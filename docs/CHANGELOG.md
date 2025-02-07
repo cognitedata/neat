@@ -22,7 +22,10 @@ Changes are grouped as follows:
 ### Fixed
 - In Model was not automatically set to True importing from spreadsheet missing value in this column
 - Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
-- The `neat.infer()` maintains acronyms when renaming invalid properties/classes. 
+- The `neat.infer()` maintains acronyms when renaming invalid properties/classes.
+
+### Changed
+- Moved examples under neat.read.examples[nordic44, pump_example]
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
@@ -475,7 +478,7 @@ Changes are grouped as follows:
 - Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 - Added RDF based readers for `NeatSession`
-- `NeatSession.read.rdf.examples.nordic44`
+- `NeatSession.read.examples.nordic44`
 - `NeatSession.show.data_model` show data model in UI
 
 ### Removed

@@ -50,6 +50,7 @@ class ReadAPI:
         self.csv = CSVReadAPI(state, verbose)
         self.yaml = YamlReadAPI(state, verbose)
         self.xml = XMLReadAPI(state, verbose)
+        self.examples = Examples(state)
 
     def session(self, io: Any) -> None:
         """Reads a Neat Session from a zip file.
@@ -286,7 +287,6 @@ class ExcelReadAPI(BaseReadAPI):
 
     def __init__(self, state: SessionState, verbose: bool) -> None:
         super().__init__(state, verbose)
-        self.examples = ExcelExampleAPI(state, verbose)
 
     def __call__(self, io: Any, enable_manual_edit: bool = False) -> IssueList:
         """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
@@ -308,16 +308,6 @@ class ExcelReadAPI(BaseReadAPI):
             AlphaFlags.manual_rules_edit.warn()
 
         return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
-
-
-@session_class_wrapper
-class ExcelExampleAPI(BaseReadAPI):
-    """Used as example for reading some data model into the NeatSession."""
-
-    def pump_example(self) -> IssueList:
-        """Reads the Hello World pump example into the NeatSession."""
-        importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
-        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
@@ -519,7 +509,6 @@ class RDFReadAPI(BaseReadAPI):
 
     def __init__(self, state: SessionState, verbose: bool) -> None:
         super().__init__(state, verbose)
-        self.examples = RDFExamples(state)
 
     def ontology(self, io: Any) -> IssueList:
         """Reads an OWL ontology source into NeatSession.
@@ -582,8 +571,8 @@ class RDFReadAPI(BaseReadAPI):
 
 
 @session_class_wrapper
-class RDFExamples:
-    """Used as example for reading some triples into the NeatSession knowledge grapgh."""
+class Examples:
+    """Used as example for reading various sources into NeatSession."""
 
     def __init__(self, state: SessionState) -> None:
         self._state = state
@@ -592,3 +581,8 @@ class RDFExamples:
         """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
         self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
         return IssueList()
+
+    def pump_example(self) -> IssueList:
+        """Reads the Hello World pump example into the NeatSession."""
+        importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
+        return self._state.rule_import(importer)
