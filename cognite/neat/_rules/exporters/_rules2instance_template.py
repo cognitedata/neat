@@ -55,9 +55,7 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        for class_, properties in (
-            RulesAnalysis(rules).properties_by_id_by_class().items()
-        ):
+        for class_, properties in RulesAnalysis(rules).properties_by_id_by_class().items():
             workbook.create_sheet(title=class_.suffix)
 
             # Add header rows

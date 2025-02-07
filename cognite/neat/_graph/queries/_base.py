@@ -1,4 +1,3 @@
-import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Literal, cast, overload
@@ -10,12 +9,8 @@ from rdflib.query import ResultRow
 
 from cognite.neat._constants import NEAT
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information import InformationRules
 from cognite.neat._shared import InstanceType
 from cognite.neat._utils.rdf_ import remove_instance_ids_in_batch, remove_namespace_from_uri
-
-from ._construct import build_construct_query
 
 
 class Queries:
@@ -228,9 +223,7 @@ class Queries:
                 # guarding against multiple rdf:type values as this is not allowed in CDF
                 if RDF.type not in property_values:
                     property_values[RDF.type].append(
-                        remove_namespace_from_uri(instance_type, validation="prefix")
-                        if instance_type
-                        else value
+                        remove_namespace_from_uri(instance_type, validation="prefix") if instance_type else value
                     )
                 else:
                     # we should not have multiple rdf:type values
@@ -257,9 +250,7 @@ class Queries:
         return cast(list[ResultRow], list(self.graph(named_graph).query(query)))
 
     @overload
-    def list_types(
-        self, remove_namespace: Literal[False] = False, limit: int = 25
-    ) -> list[ResultRow]: ...
+    def list_types(self, remove_namespace: Literal[False] = False, limit: int = 25) -> list[ResultRow]: ...
 
     @overload
     def list_types(
@@ -365,8 +356,6 @@ class Queries:
 
         return result
 
-    def count_of_type(
-        self, class_uri: URIRef, named_graph: URIRef | None = None
-    ) -> int:
+    def count_of_type(self, class_uri: URIRef, named_graph: URIRef | None = None) -> int:
         query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
         return int(next(iter(self.graph(named_graph).query(query)))[0])  # type: ignore[arg-type, index]

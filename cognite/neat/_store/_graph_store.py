@@ -18,9 +18,6 @@ from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import OxigraphStorageLockedError
-from cognite.neat._rules.analysis import RulesAnalysis
-from cognite.neat._rules.models import InformationRules
-from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
 from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
@@ -55,7 +52,6 @@ class NeatGraphStore:
         dataset: Dataset,
         default_named_graph: URIRef | None = None,
     ):
-
         _start = datetime.now(timezone.utc)
         self.dataset = dataset
         self.provenance = Provenance[Entity](
@@ -244,12 +240,9 @@ class NeatGraphStore:
         named_graph: URIRef | None = None,
         property_renaming_config: dict[URIRef, str] | None = None,
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
-
         named_graph = named_graph or self.default_named_graph
 
-        instance_ids = self.queries.list_instances_ids_of_class(
-            class_uri, named_graph=named_graph
-        )
+        instance_ids = self.queries.list_instances_ids_of_class(class_uri, named_graph=named_graph)
 
         for instance_id in instance_ids:
             if res := self.queries.describe(

@@ -1071,9 +1071,7 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
             }
         new_model = rules.model_copy(deep=True)
 
-        properties_by_view = RulesAnalysis(dms=new_model).properties_by_view(
-            include_ancestors=True
-        )
+        properties_by_view = RulesAnalysis(dms=new_model).properties_by_view(include_ancestors=True)
 
         new_model.views = SheetList[DMSView]([view for view in new_model.views if view.view not in exclude_views])
         new_properties = SheetList[DMSProperty]()

@@ -33,9 +33,7 @@ def test_ill_formed_owl_importer():
     # this is rdf:PlainLiteral edge case
     assert (
         RulesAnalysis(rules)
-        .properties_by_id_by_class()[ClassEntity.load("neat_space:LaureateAward")][
-            "motivation"
-        ]
+        .properties_by_id_by_class()[ClassEntity.load("neat_space:LaureateAward")]["motivation"]
         .type_
         == EntityTypes.data_property
     )

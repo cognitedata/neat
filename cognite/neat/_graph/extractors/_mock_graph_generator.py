@@ -54,10 +54,7 @@ class MockGraphGenerator(BaseExtractor):
 
         if not class_count:
             self.class_count = {
-                class_: 1
-                for class_ in RulesAnalysis(self.rules).defined_classes(
-                    include_ancestors=True
-                )
+                class_: 1 for class_ in RulesAnalysis(self.rules).defined_classes(include_ancestors=True)
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {

@@ -20,53 +20,22 @@ class TestRulesAnalysis:
         assert len(RulesAnalysis(david_rules).properties_by_id_by_class()) == 20
 
     def test_defined_classes(self, david_rules: InformationRules) -> None:
-        assert (
-            len(RulesAnalysis(david_rules).defined_classes(include_ancestors=False))
-            == 20
-        )
-        assert (
-            len(RulesAnalysis(david_rules).defined_classes(include_ancestors=True))
-            == 26
-        )
+        assert len(RulesAnalysis(david_rules).defined_classes(include_ancestors=False)) == 20
+        assert len(RulesAnalysis(david_rules).defined_classes(include_ancestors=True)) == 26
 
     def test_get_class_linkage(self, david_rules: InformationRules) -> None:
-        assert (
-            len(RulesAnalysis(david_rules).class_linkage(include_ancestors=False)) == 28
-        )
-        assert (
-            len(RulesAnalysis(david_rules).class_linkage(include_ancestors=True)) == 57
-        )
+        assert len(RulesAnalysis(david_rules).class_linkage(include_ancestors=False)) == 28
+        assert len(RulesAnalysis(david_rules).class_linkage(include_ancestors=True)) == 57
 
     def test_symmetric_pairs(self, david_rules: InformationRules) -> None:
-        assert (
-            len(
-                RulesAnalysis(david_rules).symmetrically_connected_classes(
-                    include_ancestors=True
-                )
-            )
-            == 0
-        )
-        assert (
-            len(
-                RulesAnalysis(david_rules).symmetrically_connected_classes(
-                    include_ancestors=False
-                )
-            )
-            == 0
-        )
+        assert len(RulesAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=True)) == 0
+        assert len(RulesAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=False)) == 0
 
     def test_subset_rules(self, david_rules: InformationRules) -> None:
-        assert RulesAnalysis(david_rules).subset_rules(
-            {ClassEntity.load("power:GeoLocation")}
-        ).classes[0].class_ == ClassEntity.load("power:GeoLocation")
-        assert (
-            len(
-                RulesAnalysis(david_rules)
-                .subset_rules({ClassEntity.load("power:GeoLocation")})
-                .classes
-            )
-            == 1
-        )
+        assert RulesAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes[
+            0
+        ].class_ == ClassEntity.load("power:GeoLocation")
+        assert len(RulesAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes) == 1
 
 
 class TestAnalysis:
