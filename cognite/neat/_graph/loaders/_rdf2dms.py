@@ -31,10 +31,11 @@ from cognite.neat._issues.errors import (
     ResourceRetrievalError,
 )
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
-from cognite.neat._rules.analysis import RuleAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.entities._single_value import ViewEntity
+from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
@@ -63,78 +64,43 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def __init__(
         self,
+        dms_rules: DMSRules,
+        info_rules: InformationRules,
         graph_store: NeatGraphStore,
-        data_model: dm.DataModel[dm.View] | None,
         instance_space: str,
-        class_neat_id_by_view_id: dict[ViewId, URIRef] | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         tracker: type[Tracker] | None = None,
-        rules: DMSRules | None = None,
         client: NeatClient | None = None,
         unquote_external_ids: bool = False,
     ):
         super().__init__(graph_store)
-        self.data_model = data_model
-        self.instance_space = instance_space
-        self.class_neat_id_by_view_id = class_neat_id_by_view_id or {}
+        self.dms_rules = dms_rules
+        self.info_rules = info_rules
         self._issues = IssueList(create_issues or [])
-        self._tracker: type[Tracker] = tracker or LogTracker
-        self.rules = rules
-        self._client = client
-        self._unquote_external_ids = unquote_external_ids
 
-    @classmethod
-    def from_data_model_id(
-        cls,
-        client: NeatClient,
-        data_model_id: dm.DataModelId,
-        graph_store: NeatGraphStore,
-        instance_space: str,
-    ) -> "DMSLoader":
-        issues: list[NeatIssue] = []
-        data_model: dm.DataModel[dm.View] | None = None
         try:
-            data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
+            self.data_model = dms_rules.as_schema().as_read_model()
         except Exception as e:
-            issues.append(ResourceRetrievalError(data_model_id, "data model", str(e)))
-
-        return cls(graph_store, data_model, instance_space, {}, issues, client=client)
-
-    @classmethod
-    def from_rules(
-        cls,
-        rules: DMSRules,
-        graph_store: NeatGraphStore,
-        instance_space: str,
-        client: NeatClient | None = None,
-        unquote_external_ids: bool = False,
-    ) -> "DMSLoader":
-        issues: list[NeatIssue] = []
-        data_model: dm.DataModel[dm.View] | None = None
-        try:
-            data_model = rules.as_schema().as_read_model()
-        except Exception as e:
-            issues.append(
+            self.data_model = None
+            self._issues.append(
                 ResourceConversionError(
-                    identifier=rules.metadata.as_identifier(),
+                    identifier=dms_rules.metadata.as_identifier(),
                     resource_type="DMS Rules",
                     target_format="read DMS model",
                     reason=str(e),
                 )
             )
 
-        class_neat_id_by_view_id = {view.view.as_id(): view.logical for view in rules.views if view.logical}
-
-        return cls(
-            graph_store,
-            data_model,
-            instance_space,
-            class_neat_id_by_view_id,
-            issues,
-            rules=rules,
-            client=client,
-            unquote_external_ids=unquote_external_ids,
+        self.views_by_view_id = (
+            {view.as_id(): view for view in self.data_model.views}
+            if self.data_model
+            else {}
         )
+
+        self.instance_space = instance_space
+        self._tracker: type[Tracker] = tracker or LogTracker
+        self._client = client
+        self._unquote_external_ids = unquote_external_ids
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
@@ -146,13 +112,28 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             # There should already be an error in this case.
             return
 
-        views_with_linked_properties = (
-            RuleAnalysis(dms=self.rules).logical_uri_by_property_by_view(include_ancestors=True)
-            if self.rules and self.rules.metadata.logical
-            else None
+        query_config_by_view_id = RulesAnalysis(
+            self.info_rules, self.dms_rules
+        ).query_config_by_view_id
+
+        view_and_count_by_id = self._select_views_with_instances(
+            query_config_by_view_id
         )
 
-        view_and_count_by_id = self._select_views_with_instances(self.data_model.views)
+        # need to check if the view has instances in graph
+        # if views_with_linked_properties:
+        #     # we need graceful exit if the view is not in the view_property_pairs
+        #     property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
+
+        #     if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
+        #         reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
+        #     else:
+        #         error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
+        #         tracker.issue(error_view)
+        #         if stop_on_exception:
+        #             raise error_view
+        #         yield error_view
+        #         continue
 
         if self._client:
             view_and_count_by_id, properties_point_to_self = self._sort_by_direct_relation_dependencies(
@@ -189,22 +170,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 else:
                     track_id = repr(view_id)
                 tracker.start(track_id)
-                if views_with_linked_properties:
-                    # we need graceful exit if the view is not in the view_property_pairs
-                    property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
 
-                    if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
-                        reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
-                    else:
-                        error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
-                        tracker.issue(error_view)
-                        if stop_on_exception:
-                            raise error_view
-                        yield error_view
-                        continue
-                else:
-                    # this assumes no changes in the suffix of view and class
-                    reader = self.graph_store.read(view.external_id)
+                class_uri = query_config_by_view_id[view_id]["rdf_type"]
+                property_renaming_config = query_config_by_view_id[view_id][
+                    "property_renaming_config"
+                ]
+                reader = self.graph_store.read(
+                    class_uri=class_uri,
+                    property_renaming_config=property_renaming_config,
+                )
 
                 instance_iterable = iterate_progress_bar_if_above_config_threshold(
                     reader, instance_count, f"Loading {track_id}"
@@ -286,24 +260,19 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _select_views_with_instances(self, views: list[dm.View]) -> dict[dm.ViewId, tuple[dm.View, int]]:
+    def _select_views_with_instances(
+        self,
+        query_config_by_view_id: dict[
+            ViewEntity, dict[str, None | URIRef | dict[URIRef, str]]
+        ],
+    ) -> dict[dm.ViewId, tuple[dm.View, int]]:
         """Selects the views with data."""
         view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
-        uri_by_type: dict[str, URIRef] = {
-            remove_namespace_from_uri(uri[0]): uri[0]  # type: ignore[misc]
-            for uri in self.graph_store.queries.list_types()
-        }
-        for view in views:
-            view_id = view.as_id()
-            neat_id = self.class_neat_id_by_view_id.get(view_id)
-            if neat_id is not None:
-                count = self.graph_store.count_of_id(neat_id)
-            elif view.external_id in uri_by_type:
-                count = self.graph_store.count_of_type(uri_by_type[view.external_id])
-            else:
-                continue
+
+        for view_id, query_config in query_config_by_view_id.items():
+            count = self.graph_store.queries.count_of_type(query_config["rdf_type"])
             if count > 0:
-                view_and_count_by_id[view_id] = view, count
+                view_and_count_by_id[view_id] = self.views_by_view_id[view_id], count
 
         return view_and_count_by_id
 

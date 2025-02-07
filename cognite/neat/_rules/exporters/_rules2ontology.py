@@ -15,7 +15,7 @@ from cognite.neat._issues.errors import (
 )
 from cognite.neat._issues.warnings import PropertyDefinitionDuplicatedWarning
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.analysis import RuleAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import (
@@ -121,7 +121,7 @@ class Ontology(OntologyModel):
                 )
             raise MultiValueError(errors)
 
-        analysis = RuleAnalysis(rules)
+        analysis = RulesAnalysis(rules)
         class_dict = analysis.class_by_suffix()
         return cls(
             properties=[

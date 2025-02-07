@@ -4,7 +4,7 @@ from collections import defaultdict
 from collections.abc import Hashable, Set
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
-from typing import Any, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast
 
 import pandas as pd
 from pydantic import ValidationError
@@ -61,7 +61,7 @@ class LinkageSet(set, Set[Linkage]):
         )
 
 
-class RuleAnalysis:
+class RulesAnalysis:
     def __init__(self, information: InformationRules | None = None, dms: DMSRules | None = None) -> None:
         self._information = information
         self._dms = dms
@@ -196,6 +196,11 @@ class RuleAnalysis:
 
         return properties_by_views
 
+    @property
+    def logical_uri_by_view(self) -> dict[ViewEntity, URIRef]:
+        """Get the logical URI by view."""
+        return {view.view: view.logical for view in self.dms.views if view.logical}
+
     def logical_uri_by_property_by_view(
         self,
         include_ancestors: bool = False,
@@ -208,6 +213,13 @@ class RuleAnalysis:
             view: {prop.view_property: prop.logical for prop in properties if prop.logical}
             for view, properties in properties_by_view.items()
         }
+
+    @property
+    def class_by_neat_id(self) -> dict[URIRef, InformationClass]:
+        """Get a dictionary of class neat IDs to
+        class entities."""
+
+        return {cls.neatId: cls for cls in self.information.classes if cls.neatId}
 
     def class_by_suffix(self) -> dict[str, InformationClass]:
         """Get a dictionary of class suffixes to class entities."""
@@ -454,9 +466,18 @@ class RuleAnalysis:
 
         return property_renaming_configuration
 
-    @property
-    def properties_by_neat_id(self) -> dict[URIRef, InformationProperty]:
-        return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
+    def properties_by_neat_id(
+        self, format: Literal["info", "dms"] = "info"
+    ) -> dict[URIRef, InformationProperty | DMSProperty]:
+
+        if format == "info":
+            return {
+                prop.neatId: prop for prop in self.information.properties if prop.neatId
+            }
+        elif format == "dms":
+            return {prop.neatId: prop for prop in self.dms.properties if prop.neatId}
+        else:
+            raise NeatValueError(f"Invalid format: {format}")
 
     @property
     def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
@@ -464,15 +485,17 @@ class RuleAnalysis:
 
     def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
         if (
-            (property_ := self.properties_by_neat_id.get(property_neat_id))
+            (property_ := self.properties_by_neat_id().get(property_neat_id))
             and property_.instance_source
             and isinstance(
                 property_.instance_source.traversal,
                 SingleProperty,
             )
             and (
-                property_.instance_source.traversal.property.prefix in self.information.prefixes
-                or property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
+                property_.instance_source.traversal.property.prefix
+                in self.information.prefixes
+                or property_.instance_source.traversal.property.prefix
+                == self.information.metadata.prefix
             )
         ):
             namespace = (
@@ -524,6 +547,68 @@ class RuleAnalysis:
         else:
             return None
 
+    def property_uri(self, property_: InformationProperty) -> URIRef | None:
+        if (instance_source := property_.instance_source) and isinstance(
+            instance_source.traversal, SingleProperty
+        ):
+
+            prefix = instance_source.traversal.property.prefix
+            suffix = instance_source.traversal.property.suffix
+
+            if namespace := self.information.prefixes.get(prefix):
+                return namespace[suffix]
+        return None
+
     @property
     def multi_value_properties(self) -> list[InformationProperty]:
         return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
+
+    @property
+    def query_config_by_view_id(
+        self,
+    ) -> dict[ViewEntity, dict[str, None | URIRef | dict[URIRef, str]]]:
+
+        _ = self.information
+        _ = self.dms
+
+        # caching results for faster access
+        classes_by_neat_id = self.class_by_neat_id
+        logical_uri_by_view = self.logical_uri_by_view
+        logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(
+            include_ancestors=True
+        )
+        information_properties_by_neat_id = self.properties_by_neat_id()
+
+        config = {}
+
+        for view in self.dms.views:
+
+            # this entire block of sequential if statements checks:
+            # 1. connection of dms to info rules
+            # 2. correct paring of information and dms rules
+            # 3. connection of info rules to instances
+            if (
+                (neat_id := logical_uri_by_view.get(view.view))
+                and (class_ := classes_by_neat_id.get(neat_id))
+                and (uri := self.class_uri(class_.class_))
+            ):
+                rdf_type = uri
+
+                config[view.view.as_id()] = {
+                    "rdf_type": rdf_type,
+                    "property_renaming_config": {},
+                }
+
+                if logical_uri_by_property := logical_uri_by_property_by_view.get(
+                    view.view
+                ):
+                    for target_name, neat_id in logical_uri_by_property.items():
+
+                        if (
+                            property_ := information_properties_by_neat_id.get(neat_id)
+                        ) and (uri := self.property_uri(property_)):
+                            config[view.view.as_id()]["property_renaming_config"][
+                                uri
+                            ] = target_name
+
+        return config

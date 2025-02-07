@@ -12,7 +12,7 @@ import pandas as pd
 from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.analysis import RuleAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity
@@ -54,7 +54,10 @@ class MockGraphGenerator(BaseExtractor):
 
         if not class_count:
             self.class_count = {
-                class_: 1 for class_ in RuleAnalysis(self.rules).defined_classes(include_ancestors=True)
+                class_: 1
+                for class_ in RulesAnalysis(self.rules).defined_classes(
+                    include_ancestors=True
+                )
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
@@ -104,7 +107,7 @@ def generate_triples(
     """
 
     namespace = rules.metadata.namespace
-    analysis = RuleAnalysis(rules)
+    analysis = RulesAnalysis(rules)
     defined_classes = analysis.defined_classes(include_ancestors=True)
 
     if non_existing_classes := set(class_count.keys()) - defined_classes:

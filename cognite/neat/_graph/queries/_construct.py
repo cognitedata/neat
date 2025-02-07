@@ -3,7 +3,7 @@ from typing import cast
 
 from rdflib import Graph, URIRef
 
-from cognite.neat._rules.analysis import RuleAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models._rdfpath import (
     Hop,
     RDFPath,
@@ -55,7 +55,7 @@ def build_construct_query(
     """
 
     if (
-        transformations := RuleAnalysis(rules)
+        transformations := RulesAnalysis(rules)
         .properties_by_id_by_class(has_instance_source=True, include_ancestors=True)
         .get(class_, None)
     ):

@@ -37,7 +37,6 @@ class SessionState:
         last_entity = self.rule_store.provenance[-1].target_entity
         issues.action = f"{start} &#8594; {last_entity.display_name}"
         issues.hint = "Use the .inspect.issues() for more details."
-        self.instances.store.add_rules(last_entity.information)
         return issues
 
     def rule_import(self, importer: BaseImporter, enable_manual_edit: bool = False) -> IssueList:
@@ -61,7 +60,6 @@ class SessionState:
     def write_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
         extract_issues = self.instances.store.write(extractor)
         issues = self.rule_store.import_graph(extractor)
-        self.instances.store.add_rules(self.rule_store.last_verified_information_rules)
         issues.extend(extract_issues)
         return issues
 

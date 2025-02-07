@@ -45,10 +45,14 @@ class TestExtractToLoadFlow:
 
         # Hack to get the instances.
         dms_rules = neat._state.rule_store.last_verified_dms_rules
+        info_rules = neat._state.rule_store.last_verified_information_rules
+
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
-            for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            for instance in DMSLoader(
+                dms_rules, info_rules, store, "sp_instance_space"
+            ).load()
             if isinstance(instance, InstanceApply)
         ]
 

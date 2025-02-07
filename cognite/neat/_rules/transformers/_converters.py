@@ -33,7 +33,7 @@ from cognite.neat._rules._shared import (
     ReadRules,
     VerifiedRules,
 )
-from cognite.neat._rules.analysis import RuleAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import (
     DMSInputRules,
@@ -816,7 +816,7 @@ class ToSolutionModel(ToExtensionModel):
 
     @staticmethod
     def _expand_properties(rules: DMSRules) -> DMSRules:
-        probe = RuleAnalysis(dms=rules)
+        probe = RulesAnalysis(dms=rules)
         ancestor_properties_by_view = probe.properties_by_view(
             include_ancestors=True,
             include_different_space=True,
@@ -1071,7 +1071,9 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
             }
         new_model = rules.model_copy(deep=True)
 
-        properties_by_view = RuleAnalysis(dms=new_model).properties_by_view(include_ancestors=True)
+        properties_by_view = RulesAnalysis(dms=new_model).properties_by_view(
+            include_ancestors=True
+        )
 
         new_model.views = SheetList[DMSView]([view for view in new_model.views if view.view not in exclude_views])
         new_properties = SheetList[DMSProperty]()
