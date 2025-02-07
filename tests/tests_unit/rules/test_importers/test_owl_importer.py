@@ -9,7 +9,7 @@ from cognite.neat._rules.transformers._verification import VerifyAnyRules
 def test_ill_formed_owl_importer():
     input = importers.OWLImporter.from_file(filepath="https://data.nobelprize.org/terms.rdf").to_rules()
     with catch_issues() as issues:
-        rules = VerifyAnyRules().transform(input)
+        _ = VerifyAnyRules().transform(input)
 
     assert len(issues) == 6
     assert issues.has_errors
