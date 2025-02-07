@@ -1,4 +1,4 @@
-from cognite.neat._issues._base import DefaultPydanticError, NeatError, RowError, _get_subclasses
+from cognite.neat._issues._base import NeatError, _get_subclasses
 
 from ._external import (
     AuthorizationError,
@@ -36,7 +36,6 @@ from ._wrapper import MetadataValueError
 __all__ = [
     "AuthorizationError",
     "CDFMissingClientError",
-    "DefaultPydanticError",
     "FileMissingRequiredFieldError",
     "FileNotAFileError",
     "FileNotFoundNeatError",
@@ -65,7 +64,6 @@ __all__ = [
     "ResourceNotFoundError",
     "ResourceRetrievalError",
     "ReversedConnectionNotFeasibleError",
-    "RowError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

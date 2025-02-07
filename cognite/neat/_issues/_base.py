@@ -30,6 +30,7 @@ __all__ = [
     "NeatError",
     "NeatIssue",
     "NeatWarning",
+    "IssueList",
 ]
 
 T_Identifier = TypeVar("T_Identifier", bound=Hashable)

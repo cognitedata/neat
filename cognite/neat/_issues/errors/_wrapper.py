@@ -36,6 +36,7 @@ class ViewValueError(SpreadsheetError):
 class ContainerValueError(SpreadsheetError):
     ...
 
+
 @dataclass(unsafe_hash=True)
 class PropertyValueError(SpreadsheetError):
     ...

@@ -17,7 +17,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.data_modeling import ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT, DMS_VIEW_CONTAINER_SIZE_LIMIT
-from cognite.neat._issues import IssueList, NeatError, NeatIssueList
+from cognite.neat._issues import IssueList, NeatError
 from cognite.neat._issues.errors import (
     CDFMissingClientError,
     PropertyDefinitionDuplicatedError,
@@ -87,7 +87,7 @@ class DMSValidation:
 
         return imported_views, imported_containers
 
-    def validate(self) -> NeatIssueList:
+    def validate(self) -> IssueList:
         imported_views, imported_containers = self.imported_views_and_containers_ids(
             include_views_with_no_properties=False
         )
