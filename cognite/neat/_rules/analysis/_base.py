@@ -593,7 +593,7 @@ class RulesAnalysis:
                 config[view.view.as_id()] = {
                     "rdf_type": rdf_type,
                     # start off with renaming of properties on the information level
-                    # this is to encounter for special cases of startNode and endNode
+                    # this is to encounter for special cases of e.g. space, startNode and endNode
                     "property_renaming_config": {
                         uri: prop_.property_ for prop_ in info_properties if (uri := self.property_uri(prop_))
                     }

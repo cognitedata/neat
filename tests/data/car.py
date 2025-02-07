@@ -5,10 +5,10 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF
 from rdflib.term import Literal
 
-from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, NodeApplyDict, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules import importers
+from cognite.neat._rules.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
@@ -18,6 +18,7 @@ from cognite.neat._rules.models.dms import (
     DMSInputView,
 )
 from cognite.neat._rules.transformers import VerifyInformationRules
+from tests.data import DATA_DIR
 
 INSTANCE_SPACE = "sp_cars"
 _neat = DEFAULT_NAMESPACE
@@ -274,12 +275,5 @@ INSTANCES = [
 
 
 @lru_cache(maxsize=1)
-def get_car_schema() -> DMSSchema:
-    model = CAR_MODEL.as_write()
-    model.views = [view.as_id() for view in model.views]
-    return DMSSchema(
-        data_model=model,
-        containers=ContainerApplyDict(CONTAINERS),
-        views=ViewApplyDict([view.as_write() for view in CAR_MODEL.views]),
-        node_types=NodeApplyDict(NODE_TYPES),
-    )
+def get_car_dms_rules() -> DMSSchema:
+    return ExcelImporter(DATA_DIR / "car_dms_rules.xlsx").to_rules().rules.as_verified_rules()
