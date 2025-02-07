@@ -24,6 +24,9 @@ Changes are grouped as follows:
 - Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
 - The `neat.infer()` maintains acronyms when renaming invalid properties/classes.
 
+### Changed
+- Moved examples under neat.read.examples[nordic44, pump_example]
+
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
 - The `neat.create.enterprise_model()` now sorts properties based on (view + property) in alphabetical order.
