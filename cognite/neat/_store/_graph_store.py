@@ -18,7 +18,7 @@ from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import OxigraphStorageLockedError
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import RuleAnalysis
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._shared import InstanceType, Triple
@@ -299,7 +299,7 @@ class NeatGraphStore:
                 stacklevel=2,
             )
 
-        analysis = InformationAnalysis(self.rules[named_graph])
+        analysis = RuleAnalysis(self.rules[named_graph])
 
         if cls := analysis.classes_by_neat_id.get(class_neat_id):
             if property_link_pairs:
@@ -308,9 +308,7 @@ class NeatGraphStore:
                     for prop_name, prop_neat_id in property_link_pairs.items()
                     if (prop_uri := analysis.neat_id_to_instance_source_property_uri(prop_neat_id))
                 }
-                if information_properties := analysis.classes_with_properties(consider_inheritance=True).get(
-                    cls.class_
-                ):
+                if information_properties := analysis.properties_by_class(include_ancestors=True).get(cls.class_):
                     for prop in information_properties:
                         if prop.neatId is None:
                             continue
@@ -363,17 +361,16 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return
 
-        if not (class_uri := InformationAnalysis(self.rules[named_graph]).class_uri(class_entity)):
+        analysis = RuleAnalysis(self.rules[named_graph])
+        if not (class_uri := analysis.class_uri(class_entity)):
             warnings.warn(
                 f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
                 stacklevel=2,
             )
             return
 
-        has_hop_transformations = InformationAnalysis(self.rules[named_graph]).has_hop_transformations()
-        has_self_reference_transformations = InformationAnalysis(
-            self.rules[named_graph]
-        ).has_self_reference_property_transformations()
+        has_hop_transformations = analysis.has_hop_transformations()
+        has_self_reference_transformations = analysis.has_self_reference_property_transformations()
         if has_hop_transformations or has_self_reference_transformations:
             msg = (
                 f"Rules contain [{'Hop' if has_hop_transformations else ''}"
@@ -394,9 +391,7 @@ class NeatGraphStore:
         instance_ids = self.queries.list_instances_ids_of_class(class_uri)
 
         # get potential property renaming config
-        property_renaming_config = property_renaming_config or InformationAnalysis(
-            self.rules[named_graph]
-        ).define_property_renaming_config(class_entity)
+        property_renaming_config = property_renaming_config or analysis.define_property_renaming_config(class_entity)
 
         for instance_id in instance_ids:
             if res := self.queries.describe(
@@ -478,7 +473,7 @@ class NeatGraphStore:
             warnings.warn("Desired type not found in graph!", stacklevel=2)
             return 0
 
-        if not (class_uri := InformationAnalysis(self.rules[named_graph]).class_uri(class_entity)):
+        if not (class_uri := RuleAnalysis(self.rules[named_graph]).class_uri(class_entity)):
             warnings.warn(
                 f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
                 stacklevel=2,

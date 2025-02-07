@@ -3,7 +3,7 @@ from typing import cast
 
 from rdflib import Graph, URIRef
 
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import RuleAnalysis
 from cognite.neat._rules.models._rdfpath import (
     Hop,
     RDFPath,
@@ -55,8 +55,8 @@ def build_construct_query(
     """
 
     if (
-        transformations := InformationAnalysis(rules)
-        .class_property_pairs(only_rdfpath=True, consider_inheritance=True)
+        transformations := RuleAnalysis(rules)
+        .properties_by_id_by_class(has_instance_source=True, include_ancestors=True)
         .get(class_, None)
     ):
         templates, patterns = to_construct_triples(
