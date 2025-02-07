@@ -233,8 +233,9 @@ class CDFToAPI:
         if not client.data_modeling.spaces.retrieve(space):
             client.data_modeling.spaces.apply(dm.SpaceApply(space=space))
 
-        loader = loaders.DMSLoader.from_rules(
+        loader = loaders.DMSLoader(
             self._state.rule_store.last_verified_dms_rules,
+            self._state.rule_store.last_verified_information_rules,
             self._state.instances.store,
             instance_space=space,
             client=client,

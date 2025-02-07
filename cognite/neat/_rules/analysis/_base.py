@@ -4,9 +4,10 @@ from collections import defaultdict
 from collections.abc import Hashable, Set
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
-from typing import Any, Literal, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast, overload
 
 import pandas as pd
+from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 from rdflib import URIRef
 
@@ -466,14 +467,17 @@ class RulesAnalysis:
 
         return property_renaming_configuration
 
+    @overload
+    def properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
+
+    @overload
+    def properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
+
     def properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
     ) -> dict[URIRef, InformationProperty | DMSProperty]:
-
         if format == "info":
-            return {
-                prop.neatId: prop for prop in self.information.properties if prop.neatId
-            }
+            return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
         elif format == "dms":
             return {prop.neatId: prop for prop in self.dms.properties if prop.neatId}
         else:
@@ -492,10 +496,8 @@ class RulesAnalysis:
                 SingleProperty,
             )
             and (
-                property_.instance_source.traversal.property.prefix
-                in self.information.prefixes
-                or property_.instance_source.traversal.property.prefix
-                == self.information.metadata.prefix
+                property_.instance_source.traversal.property.prefix in self.information.prefixes
+                or property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
             )
         ):
             namespace = (
@@ -548,10 +550,7 @@ class RulesAnalysis:
             return None
 
     def property_uri(self, property_: InformationProperty) -> URIRef | None:
-        if (instance_source := property_.instance_source) and isinstance(
-            instance_source.traversal, SingleProperty
-        ):
-
+        if (instance_source := property_.instance_source) and isinstance(instance_source.traversal, SingleProperty):
             prefix = instance_source.traversal.property.prefix
             suffix = instance_source.traversal.property.suffix
 
@@ -566,23 +565,20 @@ class RulesAnalysis:
     @property
     def query_config_by_view_id(
         self,
-    ) -> dict[ViewEntity, dict[str, None | URIRef | dict[URIRef, str]]]:
-
+    ) -> dict[dm.ViewId, dict[str, None | URIRef | dict[URIRef, str]]]:
         _ = self.information
         _ = self.dms
 
         # caching results for faster access
         classes_by_neat_id = self.class_by_neat_id
+        properties_by_class = self.properties_by_class(include_ancestors=True)
         logical_uri_by_view = self.logical_uri_by_view
-        logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(
-            include_ancestors=True
-        )
+        logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(include_ancestors=True)
         information_properties_by_neat_id = self.properties_by_neat_id()
 
         config = {}
 
         for view in self.dms.views:
-
             # this entire block of sequential if statements checks:
             # 1. connection of dms to info rules
             # 2. correct paring of information and dms rules
@@ -596,19 +592,19 @@ class RulesAnalysis:
 
                 config[view.view.as_id()] = {
                     "rdf_type": rdf_type,
-                    "property_renaming_config": {},
+                    # start off with renaming of properties on the information level
+                    # this is to encounter for special cases of startNode and endNode
+                    "property_renaming_config": {
+                        self.property_uri(info_prop): info_prop.property_
+                        for info_prop in properties_by_class.get(class_.class_)
+                    },
                 }
 
-                if logical_uri_by_property := logical_uri_by_property_by_view.get(
-                    view.view
-                ):
+                if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
                     for target_name, neat_id in logical_uri_by_property.items():
-
-                        if (
-                            property_ := information_properties_by_neat_id.get(neat_id)
-                        ) and (uri := self.property_uri(property_)):
-                            config[view.view.as_id()]["property_renaming_config"][
-                                uri
-                            ] = target_name
+                        if (property_ := information_properties_by_neat_id.get(neat_id)) and (
+                            uri := self.property_uri(property_)
+                        ):
+                            config[view.view.as_id()]["property_renaming_config"][uri] = target_name
 
         return config

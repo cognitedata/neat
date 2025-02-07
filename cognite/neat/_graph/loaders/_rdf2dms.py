@@ -12,7 +12,6 @@ import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
-from cognite.client.data_classes.data_modeling import ViewId
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
@@ -28,13 +27,11 @@ from cognite.neat._issues.errors import (
     ResourceConversionError,
     ResourceCreationError,
     ResourceDuplicatedError,
-    ResourceRetrievalError,
 )
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
-from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
@@ -77,11 +74,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self.dms_rules = dms_rules
         self.info_rules = info_rules
         self._issues = IssueList(create_issues or [])
+        self.data_model = None
 
         try:
             self.data_model = dms_rules.as_schema().as_read_model()
         except Exception as e:
-            self.data_model = None
             self._issues.append(
                 ResourceConversionError(
                     identifier=dms_rules.metadata.as_identifier(),
@@ -91,12 +88,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 )
             )
 
-        self.views_by_view_id = (
-            {view.as_id(): view for view in self.data_model.views}
-            if self.data_model
-            else {}
-        )
-
+        self.views_by_view_id = {view.as_id(): view for view in self.data_model.views} if self.data_model else {}
         self.instance_space = instance_space
         self._tracker: type[Tracker] = tracker or LogTracker
         self._client = client
@@ -112,28 +104,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             # There should already be an error in this case.
             return
 
-        query_config_by_view_id = RulesAnalysis(
-            self.info_rules, self.dms_rules
-        ).query_config_by_view_id
+        query_config_by_view_id = RulesAnalysis(self.info_rules, self.dms_rules).query_config_by_view_id
 
-        view_and_count_by_id = self._select_views_with_instances(
-            query_config_by_view_id
-        )
+        view_and_count_by_id = self._select_views_with_instances(query_config_by_view_id)
 
-        # need to check if the view has instances in graph
-        # if views_with_linked_properties:
-        #     # we need graceful exit if the view is not in the view_property_pairs
-        #     property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
-
-        #     if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
-        #         reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
-        #     else:
-        #         error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
-        #         tracker.issue(error_view)
-        #         if stop_on_exception:
-        #             raise error_view
-        #         yield error_view
-        #         continue
+        # TODO: here we need to do check if the views have all the properties
 
         if self._client:
             view_and_count_by_id, properties_point_to_self = self._sort_by_direct_relation_dependencies(
@@ -171,10 +146,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     track_id = repr(view_id)
                 tracker.start(track_id)
 
-                class_uri = query_config_by_view_id[view_id]["rdf_type"]
-                property_renaming_config = query_config_by_view_id[view_id][
-                    "property_renaming_config"
-                ]
+                class_uri = cast(URIRef, query_config_by_view_id[view_id]["rdf_type"])
+                property_renaming_config = cast(
+                    dict[URIRef, str] | None,
+                    query_config_by_view_id[view_id]["property_renaming_config"],
+                )
                 reader = self.graph_store.read(
                     class_uri=class_uri,
                     property_renaming_config=property_renaming_config,
@@ -262,15 +238,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _select_views_with_instances(
         self,
-        query_config_by_view_id: dict[
-            ViewEntity, dict[str, None | URIRef | dict[URIRef, str]]
-        ],
+        query_config_by_view_id: dict[dm.ViewId, dict[str, None | URIRef | dict[URIRef, str]]],
     ) -> dict[dm.ViewId, tuple[dm.View, int]]:
         """Selects the views with data."""
         view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
 
         for view_id, query_config in query_config_by_view_id.items():
-            count = self.graph_store.queries.count_of_type(query_config["rdf_type"])
+            count = self.graph_store.queries.count_of_type(cast(URIRef, query_config["rdf_type"]))
             if count > 0:
                 view_and_count_by_id[view_id] = self.views_by_view_id[view_id], count
 
