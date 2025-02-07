@@ -15,7 +15,7 @@ class TestDataModelPrepare:
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
         neat = NeatSession(cognite_client)
-        neat.read.excel.examples.pump_example()
+        neat.read.examples.pump_example()
 
         # Hack to ensure deterministic output
         rules = neat._state.rule_store.last_verified_dms_rules

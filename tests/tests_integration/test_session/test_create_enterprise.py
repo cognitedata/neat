@@ -9,7 +9,7 @@ from cognite.neat import NeatSession
 class TestCreateAPI:
     def test_create_enterprise_maintain_reference(self, cognite_client: CogniteClient, tmp_path: Path) -> None:
         neat = NeatSession(cognite_client)
-        neat.read.excel.examples.pump_example()
+        neat.read.examples.pump_example()
 
         neat.create.enterprise_model(("my_space", "MySpace", "v1"))
 
