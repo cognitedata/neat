@@ -1,3 +1,4 @@
+from typing import cast
 from warnings import WarningMessage
 
 from pydantic_core import ErrorDetails
@@ -5,8 +6,8 @@ from pydantic_core import ErrorDetails
 from cognite.neat._issues._base import NeatError, NeatWarning
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
 
+from .errors import NeatValueError, SpreadsheetError
 from .warnings import NeatValueWarning
-from .errors import SpreadsheetError, NeatValueError
 
 
 def from_pydantic_errors(
@@ -14,7 +15,8 @@ def from_pydantic_errors(
 ) -> list[NeatError]:
     read_info_by_sheet = read_info_by_sheet or {}
     return [
-        _from_pydantic_error(error, read_info_by_sheet) for error in errors
+        _from_pydantic_error(error, read_info_by_sheet)
+        for error in errors
         # Skip the error for SheetList, as it is not relevant for the user. This is an
         # internal class used to have helper methods for a lists as .to_pandas()
         if not (error["type"] == "is_instance_of" and error["loc"][1] == "is-instance[SheetList]")
@@ -32,13 +34,16 @@ def from_warning(warning: WarningMessage) -> NeatWarning:
 
 def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead]) -> NeatError:
     neat_error = _create_neat_value_error(error)
-    return SpreadsheetError.create(error["loc"], neat_error, read_info_by_sheet.get(error["loc"][0]))
+    location = error["loc"]
+    return SpreadsheetError.create(location, neat_error, read_info_by_sheet.get(cast(str, location[0])))
+
 
 def _create_neat_value_error(error: ErrorDetails) -> NeatValueError:
     if (ctx := error.get("ctx")) and (neat_error := ctx.get("error")) and isinstance(neat_error, NeatError):
         # Is already a NeatError
         return neat_error
     return _pydantic_to_neat_error(error)
+
 
 def _pydantic_to_neat_error(error: ErrorDetails) -> NeatValueError:
     error_type = error["type"]
@@ -50,6 +55,5 @@ def _pydantic_to_neat_error(error: ErrorDetails) -> NeatValueError:
             return NeatValueError(f"Expected a {expected_type} type, got {input_value!r}")
         case _:
             # The above cases overwrite the human-readable message from pydantic.
-            # The default is to use the message from pydantic.
             # Motivation for overwriting is that pydantic is developer-oriented and while neat is SME-oriented.
             return NeatValueError(f"{error['msg']} got '{input_value}'")

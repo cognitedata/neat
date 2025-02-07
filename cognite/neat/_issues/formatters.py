@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from ._base import NeatError, NeatWarning, IssueList
+from ._base import IssueList, NeatError, NeatWarning
 
 __all__ = ["FORMATTER_BY_NAME", "BasicHTML", "Formatter"]
 

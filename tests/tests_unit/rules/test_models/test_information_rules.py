@@ -6,7 +6,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import NeatError, catch_issues
-from cognite.neat._issues.errors import NeatValueError, ResourceNotDefinedError, PropertyValueError
+from cognite.neat._issues.errors import NeatValueError, PropertyValueError, ResourceNotDefinedError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSRules, SheetList, data_types
 from cognite.neat._rules.models.data_types import DataType, String
@@ -107,7 +107,11 @@ def invalid_domain_rules_cases():
                 }
             ],
         },
-        PropertyValueError(row=0, column="Instance Source", error=NeatValueError("Invalid RDF Path - the prefix is empty in ':GeneratingUnit'")),
+        PropertyValueError(
+            row=0,
+            column="Instance Source",
+            error=NeatValueError("Invalid RDF Path - the prefix is empty in ':GeneratingUnit'"),
+        ),
         id="missing_rule",
     )
 

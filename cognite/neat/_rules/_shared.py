@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Generic, TypeAlias, TypeVar
+from typing import Generic, TypeAlias, TypeVar
 
 from cognite.neat._rules.models import (
     DMSRules,

@@ -43,6 +43,7 @@ from cognite.neat._rules.models.entities._single_value import (
     ViewEntity,
 )
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
+
 from ._rules import DMSProperty, DMSRules
 
 
@@ -54,7 +55,12 @@ class DMSValidation:
     # For example, changing the filter is allowed, but changing the properties is not.
     changeable_view_attributes: ClassVar[set[str]] = {"filter"}
 
-    def __init__(self, rules: DMSRules, client: NeatClient | None = None, read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None) -> None:
+    def __init__(
+        self,
+        rules: DMSRules,
+        client: NeatClient | None = None,
+        read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+    ) -> None:
         self._rules = rules
         self._client = client
         self._metadata = rules.metadata

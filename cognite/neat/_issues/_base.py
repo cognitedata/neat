@@ -26,11 +26,11 @@ else:
 
 
 __all__ = [
+    "IssueList",
     "MultiValueError",
     "NeatError",
     "NeatIssue",
     "NeatWarning",
-    "IssueList",
 ]
 
 T_Identifier = TypeVar("T_Identifier", bound=Hashable)
@@ -203,14 +203,18 @@ class NeatIssue:
             return NotImplemented
         return (type(self).__name__, self.as_message()) == (type(other).__name__, other.as_message())
 
+
 @dataclass(unsafe_hash=True)
 class NeatError(NeatIssue, Exception):
     """This is the base class for all exceptions (errors) used in Neat."""
+
     ...
+
 
 @dataclass(unsafe_hash=True)
 class NeatWarning(NeatIssue, UserWarning):
     """This is the base class for all warnings used in Neat."""
+
     ...
 
 

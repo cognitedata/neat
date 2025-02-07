@@ -10,7 +10,6 @@ from ._base import (
 )
 from ._contextmanagers import catch_issues, catch_warnings
 
-
 __all__ = [
     "IssueList",
     "MultiValueError",
