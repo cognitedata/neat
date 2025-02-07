@@ -23,7 +23,7 @@ from rdflib import RDF, URIRef
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
 from cognite.neat._graph._tracking import LogTracker, Tracker
-from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
+from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.errors import (
     ResourceConversionError,
     ResourceCreationError,
@@ -354,7 +354,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         type[BaseModel],
         dict[str, tuple[str, dm.EdgeConnection]],
         dict[str, tuple[str, dm.EdgeConnection]],
-        NeatIssueList,
+        IssueList,
     ]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}

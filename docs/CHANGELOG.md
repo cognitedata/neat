@@ -27,6 +27,9 @@ Changes are grouped as follows:
 ### Changed
 - Moved examples under neat.read.examples[nordic44, pump_example]
 
+### Improved
+- The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
+
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
 - The `neat.create.enterprise_model()` now sorts properties based on (view + property) in alphabetical order.
