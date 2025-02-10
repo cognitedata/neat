@@ -1,7 +1,7 @@
 import itertools
 import warnings
 from collections import defaultdict
-from collections.abc import Hashable, Iterator, MutableMapping, Set, ItemsView, KeysView, ValuesView
+from collections.abc import Hashable, ItemsView, Iterator, KeysView, MutableMapping, Set, ValuesView
 from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
 from typing import Any, Literal, TypeVar, cast, overload
@@ -100,9 +100,6 @@ class ViewQueryDict(dict, MutableMapping[dm.ViewId, ViewQuery]):
 
     def popitem(self) -> tuple[dm.ViewId, ViewQuery]:
         return super().popitem()
-
-    def copy(self) -> "ViewQueryDict[dm.ViewId, ViewQuery]":
-        return cast(ViewQueryDict[dm.ViewId, ViewQuery], super().copy())
 
 
 class RulesAnalysis:

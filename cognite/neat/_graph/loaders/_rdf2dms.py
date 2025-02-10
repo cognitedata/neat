@@ -2,10 +2,8 @@ import itertools
 import json
 import urllib.parse
 import warnings
-from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from graphlib import TopologicalSorter
 from pathlib import Path
 from typing import Any, cast, get_args
 
@@ -27,6 +25,7 @@ from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.errors import ResourceDuplicatedError, ResourceNotFoundError
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis import RulesAnalysis
+from cognite.neat._rules.analysis._base import ViewQuery, ViewQueryDict
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.information._rules import InformationRules
@@ -37,7 +36,6 @@ from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.upload import UploadResult
 
-from ..._rules.analysis._base import ViewQuery, ViewQueryDict
 from ._base import _END_OF_CLASS, CDFLoader
 
 
@@ -66,7 +64,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     Args:
         dms_rules (DMSRules): The DMS rules used by the data model.
-        info_rules (InformationRules): The information rules used by the data model, used to lookup the instances in the store.
+        info_rules (InformationRules): The information rules used by the data model, used to
+            lookup the instances in the store.
         graph_store (NeatGraphStore): The graph store to load the data from.
         instance_space (str): The instance space to load the data into.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
@@ -114,12 +113,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 reader, view_iteration.instance_count, f"Loading {view_iteration.view_id!r}"
             )
             for identifier, properties in instance_iterable:
-                yield from self._create_instances(identifier, properties, exclude=view_iteration.self_required_properties)
+                yield from self._create_instances(
+                    identifier, properties, exclude=view_iteration.self_required_properties
+                )
             if view_iteration.self_required_properties:
                 # We need to run the view again to add the self properties.
                 # This is only relevant if the view has a require constraint on the container.
                 # If not, we can create an empty node on the fly.
-                yield from self._create_instances(identifier, properties, include=view_iteration.self_required_properties)
+                yield from self._create_instances(
+                    identifier, properties, include=view_iteration.self_required_properties
+                )
 
             yield _END_OF_CLASS
 
@@ -132,8 +135,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         containers = self._client.data_modeling.containers.retrieve(list(views.referenced_containers()))
         views_by_id = {view.as_id(): view for view in views}
 
-        ordered_view_ids, properties_dependent_on_self_by_view_id = self._client.schema.order_views_by_container_dependencies(
-            views_by_id, containers
+        ordered_view_ids, properties_dependent_on_self_by_view_id = (
+            self._client.schema.order_views_by_container_dependencies(views_by_id, containers)
         )
 
         view_iterations: list[_ViewIterator] = []
@@ -320,7 +323,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return pydantic_cls, edge_by_type, edge_by_prop_id, issues
 
     def _create_instances(
-        self, identifier: str, properties: dict[str | InstanceType, list[str]], exclude: set[str] | None = None, include: set[str] | None = None
+        self,
+        identifier: str,
+        properties: dict[str | InstanceType, list[str]],
+        exclude: set[str] | None = None,
+        include: set[str] | None = None,
     ) -> Iterable[dm.InstanceApply | NeatIssue]:
         raise NotImplementedError
 

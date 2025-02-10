@@ -1,5 +1,5 @@
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING
 
@@ -115,7 +115,7 @@ class SchemaAPI:
 
     @staticmethod
     def order_views_by_container_dependencies(
-        views_by_id: dict[dm.ViewId, dm.View | dm.ViewApply], containers: Sequence[dm.Container | dm.ContainerApply]
+        views_by_id: Mapping[dm.ViewId, dm.View | dm.ViewApply], containers: Sequence[dm.Container | dm.ContainerApply]
     ) -> tuple[list[dm.ViewId], dict[dm.ViewId, set[str]]]:
         """Sorts the views by container constraints."""
         container_by_id = {container.as_id(): container for container in containers}
@@ -128,7 +128,7 @@ class SchemaAPI:
         view_id_by_dependencies: dict[dm.ViewId, set[dm.ViewId]] = {}
         for view_id, view in views_by_id.items():
             dependencies = set()
-            for prop_id, prop in view.properties.items():
+            for prop_id, prop in (view.properties or {}).items():
                 if not isinstance(prop, dm.MappedProperty | dm.MappedPropertyApply):
                     continue
                 container = container_by_id[prop.container]
