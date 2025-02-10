@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
 from typing import Any, Literal, TypeVar, cast, overload
 
+import networkx as nx
 import pandas as pd
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
@@ -14,9 +15,15 @@ from rdflib import URIRef
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._rdfpath import Hop, RDFPath, SelfReferenceProperty, SingleProperty
+from cognite.neat._rules.models._rdfpath import (
+    Hop,
+    RDFPath,
+    SelfReferenceProperty,
+    SingleProperty,
+)
 from cognite.neat._rules.models.dms import DMSProperty
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
+from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
 from cognite.neat._utils.collection_ import most_occurring_element
 from cognite.neat._utils.rdf_ import get_inheritance_path
@@ -626,3 +633,98 @@ class RulesAnalysis:
                 query_configs.append(view_query_config)
 
         return query_configs
+
+    def _dms_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.DiGraph:
+        """Generate a DiGraph from the DMS rules."""
+        di_graph = nx.DiGraph()
+
+        rules = self.dms
+
+        # Views with properties or used as ValueType
+        # If a view is not used in properties or as ValueType, it is not added to the graph
+        # as we typically do not have the properties for it.
+        used_views = {prop_.view for prop_ in rules.properties} | {
+            prop_.value_type for prop_ in rules.properties if isinstance(prop_.value_type, ViewEntity)
+        }
+
+        # Add nodes and edges from Views sheet
+        for view in rules.views:
+            if view.view not in used_views:
+                continue
+            # if possible use human-readable label coming from the view name
+            if not di_graph.has_node(view.view.suffix):
+                di_graph.add_node(view.view.suffix, label=view.view.suffix)
+
+                if format == "implements" and view.implements:
+                    for implement in view.implements:
+                        if not di_graph.has_node(implement.suffix):
+                            di_graph.add_node(implement.suffix, label=implement.suffix)
+
+                        di_graph.add_edge(
+                            view.view.suffix,
+                            implement.suffix,
+                            label="implements",
+                            dashes=True,
+                        )
+
+        if format == "data-model":
+            # Add nodes and edges from Properties sheet
+            for prop_ in rules.properties:
+                if prop_.connection and isinstance(prop_.value_type, ViewEntity):
+                    if not di_graph.has_node(prop_.view.suffix):
+                        di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
+
+                    if not di_graph.has_node(prop_.value_type.suffix):
+                        di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
+
+                    di_graph.add_edge(
+                        prop_.view.suffix,
+                        prop_.value_type.suffix,
+                        label=prop_.name or prop_.view_property,
+                    )
+
+        return di_graph
+
+    def _info_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.DiGraph:
+        """Generate DiGraph representing information data model."""
+
+        rules = self.information
+        di_graph = nx.DiGraph()
+
+        # Add nodes and edges from Views sheet
+        for class_ in rules.classes:
+            # if possible use human readable label coming from the view name
+            if not di_graph.has_node(class_.class_.suffix):
+                di_graph.add_node(
+                    class_.class_.suffix,
+                    label=class_.name or class_.class_.suffix,
+                )
+
+                if format == "implements" and class_.implements:
+                    for parent in class_.implements:
+                        if not di_graph.has_node(parent.suffix):
+                            di_graph.add_node(parent.suffix, label=parent.suffix)
+                        di_graph.add_edge(
+                            class_.class_.suffix,
+                            parent.suffix,
+                            label="implements",
+                            dashes=True,
+                        )
+
+        if format == "data-model":
+            # Add nodes and edges from Properties sheet
+            for prop_ in rules.properties:
+                if isinstance(prop_.value_type, ClassEntity) and not isinstance(prop_.value_type, UnknownEntity):
+                    if not di_graph.has_node(prop_.class_.suffix):
+                        di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
+
+                    if not di_graph.has_node(prop_.value_type.suffix):
+                        di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
+
+                    di_graph.add_edge(
+                        prop_.class_.suffix,
+                        prop_.value_type.suffix,
+                        label=prop_.name or prop_.property_,
+                    )
+
+        return di_graph

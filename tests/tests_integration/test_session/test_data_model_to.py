@@ -93,6 +93,7 @@ class TestRulesStoreProvenanceSyncing:
         neat = NeatSession()
         neat.read.examples.nordic44()
         neat.infer()
+        neat.show.data_model()
         neat.to.excel(tmp_path / "nordic44.xlsx")
         neat.fix.data_model.cdf_compliant_external_ids()
 
