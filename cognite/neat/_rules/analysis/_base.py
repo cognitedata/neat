@@ -2,7 +2,7 @@ import itertools
 import warnings
 from collections import defaultdict
 from collections.abc import Hashable, Set
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
 from typing import Any, Literal, TypeVar, cast, overload
 
@@ -59,6 +59,22 @@ class LinkageSet(set, Set[Linkage]):
                 }
                 for link in self
             ]
+        )
+
+
+@dataclass
+class ViewQuery:
+    view_id: dm.ViewId
+    rdf_type: URIRef
+    property_renaming_config: dict[URIRef, str] = field(default_factory=dict)
+
+
+class ViewQueryConfigs(list, ViewQuery):
+    def get_view_query_config(self, key: dm.ViewId) -> ViewQuery | None:
+        """Access attributes using a dictionary-like approach."""
+        return next(
+            (config for config in self if config.view_id == key),
+            None,
         )
 
 
@@ -216,7 +232,7 @@ class RulesAnalysis:
         }
 
     @property
-    def class_by_neat_id(self) -> dict[URIRef, InformationClass]:
+    def _class_by_neat_id(self) -> dict[URIRef, InformationClass]:
         """Get a dictionary of class neat IDs to
         class entities."""
 
@@ -468,12 +484,12 @@ class RulesAnalysis:
         return property_renaming_configuration
 
     @overload
-    def properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
 
     @overload
-    def properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
 
-    def properties_by_neat_id(
+    def _properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
     ) -> dict[URIRef, InformationProperty] | dict[URIRef, DMSProperty]:
         if format == "info":
@@ -489,7 +505,7 @@ class RulesAnalysis:
 
     def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
         if (
-            (property_ := self.properties_by_neat_id().get(property_neat_id))
+            (property_ := self._properties_by_neat_id().get(property_neat_id))
             and property_.instance_source
             and isinstance(
                 property_.instance_source.traversal,
@@ -563,22 +579,21 @@ class RulesAnalysis:
         return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
 
     @property
-    def query_config_by_view_id(
+    def query_config(
         self,
-    ) -> dict[dm.ViewId, dict[str, None | URIRef | dict[URIRef, str]]]:
+    ) -> "ViewQueryConfigs":
         # Trigger error if any of these are missing
         _ = self.information
         _ = self.dms
 
         # caching results for faster access
-        classes_by_neat_id = self.class_by_neat_id
+        classes_by_neat_id = self._class_by_neat_id
         properties_by_class = self.properties_by_class(include_ancestors=True)
         logical_uri_by_view = self.logical_uri_by_view
         logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(include_ancestors=True)
-        information_properties_by_neat_id = self.properties_by_neat_id()
+        information_properties_by_neat_id = self._properties_by_neat_id()
 
-        config: dict[dm.ViewId, dict[str, None | URIRef | dict[URIRef, str]]] = {}
-
+        query_configs: ViewQueryConfigs = ViewQueryConfigs()
         for view in self.dms.views:
             # this entire block of sequential if statements checks:
             # 1. connection of dms to info rules
@@ -589,24 +604,25 @@ class RulesAnalysis:
                 and (class_ := classes_by_neat_id.get(neat_id))
                 and (uri := self.class_uri(class_.class_))
             ):
-                rdf_type = uri
-
-                config[view.view.as_id()] = {
-                    "rdf_type": rdf_type,
+                view_query_config = ViewQuery(
+                    view_id=view.view.as_id(),
+                    rdf_type=uri,
                     # start off with renaming of properties on the information level
                     # this is to encounter for special cases of e.g. space, startNode and endNode
-                    "property_renaming_config": {
-                        uri: prop_.property_ for prop_ in info_properties if (uri := self.property_uri(prop_))
-                    }
-                    if (info_properties := properties_by_class.get(class_.class_))
-                    else {},
-                }
+                    property_renaming_config=(
+                        {uri: prop_.property_ for prop_ in info_properties if (uri := self.property_uri(prop_))}
+                        if (info_properties := properties_by_class.get(class_.class_))
+                        else {}
+                    ),
+                )
 
                 if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
                     for target_name, neat_id in logical_uri_by_property.items():
                         if (property_ := information_properties_by_neat_id.get(neat_id)) and (
                             uri := self.property_uri(property_)
                         ):
-                            cast(dict, config[view.view.as_id()]["property_renaming_config"])[uri] = target_name
+                            view_query_config.property_renaming_config[uri] = target_name
 
-        return config
+                query_configs.append(view_query_config)
+
+        return query_configs

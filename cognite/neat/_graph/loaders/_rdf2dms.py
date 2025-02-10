@@ -17,7 +17,7 @@ from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
-from rdflib import RDF, URIRef
+from rdflib import RDF
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
@@ -30,6 +30,7 @@ from cognite.neat._issues.errors import (
 )
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis import RulesAnalysis
+from cognite.neat._rules.analysis._base import ViewQuery, ViewQueryConfigs
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.information._rules import InformationRules
@@ -104,9 +105,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             # There should already be an error in this case.
             return
 
-        query_config_by_view_id = RulesAnalysis(self.info_rules, self.dms_rules).query_config_by_view_id
+        query_config = RulesAnalysis(self.info_rules, self.dms_rules).query_config
 
-        view_and_count_by_id = self._select_views_with_instances(query_config_by_view_id)
+        view_and_count_by_id = self._select_views_with_instances(query_config)
 
         # TODO: here we need to do check if the views have all the properties
 
@@ -146,14 +147,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     track_id = repr(view_id)
                 tracker.start(track_id)
 
-                class_uri = cast(URIRef, query_config_by_view_id[view_id]["rdf_type"])
-                property_renaming_config = cast(
-                    dict[URIRef, str] | None,
-                    query_config_by_view_id[view_id]["property_renaming_config"],
-                )
+                view_query_config = cast(ViewQuery, query_config.get_view_query_config(view_id))
+
                 reader = self.graph_store.read(
-                    class_uri=class_uri,
-                    property_renaming_config=property_renaming_config,
+                    class_uri=view_query_config.rdf_type,
+                    property_renaming_config=view_query_config.property_renaming_config,
                 )
 
                 instance_iterable = iterate_progress_bar_if_above_config_threshold(
@@ -238,15 +236,18 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _select_views_with_instances(
         self,
-        query_config_by_view_id: dict[dm.ViewId, dict[str, None | URIRef | dict[URIRef, str]]],
+        dm_query_config: ViewQueryConfigs,
     ) -> dict[dm.ViewId, tuple[dm.View, int]]:
         """Selects the views with data."""
         view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
 
-        for view_id, query_config in query_config_by_view_id.items():
-            count = self.graph_store.queries.count_of_type(cast(URIRef, query_config["rdf_type"]))
+        for view_query_config in dm_query_config:
+            count = self.graph_store.queries.count_of_type(view_query_config.rdf_type)
             if count > 0:
-                view_and_count_by_id[view_id] = self.views_by_view_id[view_id], count
+                view_and_count_by_id[view_query_config.view_id] = (
+                    self.views_by_view_id[view_query_config.view_id],
+                    count,
+                )
 
         return view_and_count_by_id
 
