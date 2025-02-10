@@ -566,6 +566,7 @@ class RulesAnalysis:
     def query_config_by_view_id(
         self,
     ) -> dict[dm.ViewId, dict[str, None | URIRef | dict[URIRef, str]]]:
+        # Trigger error if any of these are missing
         _ = self.information
         _ = self.dms
 
