@@ -119,24 +119,32 @@ class SchemaAPI:
     ) -> tuple[list[dm.ViewId], dict[dm.ViewId, set[str]]]:
         """Sorts the views by container constraints."""
         container_by_id = {container.as_id(): container for container in containers}
+        views_by_container = defaultdict(set)
+        for view_id, view in views_by_id.items():
+            for container_id in view.referenced_containers():
+                views_by_container[container_id].add(view_id)
+
         properties_dependent_on_self: dict[dm.ViewId, set[str]] = defaultdict(set)
         view_id_by_dependencies: dict[dm.ViewId, set[dm.ViewId]] = {}
         for view_id, view in views_by_id.items():
             dependencies = set()
             for prop_id, prop in view.properties.items():
-                if isinstance(prop, dm.MappedProperty) and isinstance(prop.type, dm.DirectRelation):
-                    container = container_by_id[prop.container]
-                    for constraint in container.constraints.values():
-                        if isinstance(constraint, dm.RequiresConstraint):
-                            constraint.require
-
-                    has_require_constraint = any(
-                        isinstance(constraint, dm.RequiresConstraint) for constraint in container.constraints.values()
-                    )
-                    if has_require_constraint and prop.source == view_id:
-                        properties_dependent_on_self[view_id].add(prop_id)
-                    elif has_require_constraint:
-                        dependencies.add(prop.source)
+                if not isinstance(prop, dm.MappedProperty | dm.MappedPropertyApply):
+                    continue
+                container = container_by_id[prop.container]
+                container_prop = container.properties[prop.container_property_identifier]
+                if not isinstance(container_prop.type, dm.DirectRelation):
+                    continue
+                if prop.source == view_id:
+                    properties_dependent_on_self[view_id].add(prop_id)
+                for constraint in container.constraints.values():
+                    if isinstance(constraint, dm.RequiresConstraint):
+                        view_dependencies = views_by_container.get(constraint.require, set())
+                        if view_id in view_dependencies:
+                            # Dependency on self
+                            properties_dependent_on_self[view_id].add(prop_id)
+                            view_dependencies.remove(view_id)
+                        dependencies.update(view_dependencies)
             view_id_by_dependencies[view_id] = dependencies
 
         ordered_view_ids = list(TopologicalSorter(view_id_by_dependencies).static_order())

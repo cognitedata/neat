@@ -132,7 +132,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         containers = self._client.data_modeling.containers.retrieve(list(views.referenced_containers()))
         views_by_id = {view.as_id(): view for view in views}
 
-        ordered_view_ids, properties_dependent_on_self_by_view_id = self._order_views_by_container_dependencies(
+        ordered_view_ids, properties_dependent_on_self_by_view_id = self._client.schema.order_views_by_container_dependencies(
             views_by_id, containers
         )
 
@@ -183,7 +183,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if count > 0:
                 view_iterations[view_id] = _ViewIterator(view_id, count, set(), query)
         return view_iterations
-
 
     def _create_validation_classes(
         self, view: dm.View
