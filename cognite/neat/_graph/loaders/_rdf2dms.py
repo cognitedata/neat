@@ -105,9 +105,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             # There should already be an error in this case.
             return
 
-        query_config = RulesAnalysis(self.info_rules, self.dms_rules).query_config
+        view_query_configs = RulesAnalysis(self.info_rules, self.dms_rules).view_query_configs
 
-        view_and_count_by_id = self._select_views_with_instances(query_config)
+        view_and_count_by_id = self._select_views_with_instances(view_query_configs)
 
         # TODO: here we need to do check if the views have all the properties
 
@@ -147,7 +147,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     track_id = repr(view_id)
                 tracker.start(track_id)
 
-                view_query_config = cast(ViewQuery, query_config.get_view_query_config(view_id))
+                view_query_config = cast(ViewQuery, view_query_configs.get_view_query_config(view_id))
 
                 reader = self.graph_store.read(
                     class_uri=view_query_config.rdf_type,
@@ -236,12 +236,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _select_views_with_instances(
         self,
-        dm_query_config: ViewQueryConfigs,
+        view_query_configs: ViewQueryConfigs,
     ) -> dict[dm.ViewId, tuple[dm.View, int]]:
         """Selects the views with data."""
         view_and_count_by_id: dict[dm.ViewId, tuple[dm.View, int]] = {}
 
-        for view_query_config in dm_query_config:
+        for view_query_config in view_query_configs:
             count = self.graph_store.queries.count_of_type(view_query_config.rdf_type)
             if count > 0:
                 view_and_count_by_id[view_query_config.view_id] = (

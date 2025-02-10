@@ -579,7 +579,7 @@ class RulesAnalysis:
         return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
 
     @property
-    def query_config(
+    def view_query_configs(
         self,
     ) -> "ViewQueryConfigs":
         # Trigger error if any of these are missing
