@@ -44,7 +44,7 @@ class TestRead:
     def test_store_read_neat_session(self, tmp_path: Path) -> None:
         neat = NeatSession()
 
-        _ = neat.read.rdf.examples.nordic44()
+        _ = neat.read.examples.nordic44()
 
         session_file = tmp_path / "session.zip"
         try:

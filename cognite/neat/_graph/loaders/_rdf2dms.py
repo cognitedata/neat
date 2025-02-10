@@ -13,27 +13,25 @@ import yaml
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
-from cognite.client.data_classes.data_modeling import ViewId
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
-from rdflib import RDF, URIRef
+from rdflib import RDF
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
 from cognite.neat._graph._tracking import Tracker
-from cognite.neat._issues import IssueList, NeatIssue, NeatIssueList
+from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.errors import (
     ResourceConversionError,
     ResourceDuplicatedError,
-    ResourceRetrievalError,
 )
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
-from cognite.neat._rules.analysis._dms import DMSAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
+from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
@@ -84,22 +82,36 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def __init__(
         self,
+        dms_rules: DMSRules,
+        info_rules: InformationRules,
         graph_store: NeatGraphStore,
-        data_model: dm.DataModel[dm.View] | None,
         instance_space: str,
-        class_neat_id_by_view_id: dict[ViewId, URIRef] | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
-        rules: DMSRules | None = None,
         client: NeatClient | None = None,
         unquote_external_ids: bool = False,
     ):
         super().__init__(graph_store)
-        self.data_model = data_model
-        self.instance_space = instance_space
-        self.class_neat_id_by_view_id = class_neat_id_by_view_id or {}
+        self.dms_rules = dms_rules
+        self.info_rules = info_rules
         self._issues = IssueList(create_issues or [])
-        self.rules = rules
+        self.data_model = None
+        try:
+            self.data_model = dms_rules.as_schema().as_read_model()
+        except Exception as e:
+            self._issues.append(
+                ResourceConversionError(
+                    identifier=dms_rules.metadata.as_identifier(),
+                    resource_type="DMS Rules",
+                    target_format="read DMS model",
+                    reason=str(e),
+                )
+            )
+
+        self.views_by_view_id = {view.as_id(): view for view in self.data_model.views} if self.data_model else {}
+        self.instance_space = instance_space
         self._client = client
+        self._unquote_external_ids = unquote_external_ids
+
         self._unquote_external_ids = unquote_external_ids
 
     @classmethod
@@ -324,7 +336,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
 
             if count > 0:
-                view_and_count_by_id[view_id] = view, count
+                view_and_count_by_id[view_query_config.view_id] = (
+                    self.views_by_view_id[view_query_config.view_id],
+                    count,
+                )
 
         return view_and_count_by_id
 
@@ -374,7 +389,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         type[BaseModel],
         dict[str, tuple[str, dm.EdgeConnection]],
         dict[str, tuple[str, dm.EdgeConnection]],
-        NeatIssueList,
+        IssueList,
     ]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}

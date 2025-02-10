@@ -16,9 +16,20 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Added
+- [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
+- The `neat.to.excel(...)` now supports passing a data model directly in the `include_reference` parameter.
+
 ### Fixed
+- In Model was not automatically set to True importing from spreadsheet missing value in this column
 - Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
-- The `neat.infer()` maintains acronyms when renaming invalid properties/classes. 
+- The `neat.infer()` maintains acronyms when renaming invalid properties/classes.
+
+### Changed
+- Moved examples under neat.read.examples[nordic44, pump_example]
+
+### Improved
+- The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
@@ -33,7 +44,7 @@ Changes are grouped as follows:
 - `neat.infer()` now automatically makes the inferred classes and properties comply with the CDF naming conventions.
 
 ### Fixed
-- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
+- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model
   in the Excel file.
 
 ## [0.109.2] - 31-01-**2025**
@@ -471,7 +482,7 @@ Changes are grouped as follows:
 - Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 - Added RDF based readers for `NeatSession`
-- `NeatSession.read.rdf.examples.nordic44`
+- `NeatSession.read.examples.nordic44`
 - `NeatSession.show.data_model` show data model in UI
 
 ### Removed

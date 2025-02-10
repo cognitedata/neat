@@ -6,6 +6,8 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._rules.catalog import classic_model
+from cognite.neat._rules.models.entities._single_value import ViewEntity
+from tests.data import DATA_DIR
 
 
 class TestDataModelPrepare:
@@ -13,7 +15,7 @@ class TestDataModelPrepare:
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
         neat = NeatSession(cognite_client)
-        neat.read.excel.examples.pump_example()
+        neat.read.examples.pump_example()
 
         # Hack to ensure deterministic output
         rules = neat._state.rule_store.last_verified_dms_rules
@@ -53,3 +55,35 @@ class TestDataModelPrepare:
                 "rules": rules_dict,
             }
         )
+
+    def test_standardize_space_and_version(
+        self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
+        neat = NeatSession(cognite_client)
+
+        neat.read.excel(DATA_DIR / "mixed-up-version.xlsx")
+
+        neat.prepare.data_model.standardize_space_and_version()
+
+        rules_str = neat.to.yaml(format="neat")
+
+        rules_dict = yaml.safe_load(rules_str)
+        data_regression.check(
+            {
+                "rules": rules_dict,
+            }
+        )
+
+        rules = neat._state.rule_store.last_verified_dms_rules
+
+        for view in rules.views:
+            assert view.view.space == rules.metadata.space
+            assert view.view.version == rules.metadata.version
+
+        for property_ in rules.properties:
+            assert property_.view.space == rules.metadata.space
+            assert property_.view.version == rules.metadata.version
+
+            if isinstance(property_.value_type, ViewEntity):
+                assert property_.value_type.space == rules.metadata.space
+                assert property_.value_type.version == rules.metadata.version

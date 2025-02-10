@@ -2,14 +2,15 @@ from pathlib import Path
 
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
-from pydantic.version import VERSION
 
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import (
     CDFMissingClientError,
     FileNotFoundNeatError,
+    MetadataValueError,
+    NeatValueError,
     PropertyDefinitionDuplicatedError,
-    RowError,
+    PropertyValueError,
 )
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
@@ -18,7 +19,7 @@ from cognite.neat._issues.warnings import (
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import VerifyAnyRules
-from tests.config import DOC_RULES
+from tests.config import DATA_FOLDER, DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
 
@@ -28,21 +29,29 @@ def invalid_rules_filepaths():
         IssueList([FileNotFoundNeatError(DOC_RULES / "not-existing.xlsx")]),
         id="Not existing file",
     )
-    major, minor, *_ = VERSION.split(".")
+
+    yield pytest.param(
+        EXCEL_IMPORTER_DATA / "invalid_metadata.xlsx",
+        IssueList(
+            [
+                MetadataValueError(
+                    field_name="space",
+                    error=NeatValueError("value is missing."),
+                ),
+            ]
+        ),
+        id="Missing space in Metadata sheet.",
+    )
 
     yield pytest.param(
         EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
         IssueList(
             [
-                RowError(
-                    sheet_name="Properties",
-                    column="Is List",
+                PropertyValueError(
                     row=5,
-                    type="bool_parsing",
-                    msg="Input should be a valid boolean, unable to interpret input",
-                    input="Apple",
-                    url=f"https://errors.pydantic.dev/{major}.{minor}/v/bool_parsing",
-                )
+                    column="Is List",
+                    error=NeatValueError("Expected a bool type, got 'Apple'"),
+                ),
             ]
         ),
         id="Invalid property specification",
@@ -158,3 +167,10 @@ class TestExcelImporter:
 
         assert len(issues) == len(expected_issues)
         assert issues == expected_issues
+
+    def test_import_dms_rules_missing_in_model(self):
+        importer = ExcelImporter(DATA_FOLDER / "missing-in-model-value.xlsx")
+        rules = VerifyAnyRules(validate=False).transform(importer.to_rules())
+
+        for views in rules.views:
+            assert views.in_model

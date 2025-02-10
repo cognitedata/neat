@@ -1,7 +1,7 @@
 from cognite.neat._issues import catch_issues
 from cognite.neat._rules import importers
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.transformers._verification import VerifyAnyRules
 
@@ -9,7 +9,7 @@ from cognite.neat._rules.transformers._verification import VerifyAnyRules
 def test_ill_formed_owl_importer():
     input = importers.OWLImporter.from_file(filepath="https://data.nobelprize.org/terms.rdf").to_rules()
     with catch_issues() as issues:
-        rules = VerifyAnyRules().transform(input)
+        _ = VerifyAnyRules().transform(input)
 
     assert len(issues) == 6
     assert issues.has_errors
@@ -32,8 +32,8 @@ def test_ill_formed_owl_importer():
 
     # this is rdf:PlainLiteral edge case
     assert (
-        InformationAnalysis(rules)
-        .class_property_pairs()[ClassEntity.load("neat_space:LaureateAward")]["motivation"]
+        RulesAnalysis(rules)
+        .properties_by_id_by_class()[ClassEntity.load("neat_space:LaureateAward")]["motivation"]
         .type_
         == EntityTypes.data_property
     )

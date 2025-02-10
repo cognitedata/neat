@@ -19,7 +19,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat._client import NeatClient
-from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
+from cognite.neat._issues import IssueList, MultiValueError, NeatIssue, catch_issues
 from cognite.neat._issues.errors import (
     FileTypeUnexpectedError,
     NeatValueError,
@@ -35,7 +35,7 @@ from cognite.neat._issues.warnings import (
     ResourceUnknownWarning,
 )
 from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.importers._base import BaseImporter, _handle_issues
+from cognite.neat._rules.importers._base import BaseImporter
 from cognite.neat._rules.models import (
     DMSInputRules,
     DMSSchema,
@@ -131,11 +131,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     @classmethod
     def from_data_model(cls, client: NeatClient, model: dm.DataModel[dm.View]) -> "DMSImporter":
-        issue_list = IssueList()
-        with _handle_issues(issue_list) as result:
+        with catch_issues() as issue_list:
             schema = client.schema.retrieve_data_model(model)
 
-        if result.result == "failure" or issue_list.has_errors:
+        if issue_list.has_errors:
             return cls(DMSSchema(), issue_list)
 
         metadata = cls._create_metadata_from_model(model)
@@ -187,10 +186,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     @classmethod
     def from_directory(cls, directory: str | Path, client: NeatClient | None = None) -> "DMSImporter":
-        issue_list = IssueList()
-        with _handle_issues(issue_list) as _:
+        with catch_issues() as issue_list:
             schema = DMSSchema.from_directory(directory)
-        # If there were errors during the import, the to_rules
+        # If there were errors during the import, the to_rules will raise them.
         return cls(
             schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, issue_list, client)
         )
@@ -202,8 +200,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 DMSSchema(),
                 [FileTypeUnexpectedError(Path(zip_file), frozenset([".zip"]))],
             )
-        issue_list = IssueList()
-        with _handle_issues(issue_list) as _:
+        with catch_issues() as issue_list:
             schema = DMSSchema.from_zip(zip_file)
         return cls(
             schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, issue_list, client)

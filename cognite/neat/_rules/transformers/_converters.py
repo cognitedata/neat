@@ -33,7 +33,7 @@ from cognite.neat._rules._shared import (
     ReadRules,
     VerifiedRules,
 )
-from cognite.neat._rules.analysis import DMSAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import (
     DMSInputRules,
@@ -170,6 +170,65 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
         if len(property_) > 252:
             property_ = property_[:252]
         return property_
+
+
+class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]):  # type: ignore[misc]
+    """This transformer standardizes the space and version of the DMSRules.
+
+    typically used to ensure all the views are moved to the same version as the data model.
+
+    """
+
+    @property
+    def description(self) -> str:
+        return "Ensures uniform version and space of the views belonging to the data model."
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        copy = rules.model_copy(deep=True)
+
+        space = copy.metadata.space
+        version = copy.metadata.version
+
+        copy.views = self._standardize_views(copy.views, space, version)
+        copy.properties = self._standardize_properties(copy.properties, space, version)
+        return copy
+
+    def _standardize_views(self, views: SheetList[DMSView], space: str, version: str) -> SheetList[DMSView]:
+        for view in views:
+            if view.view.space not in COGNITE_SPACES:
+                view.view.version = version
+                view.view.prefix = space
+
+            if view.implements:
+                for i, parent in enumerate(view.implements):
+                    if parent.space not in COGNITE_SPACES:
+                        view.implements[i].version = version
+                        view.implements[i].prefix = space
+        return views
+
+    def _standardize_properties(
+        self, properties: SheetList[DMSProperty], space: str, version: str
+    ) -> SheetList[DMSProperty]:
+        for property_ in properties:
+            if property_.view.space not in COGNITE_SPACES:
+                property_.view.version = version
+                property_.view.prefix = space
+
+            if isinstance(property_.value_type, ViewEntity) and property_.value_type.space not in COGNITE_SPACES:
+                property_.value_type.version = version
+                property_.value_type.prefix = space
+
+            # for edge connection
+            if (
+                property_.connection
+                and isinstance(property_.connection, EdgeEntity)
+                and property_.connection.properties
+            ):
+                if property_.connection.properties.space not in COGNITE_SPACES:
+                    property_.connection.properties.version = version
+                    property_.connection.properties.prefix = space
+
+        return properties
 
 
 class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, InformationRules]):  # type: ignore[misc]
@@ -757,13 +816,16 @@ class ToSolutionModel(ToExtensionModel):
 
     @staticmethod
     def _expand_properties(rules: DMSRules) -> DMSRules:
-        probe = DMSAnalysis(rules)
-        ancestor_properties_by_view = probe.classes_with_properties(
-            consider_inheritance=True, allow_different_namespace=True
+        probe = RulesAnalysis(dms=rules)
+        ancestor_properties_by_view = probe.properties_by_view(
+            include_ancestors=True,
+            include_different_space=True,
         )
         property_ids_by_view = {
             view: {prop.view_property for prop in properties}
-            for view, properties in probe.classes_with_properties(consider_inheritance=False).items()
+            for view, properties in probe.properties_by_view(
+                include_ancestors=False, include_different_space=True
+            ).items()
         }
         for view, property_ids in property_ids_by_view.items():
             ancestor_properties = ancestor_properties_by_view.get(view, [])
@@ -935,7 +997,7 @@ class ToDataProductModel(ToSolutionModel):
         self.include = include
 
     def transform(self, rules: DMSRules) -> DMSRules:
-        # Overwrite this to avoid the warning.
+        # Overwrite transform to avoid the warning.
         return self._to_solution(rules)
 
 
@@ -1009,7 +1071,7 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
             }
         new_model = rules.model_copy(deep=True)
 
-        properties_by_view = DMSAnalysis(new_model).classes_with_properties(consider_inheritance=True)
+        properties_by_view = RulesAnalysis(dms=new_model).properties_by_view(include_ancestors=True)
 
         new_model.views = SheetList[DMSView]([view for view in new_model.views if view.view not in exclude_views])
         new_properties = SheetList[DMSProperty]()

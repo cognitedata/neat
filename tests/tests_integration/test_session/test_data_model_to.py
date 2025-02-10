@@ -91,7 +91,7 @@ class TestDataModelToCDF:
 class TestRulesStoreProvenanceSyncing:
     def test_detached_provenance(self, tmp_path: Path) -> None:
         neat = NeatSession()
-        neat.read.rdf.examples.nordic44()
+        neat.read.examples.nordic44()
         neat.infer()
         neat.to.excel(tmp_path / "nordic44.xlsx")
         neat.fix.data_model.cdf_compliant_external_ids()
@@ -110,7 +110,7 @@ class TestRulesStoreProvenanceSyncing:
 
     def test_unknown_source(self, neat_client: NeatClient) -> None:
         neat = NeatSession(neat_client)
-        neat.read.excel.examples.pump_example()
+        neat.read.examples.pump_example()
 
         with pytest.raises(NeatValueError) as e:
             neat._state.rule_import(
@@ -122,11 +122,11 @@ class TestRulesStoreProvenanceSyncing:
 
     def test_source_not_in_store(self, tmp_path: Path, neat_client: NeatClient) -> None:
         neat = NeatSession(neat_client)
-        neat.read.excel.examples.pump_example()
+        neat.read.examples.pump_example()
         neat.to.excel(tmp_path / "pump.xlsx")
 
         neat2 = NeatSession(neat_client)
-        neat2.read.rdf.examples.nordic44()
+        neat2.read.examples.nordic44()
         neat2.infer()
 
         with pytest.raises(NeatValueError) as e:
@@ -139,7 +139,7 @@ class TestRulesStoreProvenanceSyncing:
 
     def test_external_mod_allowed_provenance(self, tmp_path: Path) -> None:
         neat = NeatSession()
-        neat.read.rdf.examples.nordic44()
+        neat.read.examples.nordic44()
         neat.infer()
         neat.fix.data_model.cdf_compliant_external_ids()
         neat.to.excel(tmp_path / "nordic44.xlsx")

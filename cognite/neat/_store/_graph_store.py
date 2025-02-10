@@ -18,9 +18,6 @@ from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import OxigraphStorageLockedError
-from cognite.neat._rules.analysis import InformationAnalysis
-from cognite.neat._rules.models import InformationRules
-from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
 from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
@@ -55,9 +52,6 @@ class NeatGraphStore:
         dataset: Dataset,
         default_named_graph: URIRef | None = None,
     ):
-        self.rules: dict[URIRef, InformationRules] = {}
-        self.base_namespace: dict[URIRef, Namespace] = {}
-
         _start = datetime.now(timezone.utc)
         self.dataset = dataset
         self.provenance = Provenance[Entity](
@@ -72,8 +66,7 @@ class NeatGraphStore:
         )
 
         self.default_named_graph = default_named_graph or DATASET_DEFAULT_GRAPH_ID
-
-        self.queries = Queries(self.dataset, self.rules, self.default_named_graph)
+        self.queries = Queries(self.dataset, self.default_named_graph)
 
     def graph(self, named_graph: URIRef | None = None) -> Graph:
         """Get named graph from the dataset to query over"""
@@ -115,36 +108,6 @@ class NeatGraphStore:
             return None
         else:
             return self.dataset.serialize(format="ox-trig" if self.type_ == "OxigraphStore" else "trig")
-
-    def add_rules(self, rules: InformationRules, named_graph: URIRef | None = None) -> None:
-        """This method is used to add rules to a named graph stored in the graph store.
-
-        Args:
-            rules: InformationRules object containing rules to be added to the named graph
-            named_graph: URIRef of the named graph to store the rules in, by default None
-                        rules will be added to the default graph
-
-        """
-
-        named_graph = named_graph or self.default_named_graph
-
-        if named_graph in self.named_graphs:
-            # attaching appropriate namespace to the rules
-            # as well base_namespace
-            self.rules[named_graph] = rules
-            self.base_namespace[named_graph] = rules.metadata.namespace
-            self.queries = Queries(self.dataset, self.rules)
-            self.provenance.append(
-                Change.record(
-                    activity=f"{type(self)}.rules",
-                    start=datetime.now(timezone.utc),
-                    end=datetime.now(timezone.utc),
-                    description=f"Added {type(self.rules).__name__} to {named_graph} named graph",
-                )
-            )
-
-            if self.rules[named_graph].prefixes:
-                self._upsert_prefixes(self.rules[named_graph].prefixes, named_graph)
 
     def _upsert_prefixes(self, prefixes: dict[str, Namespace], named_graph: URIRef) -> None:
         """Adds prefixes to the graph store."""
@@ -271,225 +234,23 @@ class NeatGraphStore:
             last_change.target_entity.issues.extend(issue_list)
         return issue_list
 
-    def _read_via_rules_linkage(
+    def read(
         self,
-        class_neat_id: URIRef,
-        property_link_pairs: dict[str, URIRef] | None,
+        class_uri: URIRef,
         named_graph: URIRef | None = None,
-    ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
-        named_graph = named_graph or self.default_named_graph
-
-        if named_graph not in self.named_graphs:
-            warnings.warn(
-                f"Named graph {named_graph} not found in graph store, cannot read",
-                stacklevel=2,
-            )
-            return
-
-        if not self.rules or named_graph not in self.rules:
-            warnings.warn(
-                f"Rules for named graph {named_graph} not found in graph store!",
-                stacklevel=2,
-            )
-            return
-
-        if self.multi_type_instances:
-            warnings.warn(
-                "Multi typed instances detected, issues with loading can occur!",
-                stacklevel=2,
-            )
-
-        analysis = InformationAnalysis(self.rules[named_graph])
-
-        if cls := analysis.classes_by_neat_id.get(class_neat_id):
-            if property_link_pairs:
-                property_renaming_config = {
-                    prop_uri: prop_name
-                    for prop_name, prop_neat_id in property_link_pairs.items()
-                    if (prop_uri := analysis.neat_id_to_instance_source_property_uri(prop_neat_id))
-                }
-                if information_properties := analysis.classes_with_properties(consider_inheritance=True).get(
-                    cls.class_
-                ):
-                    for prop in information_properties:
-                        if prop.neatId is None:
-                            continue
-                        # Include renaming done in the Information rules that are not present in the
-                        # property_link_pairs. The use case for this renaming to startNode and endNode
-                        # properties that are not part of DMSRules but will typically be present
-                        # in the Information rules.
-                        if (
-                            uri := analysis.neat_id_to_instance_source_property_uri(prop.neatId)
-                        ) and uri not in property_renaming_config:
-                            property_renaming_config[uri] = prop.property_
-
-                yield from self._read_via_class_entity(cls.class_, property_renaming_config)
-                return
-            else:
-                warnings.warn("Rules not linked", stacklevel=2)
-                return
-        else:
-            warnings.warn("Class with neat id {class_neat_id} found in rules", stacklevel=2)
-            return
-
-    def _read_via_class_entity(
-        self,
-        class_entity: ClassEntity,
         property_renaming_config: dict[URIRef, str] | None = None,
-        named_graph: URIRef | None = None,
     ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
         named_graph = named_graph or self.default_named_graph
 
-        if named_graph not in self.named_graphs:
-            warnings.warn(
-                f"Named graph {named_graph} not found in graph store, cannot read",
-                stacklevel=2,
-            )
-            return
-
-        if not self.rules or named_graph not in self.rules:
-            warnings.warn(
-                f"Rules for named graph {named_graph} not found in graph store!",
-                stacklevel=2,
-            )
-            return
-        if self.multi_type_instances:
-            warnings.warn(
-                "Multi typed instances detected, issues with loading can occur!",
-                stacklevel=2,
-            )
-
-        if class_entity not in [definition.class_ for definition in self.rules[named_graph].classes]:
-            warnings.warn("Desired type not found in graph!", stacklevel=2)
-            return
-
-        if not (class_uri := InformationAnalysis(self.rules[named_graph]).class_uri(class_entity)):
-            warnings.warn(
-                f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
-                stacklevel=2,
-            )
-            return
-
-        has_hop_transformations = InformationAnalysis(self.rules[named_graph]).has_hop_transformations()
-        has_self_reference_transformations = InformationAnalysis(
-            self.rules[named_graph]
-        ).has_self_reference_property_transformations()
-        if has_hop_transformations or has_self_reference_transformations:
-            msg = (
-                f"Rules contain [{'Hop' if has_hop_transformations else ''}"
-                f", {'SelfReferenceProperty' if has_self_reference_transformations else ''}]"
-                " rdfpath."
-                f" Run [{'ReduceHopTraversal' if has_hop_transformations else ''}"
-                f", {'AddSelfReferenceProperty' if has_self_reference_transformations else ''}]"
-                " transformer(s) first!"
-            )
-
-            warnings.warn(
-                msg,
-                stacklevel=2,
-            )
-            return
-
-        # get all the instances for give class_uri
-        instance_ids = self.queries.list_instances_ids_of_class(class_uri)
-
-        # get potential property renaming config
-        property_renaming_config = property_renaming_config or InformationAnalysis(
-            self.rules[named_graph]
-        ).define_property_renaming_config(class_entity)
+        instance_ids = self.queries.list_instances_ids_of_class(class_uri, named_graph=named_graph)
 
         for instance_id in instance_ids:
             if res := self.queries.describe(
                 instance_id=instance_id,
-                instance_type=class_entity.suffix,
+                instance_type=class_uri,
                 property_renaming_config=property_renaming_config,
             ):
                 yield res
-
-    def read(
-        self, class_: str, named_graph: URIRef | None = None
-    ) -> Iterable[tuple[str, dict[str | InstanceType, list[str]]]]:
-        """Read instances for given class from the graph store.
-
-        !!! note "Assumption"
-            This method assumes that the class_ belongs to the same (name)space as
-            the rules which are attached to the graph store.
-
-        """
-        named_graph = named_graph or self.default_named_graph
-
-        if named_graph not in self.named_graphs:
-            warnings.warn(
-                f"Named graph {named_graph} not found in graph store, cannot read",
-                stacklevel=2,
-            )
-            return
-
-        if not self.rules or named_graph not in self.rules:
-            warnings.warn(
-                f"Rules for named graph {named_graph} not found in graph store!",
-                stacklevel=2,
-            )
-            return
-        if self.multi_type_instances:
-            warnings.warn(
-                "Multi typed instances detected, issues with loading can occur!",
-                stacklevel=2,
-            )
-
-        class_entity = ClassEntity(prefix=self.rules[named_graph].metadata.prefix, suffix=class_)
-
-        if class_entity not in [definition.class_ for definition in self.rules[named_graph].classes]:
-            warnings.warn("Desired type not found in graph!", stacklevel=2)
-            return
-
-        yield from self._read_via_class_entity(class_entity)
-
-    def count_of_id(self, neat_id: URIRef, named_graph: URIRef | None = None) -> int:
-        """Count the number of instances of a given type
-
-        Args:
-            neat_id: Type for which instances are to be counted
-
-        Returns:
-            Number of instances
-        """
-        named_graph = named_graph or self.default_named_graph
-
-        if named_graph not in self.named_graphs:
-            warnings.warn(
-                f"Named graph {named_graph} not found in graph store, cannot count",
-                stacklevel=2,
-            )
-            return 0
-
-        if not self.rules or named_graph not in self.rules:
-            warnings.warn(
-                f"Rules for named graph {named_graph} not found in graph store!",
-                stacklevel=2,
-            )
-            return 0
-
-        class_entity = next(
-            (definition.class_ for definition in self.rules[named_graph].classes if definition.neatId == neat_id),
-            None,
-        )
-        if not class_entity:
-            warnings.warn("Desired type not found in graph!", stacklevel=2)
-            return 0
-
-        if not (class_uri := InformationAnalysis(self.rules[named_graph]).class_uri(class_entity)):
-            warnings.warn(
-                f"Class {class_entity.suffix} does not have namespace defined for prefix {class_entity.prefix} Rules!",
-                stacklevel=2,
-            )
-            return 0
-
-        return self.count_of_type(class_uri)
-
-    def count_of_type(self, class_uri: URIRef) -> int:
-        query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
-        return int(next(iter(self.dataset.query(query)))[0])  # type: ignore[arg-type, index]
 
     def _parse_file(
         self,
