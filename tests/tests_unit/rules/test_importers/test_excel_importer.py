@@ -140,6 +140,11 @@ class TestExcelImporter:
                 DMSRules,
                 id="Svein Harald Enterprise Extension DMS",
             ),
+            pytest.param(
+                DATA_FOLDER / "pump_example_with_missing_cells.xlsx",
+                DMSRules,
+                id="Missing expected cell entire row drop",
+            ),
         ],
     )
     def test_import_valid_rules(

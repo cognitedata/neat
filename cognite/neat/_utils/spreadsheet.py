@@ -69,6 +69,11 @@ def read_individual_sheet(
     if "Value Type" in raw.columns:
         # Special handling for Value Type column, #N/A is treated specially by NEAT it means Unknown
         raw["Value Type"] = raw["Value Type"].replace(float("nan"), "#N/A")
+
+    # here we should drop raws which critical columns are None
+    if expected_headers:
+        raw.dropna(subset=expected_headers, how="any", inplace=True)
+
     output = raw.replace(float("nan"), None).to_dict(orient="records")
     if return_read_info:
         # If no rows are skipped, row 1 is the header row.
