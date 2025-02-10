@@ -30,6 +30,7 @@ Changes are grouped as follows:
 
 ### Improved
 - The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
+- Automatic drop of rows in Excel rules if cells for critical columns are missing
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
