@@ -14,4 +14,4 @@ classic = true
 [plugins]
 run = true
 pull = false
-dump = false
+dump = true

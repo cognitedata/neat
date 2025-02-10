@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Sequence
+from graphlib import TopologicalSorter
 from typing import TYPE_CHECKING
 
 from cognite.client import data_modeling as dm
@@ -114,7 +115,7 @@ class SchemaAPI:
 
     @staticmethod
     def order_views_by_container_dependencies(
-        views_by_id: dict[dm.ViewId, dm.View], containers: dm.ContainerList
+        views_by_id: dict[dm.ViewId, dm.View | dm.ViewApply], containers: Sequence[dm.Container | dm.ContainerApply]
     ) -> tuple[list[dm.ViewId], dict[dm.ViewId, set[str]]]:
         """Sorts the views by container constraints."""
         container_by_id = {container.as_id(): container for container in containers}

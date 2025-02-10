@@ -180,3 +180,4 @@ real_cases/
 ~*.xlsx
 docs/**/*.aml
 docs/**/*.xml
+tmp/
