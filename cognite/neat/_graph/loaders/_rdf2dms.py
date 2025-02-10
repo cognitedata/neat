@@ -24,11 +24,9 @@ from cognite.neat._client import NeatClient
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
 from cognite.neat._graph._tracking import Tracker
 from cognite.neat._issues import IssueList, NeatIssue
-from cognite.neat._issues.errors import (
-    ResourceConversionError,
-    ResourceDuplicatedError,
-)
+from cognite.neat._issues.errors import ResourceDuplicatedError, ResourceNotFoundError
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.information._rules import InformationRules
@@ -39,6 +37,7 @@ from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.upload import UploadResult
 
+from ..._rules.analysis._base import ViewQuery, ViewQueryDict
 from ._base import _END_OF_CLASS, CDFLoader
 
 
@@ -55,29 +54,25 @@ class _ViewIterator:
             the parent property.
     """
 
-    view: dm.View
+    view_id: dm.ViewId
     instance_count: int
     self_required_properties: set[str]
-
-    @property
-    def view_id(self) -> dm.ViewId:
-        return self.view.as_id()
+    query: ViewQuery
+    view: dm.View | None = None
 
 
 class DMSLoader(CDFLoader[dm.InstanceApply]):
     """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
 
     Args:
-        graph_store (NeatGraphStore): The graph store to load the data into.
-        data_model (dm.DataModel[dm.View] | None): The data model to load.
+        dms_rules (DMSRules): The DMS rules used by the data model.
+        info_rules (InformationRules): The information rules used by the data model, used to lookup the instances in the store.
+        graph_store (NeatGraphStore): The graph store to load the data from.
         instance_space (str): The instance space to load the data into.
-        class_neat_id_by_view_id (dict[ViewId, URIRef] | None): A mapping from view id to class name. Defaults to None.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
-        tracker (type[Tracker] | None): The tracker to use. Defaults to None.
-        rules (DMSRules | None): The DMS rules used by the data model. This is used to lookup the
-            instances in the store. Defaults to None.
         client (NeatClient | None): This is used to lookup containers such that the loader
             creates instances in accordance with required constraints. Defaults to None.
+        unquote_external_ids (bool): If True, the loader will unquote external ids before creating the instances.
     """
 
     def __init__(
@@ -86,86 +81,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         info_rules: InformationRules,
         graph_store: NeatGraphStore,
         instance_space: str,
+        client: NeatClient,
         create_issues: Sequence[NeatIssue] | None = None,
-        client: NeatClient | None = None,
         unquote_external_ids: bool = False,
     ):
         super().__init__(graph_store)
         self.dms_rules = dms_rules
         self.info_rules = info_rules
-        self._issues = IssueList(create_issues or [])
-        self.data_model = None
-        try:
-            self.data_model = dms_rules.as_schema().as_read_model()
-        except Exception as e:
-            self._issues.append(
-                ResourceConversionError(
-                    identifier=dms_rules.metadata.as_identifier(),
-                    resource_type="DMS Rules",
-                    target_format="read DMS model",
-                    reason=str(e),
-                )
-            )
-
-        self.views_by_view_id = {view.as_id(): view for view in self.data_model.views} if self.data_model else {}
         self.instance_space = instance_space
+        self._issues = IssueList(create_issues or [])
         self._client = client
         self._unquote_external_ids = unquote_external_ids
-
-        self._unquote_external_ids = unquote_external_ids
-
-    @classmethod
-    def from_data_model_id(
-        cls,
-        client: NeatClient,
-        data_model_id: dm.DataModelId,
-        graph_store: NeatGraphStore,
-        instance_space: str,
-    ) -> "DMSLoader":
-        issues: list[NeatIssue] = []
-        data_model: dm.DataModel[dm.View] | None = None
-        try:
-            data_model = client.data_modeling.data_models.retrieve(data_model_id, inline_views=True).latest_version()
-        except Exception as e:
-            issues.append(ResourceRetrievalError(data_model_id, "data model", str(e)))
-
-        return cls(graph_store, data_model, instance_space, {}, issues, client=client)
-
-    @classmethod
-    def from_rules(
-        cls,
-        rules: DMSRules,
-        graph_store: NeatGraphStore,
-        instance_space: str,
-        client: NeatClient | None = None,
-        unquote_external_ids: bool = False,
-    ) -> "DMSLoader":
-        issues: list[NeatIssue] = []
-        data_model: dm.DataModel[dm.View] | None = None
-        try:
-            data_model = rules.as_schema().as_read_model()
-        except Exception as e:
-            issues.append(
-                ResourceConversionError(
-                    identifier=rules.metadata.as_identifier(),
-                    resource_type="DMS Rules",
-                    target_format="read DMS model",
-                    reason=str(e),
-                )
-            )
-
-        class_neat_id_by_view_id = {view.view.as_id(): view.logical for view in rules.views if view.logical}
-
-        return cls(
-            graph_store,
-            data_model,
-            instance_space,
-            class_neat_id_by_view_id,
-            issues,
-            rules=rules,
-            client=client,
-            unquote_external_ids=unquote_external_ids,
-        )
 
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
@@ -173,119 +99,50 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         elif self._issues.has_errors:
             yield from self._issues
             return
-        if not self.data_model:
-            # There should already be an error in this case.
-            return
 
-        view_iterations = self._create_view_iterations()
-
-        for view_iteration in view_iterations:
+        for view_iteration in self._create_view_iterations():
+            if view_iteration.view is None:
+                yield ResourceNotFoundError(
+                    view_iteration.view_id, "view", more=f"Skipping {view_iteration.instance_count} instances..."
+                )
+                continue
             pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view_iteration.view)  # type: ignore[var-annotated]
             yield from issues
-            reader = get_reader()
+            query = view_iteration.query
+            reader = self.graph_store.read(query.rdf_type, property_renaming_config=query.property_renaming_config)
             instance_iterable = iterate_progress_bar_if_above_config_threshold(
-                reader, view_iteration.instance_count, f"Loading {track_id}"
+                reader, view_iteration.instance_count, f"Loading {view_iteration.view_id!r}"
             )
             for identifier, properties in instance_iterable:
-                yield from self._create_instances(...)
+                yield from self._create_instances(identifier, properties, exclude=view_iteration.self_required_properties)
             if view_iteration.self_required_properties:
                 # We need to run the view again to add the self properties.
                 # This is only relevant if the view has a require constraint on the container.
                 # If not, we can create an empty node on the fly.
-                yield from self._create_instances
+                yield from self._create_instances(identifier, properties, include=view_iteration.self_required_properties)
 
             yield _END_OF_CLASS
 
-        #
-        # for view_id, (view, instance_count, self_properties) in view_and_count_by_id.items():
-        #     pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view)  # type: ignore[var-annotated]
-        #     yield from issues
-        #     # tracker.issue(issues)
-        #
-        #
-        #     for skip_properties in iterations:
-        #         if skip_properties:
-        #             track_id = f"{view_id} (self)"
-        #         else:
-        #             track_id = repr(view_id)
-        #         tracker.start(track_id)
-        #         if views_with_linked_properties:
-        #             # we need graceful exit if the view is not in the view_property_pairs
-        #             property_link_pairs = views_with_linked_properties.get(ViewEntity.from_id(view_id))
-        #
-        #             if class_neat_id := self.class_neat_id_by_view_id.get(view_id):
-        #                 reader = self.graph_store._read_via_rules_linkage(class_neat_id, property_link_pairs)
-        #             else:
-        #                 error_view = ResourceRetrievalError(view_id, "view", "View not linked to class")
-        #                 tracker.issue(error_view)
-        #                 if stop_on_exception:
-        #                     raise error_view
-        #                 yield error_view
-        #                 continue
-        #         else:
-        #             # this assumes no changes in the suffix of view and class
-        #             reader = self.graph_store.read(view.external_id)
-        #
-        #         instance_iterable = iterate_progress_bar_if_above_config_threshold(
-        #             reader, instance_count, f"Loading {track_id}"
-        #         )
-        #
-        #         for identifier, properties in instance_iterable:
-        #             start_node, end_node = self._pop_start_end_node(properties)
-        #             is_edge = start_node and end_node
-        #             if (is_edge and view.used_for == "node") or (not is_edge and view.used_for == "edge"):
-        #                 instance_type = "edge" if is_edge else "node"
-        #                 creation_error = ResourceCreationError(
-        #                     identifier,
-        #                     instance_type,
-        #                     error=f"{instance_type.capitalize()} found in {view.used_for} view",
-        #                 )
-        #                 tracker.issue(creation_error)
-        #                 if stop_on_exception:
-        #                     raise creation_error
-        #                 yield creation_error
-        #                 continue
-        #
-        #             if skip_properties:
-        #                 properties = {k: v for k, v in properties.items() if k not in skip_properties}
-        #
-        #             if start_node and end_node:
-        #                 # Is an edge
-        #                 try:
-        #                     yield self._create_edge_with_properties(
-        #                         identifier, properties, start_node, end_node, pydantic_cls, view_id
-        #                     )
-        #                 except ValueError as e:
-        #                     error_edge = ResourceCreationError(identifier, "edge", error=str(e))
-        #                     tracker.issue(error_edge)
-        #                     if stop_on_exception:
-        #                         raise error_edge from e
-        #                     yield error_edge
-        #             else:
-        #                 try:
-        #                     yield self._create_node(identifier, properties, pydantic_cls, view_id)
-        #                 except ValueError as e:
-        #                     error_node = ResourceCreationError(identifier, "node", error=str(e))
-        #                     tracker.issue(error_node)
-        #                     if stop_on_exception:
-        #                         raise error_node from e
-        #                     yield error_node
-        #                 yield from self._create_edges_without_properties(
-        #                     identifier, properties, edge_by_type, edge_by_prop_id, tracker
-        #                 )
-        #         tracker.finish(track_id)
-        #         yield _END_OF_CLASS
-
     def _create_view_iterations(self) -> list[_ViewIterator]:
-        views_with_linked_properties = (
-            DMSAnalysis(self.rules).views_with_properties_linked_to_classes(consider_inheritance=True)
-            if self.rules and self.rules.metadata.logical
-            else None
+        view_query_by_id = RulesAnalysis(self.info_rules, self.dms_rules).view_query_by_id
+        iterations_by_view_id = self._select_views_with_instances(view_query_by_id)
+        views = self._client.data_modeling.views.retrieve(
+            list(iterations_by_view_id.keys()), include_inherited_properties=True
+        )
+        containers = self._client.data_modeling.containers.retrieve(list(views.referenced_containers()))
+        views_by_id = {view.as_id(): view for view in views}
+
+        ordered_view_ids, properties_dependent_on_self_by_view_id = self._order_views_by_container_dependencies(
+            views_by_id, containers
         )
 
-        view_iterations = self._select_views_with_instances(self.data_model.views)
-
-        view_iterations = self._sort_by_direct_relation_dependencies(view_iterations)
+        view_iterations: list[_ViewIterator] = []
+        for view_id in ordered_view_ids:
+            if view_id not in iterations_by_view_id:
+                continue
+            view_iteration = iterations_by_view_id[view_id]
+            view_iteration.view = views_by_id.get(view_id)
+            view_iteration.self_required_properties = properties_dependent_on_self_by_view_id.get(view_id, set())
         return view_iterations
 
     @staticmethod
@@ -318,70 +175,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _select_views_with_instances(self, views: list[dm.View]) -> list[_ViewIterator]:
+    def _select_views_with_instances(self, view_query_by_id: ViewQueryDict) -> dict[dm.ViewId, _ViewIterator]:
         """Selects the views with data."""
-        view_and_count_by_id: list[_ViewIterator] = []
-        uri_by_type: dict[str, URIRef] = {
-            remove_namespace_from_uri(uri[0]): uri[0]  # type: ignore[misc]
-            for uri in self.graph_store.queries.list_types(limit=None)
-        }
-        for view in views:
-            view_id = view.as_id()
-            neat_id = self.class_neat_id_by_view_id.get(view_id)
-            if neat_id is not None:
-                count = self.graph_store.count_of_id(neat_id)
-            elif view.external_id in uri_by_type:
-                count = self.graph_store.count_of_type(uri_by_type[view.external_id])
-            else:
-                continue
-
+        view_iterations: dict[dm.ViewId, _ViewIterator] = {}
+        for view_id, query in view_query_by_id.items():
+            count = self.graph_store.queries.count_of_type(query.rdf_type)
             if count > 0:
-                view_and_count_by_id[view_query_config.view_id] = (
-                    self.views_by_view_id[view_query_config.view_id],
-                    count,
-                )
+                view_iterations[view_id] = _ViewIterator(view_id, count, set(), query)
+        return view_iterations
 
-        return view_and_count_by_id
-
-    def _sort_by_direct_relation_dependencies(self, iterations: list[_ViewIterator]) -> list[_ViewIterator]:
-        """Sorts the views by container constraints."""
-        if not self._client:
-            return iterations
-
-        # We need to retrieve the views to ensure we get all properties, such that we can find all
-        # the containers that the view is linked to.
-        views = self._client.data_modeling.views.retrieve(
-            list(view_and_count_by_id.keys()), include_inherited_properties=True
-        )
-        container_ids_by_view_id = {view.as_id(): view.referenced_containers() for view in views}
-        referenced_containers = {
-            container for containers in container_ids_by_view_id.values() for container in containers
-        }
-        containers = self._client.data_modeling.containers.retrieve(list(referenced_containers))
-        container_by_id = {container.as_id(): container for container in containers}
-
-        dependency_on_self: dict[dm.ViewId, set[str]] = defaultdict(set)
-        view_id_by_dependencies: dict[dm.ViewId, set[dm.ViewId]] = {}
-        for view in views:
-            view_id = view.as_id()
-            dependencies = set()
-            for prop_id, prop in view.properties.items():
-                if isinstance(prop, dm.MappedProperty) and isinstance(prop.type, dm.DirectRelation) and prop.source:
-                    container = container_by_id[prop.container]
-                    has_require_constraint = any(
-                        isinstance(constraint, dm.RequiresConstraint) for constraint in container.constraints.values()
-                    )
-                    if has_require_constraint and prop.source == view_id:
-                        dependency_on_self[view_id].add(prop_id)
-                    elif has_require_constraint:
-                        dependencies.add(prop.source)
-            view_id_by_dependencies[view_id] = dependencies
-
-        ordered_view_ids = TopologicalSorter(view_id_by_dependencies).static_order()
-
-        return {
-            view_id: view_and_count_by_id[view_id] for view_id in ordered_view_ids if view_id in view_and_count_by_id
-        }, dict(dependency_on_self)
 
     def _create_validation_classes(
         self, view: dm.View
@@ -517,6 +319,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
         return pydantic_cls, edge_by_type, edge_by_prop_id, issues
+
+    def _create_instances(
+        self, identifier: str, properties: dict[str | InstanceType, list[str]], exclude: set[str] | None = None, include: set[str] | None = None
+    ) -> Iterable[dm.InstanceApply | NeatIssue]:
+        raise NotImplementedError
 
     def _create_node(
         self,

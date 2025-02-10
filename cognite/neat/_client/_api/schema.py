@@ -1,3 +1,4 @@
+from collections import defaultdict
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -110,3 +111,33 @@ class SchemaAPI:
             views=view_write,
             containers=container_write,
         )
+
+    @staticmethod
+    def order_views_by_container_dependencies(
+        views_by_id: dict[dm.ViewId, dm.View], containers: dm.ContainerList
+    ) -> tuple[list[dm.ViewId], dict[dm.ViewId, set[str]]]:
+        """Sorts the views by container constraints."""
+        container_by_id = {container.as_id(): container for container in containers}
+        properties_dependent_on_self: dict[dm.ViewId, set[str]] = defaultdict(set)
+        view_id_by_dependencies: dict[dm.ViewId, set[dm.ViewId]] = {}
+        for view_id, view in views_by_id.items():
+            dependencies = set()
+            for prop_id, prop in view.properties.items():
+                if isinstance(prop, dm.MappedProperty) and isinstance(prop.type, dm.DirectRelation):
+                    container = container_by_id[prop.container]
+                    for constraint in container.constraints.values():
+                        if isinstance(constraint, dm.RequiresConstraint):
+                            constraint.require
+
+                    has_require_constraint = any(
+                        isinstance(constraint, dm.RequiresConstraint) for constraint in container.constraints.values()
+                    )
+                    if has_require_constraint and prop.source == view_id:
+                        properties_dependent_on_self[view_id].add(prop_id)
+                    elif has_require_constraint:
+                        dependencies.add(prop.source)
+            view_id_by_dependencies[view_id] = dependencies
+
+        ordered_view_ids = list(TopologicalSorter(view_id_by_dependencies).static_order())
+
+        return list(ordered_view_ids), properties_dependent_on_self

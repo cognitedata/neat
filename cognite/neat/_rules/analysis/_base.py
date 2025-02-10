@@ -1,7 +1,7 @@
 import itertools
 import warnings
 from collections import defaultdict
-from collections.abc import Hashable, Set
+from collections.abc import Hashable, Iterator, MutableMapping, Set, ItemsView, KeysView, ValuesView
 from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
 from typing import Any, Literal, TypeVar, cast, overload
@@ -69,13 +69,40 @@ class ViewQuery:
     property_renaming_config: dict[URIRef, str] = field(default_factory=dict)
 
 
-class ViewQueryConfigs(list, ViewQuery):
-    def get_view_query_config(self, key: dm.ViewId) -> ViewQuery | None:
-        """Access attributes using a dictionary-like approach."""
-        return next(
-            (config for config in self if config.view_id == key),
-            None,
-        )
+class ViewQueryDict(dict, MutableMapping[dm.ViewId, ViewQuery]):
+    # The below methods are included to make better type hints in the IDE
+    def __getitem__(self, k: dm.ViewId) -> ViewQuery:
+        return super().__getitem__(k)
+
+    def __setitem__(self, k: dm.ViewId, v: ViewQuery) -> None:
+        super().__setitem__(k, v)
+
+    def __delitem__(self, k: dm.ViewId) -> None:
+        super().__delitem__(k)
+
+    def __iter__(self) -> Iterator[dm.ViewId]:
+        return super().__iter__()
+
+    def keys(self) -> KeysView[dm.ViewId]:  # type: ignore[override]
+        return super().keys()
+
+    def values(self) -> ValuesView[ViewQuery]:  # type: ignore[override]
+        return super().values()
+
+    def items(self) -> ItemsView[dm.ViewId, ViewQuery]:  # type: ignore[override]
+        return super().items()
+
+    def get(self, __key: dm.ViewId, __default: Any = ...) -> ViewQuery:
+        return super().get(__key, __default)
+
+    def pop(self, __key: dm.ViewId, __default: Any = ...) -> ViewQuery:
+        return super().pop(__key, __default)
+
+    def popitem(self) -> tuple[dm.ViewId, ViewQuery]:
+        return super().popitem()
+
+    def copy(self) -> "ViewQueryDict[dm.ViewId, ViewQuery]":
+        return cast(ViewQueryDict[dm.ViewId, ViewQuery], super().copy())
 
 
 class RulesAnalysis:
@@ -579,9 +606,9 @@ class RulesAnalysis:
         return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
 
     @property
-    def view_query_configs(
+    def view_query_by_id(
         self,
-    ) -> "ViewQueryConfigs":
+    ) -> "ViewQueryDict":
         # Trigger error if any of these are missing
         _ = self.information
         _ = self.dms
@@ -593,7 +620,7 @@ class RulesAnalysis:
         logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(include_ancestors=True)
         information_properties_by_neat_id = self._properties_by_neat_id()
 
-        query_configs: ViewQueryConfigs = ViewQueryConfigs()
+        query_configs = ViewQueryDict()
         for view in self.dms.views:
             # this entire block of sequential if statements checks:
             # 1. connection of dms to info rules
@@ -604,7 +631,7 @@ class RulesAnalysis:
                 and (class_ := classes_by_neat_id.get(neat_id))
                 and (uri := self.class_uri(class_.class_))
             ):
-                view_query_config = ViewQuery(
+                view_query = ViewQuery(
                     view_id=view.view.as_id(),
                     rdf_type=uri,
                     # start off with renaming of properties on the information level
@@ -621,8 +648,8 @@ class RulesAnalysis:
                         if (property_ := information_properties_by_neat_id.get(neat_id)) and (
                             uri := self.property_uri(property_)
                         ):
-                            view_query_config.property_renaming_config[uri] = target_name
+                            view_query.property_renaming_config[uri] = target_name
 
-                query_configs.append(view_query_config)
+                query_configs[view.view.as_id()] = view_query
 
         return query_configs

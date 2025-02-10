@@ -15,3 +15,4 @@ class NeatClient(CogniteClient):
             self._config.client_name = _CLIENT_NAME
         self.loaders = DataModelLoaderAPI(self)
         self.schema = SchemaAPI(self)
+
