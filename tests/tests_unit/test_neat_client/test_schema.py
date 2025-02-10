@@ -1,6 +1,8 @@
+from cognite.client import data_modeling as dm
+
 from cognite.neat._client._api.schema import SchemaAPI
 from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.client import data_modeling as dm
+
 
 class TestSchemaAPI:
     def test_order_views_by_container_dependencies(self, cognite_core_schema: DMSSchema) -> None:
@@ -12,4 +14,4 @@ class TestSchemaAPI:
         id_order, depend_on_self = SchemaAPI.order_views_by_container_dependencies(selected_views, selected_containers)
         # The three first ones are not dependent on any other view
         assert id_order[-1].external_id == "CogniteAsset"
-        assert depend_on_self == {dm.ViewId("cdf_cdm", "CogniteAsset", "v1"): {"parent"}}
+        assert depend_on_self == {dm.ViewId("cdf_cdm", "CogniteAsset", "v1"): {"parent", "path", "root"}}
