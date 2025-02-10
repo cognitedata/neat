@@ -24,6 +24,7 @@ Changes are grouped as follows:
 - In Model was not automatically set to True importing from spreadsheet missing value in this column
 - Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
 - The `neat.infer()` maintains acronyms when renaming invalid properties/classes.
+- neat.show.data_model() fixed for information rules
 
 ### Changed
 - Moved examples under neat.read.examples[nordic44, pump_example]
