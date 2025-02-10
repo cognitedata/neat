@@ -5,7 +5,6 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF
 from rdflib.term import Literal
 
-from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules import importers
 from cognite.neat._rules.importers._spreadsheet2rules import ExcelImporter
@@ -275,5 +274,5 @@ INSTANCES = [
 
 
 @lru_cache(maxsize=1)
-def get_car_dms_rules() -> DMSSchema:
+def get_car_dms_rules() -> DMSRules:
     return ExcelImporter(DATA_DIR / "car_dms_rules.xlsx").to_rules().rules.as_verified_rules()
