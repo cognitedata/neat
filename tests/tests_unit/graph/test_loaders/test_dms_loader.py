@@ -45,9 +45,7 @@ def test_metadata_as_json_filed():
         prop.class_ = ClassEntity.load("neat_space:YourAsset")
         prop.property_ = f"your_{prop.property_}"
 
-    store.add_rules(info_rules)
-
-    loader = DMSLoader.from_rules(dms_rules, store, dms_rules.metadata.space)
+    loader = DMSLoader(dms_rules, info_rules, store, dms_rules.metadata.space)
     instances = {instance.external_id: instance for instance in loader._load() if isinstance(instance, InstanceApply)}
 
     # metadata not unpacked but kept as Json obj
@@ -70,10 +68,9 @@ def test_imf_attribute_nodes():
     dms_rules = InformationToDMS().transform(info_rules)
 
     store = NeatGraphStore.from_oxi_local_store()
-    store.add_rules(info_rules)
     store.write(RdfFileExtractor(IMF_EXAMPLE))
 
-    loader = DMSLoader.from_rules(dms_rules, store, instance_space="knowledge")
+    loader = DMSLoader(dms_rules, info_rules, store, instance_space="knowledge")
     knowledge_nodes = list(loader.load())
 
     assert len(knowledge_nodes) == 56

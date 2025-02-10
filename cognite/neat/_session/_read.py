@@ -257,9 +257,6 @@ class CDFClassicAPI(BaseReadAPI):
         prepare_issues = self._state.rule_store.transform(
             ClassicPrepareCore(namespace, reference_timeseries, reference_files)
         )
-        # Update the instance store with the latest rules
-        information_rules = self._state.rule_store.last_verified_information_rules
-        self._state.instances.store.rules[self._state.instances.store.default_named_graph] = information_rules
 
         all_issues = IssueList(extract_issues + prepare_issues)
         # Update the provenance with all issue.

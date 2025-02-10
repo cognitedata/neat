@@ -1,4 +1,4 @@
-from cognite.neat._rules.analysis import RuleAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import (
@@ -11,31 +11,31 @@ from cognite.neat._rules.models.information import (
 
 class TestRulesAnalysis:
     def test_class_parent_pairs(self, david_rules: InformationRules) -> None:
-        assert len(RuleAnalysis(david_rules).parents_by_class()) == 26
+        assert len(RulesAnalysis(david_rules).parents_by_class()) == 26
 
     def test_classes_with_properties(self, david_rules: InformationRules) -> None:
-        assert len(RuleAnalysis(david_rules).properties_by_class()) == 20
+        assert len(RulesAnalysis(david_rules).properties_by_class()) == 20
 
     def test_class_property_pairs(self, david_rules: InformationRules) -> None:
-        assert len(RuleAnalysis(david_rules).properties_by_id_by_class()) == 20
+        assert len(RulesAnalysis(david_rules).properties_by_id_by_class()) == 20
 
     def test_defined_classes(self, david_rules: InformationRules) -> None:
-        assert len(RuleAnalysis(david_rules).defined_classes(include_ancestors=False)) == 20
-        assert len(RuleAnalysis(david_rules).defined_classes(include_ancestors=True)) == 26
+        assert len(RulesAnalysis(david_rules).defined_classes(include_ancestors=False)) == 20
+        assert len(RulesAnalysis(david_rules).defined_classes(include_ancestors=True)) == 26
 
     def test_get_class_linkage(self, david_rules: InformationRules) -> None:
-        assert len(RuleAnalysis(david_rules).class_linkage(include_ancestors=False)) == 28
-        assert len(RuleAnalysis(david_rules).class_linkage(include_ancestors=True)) == 57
+        assert len(RulesAnalysis(david_rules).class_linkage(include_ancestors=False)) == 28
+        assert len(RulesAnalysis(david_rules).class_linkage(include_ancestors=True)) == 57
 
     def test_symmetric_pairs(self, david_rules: InformationRules) -> None:
-        assert len(RuleAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=True)) == 0
-        assert len(RuleAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=False)) == 0
+        assert len(RulesAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=True)) == 0
+        assert len(RulesAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=False)) == 0
 
     def test_subset_rules(self, david_rules: InformationRules) -> None:
-        assert RuleAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes[
+        assert RulesAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes[
             0
         ].class_ == ClassEntity.load("power:GeoLocation")
-        assert len(RuleAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes) == 1
+        assert len(RulesAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes) == 1
 
 
 class TestAnalysis:
@@ -59,7 +59,7 @@ class TestAnalysis:
             ],
         )
 
-        explore = RuleAnalysis(generation.as_verified_rules(), None)
+        explore = RulesAnalysis(generation.as_verified_rules(), None)
 
         parents_by_class = explore.parents_by_class(include_ancestors=True)
         assert {

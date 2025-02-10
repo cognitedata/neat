@@ -1,3 +1,3 @@
-from ._base import RuleAnalysis
+from ._base import RulesAnalysis
 
-__all__ = ["RuleAnalysis"]
+__all__ = ["RulesAnalysis"]

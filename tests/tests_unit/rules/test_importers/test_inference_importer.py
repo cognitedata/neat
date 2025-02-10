@@ -7,7 +7,7 @@ from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._issues import catch_issues
-from cognite.neat._rules.analysis import RuleAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._rules.models.data_types import DataType, Integer, Json, Long
 from cognite.neat._rules.models.entities import MultiValueTypeInfo
@@ -50,7 +50,7 @@ def test_rdf_inference():
     )
 
     # we should have 4 multi-value property
-    assert len(RuleAnalysis(rules).multi_value_properties) == 4
+    assert len(RulesAnalysis(rules).multi_value_properties) == 4
 
 
 def test_rdf_inference_with_removal_of_unknown_type():
