@@ -20,7 +20,7 @@ from rdflib import RDF
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
-from cognite.neat._issues import IssueList, NeatIssue
+from cognite.neat._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat._issues.errors import ResourceCreationError, ResourceDuplicatedError, ResourceNotFoundError
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis import RulesAnalysis
@@ -91,7 +91,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         info_rules: InformationRules,
         graph_store: NeatGraphStore,
         instance_space: str,
-        client: NeatClient,
+        client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
     ):
@@ -129,8 +129,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         elif self._issues.has_errors:
             yield from self._issues
             return
-
-        for it in self._create_view_iterations():
+        view_iterations, issues = self._create_view_iterations()
+        yield from issues
+        for it in view_iterations:
             view = it.view
             if view is None:
                 yield ResourceNotFoundError(it.view_id, "view", more=f"Skipping {it.instance_count} instances...")
@@ -166,18 +167,28 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             yield _END_OF_CLASS
 
-    def _create_view_iterations(self) -> list[_ViewIterator]:
+    def _create_view_iterations(self) -> tuple[list[_ViewIterator], IssueList]:
         view_query_by_id = RulesAnalysis(self.info_rules, self.dms_rules).view_query_by_id
         iterations_by_view_id = self._select_views_with_instances(view_query_by_id)
-        views = self._client.data_modeling.views.retrieve(
-            list(iterations_by_view_id.keys()), include_inherited_properties=True
-        )
-        containers = self._client.data_modeling.containers.retrieve(list(views.referenced_containers()))
-        views_by_id = {view.as_id(): view for view in views}
-
-        ordered_view_ids, properties_dependent_on_self_by_view_id = (
-            self._client.schema.order_views_by_container_dependencies(views_by_id, containers, skip_readonly=True)
-        )
+        if self._client:
+            views = self._client.data_modeling.views.retrieve(
+                list(iterations_by_view_id.keys()), include_inherited_properties=True
+            )
+            containers = self._client.data_modeling.containers.retrieve(list(views.referenced_containers()))
+            views_by_id = {view.as_id(): view for view in views}
+            ordered_view_ids, properties_dependent_on_self_by_view_id = (
+                self._client.schema.order_views_by_container_dependencies(views_by_id, containers, skip_readonly=True)
+            )
+            issues = IssueList()
+        else:
+            ordered_view_ids = list(iterations_by_view_id.keys())
+            properties_dependent_on_self_by_view_id = {}
+            view_by_id = {}
+            with catch_issues() as issues:
+                read_model = self.dms_rules.as_schema().as_read_model()
+                view_by_id.update({view.as_id(): view for view in read_model.views})
+            if issues.has_errors:
+                return [], issues
 
         view_iterations: list[_ViewIterator] = []
         for view_id in ordered_view_ids:
@@ -186,7 +197,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             view_iteration = iterations_by_view_id[view_id]
             view_iteration.view = views_by_id.get(view_id)
             view_iteration.self_required_properties = properties_dependent_on_self_by_view_id.get(view_id, set())
-        return view_iterations
+        return view_iterations, issues
 
     def _select_views_with_instances(self, view_query_by_id: ViewQueryDict) -> dict[dm.ViewId, _ViewIterator]:
         """Selects the views with data."""
