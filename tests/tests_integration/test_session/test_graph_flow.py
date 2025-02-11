@@ -199,5 +199,5 @@ class TestExtractToLoadFlow:
 
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
 
-        neat.to.cdf.data_model(existing="force")
+        neat.to.cdf.data_model(existing="recreate")
         neat.to.cdf.instances()
