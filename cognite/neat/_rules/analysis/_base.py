@@ -527,6 +527,8 @@ class RulesAnalysis:
 
         for class_, properties in class_property_pairs.items():
             if class_ in subset:
+                # need one more pass to remove properties that are not part of the subset
+
                 subsetted_rules["properties"].extend(properties)
 
         try:
