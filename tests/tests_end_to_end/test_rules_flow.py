@@ -68,17 +68,17 @@ class TestImportersToYAMLExporter:
         def lookup_containers(ids: list[ContainerId]) -> ContainerList:
             return ContainerList(
                 [
-                    as_container_read(cdf_simulation.containers[container_id])
+                    as_container_read(cognite_core_schema.containers[container_id])
                     for container_id in ids
-                    if container_id in cdf_simulation.containers
+                    if container_id in cognite_core_schema.containers
                 ]
             )
 
         def pickup_containers(container: list[ContainerApply]) -> ContainerList:
             for item in container:
                 container_id = item.as_id()
-                if container_id not in cdf_simulation.containers:
-                    cdf_simulation.containers[container_id] = item
+                if container_id not in cognite_core_schema.containers:
+                    cognite_core_schema.containers[container_id] = item
             return ContainerList([as_container_read(item) for item in container])
 
         with monkeypatch_neat_client() as client:
