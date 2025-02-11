@@ -136,7 +136,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         view_iterations, issues = self._create_view_iterations()
         yield from issues
         if self._space_property:
-            self._lookup_space_by_uri(view_iterations)
+            yield from self._lookup_space_by_uri(view_iterations, stop_on_exception)
 
         for it in view_iterations:
             view = it.view
@@ -218,21 +218,31 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 view_iterations[view_id] = _ViewIterator(view_id, count, set(), query)
         return view_iterations
 
-    def _lookup_space_by_uri(self, view_iterations: list[_ViewIterator]) -> None:
+    def _lookup_space_by_uri(self, view_iterations: list[_ViewIterator], stop_on_exception: bool = False) -> IssueList:
+        issues = IssueList()
         if self._space_property is None:
-            return
+            return issues
         total = sum(it.instance_count for it in view_iterations)
+        properties_by_uriref = self.graph_store.queries.properties()
+        space_property_uri = next((k for k, v in properties_by_uriref.items() if v == self._space_property), None)
+        if space_property_uri is None:
+            error: ResourceNotFoundError[str, str] = ResourceNotFoundError(
+                self._space_property,
+                "property",
+                more=f"Could not find the {self._space_property} in the graph.",
+            )
+            if stop_on_exception:
+                raise error
+            issues.append(error)
+            return issues
 
-        instance_iterable = itertools.chain.from_iterable(
-            self.graph_store.read(it.query.rdf_type, property_renaming_config=it.query.property_renaming_config)
-            for it in view_iterations
-        )
-
+        instance_iterable = self.graph_store.queries.list_instances_ids_by_space(space_property_uri)
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, total, f"Looking up spaces for {total} instances..."
         )
-        for instance, properties in instance_iterable:
-            self._space_by_uri[instance] = properties.get(self._space_property, [self._instance_space])[0]
+        for instance, space in instance_iterable:
+            self._space_by_uri[remove_namespace_from_uri(instance)] = space
+        return issues
 
     def _create_projection(self, view: dm.View) -> tuple[_Projection, IssueList]:
         issues = IssueList()

@@ -361,3 +361,19 @@ class Queries:
     def count_of_type(self, class_uri: URIRef, named_graph: URIRef | None = None) -> int:
         query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
         return int(next(iter(self.graph(named_graph).query(query)))[0])  # type: ignore[arg-type, index]
+
+    def list_instances_ids_by_space(
+        self, space_property: URIRef, named_graph: URIRef | None = None
+    ) -> Iterable[tuple[URIRef, str]]:
+        """Returns instance ids by space"""
+        query = f"""SELECT DISTINCT ?instance ?space
+                   WHERE {{?instance <{space_property}> ?space}}"""
+
+        for result in cast(Iterable[ResultRow], self.graph(named_graph).query(query)):
+            instance_id, space = cast(tuple[URIRef, URIRef | RdfLiteral], result)
+            if isinstance(space, URIRef):
+                yield instance_id, remove_namespace_from_uri(space)
+            elif isinstance(space, RdfLiteral):
+                yield instance_id, str(space.toPython())
+            else:
+                yield instance_id, str(space)
