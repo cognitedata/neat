@@ -5,7 +5,7 @@ import warnings
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast, get_args
+from typing import Any, Literal, cast, get_args
 
 import yaml
 from cognite.client import CogniteClient
@@ -20,9 +20,8 @@ from rdflib import RDF
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
-from cognite.neat._graph._tracking import Tracker
 from cognite.neat._issues import IssueList, NeatIssue
-from cognite.neat._issues.errors import ResourceDuplicatedError, ResourceNotFoundError
+from cognite.neat._issues.errors import ResourceCreationError, ResourceDuplicatedError, ResourceNotFoundError
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
 from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.analysis._base import ViewQuery, ViewQueryDict
@@ -34,6 +33,7 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, CDFLoader
@@ -59,13 +59,24 @@ class _ViewIterator:
     view: dm.View | None = None
 
 
+@dataclass
+class _Projection:
+    """This is a helper class to project triples to a node and/or edge(s)"""
+
+    view_id: dm.ViewId
+    used_for: Literal["node", "edge", "all"]
+    pydantic_cls: type[BaseModel]
+    edge_by_type: dict[str, tuple[str, dm.EdgeConnection]]
+    edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]]
+
+
 class DMSLoader(CDFLoader[dm.InstanceApply]):
     """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
 
     Args:
         dms_rules (DMSRules): The DMS rules used by the data model.
         info_rules (InformationRules): The information rules used by the data model, used to
-            lookup the instances in the store.
+            look+up the instances in the store.
         graph_store (NeatGraphStore): The graph store to load the data from.
         instance_space (str): The instance space to load the data into.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
@@ -92,6 +103,26 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self._client = client
         self._unquote_external_ids = unquote_external_ids
 
+    def write_to_file(self, filepath: Path) -> None:
+        if filepath.suffix not in [".json", ".yaml", ".yml"]:
+            raise ValueError(f"File format {filepath.suffix} is not supported")
+        dumped: dict[str, list] = {"nodes": [], "edges": [], "issues": []}
+        for item in self.load(stop_on_exception=False):
+            key = {
+                dm.NodeApply: "nodes",
+                dm.EdgeApply: "edges",
+                NeatIssue: "issues",
+            }.get(type(item))
+            if key is None:
+                # This should never happen, and is a bug in neat
+                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
+            dumped[key].append(item.dump())
+        with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
+            if filepath.suffix == ".json":
+                json.dump(dumped, f, indent=2)
+            else:
+                yaml.safe_dump(dumped, f, sort_keys=False)
+
     def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS]]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
@@ -99,30 +130,39 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield from self._issues
             return
 
-        for view_iteration in self._create_view_iterations():
-            if view_iteration.view is None:
-                yield ResourceNotFoundError(
-                    view_iteration.view_id, "view", more=f"Skipping {view_iteration.instance_count} instances..."
-                )
+        for it in self._create_view_iterations():
+            view = it.view
+            if view is None:
+                yield ResourceNotFoundError(it.view_id, "view", more=f"Skipping {it.instance_count} instances...")
                 continue
-            pydantic_cls, edge_by_type, edge_by_prop_id, issues = self._create_validation_classes(view_iteration.view)  # type: ignore[var-annotated]
+            projection, issues = self._create_projection(view)
             yield from issues
-            query = view_iteration.query
+            query = it.query
             reader = self.graph_store.read(query.rdf_type, property_renaming_config=query.property_renaming_config)
             instance_iterable = iterate_progress_bar_if_above_config_threshold(
-                reader, view_iteration.instance_count, f"Loading {view_iteration.view_id!r}"
+                reader, it.instance_count, f"Loading {it.view_id!r}"
             )
             for identifier, properties in instance_iterable:
                 yield from self._create_instances(
-                    identifier, properties, exclude=view_iteration.self_required_properties
+                    identifier, properties, projection, stop_on_exception, exclude=it.self_required_properties
                 )
-            if view_iteration.self_required_properties:
+            if it.self_required_properties:
+                # Force calling upload on the instances above, before
+                # we add the properties pointing to the same instances.
+                yield _END_OF_CLASS
                 # We need to run the view again to add the self properties.
                 # This is only relevant if the view has a require constraint on the container.
                 # If not, we can create an empty node on the fly.
-                yield from self._create_instances(
-                    identifier, properties, include=view_iteration.self_required_properties
+                reader = self.graph_store.read(query.rdf_type, property_renaming_config=query.property_renaming_config)
+                instance_iterable = iterate_progress_bar_if_above_config_threshold(
+                    reader,
+                    it.instance_count,
+                    f"Loading {it.view_id!r}({humanize_collection(it.self_required_properties)})",
                 )
+                for identifier, properties in instance_iterable:
+                    yield from self._create_instances(
+                        identifier, properties, projection, stop_on_exception, include=it.self_required_properties
+                    )
 
             yield _END_OF_CLASS
 
@@ -148,36 +188,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             view_iteration.self_required_properties = properties_dependent_on_self_by_view_id.get(view_id, set())
         return view_iterations
 
-    @staticmethod
-    def _pop_start_end_node(properties: dict[str | InstanceType, list[str]]) -> tuple[str | None, str | None]:
-        start_node = properties.pop("startNode", [None])[0]
-        if not start_node:
-            start_node = properties.pop("start_node", [None])[0]
-        end_node = properties.pop("endNode", [None])[0]
-        if not end_node:
-            end_node = properties.pop("end_node", [None])[0]
-        return start_node, end_node
-
-    def write_to_file(self, filepath: Path) -> None:
-        if filepath.suffix not in [".json", ".yaml", ".yml"]:
-            raise ValueError(f"File format {filepath.suffix} is not supported")
-        dumped: dict[str, list] = {"nodes": [], "edges": [], "issues": []}
-        for item in self.load(stop_on_exception=False):
-            key = {
-                dm.NodeApply: "nodes",
-                dm.EdgeApply: "edges",
-                NeatIssue: "issues",
-            }.get(type(item))
-            if key is None:
-                # This should never happen, and is a bug in neat
-                raise ValueError(f"Item {item} is not supported. This is a bug in neat please report it.")
-            dumped[key].append(item.dump())
-        with filepath.open("w", encoding=self._encoding, newline=self._new_line) as f:
-            if filepath.suffix == ".json":
-                json.dump(dumped, f, indent=2)
-            else:
-                yaml.safe_dump(dumped, f, sort_keys=False)
-
     def _select_views_with_instances(self, view_query_by_id: ViewQueryDict) -> dict[dm.ViewId, _ViewIterator]:
         """Selects the views with data."""
         view_iterations: dict[dm.ViewId, _ViewIterator] = {}
@@ -187,14 +197,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 view_iterations[view_id] = _ViewIterator(view_id, count, set(), query)
         return view_iterations
 
-    def _create_validation_classes(
-        self, view: dm.View
-    ) -> tuple[
-        type[BaseModel],
-        dict[str, tuple[str, dm.EdgeConnection]],
-        dict[str, tuple[str, dm.EdgeConnection]],
-        IssueList,
-    ]:
+    def _create_projection(self, view: dm.View) -> tuple[_Projection, IssueList]:
         issues = IssueList()
         field_definitions: dict[str, tuple[type, Any]] = {}
         edge_by_type: dict[str, tuple[str, dm.EdgeConnection]] = {}
@@ -320,79 +323,89 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
 
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
-        return pydantic_cls, edge_by_type, edge_by_prop_id, issues
+        return _Projection(view.as_id(), view.used_for, pydantic_cls, edge_by_type, edge_by_prop_id), issues
 
     def _create_instances(
         self,
         identifier: str,
         properties: dict[str | InstanceType, list[str]],
+        projection: _Projection,
+        stop_on_exception: bool = False,
         exclude: set[str] | None = None,
         include: set[str] | None = None,
     ) -> Iterable[dm.InstanceApply | NeatIssue]:
-        raise NotImplementedError
-
-    def _create_node(
-        self,
-        identifier: str,
-        properties: dict[str | InstanceType, list[str]],
-        pydantic_cls: type[BaseModel],
-        view_id: dm.ViewId,
-    ) -> dm.InstanceApply:
-        type_ = properties.pop(RDF.type, [None])[0]
-        created = pydantic_cls.model_validate(properties)
         if self._unquote_external_ids:
             identifier = urllib.parse.unquote(identifier)
+        start_node, end_node = self._pop_start_end_node(properties)
+        is_edge = start_node and end_node
+        instance_type = "edge" if is_edge else "node"
+        if (projection.used_for == "node" and is_edge) or (projection.used_for == "edge" and not is_edge):
+            creation_error = ResourceCreationError(
+                identifier,
+                instance_type,
+                f"View used for {projection.used_for} instance {identifier!s} but is {instance_type}",
+            )
+            if stop_on_exception:
+                raise creation_error from None
+            yield creation_error
+            return
 
-        return dm.NodeApply(
-            space=self.instance_space,
-            external_id=identifier,
-            type=(dm.DirectRelationReference(view_id.space, view_id.external_id) if type_ is not None else None),
-            sources=[
-                dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump(exclude_unset=True).items()))
-            ],
-        )
+        if RDF.type not in properties:
+            error = ResourceCreationError(identifier, instance_type, "No rdf:type found")
+            if stop_on_exception:
+                raise error from None
+            yield error
+            return
+        type_ = properties.pop(RDF.type)[0]
+        if start_node and self._unquote_external_ids:
+            start_node = urllib.parse.unquote(start_node)
+        if end_node and self._unquote_external_ids:
+            end_node = urllib.parse.unquote(end_node)
 
-    def _create_edge_with_properties(
-        self,
-        identifier: str,
-        properties: dict[str | InstanceType, list[str]],
-        start_node: str,
-        end_node: str,
-        pydantic_cls: type[BaseModel],
-        view_id: dm.ViewId,
-    ) -> dm.EdgeApply:
-        type_ = properties.pop(RDF.type, [None])[0]
-        created = pydantic_cls.model_validate(properties)
-        if type_ is None:
-            raise ValueError(f"Missing type for edge {identifier}")
+        if exclude:
+            properties = {k: v for k, v in properties.items() if k not in exclude}
+        if include:
+            properties = {k: v for k, v in properties.items() if k in include}
+        try:
+            sources = [
+                dm.NodeOrEdgeData(
+                    projection.view_id,
+                    projection.pydantic_cls.model_validate(properties).model_dump(exclude_unset=True),
+                )
+            ]
+        except ValueError as e:
+            error = ResourceCreationError(identifier, instance_type, f"Invalid properties: {e!s}")
+            if stop_on_exception:
+                raise error from None
+            yield error
+            return
 
-        if self._unquote_external_ids:
-            identifier = urllib.parse.unquote(identifier)
-
-        return dm.EdgeApply(
-            space=self.instance_space,
-            external_id=identifier,
-            type=dm.DirectRelationReference(view_id.space, view_id.external_id),
-            start_node=dm.DirectRelationReference(self.instance_space, start_node),
-            end_node=dm.DirectRelationReference(self.instance_space, end_node),
-            sources=[
-                dm.NodeOrEdgeData(source=view_id, properties=dict(created.model_dump(exclude_unset=True).items()))
-            ],
-        )
+        if start_node and end_node:
+            yield dm.EdgeApply(
+                space=self.instance_space,
+                external_id=identifier,
+                type=(self.instance_space, type_),
+                start_node=(self.instance_space, start_node),
+                end_node=(self.instance_space, end_node),
+                sources=sources,
+            )
+        else:
+            yield dm.NodeApply(
+                space=self.instance_space,
+                external_id=identifier,
+                type=(self.instance_space, type_),
+                sources=sources,
+            )
+        yield from self._create_edges_without_properties(identifier, properties, projection)
 
     def _create_edges_without_properties(
-        self,
-        identifier: str,
-        properties: dict[str, list[str]],
-        edge_by_type: dict[str, tuple[str, dm.EdgeConnection]],
-        edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]],
-        tracker: Tracker,
+        self, identifier: str, properties: dict[str | InstanceType, list[str]], projection: _Projection
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for predicate, values in properties.items():
-            if predicate in edge_by_type:
-                prop_id, edge = edge_by_type[predicate]
-            elif predicate in edge_by_prop_id:
-                prop_id, edge = edge_by_prop_id[predicate]
+            if predicate in projection.edge_by_type:
+                prop_id, edge = projection.edge_by_type[predicate]
+            elif predicate in projection.edge_by_prop_id:
+                prop_id, edge = projection.edge_by_prop_id[predicate]
             else:
                 continue
             if isinstance(edge, SingleEdgeConnection) and len(values) > 1:
@@ -401,20 +414,32 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     identifier=identifier,
                     location=f"Multiple values for single edge {edge}. Expected only one.",
                 )
-                tracker.issue(error)
                 yield error
+                continue
             for target in values:
                 external_id = f"{identifier}.{prop_id}.{target}"
-                if self._unquote_external_ids:
-                    external_id = urllib.parse.unquote(external_id)
-
+                start_node, end_node = (self.instance_space, identifier), (self.instance_space, target)
+                if edge.direction == "inwards":
+                    start_node, end_node = end_node, start_node
                 yield dm.EdgeApply(
                     space=self.instance_space,
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
-                    start_node=dm.DirectRelationReference(self.instance_space, identifier),
-                    end_node=dm.DirectRelationReference(self.instance_space, target),
+                    start_node=start_node,
+                    end_node=end_node,
                 )
+
+    @staticmethod
+    def _pop_start_end_node(properties: dict[str | InstanceType, list[str]]) -> tuple[str, str] | tuple[None, None]:
+        start_node = properties.pop("startNode", [None])[0]
+        if not start_node:
+            start_node = properties.pop("start_node", [None])[0]
+        end_node = properties.pop("endNode", [None])[0]
+        if not end_node:
+            end_node = properties.pop("end_node", [None])[0]
+        if start_node and end_node:
+            return start_node, end_node
+        return None, None
 
     def _get_required_capabilities(self) -> list[Capability]:
         return [
