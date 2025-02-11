@@ -62,23 +62,23 @@ class TestImportersToYAMLExporter:
         data_regression.check(exported_rules)
 
     @pytest.mark.freeze_time("2025-01-03")
-    def test_to_extension_transformer(self, data_regression: DataRegressionFixture) -> None:
-        cdf_simulation = DMSSchema.from_zip(COGNITE_CORE_ZIP)
-
+    def test_to_extension_transformer(
+        self, cognite_core_schema: DMSSchema, data_regression: DataRegressionFixture
+    ) -> None:
         def lookup_containers(ids: list[ContainerId]) -> ContainerList:
             return ContainerList(
                 [
-                    as_container_read(cdf_simulation.containers[container_id])
+                    as_container_read(cognite_core_schema.containers[container_id])
                     for container_id in ids
-                    if container_id in cdf_simulation.containers
+                    if container_id in cognite_core_schema.containers
                 ]
             )
 
         def pickup_containers(container: list[ContainerApply]) -> ContainerList:
             for item in container:
                 container_id = item.as_id()
-                if container_id not in cdf_simulation.containers:
-                    cdf_simulation.containers[container_id] = item
+                if container_id not in cognite_core_schema.containers:
+                    cognite_core_schema.containers[container_id] = item
             return ContainerList([as_container_read(item) for item in container])
 
         with monkeypatch_neat_client() as client:

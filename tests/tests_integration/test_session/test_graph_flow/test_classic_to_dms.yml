@@ -1506,15 +1506,28 @@ instances:
         maxCapacity: '3'
         turbineType: V112/3075
       name: WT-02
-      parent:
-        externalId: Asset_651983444458536
-        space: sp_instance_space
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Asset_2541486502201641
+  instanceType: node
+  sources:
+  - properties:
+      parent:
+        externalId: Asset_651983444458536
+        space: sp_instance_space
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1550,6 +1563,19 @@ instances:
   type:
     externalId: ClassicAsset
     space: sp_windfarm
+- externalId: Asset_651983444458536
+  instanceType: node
+  sources:
+  - properties: {}
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
 - externalId: Asset_734702499721687
   instanceType: node
   sources:
@@ -1564,15 +1590,28 @@ instances:
         maxCapacity: '3'
         turbineType: V112/3075
       name: WT-01
-      parent:
-        externalId: Asset_651983444458536
-        space: sp_instance_space
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_instance_space
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Asset_734702499721687
+  instanceType: node
+  sources:
+  - properties:
+      parent:
+        externalId: Asset_651983444458536
+        space: sp_instance_space
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1595,15 +1634,28 @@ instances:
         assetCategory: MetMast
         height: '100'
       name: MetMast
-      parent:
-        externalId: Asset_8587146265757795
-        space: sp_instance_space
       source:
         externalId: ClassicSourceSystem_manufacturer2
         space: sp_instance_space
       tags:
       - Label_Measurement
       - Label_metMast
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_instance_space
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Asset_8279627777657373
+  instanceType: node
+  sources:
+  - properties:
+      parent:
+        externalId: Asset_8587146265757795
+        space: sp_instance_space
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1859,6 +1911,18 @@ instances:
     externalId: ClassicRelationship
     space: sp_windfarm
 - endNode:
+    externalId: Label_metMast
+    space: sp_instance_space
+  externalId: Relationship_8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130.labels.Label_metMast
+  instanceType: edge
+  space: sp_instance_space
+  startNode:
+    externalId: Relationship_8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130
+    space: sp_instance_space
+  type:
+    externalId: ClassicRelationship.labels
+    space: sp_windfarm
+- endNode:
     externalId: Asset_8279627777657373
     space: sp_instance_space
   externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447
@@ -1882,6 +1946,18 @@ instances:
     space: sp_instance_space
   type:
     externalId: ClassicRelationship
+    space: sp_windfarm
+- endNode:
+    externalId: Label_metMast
+    space: sp_instance_space
+  externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447.labels.Label_metMast
+  instanceType: edge
+  space: sp_instance_space
+  startNode:
+    externalId: Relationship_dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447
+    space: sp_instance_space
+  type:
+    externalId: ClassicRelationship.labels
     space: sp_windfarm
 - externalId: Sequence_4211923354953533
   instanceType: node
