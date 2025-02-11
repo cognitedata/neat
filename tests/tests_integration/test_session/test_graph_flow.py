@@ -50,7 +50,7 @@ class TestExtractToLoadFlow:
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
-            for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space", neat._state.client).load()
+            for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
             if isinstance(instance, InstanceApply)
         ]
 
@@ -87,7 +87,7 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.rule_store.last_verified_dms_rules
             info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space", neat._state.client).load())
+            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
@@ -125,13 +125,13 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.rule_store.last_verified_dms_rules
             info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space", neat._state.client).load())
+            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
             instances = [
                 self._standardize_instance(instance)
-                for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space", neat._state.client).load()
+                for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
             ]
 
         else:
