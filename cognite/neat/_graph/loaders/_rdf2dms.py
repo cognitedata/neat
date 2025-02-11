@@ -19,6 +19,7 @@ from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF
 
 from cognite.neat._client import NeatClient
+from cognite.neat._client._api_client import SchemaAPI
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
 from cognite.neat._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat._issues.errors import ResourceCreationError, ResourceDuplicatedError, ResourceNotFoundError
@@ -171,32 +172,33 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         view_query_by_id = RulesAnalysis(self.info_rules, self.dms_rules).view_query_by_id
         iterations_by_view_id = self._select_views_with_instances(view_query_by_id)
         if self._client:
+            issues = IssueList()
             views = self._client.data_modeling.views.retrieve(
                 list(iterations_by_view_id.keys()), include_inherited_properties=True
             )
-            containers = self._client.data_modeling.containers.retrieve(list(views.referenced_containers()))
-            views_by_id = {view.as_id(): view for view in views}
-            ordered_view_ids, properties_dependent_on_self_by_view_id = (
-                self._client.schema.order_views_by_container_dependencies(views_by_id, containers, skip_readonly=True)
-            )
-            issues = IssueList()
         else:
-            ordered_view_ids = list(iterations_by_view_id.keys())
-            properties_dependent_on_self_by_view_id = {}
-            views_by_id = {}
+            views = dm.ViewList([])
             with catch_issues() as issues:
                 read_model = self.dms_rules.as_schema().as_read_model()
-                views_by_id.update({view.as_id(): view for view in read_model.views})
+                views.extend(read_model.views)
             if issues.has_errors:
                 return [], issues
+        views_by_id = {view.as_id(): view for view in views}
+        hierarchical_properties_by_view_id = SchemaAPI.get_hierarchical_properties(views)
 
+        def sort_by_instance_type(id_: dm.ViewId) -> int:
+            if id_ not in views_by_id:
+                return 0
+            return {"node": 1, "all": 2, "edge": 3}.get(views_by_id[id_].used_for, 0)
+
+        ordered_view_ids = sorted(iterations_by_view_id.keys(), key=sort_by_instance_type)
         view_iterations: list[_ViewIterator] = []
         for view_id in ordered_view_ids:
             if view_id not in iterations_by_view_id:
                 continue
             view_iteration = iterations_by_view_id[view_id]
             view_iteration.view = views_by_id.get(view_id)
-            view_iteration.hierarchical_properties = properties_dependent_on_self_by_view_id.get(view_id, set())
+            view_iteration.hierarchical_properties = hierarchical_properties_by_view_id.get(view_id, set())
             view_iterations.append(view_iteration)
         return view_iterations, issues
 

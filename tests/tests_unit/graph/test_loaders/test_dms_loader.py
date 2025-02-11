@@ -54,7 +54,7 @@ def test_metadata_as_json_filed():
         dict,
     )
 
-    assert instances["Asset_4288662884680989"].type.external_id == "Asset"
+    assert instances["Asset_4288662884680989"].type.external_id == "MyAsset"
     assert instances["Asset_4288662884680989"].type.space == "neat_space"
 
 
