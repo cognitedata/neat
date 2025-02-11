@@ -50,7 +50,7 @@ class TestExtractToLoadFlow:
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
-            for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
+            for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space", "dataSetId").load()
             if isinstance(instance, InstanceApply)
         ]
 

@@ -2,6 +2,7 @@ import itertools
 import json
 import urllib.parse
 import warnings
+from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -91,6 +92,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         info_rules: InformationRules,
         graph_store: NeatGraphStore,
         instance_space: str,
+        space_property: str | None = None,
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
@@ -98,7 +100,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         super().__init__(graph_store)
         self.dms_rules = dms_rules
         self.info_rules = info_rules
-        self.instance_space = instance_space
+        self._instance_space = instance_space
+        self._space_property = space_property
+        self._space_by_uri: dict[str, str] = defaultdict(lambda: instance_space)
         self._issues = IssueList(create_issues or [])
         self._client = client
         self._unquote_external_ids = unquote_external_ids
@@ -131,6 +135,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
         view_iterations, issues = self._create_view_iterations()
         yield from issues
+        if self._space_property:
+            yield from self._lookup_space_by_uri(view_iterations, stop_on_exception)
+
         for it in view_iterations:
             view = it.view
             if view is None:
@@ -210,6 +217,32 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if count > 0:
                 view_iterations[view_id] = _ViewIterator(view_id, count, set(), query)
         return view_iterations
+
+    def _lookup_space_by_uri(self, view_iterations: list[_ViewIterator], stop_on_exception: bool = False) -> IssueList:
+        issues = IssueList()
+        if self._space_property is None:
+            return issues
+        total = sum(it.instance_count for it in view_iterations)
+        properties_by_uriref = self.graph_store.queries.properties()
+        space_property_uri = next((k for k, v in properties_by_uriref.items() if v == self._space_property), None)
+        if space_property_uri is None:
+            error: ResourceNotFoundError[str, str] = ResourceNotFoundError(
+                self._space_property,
+                "property",
+                more=f"Could not find the {self._space_property} in the graph.",
+            )
+            if stop_on_exception:
+                raise error
+            issues.append(error)
+            return issues
+
+        instance_iterable = self.graph_store.queries.list_instances_ids_by_space(space_property_uri)
+        instance_iterable = iterate_progress_bar_if_above_config_threshold(
+            instance_iterable, total, f"Looking up spaces for {total} instances..."
+        )
+        for instance, space in instance_iterable:
+            self._space_by_uri[remove_namespace_from_uri(instance)] = space
+        return issues
 
     def _create_projection(self, view: dm.View) -> tuple[_Projection, IssueList]:
         issues = IssueList()
@@ -302,7 +335,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    result = [{"space": self.instance_space, "externalId": remove_namespace_from_uri(v)} for v in value]
+                    external_ids = (remove_namespace_from_uri(v) for v in value)
+                    result = [{"space": self._space_by_uri[e], "externalId": e} for e in external_ids]
+                    # Todo: Account for max_list_limit
                     if len(result) <= DMS_DIRECT_RELATION_LIST_LIMIT:
                         return result
                     warnings.warn(
@@ -318,7 +353,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     result.sort(key=lambda x: (x["space"], x["externalId"]))
                     return result[:DMS_DIRECT_RELATION_LIST_LIMIT]
                 elif value:
-                    return {"space": self.instance_space, "externalId": remove_namespace_from_uri(value[0])}
+                    external_id = remove_namespace_from_uri(value[0])
+                    return {"space": self._space_by_uri[external_id], "externalId": external_id}
                 return {}
 
             validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
@@ -396,16 +432,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         if start_node and end_node:
             yield dm.EdgeApply(
-                space=self.instance_space,
+                space=self._space_by_uri[identifier],
                 external_id=identifier,
                 type=(projection.view_id.space, projection.view_id.external_id),
-                start_node=(self.instance_space, start_node),
-                end_node=(self.instance_space, end_node),
+                start_node=(self._space_by_uri[start_node], start_node),
+                end_node=(self._space_by_uri[end_node], end_node),
                 sources=sources,
             )
         else:
             yield dm.NodeApply(
-                space=self.instance_space,
+                space=self._space_by_uri[identifier],
                 external_id=identifier,
                 type=(projection.view_id.space, projection.view_id.external_id),
                 sources=sources,
@@ -432,11 +468,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             for target in values:
                 external_id = f"{identifier}.{prop_id}.{target}"
-                start_node, end_node = (self.instance_space, identifier), (self.instance_space, target)
+                start_node, end_node = (
+                    (self._space_by_uri[identifier], identifier),
+                    (self._space_by_uri[target], target),
+                )
                 if edge.direction == "inwards":
                     start_node, end_node = end_node, start_node
                 yield dm.EdgeApply(
-                    space=self.instance_space,
+                    space=self._space_by_uri[identifier],
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
                     start_node=start_node,
@@ -463,7 +502,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     DataModelInstancesAcl.Action.Write_Properties,
                     DataModelInstancesAcl.Action.Read,
                 ],
-                scope=DataModelInstancesAcl.Scope.SpaceID([self.instance_space]),
+                scope=DataModelInstancesAcl.Scope.SpaceID([self._instance_space]),
             )
         ]
 
