@@ -176,7 +176,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         views_by_id = {view.as_id(): view for view in views}
 
         ordered_view_ids, properties_dependent_on_self_by_view_id = (
-            self._client.schema.order_views_by_container_dependencies(views_by_id, containers)
+            self._client.schema.order_views_by_container_dependencies(views_by_id, containers, skip_readonly=True)
         )
 
         view_iterations: list[_ViewIterator] = []

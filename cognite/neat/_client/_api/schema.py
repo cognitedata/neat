@@ -7,6 +7,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._constants import is_readonly_property
 from cognite.neat._issues.errors import NeatValueError
 
 if TYPE_CHECKING:
@@ -115,7 +116,9 @@ class SchemaAPI:
 
     @staticmethod
     def order_views_by_container_dependencies(
-        views_by_id: Mapping[dm.ViewId, dm.View | dm.ViewApply], containers: Sequence[dm.Container | dm.ContainerApply]
+        views_by_id: Mapping[dm.ViewId, dm.View | dm.ViewApply],
+        containers: Sequence[dm.Container | dm.ContainerApply],
+        skip_readonly: bool = False,
     ) -> tuple[list[dm.ViewId], dict[dm.ViewId, set[str]]]:
         """Sorts the views by container constraints."""
         container_by_id = {container.as_id(): container for container in containers}
@@ -130,6 +133,8 @@ class SchemaAPI:
             dependencies = set()
             for prop_id, prop in (view.properties or {}).items():
                 if not isinstance(prop, dm.MappedProperty | dm.MappedPropertyApply):
+                    continue
+                if skip_readonly and is_readonly_property(prop.container, prop.container_property_identifier):
                     continue
                 container = container_by_id[prop.container]
                 container_prop = container.properties[prop.container_property_identifier]
