@@ -118,7 +118,11 @@ def generate_triples(
                 class_count.pop(class_)
 
     # Subset data model to only classes that are defined in class count
-    rules = analysis.subset_rules(set(class_count.keys())) if defined_classes != set(class_count.keys()) else rules
+    rules = (
+        analysis.subset_information_rules(set(class_count.keys()))
+        if defined_classes != set(class_count.keys())
+        else rules
+    )
 
     class_linkage = analysis.class_linkage().to_pandas()
 

@@ -574,6 +574,14 @@ class Examples:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
+    @property
+    def _get_client(self) -> NeatClient:
+        if self._state.client is None:
+            raise NeatValueError(
+                "No client provided. Please provide a client to read a data model."
+            )
+        return self._state.client
+
     def nordic44(self) -> IssueList:
         """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
         self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
@@ -582,4 +590,13 @@ class Examples:
     def pump_example(self) -> IssueList:
         """Reads the Hello World pump example into the NeatSession."""
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
+        return self._state.rule_import(importer)
+
+    def core_data_model(self) -> IssueList:
+        """Reads the core data model example into the NeatSession."""
+
+        cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
+        importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
+            self._get_client, cdm_v1
+        )
         return self._state.rule_import(importer)
