@@ -2,6 +2,7 @@ import itertools
 import json
 import urllib.parse
 import warnings
+from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -98,7 +99,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         super().__init__(graph_store)
         self.dms_rules = dms_rules
         self.info_rules = info_rules
-        self.instance_space = instance_space
+        self._instance_space = instance_space
+        self._space_by_uri: dict[str, str] = defaultdict(lambda: instance_space)
         self._issues = IssueList(create_issues or [])
         self._client = client
         self._unquote_external_ids = unquote_external_ids
@@ -302,7 +304,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    result = [{"space": self.instance_space, "externalId": remove_namespace_from_uri(v)} for v in value]
+                    external_ids = (remove_namespace_from_uri(v) for v in value)
+                    result = [{"space": self._space_by_uri[e], "externalId": e} for e in external_ids]
+                    # Todo: Account for max_list_limit
                     if len(result) <= DMS_DIRECT_RELATION_LIST_LIMIT:
                         return result
                     warnings.warn(
@@ -318,7 +322,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     result.sort(key=lambda x: (x["space"], x["externalId"]))
                     return result[:DMS_DIRECT_RELATION_LIST_LIMIT]
                 elif value:
-                    return {"space": self.instance_space, "externalId": remove_namespace_from_uri(value[0])}
+                    external_id = remove_namespace_from_uri(value[0])
+                    return {"space": self._space_by_uri[external_id], "externalId": external_id}
                 return {}
 
             validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
@@ -396,16 +401,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         if start_node and end_node:
             yield dm.EdgeApply(
-                space=self.instance_space,
+                space=self._space_by_uri[identifier],
                 external_id=identifier,
                 type=(projection.view_id.space, projection.view_id.external_id),
-                start_node=(self.instance_space, start_node),
-                end_node=(self.instance_space, end_node),
+                start_node=(self._space_by_uri[start_node], start_node),
+                end_node=(self._space_by_uri[end_node], end_node),
                 sources=sources,
             )
         else:
             yield dm.NodeApply(
-                space=self.instance_space,
+                space=self._space_by_uri[identifier],
                 external_id=identifier,
                 type=(projection.view_id.space, projection.view_id.external_id),
                 sources=sources,
@@ -432,11 +437,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             for target in values:
                 external_id = f"{identifier}.{prop_id}.{target}"
-                start_node, end_node = (self.instance_space, identifier), (self.instance_space, target)
+                start_node, end_node = (
+                    (self._space_by_uri[identifier], identifier),
+                    (self._space_by_uri[target], target),
+                )
                 if edge.direction == "inwards":
                     start_node, end_node = end_node, start_node
                 yield dm.EdgeApply(
-                    space=self.instance_space,
+                    space=self._space_by_uri[identifier],
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
                     start_node=start_node,
@@ -463,7 +471,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     DataModelInstancesAcl.Action.Write_Properties,
                     DataModelInstancesAcl.Action.Read,
                 ],
-                scope=DataModelInstancesAcl.Scope.SpaceID([self.instance_space]),
+                scope=DataModelInstancesAcl.Scope.SpaceID([self._instance_space]),
             )
         ]
 
