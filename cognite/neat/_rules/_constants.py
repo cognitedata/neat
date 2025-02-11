@@ -185,3 +185,12 @@ class _Patterns:
 
 
 PATTERNS = _Patterns()
+
+
+def get_internal_properties() -> set[str]:
+    return {
+        "physical",
+        "logical",
+        "conceptual",
+        "Neat ID",
+    }

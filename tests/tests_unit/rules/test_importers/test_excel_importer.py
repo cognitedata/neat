@@ -140,6 +140,11 @@ class TestExcelImporter:
                 DMSRules,
                 id="Svein Harald Enterprise Extension DMS",
             ),
+            pytest.param(
+                DATA_FOLDER / "pump_example_with_missing_cells.xlsx",
+                DMSRules,
+                id="Missing expected cell entire row drop",
+            ),
         ],
     )
     def test_import_valid_rules(
@@ -174,3 +179,13 @@ class TestExcelImporter:
 
         for views in rules.views:
             assert views.in_model
+
+    def test_import_dms_rules_with_skipped_rows_error_at_correct_loc(self):
+        importer = ExcelImporter(DATA_FOLDER / "pump_example_with_missing_cells_raise_issues.xlsx")
+
+        with catch_issues() as issues:
+            read_rules = importer.to_rules()
+            _ = VerifyAnyRules().transform(read_rules)
+
+        assert len(issues) == 1
+        assert issues[0].row == 15
