@@ -92,6 +92,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         info_rules: InformationRules,
         graph_store: NeatGraphStore,
         instance_space: str,
+        space_property: str | None = None,
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
@@ -100,6 +101,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self.dms_rules = dms_rules
         self.info_rules = info_rules
         self._instance_space = instance_space
+        self._space_property = space_property
         self._space_by_uri: dict[str, str] = defaultdict(lambda: instance_space)
         self._issues = IssueList(create_issues or [])
         self._client = client
@@ -133,6 +135,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
         view_iterations, issues = self._create_view_iterations()
         yield from issues
+        if self._space_property:
+            self._lookup_space_by_uri(view_iterations)
+
         for it in view_iterations:
             view = it.view
             if view is None:
@@ -212,6 +217,22 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if count > 0:
                 view_iterations[view_id] = _ViewIterator(view_id, count, set(), query)
         return view_iterations
+
+    def _lookup_space_by_uri(self, view_iterations: list[_ViewIterator]) -> None:
+        if self._space_property is None:
+            return
+        total = sum(it.instance_count for it in view_iterations)
+
+        instance_iterable = itertools.chain.from_iterable(
+            self.graph_store.read(it.query.rdf_type, property_renaming_config=it.query.property_renaming_config)
+            for it in view_iterations
+        )
+
+        instance_iterable = iterate_progress_bar_if_above_config_threshold(
+            instance_iterable, total, f"Looking up spaces for {total} instances..."
+        )
+        for instance, properties in instance_iterable:
+            self._space_by_uri[instance] = properties.get(self._space_property, [self._instance_space])[0]
 
     def _create_projection(self, view: dm.View) -> tuple[_Projection, IssueList]:
         issues = IssueList()
