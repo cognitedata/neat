@@ -113,6 +113,7 @@ def svein_harald_dms_rules() -> DMSRules:
 def olav_rebuild_dms_rules() -> DMSRules:
     return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_verified_rules()
 
+
 @pytest.fixture(scope="session")
 def cognite_core_schema() -> DMSSchema:
     return DMSSchema.from_zip(COGNITE_CORE_ZIP)

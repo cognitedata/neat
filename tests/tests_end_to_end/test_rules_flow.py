@@ -62,7 +62,9 @@ class TestImportersToYAMLExporter:
         data_regression.check(exported_rules)
 
     @pytest.mark.freeze_time("2025-01-03")
-    def test_to_extension_transformer(self, cognite_core_schema: DMSSchema, data_regression: DataRegressionFixture) -> None:
+    def test_to_extension_transformer(
+        self, cognite_core_schema: DMSSchema, data_regression: DataRegressionFixture
+    ) -> None:
         def lookup_containers(ids: list[ContainerId]) -> ContainerList:
             return ContainerList(
                 [
