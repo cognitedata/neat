@@ -183,10 +183,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         else:
             ordered_view_ids = list(iterations_by_view_id.keys())
             properties_dependent_on_self_by_view_id = {}
-            view_by_id = {}
+            views_by_id = {}
             with catch_issues() as issues:
                 read_model = self.dms_rules.as_schema().as_read_model()
-                view_by_id.update({view.as_id(): view for view in read_model.views})
+                views_by_id.update({view.as_id(): view for view in read_model.views})
             if issues.has_errors:
                 return [], issues
 
@@ -197,6 +197,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             view_iteration = iterations_by_view_id[view_id]
             view_iteration.view = views_by_id.get(view_id)
             view_iteration.self_required_properties = properties_dependent_on_self_by_view_id.get(view_id, set())
+            view_iterations.append(view_iteration)
         return view_iterations, issues
 
     def _select_views_with_instances(self, view_query_by_id: ViewQueryDict) -> dict[dm.ViewId, _ViewIterator]:
@@ -395,7 +396,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield dm.EdgeApply(
                 space=self.instance_space,
                 external_id=identifier,
-                type=(self.instance_space, type_),
+                type=(projection.view_id.space, type_),
                 start_node=(self.instance_space, start_node),
                 end_node=(self.instance_space, end_node),
                 sources=sources,
@@ -404,7 +405,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield dm.NodeApply(
                 space=self.instance_space,
                 external_id=identifier,
-                type=(self.instance_space, type_),
+                type=(projection.view_id.space, type_),
                 sources=sources,
             )
         yield from self._create_edges_without_properties(identifier, properties, projection)
