@@ -7,7 +7,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._constants import is_readonly_property
+from cognite.neat._constants import is_hierarchy_property, is_readonly_property
 from cognite.neat._issues.errors import NeatValueError
 
 if TYPE_CHECKING:
@@ -127,7 +127,7 @@ class SchemaAPI:
             for container_id in view.referenced_containers():
                 views_by_container[container_id].add(view_id)
 
-        properties_dependent_on_self: dict[dm.ViewId, set[str]] = defaultdict(set)
+        hierarchical_properties_by_view_id: dict[dm.ViewId, set[str]] = defaultdict(set)
         view_id_by_dependencies: dict[dm.ViewId, set[dm.ViewId]] = {}
         for view_id, view in views_by_id.items():
             dependencies = set()
@@ -136,22 +136,21 @@ class SchemaAPI:
                     continue
                 if skip_readonly and is_readonly_property(prop.container, prop.container_property_identifier):
                     continue
+                if is_hierarchy_property(prop.container, prop.container_property_identifier):
+                    hierarchical_properties_by_view_id[view_id].add(prop_id)
+                    continue
                 container = container_by_id[prop.container]
                 container_prop = container.properties[prop.container_property_identifier]
                 if not isinstance(container_prop.type, dm.DirectRelation):
                     continue
                 if prop.source == view_id:
-                    properties_dependent_on_self[view_id].add(prop_id)
+                    hierarchical_properties_by_view_id[view_id].add(prop_id)
                 for constraint in container.constraints.values():
                     if isinstance(constraint, dm.RequiresConstraint):
-                        view_dependencies = views_by_container.get(constraint.require, set())
-                        if view_id in view_dependencies:
-                            # Dependency on self
-                            properties_dependent_on_self[view_id].add(prop_id)
-                            view_dependencies.remove(view_id)
+                        view_dependencies = views_by_container.get(constraint.require, set()) - {view_id}
                         dependencies.update(view_dependencies)
             view_id_by_dependencies[view_id] = dependencies
 
         ordered_view_ids = list(TopologicalSorter(view_id_by_dependencies).static_order())
 
-        return list(ordered_view_ids), properties_dependent_on_self
+        return list(ordered_view_ids), hierarchical_properties_by_view_id

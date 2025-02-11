@@ -44,17 +44,16 @@ class _ViewIterator:
     """This is a helper class to iterate over the views
 
     Args:
-        view: The view to iterate over
+        view_id: The view to iterate over
         instance_count: The number of instances in the view
-        self_required_properties: The properties in the view that are required to be created first.
-            There is only one known case, the CogniteAsset.parent property. If the view has a dependency on itself,
-            the DMS will create the nodes twice, first without the parent property, and then add only
-            the parent property.
+        hierarchical_properties: The properties that are hierarchical, meaning they point to the same instances.
+        query: The query to get the instances from the store.
+        view: The view object from the client.
     """
 
     view_id: dm.ViewId
     instance_count: int
-    self_required_properties: set[str]
+    hierarchical_properties: set[str]
     query: ViewQuery
     view: dm.View | None = None
 
@@ -145,27 +144,28 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
             for identifier, properties in instance_iterable:
                 yield from self._create_instances(
-                    identifier, properties, projection, stop_on_exception, exclude=it.self_required_properties
+                    identifier, properties, projection, stop_on_exception, exclude=it.hierarchical_properties
                 )
-            if it.self_required_properties:
-                # Force calling upload on the instances above, before
-                # we add the properties pointing to the same instances.
+            if it.hierarchical_properties:
+                # Force the creation of instances, before we create the hierarchical properties.
                 yield _END_OF_CLASS
-                # We need to run the view again to add the self properties.
-                # This is only relevant if the view has a require constraint on the container.
-                # If not, we can create an empty node on the fly.
-                reader = self.graph_store.read(query.rdf_type, property_renaming_config=query.property_renaming_config)
-                instance_iterable = iterate_progress_bar_if_above_config_threshold(
-                    reader,
-                    it.instance_count,
-                    f"Loading {it.view_id!r}({humanize_collection(it.self_required_properties)})",
-                )
-                for identifier, properties in instance_iterable:
-                    yield from self._create_instances(
-                        identifier, properties, projection, stop_on_exception, include=it.self_required_properties
-                    )
+                yield from self._create_hierarchical_properties(it, projection, stop_on_exception)
 
             yield _END_OF_CLASS
+
+    def _create_hierarchical_properties(
+        self, it: _ViewIterator, projection: _Projection, stop_on_exception: bool
+    ) -> Iterable[dm.InstanceApply | NeatIssue]:
+        reader = self.graph_store.read(it.query.rdf_type, property_renaming_config=it.query.property_renaming_config)
+        instance_iterable = iterate_progress_bar_if_above_config_threshold(
+            reader,
+            it.instance_count,
+            f"Loading {it.view_id!r} hierarchical properties: {humanize_collection(it.hierarchical_properties)}",
+        )
+        for identifier, properties in instance_iterable:
+            yield from self._create_instances(
+                identifier, properties, projection, stop_on_exception, include=it.hierarchical_properties
+            )
 
     def _create_view_iterations(self) -> tuple[list[_ViewIterator], IssueList]:
         view_query_by_id = RulesAnalysis(self.info_rules, self.dms_rules).view_query_by_id
@@ -196,7 +196,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             view_iteration = iterations_by_view_id[view_id]
             view_iteration.view = views_by_id.get(view_id)
-            view_iteration.self_required_properties = properties_dependent_on_self_by_view_id.get(view_id, set())
+            view_iteration.hierarchical_properties = properties_dependent_on_self_by_view_id.get(view_id, set())
             view_iterations.append(view_iteration)
         return view_iterations, issues
 
@@ -368,7 +368,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 raise error from None
             yield error
             return
-        type_ = properties.pop(RDF.type)[0]
+        _ = properties.pop(RDF.type)[0]
         if start_node and self._unquote_external_ids:
             start_node = urllib.parse.unquote(start_node)
         if end_node and self._unquote_external_ids:
@@ -396,7 +396,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield dm.EdgeApply(
                 space=self.instance_space,
                 external_id=identifier,
-                type=(projection.view_id.space, type_),
+                type=(projection.view_id.space, projection.view_id.external_id),
                 start_node=(self.instance_space, start_node),
                 end_node=(self.instance_space, end_node),
                 sources=sources,
@@ -405,7 +405,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield dm.NodeApply(
                 space=self.instance_space,
                 external_id=identifier,
-                type=(projection.view_id.space, type_),
+                type=(projection.view_id.space, projection.view_id.external_id),
                 sources=sources,
             )
         yield from self._create_edges_without_properties(identifier, properties, projection)

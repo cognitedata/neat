@@ -11,9 +11,9 @@ class TestSchemaAPI:
         selected_views = {v_id: v for v_id, v in schema.views.items() if v_id.external_id in external_ids}
         selected_containers = [c for c in schema.containers.values() if c.external_id in external_ids]
 
-        id_order, depend_on_self = SchemaAPI.order_views_by_container_dependencies(
+        id_order, hierarchical_properties = SchemaAPI.order_views_by_container_dependencies(
             selected_views, selected_containers, skip_readonly=True
         )
         # The three first ones are not dependent on any other view
         assert id_order[-1].external_id == "CogniteAsset"
-        assert depend_on_self == {dm.ViewId("cdf_cdm", "CogniteAsset", "v1"): {"parent"}}
+        assert hierarchical_properties == {dm.ViewId("cdf_cdm", "CogniteAsset", "v1"): {"parent"}}
