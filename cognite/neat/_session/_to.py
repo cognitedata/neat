@@ -244,12 +244,30 @@ class CDFToAPI:
     def instances(
         self,
         space: str | None = None,
+        space_property: str | None = None,
     ) -> UploadResultList:
         """Export the verified DMS instances to CDF.
 
         Args:
             space: Name of instance space to use. Default is to suffix the schema space with '_instances'.
-            Note this space is required to be different than the space with the data model.
+                Note this space is required to be different from the space with the data model.
+            space_property: This is an alternative to the 'space' argument. If provided, the space will set to the
+                value of the property with the given name for each instance. If the property is not found, the
+                'space' argument will be used. Defaults to None.
+
+        Returns:
+            UploadResultList: The result of the upload.
+
+        Example:
+            Export instances to CDF
+            ```python
+            neat.to.cdf.instances()
+            ```
+
+            Export instances to CDF using the `dataSetId` property as the space
+            ```python
+            neat.to.cdf.instances(space_property="dataSetId")
+            ```
 
         """
         if not self._state.client:
