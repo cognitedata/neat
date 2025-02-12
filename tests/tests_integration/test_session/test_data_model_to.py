@@ -47,10 +47,7 @@ class TestDataModelToCDF:
     def test_to_cdf_recreate(self, neat_client: NeatClient) -> None:
         car_model = create_new_car_model(neat_client, "test_to_cdf_recreate", "test_to_cdf_recreate_data")
         neat = NeatSession(neat_client)
-
         neat.read.cdf.data_model(car_model)
-
-        neat.verify()
 
         result = neat.to.cdf.data_model(existing="recreate", drop_data=False)
         result_by_name = {r.name: r for r in result}

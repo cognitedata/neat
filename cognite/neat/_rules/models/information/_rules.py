@@ -209,6 +209,12 @@ class InformationProperty(SheetRow):
                     ) from None
         return self
 
+    @field_serializer("instance_source", when_used="unless-none")
+    def serialize_instance_source(self, value: list[URIRefType] | None) -> str | None:
+        if value is None:
+            return None
+        return ",".join(str(v) for v in value)
+
     @field_serializer("max_count", when_used="json-unless-none")
     def serialize_max_count(self, value: int | float | None) -> int | float | None | str:
         if isinstance(value, float) and math.isinf(value):
