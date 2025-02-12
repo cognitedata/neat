@@ -7,8 +7,9 @@ from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DMS_DIRECT_RELATION_LIST_LIMIT
 from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._issues import IssueList
 from cognite.neat._rules.catalog import imf_attributes
-from cognite.neat._rules.importers import ExcelImporter, InferenceImporter
+from cognite.neat._rules.importers import ExcelImporter, SubclassInferenceImporter
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ContainerEntity, ViewEntity
 from cognite.neat._rules.transformers import InformationToDMS
 from cognite.neat._store import NeatGraphStore
@@ -21,7 +22,7 @@ def test_metadata_as_json_filed():
         AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False, as_write=True)
     )
 
-    importer = InferenceImporter.from_graph_store(store)
+    importer = SubclassInferenceImporter(IssueList(), store.dataset, data_model_id=("neat_space", "MyAsset", "1"))
 
     info_rules = importer.to_rules().rules.as_verified_rules()
     # Need to change externalId as it is not allowed in DMS
