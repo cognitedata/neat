@@ -14,3 +14,4 @@ class AlphaFlags:
     same_space_properties_only_export = AlphaWarning("same-space-properties-only")
     standardize_naming = AlphaWarning("standardize_naming")
     standardize_space_and_version = AlphaWarning("standardize_space_and_version")
+    data_model_subsetting = AlphaWarning("data_model_subsetting")

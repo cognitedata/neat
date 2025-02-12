@@ -1,6 +1,5 @@
 from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models import InformationRules
-from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import (
     InformationInputClass,
     InformationInputMetadata,
@@ -30,12 +29,6 @@ class TestRulesAnalysis:
     def test_symmetric_pairs(self, david_rules: InformationRules) -> None:
         assert len(RulesAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=True)) == 0
         assert len(RulesAnalysis(david_rules).symmetrically_connected_classes(include_ancestors=False)) == 0
-
-    def test_subset_rules(self, david_rules: InformationRules) -> None:
-        assert RulesAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes[
-            0
-        ].class_ == ClassEntity.load("power:GeoLocation")
-        assert len(RulesAnalysis(david_rules).subset_rules({ClassEntity.load("power:GeoLocation")}).classes) == 1
 
 
 class TestAnalysis:

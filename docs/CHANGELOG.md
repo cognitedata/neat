@@ -19,6 +19,7 @@ Changes are grouped as follows:
 ### Added
 - [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
 - The `neat.to.excel(...)` now supports passing a data model directly in the `include_reference` parameter.
+- [ALPHA] Ability to subset data model to desired concepts (classes/views) via `neat.subset.data_model` endpoint
 
 ### Fixed
 - In Model was not automatically set to True importing from spreadsheet missing value in this column
@@ -32,6 +33,7 @@ Changes are grouped as follows:
 ### Improved
 - The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
 - Automatic drop of rows in Excel rules if cells for critical columns are missing
+- [BREAKING] multi value types are now serialized as a comma separated values (previous we used `|` as separator)
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
