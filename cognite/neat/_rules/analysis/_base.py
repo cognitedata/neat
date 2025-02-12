@@ -17,15 +17,17 @@ from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models._base_rules import SheetList
 from cognite.neat._rules.models._rdfpath import (
-    Hop,
     RDFPath,
-    SelfReferenceProperty,
     SingleProperty,
 )
+from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.dms import DMSProperty
-from cognite.neat._rules.models.dms._rules import DMSView
+from cognite.neat._rules.models.dms._rules import DMSContainer, DMSView
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
-from cognite.neat._rules.models.entities._single_value import UnknownEntity
+from cognite.neat._rules.models.entities._single_value import (
+    DMSUnknownEntity,
+    UnknownEntity,
+)
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
 from cognite.neat._utils.collection_ import most_occurring_element
 from cognite.neat._utils.rdf_ import get_inheritance_path
@@ -296,7 +298,7 @@ class RulesAnalysis:
         return {cls.class_: cls for cls in rules.classes}
 
     @property
-    def view_by_view_entity(self) -> dict[ClassEntity, InformationClass]:
+    def view_by_view_entity(self) -> dict[ViewEntity, DMSView]:
         """Get a dictionary of class entities to class entities."""
         rules = self.dms
         return {view.view: view for view in rules.views}
@@ -336,10 +338,7 @@ class RulesAnalysis:
 
     def defined_views(self, include_ancestors: bool = False) -> set[ViewEntity]:
         properties_by_view = self.properties_by_view(include_ancestors)
-        return {
-            prop.view
-            for prop in itertools.chain.from_iterable(properties_by_view.values())
-        }
+        return {prop.view for prop in itertools.chain.from_iterable(properties_by_view.values())}
 
     def defined_classes(
         self,
@@ -354,10 +353,7 @@ class RulesAnalysis:
             Set of classes that have been defined in the data model
         """
         properties_by_class = self.properties_by_class(include_ancestors)
-        return {
-            prop.class_
-            for prop in itertools.chain.from_iterable(properties_by_class.values())
-        }
+        return {prop.class_ for prop in itertools.chain.from_iterable(properties_by_class.values())}
 
     def class_linkage(
         self,
@@ -422,7 +418,6 @@ class RulesAnalysis:
         return sym_pairs
 
     def subset_dms_rules(self, views: Set[ViewEntity]) -> DMSRules:
-
         views_by_view = self.view_by_view_entity
         implements_by_view = self.implements_by_view()
 
@@ -431,12 +426,7 @@ class RulesAnalysis:
 
         ancestors: set[ViewEntity] = set()
         for view in subset:
-            ancestors = ancestors.union(
-                {
-                    ancestor
-                    for ancestor in get_inheritance_path(view, implements_by_view)
-                }
-            )
+            ancestors = ancestors.union({ancestor for ancestor in get_inheritance_path(view, implements_by_view)})
         subset = subset.union(ancestors)
 
         if not subset:
@@ -452,12 +442,43 @@ class RulesAnalysis:
             "metadata": self.dms.metadata.model_copy(),
             "views": SheetList[DMSView](),
             "properties": SheetList[DMSProperty](),
+            "containers": SheetList[DMSContainer](),
+            "enum": self.dms.enum,
+            "nodes": self.dms.nodes,
         }
 
+        # add views
         for view in subset:
             subsetted_rules["views"].append(views_by_view[view])
 
-        return subsetted_rules
+        used_containers = set()
+
+        # add properties
+        for view, properties in self.properties_by_view(include_ancestors=False).items():
+            if view not in subset:
+                continue
+
+            for property_ in properties:
+                if (
+                    isinstance(property_.value_type, DataType)
+                    or isinstance(property_.value_type, DMSUnknownEntity)
+                    or (isinstance(property_.value_type, ViewEntity) and property_.value_type in subset)
+                ):
+                    subsetted_rules["properties"].append(property_)
+
+                    if property_.container:
+                        used_containers.add(property_.container)
+
+        # add containers
+        if self.dms.containers:
+            for container in self.dms.containers:
+                if container.container in used_containers:
+                    subsetted_rules["containers"].append(container)
+
+        try:
+            return DMSRules.model_validate(subsetted_rules)
+        except ValidationError as e:
+            raise NeatValueError(f"Cannot subset rules: {e}") from e
 
     def subset_information_rules(self, classes: Set[ClassEntity]) -> InformationRules:
         """Subset rules to only include desired classes and their properties.
@@ -473,17 +494,6 @@ class RulesAnalysis:
             will be included in the reduced data model as well even though the parent class(es) are
             not in the desired classes set. This is to ensure that the reduced data model is
             consistent and complete.
-
-        !!! note "Partial Reduction"
-            This method does not perform checks if classes that are value types of desired classes
-            properties are part of desired classes. If a class is not part of desired classes, but it
-            is a value type of a property of a class that is part of desired classes, derived reduced
-            rules will be marked as partial.
-
-        !!! note "Validation"
-            This method will attempt to validate the reduced rules with custom validations.
-            If it fails, it will return a partial rules with a warning message, validated
-            only with base Pydantic validators.
         """
         class_by_class_entity = self.class_by_class_entity
         parent_entity_by_class_entity = self.parents_by_class()
@@ -495,12 +505,7 @@ class RulesAnalysis:
         ancestors: set[ClassEntity] = set()
         for class_ in subset:
             ancestors = ancestors.union(
-                {
-                    ancestor
-                    for ancestor in get_inheritance_path(
-                        class_, parent_entity_by_class_entity
-                    )
-                }
+                {ancestor for ancestor in get_inheritance_path(class_, parent_entity_by_class_entity)}
             )
         subset = subset.union(ancestors)
 
@@ -523,71 +528,38 @@ class RulesAnalysis:
         for class_ in subset:
             subsetted_rules["classes"].append(class_by_class_entity[class_])
 
-        class_property_pairs = self.properties_by_class(include_ancestors=False)
-
-        for class_, properties in class_property_pairs.items():
-            if class_ in subset:
-                # need one more pass to remove properties that are not part of the subset
-
-                subsetted_rules["properties"].extend(properties)
+        for class_, properties in self.properties_by_class(include_ancestors=False).items():
+            if class_ not in subset:
+                continue
+            for property_ in properties:
+                # datatype property can be added directly
+                if (
+                    isinstance(property_.value_type, DataType)
+                    and (isinstance(property_.value_type, ClassEntity) and property_.value_type in subset)
+                    and isinstance(property_.value_type, UnknownEntity)
+                ):
+                    subsetted_rules["properties"].append(property_)
+                # object property can be added if the value type is in the subset
+                elif isinstance(property_.value_type, MultiValueTypeInfo):
+                    allowed = [t for t in property_.value_type.types if t in subset or isinstance(t, DataType)]
+                    if allowed:
+                        subsetted_rules["properties"].append(
+                            property_.model_copy(
+                                deep=True,
+                                update={"value_type": MultiValueTypeInfo(types=allowed)},
+                            )
+                        )
 
         try:
             return InformationRules.model_validate(subsetted_rules)
         except ValidationError as e:
-            # should raise Neat Error saying it is not possible to generate a reduced data model
-            warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
-            return InformationRules.model_construct(**subsetted_rules)
-
-    def has_hop_transformations(self):
-        return any(
-            prop_.instance_source and isinstance(prop_.instance_source.traversal, Hop)
-            for prop_ in self.information.properties
-        )
-
-    def has_self_reference_property_transformations(self):
-        return any(
-            prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
-            for prop_ in self.information.properties
-        )
-
-    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
-        property_renaming_configuration: dict[str | URIRef, str] = {}
-
-        if definitions := self.properties_by_id_by_class(has_instance_source=True, include_ancestors=True).get(class_):
-            for property_id, definition in definitions.items():
-                transformation = cast(RDFPath, definition.instance_source)
-                # use case we have a single property rdf path, and defined prefix
-                # in either metadata or prefixes of rules
-                if isinstance(
-                    transformation.traversal,
-                    SingleProperty,
-                ) and (
-                    transformation.traversal.property.prefix in self.information.prefixes
-                    or transformation.traversal.property.prefix == self.information.metadata.prefix
-                ):
-                    namespace = (
-                        self.information.metadata.namespace
-                        if transformation.traversal.property.prefix == self.information.metadata.prefix
-                        else self.information.prefixes[transformation.traversal.property.prefix]
-                    )
-
-                    property_renaming_configuration[namespace[transformation.traversal.property.suffix]] = property_id
-
-                # otherwise we default to the property id
-                else:
-                    property_renaming_configuration[property_id] = property_id
-
-        return property_renaming_configuration
+            raise NeatValueError(f"Cannot subset rules: {e}") from e
 
     @overload
-    def _properties_by_neat_id(
-        self, format: Literal["info"] = "info"
-    ) -> dict[URIRef, InformationProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
 
     @overload
-    def _properties_by_neat_id(
-        self, format: Literal["dms"] = "dms"
-    ) -> dict[URIRef, DMSProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
 
     def _properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
@@ -598,10 +570,6 @@ class RulesAnalysis:
             return {prop.neatId: prop for prop in self.dms.properties if prop.neatId}
         else:
             raise NeatValueError(f"Invalid format: {format}")
-
-    @property
-    def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
-        return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
 
     def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
         if (
