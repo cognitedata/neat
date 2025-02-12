@@ -23,7 +23,7 @@ def load_value_type(
     elif isinstance(raw, str):
         # property holding xsd data type
         # check if it is multi value type
-        if "|" in raw:
+        if "," in raw:
             value_type = MultiValueTypeInfo.load(raw)
             value_type.set_default_prefix(default_prefix)
             return value_type

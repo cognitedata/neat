@@ -33,6 +33,7 @@ Changes are grouped as follows:
 ### Improved
 - The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
 - Automatic drop of rows in Excel rules if cells for critical columns are missing
+- [BREAKING] multi value types are now serialized as a comma separated values (previous we used `|` as separator)
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
