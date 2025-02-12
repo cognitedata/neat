@@ -1831,12 +1831,12 @@ class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         subset = subset.union(ancestors)
 
         if not subset:
-            raise ValueError("None of the requested classes are defined in the rules!")
+            raise NeatValueError("None of the requested views are defined in the rules!")
 
         if nonexisting := self._views - subset:
-            warnings.warn(
-                f"Following requested classes do not exist in the rules: {nonexisting}",
-                stacklevel=2,
+            raise NeatValueError(
+                "Following requested views do not exist"
+                f" in the rules: [{','.join([view.external_id for view in nonexisting])}]. Aborting."
             )
 
         subsetted_rules: dict[str, Any] = {
@@ -1906,12 +1906,13 @@ class SubsetInformationRules(VerifiedRulesTransformer[InformationRules, Informat
         subset = subset.union(ancestors)
 
         if not subset:
-            raise ValueError("None of the requested classes are defined in the rules!")
+            raise NeatValueError("None of the requested classes are defined in the rules!")
 
         if nonexisting := self._classes - subset:
-            warnings.warn(
-                f"Following requested classes do not exist in the rules: {nonexisting}",
-                stacklevel=2,
+            raise NeatValueError(
+                "Following requested classes do not exist"
+                f" in the rules: [{','.join([class_.suffix for class_ in nonexisting])}]"
+                ". Aborting."
             )
 
         subsetted_rules: dict[str, Any] = {
