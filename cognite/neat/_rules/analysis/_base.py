@@ -9,24 +9,23 @@ from typing import Any, Literal, TypeVar, cast, overload
 import networkx as nx
 import pandas as pd
 from cognite.client import data_modeling as dm
-from pydantic import ValidationError
 from rdflib import URIRef
 
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models._rdfpath import (
-    Hop,
     RDFPath,
-    SelfReferenceProperty,
     SingleProperty,
 )
 from cognite.neat._rules.models.dms import DMSProperty
+from cognite.neat._rules.models.dms._rules import DMSView
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
-from cognite.neat._rules.models.entities._single_value import UnknownEntity
+from cognite.neat._rules.models.entities._single_value import (
+    UnknownEntity,
+)
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
 from cognite.neat._utils.collection_ import most_occurring_element
-from cognite.neat._utils.rdf_ import get_inheritance_path
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -271,6 +270,7 @@ class RulesAnalysis:
 
     def class_by_suffix(self) -> dict[str, InformationClass]:
         """Get a dictionary of class suffixes to class entities."""
+        # TODO: Remove this method
         class_dict: dict[str, InformationClass] = {}
         for definition in self.information.classes:
             entity = definition.class_
@@ -285,6 +285,18 @@ class RulesAnalysis:
                 continue
             class_dict[entity.suffix] = definition
         return class_dict
+
+    @property
+    def class_by_class_entity(self) -> dict[ClassEntity, InformationClass]:
+        """Get a dictionary of class entities to class entities."""
+        rules = self.information
+        return {cls.class_: cls for cls in rules.classes}
+
+    @property
+    def view_by_view_entity(self) -> dict[ViewEntity, DMSView]:
+        """Get a dictionary of class entities to class entities."""
+        rules = self.dms
+        return {view.view: view for view in rules.views}
 
     def property_by_id(self) -> dict[str, list[InformationProperty]]:
         """Get a dictionary of property IDs to property entities."""
@@ -319,6 +331,10 @@ class RulesAnalysis:
 
         return class_property_pairs
 
+    def defined_views(self, include_ancestors: bool = False) -> set[ViewEntity]:
+        properties_by_view = self.properties_by_view(include_ancestors)
+        return {prop.view for prop in itertools.chain.from_iterable(properties_by_view.values())}
+
     def defined_classes(
         self,
         include_ancestors: bool = False,
@@ -331,8 +347,8 @@ class RulesAnalysis:
         Returns:
             Set of classes that have been defined in the data model
         """
-        class_property_pairs = self.properties_by_class(include_ancestors)
-        return {prop.class_ for prop in itertools.chain.from_iterable(class_property_pairs.values())}
+        properties_by_class = self.properties_by_class(include_ancestors)
+        return {prop.class_ for prop in itertools.chain.from_iterable(properties_by_class.values())}
 
     def class_linkage(
         self,
@@ -396,124 +412,6 @@ class RulesAnalysis:
                 sym_pairs.add((source, target))
         return sym_pairs
 
-    def subset_rules(self, include_classes: Set[ClassEntity]) -> InformationRules:
-        """Subset rules to only include desired classes and their properties.
-
-        Args:
-            include_classes: Desired classes to include in the reduced data model
-
-        Returns:
-            Instance of InformationRules
-
-        !!! note "Inheritance"
-            If desired classes contain a class that is a subclass of another class(es), the parent class(es)
-            will be included in the reduced data model as well even though the parent class(es) are
-            not in the desired classes set. This is to ensure that the reduced data model is
-            consistent and complete.
-
-        !!! note "Partial Reduction"
-            This method does not perform checks if classes that are value types of desired classes
-            properties are part of desired classes. If a class is not part of desired classes, but it
-            is a value type of a property of a class that is part of desired classes, derived reduced
-            rules will be marked as partial.
-
-        !!! note "Validation"
-            This method will attempt to validate the reduced rules with custom validations.
-            If it fails, it will return a partial rules with a warning message, validated
-            only with base Pydantic validators.
-        """
-        class_as_dict = self.class_by_suffix()
-        parents_by_class = self.parents_by_class()
-        defined_classes = self.defined_classes(include_ancestors=True)
-
-        possible_classes = defined_classes.intersection(include_classes)
-        impossible_classes = include_classes - possible_classes
-
-        # need to add all the parent classes of the desired classes to the possible classes
-        parents: set[ClassEntity] = set()
-        for class_ in possible_classes:
-            parents = parents.union(
-                {
-                    parent
-                    for parent in get_inheritance_path(
-                        class_, {cls_: list(parents) for cls_, parents in parents_by_class.items()}
-                    )
-                }
-            )
-        possible_classes = possible_classes.union(parents)
-
-        if not possible_classes:
-            raise ValueError("None of the desired classes are defined in the data model!")
-
-        if impossible_classes:
-            warnings.warn(
-                f"Could not find the following classes defined in the data model: {impossible_classes}",
-                stacklevel=2,
-            )
-
-        reduced_data_model: dict[str, Any] = {
-            "metadata": self.information.metadata.model_copy(),
-            "prefixes": (self.information.prefixes or {}).copy(),
-            "classes": [],
-            "properties": [],
-        }
-
-        for class_ in possible_classes:
-            reduced_data_model["classes"].append(class_as_dict[str(class_.suffix)])
-
-        class_property_pairs = self.properties_by_class(include_ancestors=False)
-
-        for class_, properties in class_property_pairs.items():
-            if class_ in possible_classes:
-                reduced_data_model["properties"].extend(properties)
-
-        try:
-            return InformationRules.model_validate(reduced_data_model)
-        except ValidationError as e:
-            warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
-            return InformationRules.model_construct(**reduced_data_model)
-
-    def has_hop_transformations(self):
-        return any(
-            prop_.instance_source and isinstance(prop_.instance_source.traversal, Hop)
-            for prop_ in self.information.properties
-        )
-
-    def has_self_reference_property_transformations(self):
-        return any(
-            prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
-            for prop_ in self.information.properties
-        )
-
-    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
-        property_renaming_configuration: dict[str | URIRef, str] = {}
-
-        if definitions := self.properties_by_id_by_class(has_instance_source=True, include_ancestors=True).get(class_):
-            for property_id, definition in definitions.items():
-                transformation = cast(RDFPath, definition.instance_source)
-                # use case we have a single property rdf path, and defined prefix
-                # in either metadata or prefixes of rules
-                if isinstance(
-                    transformation.traversal,
-                    SingleProperty,
-                ) and (
-                    transformation.traversal.property.prefix in self.information.prefixes
-                    or transformation.traversal.property.prefix == self.information.metadata.prefix
-                ):
-                    namespace = (
-                        self.information.metadata.namespace
-                        if transformation.traversal.property.prefix == self.information.metadata.prefix
-                        else self.information.prefixes[transformation.traversal.property.prefix]
-                    )
-
-                    property_renaming_configuration[namespace[transformation.traversal.property.suffix]] = property_id
-
-                # otherwise we default to the property id
-                else:
-                    property_renaming_configuration[property_id] = property_id
-
-        return property_renaming_configuration
-
     @overload
     def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
 
@@ -529,10 +427,6 @@ class RulesAnalysis:
             return {prop.neatId: prop for prop in self.dms.properties if prop.neatId}
         else:
             raise NeatValueError(f"Invalid format: {format}")
-
-    @property
-    def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
-        return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
 
     def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
         if (

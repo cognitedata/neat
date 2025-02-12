@@ -1,13 +1,23 @@
+import pytest
+
+from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSInputRules, InformationRules
 from cognite.neat._rules.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
+from cognite.neat._rules.models.dms._rules import DMSRules
+from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.models.information import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
     InformationInputRules,
 )
-from cognite.neat._rules.transformers import StandardizeNaming, ToDMSCompliantEntities
+from cognite.neat._rules.transformers import (
+    StandardizeNaming,
+    SubsetDMSRules,
+    SubsetInformationRules,
+    ToDMSCompliantEntities,
+)
 
 
 class TestStandardizeNaming:
@@ -77,3 +87,31 @@ class TestToInformationCompliantEntities:
 
         assert res.properties[1].property_ == "statePrevious"
         assert res.properties[2].property_ == "pId"
+
+
+class TestRulesSubsetting:
+    def test_subset_information_rules(self, david_rules: InformationRules) -> None:
+        class_ = ClassEntity.load("power:GeoLocation")
+        subset = SubsetInformationRules({class_}).transform(david_rules)
+
+        assert subset.classes[0].class_ == class_
+        assert len(subset.classes) == 1
+
+    def test_subset_information_rules_fails(self, david_rules: DMSRules) -> None:
+        class_ = ClassEntity.load("power:GeoLooocation")
+
+        with pytest.raises(NeatValueError):
+            _ = SubsetInformationRules({class_}).transform(david_rules)
+
+    def test_subset_dms_rules(self, alice_rules: DMSRules) -> None:
+        view = ViewEntity.load("power:GeoLocation(version=0.1.0)")
+        subset = SubsetDMSRules({view}).transform(alice_rules)
+
+        assert subset.views[0].view == view
+        assert len(subset.views) == 1
+
+    def test_subset_dms_rules_fails(self, alice_rules: DMSRules) -> None:
+        view = ViewEntity.load("power:GeoLooocation(version=0.1.0)")
+
+        with pytest.raises(NeatValueError):
+            _ = SubsetDMSRules({view}).transform(alice_rules)
