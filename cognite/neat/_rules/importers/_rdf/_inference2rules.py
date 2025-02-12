@@ -441,7 +441,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         InformationInputClass(
                             class_=class_suffix,
                             implements=parent_suffix,
-                            instance_source=uri_to_short_form(type_uri, prefixes),
+                            instance_source=type_uri,
                         )
                     )
                 else:
@@ -495,7 +495,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
             class_suffix = remove_namespace_from_uri(type_uri)
             if (existing_class := existing_classes.get(class_suffix)) and existing_class.instance_source is None:
-                existing_class.instance_source = uri_to_short_form(type_uri, self._rules.prefixes)
+                existing_class.instance_source = type_uri
 
             for result_row in self.graph.query(property_query):
                 property_uri, value_type_uri = cast(tuple[URIRef, URIRef], result_row)
@@ -503,14 +503,13 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     continue
                 property_str = remove_namespace_from_uri(property_uri)
                 if existing_property := existing_class_properties.get((class_suffix, property_str)):
-                    property_short_form = uri_to_short_form(property_uri, self._rules.prefixes)
                     if existing_property.instance_source is None:
-                        existing_property.instance_source = property_uri
+                        existing_property.instance_source = [property_uri]
                     elif (
                         existing_property.instance_source
-                        and property_short_form not in existing_property.instance_source
+                        and property_uri not in existing_property.instance_source
                     ):
-                        existing_property.instance_source.append(property_short_form)
+                        existing_property.instance_source.append(property_uri)
                     continue
                 occurrence_query = self._max_occurrence_query.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
@@ -554,7 +553,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             property_=property_name,
             max_count=first.max_occurrence,
             value_type=value_type,
-            instance_source=uri_to_short_form(property_uri, prefixes),
+            instance_source=property_uri,
         )
 
     def _get_value_type(

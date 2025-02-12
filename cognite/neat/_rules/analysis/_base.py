@@ -622,9 +622,10 @@ class RulesAnalysis:
                 if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
                     for target_name, neat_id in logical_uri_by_property.items():
                         if (property_ := information_properties_by_neat_id.get(neat_id)) and (
-                            uri := self.property_uri(property_)
+                            uris := property_.instance_source
                         ):
-                            view_query.property_renaming_config[uri] = target_name
+                            for uri in uris:
+                                view_query.property_renaming_config[uri] = target_name
 
                 query_configs[view.view.as_id()] = view_query
 
