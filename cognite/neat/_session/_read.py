@@ -577,9 +577,7 @@ class Examples:
     @property
     def _get_client(self) -> NeatClient:
         if self._state.client is None:
-            raise NeatValueError(
-                "No client provided. Please provide a client to read a data model."
-            )
+            raise NeatValueError("No client provided. Please provide a client to read a data model.")
         return self._state.client
 
     def nordic44(self) -> IssueList:
@@ -596,7 +594,5 @@ class Examples:
         """Reads the core data model example into the NeatSession."""
 
         cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
-        importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
-            self._get_client, cdm_v1
-        )
+        importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(self._get_client, cdm_v1)
         return self._state.rule_import(importer)
