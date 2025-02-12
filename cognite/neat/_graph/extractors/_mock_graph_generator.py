@@ -17,6 +17,7 @@ from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import InformationProperty
+from cognite.neat._rules.transformers import SubsetInformationRules
 from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
@@ -119,7 +120,7 @@ def generate_triples(
 
     # Subset data model to only classes that are defined in class count
     rules = (
-        analysis.subset_information_rules(set(class_count.keys()))
+        SubsetInformationRules(classes=set(class_count.keys())).transform(rules)
         if defined_classes != set(class_count.keys())
         else rules
     )

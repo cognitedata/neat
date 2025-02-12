@@ -9,28 +9,23 @@ from typing import Any, Literal, TypeVar, cast, overload
 import networkx as nx
 import pandas as pd
 from cognite.client import data_modeling as dm
-from pydantic import ValidationError
 from rdflib import URIRef
 
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._base_rules import SheetList
 from cognite.neat._rules.models._rdfpath import (
     RDFPath,
     SingleProperty,
 )
-from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.dms import DMSProperty
-from cognite.neat._rules.models.dms._rules import DMSContainer, DMSView
+from cognite.neat._rules.models.dms._rules import DMSView
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
 from cognite.neat._rules.models.entities._single_value import (
-    DMSUnknownEntity,
     UnknownEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
 from cognite.neat._utils.collection_ import most_occurring_element
-from cognite.neat._utils.rdf_ import get_inheritance_path
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -416,144 +411,6 @@ class RulesAnalysis:
             if source in targets_by_source[source] and (source, target) not in sym_pairs:
                 sym_pairs.add((source, target))
         return sym_pairs
-
-    def subset_dms_rules(self, views: Set[ViewEntity]) -> DMSRules:
-        views_by_view = self.view_by_view_entity
-        implements_by_view = self.implements_by_view()
-
-        available = self.defined_views(include_ancestors=True)
-        subset = available.intersection(views)
-
-        ancestors: set[ViewEntity] = set()
-        for view in subset:
-            ancestors = ancestors.union({ancestor for ancestor in get_inheritance_path(view, implements_by_view)})
-        subset = subset.union(ancestors)
-
-        if not subset:
-            raise ValueError("None of the requested classes are defined in the rules!")
-
-        if nonexisting := views - subset:
-            warnings.warn(
-                f"Following requested classes do not exist in the rules: {nonexisting}",
-                stacklevel=2,
-            )
-
-        subsetted_rules: dict[str, Any] = {
-            "metadata": self.dms.metadata.model_copy(),
-            "views": SheetList[DMSView](),
-            "properties": SheetList[DMSProperty](),
-            "containers": SheetList[DMSContainer](),
-            "enum": self.dms.enum,
-            "nodes": self.dms.nodes,
-        }
-
-        # add views
-        for view in subset:
-            subsetted_rules["views"].append(views_by_view[view])
-
-        used_containers = set()
-
-        # add properties
-        for view, properties in self.properties_by_view(include_ancestors=False).items():
-            if view not in subset:
-                continue
-
-            for property_ in properties:
-                if (
-                    isinstance(property_.value_type, DataType)
-                    or isinstance(property_.value_type, DMSUnknownEntity)
-                    or (isinstance(property_.value_type, ViewEntity) and property_.value_type in subset)
-                ):
-                    subsetted_rules["properties"].append(property_)
-
-                    if property_.container:
-                        used_containers.add(property_.container)
-
-        # add containers
-        if self.dms.containers:
-            for container in self.dms.containers:
-                if container.container in used_containers:
-                    subsetted_rules["containers"].append(container)
-
-        try:
-            return DMSRules.model_validate(subsetted_rules)
-        except ValidationError as e:
-            raise NeatValueError(f"Cannot subset rules: {e}") from e
-
-    def subset_information_rules(self, classes: Set[ClassEntity]) -> InformationRules:
-        """Subset rules to only include desired classes and their properties.
-
-        Args:
-            include_classes: Desired classes to include in the reduced data model
-
-        Returns:
-            Instance of InformationRules
-
-        !!! note "Inheritance"
-            If desired classes contain a class that is a subclass of another class(es), the parent class(es)
-            will be included in the reduced data model as well even though the parent class(es) are
-            not in the desired classes set. This is to ensure that the reduced data model is
-            consistent and complete.
-        """
-        class_by_class_entity = self.class_by_class_entity
-        parent_entity_by_class_entity = self.parents_by_class()
-
-        available = self.defined_classes(include_ancestors=True)
-        subset = available.intersection(classes)
-
-        # need to add all the parent classes of the desired classes to the possible classes
-        ancestors: set[ClassEntity] = set()
-        for class_ in subset:
-            ancestors = ancestors.union(
-                {ancestor for ancestor in get_inheritance_path(class_, parent_entity_by_class_entity)}
-            )
-        subset = subset.union(ancestors)
-
-        if not subset:
-            raise ValueError("None of the requested classes are defined in the rules!")
-
-        if nonexisting := classes - subset:
-            warnings.warn(
-                f"Following requested classes do not exist in the rules: {nonexisting}",
-                stacklevel=2,
-            )
-
-        subsetted_rules: dict[str, Any] = {
-            "metadata": self.information.metadata.model_copy(),
-            "prefixes": (self.information.prefixes or {}).copy(),
-            "classes": SheetList[InformationClass](),
-            "properties": SheetList[InformationProperty](),
-        }
-
-        for class_ in subset:
-            subsetted_rules["classes"].append(class_by_class_entity[class_])
-
-        for class_, properties in self.properties_by_class(include_ancestors=False).items():
-            if class_ not in subset:
-                continue
-            for property_ in properties:
-                # datatype property can be added directly
-                if (
-                    isinstance(property_.value_type, DataType)
-                    and (isinstance(property_.value_type, ClassEntity) and property_.value_type in subset)
-                    and isinstance(property_.value_type, UnknownEntity)
-                ):
-                    subsetted_rules["properties"].append(property_)
-                # object property can be added if the value type is in the subset
-                elif isinstance(property_.value_type, MultiValueTypeInfo):
-                    allowed = [t for t in property_.value_type.types if t in subset or isinstance(t, DataType)]
-                    if allowed:
-                        subsetted_rules["properties"].append(
-                            property_.model_copy(
-                                deep=True,
-                                update={"value_type": MultiValueTypeInfo(types=allowed)},
-                            )
-                        )
-
-        try:
-            return InformationRules.model_validate(subsetted_rules)
-        except ValidationError as e:
-            raise NeatValueError(f"Cannot subset rules: {e}") from e
 
     @overload
     def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
