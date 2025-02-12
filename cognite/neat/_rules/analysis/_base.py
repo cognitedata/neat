@@ -4,7 +4,7 @@ from collections import defaultdict
 from collections.abc import Hashable, ItemsView, Iterator, KeysView, MutableMapping, Set, ValuesView
 from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
-from typing import Any, Literal, TypeVar, cast, overload
+from typing import Any, Literal, TypeVar, overload
 
 import networkx as nx
 import pandas as pd
@@ -15,12 +15,6 @@ from rdflib import URIRef
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._rdfpath import (
-    Hop,
-    RDFPath,
-    SelfReferenceProperty,
-    SingleProperty,
-)
 from cognite.neat._rules.models.dms import DMSProperty
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
@@ -311,7 +305,7 @@ class RulesAnalysis:
                         stacklevel=2,
                     )
                     continue
-                if has_instance_source and not isinstance(prop.instance_source, RDFPath):
+                if has_instance_source and prop.instance_source is None:
                     continue
                 processed_properties[prop.property_] = prop
             class_property_pairs[class_] = processed_properties
@@ -471,47 +465,6 @@ class RulesAnalysis:
         except ValidationError as e:
             warnings.warn(f"Reduced data model is not complete: {e}", stacklevel=2)
             return InformationRules.model_construct(**reduced_data_model)
-
-    def has_hop_transformations(self):
-        return any(
-            prop_.instance_source and isinstance(prop_.instance_source.traversal, Hop)
-            for prop_ in self.information.properties
-        )
-
-    def has_self_reference_property_transformations(self):
-        return any(
-            prop_.instance_source and isinstance(prop_.instance_source.traversal, SelfReferenceProperty)
-            for prop_ in self.information.properties
-        )
-
-    def define_property_renaming_config(self, class_: ClassEntity) -> dict[str | URIRef, str]:
-        property_renaming_configuration: dict[str | URIRef, str] = {}
-
-        if definitions := self.properties_by_id_by_class(has_instance_source=True, include_ancestors=True).get(class_):
-            for property_id, definition in definitions.items():
-                transformation = cast(RDFPath, definition.instance_source)
-                # use case we have a single property rdf path, and defined prefix
-                # in either metadata or prefixes of rules
-                if isinstance(
-                    transformation.traversal,
-                    SingleProperty,
-                ) and (
-                    transformation.traversal.property.prefix in self.information.prefixes
-                    or transformation.traversal.property.prefix == self.information.metadata.prefix
-                ):
-                    namespace = (
-                        self.information.metadata.namespace
-                        if transformation.traversal.property.prefix == self.information.metadata.prefix
-                        else self.information.prefixes[transformation.traversal.property.prefix]
-                    )
-
-                    property_renaming_configuration[namespace[transformation.traversal.property.suffix]] = property_id
-
-                # otherwise we default to the property id
-                else:
-                    property_renaming_configuration[property_id] = property_id
-
-        return property_renaming_configuration
 
     @overload
     def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...

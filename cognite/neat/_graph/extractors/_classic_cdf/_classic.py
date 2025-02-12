@@ -16,8 +16,6 @@ from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.catalog import classic_model
 from cognite.neat._rules.models import InformationInputRules, InformationRules
-from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
-from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
@@ -195,12 +193,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             prop_id = prop.property_
             if is_snake_case:
                 prop_id = to_snake_case(prop_id)
-            prop.instance_source = RDFPath(
-                traversal=SingleProperty(
-                    class_=RDFPathEntity(prefix=instance_prefix, suffix=prop.class_.suffix),
-                    property=RDFPathEntity(prefix=instance_prefix, suffix=prop_id),
-                )
-            )
+            prop.instance_source = [self._namespace[prop_id]]
         return verified
 
     @property

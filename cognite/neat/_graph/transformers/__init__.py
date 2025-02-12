@@ -16,12 +16,11 @@ from ._prune_graph import (
     PruneInstancesOfUnknownType,
     PruneTypes,
 )
-from ._rdfpath import AddSelfReferenceProperty, MakeConnectionOnExactMatch
+from ._rdfpath import MakeConnectionOnExactMatch
 from ._value_type import ConnectionToLiteral, ConvertLiteral, LiteralToEntity, SetType, SplitMultiValueProperty
 
 __all__ = [
     "AddAssetDepth",
-    "AddSelfReferenceProperty",
     "AssetEventConnector",
     "AssetFileConnector",
     "AssetRelationshipConnector",
@@ -49,7 +48,6 @@ Transformers = (
     | AssetFileConnector
     | AssetEventConnector
     | AssetRelationshipConnector
-    | AddSelfReferenceProperty
     | SplitMultiValueProperty
     | RelationshipAsEdgeTransformer
     | MakeConnectionOnExactMatch
