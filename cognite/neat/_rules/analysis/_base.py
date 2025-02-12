@@ -25,7 +25,6 @@ from cognite.neat._rules.models.dms import DMSProperty
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
-from cognite.neat._utils.collection_ import most_occurring_element
 from cognite.neat._utils.rdf_ import get_inheritance_path
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
@@ -533,49 +532,6 @@ class RulesAnalysis:
     @property
     def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
         return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
-
-    def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
-        if (
-            (property_ := self._properties_by_neat_id().get(property_neat_id))
-            and property_.instance_source
-            and isinstance(
-                property_.instance_source.traversal,
-                SingleProperty,
-            )
-            and (
-                property_.instance_source.traversal.property.prefix in self.information.prefixes
-                or property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
-            )
-        ):
-            namespace = (
-                self.information.metadata.namespace
-                if property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
-                else self.information.prefixes[property_.instance_source.traversal.property.prefix]
-            )
-
-            return namespace[property_.instance_source.traversal.property.suffix]
-        return None
-
-    def most_occurring_class_in_transformations(self, class_: ClassEntity) -> ClassEntity | None:
-        classes = []
-        if class_property_pairs := self.properties_by_id_by_class(include_ancestors=True, has_instance_source=True).get(
-            class_
-        ):
-            for property_ in class_property_pairs.values():
-                classes.append(cast(RDFPath, property_.instance_source).traversal.class_)
-
-            return cast(ClassEntity, most_occurring_element(classes))
-        else:
-            return None
-
-    def property_uri(self, property_: InformationProperty) -> URIRef | None:
-        if (instance_source := property_.instance_source) and isinstance(instance_source.traversal, SingleProperty):
-            prefix = instance_source.traversal.property.prefix
-            suffix = instance_source.traversal.property.suffix
-
-            if namespace := self.information.prefixes.get(prefix):
-                return namespace[suffix]
-        return None
 
     @property
     def multi_value_properties(self) -> list[InformationProperty]:
