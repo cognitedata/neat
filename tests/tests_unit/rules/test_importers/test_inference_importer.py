@@ -44,8 +44,8 @@ def test_rdf_inference():
     assert prop is not None, "Failed to infer expected multi-value property OperatingShare.PowerSystemResource"
     assert set(prop.value_type.types) == set(
         MultiValueTypeInfo.load(
-            "inferred:ConformLoad | inferred:NonConformLoad | "
-            "inferred:GeneratingUnit | inferred:ACLineSegment | inferred:PowerTransformer"
+            "inferred:ConformLoad, inferred:NonConformLoad, "
+            "inferred:GeneratingUnit, inferred:ACLineSegment, inferred:PowerTransformer"
         ).types
     )
 

@@ -256,7 +256,7 @@ class InferenceImporter(BaseRDFImporter):
                 property_["value_type"].remove(str(self.non_existing_node_type))
 
             if len(property_["value_type"]) > 1:
-                property_["value_type"] = " | ".join([str(t) for t in property_["value_type"]])
+                property_["value_type"] = ", ".join([str(t) for t in property_["value_type"]])
             else:
                 property_["value_type"] = next(iter(property_["value_type"]))
 
@@ -564,7 +564,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             return UnknownEntity()
         for uri_ref in value_types:
             self._add_uri_namespace_to_prefixes(uri_ref, prefixes)
-        return " | ".join(remove_namespace_from_uri(uri_ref) for uri_ref in value_types)
+        return ", ".join(remove_namespace_from_uri(uri_ref) for uri_ref in value_types)
 
     def _default_metadata(self) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
