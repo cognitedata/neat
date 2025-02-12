@@ -256,7 +256,6 @@ class InferenceImporter(BaseRDFImporter):
                 property_["value_type"].remove(str(self.non_existing_node_type))
 
             if len(property_["value_type"]) > 1:
-                print("here")
                 property_["value_type"] = ", ".join([str(t) for t in property_["value_type"]])
             else:
                 property_["value_type"] = next(iter(property_["value_type"]))
