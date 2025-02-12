@@ -19,7 +19,7 @@ Changes are grouped as follows:
 ### Added
 - [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
 - The `neat.to.excel(...)` now supports passing a data model directly in the `include_reference` parameter.
-- [ALPHA] Ability to subset data model to desired concepts (classes/views)
+- [ALPHA] Ability to subset data model to desired concepts (classes/views) via `neat.subset.data_model` endpoint
 
 ### Fixed
 - In Model was not automatically set to True importing from spreadsheet missing value in this column
