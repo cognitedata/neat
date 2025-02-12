@@ -8,7 +8,7 @@ from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import get_default_prefixes_and_namespaces
-from cognite.neat._issues.errors import NeatValueError, PropertyDefinitionError
+from cognite.neat._issues.errors import PropertyDefinitionError
 from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
@@ -17,11 +17,6 @@ from cognite.neat._rules.models._base_rules import (
     RoleTypes,
     SheetList,
     SheetRow,
-)
-from cognite.neat._rules.models._rdfpath import (
-    RDFPath,
-    TransformationRuleType,
-    parse_rule,
 )
 from cognite.neat._rules.models._types import (
     ClassEntityType,
@@ -78,7 +73,7 @@ class InformationClass(SheetRow):
         default=None,
         description="List of classes (comma separated) that the current class implements (parents).",
     )
-    instance_source: URIRef | None = Field(
+    instance_source: URIRefType | None = Field(
         alias="Instance Source",
         default=None,
         description="The link to to the rdf.type that have the instances for this class.",
@@ -157,7 +152,7 @@ class InformationProperty(SheetRow):
         "which means that the property can hold any number of values (listable).",
     )
     default: Any | None = Field(alias="Default", default=None, description="Default value of the property.")
-    instance_source: list[URIRef] | None = Field(
+    instance_source: list[URIRefType] | None = Field(
         alias="Instance Source",
         default=None,
         description="The URIRef(s) in the graph to get the value of the property.",
@@ -185,13 +180,10 @@ class InformationProperty(SheetRow):
         return value
 
     @field_validator("instance_source", mode="before")
-    def generate_rdfpath(cls, value: str | RDFPath | None) -> RDFPath | None:
-        if value is None or isinstance(value, RDFPath):
-            return value
-        elif isinstance(value, str):
-            return parse_rule(value, TransformationRuleType.rdfpath)
-        else:
-            raise NeatValueError(f"Invalid RDF Path: {value!s}")
+    def split_on_comma(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return [v.strip() for v in value.split(",")]
+        return value
 
     @model_validator(mode="after")
     def set_type_for_default(self):
