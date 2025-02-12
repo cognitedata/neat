@@ -43,8 +43,6 @@ from cognite.neat._rules.models import (
     SheetList,
     data_types,
 )
-from cognite.neat._rules.models._rdfpath import Entity as RDFPathEntity
-from cognite.neat._rules.models._rdfpath import RDFPath, SingleProperty
 from cognite.neat._rules.models.data_types import AnyURI, DataType, Enum, File, String, Timeseries
 from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
 from cognite.neat._rules.models.dms._rules import DMSContainer, DMSEnum, DMSNode
@@ -1215,6 +1213,7 @@ class ClassicPrepareCore(VerifiedRulesTransformer[InformationRules, InformationR
             class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
             description="A source system that provides data to the data model.",
             neatId=namespace["ClassicSourceSystem"],
+            instance_source=self.instance_namespace["ClassicSourceSystem"],
         )
         output.classes.append(source_system_class)
         for prop in output.properties:
@@ -1243,15 +1242,7 @@ class ClassicPrepareCore(VerifiedRulesTransformer[InformationRules, InformationR
                 value_type=String(),
                 class_=ClassEntity(prefix=prefix, suffix="ClassicSourceSystem"),
                 max_count=1,
-                instance_source=RDFPath(
-                    traversal=SingleProperty(
-                        class_=RDFPathEntity(
-                            prefix=instance_prefix,
-                            suffix="ClassicSourceSystem",
-                        ),
-                        property=RDFPathEntity(prefix=instance_prefix, suffix="name"),
-                    ),
-                ),
+                instance_source=[self.instance_namespace["name"]],
             )
         )
         return output
@@ -1733,7 +1724,6 @@ class _DMSRulesConverter:
             classes.append(info_class)
 
         prefixes = get_default_prefixes_and_namespaces()
-        instance_prefix: str | None = None
         if self.instance_namespace:
             instance_prefix = next((k for k, v in prefixes.items() if v == self.instance_namespace), None)
             if instance_prefix is None:
@@ -1756,15 +1746,6 @@ class _DMSRulesConverter:
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
 
-            transformation: RDFPath | None = None
-            if instance_prefix is not None:
-                transformation = RDFPath(
-                    traversal=SingleProperty(
-                        class_=RDFPathEntity(prefix=instance_prefix, suffix=property_.view.external_id),
-                        property=RDFPathEntity(prefix=instance_prefix, suffix=property_.view_property),
-                    )
-                )
-
             info_property = InformationProperty(
                 # Removing version
                 class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
@@ -1773,7 +1754,6 @@ class _DMSRulesConverter:
                 description=property_.description,
                 min_count=(0 if property_.nullable or property_.nullable is None else 1),
                 max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
-                instance_source=transformation,
             )
 
             # Linking

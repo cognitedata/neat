@@ -485,12 +485,12 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 ).items()
                 for prop in properties
             }
-            existing_classes = {class_entity.suffix for class_entity in self._rules.classes}
+            existing_classes = {cls_.class_.suffix: cls_ for cls_ in self._rules.classes}
         else:
-            existing_class_properties = dict()
-            existing_classes = dict()
+            existing_class_properties = {}
+            existing_classes = {}
         properties_by_class_by_subclass: list[_ReadProperties] = []
-        existing_class: InformationClass
+        existing_class: InformationClass | None
         for type_uri, instance_count in count_by_type.items():
             property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
             class_suffix = remove_namespace_from_uri(type_uri)
@@ -505,10 +505,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 if existing_property := existing_class_properties.get((class_suffix, property_str)):
                     if existing_property.instance_source is None:
                         existing_property.instance_source = [property_uri]
-                    elif (
-                        existing_property.instance_source
-                        and property_uri not in existing_property.instance_source
-                    ):
+                    elif existing_property.instance_source and property_uri not in existing_property.instance_source:
                         existing_property.instance_source.append(property_uri)
                     continue
                 occurrence_query = self._max_occurrence_query.format(type=type_uri, property=property_uri)
