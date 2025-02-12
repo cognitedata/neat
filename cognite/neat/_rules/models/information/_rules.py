@@ -78,7 +78,11 @@ class InformationClass(SheetRow):
         default=None,
         description="List of classes (comma separated) that the current class implements (parents).",
     )
-
+    instance_source: URIRef | None = Field(
+        alias="Instance Source",
+        default=None,
+        description="The link to to the rdf.type that have the instances for this class.",
+    )
     physical: URIRefType | None = Field(
         None,
         description="Link to the class representation in the physical data model aspect",
@@ -153,11 +157,10 @@ class InformationProperty(SheetRow):
         "which means that the property can hold any number of values (listable).",
     )
     default: Any | None = Field(alias="Default", default=None, description="Default value of the property.")
-    instance_source: RDFPath | None = Field(
+    instance_source: list[URIRef] | None = Field(
         alias="Instance Source",
         default=None,
-        description="The link to to the instance property for the model. "
-        "The rule is provided in a RDFPath query syntax which is converted to downstream solution query (e.g. SPARQL).",
+        description="The URIRef(s) in the graph to get the value of the property.",
     )
     inherited: bool = Field(
         default=False,
