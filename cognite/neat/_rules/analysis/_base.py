@@ -4,7 +4,7 @@ from collections import defaultdict
 from collections.abc import Hashable, ItemsView, Iterator, KeysView, MutableMapping, Set, ValuesView
 from dataclasses import dataclass, field
 from graphlib import TopologicalSorter
-from typing import Any, Literal, TypeVar, cast, overload
+from typing import Any, Literal, TypeVar, overload
 
 import networkx as nx
 import pandas as pd
@@ -14,10 +14,6 @@ from rdflib import URIRef
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._rdfpath import (
-    RDFPath,
-    SingleProperty,
-)
 from cognite.neat._rules.models.dms import DMSProperty
 from cognite.neat._rules.models.dms._rules import DMSView
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
@@ -25,7 +21,6 @@ from cognite.neat._rules.models.entities._single_value import (
     UnknownEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationProperty
-from cognite.neat._utils.collection_ import most_occurring_element
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
@@ -324,7 +319,7 @@ class RulesAnalysis:
                         stacklevel=2,
                     )
                     continue
-                if has_instance_source and not isinstance(prop.instance_source, RDFPath):
+                if has_instance_source and prop.instance_source is None:
                     continue
                 processed_properties[prop.property_] = prop
             class_property_pairs[class_] = processed_properties
@@ -428,76 +423,9 @@ class RulesAnalysis:
         else:
             raise NeatValueError(f"Invalid format: {format}")
 
-    def neat_id_to_instance_source_property_uri(self, property_neat_id: URIRef) -> URIRef | None:
-        if (
-            (property_ := self._properties_by_neat_id().get(property_neat_id))
-            and property_.instance_source
-            and isinstance(
-                property_.instance_source.traversal,
-                SingleProperty,
-            )
-            and (
-                property_.instance_source.traversal.property.prefix in self.information.prefixes
-                or property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
-            )
-        ):
-            namespace = (
-                self.information.metadata.namespace
-                if property_.instance_source.traversal.property.prefix == self.information.metadata.prefix
-                else self.information.prefixes[property_.instance_source.traversal.property.prefix]
-            )
-
-            return namespace[property_.instance_source.traversal.property.suffix]
-        return None
-
-    def most_occurring_class_in_transformations(self, class_: ClassEntity) -> ClassEntity | None:
-        classes = []
-        if class_property_pairs := self.properties_by_id_by_class(include_ancestors=True, has_instance_source=True).get(
-            class_
-        ):
-            for property_ in class_property_pairs.values():
-                classes.append(cast(RDFPath, property_.instance_source).traversal.class_)
-
-            return cast(ClassEntity, most_occurring_element(classes))
-        else:
-            return None
-
-    def class_uri(self, class_: ClassEntity) -> URIRef | None:
-        """Get URI for a class entity based on the rules.
-
-        Args:
-            class_: instance of ClassEntity
-
-        Returns:
-            URIRef of the class entity or None if not found
-        """
-
-        # we need to handle optional renamings and we do this
-        # by checking if the most occurring class in transformations alternatively
-        # in cases when we are not specifying transformations we default to the class entity
-        if not (most_frequent_class := self.most_occurring_class_in_transformations(class_)):
-            most_frequent_class = class_
-
-        # case 1 class prefix in rules.prefixes
-        if most_frequent_class.prefix in self.information.prefixes:
-            return self.information.prefixes[cast(str, most_frequent_class.prefix)][most_frequent_class.suffix]
-
-        # case 2 class prefix equal to rules.metadata.prefix
-        elif most_frequent_class.prefix == self.information.metadata.prefix:
-            return self.information.metadata.namespace[most_frequent_class.suffix]
-
-        # case 3 when class prefix is not found in prefixes of rules
-        else:
-            return None
-
-    def property_uri(self, property_: InformationProperty) -> URIRef | None:
-        if (instance_source := property_.instance_source) and isinstance(instance_source.traversal, SingleProperty):
-            prefix = instance_source.traversal.property.prefix
-            suffix = instance_source.traversal.property.suffix
-
-            if namespace := self.information.prefixes.get(prefix):
-                return namespace[suffix]
-        return None
+    @property
+    def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
+        return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
 
     @property
     def multi_value_properties(self) -> list[InformationProperty]:
@@ -527,7 +455,7 @@ class RulesAnalysis:
             if (
                 (neat_id := logical_uri_by_view.get(view.view))
                 and (class_ := classes_by_neat_id.get(neat_id))
-                and (uri := self.class_uri(class_.class_))
+                and (uri := class_.instance_source)
             ):
                 view_query = ViewQuery(
                     view_id=view.view.as_id(),
@@ -535,7 +463,7 @@ class RulesAnalysis:
                     # start off with renaming of properties on the information level
                     # this is to encounter for special cases of e.g. space, startNode and endNode
                     property_renaming_config=(
-                        {uri: prop_.property_ for prop_ in info_properties if (uri := self.property_uri(prop_))}
+                        {uri: prop_.property_ for prop_ in info_properties for uri in prop_.instance_source or []}
                         if (info_properties := properties_by_class.get(class_.class_))
                         else {}
                     ),
@@ -544,9 +472,10 @@ class RulesAnalysis:
                 if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
                     for target_name, neat_id in logical_uri_by_property.items():
                         if (property_ := information_properties_by_neat_id.get(neat_id)) and (
-                            uri := self.property_uri(property_)
+                            uris := property_.instance_source
                         ):
-                            view_query.property_renaming_config[uri] = target_name
+                            for uri in uris:
+                                view_query.property_renaming_config[uri] = target_name
 
                 query_configs[view.view.as_id()] = view_query
 

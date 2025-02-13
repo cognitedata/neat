@@ -1,7 +1,8 @@
 import pytest
 
 from cognite.neat._graph.loaders import DMSLoader
-from cognite.neat._rules.importers import InferenceImporter
+from cognite.neat._issues import IssueList
+from cognite.neat._rules.importers import SubclassInferenceImporter
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.transformers._converters import (
@@ -17,11 +18,11 @@ def car_case() -> tuple[DMSRules, InformationRules, NeatGraphStore]:
 
     for triple in car.TRIPLES:
         store.dataset.add(triple)
-    info_rules = InferenceImporter.from_graph_store(store).to_rules().rules
-
-    info_rules.metadata.space = "sp_example_car"
-    info_rules.metadata.external_id = "CarModel"
-    info_rules.metadata.version = "1"
+    info_rules = (
+        SubclassInferenceImporter(IssueList(), store.dataset, data_model_id=("sp_example_car", "CarModel", "1"))
+        .to_rules()
+        .rules
+    )
 
     info_rules = ToCompliantEntities().transform(info_rules.as_verified_rules())
 

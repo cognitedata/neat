@@ -18,6 +18,7 @@ from cognite.neat._rules.models import InformationRules, data_types
 from cognite.neat._rules.models.data_types import AnyURI
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.models.information import (
+    InformationClass,
     InformationInputClass,
     InformationInputProperty,
     InformationMetadata,
@@ -440,6 +441,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         InformationInputClass(
                             class_=class_suffix,
                             implements=parent_suffix,
+                            instance_source=type_uri,
                         )
                     )
                 else:
@@ -448,17 +450,11 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     if property_uri in shared_property_uris:
                         shared_properties[property_uri].extend(read_properties)
                         continue
-                    properties.append(
-                        self._create_property(read_properties, class_suffix, type_uri, property_uri, prefixes)
-                    )
+                    properties.append(self._create_property(read_properties, class_suffix, property_uri, prefixes))
 
             if parent_suffix:
                 for property_uri, read_properties in shared_properties.items():
-                    properties.append(
-                        self._create_property(
-                            read_properties, parent_suffix, read_properties[0].type_uri, property_uri, prefixes
-                        )
-                    )
+                    properties.append(self._create_property(read_properties, parent_suffix, property_uri, prefixes))
         return classes, properties
 
     @staticmethod
@@ -481,28 +477,36 @@ class SubclassInferenceImporter(BaseRDFImporter):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
         if self._rules:
-            analysis = RulesAnalysis(
-                self._rules,
-            )
+            analysis = RulesAnalysis(self._rules)
             existing_class_properties = {
-                (class_entity.suffix, prop.property_)
+                (class_entity.suffix, prop.property_): prop
                 for class_entity, properties in analysis.properties_by_class(
                     include_ancestors=True, include_different_space=True
                 ).items()
                 for prop in properties
             }
+            existing_classes = {cls_.class_.suffix: cls_ for cls_ in self._rules.classes}
         else:
-            existing_class_properties = set()
+            existing_class_properties = {}
+            existing_classes = {}
         properties_by_class_by_subclass: list[_ReadProperties] = []
+        existing_class: InformationClass | None
         for type_uri, instance_count in count_by_type.items():
             property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
             class_suffix = remove_namespace_from_uri(type_uri)
+            if (existing_class := existing_classes.get(class_suffix)) and existing_class.instance_source is None:
+                existing_class.instance_source = type_uri
+
             for result_row in self.graph.query(property_query):
                 property_uri, value_type_uri = cast(tuple[URIRef, URIRef], result_row)
                 if property_uri == RDF.type:
                     continue
                 property_str = remove_namespace_from_uri(property_uri)
-                if (class_suffix, property_str) in existing_class_properties:
+                if existing_property := existing_class_properties.get((class_suffix, property_str)):
+                    if existing_property.instance_source is None:
+                        existing_property.instance_source = [property_uri]
+                    elif existing_property.instance_source and property_uri not in existing_property.instance_source:
+                        existing_property.instance_source.append(property_uri)
                     continue
                 occurrence_query = self._max_occurrence_query.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
@@ -533,7 +537,6 @@ class SubclassInferenceImporter(BaseRDFImporter):
         self,
         read_properties: list[_ReadProperties],
         class_suffix: str,
-        type_uri: URIRef,
         property_uri: URIRef,
         prefixes: dict[str, Namespace],
     ) -> InformationInputProperty:
@@ -547,7 +550,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             property_=property_name,
             max_count=first.max_occurrence,
             value_type=value_type,
-            instance_source=(f"{uri_to_short_form(type_uri, prefixes)}({uri_to_short_form(property_uri, prefixes)})"),
+            instance_source=property_uri,
         )
 
     def _get_value_type(

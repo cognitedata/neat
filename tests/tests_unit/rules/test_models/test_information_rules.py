@@ -5,8 +5,8 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
-from cognite.neat._issues import NeatError, catch_issues
-from cognite.neat._issues.errors import NeatValueError, PropertyValueError, ResourceNotDefinedError
+from cognite.neat._issues import NeatError
+from cognite.neat._issues.errors import ResourceNotDefinedError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSRules, SheetList, data_types
 from cognite.neat._rules.models.data_types import DataType, String
@@ -74,48 +74,6 @@ def case_insensitive_value_types():
     )
 
 
-def invalid_domain_rules_cases():
-    yield pytest.param(
-        {
-            "Metadata": {
-                "role": "information architect",
-                "creator": "Jon, Emma, David",
-                "space": "power",
-                "external_id": "power2consumer",
-                "created": datetime(2024, 2, 9, 0, 0),
-                "updated": datetime(2024, 2, 9, 0, 0),
-                "version": "0.1.0",
-                "name": "Power to Consumer Data Model",
-            },
-            "Classes": [
-                {
-                    "Class": "GeneratingUnit",
-                    "Description": None,
-                    "Implements": None,
-                }
-            ],
-            "Properties": [
-                {
-                    "Class": "GeneratingUnit",
-                    "Property": "name",
-                    "Description": None,
-                    "Value Type": "string",
-                    "Min Count": 1,
-                    "Max Count": 1.0,
-                    "Default": None,
-                    "Instance Source": ":GeneratingUnit(cim:name)",
-                }
-            ],
-        },
-        PropertyValueError(
-            row=0,
-            column="Instance Source",
-            error=NeatValueError("Invalid RDF Path - the prefix is empty in ':GeneratingUnit'"),
-        ),
-        id="missing_rule",
-    )
-
-
 def incomplete_rules_case():
     yield pytest.param(
         {
@@ -179,14 +137,6 @@ class TestInformationRules:
         }
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
-
-    @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_domain_rules_cases()))
-    def test_invalid_rules(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
-        with catch_issues() as errors:
-            InformationRules.model_validate(invalid_rules)
-        assert len(errors) == 1
-
-        assert errors[0] == expected_exception
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
     @pytest.mark.skip("Temp skipping: enabling in new PR")

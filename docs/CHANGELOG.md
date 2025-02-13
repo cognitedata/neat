@@ -29,6 +29,8 @@ Changes are grouped as follows:
 
 ### Changed
 - Moved examples under neat.read.examples[nordic44, pump_example]
+- [BREAKING] In Information rules, the `Instance Source` field is now a URIRef list instead of a RDFPath. In addition,
+  the classes now also have an `Instance Source` column with the rdf:type of the class.
 
 ### Improved
 - The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
