@@ -457,6 +457,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if include:
             properties = {k: v for k, v in properties.items() if k in include}
 
+        sources = []
         with catch_issues() as property_issues:
             sources = [
                 dm.NodeOrEdgeData(
@@ -471,6 +472,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if property_issues.has_errors and stop_on_exception:
             raise property_issues.as_exception()
         yield from property_issues
+        if not sources:
+            return
 
         if start_node and end_node:
             yield dm.EdgeApply(
