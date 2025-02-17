@@ -28,6 +28,10 @@ Changes are grouped as follows:
 
 ## [0.110.0] - 17-02-**2025**
 ### Added
+- Validation of DMS rules does not allow re-definition of any of the resources
+
+## [0.110.0] - 17-02-**2025**
+### Added
 - [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
 - The `neat.to.excel(...)` now supports passing a data model directly in the `include_reference` parameter.
 - [ALPHA] Ability to subset data model to desired concepts (classes/views) via `neat.subset.data_model` endpoint

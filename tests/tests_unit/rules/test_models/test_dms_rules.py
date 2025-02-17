@@ -944,7 +944,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             ResourceDuplicatedError(
                 identifier="maxPower",
                 resource_type="property",
-                location="the Properties sheet at row 2 if data model is read from a spreadsheet.",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         ],
         id="Inconsistent container definition value type",
@@ -997,7 +997,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             ResourceDuplicatedError(
                 identifier="maxPower",
                 resource_type="property",
-                location="the Properties sheet at row 2 if data model is read from a spreadsheet.",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         ],
         id="Inconsistent container definition isList",
@@ -1049,7 +1049,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             ResourceDuplicatedError(
                 identifier="maxPower",
                 resource_type="property",
-                location="the Properties sheet at row 2 if data model is read from a spreadsheet.",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         ],
         id="Inconsistent container definition nullable",
@@ -1101,7 +1101,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             ResourceDuplicatedError(
                 identifier="maxPower",
                 resource_type="property",
-                location="the Properties sheet at row 2 if data model is read from a spreadsheet.",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         ],
         id="Inconsistent container definition index",
@@ -1153,7 +1153,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             ResourceDuplicatedError(
                 identifier="maxPower",
                 resource_type="property",
-                location="the Properties sheet at row 2 if data model is read from a spreadsheet.",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         ],
         id="Inconsistent container definition constraint",
@@ -1258,7 +1258,7 @@ class TestDMSRules:
         rules = raw.as_verified_rules()
         issues = DMSValidation(rules).validate()
 
-        assert len(issues.errors) == 2, "Expected there to be exactly one validation error"
+        assert len(issues.errors) == 2
 
         assert sorted(issues) == sorted(expected_errors)
 
