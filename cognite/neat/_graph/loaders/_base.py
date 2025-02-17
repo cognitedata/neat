@@ -20,6 +20,11 @@ T_Output = TypeVar("T_Output")
 class _END_OF_CLASS: ...
 
 
+class _START_OF_CLASS:
+    def __init__(self, class_name: str | None = None):
+        self.class_name = class_name
+
+
 class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
@@ -36,7 +41,9 @@ class BaseLoader(ABC, Generic[T_Output]):
         return (item for item in self._load(stop_on_exception) if item is not _END_OF_CLASS)  # type: ignore[misc]
 
     @abstractmethod
-    def _load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue | type[_END_OF_CLASS]]:
+    def _load(
+        self, stop_on_exception: bool = False
+    ) -> Iterable[T_Output | NeatIssue | type[_END_OF_CLASS] | _START_OF_CLASS]:
         """Load the graph with data."""
         pass
 
@@ -75,21 +82,25 @@ class CDFLoader(BaseLoader[T_Output]):
 
         issues = IssueList()
         items: list[T_Output] = []
+        last_class_name: str | None = None
         for result in self._load(stop_on_exception=False):
             if isinstance(result, NeatIssue):
                 issues.append(result)
             elif result is _END_OF_CLASS:
                 ...
+            elif isinstance(result, _START_OF_CLASS):
+                last_class_name = result.class_name
+                continue
             else:
                 # MyPy does not understand that 'else' means the item will be of type T_Output
                 items.append(result)  # type: ignore[arg-type]
 
             if len(items) >= self._UPLOAD_BATCH_SIZE or result is _END_OF_CLASS:
-                yield from self._upload_to_cdf(client, items, dry_run, issues)
+                yield from self._upload_to_cdf(client, items, dry_run, issues, last_class_name)
                 issues = IssueList()
                 items = []
         if items:
-            yield from self._upload_to_cdf(client, items, dry_run, issues)
+            yield from self._upload_to_cdf(client, items, dry_run, issues, last_class_name)
 
     @abstractmethod
     def _get_required_capabilities(self) -> list[Capability]:
@@ -102,5 +113,6 @@ class CDFLoader(BaseLoader[T_Output]):
         items: list[T_Output],
         dry_run: bool,
         read_issues: IssueList,
+        class_name: str | None = None,
     ) -> Iterable[UploadResult]:
         raise NotImplementedError

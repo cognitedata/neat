@@ -48,7 +48,7 @@ from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResult
 
-from ._base import _END_OF_CLASS, CDFLoader
+from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
 
 
 @dataclass
@@ -137,7 +137,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             else:
                 yaml.safe_dump(dumped, f, sort_keys=False)
 
-    def _load(self, stop_on_exception: bool = False) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS]]:
+    def _load(
+        self, stop_on_exception: bool = False
+    ) -> Iterable[dm.InstanceApply | NeatIssue | type[_END_OF_CLASS] | _START_OF_CLASS]:
         if self._issues.has_errors and stop_on_exception:
             raise self._issues.as_exception()
         elif self._issues.has_errors:
@@ -167,6 +169,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             instance_iterable = iterate_progress_bar_if_above_config_threshold(
                 reader, it.instance_count, f"Loading {it.view_id!r}"
             )
+            yield _START_OF_CLASS(view.external_id)
             for identifier, properties in instance_iterable:
                 yield from self._create_instances(
                     identifier, properties, projection, stop_on_exception, exclude=it.hierarchical_properties
@@ -174,6 +177,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if it.hierarchical_properties:
                 # Force the creation of instances, before we create the hierarchical properties.
                 yield _END_OF_CLASS
+                yield _START_OF_CLASS(f"{view.external_id} ({humanize_collection(it.hierarchical_properties)})")
                 yield from self._create_hierarchical_properties(it, projection, stop_on_exception)
 
             yield _END_OF_CLASS
@@ -557,24 +561,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         items: list[dm.InstanceApply],
         dry_run: bool,
         read_issues: IssueList,
+        class_name: str | None = None,
     ) -> Iterable[UploadResult]:
-        nodes: list[dm.NodeApply] = []
-        edges: list[dm.EdgeApply] = []
-        source_by_node_id: dict[dm.NodeId, str] = {}
-        source_by_edge_id: dict[dm.EdgeId, str] = {}
-        for item in items:
-            if isinstance(item, dm.NodeApply):
-                nodes.append(item)
-                if item.sources:
-                    source_by_node_id[item.as_id()] = item.sources[0].source.external_id
-                else:
-                    source_by_node_id[item.as_id()] = "node"
-            elif isinstance(item, dm.EdgeApply):
-                edges.append(item)
-                if item.sources:
-                    source_by_edge_id[item.as_id()] = item.sources[0].source.external_id
-                else:
-                    source_by_edge_id[item.as_id()] = "edge"
+        name = class_name or "Instances"
+        nodes = [item for item in items if isinstance(item, dm.NodeApply)]
+        edges = [item for item in items if isinstance(item, dm.EdgeApply)]
         try:
             upserted = client.data_modeling.instances.apply(
                 nodes,
@@ -584,29 +575,21 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 skip_on_version_conflict=True,
             )
         except CogniteAPIError as e:
-            result = UploadResult[InstanceId](name="Instances", issues=read_issues)
+            result = UploadResult[InstanceId](name=name, issues=read_issues)
             result.error_messages.append(str(e))
             result.failed_upserted.update(item.as_id() for item in e.failed + e.unknown)
             result.created.update(item.as_id() for item in e.successful)
             yield result
         else:
-            for instances, ids_by_source in [
-                (upserted.nodes, source_by_node_id),
-                (upserted.edges, source_by_edge_id),
-            ]:
-                for name, subinstances in itertools.groupby(
-                    sorted(instances, key=lambda i: ids_by_source.get(i.as_id(), "")),  # type: ignore[call-overload, index, attr-defined]
-                    key=lambda i: ids_by_source.get(i.as_id(), ""),  # type: ignore[index, attr-defined]
-                ):
-                    result = UploadResult(name=name, issues=read_issues)
-                    for instance in subinstances:  # type: ignore[attr-defined]
-                        if instance.was_modified and instance.created_time == instance.last_updated_time:
-                            result.created.add(instance.as_id())
-                        elif instance.was_modified:
-                            result.changed.add(instance.as_id())
-                        else:
-                            result.unchanged.add(instance.as_id())
-                    yield result
+            result = UploadResult(name=name, issues=read_issues)
+            for instance in itertools.chain(upserted.nodes, upserted.edges):  # type: ignore[attr-defined]
+                if instance.was_modified and instance.created_time == instance.last_updated_time:
+                    result.created.add(instance.as_id())
+                elif instance.was_modified:
+                    result.changed.add(instance.as_id())
+                else:
+                    result.unchanged.add(instance.as_id())
+            yield result
 
 
 def _get_field_value_types(cls, info):
