@@ -1,3 +1,4 @@
+import re
 from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -70,6 +71,7 @@ EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "_graph" / "examples"
 EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "_workflows" / "examples"
 
 DEFAULT_SPACE_URI = "http://purl.org/cognite/space/{space}#"
+SPACE_URI_PATTERN = re.compile(r"http://purl.org/cognite/space/(?P<space>[^#]+)#$")
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat/")
 CDF_NAMESPACE = Namespace("https://cognitedata.com/")
 DEFAULT_BASE_URI = URIRef(DEFAULT_NAMESPACE)
@@ -197,5 +199,15 @@ DMS_RESERVED_PROPERTIES = frozenset(
         "tg_table_name",
         "startNode",
         "endNode",
+    }
+)
+
+# These are properties that can contain space in their URIRef.
+SPACE_PROPERTIES = frozenset(
+    {
+        "startNode",
+        "endNode",
+        "start_node",
+        "end_node",
     }
 )

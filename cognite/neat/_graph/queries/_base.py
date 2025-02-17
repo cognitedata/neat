@@ -7,7 +7,7 @@ from rdflib import Literal as RdfLiteral
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.query import ResultRow
 
-from cognite.neat._constants import NEAT
+from cognite.neat._constants import NEAT, SPACE_PROPERTIES
 from cognite.neat._shared import InstanceType
 from cognite.neat._utils.rdf_ import remove_instance_ids_in_batch, remove_namespace_from_uri
 
@@ -182,7 +182,7 @@ class Queries:
         instance_type: URIRef | None = None,
         property_renaming_config: dict | None = None,
         named_graph: URIRef | None = None,
-    ) -> tuple[str, dict[str | InstanceType, list[str]]] | None:
+    ) -> tuple[URIRef, dict[str | InstanceType, list[str] | list[URIRef]]] | None:
         """DESCRIBE instance for a given class from the graph store
 
         Args:
@@ -195,8 +195,7 @@ class Queries:
         Returns:
             Dictionary of instance properties
         """
-        property_values: dict[str, list[str]] = defaultdict(list)
-        identifier = remove_namespace_from_uri(instance_id, validation="prefix")
+        property_values: dict[str, list[str] | list[URIRef]] = defaultdict(list)
         for _, predicate, object_ in cast(list[ResultRow], self.graph(named_graph).query(f"DESCRIBE <{instance_id}>")):
             if object_.lower() in [
                 "",
@@ -219,7 +218,11 @@ class Queries:
                 property_ = RDF.type
                 renamed_property_ = property_
 
-            if isinstance(object_, URIRef):
+            value: str | URIRef
+            if property_ in SPACE_PROPERTIES and isinstance(object_, URIRef):
+                # These properties contain the space in the Namespace.
+                value = object_
+            elif isinstance(object_, URIRef):
                 value = remove_namespace_from_uri(object_, validation="prefix")
             elif isinstance(object_, RdfLiteral):
                 value = object_.toPython()
@@ -229,19 +232,19 @@ class Queries:
 
             # add type to the dictionary
             if predicate != RDF.type:
-                property_values[renamed_property_].append(value)
+                property_values[renamed_property_].append(value)  # type: ignore[arg-type]
             else:
                 # guarding against multiple rdf:type values as this is not allowed in CDF
                 if RDF.type not in property_values:
                     property_values[RDF.type].append(
-                        remove_namespace_from_uri(instance_type, validation="prefix") if instance_type else value
+                        remove_namespace_from_uri(instance_type, validation="prefix") if instance_type else value  # type: ignore[arg-type]
                     )
                 else:
                     # we should not have multiple rdf:type values
                     continue
         if property_values:
             return (
-                identifier,
+                instance_id,
                 property_values,
             )
         else:
