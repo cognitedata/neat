@@ -36,6 +36,7 @@ Changes are grouped as follows:
 - The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
 - Automatic drop of rows in Excel rules if cells for critical columns are missing
 - [BREAKING] multi value types are now serialized as a comma separated values (previous we used `|` as separator)
+- Validation of DMS rules which does not allow re-definition of any of the resources
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
