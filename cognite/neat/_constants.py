@@ -69,7 +69,7 @@ EXAMPLE_RULES = PACKAGE_DIRECTORY / "_rules" / "examples"
 EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "_graph" / "examples"
 EXAMPLE_WORKFLOWS = PACKAGE_DIRECTORY / "_workflows" / "examples"
 
-DEFAULT_SPACE_URI = "http://purl.org/cognite/{space}#"
+DEFAULT_SPACE_URI = "http://purl.org/cognite/space/{space}#"
 DEFAULT_NAMESPACE = Namespace("http://purl.org/cognite/neat/")
 CDF_NAMESPACE = Namespace("https://cognitedata.com/")
 DEFAULT_BASE_URI = URIRef(DEFAULT_NAMESPACE)

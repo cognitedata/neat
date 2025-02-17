@@ -131,7 +131,6 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         yield from DMSExtractor.from_views(
             self._client,
             views,
-            overwrite_namespace=self._namespace,
             instance_space=self._instance_space,
             unpack_json=self._unpack_json,
             str_to_ideal_type=self._str_to_ideal_type,
