@@ -23,7 +23,12 @@ from cognite.neat._client import NeatClient
 from cognite.neat._client._api_client import SchemaAPI
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
 from cognite.neat._issues import IssueList, NeatIssue, catch_issues
-from cognite.neat._issues.errors import ResourceCreationError, ResourceDuplicatedError, ResourceNotFoundError
+from cognite.neat._issues.errors import (
+    AuthorizationError,
+    ResourceCreationError,
+    ResourceDuplicatedError,
+    ResourceNotFoundError,
+)
 from cognite.neat._issues.warnings import (
     PropertyDirectRelationLimitWarning,
     PropertyMultipleValueWarning,
@@ -143,6 +148,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if self._space_property:
             yield from self._lookup_space_by_uri(view_iterations, stop_on_exception)
 
+            if self._client:
+                space_creation = self._create_instance_space_if_not_exists()
+                yield from space_creation.warnings
+                if space_creation.has_errors and stop_on_exception:
+                    raise space_creation.as_exception()
+                yield from space_creation.errors
+
         for it in view_iterations:
             view = it.view
             if view is None:
@@ -250,6 +262,20 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if self._unquote_external_ids:
                 identifier = urllib.parse.unquote(identifier)
             self._space_by_uri[identifier] = space
+        return issues
+
+    def _create_instance_space_if_not_exists(self) -> IssueList:
+        issues = IssueList()
+        if not self._client:
+            return issues
+
+        instance_spaces = set(self._space_by_uri.values()) - {self._instance_space}
+        existing_spaces = {space.space for space in self._client.data_modeling.spaces.retrieve(list(instance_spaces))}
+        if missing_spaces := (instance_spaces - existing_spaces):
+            try:
+                self._client.data_modeling.spaces.apply([dm.SpaceApply(space=space) for space in missing_spaces])
+            except CogniteAPIError as e:
+                issues.append(AuthorizationError(f"Creating {len(missing_spaces)} instance spaces.", str(e)))
         return issues
 
     def _create_projection(self, view: dm.View) -> tuple[_Projection, IssueList]:

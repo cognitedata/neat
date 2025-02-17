@@ -85,6 +85,7 @@ class InspectIssues:
 
     def __init__(self, state: SessionState) -> None:
         self._state = state
+        self._max_display = 50
 
     @overload
     def __call__(
@@ -130,8 +131,11 @@ class InspectIssues:
             issues = IssueList([issue for issue in issues if type(issue).__name__ in closest_match])
 
         issue_str = "\n".join(
-            [f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}" for issue in issues[:50]]
-            + ([] if len(issues) <= 50 else [f"  * ... {len(issues) - 50} more"])
+            [
+                f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}"
+                for issue in issues[: self._max_display]
+            ]
+            + ([] if len(issues) <= 50 else [f"  * ... {len(issues) - self._max_display} more"])
         )
         markdown_str = f"### {len(issues)} issues found\n\n{issue_str}"
 
@@ -181,6 +185,7 @@ class InspectOutcome:
 class InspectUploadOutcome:
     def __init__(self, get_last_outcome: Callable[[], UploadResultList]) -> None:
         self._get_last_outcome = get_last_outcome
+        self._max_display = 50
 
     @staticmethod
     def _as_set(value: str | list[str] | None) -> set[str] | None:
@@ -234,7 +239,7 @@ class InspectUploadOutcome:
             from IPython.display import Markdown, display
 
             lines: list[str] = []
-            for item in outcome:
+            for line_no, item in enumerate(outcome):
                 lines.append(f"### {item.name}")
                 if unique_errors := set(item.error_messages):
                     lines.append("#### Errors")
@@ -265,6 +270,10 @@ class InspectUploadOutcome:
 
                         else:
                             lines.append(f"  * {value}")
+
+                if line_no >= self._max_display:
+                    lines.append(f"### ... {len(outcome) - self._max_display} more")
+                    break
 
             display(Markdown("\n".join(lines)))
 
