@@ -15,7 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.110.0] - 17-02-**2025**
+### Added
+- Validation of DMS rules does not allow re-definition of any of the resources
+- Validation of INFO rules does not allow re-definition of any of the resources
+
+## [0.110.0] - 17-02-**2025**
 ### Added
 - Validation of DMS rules does not allow re-definition of any of the resources
 
