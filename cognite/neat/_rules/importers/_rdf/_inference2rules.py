@@ -456,6 +456,10 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
                     if existing_prop := properties_by_id.get(property_id.casefold()):
+                        if not isinstance(existing_prop.instance_source, list):
+                            existing_prop.instance_source = (
+                                [existing_prop.instance_source] if existing_prop.instance_source else []
+                            )
                         existing_prop.instance_source.append(property_uri)
                         continue
                     else:
@@ -464,11 +468,15 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         )
                 properties_by_class_suffix_by_property_id_lowered[class_suffix] = properties_by_id
             if parent_suffix:
-                properties_by_id: dict[str, InformationInputProperty] = {}
+                properties_by_id = {}
                 for property_uri, read_properties in shared_properties.items():
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
                     if existing_prop := properties_by_id.get(property_id.casefold()):
+                        if not isinstance(existing_prop.instance_source, list):
+                            existing_prop.instance_source = (
+                                [existing_prop.instance_source] if existing_prop.instance_source else []
+                            )
                         existing_prop.instance_source.append(property_uri)
                     else:
                         properties_by_id[property_uri.casefold()] = self._create_property(
