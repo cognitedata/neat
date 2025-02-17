@@ -37,6 +37,7 @@ Changes are grouped as follows:
 - Automatic drop of rows in Excel rules if cells for critical columns are missing
 - [BREAKING] multi value types are now serialized as a comma separated values (previous we used `|` as separator)
 - Validation of DMS rules which does not allow re-definition of any of the resources
+- The `neat.infer()` now is case-insensitive when inferring the data model. This is to match CDF's behavior.
 
 ## [0.109.4] - 03-02-**2025**
 ### Fixed

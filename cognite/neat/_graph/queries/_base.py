@@ -8,7 +8,6 @@ from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.query import ResultRow
 
 from cognite.neat._constants import NEAT
-from cognite.neat._rules._constants import EntityTypes
 from cognite.neat._shared import InstanceType
 from cognite.neat._utils.rdf_ import remove_instance_ids_in_batch, remove_namespace_from_uri
 
@@ -168,7 +167,6 @@ class Queries:
         instance_id: URIRef,
         instance_type: URIRef | None = None,
         property_renaming_config: dict | None = None,
-        property_types: dict[str, EntityTypes] | None = None,
         named_graph: URIRef | None = None,
     ) -> tuple[str, dict[str | InstanceType, list[str]]] | None:
         """DESCRIBE instance for a given class from the graph store
@@ -177,7 +175,6 @@ class Queries:
             instance_id: Instance id for which we want to generate query
             instance_type: Type of the instance, default None (will be inferred from triples)
             property_renaming_config: Dictionary to rename properties, default None (no renaming)
-            property_types: Dictionary of property types, default None (helper for removal of namespace)
             named_graph: Named graph to query over, default None (default graph)
 
 
