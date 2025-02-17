@@ -308,15 +308,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
             if isinstance(value, list) and list.__name__ not in _get_field_value_types(cls, info):
-                if len(value) == 1:
-                    return value[0]
                 if len(value) > 1:
                     warnings.warn(
                         # the identifier is unknown, it will be cest in the create_instances method
                         PropertyMultipleValueWarning("", "property", str(info.field_name), value=str(value[0])),
                         stacklevel=2,
                     )
-                    return value[0]
+                elif not value:
+                    return None  # type: ignore[return-value]
+                return value[0]
 
             return value
 
