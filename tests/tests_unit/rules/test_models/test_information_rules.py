@@ -6,7 +6,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import NeatError
-from cognite.neat._issues.errors import NeatValueError, ResourceNotDefinedError
+from cognite.neat._issues.errors import ResourceNotDefinedError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSRules, SheetList, data_types
 from cognite.neat._rules.models.data_types import DataType, String
@@ -14,6 +14,7 @@ from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat._rules.models.information import (
     InformationClass,
     InformationInputRules,
+    InformationProperty,
     InformationRules,
     InformationValidation,
 )
@@ -70,44 +71,6 @@ def case_insensitive_value_types():
         },
         String(),
         id="case_insensitive",
-    )
-
-
-def invalid_domain_rules_cases():
-    yield pytest.param(
-        {
-            "Metadata": {
-                "role": "information architect",
-                "creator": "Jon, Emma, David",
-                "space": "power",
-                "external_id": "power2consumer",
-                "created": datetime(2024, 2, 9, 0, 0),
-                "updated": datetime(2024, 2, 9, 0, 0),
-                "version": "0.1.0",
-                "name": "Power to Consumer Data Model",
-            },
-            "Classes": [
-                {
-                    "Class": "GeneratingUnit",
-                    "Description": None,
-                    "Implements": None,
-                }
-            ],
-            "Properties": [
-                {
-                    "Class": "GeneratingUnit",
-                    "Property": "name",
-                    "Description": None,
-                    "Value Type": "string",
-                    "Min Count": 1,
-                    "Max Count": 1.0,
-                    "Default": None,
-                    "Instance Source": ":GeneratingUnit(cim:name)",
-                }
-            ],
-        },
-        NeatValueError("Invalid RDF Path: ':GeneratingUnit(cim:name)'"),
-        id="missing_rule",
     )
 
 
@@ -174,14 +137,6 @@ class TestInformationRules:
         }
         missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
-
-    @pytest.mark.parametrize("invalid_rules, expected_exception", list(invalid_domain_rules_cases()))
-    def test_invalid_rules(self, invalid_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
-        with pytest.raises(ValueError) as e:
-            InformationRules.model_validate(invalid_rules)
-        errors = NeatError.from_errors(e.value.errors())
-        assert len(errors) == 1
-        assert errors[0] == expected_exception
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
     @pytest.mark.skip("Temp skipping: enabling in new PR")
@@ -409,3 +364,35 @@ class TestInformationConverter:
         assert rules.classes[0].class_.suffix == "Generating_Unit"
         assert rules.properties[0].property_ == "IdentifiedObject_name"
         assert rules.properties[0].class_.suffix == "Generating_Unit"
+
+
+class TestInformationProperty:
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            pytest.param(
+                InformationInputProperty(
+                    class_="MyAsset",
+                    property_="name",
+                    value_type="string",
+                    max_count=1,
+                    instance_source="prefix_16:MyAsset(prefix_16:P&ID)",
+                ),
+                id="Instance Source with ampersand",
+            ),
+            pytest.param(
+                InformationInputProperty(
+                    class_="MyAsset",
+                    property_="name",
+                    value_type="string",
+                    max_count=1,
+                    instance_source="prefix_16:MyAsset(prefix_16:State(Previous))",
+                ),
+                id="Instance Source with parentheses",
+            ),
+        ],
+    )
+    def test_rdf_properties(self, raw: InformationInputProperty):
+        prop = InformationProperty.model_validate(raw.dump(default_prefix="power"))
+
+        assert isinstance(prop, InformationProperty)

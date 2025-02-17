@@ -1,10 +1,12 @@
-from collections.abc import Sequence
+from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from typing import TYPE_CHECKING
 
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._constants import is_hierarchy_property
 from cognite.neat._issues.errors import NeatValueError
 
 if TYPE_CHECKING:
@@ -110,3 +112,17 @@ class SchemaAPI:
             views=view_write,
             containers=container_write,
         )
+
+    @staticmethod
+    def get_hierarchical_properties(
+        views: Iterable[dm.View | dm.ViewApply],
+    ) -> dict[dm.ViewId, set[str]]:
+        """Sorts the views by container constraints."""
+        hierarchical_properties_by_view_id: dict[dm.ViewId, set[str]] = defaultdict(set)
+        for view in views:
+            for prop_id, prop in (view.properties or {}).items():
+                if not isinstance(prop, dm.MappedProperty | dm.MappedPropertyApply):
+                    continue
+                if is_hierarchy_property(prop.container, prop.container_property_identifier):
+                    hierarchical_properties_by_view_id[view.as_id()].add(prop_id)
+        return hierarchical_properties_by_view_id

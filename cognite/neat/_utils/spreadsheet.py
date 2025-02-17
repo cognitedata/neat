@@ -5,6 +5,8 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
+from cognite.neat._rules._constants import get_internal_properties
+
 
 @dataclass
 class SpreadsheetRead:
@@ -16,6 +18,7 @@ class SpreadsheetRead:
 
     header_row: int = 1
     empty_rows: list[int] = field(default_factory=list)
+    skipped_rows: list[int] = field(default_factory=list)
     is_one_indexed: bool = True
 
     def __post_init__(self):
@@ -28,6 +31,13 @@ class SpreadsheetRead:
                 output += 1
             else:
                 break
+
+        for skipped_rows in self.skipped_rows:
+            if skipped_rows <= output:
+                output += 1
+            else:
+                break
+
         return output + self.header_row + (1 if self.is_one_indexed else 0)
 
 
@@ -63,17 +73,50 @@ def read_individual_sheet(
 
     raw = pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
     is_na = raw.isnull().all(axis=1)
+    skip_rows = _find_rows_to_skip(raw)
     empty_rows = is_na[is_na].index.tolist()
 
+    if skip_rows:
+        raw = raw.drop(skip_rows)
+
     raw.dropna(axis=0, how="all", inplace=True)
+
     if "Value Type" in raw.columns:
         # Special handling for Value Type column, #N/A is treated specially by NEAT it means Unknown
         raw["Value Type"] = raw["Value Type"].replace(float("nan"), "#N/A")
+
     output = raw.replace(float("nan"), None).to_dict(orient="records")
     if return_read_info:
         # If no rows are skipped, row 1 is the header row.
-        return output, SpreadsheetRead(header_row=skiprows + 1, empty_rows=empty_rows, is_one_indexed=True)
+        return output, SpreadsheetRead(
+            header_row=skiprows + 1,
+            empty_rows=empty_rows,
+            is_one_indexed=True,
+            skipped_rows=skip_rows,
+        )
     return output
+
+
+def _find_rows_to_skip(
+    df: pd.DataFrame,
+) -> list:
+    """Find rows which are having all values as None except for internal properties."""
+    rows_to_skip = []
+
+    internal_cols = {val.lower() for val in get_internal_properties()}
+    for i, row in df.iterrows():
+        user_cols_state = []
+        internal_cols_state = []
+        for col in df.columns:
+            if col.lower() not in internal_cols:
+                user_cols_state.append(row[col] == "#N/A" or row[col].__str__().lower() in ["none", "nan"])
+            else:
+                internal_cols_state.append(row[col] is not None)
+
+        if all(user_cols_state) and any(internal_cols_state):
+            rows_to_skip.append(i)
+
+    return rows_to_skip
 
 
 def _get_row_number(sheet: Worksheet, values_to_find: list[str]) -> int | None:

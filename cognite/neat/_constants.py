@@ -164,9 +164,20 @@ READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
     dm.ContainerId("cdf_cdm", "CogniteFile"): frozenset({"isUploaded", "uploadedTime"}),
 }
 
+HIERARCHICAL_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
+    dm.ContainerId("cdf_cdm", "CogniteAsset"): frozenset({"assetHierarchy_parent"})
+}
+
 
 def is_readonly_property(container: dm.ContainerId, property_: str) -> bool:
     return container in READONLY_PROPERTIES_BY_CONTAINER and property_ in READONLY_PROPERTIES_BY_CONTAINER[container]
+
+
+def is_hierarchy_property(container: dm.ContainerId, property_: str) -> bool:
+    return (
+        container in HIERARCHICAL_PROPERTIES_BY_CONTAINER
+        and property_ in HIERARCHICAL_PROPERTIES_BY_CONTAINER[container]
+    )
 
 
 DMS_RESERVED_PROPERTIES = frozenset(

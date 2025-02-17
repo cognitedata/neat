@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -14,6 +15,7 @@ from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules.transformers import PrefixEntities, StandardizeNaming
+from cognite.neat._rules.transformers._converters import StandardizeSpaceAndVersion
 from cognite.neat._utils.text import humanize_collection
 
 from ._state import SessionState
@@ -270,5 +272,15 @@ class DataModelPrepareAPI:
         For classes/views/containers, the naming will be standardized to PascalCase.
         For properties, the naming will be standardized to camelCase.
         """
+        warnings.filterwarnings("default")
         AlphaFlags.standardize_naming.warn()
         return self._state.rule_transform(StandardizeNaming())
+
+    def standardize_space_and_version(self) -> IssueList:
+        """Standardize space and version in the data model.
+
+        This method will standardize the space and version in the data model to the Cognite standard.
+        """
+        warnings.filterwarnings("default")
+        AlphaFlags.standardize_space_and_version.warn()
+        return self._state.rule_transform(StandardizeSpaceAndVersion())

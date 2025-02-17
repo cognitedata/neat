@@ -1,4 +1,3 @@
-from ._dms import DMSAnalysis
-from ._information import InformationAnalysis
+from ._base import RulesAnalysis
 
-__all__ = ["DMSAnalysis", "InformationAnalysis"]
+__all__ = ["RulesAnalysis"]

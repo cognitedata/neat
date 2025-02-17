@@ -1,13 +1,15 @@
 import urllib.parse
 
+from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat import NeatSession
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._issues import catch_issues
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._rules.models.data_types import DataType, Integer, Json, Long
 from cognite.neat._rules.models.entities import MultiValueTypeInfo
@@ -44,13 +46,13 @@ def test_rdf_inference():
     assert prop is not None, "Failed to infer expected multi-value property OperatingShare.PowerSystemResource"
     assert set(prop.value_type.types) == set(
         MultiValueTypeInfo.load(
-            "inferred:ConformLoad | inferred:NonConformLoad | "
-            "inferred:GeneratingUnit | inferred:ACLineSegment | inferred:PowerTransformer"
+            "inferred:ConformLoad, inferred:NonConformLoad, "
+            "inferred:GeneratingUnit, inferred:ACLineSegment, inferred:PowerTransformer"
         ).types
     )
 
     # we should have 4 multi-value property
-    assert len(InformationAnalysis(rules).multi_value_properties) == 4
+    assert len(RulesAnalysis(rules).multi_value_properties) == 4
 
 
 def test_rdf_inference_with_removal_of_unknown_type():
@@ -148,3 +150,41 @@ def test_infer_with_bad_property_names() -> None:
     assert info is not None
     assert len(info.properties) == 1
     assert info.properties[0].property_ == "myPropertyIllFormed"
+
+
+def test_infer_importer_names_different_casing() -> None:
+    neat = NeatSession()
+    neat._state.instances.store._add_triples(
+        [
+            (DEFAULT_NAMESPACE["MyAsset"], RDF.type, DEFAULT_NAMESPACE["Asset"]),
+            (DEFAULT_NAMESPACE["MyAsset"], DEFAULT_NAMESPACE["deleteFlag"], Literal(True)),
+            (DEFAULT_NAMESPACE["MyAsset2"], RDF.type, DEFAULT_NAMESPACE["Asset"]),
+            (DEFAULT_NAMESPACE["MyAsset2"], DEFAULT_NAMESPACE["DeleteFlag"], Literal(False)),
+        ],
+        named_graph=neat._state.instances.store.default_named_graph,
+    )
+    neat.infer()
+    assert neat._state.rule_store.provenance
+    info = neat._state.rule_store.last_verified_information_rules
+
+    assert info is not None
+    assert len(info.properties) == 1
+    assert info.properties[0].instance_source is not None
+    assert len(info.properties[0].instance_source) == 2
+
+    neat.convert()
+
+    dms_rules = neat._state.rule_store.last_verified_dms_rules
+    info_rules = neat._state.rule_store.last_verified_information_rules
+
+    store = neat._state.instances.store
+    instances = [
+        instance
+        for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
+        if isinstance(instance, InstanceApply)
+    ]
+    actual = {node.external_id: node.sources[0].properties for node in instances}
+    assert actual == {
+        "MyAsset": {"DeleteFlag": True},
+        "MyAsset2": {"DeleteFlag": False},
+    }

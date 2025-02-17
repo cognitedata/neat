@@ -15,6 +15,29 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.110.0] - 17-02-**2025**
+### Added
+- [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
+- The `neat.to.excel(...)` now supports passing a data model directly in the `include_reference` parameter.
+- [ALPHA] Ability to subset data model to desired concepts (classes/views) via `neat.subset.data_model` endpoint
+
+### Fixed
+- In Model was not automatically set to True importing from spreadsheet missing value in this column
+- Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
+- The `neat.infer()` maintains acronyms when renaming invalid properties/classes.
+- neat.show.data_model() fixed for information rules
+
+### Changed
+- Moved examples under neat.read.examples[nordic44, pump_example]
+- [BREAKING] In Information rules, the `Instance Source` field is now a URIRef list instead of a RDFPath. In addition,
+  the classes now also have an `Instance Source` column with the rdf:type of the class.
+
+### Improved
+- The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
+- Automatic drop of rows in Excel rules if cells for critical columns are missing
+- [BREAKING] multi value types are now serialized as a comma separated values (previous we used `|` as separator)
+- The `neat.infer()` now is case-insensitive when inferring the data model. This is to match CDF's behavior.
+
 ## [0.109.4] - 03-02-**2025**
 ### Fixed
 - The `neat.create.enterprise_model()` now sorts properties based on (view + property) in alphabetical order.
@@ -28,7 +51,7 @@ Changes are grouped as follows:
 - `neat.infer()` now automatically makes the inferred classes and properties comply with the CDF naming conventions.
 
 ### Fixed
-- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model 
+- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model
   in the Excel file.
 
 ## [0.109.2] - 31-01-**2025**
@@ -466,7 +489,7 @@ Changes are grouped as follows:
 - Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 - Added RDF based readers for `NeatSession`
-- `NeatSession.read.rdf.examples.nordic44`
+- `NeatSession.read.examples.nordic44`
 - `NeatSession.show.data_model` show data model in UI
 
 ### Removed

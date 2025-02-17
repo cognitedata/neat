@@ -1,16 +1,13 @@
 import colorsys
 import random
-from typing import Any, cast
+from typing import Any
 
 import networkx as nx
 from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
 
 from cognite.neat._constants import IN_NOTEBOOK, IN_PYODIDE
-from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
-from cognite.neat._rules.models.information._rules import InformationRules
+from cognite.neat._rules.analysis._base import RulesAnalysis
 from cognite.neat._session.exceptions import NeatSessionError
 from cognite.neat._utils.io_ import to_directory_compatible
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_display_name
@@ -99,78 +96,20 @@ class ShowDataModelAPI(ShowBaseAPI):
 
     def __call__(self) -> Any:
         if self._state.rule_store.empty:
-            raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a new data model.")
+            raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a data model.")
+
         last_target = self._state.rule_store.provenance[-1].target_entity
         rules = last_target.dms or last_target.information
+        analysis = RulesAnalysis(dms=last_target.dms, information=last_target.information)
 
         if last_target.dms is not None:
-            di_graph = self._generate_dms_di_graph(last_target.dms)
+            di_graph = analysis._dms_di_graph(format="data-model")
         else:
-            di_graph = self._generate_info_di_graph(last_target.information)
+            di_graph = analysis._info_di_graph(format="data-model")
+
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}.html"
-
         return self._generate_visualization(di_graph, name)
-
-    def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
-        """Generate a DiGraph from the last verified DMS rules."""
-        di_graph = nx.DiGraph()
-
-        # Views with properties or used as ValueType
-        # If a view is not used in properties or as ValueType, it is not added to the graph
-        # as we typically do not have the properties for it.
-        used_views = {prop_.view for prop_ in rules.properties} | {
-            prop_.value_type for prop_ in rules.properties if isinstance(prop_.value_type, ViewEntity)
-        }
-
-        # Add nodes and edges from Views sheet
-        for view in rules.views:
-            if view.view not in used_views:
-                continue
-            # if possible use humanreadable label coming from the view name
-            if not di_graph.has_node(view.view.suffix):
-                di_graph.add_node(view.view.suffix, label=view.view.suffix)
-
-        # Add nodes and edges from Properties sheet
-        for prop_ in rules.properties:
-            if prop_.connection and isinstance(prop_.value_type, ViewEntity):
-                if not di_graph.has_node(prop_.view.suffix):
-                    di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
-                di_graph.add_edge(
-                    prop_.view.suffix,
-                    prop_.value_type.suffix,
-                    label=prop_.name or prop_.view_property,
-                )
-
-        return di_graph
-
-    def _generate_info_di_graph(self, rules: InformationRules) -> nx.DiGraph:
-        """Generate DiGraph representing information data model."""
-
-        di_graph = nx.DiGraph()
-
-        # Add nodes and edges from Views sheet
-        for class_ in rules.classes:
-            # if possible use humanreadable label coming from the view name
-            if not di_graph.has_node(class_.class_.suffix):
-                di_graph.add_node(
-                    class_.class_.suffix,
-                    label=class_.name or class_.class_.suffix,
-                )
-
-        # Add nodes and edges from Properties sheet
-        for prop_ in rules.properties:
-            if prop_.type_ == EntityTypes.object_property:
-                if not di_graph.has_node(prop_.class_.suffix):
-                    di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
-
-                di_graph.add_edge(
-                    prop_.class_.suffix,
-                    cast(ClassEntity, prop_.value_type).suffix,
-                    label=prop_.name or prop_.property_,
-                )
-
-        return di_graph
 
 
 @session_class_wrapper
@@ -185,66 +124,15 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
 
         last_target = self._state.rule_store.provenance[-1].target_entity
         rules = last_target.dms or last_target.information
+        analysis = RulesAnalysis(dms=last_target.dms, information=last_target.information)
 
         if last_target.dms is not None:
-            di_graph = self._generate_dms_di_graph(last_target.dms)
+            di_graph = analysis._dms_di_graph(format="implements")
         else:
-            di_graph = self._generate_info_di_graph(last_target.information)
+            di_graph = analysis._info_di_graph(format="implements")
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}_implements.html"
         return self._generate_visualization(di_graph, name)
-
-    def _generate_dms_di_graph(self, rules: DMSRules) -> nx.DiGraph:
-        """Generate a DiGraph from the last verified DMS rules."""
-        di_graph = nx.DiGraph()
-
-        # Add nodes and edges from Views sheet
-        for view in rules.views:
-            # add implements as edges
-            if view.implements:
-                if not di_graph.has_node(view.view.suffix):
-                    di_graph.add_node(view.view.suffix, label=view.view.suffix)
-                for implement in view.implements:
-                    if not di_graph.has_node(implement.suffix):
-                        di_graph.add_node(implement.suffix, label=implement.suffix)
-
-                    di_graph.add_edge(
-                        view.view.suffix,
-                        implement.suffix,
-                        label="implements",
-                        dashes=True,
-                    )
-
-        return di_graph
-
-    def _generate_info_di_graph(self, rules: InformationRules) -> nx.DiGraph:
-        """Generate DiGraph representing information data model."""
-
-        di_graph = nx.DiGraph()
-
-        # Add nodes and edges from Views sheet
-        for class_ in rules.classes:
-            # if possible use human readable label coming from the view name
-
-            # add subClassOff as edges
-            if class_.implements:
-                if not di_graph.has_node(class_.class_.suffix):
-                    di_graph.add_node(
-                        class_.class_.suffix,
-                        label=class_.name or class_.class_.suffix,
-                    )
-
-                for parent in class_.implements:
-                    if not di_graph.has_node(parent.suffix):
-                        di_graph.add_node(parent.suffix, label=parent.suffix)
-                    di_graph.add_edge(
-                        class_.class_.suffix,
-                        parent.suffix,
-                        label="implements",
-                        dashes=True,
-                    )
-
-        return di_graph
 
 
 @session_class_wrapper

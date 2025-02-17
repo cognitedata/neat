@@ -1,51 +1,49 @@
 import itertools
 import warnings
-from abc import ABC, abstractmethod
 from collections import defaultdict
-from collections.abc import Set
-from dataclasses import dataclass
-from typing import Generic, TypeVar, cast
+from collections.abc import Hashable, ItemsView, Iterator, KeysView, MutableMapping, Set, ValuesView
+from dataclasses import dataclass, field
+from graphlib import TopologicalSorter
+from typing import Any, Literal, TypeVar, overload
 
+import networkx as nx
 import pandas as pd
+from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
-from cognite.neat._rules.models._base_rules import BaseRules
-from cognite.neat._rules.models._rdfpath import RDFPath
-from cognite.neat._rules.models.dms._rules import DMSProperty, DMSView
-from cognite.neat._rules.models.entities import (
-    ClassEntity,
-    Entity,
+from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings import NeatValueWarning
+from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat._rules.models.dms import DMSProperty
+from cognite.neat._rules.models.dms._rules import DMSView
+from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
+from cognite.neat._rules.models.entities._single_value import (
+    UnknownEntity,
 )
-from cognite.neat._rules.models.information import InformationProperty
-from cognite.neat._rules.models.information._rules import InformationClass
-from cognite.neat._utils.rdf_ import get_inheritance_path
+from cognite.neat._rules.models.information import InformationClass, InformationProperty
 
-T_Rules = TypeVar("T_Rules", bound=BaseRules)
-T_Property = TypeVar("T_Property", bound=InformationProperty | DMSProperty)
-T_Class = TypeVar("T_Class", bound=InformationClass | DMSView)
-T_ClassEntity = TypeVar("T_ClassEntity", bound=Entity)
-T_PropertyEntity = TypeVar("T_PropertyEntity", bound=Entity | str)
+T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
 
 @dataclass(frozen=True)
-class Linkage(Generic[T_ClassEntity, T_PropertyEntity]):
-    source_class: T_ClassEntity
-    connecting_property: T_PropertyEntity
-    target_class: T_ClassEntity
+class Linkage:
+    source_class: ClassEntity
+    connecting_property: str
+    target_class: ClassEntity
     max_occurrence: int | float | None
 
 
-class LinkageSet(set, Generic[T_ClassEntity, T_PropertyEntity], Set[Linkage[T_ClassEntity, T_PropertyEntity]]):
+class LinkageSet(set, Set[Linkage]):
     @property
-    def source_class(self) -> set[T_ClassEntity]:
+    def source_class(self) -> set[ClassEntity]:
         return {link.source_class for link in self}
 
     @property
-    def target_class(self) -> set[T_ClassEntity]:
+    def target_class(self) -> set[ClassEntity]:
         return {link.target_class for link in self}
 
-    def get_target_classes_by_source(self) -> dict[T_ClassEntity, set[T_ClassEntity]]:
-        target_classes_by_source: dict[T_ClassEntity, set[T_ClassEntity]] = defaultdict(set)
+    def get_target_classes_by_source(self) -> dict[ClassEntity, set[ClassEntity]]:
+        target_classes_by_source: dict[ClassEntity, set[ClassEntity]] = defaultdict(set)
         for link in self:
             target_classes_by_source[link.source_class].add(link.target_class)
         return target_classes_by_source
@@ -65,271 +63,327 @@ class LinkageSet(set, Generic[T_ClassEntity, T_PropertyEntity], Set[Linkage[T_Cl
         )
 
 
-class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_PropertyEntity]):
-    def __init__(self, rules: T_Rules) -> None:
-        self.rules = rules
+@dataclass
+class ViewQuery:
+    view_id: dm.ViewId
+    rdf_type: URIRef
+    property_renaming_config: dict[URIRef, str] = field(default_factory=dict)
 
-    @abstractmethod
-    def _get_classes(self) -> list[T_Class]:
-        raise NotImplementedError
 
-    @abstractmethod
-    def _get_properties(self) -> list[T_Property]:
-        raise NotImplementedError
+class ViewQueryDict(dict, MutableMapping[dm.ViewId, ViewQuery]):
+    # The below methods are included to make better type hints in the IDE
+    def __getitem__(self, k: dm.ViewId) -> ViewQuery:
+        return super().__getitem__(k)
 
-    @abstractmethod
-    def _get_cls_entity(self, class_: T_Class | T_Property) -> T_ClassEntity:
-        raise NotImplementedError
+    def __setitem__(self, k: dm.ViewId, v: ViewQuery) -> None:
+        super().__setitem__(k, v)
 
-    @abstractmethod
-    def _get_prop_entity(self, property_: T_Property) -> T_PropertyEntity:
-        raise NotImplementedError
+    def __delitem__(self, k: dm.ViewId) -> None:
+        super().__delitem__(k)
 
-    @abstractmethod
-    def _get_cls_parents(self, class_: T_Class) -> list[T_ClassEntity] | None:
-        raise NotImplementedError
+    def __iter__(self) -> Iterator[dm.ViewId]:
+        return super().__iter__()
 
-    @classmethod
-    @abstractmethod
-    def _set_cls_entity(cls, property_: T_Property, class_: T_ClassEntity) -> None:
-        raise NotImplementedError
+    def keys(self) -> KeysView[dm.ViewId]:  # type: ignore[override]
+        return super().keys()
 
-    @abstractmethod
-    def _get_object(self, property_: T_Property) -> T_ClassEntity | None:
-        raise NotImplementedError
+    def values(self) -> ValuesView[ViewQuery]:  # type: ignore[override]
+        return super().values()
 
-    @abstractmethod
-    def _get_max_occurrence(self, property_: T_Property) -> int | float | None:
-        raise NotImplementedError
+    def items(self) -> ItemsView[dm.ViewId, ViewQuery]:  # type: ignore[override]
+        return super().items()
 
-    @property
-    def directly_referred_classes(self) -> set[ClassEntity]:
-        raise NotImplementedError
+    def get(self, __key: dm.ViewId, __default: Any = ...) -> ViewQuery:
+        return super().get(__key, __default)
 
-    @property
-    def inherited_referred_classes(self) -> set[ClassEntity]:
-        raise NotImplementedError
+    def pop(self, __key: dm.ViewId, __default: Any = ...) -> ViewQuery:
+        return super().pop(__key, __default)
 
-    @property
-    def properties_by_neat_id(self) -> dict[URIRef, T_Property]:
-        return {cast(URIRef, prop.neatId): prop for prop in self._get_properties()}
+    def popitem(self) -> tuple[dm.ViewId, ViewQuery]:
+        return super().popitem()
+
+
+class RulesAnalysis:
+    def __init__(self, information: InformationRules | None = None, dms: DMSRules | None = None) -> None:
+        self._information = information
+        self._dms = dms
 
     @property
-    def classes_by_neat_id(self) -> dict[URIRef, T_Class]:
-        return {cast(URIRef, class_.neatId): class_ for class_ in self._get_classes()}
+    def information(self) -> InformationRules:
+        if self._information is None:
+            raise NeatValueError("Information rules are required for this analysis")
+        return self._information
 
-    # Todo Lru cache this method.
-    def class_parent_pairs(self, allow_different_space: bool = False) -> dict[T_ClassEntity, list[T_ClassEntity]]:
-        """This only returns class - parent pairs only if parent is in the same data model"""
-        class_subclass_pairs: dict[T_ClassEntity, list[T_ClassEntity]] = {}
-        for cls_ in self._get_classes():
-            entity = self._get_cls_entity(cls_)
-            class_subclass_pairs[entity] = []
-            for parent in self._get_cls_parents(cls_) or []:
-                if parent.prefix == entity.prefix or allow_different_space:
-                    class_subclass_pairs[entity].append(parent)
+    @property
+    def dms(self) -> DMSRules:
+        if self._dms is None:
+            raise NeatValueError("DMS rules are required for this analysis")
+        return self._dms
+
+    def parents_by_class(
+        self, include_ancestors: bool = False, include_different_space: bool = False
+    ) -> dict[ClassEntity, set[ClassEntity]]:
+        """Get a dictionary of classes and their parents.
+
+        Args:
+            include_ancestors (bool, optional): Include ancestors of the parents. Defaults to False.
+            include_different_space (bool, optional): Include parents from different spaces. Defaults to False.
+
+        Returns:
+            dict[ClassEntity, set[ClassEntity]]: Values parents with class as key.
+        """
+        parents_by_class: dict[ClassEntity, set[ClassEntity]] = {}
+        for class_ in self.information.classes:
+            parents_by_class[class_.class_] = set()
+            for parent in class_.implements or []:
+                if include_different_space or parent.prefix == class_.class_.prefix:
+                    parents_by_class[class_.class_].add(parent)
                 else:
                     warnings.warn(
-                        f"Parent class {parent} of class {cls_} is not in the same namespace, skipping !",
+                        NeatValueWarning(
+                            f"Parent class {parent} of class {class_} is not in the same namespace, skipping!"
+                        ),
                         stacklevel=2,
                     )
+        if include_ancestors:
+            self._include_ancestors(parents_by_class)
 
-        return class_subclass_pairs
+        return parents_by_class
 
-    def classes_with_properties(
-        self, consider_inheritance: bool = False, allow_different_namespace: bool = False
-    ) -> dict[T_ClassEntity, list[T_Property]]:
-        """Returns classes that have been defined in the data model.
+    @staticmethod
+    def _include_ancestors(parents_by_class: dict[T_Hashable, set[T_Hashable]]) -> None:
+        # Topological sort to ensure that classes include all ancestors
+        for class_entity in list(TopologicalSorter(parents_by_class).static_order()):
+            parents_by_class[class_entity] |= {
+                grand_parent for parent in parents_by_class[class_entity] for grand_parent in parents_by_class[parent]
+            }
 
-        Args:
-            consider_inheritance: Whether to consider inheritance or not. Defaults False
-            allow_different_namespace: When considering inheritance, whether to allow parents from
-                different namespaces or not. Defaults False
-
-        Returns:
-            Dictionary of classes with a list of properties defined for them
-
-        !!! note "consider_inheritance"
-            If consider_inheritance is True, properties from parent classes will also be considered.
-            This means if a class has a parent class, and the parent class has properties defined for it,
-            while we do not have any properties defined for the child class, we will still consider the
-            properties from the parent class. If consider_inheritance is False, we will only consider
-            properties defined for the child class, thus if no properties are defined for the child class,
-            it will not be included in the returned dictionary.
-        """
-
-        class_property_pairs: dict[T_ClassEntity, list[T_Property]] = defaultdict(list)
-
-        for property_ in self._get_properties():
-            class_property_pairs[self._get_cls_entity(property_)].append(property_)  # type: ignore
-
-        if consider_inheritance:
-            class_parent_pairs = self.class_parent_pairs(allow_different_namespace)
-            for class_ in class_parent_pairs:
-                self._add_inherited_properties(class_, class_property_pairs, class_parent_pairs)
-
-        return class_property_pairs
-
-    def class_inheritance_path(self, class_: ClassEntity) -> list[ClassEntity]:
-        class_parent_pairs = self.class_parent_pairs()
-        return get_inheritance_path(class_, class_parent_pairs)
-
-    @classmethod
-    def _add_inherited_properties(
-        cls,
-        class_: T_ClassEntity,
-        class_property_pairs: dict[T_ClassEntity, list[T_Property]],
-        class_parent_pairs: dict[T_ClassEntity, list[T_ClassEntity]],
-    ):
-        inheritance_path = get_inheritance_path(class_, class_parent_pairs)
-        for parent in inheritance_path:
-            # ParentClassEntity -> ClassEntity to match the type of class_property_pairs
-            if parent in class_property_pairs:
-                for property_ in class_property_pairs[parent]:
-                    property_ = property_.model_copy()  # type: ignore
-
-                    # This corresponds to importing properties from parent class
-                    # making sure that the property is attached to desired child class
-                    cls._set_cls_entity(property_, class_)
-
-                    # need same if we have RDF path to make sure that the starting class is the
-                    if class_ in class_property_pairs:
-                        class_property_pairs[class_].append(property_)
-                    else:
-                        class_property_pairs[class_] = [property_]
-
-    def class_property_pairs(
-        self, only_rdfpath: bool = False, consider_inheritance: bool = False
-    ) -> dict[T_ClassEntity, dict[T_PropertyEntity, T_Property]]:
-        """Returns a dictionary of classes with a dictionary of properties associated with them.
+    def properties_by_class(
+        self, include_ancestors: bool = False, include_different_space: bool = False
+    ) -> dict[ClassEntity, list[InformationProperty]]:
+        """Get a dictionary of classes and their properties.
 
         Args:
-            only_rdfpath : To consider only properties which have rule `rdfpath` set. Defaults False
-            consider_inheritance: Whether to consider inheritance or not. Defaults False
+            include_ancestors: Whether to include properties from parent classes.
+            include_different_space: Whether to include properties from parent classes in different spaces.
 
         Returns:
-            Dictionary of classes with a dictionary of properties associated with them.
+            dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
 
-        !!! note "difference to get_classes_with_properties"
-            This method returns a dictionary of classes with a dictionary of properties associated with them.
-            While get_classes_with_properties returns a dictionary of classes with a list of
-            properties defined for them,
-            here we filter the properties based on the `only_rdfpath` parameter and only consider
-            the first definition of a property if it is defined more than once.
-
-        !!! note "only_rdfpath"
-            If only_rdfpath is True, only properties with RuleType.rdfpath will be returned as
-            a part of the dictionary of properties related to a class. Otherwise, all properties
-            will be returned.
-
-        !!! note "consider_inheritance"
-            If consider_inheritance is True, properties from parent classes will also be considered.
-            This means if a class has a parent class, and the parent class has properties defined for it,
-            while we do not have any properties defined for the child class, we will still consider the
-            properties from the parent class. If consider_inheritance is False, we will only consider
-            properties defined for the child class, thus if no properties are defined for the child class,
-            it will not be included in the returned dictionary.
         """
-        # TODO: https://cognitedata.atlassian.net/jira/software/projects/NEAT/boards/893?selectedIssue=NEAT-78
+        properties_by_classes: dict[ClassEntity, list[InformationProperty]] = defaultdict(list)
+        for prop in self.information.properties:
+            properties_by_classes[prop.class_].append(prop)
 
-        class_property_pairs: dict[T_ClassEntity, dict[T_PropertyEntity, T_Property]] = {}
+        if include_ancestors:
+            parents_by_classes = self.parents_by_class(
+                include_ancestors=include_ancestors, include_different_space=include_different_space
+            )
+            for class_, parents in parents_by_classes.items():
+                class_properties = {prop.property_ for prop in properties_by_classes[class_]}
+                for parent in parents:
+                    for parent_prop in properties_by_classes[parent]:
+                        if parent_prop.property_ not in class_properties:
+                            child_prop = parent_prop.model_copy(update={"class_": class_})
+                            properties_by_classes[class_].append(child_prop)
+                            class_properties.add(child_prop.property_)
 
-        for class_, properties in self.classes_with_properties(consider_inheritance).items():
-            processed_properties: dict[T_PropertyEntity, T_Property] = {}
-            for property_ in properties:
-                prop_entity = self._get_prop_entity(property_)
-                if prop_entity in processed_properties:
-                    # TODO: use appropriate Warning class from _exceptions.py
-                    # if missing make one !
+        return properties_by_classes
+
+    def implements_by_view(
+        self, include_ancestors: bool = False, include_different_space: bool = False
+    ) -> dict[ViewEntity, set[ViewEntity]]:
+        """Get a dictionary of views and their implemented views."""
+        # This is a duplicate fo the parent_by_class method, but for views
+        # The choice to duplicate the code is to avoid generics which will make the code less readable
+        implements_by_view: dict[ViewEntity, set[ViewEntity]] = {}
+        for view in self.dms.views:
+            implements_by_view[view.view] = set()
+            for implements in view.implements or []:
+                if include_different_space or implements.space == view.view.space:
+                    implements_by_view[view.view].add(implements)
+                else:
                     warnings.warn(
-                        f"Property {processed_properties} for {class_} has been defined more than once!"
-                        " Only the first definition will be considered, skipping the rest..",
+                        NeatValueWarning(
+                            f"Implemented view {implements} of view {view} is not in the same namespace, skipping!"
+                        ),
+                        stacklevel=2,
+                    )
+        if include_ancestors:
+            self._include_ancestors(implements_by_view)
+        return implements_by_view
+
+    def properties_by_view(
+        self, include_ancestors: bool = False, include_different_space: bool = False
+    ) -> dict[ViewEntity, list[DMSProperty]]:
+        """Get a dictionary of views and their properties."""
+        # This is a duplicate fo the properties_by_class method, but for views
+        # The choice to duplicate the code is to avoid generics which will make the code less readable.
+        properties_by_views: dict[ViewEntity, list[DMSProperty]] = defaultdict(list)
+        for prop in self.dms.properties:
+            properties_by_views[prop.view].append(prop)
+
+        if include_ancestors:
+            implements_by_view = self.implements_by_view(
+                include_ancestors=include_ancestors, include_different_space=include_different_space
+            )
+            for view, parents in implements_by_view.items():
+                view_properties = {prop.view_property for prop in properties_by_views[view]}
+                for parent in parents:
+                    for parent_prop in properties_by_views[parent]:
+                        if parent_prop.view_property not in view_properties:
+                            child_prop = parent_prop.model_copy(update={"view": view})
+                            properties_by_views[view].append(child_prop)
+                            view_properties.add(child_prop.view_property)
+
+        return properties_by_views
+
+    @property
+    def logical_uri_by_view(self) -> dict[ViewEntity, URIRef]:
+        """Get the logical URI by view."""
+        return {view.view: view.logical for view in self.dms.views if view.logical}
+
+    def logical_uri_by_property_by_view(
+        self,
+        include_ancestors: bool = False,
+        include_different_space: bool = False,
+    ) -> dict[ViewEntity, dict[str, URIRef]]:
+        """Get the logical URI by property by view."""
+        properties_by_view = self.properties_by_view(include_ancestors, include_different_space)
+
+        return {
+            view: {prop.view_property: prop.logical for prop in properties if prop.logical}
+            for view, properties in properties_by_view.items()
+        }
+
+    @property
+    def _class_by_neat_id(self) -> dict[URIRef, InformationClass]:
+        """Get a dictionary of class neat IDs to
+        class entities."""
+
+        return {cls.neatId: cls for cls in self.information.classes if cls.neatId}
+
+    def class_by_suffix(self) -> dict[str, InformationClass]:
+        """Get a dictionary of class suffixes to class entities."""
+        # TODO: Remove this method
+        class_dict: dict[str, InformationClass] = {}
+        for definition in self.information.classes:
+            entity = definition.class_
+            if entity.suffix in class_dict:
+                warnings.warn(
+                    NeatValueWarning(
+                        f"Class {entity} has been defined more than once! Only the first definition "
+                        "will be considered, skipping the rest.."
+                    ),
+                    stacklevel=2,
+                )
+                continue
+            class_dict[entity.suffix] = definition
+        return class_dict
+
+    @property
+    def class_by_class_entity(self) -> dict[ClassEntity, InformationClass]:
+        """Get a dictionary of class entities to class entities."""
+        rules = self.information
+        return {cls.class_: cls for cls in rules.classes}
+
+    @property
+    def view_by_view_entity(self) -> dict[ViewEntity, DMSView]:
+        """Get a dictionary of class entities to class entities."""
+        rules = self.dms
+        return {view.view: view for view in rules.views}
+
+    def property_by_id(self) -> dict[str, list[InformationProperty]]:
+        """Get a dictionary of property IDs to property entities."""
+        property_dict: dict[str, list[InformationProperty]] = defaultdict(list)
+        for prop in self.information.properties:
+            property_dict[prop.property_].append(prop)
+        return property_dict
+
+    def properties_by_id_by_class(
+        self,
+        has_instance_source: bool = False,
+        include_ancestors: bool = False,
+    ) -> dict[ClassEntity, dict[str, InformationProperty]]:
+        """Get a dictionary of class entities to dictionaries of property IDs to property entities."""
+        class_property_pairs: dict[ClassEntity, dict[str, InformationProperty]] = {}
+        for class_, properties in self.properties_by_class(include_ancestors).items():
+            processed_properties: dict[str, InformationProperty] = {}
+            for prop in properties:
+                if prop.property_ in processed_properties:
+                    warnings.warn(
+                        NeatValueWarning(
+                            f"Property {processed_properties} for {class_} has been defined more than once!"
+                            " Only the first definition will be considered, skipping the rest.."
+                        ),
                         stacklevel=2,
                     )
                     continue
-
-                if (
-                    only_rdfpath
-                    and isinstance(property_, InformationProperty)
-                    and isinstance(property_.instance_source, RDFPath)
-                ) or not only_rdfpath:
-                    processed_properties[prop_entity] = property_
+                if has_instance_source and prop.instance_source is None:
+                    continue
+                processed_properties[prop.property_] = prop
             class_property_pairs[class_] = processed_properties
 
         return class_property_pairs
 
-    def class_linkage(self, consider_inheritance: bool = False) -> LinkageSet[T_ClassEntity, T_PropertyEntity]:
-        """Returns a set of class linkages in the data model.
+    def defined_views(self, include_ancestors: bool = False) -> set[ViewEntity]:
+        properties_by_view = self.properties_by_view(include_ancestors)
+        return {prop.view for prop in itertools.chain.from_iterable(properties_by_view.values())}
 
-        Args:
-            consider_inheritance: Whether to consider inheritance or not. Defaults False
-
-        Returns:
-
-        """
-        class_linkage = LinkageSet[T_ClassEntity, T_PropertyEntity]()
-
-        class_property_pairs = self.classes_with_properties(consider_inheritance)
-        properties = list(itertools.chain.from_iterable(class_property_pairs.values()))
-
-        for property_ in properties:
-            object_ = self._get_object(property_)
-            if object_ is not None:
-                class_linkage.add(
-                    Linkage(
-                        source_class=self._get_cls_entity(property_),
-                        connecting_property=self._get_prop_entity(property_),
-                        target_class=object_,
-                        max_occurrence=self._get_max_occurrence(property_),
-                    )
-                )
-
-        return class_linkage
-
-    def connected_classes(self, consider_inheritance: bool = False) -> set[T_ClassEntity]:
-        """Return a set of classes that are connected to other classes.
-
-        Args:
-            consider_inheritance: Whether to consider inheritance or not. Defaults False
-
-        Returns:
-            Set of classes that are connected to other classes
-        """
-        class_linkage = self.class_linkage(consider_inheritance)
-        return class_linkage.source_class.union(class_linkage.target_class)
-
-    def defined_classes(self, consider_inheritance: bool = False) -> set[T_ClassEntity]:
+    def defined_classes(
+        self,
+        include_ancestors: bool = False,
+    ) -> set[ClassEntity]:
         """Returns classes that have properties defined for them in the data model.
 
         Args:
-            consider_inheritance: Whether to consider inheritance or not. Defaults False
+            include_ancestors: Whether to consider inheritance or not. Defaults False
 
         Returns:
             Set of classes that have been defined in the data model
         """
-        class_property_pairs = self.classes_with_properties(consider_inheritance)
-        properties = list(itertools.chain.from_iterable(class_property_pairs.values()))
+        properties_by_class = self.properties_by_class(include_ancestors)
+        return {prop.class_ for prop in itertools.chain.from_iterable(properties_by_class.values())}
 
-        return {self._get_cls_entity(property) for property in properties}
-
-    def disconnected_classes(self, consider_inheritance: bool = False) -> set[T_ClassEntity]:
-        """Return a set of classes that are disconnected (i.e. isolated) from other classes.
+    def class_linkage(
+        self,
+        include_ancestors: bool = False,
+    ) -> LinkageSet:
+        """Returns a set of class linkages in the data model.
 
         Args:
-            consider_inheritance: Whether to consider inheritance or not. Defaults False
+            include_ancestors: Whether to consider inheritance or not. Defaults False
 
         Returns:
-            Set of classes that are disconnected from other classes
+
         """
-        return self.defined_classes(consider_inheritance) - self.connected_classes(consider_inheritance)
+        class_linkage = LinkageSet()
+
+        properties_by_class = self.properties_by_class(include_ancestors)
+
+        prop: InformationProperty
+        for prop in itertools.chain.from_iterable(properties_by_class.values()):
+            if not isinstance(prop.value_type, ClassEntity):
+                continue
+            class_linkage.add(
+                Linkage(
+                    source_class=prop.class_,
+                    connecting_property=prop.property_,
+                    target_class=prop.value_type,
+                    max_occurrence=prop.max_count,
+                )
+            )
+
+        return class_linkage
 
     def symmetrically_connected_classes(
-        self, consider_inheritance: bool = False
+        self,
+        include_ancestors: bool = False,
     ) -> set[tuple[ClassEntity, ClassEntity]]:
         """Returns a set of pairs of symmetrically linked classes.
 
         Args:
-            consider_inheritance: Whether to consider inheritance or not. Defaults False
+            include_ancestors: Whether to consider inheritance or not. Defaults False
 
         Returns:
             Set of pairs of symmetrically linked classes
@@ -339,11 +393,8 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
             in both directions. For example, if class A is connected to class B, and class B
             is connected to class A, then classes A and B are symmetrically connected.
         """
-
-        # TODO: Find better name for this method
         sym_pairs: set[tuple[ClassEntity, ClassEntity]] = set()
-
-        class_linkage = self.class_linkage(consider_inheritance)
+        class_linkage = self.class_linkage(include_ancestors)
         if not class_linkage:
             return sym_pairs
 
@@ -356,30 +407,171 @@ class BaseAnalysis(ABC, Generic[T_Rules, T_Class, T_Property, T_ClassEntity, T_P
                 sym_pairs.add((source, target))
         return sym_pairs
 
-    def as_property_dict(
+    @overload
+    def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
+
+    @overload
+    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
+
+    def _properties_by_neat_id(
+        self, format: Literal["info", "dms"] = "info"
+    ) -> dict[URIRef, InformationProperty] | dict[URIRef, DMSProperty]:
+        if format == "info":
+            return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
+        elif format == "dms":
+            return {prop.neatId: prop for prop in self.dms.properties if prop.neatId}
+        else:
+            raise NeatValueError(f"Invalid format: {format}")
+
+    @property
+    def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
+        return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
+
+    @property
+    def multi_value_properties(self) -> list[InformationProperty]:
+        return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
+
+    @property
+    def view_query_by_id(
         self,
-    ) -> dict[T_PropertyEntity, list[T_Property]]:
-        """This is used to capture all definitions of a property in the data model."""
-        property_dict: dict[T_PropertyEntity, list[T_Property]] = defaultdict(list)
-        for definition in self._get_properties():
-            property_dict[self._get_prop_entity(definition)].append(definition)
-        return property_dict
+    ) -> "ViewQueryDict":
+        # Trigger error if any of these are missing
+        _ = self.information
+        _ = self.dms
 
-    def as_class_dict(self) -> dict[str, T_Class]:
-        """This is to simplify access to classes through dict."""
-        class_dict: dict[str, T_Class] = {}
-        for definition in self._get_classes():
-            entity = self._get_cls_entity(definition)
-            if entity.suffix in class_dict:
-                warnings.warn(
-                    f"Class {entity} has been defined more than once! Only the first definition "
-                    "will be considered, skipping the rest..",
-                    stacklevel=2,
+        # caching results for faster access
+        classes_by_neat_id = self._class_by_neat_id
+        properties_by_class = self.properties_by_class(include_ancestors=True)
+        logical_uri_by_view = self.logical_uri_by_view
+        logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(include_ancestors=True)
+        information_properties_by_neat_id = self._properties_by_neat_id()
+
+        query_configs = ViewQueryDict()
+        for view in self.dms.views:
+            # this entire block of sequential if statements checks:
+            # 1. connection of dms to info rules
+            # 2. correct paring of information and dms rules
+            # 3. connection of info rules to instances
+            if (
+                (neat_id := logical_uri_by_view.get(view.view))
+                and (class_ := classes_by_neat_id.get(neat_id))
+                and (uri := class_.instance_source)
+            ):
+                view_query = ViewQuery(
+                    view_id=view.view.as_id(),
+                    rdf_type=uri,
+                    # start off with renaming of properties on the information level
+                    # this is to encounter for special cases of e.g. space, startNode and endNode
+                    property_renaming_config=(
+                        {uri: prop_.property_ for prop_ in info_properties for uri in prop_.instance_source or []}
+                        if (info_properties := properties_by_class.get(class_.class_))
+                        else {}
+                    ),
                 )
-                continue
-            class_dict[entity.suffix] = definition
-        return class_dict
 
-    @abstractmethod
-    def subset_rules(self, desired_classes: set[T_ClassEntity]) -> T_Rules:
-        raise NotImplementedError
+                if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
+                    for target_name, neat_id in logical_uri_by_property.items():
+                        if (property_ := information_properties_by_neat_id.get(neat_id)) and (
+                            uris := property_.instance_source
+                        ):
+                            for uri in uris:
+                                view_query.property_renaming_config[uri] = target_name
+
+                query_configs[view.view.as_id()] = view_query
+
+        return query_configs
+
+    def _dms_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.DiGraph:
+        """Generate a DiGraph from the DMS rules."""
+        di_graph = nx.DiGraph()
+
+        rules = self.dms
+
+        # Views with properties or used as ValueType
+        # If a view is not used in properties or as ValueType, it is not added to the graph
+        # as we typically do not have the properties for it.
+        used_views = {prop_.view for prop_ in rules.properties} | {
+            prop_.value_type for prop_ in rules.properties if isinstance(prop_.value_type, ViewEntity)
+        }
+
+        # Add nodes and edges from Views sheet
+        for view in rules.views:
+            if view.view not in used_views:
+                continue
+            # if possible use human-readable label coming from the view name
+            if not di_graph.has_node(view.view.suffix):
+                di_graph.add_node(view.view.suffix, label=view.view.suffix)
+
+                if format == "implements" and view.implements:
+                    for implement in view.implements:
+                        if not di_graph.has_node(implement.suffix):
+                            di_graph.add_node(implement.suffix, label=implement.suffix)
+
+                        di_graph.add_edge(
+                            view.view.suffix,
+                            implement.suffix,
+                            label="implements",
+                            dashes=True,
+                        )
+
+        if format == "data-model":
+            # Add nodes and edges from Properties sheet
+            for prop_ in rules.properties:
+                if prop_.connection and isinstance(prop_.value_type, ViewEntity):
+                    if not di_graph.has_node(prop_.view.suffix):
+                        di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
+
+                    if not di_graph.has_node(prop_.value_type.suffix):
+                        di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
+
+                    di_graph.add_edge(
+                        prop_.view.suffix,
+                        prop_.value_type.suffix,
+                        label=prop_.name or prop_.view_property,
+                    )
+
+        return di_graph
+
+    def _info_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.DiGraph:
+        """Generate DiGraph representing information data model."""
+
+        rules = self.information
+        di_graph = nx.DiGraph()
+
+        # Add nodes and edges from Views sheet
+        for class_ in rules.classes:
+            # if possible use human readable label coming from the view name
+            if not di_graph.has_node(class_.class_.suffix):
+                di_graph.add_node(
+                    class_.class_.suffix,
+                    label=class_.name or class_.class_.suffix,
+                )
+
+                if format == "implements" and class_.implements:
+                    for parent in class_.implements:
+                        if not di_graph.has_node(parent.suffix):
+                            di_graph.add_node(parent.suffix, label=parent.suffix)
+                        di_graph.add_edge(
+                            class_.class_.suffix,
+                            parent.suffix,
+                            label="implements",
+                            dashes=True,
+                        )
+
+        if format == "data-model":
+            # Add nodes and edges from Properties sheet
+            for prop_ in rules.properties:
+                if isinstance(prop_.value_type, ClassEntity) and not isinstance(prop_.value_type, UnknownEntity):
+                    if not di_graph.has_node(prop_.class_.suffix):
+                        di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
+
+                    if not di_graph.has_node(prop_.value_type.suffix):
+                        di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
+
+                    di_graph.add_edge(
+                        prop_.class_.suffix,
+                        prop_.value_type.suffix,
+                        label=prop_.name or prop_.property_,
+                    )
+
+        return di_graph

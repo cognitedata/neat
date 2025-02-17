@@ -34,7 +34,7 @@ from cognite.neat._issues.warnings import (
     FileTypeUnexpectedWarning,
     ResourcesDuplicatedWarning,
 )
-from cognite.neat._utils.text import to_camel
+from cognite.neat._utils.text import to_camel_case
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -238,7 +238,7 @@ class DMSSchema:
             data_dict = data
         loaded: dict[str, Any] = {}
         for attr in fields(cls):
-            if items := data_dict.get(attr.name) or data_dict.get(to_camel(attr.name)):
+            if items := data_dict.get(attr.name) or data_dict.get(to_camel_case(attr.name)):
                 if attr.name == "data_model":
                     if isinstance(items, list) and len(items) > 1:
                         try:
@@ -320,7 +320,7 @@ class DMSSchema:
         cls_fields = sorted(fields(self), key=lambda f: f.name) if sort else fields(self)
         for attr in cls_fields:
             if items := getattr(self, attr.name):
-                key = to_camel(attr.name) if camel_case else attr.name
+                key = to_camel_case(attr.name) if camel_case else attr.name
                 if isinstance(items, CogniteResourceDict):
                     if sort:
                         output[key] = [

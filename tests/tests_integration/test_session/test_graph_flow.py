@@ -45,10 +45,12 @@ class TestExtractToLoadFlow:
 
         # Hack to get the instances.
         dms_rules = neat._state.rule_store.last_verified_dms_rules
+        info_rules = neat._state.rule_store.last_verified_information_rules
+
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
-            for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space", "dataSetId").load()
             if isinstance(instance, InstanceApply)
         ]
 
@@ -83,8 +85,9 @@ class TestExtractToLoadFlow:
         if True:
             # In progress, not yet supported.
             dms_rules = neat._state.rule_store.last_verified_dms_rules
+            info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
+            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
@@ -120,14 +123,15 @@ class TestExtractToLoadFlow:
         if True:
             # In progress, not yet supported.
             dms_rules = neat._state.rule_store.last_verified_dms_rules
+            info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
+            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
             instances = [
                 self._standardize_instance(instance)
-                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+                for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
             ]
 
         else:
@@ -195,5 +199,5 @@ class TestExtractToLoadFlow:
 
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
 
-        neat.to.cdf.data_model(existing="force")
+        neat.to.cdf.data_model(existing="recreate")
         neat.to.cdf.instances()

@@ -16,7 +16,7 @@ from cognite.neat._rules.transformers import (
     InformationToDMS,
     MergeDMSRules,
     MergeInformationRules,
-    ToInformationCompliantEntities,
+    ToDMSCompliantEntities,
     VerifyInformationRules,
 )
 from cognite.neat._store._rules_store import RulesEntity
@@ -33,6 +33,7 @@ from ._read import ReadAPI
 from ._set import SetAPI
 from ._show import ShowAPI
 from ._state import SessionState
+from ._subset import SubsetAPI
 from ._to import ToAPI
 from .engine import load_neat_engine
 from .exceptions import session_class_wrapper
@@ -101,6 +102,7 @@ class NeatSession:
         self.inspect = InspectAPI(self._state)
         self.mapping = MappingAPI(self._state)
         self.drop = DropAPI(self._state)
+        self.subset = SubsetAPI(self._state)
         self.create = CreateAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
@@ -236,9 +238,7 @@ class NeatSession:
 
         def action() -> tuple[InformationRules, DMSRules | None]:
             unverified_information = importer.to_rules()
-            unverified_information = ToInformationCompliantEntities(renaming="warning").transform(
-                unverified_information
-            )
+            unverified_information = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_information)
 
             extra_info = VerifyInformationRules().transform(unverified_information)
             if not last_entity:

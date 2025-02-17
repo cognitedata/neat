@@ -13,6 +13,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
+from cognite.neat._rules._constants import get_internal_properties
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
     ExtensionCategory,
@@ -63,13 +64,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     }
     style_options = get_args(Style)
     dump_options = get_args(DumpOptions)
-
-    _internal_columns: ClassVar[list[str]] = [
-        "physical",
-        "logical",
-        "conceptual",
-        "Neat ID",
-    ]
 
     def __init__(
         self,
@@ -131,7 +125,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 if sheet.lower() == "metadata":
                     continue
                 ws = workbook[sheet]
-                for col in self._internal_columns:
+                for col in get_internal_properties():
                     column_letter = find_column_with_value(ws, col)
                     if column_letter:
                         ws.column_dimensions[column_letter].hidden = True
