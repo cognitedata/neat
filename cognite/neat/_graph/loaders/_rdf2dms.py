@@ -246,7 +246,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             instance_iterable, total, f"Looking up spaces for {total} instances..."
         )
         for instance, space in instance_iterable:
-            self._space_by_uri[remove_namespace_from_uri(instance)] = space
+            identifier = remove_namespace_from_uri(instance)
+            if self._unquote_external_ids:
+                identifier = urllib.parse.unquote(identifier)
+            self._space_by_uri[identifier] = space
         return issues
 
     def _create_projection(self, view: dm.View) -> tuple[_Projection, IssueList]:
