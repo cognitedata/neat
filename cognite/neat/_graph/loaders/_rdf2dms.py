@@ -416,6 +416,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 parse_direct_relation_to_unit  # type: ignore[arg-type]
             )
 
+        if text_fields:
+
+            def parse_text(cls, value: Any, info: ValidationInfo) -> str | list[str]:
+                if isinstance(value, list):
+                    return [str(v) for v in value]
+                return str(value)
+
+            validators["parse_text"] = field_validator(*text_fields, mode="before")(parse_text)  # type: ignore[assignment, arg-type]
+
         pydantic_cls = create_model(view.external_id, __validators__=validators, **field_definitions)  # type: ignore[arg-type, call-overload]
         return _Projection(view.as_id(), view.used_for, pydantic_cls, edge_by_type, edge_by_prop_id), issues
 
