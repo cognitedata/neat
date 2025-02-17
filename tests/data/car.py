@@ -20,28 +20,30 @@ from cognite.neat._rules.transformers import VerifyInformationRules
 from tests.data import DATA_DIR
 
 INSTANCE_SPACE = "sp_cars"
-_neat = Namespace(DEFAULT_SPACE_URI.format(space=INSTANCE_SPACE))
+MODEL_SPACE = "sp_example_car"
+_instance_ns = Namespace(DEFAULT_SPACE_URI.format(space=INSTANCE_SPACE))
+_model_ns = Namespace(DEFAULT_SPACE_URI.format(space=MODEL_SPACE))
 TRIPLES = tuple(
     [
-        (_neat["Toyota"], RDF.type, _neat["Manufacturer"]),
-        (_neat["Toyota"], _neat["name"], Literal("Toyota")),
-        (_neat["Blue"], RDF.type, _neat["Color"]),
-        (_neat["Blue"], _neat["name"], Literal("blue")),
-        (_neat["Car1"], RDF.type, _neat["Car"]),
-        (_neat["Car1"], _neat["Car.Manufacturer"], _neat["Toyota"]),
-        (_neat["Car1"], _neat["year"], Literal(2020)),
-        (_neat["Car1"], _neat["color"], _neat["Blue"]),
-        (_neat["Ford"], RDF.type, _neat["Manufacturer"]),
-        (_neat["Ford"], _neat["name"], Literal("Ford")),
-        (_neat["Red"], RDF.type, _neat["Color"]),
-        (_neat["Red"], _neat["name"], Literal("red")),
-        (_neat["Car2"], RDF.type, _neat["Car"]),
-        (_neat["Car2"], _neat["Car.Manufacturer"], _neat["Ford"]),
-        (_neat["Car2"], _neat["year"], Literal(2018)),
-        (_neat["Car2"], _neat["color"], _neat["Red"]),
+        (_instance_ns["Toyota"], RDF.type, _model_ns["Manufacturer"]),
+        (_instance_ns["Toyota"], _model_ns["name"], Literal("Toyota")),
+        (_instance_ns["Blue"], RDF.type, _model_ns["Color"]),
+        (_instance_ns["Blue"], _model_ns["name"], Literal("blue")),
+        (_instance_ns["Car1"], RDF.type, _model_ns["Car"]),
+        (_instance_ns["Car1"], _model_ns["Car.Manufacturer"], _instance_ns["Toyota"]),
+        (_instance_ns["Car1"], _model_ns["year"], Literal(2020)),
+        (_instance_ns["Car1"], _model_ns["color"], _instance_ns["Blue"]),
+        (_instance_ns["Ford"], RDF.type, _model_ns["Manufacturer"]),
+        (_instance_ns["Ford"], _model_ns["name"], Literal("Ford")),
+        (_instance_ns["Red"], RDF.type, _model_ns["Color"]),
+        (_instance_ns["Red"], _model_ns["name"], Literal("red")),
+        (_instance_ns["Car2"], RDF.type, _model_ns["Car"]),
+        (_instance_ns["Car2"], _model_ns["Car.Manufacturer"], _instance_ns["Ford"]),
+        (_instance_ns["Car2"], _model_ns["year"], Literal(2018)),
+        (_instance_ns["Car2"], _model_ns["color"], _instance_ns["Red"]),
     ]
 )
-MODEL_SPACE = "sp_example_car"
+
 CONTAINERS = dm.ContainerApplyList(
     [
         dm.ContainerApply(
