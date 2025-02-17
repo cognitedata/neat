@@ -6,7 +6,7 @@ from typing import cast
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
-from cognite.client.data_classes.data_modeling.instances import Instance, PropertyValue
+from cognite.client.data_classes.data_modeling.instances import Instance, InstanceSort, PropertyValue
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
@@ -270,8 +270,16 @@ class _ViewInstanceIterator(Iterable[Instance]):
         }
         # All nodes and edges with properties
         if self.view.used_for in ("node", "all"):
+            # Without a sort, the sort is implicitly by the internal id, as cursoring needs a stable sort.
+            # By making the sort be on external_id, Postgres should pick the index
+            # that's on (project_id, space, external_id)
+            # WHERE deleted_at IS NULL. In other words, avoiding soft deleted instances.
             node_iterable: Iterable[Instance] = self.client.data_modeling.instances(
-                chunk_size=None, instance_type="node", sources=[view_id], space=self.instance_space
+                chunk_size=None,
+                instance_type="node",
+                sources=[view_id],
+                space=self.instance_space,
+                sort=InstanceSort(["node", "externalId"]),
             )
             if read_only_properties:
                 node_iterable = self._remove_read_only_properties(node_iterable, read_only_properties, view_id)
@@ -279,7 +287,11 @@ class _ViewInstanceIterator(Iterable[Instance]):
 
         if self.view.used_for in ("edge", "all"):
             yield from self.client.data_modeling.instances(
-                chunk_size=None, instance_type="edge", sources=[view_id], space=self.instance_space
+                chunk_size=None,
+                instance_type="edge",
+                sources=[view_id],
+                space=self.instance_space,
+                sort=InstanceSort(["edge", "externalId"]),
             )
 
         for prop in self.view.properties.values():
@@ -294,6 +306,7 @@ class _ViewInstanceIterator(Iterable[Instance]):
                         ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
                     ),
                     space=self.instance_space,
+                    sort=InstanceSort(["edge", "externalId"]),
                 )
 
     @staticmethod
