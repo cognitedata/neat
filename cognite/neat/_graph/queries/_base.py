@@ -73,6 +73,20 @@ class Queries:
             for (type_,) in list(self.graph(named_graph).query(query))
         }
 
+    def properties_by_type(self, named_graph: URIRef | None = None) -> dict[URIRef, dict[URIRef, str]]:
+        """Properties and their short form in the graph by type
+
+        Args:
+            named_graph: Named graph to query over, default None (default graph)
+
+        """
+        query = """SELECT DISTINCT ?type ?property
+               WHERE {?s a ?type . ?s ?property ?o . FILTER(?property != rdf:type)}"""
+        properties_by_type: dict[URIRef, dict[URIRef, str]] = defaultdict(dict)
+        for type_, property_ in cast(ResultRow, list(self.graph(named_graph).query(query))):
+            properties_by_type[type_][property_] = remove_namespace_from_uri(property_)  # type: ignore[index]
+        return properties_by_type
+
     def property_uri(self, property_: str, named_graph: URIRef | None = None) -> list[URIRef]:
         """Get the URIRef of a property
 
