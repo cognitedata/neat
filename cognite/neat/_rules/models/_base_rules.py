@@ -126,7 +126,6 @@ class SchemaModel(BaseModel):
         extra="ignore",
         use_enum_values=True,
     )
-    validators_to_skip: set[str] = Field(default_factory=set, exclude=True)
 
     @classmethod
     def mandatory_fields(cls, use_alias=False) -> set[str]:
@@ -256,7 +255,6 @@ class BaseRules(SchemaModel, ABC):
 
     Args:
         metadata: Data model metadata
-        validators_to_skip: List of validators to skip. Defaults to []
     """
 
     metadata: BaseMetadata

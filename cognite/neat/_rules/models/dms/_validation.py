@@ -130,6 +130,10 @@ class DMSValidation:
         parents_view_ids_by_child_id = self._parent_view_ids_by_child_id(all_views_by_id)
 
         issue_list = IssueList()
+
+        # Validated for duplicated resource
+        issue_list.extend(self._duplicated_resources())
+
         # Neat DMS classes Validation
         # These are errors that can only happen due to the format of the Neat DMS classes
         issue_list.extend(self._validate_raw_filter())
@@ -148,6 +152,64 @@ class DMSValidation:
         )
         issue_list.extend(self._validate_schema(dms_schema, all_views_by_id, all_containers_by_id))
         issue_list.extend(self._validate_referenced_container_limits(dms_schema.views, view_properties_by_id))
+        return issue_list
+
+    def _duplicated_resources(self) -> IssueList:
+        issue_list = IssueList()
+
+        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
+        views_sheet = self._read_info_by_spreadsheet.get("Views")
+        containers_sheet = self._read_info_by_spreadsheet.get("Containers")
+
+        visited = set()
+        for row_no, property_ in enumerate(self._properties):
+            if property_._identifier() in visited:
+                issue_list.append(
+                    ResourceDuplicatedError(
+                        property_.view_property,
+                        "property",
+                        (
+                            "the Properties sheet at row "
+                            f"{properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1}"
+                            " if data model is read from a spreadsheet."
+                        ),
+                    )
+                )
+            visited.add(property_._identifier())
+
+        visited = set()
+        for row_no, view in enumerate(self._views):
+            if view.view.as_id() in visited:
+                issue_list.append(
+                    ResourceDuplicatedError(
+                        view.view,
+                        "view",
+                        (
+                            "the Views sheet at row "
+                            f"{views_sheet.adjusted_row_number(row_no) if views_sheet else row_no + 1}"
+                            " if data model is read from a spreadsheet."
+                        ),
+                    )
+                )
+            visited.add(view.view.as_id())
+
+        if self._containers:
+            visited = set()
+            for row_no, container in enumerate(self._containers):
+                if container.container.as_id() in visited:
+                    issue_list.append(
+                        ResourceDuplicatedError(
+                            container.container,
+                            "container",
+                            (
+                                "the Containers sheet at row "
+                                f"{containers_sheet.adjusted_row_number(row_no) if containers_sheet else row_no + 1}"
+                                " if data model is read from a spreadsheet."
+                            ),
+                        )
+                    )
+                visited.add(container.container.as_id())
+
         return issue_list
 
     @staticmethod
@@ -595,7 +657,7 @@ class DMSValidation:
                         ResourceDuplicatedError(
                             view_id,
                             "view",
-                            repr(model.as_id()),
+                            f"DMS {model.as_id()!r}",
                         )
                     )
 
