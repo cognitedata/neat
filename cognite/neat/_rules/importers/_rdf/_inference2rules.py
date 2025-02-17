@@ -443,7 +443,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     classes.append(
                         InformationInputClass(
                             class_=class_suffix,
-                            implements=parent_suffix if parent_suffix else None,
+                            implements=parent_suffix,
                             instance_source=type_uri,
                         )
                     )
