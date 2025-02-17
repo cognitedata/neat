@@ -137,12 +137,12 @@ def duplicated_entries():
             ResourceDuplicatedError(
                 identifier="name",
                 resource_type="property",
-                location="the Properties sheet at row 2 if data model is read from a spreadsheet.",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
             ResourceDuplicatedError(
                 identifier=ClassEntity(prefix="power", suffix="GeneratingUnit"),
                 resource_type="class",
-                location="the Classes sheet at row 2 if data model is read from a spreadsheet.",
+                location="the Classes sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         },
         id="duplicated_entries",

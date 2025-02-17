@@ -1,5 +1,5 @@
 import itertools
-from collections import Counter
+from collections import Counter, defaultdict
 
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
@@ -16,6 +16,7 @@ from cognite.neat._rules._constants import PATTERNS, EntityTypes
 from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
 from cognite.neat._rules.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from cognite.neat._utils.text import humanize_collection
 
 from ._rules import InformationRules
 
@@ -48,37 +49,43 @@ class InformationValidation:
         properties_sheet = self._read_info_by_spreadsheet.get("Properties")
         classes_sheet = self._read_info_by_spreadsheet.get("Classes")
 
-        visited = set()
+        visited = defaultdict(list)
         for row_no, property_ in enumerate(self._properties):
-            if property_._identifier() in visited:
-                self.issue_list.append(
-                    ResourceDuplicatedError(
-                        property_.property_,
-                        "property",
-                        (
-                            "the Properties sheet at row "
-                            f"{properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1}"
-                            " if data model is read from a spreadsheet."
-                        ),
-                    )
-                )
-            visited.add(property_._identifier())
+            visited[property_._identifier()].append(
+                properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1
+            )
 
-        visited = set()
-        for row_no, class_ in enumerate(self._classes):
-            if class_._identifier() in visited:
-                self.issue_list.append(
-                    ResourceDuplicatedError(
-                        class_.class_,
-                        "class",
-                        (
-                            "the Classes sheet at row "
-                            f"{classes_sheet.adjusted_row_number(row_no) if classes_sheet else row_no + 1}"
-                            " if data model is read from a spreadsheet."
-                        ),
-                    )
+        for identifier, rows in visited.items():
+            if len(rows) == 1:
+                continue
+            self.issue_list.append(
+                ResourceDuplicatedError(
+                    identifier[1],
+                    "property",
+                    (
+                        "the Properties sheet at row "
+                        f"{humanize_collection(rows)}"
+                        " if data model is read from a spreadsheet."
+                    ),
                 )
-            visited.add(class_._identifier())
+            )
+
+        visited = defaultdict(list)
+        for row_no, class_ in enumerate(self._classes):
+            visited[class_._identifier()].append(
+                classes_sheet.adjusted_row_number(row_no) if classes_sheet else row_no + 1
+            )
+
+        for identifier, rows in visited.items():
+            if len(rows) == 1:
+                continue
+            self.issue_list.append(
+                ResourceDuplicatedError(
+                    identifier[0],
+                    "class",
+                    (f"the Classes sheet at row {humanize_collection(rows)} if data model is read from a spreadsheet."),
+                )
+            )
 
     def _classes_without_properties(self) -> None:
         defined_classes = {class_.class_ for class_ in self._classes}
