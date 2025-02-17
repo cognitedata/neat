@@ -1258,7 +1258,7 @@ class TestDMSRules:
         rules = raw.as_verified_rules()
         issues = DMSValidation(rules).validate()
 
-        assert len(issues.errors) == 2, "Expected there to be exactly one validation error"
+        assert len(issues.errors) == 2
 
         assert sorted(issues) == sorted(expected_errors)
 

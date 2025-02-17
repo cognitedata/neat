@@ -217,55 +217,6 @@ class DMSValidation:
                         ),
                     )
                 )
-=======
-        visited = set()
-        for row_no, property_ in enumerate(self._properties):
-            if property_._identifier() in visited:
-                issue_list.append(
-                    ResourceDuplicatedError(
-                        property_.view_property,
-                        "property",
-                        (
-                            "the Properties sheet at row "
-                            f"{properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1}"
-                            " if data model is read from a spreadsheet."
-                        ),
-                    )
-                )
-            visited.add(property_._identifier())
-
-        visited = set()
-        for row_no, view in enumerate(self._views):
-            if view.view.as_id() in visited:
-                issue_list.append(
-                    ResourceDuplicatedError(
-                        view.view,
-                        "view",
-                        (
-                            "the Views sheet at row "
-                            f"{views_sheet.adjusted_row_number(row_no) if views_sheet else row_no + 1}"
-                            " if data model is read from a spreadsheet."
-                        ),
-                    )
-                )
-            visited.add(view.view.as_id())
-
-        if self._containers:
-            visited = set()
-            for row_no, container in enumerate(self._containers):
-                if container.container.as_id() in visited:
-                    issue_list.append(
-                        ResourceDuplicatedError(
-                            container.container,
-                            "container",
-                            (
-                                "the Containers sheet at row "
-                                f"{containers_sheet.adjusted_row_number(row_no) if containers_sheet else row_no + 1}"
-                                " if data model is read from a spreadsheet."
-                            ),
-                        )
-                    )
-                visited.add(container.container.as_id())
 
         return issue_list
 
