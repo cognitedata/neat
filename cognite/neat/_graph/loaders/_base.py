@@ -38,7 +38,11 @@ class BaseLoader(ABC, Generic[T_Output]):
 
     def load(self, stop_on_exception: bool = False) -> Iterable[T_Output | NeatIssue]:
         """Load the graph with data."""
-        return (item for item in self._load(stop_on_exception) if item is not _END_OF_CLASS)  # type: ignore[misc]
+        return (
+            item  # type: ignore[misc]
+            for item in self._load(stop_on_exception)
+            if not (item is _END_OF_CLASS or isinstance(item, _START_OF_CLASS))
+        )
 
     @abstractmethod
     def _load(
