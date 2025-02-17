@@ -158,7 +158,8 @@ def test_infer_importer_names_different_casing() -> None:
         [
             (DEFAULT_NAMESPACE["MyAsset"], RDF.type, DEFAULT_NAMESPACE["Asset"]),
             (DEFAULT_NAMESPACE["MyAsset"], DEFAULT_NAMESPACE["deleteFlag"], Literal(True)),
-            (DEFAULT_NAMESPACE["MyAsset"], DEFAULT_NAMESPACE["DeleteFlag"], Literal(True)),
+            (DEFAULT_NAMESPACE["MyAsset2"], RDF.type, DEFAULT_NAMESPACE["Asset"]),
+            (DEFAULT_NAMESPACE["MyAsset2"], DEFAULT_NAMESPACE["DeleteFlag"], Literal(False)),
         ],
         named_graph=neat._state.instances.store.default_named_graph,
     )
@@ -182,4 +183,8 @@ def test_infer_importer_names_different_casing() -> None:
         for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
         if isinstance(instance, InstanceApply)
     ]
-    assert len(instances) == 1
+    actual = {node.external_id: node.sources[0].properties for node in instances}
+    assert actual == {
+        "MyAsset": {"DeleteFlag": True},
+        "MyAsset2": {"DeleteFlag": False},
+    }
