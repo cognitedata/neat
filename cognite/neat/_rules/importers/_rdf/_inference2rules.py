@@ -10,6 +10,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, RDFS, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
+from cognite.neat._config import GLOBAL_CONFIG
 from cognite.neat._constants import NEAT, get_default_prefixes_and_namespaces
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
@@ -523,7 +524,11 @@ class SubclassInferenceImporter(BaseRDFImporter):
             existing_classes = {}
         properties_by_class_by_subclass: list[_ReadProperties] = []
         existing_class: InformationClass | None
-        for type_uri, instance_count in count_by_type.items():
+        total_instance_count = sum(count_by_type.values())
+        iterable = count_by_type.items()
+        if GLOBAL_CONFIG.use_iterate_bar_threshold and total_instance_count > GLOBAL_CONFIG.use_iterate_bar_threshold:
+            iterable = iterate_progress_bar(iterable, len(count_by_type), "Inferring types...")  # type: ignore[assignment]
+        for type_uri, instance_count in iterable:
             property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
             class_suffix = remove_namespace_from_uri(type_uri)
             if (existing_class := existing_classes.get(class_suffix)) and existing_class.instance_source is None:
