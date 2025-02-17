@@ -1,3 +1,4 @@
+import json
 import re
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,6 +22,7 @@ from cognite.neat._rules.models.entities import (
     load_connection,
     load_dms_value_type,
 )
+from cognite.neat._rules.models.entities._wrapped import RawFilter
 from cognite.neat._utils.rdf_ import uri_display_name
 
 from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
@@ -69,7 +71,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
     def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
         if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):
             creator = description_match.group(1).split(", ")
-            description = description_raw.replace(description_match.string, "").strip() or None
+            description = description_raw.replace(description_match[0], "").strip() or None
         elif description_raw:
             creator = ["MISSING"]
             description = description_raw
@@ -234,6 +236,7 @@ class DMSInputView(InputComponent[DMSView]):
             implements=", ".join([str(ViewEntity.from_id(parent, _DEFAULT_VERSION)) for parent in view.implements])
             or None,
             in_model=in_model,
+            filter_=str(RawFilter.load(f"rawFilter({json.dumps(view.filter.dump())})") if view.filter else None),
         )
 
 
