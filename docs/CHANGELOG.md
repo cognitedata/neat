@@ -17,6 +17,11 @@ Changes are grouped as follows:
 
 ## TBD
 ### Added
+- Validation of DMS rules does not allow re-definition of any of the resources
+- Validation of INFO rules does not allow re-definition of any of the resources
+
+## [0.110.0] - 17-02-**2025**
+### Added
 - [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
 - The `neat.to.excel(...)` now supports passing a data model directly in the `include_reference` parameter.
 - [ALPHA] Ability to subset data model to desired concepts (classes/views) via `neat.subset.data_model` endpoint
@@ -36,8 +41,6 @@ Changes are grouped as follows:
 - The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
 - Automatic drop of rows in Excel rules if cells for critical columns are missing
 - [BREAKING] multi value types are now serialized as a comma separated values (previous we used `|` as separator)
-- Validation of DMS rules does not allow re-definition of any of the resources
-- Validation of INFO rules does not allow re-definition of any of the resources
 - The `neat.infer()` now is case-insensitive when inferring the data model. This is to match CDF's behavior.
 
 ## [0.109.4] - 03-02-**2025**
