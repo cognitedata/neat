@@ -1,5 +1,5 @@
 import difflib
-from collections.abc import Callable
+from collections.abc import Callable, Set
 from typing import Literal, overload
 
 import pandas as pd
@@ -90,6 +90,7 @@ class InspectIssues:
     def __call__(
         self,
         search: str | None = None,
+        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
         return_dataframe: Literal[True] = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame: ...
 
@@ -97,12 +98,14 @@ class InspectIssues:
     def __call__(
         self,
         search: str | None = None,
+        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
         return_dataframe: Literal[False] = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> None: ...
 
     def __call__(
         self,
         search: str | None = None,
+        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the issues of the current data model."""
@@ -113,6 +116,13 @@ class InspectIssues:
         elif issues is None:
             self._print("No issues found.")
             return pd.DataFrame() if return_dataframe else None
+        include_set = {include} if isinstance(include, str) else include
+        if "all" in include_set:
+            include_set = {"errors", "warning"}
+        if "warning" not in include_set:
+            issues = issues.errors
+        if "errors" not in include_set:
+            issues = issues.warnings
 
         if issues and search is not None:
             unique_types = {type(issue).__name__ for issue in issues}
