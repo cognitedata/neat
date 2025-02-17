@@ -6,7 +6,9 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import NeatError
+from cognite.neat._issues._base import MultiValueError
 from cognite.neat._issues.errors import ResourceNotDefinedError
+from cognite.neat._issues.errors._resources import ResourceDuplicatedError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSRules, SheetList, data_types
 from cognite.neat._rules.models.data_types import DataType, String
@@ -74,6 +76,79 @@ def case_insensitive_value_types():
     )
 
 
+def duplicated_entries():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "schema": "complete",
+                "creator": "Jon, Emma, David",
+                "space": "power",
+                "external_id": "power2consumer",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "name": "Power to Consumer Data Model",
+            },
+            "Classes": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                },
+                {
+                    "Class": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                    "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
+                    "Match": "exact",
+                },
+            ],
+            "Properties": [
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "StrING",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                },
+                {
+                    "Class": "GeneratingUnit",
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": "StrING",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                },
+            ],
+        },
+        {
+            ResourceDuplicatedError(
+                identifier="name",
+                resource_type="property",
+                location="the Properties sheet at row 2 if data model is read from a spreadsheet.",
+            ),
+            ResourceDuplicatedError(
+                identifier=ClassEntity(prefix="power", suffix="GeneratingUnit"),
+                resource_type="class",
+                location="the Classes sheet at row 2 if data model is read from a spreadsheet.",
+            ),
+        },
+        id="duplicated_entries",
+    )
+
+
 def incomplete_rules_case():
     yield pytest.param(
         {
@@ -125,6 +200,16 @@ def incomplete_rules_case():
 
 
 class TestInformationRules:
+    @pytest.mark.parametrize("duplicated_rules, expected_exception", list(duplicated_entries()))
+    def test_duplicated_entries(self, duplicated_rules, expected_exception) -> None:
+        input_rules = ReadRules(rules=InformationInputRules.load(duplicated_rules), read_context={})
+        transformer = VerifyAnyRules(validate=True)
+
+        with pytest.raises(MultiValueError) as e:
+            _ = transformer.transform(input_rules)
+
+        assert set(e.value.errors) == expected_exception
+
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = InformationRules.model_validate(InformationInputRules.load(david_spreadsheet).dump())
 

@@ -3,7 +3,10 @@ from collections import Counter
 
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.errors._resources import ResourceNotDefinedError
+from cognite.neat._issues.errors._resources import (
+    ResourceDuplicatedError,
+    ResourceNotDefinedError,
+)
 from cognite.neat._issues.warnings._models import UndefinedClassWarning
 from cognite.neat._issues.warnings._resources import (
     ResourceNotDefinedWarning,
@@ -23,13 +26,14 @@ class InformationValidation:
 
     def __init__(self, rules: InformationRules, read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None):
         self.rules = rules
-        self.read_info_by_spreadsheet = read_info_by_spreadsheet
-        self.metadata = rules.metadata
-        self.properties = rules.properties
-        self.classes = rules.classes
+        self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
+        self._metadata = rules.metadata
+        self._properties = rules.properties
+        self._classes = rules.classes
         self.issue_list = IssueList()
 
     def validate(self) -> IssueList:
+        self._duplicated_resources()
         self._namespaces_reassigned()
         self._classes_without_properties()
         self._undefined_classes()
@@ -40,9 +44,45 @@ class InformationValidation:
 
         return self.issue_list
 
+    def _duplicated_resources(self) -> None:
+        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
+        classes_sheet = self._read_info_by_spreadsheet.get("Classes")
+
+        visited = set()
+        for row_no, property_ in enumerate(self._properties):
+            if property_._identifier() in visited:
+                self.issue_list.append(
+                    ResourceDuplicatedError(
+                        property_.property_,
+                        "property",
+                        (
+                            "the Properties sheet at row "
+                            f"{properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1}"
+                            " if data model is read from a spreadsheet."
+                        ),
+                    )
+                )
+            visited.add(property_._identifier())
+
+        visited = set()
+        for row_no, class_ in enumerate(self._classes):
+            if class_._identifier() in visited:
+                self.issue_list.append(
+                    ResourceDuplicatedError(
+                        class_.class_,
+                        "class",
+                        (
+                            "the Classes sheet at row "
+                            f"{classes_sheet.adjusted_row_number(row_no) if classes_sheet else row_no + 1}"
+                            " if data model is read from a spreadsheet."
+                        ),
+                    )
+                )
+            visited.add(class_._identifier())
+
     def _classes_without_properties(self) -> None:
-        defined_classes = {class_.class_ for class_ in self.classes}
-        referred_classes = {property_.class_ for property_ in self.properties}
+        defined_classes = {class_.class_ for class_ in self._classes}
+        referred_classes = {property_.class_ for property_ in self._properties}
         class_parent_pairs = self._class_parent_pairs()
 
         if classes_without_properties := defined_classes.difference(referred_classes):
@@ -50,7 +90,7 @@ class InformationValidation:
                 # USE CASE: class has no direct properties and no parents with properties
                 # and it is a class in the prefix of data model, as long as it is in the
                 # same prefix, meaning same space
-                if not class_parent_pairs[class_] and class_.prefix == self.metadata.prefix:
+                if not class_parent_pairs[class_] and class_.prefix == self._metadata.prefix:
                     self.issue_list.append(
                         ResourceNotDefinedWarning(
                             resource_type="class",
@@ -60,8 +100,8 @@ class InformationValidation:
                     )
 
     def _undefined_classes(self) -> None:
-        defined_classes = {class_.class_ for class_ in self.classes}
-        referred_classes = {property_.class_ for property_ in self.properties}
+        defined_classes = {class_.class_ for class_ in self._classes}
+        referred_classes = {property_.class_ for property_ in self._properties}
 
         if undefined_classes := referred_classes.difference(defined_classes):
             for class_ in undefined_classes:
@@ -81,7 +121,7 @@ class InformationValidation:
 
         if undefined_parents := parents.difference(classes):
             for parent in undefined_parents:
-                if parent.prefix != self.metadata.prefix:
+                if parent.prefix != self._metadata.prefix:
                     self.issue_list.append(UndefinedClassWarning(class_id=str(parent)))
                 else:
                     self.issue_list.append(
@@ -94,8 +134,8 @@ class InformationValidation:
 
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass
-        defined_classes = {class_.class_ for class_ in self.classes}
-        classes_with_explicit_properties = {property_.class_ for property_ in self.properties}
+        defined_classes = {class_.class_ for class_ in self._classes}
+        classes_with_explicit_properties = {property_.class_ for property_ in self._properties}
 
         # USE CASE: models are complete
         if missing_classes := classes_with_explicit_properties.difference(defined_classes):
@@ -110,7 +150,7 @@ class InformationValidation:
 
     def _referenced_value_types_exist(self) -> None:
         # adding UnknownEntity to the set of defined classes to handle the case where a property references an unknown
-        defined_classes = {class_.class_ for class_ in self.classes} | {UnknownEntity()}
+        defined_classes = {class_.class_ for class_ in self._classes} | {UnknownEntity()}
         referred_object_types = {
             property_.value_type
             for property_ in self.rules.properties
@@ -131,7 +171,7 @@ class InformationValidation:
     def _regex_compliance_with_dms(self) -> None:
         """Check regex compliance with DMS of properties, classes and value types."""
 
-        for prop_ in self.properties:
+        for prop_ in self._properties:
             if not PATTERNS.dms_property_id_compliance.match(prop_.property_):
                 self.issue_list.append(
                     ResourceRegexViolationWarning(
@@ -181,7 +221,7 @@ class InformationValidation:
                             )
                         )
 
-        for class_ in self.classes:
+        for class_ in self._classes:
             if not PATTERNS.view_id_compliance.match(class_.class_.suffix):
                 self.issue_list.append(
                     ResourceRegexViolationWarning(
