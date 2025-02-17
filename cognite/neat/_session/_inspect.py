@@ -120,7 +120,8 @@ class InspectIssues:
             issues = IssueList([issue for issue in issues if type(issue).__name__ in closest_match])
 
         issue_str = "\n".join(
-            [f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}" for issue in issues]
+            [f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}" for issue in issues[:50]]
+            + ([] if len(issues) <= 50 else [f"  * ... {len(issues) - 50} more"])
         )
         markdown_str = f"### {len(issues)} issues found\n\n{issue_str}"
 
