@@ -24,7 +24,12 @@ from cognite.neat._client._api_client import SchemaAPI
 from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
 from cognite.neat._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat._issues.errors import ResourceCreationError, ResourceDuplicatedError, ResourceNotFoundError
-from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning, PropertyTypeNotSupportedWarning
+from cognite.neat._issues.warnings import (
+    PropertyDirectRelationLimitWarning,
+    PropertyMultipleValueWarning,
+    PropertyTypeNotSupportedWarning,
+    ResourceNeatWarning,
+)
 from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.analysis._base import ViewQuery, ViewQueryDict
 from cognite.neat._rules.models import DMSRules
@@ -303,9 +308,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
             if isinstance(value, list) and list.__name__ not in _get_field_value_types(cls, info):
-                if len(value) == 1:
-                    return value[0]
-                raise ValueError(f"Got multiple values for {info.field_name}: {value}")
+                if len(value) > 1:
+                    warnings.warn(
+                        # the identifier is unknown, it will be cest in the create_instances method
+                        PropertyMultipleValueWarning("", "property", str(info.field_name), value=str(value[0])),
+                        stacklevel=2,
+                    )
+                elif not value:
+                    return None  # type: ignore[return-value]
+                return value[0]
 
             return value
 
@@ -416,19 +427,21 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             properties = {k: v for k, v in properties.items() if k not in exclude}
         if include:
             properties = {k: v for k, v in properties.items() if k in include}
-        try:
+
+        with catch_issues() as property_issues:
             sources = [
                 dm.NodeOrEdgeData(
                     projection.view_id,
                     projection.pydantic_cls.model_validate(properties).model_dump(exclude_unset=True),
                 )
             ]
-        except ValueError as e:
-            error = ResourceCreationError(identifier, instance_type, f"Invalid properties: {e!s}")
-            if stop_on_exception:
-                raise error from None
-            yield error
-            return
+        for issue in property_issues:
+            if isinstance(issue, ResourceNeatWarning):
+                issue.identifier = identifier
+
+        if property_issues.has_errors and stop_on_exception:
+            raise property_issues.as_exception()
+        yield from property_issues
 
         if start_node and end_node:
             yield dm.EdgeApply(

@@ -246,9 +246,7 @@ class NeatGraphStore:
 
         for instance_id in instance_ids:
             if res := self.queries.describe(
-                instance_id=instance_id,
-                instance_type=class_uri,
-                property_renaming_config=property_renaming_config,
+                instance_id=instance_id, instance_type=class_uri, property_renaming_config=property_renaming_config
             ):
                 yield res
 

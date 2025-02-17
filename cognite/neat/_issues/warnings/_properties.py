@@ -80,3 +80,11 @@ class PropertyDirectRelationLimitWarning(PropertyWarning[T_Identifier]):
     resource_type = "view"
 
     limit: int = DMS_DIRECT_RELATION_LIST_LIMIT
+
+
+@dataclass(unsafe_hash=True)
+class PropertyMultipleValueWarning(PropertyWarning[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has a property {property_name} with multiple values.
+    Selecting the first value {value}, the rest will be ignored."""
+
+    value: str

@@ -403,7 +403,8 @@ class SubclassInferenceImporter(BaseRDFImporter):
         else:
             existing_classes = {}
         classes: list[InformationInputClass] = []
-        properties: list[InformationInputProperty] = []
+        properties_by_class_suffix_by_property_id_lowered: dict[str, dict[str, InformationInputProperty]] = {}
+
         # Help for IDE
         type_uri: URIRef
         parent_uri: URIRef
@@ -446,16 +447,46 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     )
                 else:
                     classes.append(InformationInputClass.load(existing_classes[class_suffix].model_dump()))
+
+                properties_by_id: dict[str, InformationInputProperty] = {}
                 for property_uri, read_properties in properties_by_property_uri.items():
                     if property_uri in shared_property_uris:
                         shared_properties[property_uri].extend(read_properties)
                         continue
-                    properties.append(self._create_property(read_properties, class_suffix, property_uri, prefixes))
-
+                    property_id = remove_namespace_from_uri(property_uri)
+                    self._add_uri_namespace_to_prefixes(property_uri, prefixes)
+                    if existing_prop := properties_by_id.get(property_id.casefold()):
+                        if not isinstance(existing_prop.instance_source, list):
+                            existing_prop.instance_source = (
+                                [existing_prop.instance_source] if existing_prop.instance_source else []
+                            )
+                        existing_prop.instance_source.append(property_uri)
+                        continue
+                    else:
+                        properties_by_id[property_id.casefold()] = self._create_property(
+                            read_properties, class_suffix, property_uri, property_id, prefixes
+                        )
+                properties_by_class_suffix_by_property_id_lowered[class_suffix] = properties_by_id
             if parent_suffix:
+                properties_by_id = {}
                 for property_uri, read_properties in shared_properties.items():
-                    properties.append(self._create_property(read_properties, parent_suffix, property_uri, prefixes))
-        return classes, properties
+                    property_id = remove_namespace_from_uri(property_uri)
+                    self._add_uri_namespace_to_prefixes(property_uri, prefixes)
+                    if existing_prop := properties_by_id.get(property_id.casefold()):
+                        if not isinstance(existing_prop.instance_source, list):
+                            existing_prop.instance_source = (
+                                [existing_prop.instance_source] if existing_prop.instance_source else []
+                            )
+                        existing_prop.instance_source.append(property_uri)
+                    else:
+                        properties_by_id[property_uri.casefold()] = self._create_property(
+                            read_properties, parent_suffix, property_uri, property_id, prefixes
+                        )
+        return classes, [
+            prop
+            for properties in properties_by_class_suffix_by_property_id_lowered.values()
+            for prop in properties.values()
+        ]
 
     @staticmethod
     def _get_properties_by_class_by_property(
@@ -538,19 +569,17 @@ class SubclassInferenceImporter(BaseRDFImporter):
         read_properties: list[_ReadProperties],
         class_suffix: str,
         property_uri: URIRef,
+        property_id: str,
         prefixes: dict[str, Namespace],
     ) -> InformationInputProperty:
         first = read_properties[0]
         value_type = self._get_value_type(read_properties, prefixes)
-        property_name = remove_namespace_from_uri(property_uri)
-        self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-
         return InformationInputProperty(
             class_=class_suffix,
-            property_=property_name,
+            property_=property_id,
             max_count=first.max_occurrence,
             value_type=value_type,
-            instance_source=property_uri,
+            instance_source=[property_uri],
         )
 
     def _get_value_type(
