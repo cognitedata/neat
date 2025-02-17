@@ -15,6 +15,12 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## TBD
+### Fixed
+- Passing `space_property` to `neat.to.cdf.instances()` is no longer ignored.
+- The `neat.inspect.issues(...)` and `neat.inspect.outcome.issues(...)` now prints out a maximum of 50 issues. This is
+  to avoid the output being too large. You can pass `return_dataframe=True` to get all issues as a DataFrame.
+
 ## [0.110.0] - 17-02-**2025**
 ### Added
 - Validation of DMS rules does not allow re-definition of any of the resources

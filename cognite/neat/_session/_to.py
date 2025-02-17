@@ -289,6 +289,7 @@ class CDFToAPI:
             self._state.instances.store,
             instance_space=space,
             client=client,
+            space_property=space_property,
             # In case urllib.parse.quote() was run on the extraction, we need to run
             # urllib.parse.unquote() on the load.
             unquote_external_ids=self._state.quoted_source_identifiers,
