@@ -56,3 +56,8 @@ class TestRead:
             assert set(neat2._state.instances.store.dataset) - set(neat._state.instances.store.dataset) == set()
         finally:
             session_file.unlink()
+
+    def test_read_pump_with_duplicates(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(client=cognite_client)
+        neat.read.excel(data.DATA_DIR / "pump_example_duplicated_resources.xlsx")
+        assert len(neat._state.rule_store.last_issues) == 4
