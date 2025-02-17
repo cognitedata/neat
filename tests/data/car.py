@@ -2,10 +2,10 @@ from functools import lru_cache
 from pathlib import Path
 
 from cognite.client import data_modeling as dm
-from rdflib import RDF
+from rdflib import RDF, Namespace
 from rdflib.term import Literal
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_SPACE_URI
 from cognite.neat._rules import importers
 from cognite.neat._rules.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -20,31 +20,25 @@ from cognite.neat._rules.transformers import VerifyInformationRules
 from tests.data import DATA_DIR
 
 INSTANCE_SPACE = "sp_cars"
-_neat = DEFAULT_NAMESPACE
+_neat = Namespace(DEFAULT_SPACE_URI.format(space=INSTANCE_SPACE))
 TRIPLES = tuple(
     [
         (_neat["Toyota"], RDF.type, _neat["Manufacturer"]),
         (_neat["Toyota"], _neat["name"], Literal("Toyota")),
-        (_neat["Toyota"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Blue"], RDF.type, _neat["Color"]),
         (_neat["Blue"], _neat["name"], Literal("blue")),
-        (_neat["Blue"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Car1"], RDF.type, _neat["Car"]),
         (_neat["Car1"], _neat["Car.Manufacturer"], _neat["Toyota"]),
         (_neat["Car1"], _neat["year"], Literal(2020)),
         (_neat["Car1"], _neat["color"], _neat["Blue"]),
-        (_neat["Car1"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Ford"], RDF.type, _neat["Manufacturer"]),
         (_neat["Ford"], _neat["name"], Literal("Ford")),
-        (_neat["Ford"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Red"], RDF.type, _neat["Color"]),
         (_neat["Red"], _neat["name"], Literal("red")),
-        (_neat["Red"], _neat["space"], Literal(INSTANCE_SPACE)),
         (_neat["Car2"], RDF.type, _neat["Car"]),
         (_neat["Car2"], _neat["Car.Manufacturer"], _neat["Ford"]),
         (_neat["Car2"], _neat["year"], Literal(2018)),
         (_neat["Car2"], _neat["color"], _neat["Red"]),
-        (_neat["Car2"], _neat["space"], Literal(INSTANCE_SPACE)),
     ]
 )
 MODEL_SPACE = "sp_example_car"
