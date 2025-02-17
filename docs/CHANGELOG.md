@@ -20,6 +20,8 @@ Changes are grouped as follows:
 - Passing `space_property` to `neat.to.cdf.instances()` is no longer ignored.
 - The `neat.inspect.issues(...)` and `neat.inspect.outcome.issues(...)` now prints out a maximum of 50 issues. This is
   to avoid the output being too large. You can pass `return_dataframe=True` to get all issues as a DataFrame.
+- Description and creator were not properly parsed from DMS data model
+- RawFilter was not properly parsed from DMS data model
 
 ## [0.110.0] - 17-02-**2025**
 ### Added
