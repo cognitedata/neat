@@ -219,7 +219,7 @@ class Queries:
                 renamed_property_ = property_
 
             value: str | URIRef
-            if property_ in SPACE_PROPERTIES and isinstance(object_, URIRef):
+            if renamed_property_ in SPACE_PROPERTIES and isinstance(object_, URIRef):
                 # These properties contain the space in the Namespace.
                 value = object_
             elif isinstance(object_, URIRef):
