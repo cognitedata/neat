@@ -205,6 +205,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             views = self._client.data_modeling.views.retrieve(
                 list(iterations_by_view_id.keys()), include_inherited_properties=True
             )
+            if missing := set(iterations_by_view_id) - {view.as_id() for view in views}:
+                for missing_view in missing:
+                    issues.append(ResourceNotFoundError(missing_view, "view", more="The view is not found in CDF."))
+                return [], issues
         else:
             views = dm.ViewList([])
             with catch_issues() as issues:
