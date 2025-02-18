@@ -44,7 +44,7 @@ class TestExtractToLoadFlow:
         neat.convert()
         neat.mapping.data_model.classic_to_core("Classic")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
-        instances, _ = neat.to._python.instances("default_instance_space", space_from_property="dataSetId")
+        instances, _ = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
 
         rules_str = neat.to.yaml(format="neat")
 
@@ -74,7 +74,7 @@ class TestExtractToLoadFlow:
         has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
         assert not has_errors, has_errors
 
-        instance_result = neat.to.cdf.instances("sp_windfarm_instance", space_property="dataSetId")
+        instance_result = neat.to.cdf.instances("sp_windfarm_dataset", space_property="dataSetId")
         has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not has_errors, has_errors
 

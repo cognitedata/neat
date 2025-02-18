@@ -12,7 +12,7 @@ instances:
       height: 100
       name: MetMast
       parent:
-        externalId: Unknown%2520asset
+        externalId: Unknown%20asset
         space: sp_windfarm_enterprise_instances
       source:
         externalId: ClassicSourceSystem_manufacturer2
@@ -226,7 +226,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: sp_windfarm_instance
+  space: DataSet_maintenance
   type:
     externalId: NeatIncEvent
     space: sp_windfarm_enterprise
@@ -260,9 +260,6 @@ instances:
   sources:
   - properties:
       classicExternalId: Measurement
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_windfarm_enterprise_instances
       description: Measurement
       name: Measurement
     source:
@@ -279,9 +276,6 @@ instances:
   sources:
   - properties:
       classicExternalId: PowerGeneratingUnit
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_windfarm_enterprise_instances
       description: Power generating unit
       name: Power generating unit
     source:
@@ -298,9 +292,6 @@ instances:
   sources:
   - properties:
       classicExternalId: WindTurbine
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_windfarm_enterprise_instances
       description: Wind turbine
       name: Wind turbine
     source:
@@ -317,9 +308,6 @@ instances:
   sources:
   - properties:
       classicExternalId: metMast
-      dataSetId:
-        externalId: DataSet_2458119666837052
-        space: sp_windfarm_enterprise_instances
       description: Meteorological mast
       name: Meteorological mast
     source:
