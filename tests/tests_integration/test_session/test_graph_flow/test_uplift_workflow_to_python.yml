@@ -11,28 +11,15 @@ instances:
       description: Meteorological mast
       height: 100
       name: MetMast
+      parent:
+        externalId: Unknown%2520asset
+        space: sp_windfarm_enterprise_instances
       source:
         externalId: ClassicSourceSystem_manufacturer2
         space: sp_windfarm_enterprise_instances
       tags:
       - Label_Measurement
       - Label_metMast
-    source:
-      externalId: NeatIncAsset
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: NeatIncAsset
-    space: sp_windfarm_enterprise
-- externalId: Asset_MetMast
-  instanceType: node
-  sources:
-  - properties:
-      parent:
-        externalId: Unknown%20asset
-        space: sp_windfarm_enterprise_instances
     source:
       externalId: NeatIncAsset
       space: sp_windfarm_enterprise
@@ -67,19 +54,6 @@ instances:
   type:
     externalId: NeatIncAsset
     space: sp_windfarm_enterprise
-- externalId: Asset_Utsira
-  instanceType: node
-  sources:
-  - properties: {}
-    source:
-      externalId: NeatIncAsset
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: NeatIncAsset
-    space: sp_windfarm_enterprise
 - externalId: Asset_WT-01
   instanceType: node
   sources:
@@ -92,6 +66,9 @@ instances:
       description: Wind turbine 01
       maxCapacity: 3
       name: WT-01
+      parent:
+        externalId: Asset_Utsira
+        space: sp_windfarm_enterprise_instances
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_enterprise_instances
@@ -99,22 +76,6 @@ instances:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
       turbineType: V112/3075
-    source:
-      externalId: NeatIncAsset
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: NeatIncAsset
-    space: sp_windfarm_enterprise
-- externalId: Asset_WT-01
-  instanceType: node
-  sources:
-  - properties:
-      parent:
-        externalId: Asset_Utsira
-        space: sp_windfarm_enterprise_instances
     source:
       externalId: NeatIncAsset
       space: sp_windfarm_enterprise
@@ -136,6 +97,9 @@ instances:
       description: Wind turbine 02
       maxCapacity: 3
       name: WT-02
+      parent:
+        externalId: Asset_Utsira
+        space: sp_windfarm_enterprise_instances
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_enterprise_instances
@@ -143,22 +107,6 @@ instances:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
       turbineType: V112/3075
-    source:
-      externalId: NeatIncAsset
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: NeatIncAsset
-    space: sp_windfarm_enterprise
-- externalId: Asset_WT-02
-  instanceType: node
-  sources:
-  - properties:
-      parent:
-        externalId: Asset_Utsira
-        space: sp_windfarm_enterprise_instances
     source:
       externalId: NeatIncAsset
       space: sp_windfarm_enterprise
@@ -253,7 +201,7 @@ instances:
   type:
     externalId: NeatIncDataSet
     space: sp_windfarm_enterprise
-- externalId: Event_planned%3AWT-01%3A2022-01-01
+- externalId: Event_planned:WT-01:2022-01-01
   instanceType: node
   sources:
   - properties:

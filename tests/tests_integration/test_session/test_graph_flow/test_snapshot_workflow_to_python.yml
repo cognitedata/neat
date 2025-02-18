@@ -1505,28 +1505,15 @@ instances:
         assetCategory: MetMast
         height: '100'
       name: MetMast
+      parent:
+        externalId: Unknown asset
+        space: default_instance_space
       source:
         externalId: ClassicSourceSystem_manufacturer2
         space: default_instance_space
       tags:
       - Label_Measurement
       - Label_metMast
-    source:
-      externalId: ClassicAsset
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: ClassicAsset
-    space: sp_windfarm
-- externalId: Asset_MetMast
-  instanceType: node
-  sources:
-  - properties:
-      parent:
-        externalId: Unknown asset
-        space: default_instance_space
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1562,19 +1549,6 @@ instances:
   type:
     externalId: ClassicAsset
     space: sp_windfarm
-- externalId: Asset_Utsira
-  instanceType: node
-  sources:
-  - properties: {}
-    source:
-      externalId: ClassicAsset
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: ClassicAsset
-    space: sp_windfarm
 - externalId: Asset_WT-01
   instanceType: node
   sources:
@@ -1589,28 +1563,15 @@ instances:
         maxCapacity: '3'
         turbineType: V112/3075
       name: WT-01
+      parent:
+        externalId: Asset_Utsira
+        space: DataSet_source_ds
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: default_instance_space
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
-    source:
-      externalId: ClassicAsset
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: ClassicAsset
-    space: sp_windfarm
-- externalId: Asset_WT-01
-  instanceType: node
-  sources:
-  - properties:
-      parent:
-        externalId: Asset_Utsira
-        space: DataSet_source_ds
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1634,28 +1595,15 @@ instances:
         maxCapacity: '3'
         turbineType: V112/3075
       name: WT-02
+      parent:
+        externalId: Asset_Utsira
+        space: DataSet_source_ds
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: default_instance_space
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
-    source:
-      externalId: ClassicAsset
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: ClassicAsset
-    space: sp_windfarm
-- externalId: Asset_WT-02
-  instanceType: node
-  sources:
-  - properties:
-      parent:
-        externalId: Asset_Utsira
-        space: DataSet_source_ds
     source:
       externalId: ClassicAsset
       space: sp_windfarm
