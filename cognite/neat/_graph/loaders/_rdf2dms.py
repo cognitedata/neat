@@ -606,7 +606,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if self._unquote_external_ids:
                 target_identifier = urllib.parse.unquote(target_identifier)
         else:
-            target_identifier = remove_namespace_from_uri(raw)
+            if isinstance(raw, URIRef):
+                target_identifier = remove_namespace_from_uri(raw)
+            else:
+                target_identifier = raw
             if self._unquote_external_ids:
                 target_identifier = urllib.parse.unquote(target_identifier)
             target_space = self._space_by_uri[target_identifier]
