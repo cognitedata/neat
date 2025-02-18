@@ -149,7 +149,6 @@ class SchemaAPI:
                 ):
                     view_by_dependency[view_id].update(view_ids_by_container[prop.type.container])
         try:
-            # Reversing the order to get the view with the least dependencies first
             return list(TopologicalSorter(view_by_dependency).static_order())
         except CycleError as e:
             raise NeatValueError("Cycle in direct relation constraints") from e
