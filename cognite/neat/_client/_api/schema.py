@@ -126,3 +126,9 @@ class SchemaAPI:
                 if is_hierarchy_property(prop.container, prop.container_property_identifier):
                     hierarchical_properties_by_view_id[view.as_id()].add(prop_id)
         return hierarchical_properties_by_view_id
+
+    @staticmethod
+    def get_view_order_by_direct_relation_constraints(
+        views: Iterable[dm.View | dm.ViewApply],
+    ) -> list[dm.ViewId]:
+        return [v.as_id() for v in views]
