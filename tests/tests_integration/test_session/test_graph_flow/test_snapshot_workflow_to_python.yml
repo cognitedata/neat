@@ -1815,7 +1815,7 @@ instances:
   - properties:
       classicExternalId: Measurement
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: default_instance_space
       description: Measurement
       name: Measurement
@@ -1824,7 +1824,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: DataSet_2458119666837052
+  space: DataSet_source_ds
   type:
     externalId: ClassicLabel
     space: sp_windfarm
@@ -1834,7 +1834,7 @@ instances:
   - properties:
       classicExternalId: PowerGeneratingUnit
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: default_instance_space
       description: Power generating unit
       name: Power generating unit
@@ -1843,7 +1843,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: DataSet_2458119666837052
+  space: DataSet_source_ds
   type:
     externalId: ClassicLabel
     space: sp_windfarm
@@ -1853,7 +1853,7 @@ instances:
   - properties:
       classicExternalId: WindTurbine
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: default_instance_space
       description: Wind turbine
       name: Wind turbine
@@ -1862,7 +1862,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: DataSet_2458119666837052
+  space: DataSet_source_ds
   type:
     externalId: ClassicLabel
     space: sp_windfarm
@@ -1872,7 +1872,7 @@ instances:
   - properties:
       classicExternalId: metMast
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: default_instance_space
       description: Meteorological mast
       name: Meteorological mast
@@ -1881,7 +1881,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: DataSet_2458119666837052
+  space: DataSet_source_ds
   type:
     externalId: ClassicLabel
     space: sp_windfarm
@@ -1912,7 +1912,7 @@ instances:
     space: sp_windfarm
 - endNode:
     externalId: Label_metMast
-    space: DataSet_2458119666837052
+    space: DataSet_source_ds
   externalId: Relationship_WT-01_to_MetMast.labels.Label_metMast
   instanceType: edge
   space: DataSet_2458119666837052
@@ -1949,7 +1949,7 @@ instances:
     space: sp_windfarm
 - endNode:
     externalId: Label_metMast
-    space: DataSet_2458119666837052
+    space: DataSet_source_ds
   externalId: Relationship_WT-02_to_MetMast.labels.Label_metMast
   instanceType: edge
   space: DataSet_2458119666837052

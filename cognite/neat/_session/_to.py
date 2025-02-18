@@ -303,7 +303,7 @@ class CDFToAPI:
             use_source_space=use_source_space,
             # In case urllib.parse.quote() was run on the extraction, we need to run
             # urllib.parse.unquote() on the load.
-            unquote_external_ids=self._state.quoted_source_identifiers,
+            unquote_external_ids=True,
         )
 
         result = loader.load_into_cdf(client)
@@ -401,7 +401,7 @@ class ToPythonAPI:
             instance_space=instance_space,
             space_property=space_from_property,
             use_source_space=use_source_space,
-            unquote_external_ids=self._state.quoted_source_identifiers,
+            unquote_external_ids=True,
         )
         issue_list = IssueList()
         instances: list[dm.InstanceApply] = []

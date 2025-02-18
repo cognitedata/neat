@@ -330,7 +330,9 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
     def _extract_labels(self):
         for chunk in self._chunk(list(self._labels), description="Extracting labels"):
             label_iterator = self._client.labels.retrieve(external_id=list(chunk), ignore_unknown_ids=True)
-            yield from LabelsExtractor(label_iterator, **self._extractor_args).extract()
+            extractor = LabelsExtractor(label_iterator, **self._extractor_args)
+            extractor.lookup_dataset_external_id = self._lookup_dataset
+            yield from extractor.extract()
 
     def _extract_data_sets(self):
         for chunk in self._chunk(list(self._data_set_ids), description="Extracting data sets"):
