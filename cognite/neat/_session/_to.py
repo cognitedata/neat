@@ -271,26 +271,36 @@ class CDFToAPI:
             ```
 
         """
+        return self._instances(instance_space=space, space_from_property=space_property)
+
+    def _instances(
+        self,
+        instance_space: str | None = None,
+        space_from_property: str | None = None,
+        use_source_space: bool = False,
+    ) -> UploadResultList:
         if not self._state.client:
             raise NeatSessionError("No CDF client provided!")
         client = self._state.client
-        space = space or f"{self._state.rule_store.last_verified_dms_rules.metadata.space}_instances"
+        dms_rules = self._state.rule_store.last_verified_dms_rules
+        instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
 
-        if space and space == self._state.rule_store.last_verified_dms_rules.metadata.space:
+        if instance_space and instance_space == dms_rules.metadata.space:
             raise NeatSessionError("Space for instances must be different from the data model space.")
-        elif not PATTERNS.space_compliance.match(str(space)):
+        elif not PATTERNS.space_compliance.match(str(instance_space)):
             raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
-        if not client.data_modeling.spaces.retrieve(space):
-            client.data_modeling.spaces.apply(dm.SpaceApply(space=space))
+        if not client.data_modeling.spaces.retrieve(instance_space):
+            client.data_modeling.spaces.apply(dm.SpaceApply(space=instance_space))
 
         loader = loaders.DMSLoader(
             self._state.rule_store.last_verified_dms_rules,
             self._state.rule_store.last_verified_information_rules,
             self._state.instances.store,
-            instance_space=space,
+            instance_space=instance_space,
             client=client,
-            space_property=space_property,
+            space_property=space_from_property,
+            use_source_space=use_source_space,
             # In case urllib.parse.quote() was run on the extraction, we need to run
             # urllib.parse.unquote() on the load.
             unquote_external_ids=self._state.quoted_source_identifiers,
@@ -347,7 +357,10 @@ class ToPythonAPI:
         self._verbose = verbose
 
     def instances(
-        self, instance_space: str | None = None, space_from_property: str | None = None
+        self,
+        instance_space: str | None = None,
+        space_from_property: str | None = None,
+        use_source_space: bool = False,
     ) -> tuple[list[dm.InstanceApply], IssueList]:
         """Export the verified DMS instances to Python objects.
 
@@ -356,6 +369,8 @@ class ToPythonAPI:
             space_from_property: This is an alternative to the 'instance_space' argument. If provided,
                 the space will be set to the value of the property with the given name for each instance.
                 If the property is not found, the 'instance_space' argument will be used. Defaults to None.
+            use_source_space: If True, the instance space will be set to the source space of the instance.
+                This is only relevant if the instances were extracted from CDF data models. Defaults to False.
 
         Returns:
             list[dm.InstanceApply]: The instances as Python objects.
@@ -385,6 +400,7 @@ class ToPythonAPI:
             self._state.instances.store,
             instance_space=instance_space,
             space_property=space_from_property,
+            use_source_space=use_source_space,
             unquote_external_ids=self._state.quoted_source_identifiers,
         )
         issue_list = IssueList()

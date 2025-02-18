@@ -78,6 +78,28 @@ class TestExtractToLoadFlow:
         has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not has_errors, has_errors
 
+    def test_uplift_workflow_to_python(
+        self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.cdf._graph(
+            ("sp_windfarm", "WindFarm", "v1"),
+            unpack_json=True,
+            str_to_ideal_type=True,
+        )
+        neat.infer()
+        neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
+        instances, _ = neat.to._python.instances(use_source_space=True)
+        rules_str = neat.to.yaml(format="neat")
+        data_regression.check(
+            {
+                "rules": yaml.safe_load(rules_str),
+                "instances": sorted(
+                    [self._standardize_instance(node) for node in instances], key=lambda x: x["externalId"]
+                ),
+            }
+        )
+
     def test_uplift_workflow_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf._graph(
@@ -85,13 +107,10 @@ class TestExtractToLoadFlow:
             unpack_json=True,
             str_to_ideal_type=True,
         )
-        neat.set.instances.type_using_property("NeatIncAsset", "assetCategory")
-        neat._infer_subclasses()
-
+        neat.infer()
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
-
-        neat.to.cdf.data_model(existing="recreate")
-        neat.to.cdf.instances()
+        neat.to.cdf.data_model(existing="force")
+        neat.to.cdf._instances(use_source_space=True)
 
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
