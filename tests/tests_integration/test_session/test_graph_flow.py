@@ -36,23 +36,13 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
-    def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+    def test_snapshot_workflow(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira", identifier="id")
+        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
         neat.convert()
         neat.mapping.data_model.classic_to_core("Classic")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
-
-        # Hack to get the instances.
-        dms_rules = neat._state.rule_store.last_verified_dms_rules
-        info_rules = neat._state.rule_store.last_verified_information_rules
-
-        store = neat._state.instances.store
-        instances = [
-            self._standardize_instance(instance)
-            for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space", "dataSetId").load()
-            if isinstance(instance, InstanceApply)
-        ]
+        instances, _ = neat.to._python.instances("default_instance_space", space_from_property="dataSetId")
 
         rules_str = neat.to.yaml(format="neat")
 
@@ -65,9 +55,27 @@ class TestExtractToLoadFlow:
             {
                 "rules": rules_dict,
                 "data_product": data_product_dict,
-                "instances": sorted(instances, key=lambda x: x["externalId"]),
+                "instances": sorted(
+                    [self._standardize_instance(node) for node in instances], key=lambda x: x["externalId"]
+                ),
             }
         )
+
+    def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
+        neat.convert()
+
+        neat.mapping.data_model.classic_to_core("NeatInc")
+        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
+
+        model_result = neat.to.cdf.data_model(existing="force")
+        has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
+        assert not has_errors, has_errors
+
+        instance_result = neat.to.cdf.instances("sp_windfarm_instance_external_ids")
+        has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
+        assert not has_errors, has_errors
 
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
@@ -169,22 +177,6 @@ class TestExtractToLoadFlow:
                 elif isinstance(value, list):
                     value.sort()
         return instance.dump()
-
-    def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
-        neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
-        neat.convert()
-
-        neat.mapping.data_model.classic_to_core("NeatInc")
-        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
-
-        model_result = neat.to.cdf.data_model(existing="force")
-        has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
-        assert not has_errors, has_errors
-
-        instance_result = neat.to.cdf.instances("sp_windfarm_instance_external_ids")
-        has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
-        assert not has_errors, has_errors
 
     def test_snapshot_to_enterprise(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")

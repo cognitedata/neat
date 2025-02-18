@@ -10,7 +10,7 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.neat._alpha import AlphaFlags
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._rules._shared import VerifiedRules
@@ -35,6 +35,7 @@ class ToAPI:
         self._state = state
         self._verbose = verbose
         self.cdf = CDFToAPI(state, verbose)
+        self._python = ToPythonAPI(state, verbose)
 
     def excel(
         self,
@@ -335,3 +336,62 @@ class CDFToAPI:
         result = self._state.rule_store.export_to_cdf(exporter, self._state.client, dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
+
+
+@session_class_wrapper
+class ToPythonAPI:
+    """API used to write the contents of a NeatSession to Python objects"""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+
+    def instances(
+        self, instance_space: str | None = None, space_from_property: str | None = None
+    ) -> tuple[list[dm.InstanceApply], IssueList]:
+        """Export the verified DMS instances to Python objects.
+
+        Args:
+            instance_space: The name of the instance space to use. Defaults to None.
+            space_from_property: This is an alternative to the 'instance_space' argument. If provided,
+                the space will be set to the value of the property with the given name for each instance.
+                If the property is not found, the 'instance_space' argument will be used. Defaults to None.
+
+        Returns:
+            list[dm.InstanceApply]: The instances as Python objects.
+
+        Example:
+            Export instances to Python objects
+            ```python
+            instances = neat.to._python.instances()
+            ```
+
+            Export instances to Python objects using the `dataSetId` property as the space
+            ```python
+            instances = neat.to._python.instances(space_from_property="dataSetId")
+            ```
+        """
+        dms_rules = self._state.rule_store.last_verified_dms_rules
+        instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
+
+        if instance_space and instance_space == dms_rules.metadata.space:
+            raise NeatSessionError("Space for instances must be different from the data model space.")
+        elif not PATTERNS.space_compliance.match(str(instance_space)):
+            raise NeatSessionError(f"Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
+
+        loader = loaders.DMSLoader(
+            self._state.rule_store.last_verified_dms_rules,
+            self._state.rule_store.last_verified_information_rules,
+            self._state.instances.store,
+            instance_space=instance_space,
+            space_property=space_from_property,
+            unquote_external_ids=self._state.quoted_source_identifiers,
+        )
+        issue_list = IssueList()
+        instances: list[dm.InstanceApply] = []
+        for item in loader.load(stop_on_exception=False):
+            if isinstance(item, dm.InstanceApply):
+                instances.append(item)
+            elif isinstance(item, NeatIssue):
+                issue_list.append(item)
+        return instances, issue_list

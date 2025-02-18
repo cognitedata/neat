@@ -80,6 +80,13 @@ class _Projection:
     edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]]
 
 
+@dataclass
+class _SpaceIdentifierPair:
+    space: str
+    identifier: str
+    error: NeatIssue | None = None
+
+
 class DMSLoader(CDFLoader[dm.InstanceApply]):
     """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
 
@@ -102,6 +109,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         graph_store: NeatGraphStore,
         instance_space: str,
         space_property: str | None = None,
+        use_source_space: bool = False,
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
@@ -111,6 +119,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self.info_rules = info_rules
         self._instance_space = instance_space
         self._space_property = space_property
+        self._use_source_space = use_source_space
         self._space_by_uri: dict[str, str] = defaultdict(lambda: instance_space)
         self._issues = IssueList(create_issues or [])
         self._client = client
@@ -444,10 +453,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         exclude: set[str] | None = None,
         include: set[str] | None = None,
     ) -> Iterable[dm.InstanceApply | NeatIssue]:
-        namespace, identifier = split_uri(instance_id)
+        pair = self._to_space_identifier(instance_id, "node", stop_on_exception)
+        if pair.error:
+            yield pair.error
+            return
+        space, identifier = pair.space, pair.identifier
         if self._unquote_external_ids:
             identifier = urllib.parse.unquote(identifier)
-        default_space = namespace_as_space(namespace) or self._instance_space
         start_node, end_node = self._pop_start_end_node(properties)
         is_edge = start_node and end_node
         instance_type = "edge" if is_edge else "node"
@@ -493,44 +505,40 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
 
         if start_node and end_node:
-            start_namespace, start_identifier = split_uri(start_node)
-            end_namespace, end_identifier = split_uri(end_node)
-
-            if self._unquote_external_ids:
-                start_identifier = urllib.parse.unquote(start_identifier)
-                end_identifier = urllib.parse.unquote(end_identifier)
-
-            yield dm.EdgeApply(
-                space=self._space_by_uri.get(identifier, default_space),
-                external_id=identifier,
-                type=(projection.view_id.space, projection.view_id.external_id),
-                start_node=(
-                    self._space_by_uri.get(
-                        start_identifier, namespace_as_space(start_namespace) or self._instance_space
-                    ),
-                    start_identifier,
-                ),
-                end_node=(
-                    self._space_by_uri.get(end_identifier, namespace_as_space(end_namespace) or self._instance_space),
-                    end_identifier,
-                ),
-                sources=sources,
-            )
+            start = self._to_space_identifier(start_node, "edge", stop_on_exception)
+            end = self._to_space_identifier(end_node, "edge", stop_on_exception)
+            if start.error:
+                yield start.error
+            if end.error:
+                yield end.error
+            if not (start.error or end.error):
+                if self._unquote_external_ids:
+                    start.identifier = urllib.parse.unquote(start.identifier)
+                    end.identifier = urllib.parse.unquote(end.identifier)
+                yield dm.EdgeApply(
+                    space=space,
+                    external_id=identifier,
+                    type=(projection.view_id.space, projection.view_id.external_id),
+                    start_node=(start.space, start.identifier),
+                    end_node=(end.space, end.identifier),
+                    sources=sources,
+                )
         else:
             yield dm.NodeApply(
-                space=self._space_by_uri.get(identifier, default_space),
+                space=space,
                 external_id=identifier,
                 type=(projection.view_id.space, projection.view_id.external_id),
                 sources=sources,
             )
-        yield from self._create_edges_without_properties(default_space, identifier, properties, projection)
+        yield from self._create_edges_without_properties(space, identifier, properties, projection, stop_on_exception)
 
     def _create_edges_without_properties(
         self,
-        default_space: str,
+        space: str,
         identifier: str,
         properties: dict[str | InstanceType, list[str] | list[URIRef]],
         projection: _Projection,
+        stop_on_exception: bool,
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for predicate, values in properties.items():
             if predicate in projection.edge_by_type:
@@ -549,14 +557,19 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             for target in values:
                 external_id = f"{identifier}.{prop_id}.{target}"
+                res = self._to_space_identifier(target, "edge", stop_on_exception)
+                if res.error:
+                    yield res.error
+                    continue
+
                 start_node, end_node = (
-                    (self._space_by_uri.get(identifier, default_space), identifier),
-                    (self._space_by_uri.get(target, default_space), target),
+                    (space, identifier),
+                    (res.space, res.identifier),
                 )
                 if edge.direction == "inwards":
                     start_node, end_node = end_node, start_node
                 yield dm.EdgeApply(
-                    space=self._space_by_uri.get(identifier, default_space),
+                    space=space,
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
                     start_node=start_node,
@@ -566,7 +579,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     @staticmethod
     def _pop_start_end_node(
         properties: dict[str | InstanceType, list[str] | list[URIRef]],
-    ) -> tuple[URIRef, URIRef] | tuple[None, None]:
+    ) -> tuple[URIRef | str, URIRef | str] | tuple[None, None]:
         start_node = properties.pop("startNode", [None])[0]
         if not start_node:
             start_node = properties.pop("start_node", [None])[0]
@@ -574,8 +587,31 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not end_node:
             end_node = properties.pop("end_node", [None])[0]
         if start_node and end_node:
-            return cast(tuple[URIRef, URIRef], (start_node, end_node))
+            return start_node, end_node
         return None, None
+
+    def _to_space_identifier(
+        self, raw: URIRef | str, instance_type: str, stop_on_exception: bool = False
+    ) -> _SpaceIdentifierPair:
+        error: ResourceCreationError | None = None
+        if self._use_source_space:
+            error_candidate = ResourceCreationError(raw, instance_type, f"Could not find space for {raw!s}.")
+            if isinstance(raw, URIRef):
+                namespace, target_identifier = split_uri(raw)
+                target_space = namespace_as_space(namespace)
+                if target_space is None:
+                    error = error_candidate
+                target_space = target_space or self._instance_space
+            else:
+                target_space = self._instance_space
+                target_identifier = raw
+                error = error_candidate
+        else:
+            target_identifier = remove_namespace_from_uri(raw)
+            target_space = self._space_by_uri[target_identifier]
+        if stop_on_exception and error:
+            raise error
+        return _SpaceIdentifierPair(target_space, target_identifier, error)
 
     def _get_required_capabilities(self) -> list[Capability]:
         return [
