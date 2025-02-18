@@ -13,8 +13,9 @@ class TestSchemaAPI:
     def test_get_view_order_by_direct_relation_constraints(self, cognite_core_schema: DMSSchema) -> None:
         schema = cognite_core_schema
         selected_views = {"CogniteAsset", "CogniteFile", "CogniteEquipment", "CogniteTimeSeries", "CogniteActivity"}
+        read_views = schema.as_read_model().views
         view_order = SchemaAPI.get_view_order_by_direct_relation_constraints(
-            [view for view in schema.views.values() if view.external_id in selected_views]
+            [view for view in read_views if view.external_id in selected_views]
         )
         external_ids = [view.external_id for view in view_order]
         assert external_ids == [

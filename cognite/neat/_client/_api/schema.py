@@ -129,6 +129,6 @@ class SchemaAPI:
 
     @staticmethod
     def get_view_order_by_direct_relation_constraints(
-        views: Iterable[dm.View | dm.ViewApply],
+        views: Iterable[dm.View],
     ) -> list[dm.ViewId]:
         return [v.as_id() for v in views]

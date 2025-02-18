@@ -217,9 +217,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         def sort_by_instance_type(id_: dm.ViewId) -> int:
             if id_ not in views_by_id:
                 return 0
-            return {"node": 1, "all": 2, "edge": 3}.get(views_by_id[id_].used_for, 0)
+            return {"node": 1, "all": 1, "edge": 3}.get(views_by_id[id_].used_for, 0)
 
-        ordered_view_ids = sorted(iterations_by_view_id.keys(), key=sort_by_instance_type)
+        ordered_view_ids = SchemaAPI.get_view_order_by_direct_relation_constraints(views)
+        # Sort is stable in Python, so we will keep the order of the views:
+        ordered_view_ids.sort(key=sort_by_instance_type)
         view_iterations: list[_ViewIterator] = []
         for view_id in ordered_view_ids:
             if view_id not in iterations_by_view_id:
