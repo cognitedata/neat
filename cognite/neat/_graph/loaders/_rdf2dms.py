@@ -460,8 +460,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield pair.error
             return
         space, identifier = pair.space, pair.identifier
-        if self._unquote_external_ids:
-            identifier = urllib.parse.unquote(identifier)
         start_node, end_node = self._pop_start_end_node(properties)
         is_edge = start_node and end_node
         instance_type = "edge" if is_edge else "node"
@@ -514,9 +512,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if end.error:
                 yield end.error
             if not (start.error or end.error):
-                if self._unquote_external_ids:
-                    start.identifier = urllib.parse.unquote(start.identifier)
-                    end.identifier = urllib.parse.unquote(end.identifier)
                 yield dm.EdgeApply(
                     space=space,
                     external_id=identifier,
@@ -608,8 +603,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 target_space = self._instance_space
                 target_identifier = raw
                 error = error_candidate
+            if self._unquote_external_ids:
+                target_identifier = urllib.parse.unquote(target_identifier)
         else:
             target_identifier = remove_namespace_from_uri(raw)
+            if self._unquote_external_ids:
+                target_identifier = urllib.parse.unquote(target_identifier)
             target_space = self._space_by_uri[target_identifier]
         if stop_on_exception and error:
             raise error
