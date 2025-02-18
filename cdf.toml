@@ -15,3 +15,4 @@ classic = true
 run = true
 pull = false
 dump = true
+purge = true
