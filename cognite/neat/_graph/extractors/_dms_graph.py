@@ -195,5 +195,11 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             # Any errors occur will be raised and caught outside the extractor.
             verified_dms = VerifyDMSRules(client=self._client).transform(unverified_dms)
             information_rules = DMSToInformation(self._namespace).transform(verified_dms)
+
+        # We need to sync the metadata between the two rules, such that the `.sync_with_info_rules` method works.
+        information_rules.metadata.physical = verified_dms.metadata.identifier
+        verified_dms.metadata.logical = information_rules.metadata.identifier
+        verified_dms.sync_with_info_rules(information_rules)
+
         self._issues.extend(issues)
         return information_rules, verified_dms

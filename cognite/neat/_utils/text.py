@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 from collections.abc import Collection
 from typing import Any
 
@@ -183,5 +184,6 @@ class NamingStandardization:
 
     @classmethod
     def _clean_string(cls, raw: str) -> str:
+        raw = urllib.parse.unquote(raw)
         raw = cls._clean_pattern.sub("_", raw)
         return cls._multi_underscore_pattern.sub("_", raw)
