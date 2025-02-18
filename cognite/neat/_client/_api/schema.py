@@ -1,5 +1,6 @@
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
+from graphlib import CycleError, TopologicalSorter
 from typing import TYPE_CHECKING
 
 from cognite.client import data_modeling as dm
@@ -128,7 +129,27 @@ class SchemaAPI:
         return hierarchical_properties_by_view_id
 
     @staticmethod
-    def get_view_order_by_direct_relation_constraints(
-        views: Iterable[dm.View],
-    ) -> list[dm.ViewId]:
-        return [v.as_id() for v in views]
+    def get_view_order_by_direct_relation_constraints(views: Iterable[dm.View]) -> list[dm.ViewId]:
+        """Sorts the views by container constraints."""
+        view_sequence = list(views)
+        view_ids_by_container: dict[dm.ContainerId, set[dm.ViewId]] = defaultdict(set)
+        for view in view_sequence:
+            for container_id in view.referenced_containers():
+                view_ids_by_container[container_id].add(view.as_id())
+
+        view_by_dependency: dict[dm.ViewId, set[dm.ViewId]] = {}
+        for view in view_sequence:
+            view_id = view.as_id()
+            view_by_dependency[view_id] = set()
+            for prop in view.properties.values():
+                if (
+                    isinstance(prop, dm.MappedProperty)
+                    and isinstance(prop.type, dm.DirectRelation)
+                    and prop.type.container
+                ):
+                    view_by_dependency[view_id].update(view_ids_by_container[prop.type.container])
+        try:
+            # Reversing the order to get the view with the least dependencies first
+            return list(TopologicalSorter(view_by_dependency).static_order())
+        except CycleError as e:
+            raise NeatValueError("Cycle in direct relation constraints") from e

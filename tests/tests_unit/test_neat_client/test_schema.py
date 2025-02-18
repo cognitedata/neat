@@ -12,16 +12,17 @@ class TestSchemaAPI:
 
     def test_get_view_order_by_direct_relation_constraints(self, cognite_core_schema: DMSSchema) -> None:
         schema = cognite_core_schema
-        selected_views = {"CogniteAsset", "CogniteFile", "CogniteEquipment", "CogniteTimeSeries", "CogniteActivity"}
         read_views = schema.as_read_model().views
-        view_order = SchemaAPI.get_view_order_by_direct_relation_constraints(
-            [view for view in read_views if view.external_id in selected_views]
-        )
-        external_ids = [view.external_id for view in view_order]
-        assert external_ids == [
+        view_order = SchemaAPI.get_view_order_by_direct_relation_constraints(read_views)
+        selected_external_ids = [
+            "CogniteSourceSystem",
             "CogniteAsset",
             "CogniteFile",
             "CogniteEquipment",
             "CogniteTimeSeries",
             "CogniteActivity",
         ]
+        external_ids = [view.external_id for view in view_order if view.external_id in set(selected_external_ids)]
+        # The topological order is not unique, so we cannot compare the full order.
+        # All other views depend on the source system so that must be first.
+        assert external_ids[0] == "CogniteSourceSystem"
