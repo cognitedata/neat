@@ -218,7 +218,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 for missing_view in missing:
                     issues.append(ResourceNotFoundError(missing_view, "view", more="The view is not found in CDF."))
                 return [], issues
-            hierarchical_properties_by_view_id = self._client.schema.get_hierarchical_properties(views)
+            # Todo: Remove if this turns out to be unnecessary.
+            hierarchical_properties_by_view_id: dict[dm.ViewId, set[str]] = {}
         else:
             views = dm.ViewList([])
             with catch_issues() as issues:
