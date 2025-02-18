@@ -178,6 +178,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 yield _END_OF_CLASS
                 yield _START_OF_CLASS(f"{view.external_id} ({humanize_collection(it.hierarchical_properties)})")
                 yield from self._create_hierarchical_properties(it, projection, stop_on_exception)
+            if reader is not instance_iterable:
+                print(f"Loaded {it.instance_count} instances for {it.view_id!r}")
 
             yield _END_OF_CLASS
 
