@@ -12,6 +12,8 @@ from cognite.neat._issues.warnings import CDFAuthWarning, ResourceNotFoundWarnin
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.data_types import Json
+from cognite.neat._rules.models.entities import UnknownEntity
+from cognite.neat._rules.models.information import InformationProperty
 from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat._shared import Triple
 
@@ -203,6 +205,22 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         information_rules.metadata.physical = verified_dms.metadata.identifier
         verified_dms.metadata.logical = information_rules.metadata.identifier
         verified_dms.sync_with_info_rules(information_rules)
+
+        # Adding startNode and endNode to the information rules for views that are used for edges.
+        classes_by_prefix = {cls_.class_.prefix: cls_ for cls_ in information_rules.classes}
+        for view in self._model_views:
+            if view.used_for == "edge" and view.external_id in classes_by_prefix:
+                cls_ = classes_by_prefix[view.external_id]
+                for property_ in ("startNode", "endNode"):
+                    information_rules.properties.append(
+                        InformationProperty(
+                            class_=cls_.class_,
+                            property_=property_,
+                            value_type=UnknownEntity(),
+                            min_count=0,
+                            max_count=1,
+                        )
+                    )
 
         self._issues.extend(issues)
         return information_rules, verified_dms
