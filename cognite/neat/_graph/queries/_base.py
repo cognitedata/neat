@@ -2,7 +2,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import Literal, cast, overload
 
-from rdflib import RDF, Dataset, Graph, Namespace, URIRef
+from rdflib import RDF, XSD, Dataset, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.query import ResultRow
@@ -225,7 +225,11 @@ class Queries:
             elif isinstance(object_, URIRef):
                 value = remove_namespace_from_uri(object_, validation="prefix")
             elif isinstance(object_, RdfLiteral):
-                value = object_.toPython()
+                if object_.datatype == XSD._NS["json"]:
+                    # For JSON literals, the .toPython() returns a Literal object.
+                    value = str(object_)
+                else:
+                    value = object_.toPython()
             else:
                 # It is a blank node
                 value = str(object_)

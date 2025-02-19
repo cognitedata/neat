@@ -89,7 +89,8 @@ class TestExtractToLoadFlow:
         )
         neat.infer()
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
-        instances, _ = neat.to._python.instances(use_source_space=True)
+        instances, issues = neat.to._python.instances(use_source_space=True)
+        assert not issues.has_errors
         rules_str = neat.to.yaml(format="neat")
         data_regression.check(
             {

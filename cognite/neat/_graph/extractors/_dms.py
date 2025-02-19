@@ -1,3 +1,4 @@
+import json
 import urllib.parse
 from collections.abc import Iterable, Iterator, Set
 from functools import cached_property
@@ -203,7 +204,7 @@ class DMSExtractor(BaseExtractor):
             yield from self._unpack_json(value)
         elif isinstance(value, dict):
             # This object is a json object.
-            yield key, Literal(str(value), datatype=XSD._NS["json"])
+            yield key, Literal(json.dumps(value), datatype=XSD._NS["json"])
         elif isinstance(value, list):
             for item in value:
                 yield from self._get_predicate_objects_pair(key, item, False)
@@ -223,9 +224,9 @@ class DMSExtractor(BaseExtractor):
             elif isinstance(sub_value, dict):
                 yield from self._unpack_json(sub_value, key)
             elif isinstance(sub_value, list):
-                for item in sub_value:
+                for no, item in enumerate(sub_value, 1):
                     if isinstance(item, dict):
-                        yield from self._unpack_json(item, key)
+                        yield from self._unpack_json(item, f"{key}_{no}")
                     else:
                         yield from self._get_predicate_objects_pair(key, item, self.unpack_json)
             else:
