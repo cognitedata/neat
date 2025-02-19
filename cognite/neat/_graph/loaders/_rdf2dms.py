@@ -557,11 +557,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 yield error
                 continue
             for target in values:
-                external_id = f"{identifier}.{prop_id}.{target}"
                 res = self._to_space_identifier(target, "edge", stop_on_exception)
                 if res.error:
                     yield res.error
                     continue
+                if isinstance(target, URIRef):
+                    target = remove_namespace_from_uri(target)
+                external_id = f"{identifier}.{prop_id}.{target}"
 
                 start_node, end_node = (
                     (space, identifier),

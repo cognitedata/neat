@@ -342,7 +342,7 @@ instances:
 - endNode:
     externalId: Label_metMast
     space: DataSet_source_ds
-  externalId: Relationship_WT-01_to_MetMast.labels.http://purl.org/cognite/space/DataSet_source_ds#Label_metMast
+  externalId: Relationship_WT-01_to_MetMast.labels.Label_metMast
   instanceType: edge
   space: DataSet_2458119666837052
   startNode:
@@ -379,7 +379,7 @@ instances:
 - endNode:
     externalId: Label_metMast
     space: DataSet_source_ds
-  externalId: Relationship_WT-02_to_MetMast.labels.http://purl.org/cognite/space/DataSet_source_ds#Label_metMast
+  externalId: Relationship_WT-02_to_MetMast.labels.Label_metMast
   instanceType: edge
   space: DataSet_2458119666837052
   startNode:
