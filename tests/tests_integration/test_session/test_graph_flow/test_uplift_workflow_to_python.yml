@@ -340,6 +340,18 @@ instances:
     externalId: NeatIncRelationship
     space: sp_windfarm_enterprise
 - endNode:
+    externalId: Label_metMast
+    space: DataSet_source_ds
+  externalId: Relationship_WT-01_to_MetMast.labels.http://purl.org/cognite/space/DataSet_source_ds#Label_metMast
+  instanceType: edge
+  space: DataSet_2458119666837052
+  startNode:
+    externalId: Relationship_WT-01_to_MetMast
+    space: DataSet_2458119666837052
+  type:
+    externalId: NeatIncRelationship.labels
+    space: sp_windfarm_enterprise
+- endNode:
     externalId: MetMast
     space: sp_windfarm_dataset
   externalId: Relationship_WT-02_to_MetMast
@@ -363,6 +375,55 @@ instances:
     space: sp_windfarm_dataset
   type:
     externalId: NeatIncRelationship
+    space: sp_windfarm_enterprise
+- endNode:
+    externalId: Label_metMast
+    space: DataSet_source_ds
+  externalId: Relationship_WT-02_to_MetMast.labels.http://purl.org/cognite/space/DataSet_source_ds#Label_metMast
+  instanceType: edge
+  space: DataSet_2458119666837052
+  startNode:
+    externalId: Relationship_WT-02_to_MetMast
+    space: DataSet_2458119666837052
+  type:
+    externalId: NeatIncRelationship.labels
+    space: sp_windfarm_enterprise
+- externalId: Sequence_power_curve_manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      assetId:
+        externalId: Asset_WT-01
+        space: sp_windfarm_enterprise_instances
+      classicExternalId: power_curve_manufacturer1
+      columns:
+      - colNumber: 2
+        description: Power
+        externalId: power
+        metadata:
+          blob: data
+        name: Power
+        valueType: DOUBLE
+      - colNumber: 1
+        description: Wind speed
+        externalId: wind_speed
+        metadata:
+          blob: data
+        name: Wind speed
+        valueType: DOUBLE
+      dataSetId:
+        externalId: DataSet_source_ds
+        space: sp_windfarm_enterprise_instances
+      description: Power curve from manufacturer 1
+      name: Power curve Manufacturer 1
+    source:
+      externalId: NeatIncSequence
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: DataSet_source_ds
+  type:
+    externalId: NeatIncSequence
     space: sp_windfarm_enterprise
 - externalId: TimeSeries_WT-01_forecast
   instanceType: node
