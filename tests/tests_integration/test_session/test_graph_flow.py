@@ -87,7 +87,8 @@ class TestExtractToLoadFlow:
             unpack_json=True,
             str_to_ideal_type=True,
         )
-        neat.infer()
+        issues = neat.infer()
+        assert not issues.has_errors
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
         instances, issues = neat.to._python.instances(use_source_space=True)
         assert not issues.has_errors
