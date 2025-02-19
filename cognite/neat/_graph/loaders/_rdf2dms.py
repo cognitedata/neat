@@ -173,7 +173,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             projection, issues = self._create_projection(view)
             yield from issues
             query = it.query
-            reader = self.graph_store.read(query.rdf_type, property_renaming_config=query.property_renaming_config)
+            reader = self.graph_store.read(
+                query.rdf_type,
+                property_renaming_config=query.property_renaming_config,
+                remove_uri_namespace=not self._use_source_space,
+            )
             instance_iterable = iterate_progress_bar_if_above_config_threshold(
                 reader, it.instance_count, f"Loading {it.view_id!r}"
             )
@@ -449,7 +453,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def _create_instances(
         self,
         instance_id: URIRef,
-        properties: dict[str | InstanceType, list[str] | list[URIRef]],
+        properties: dict[str | InstanceType, list[Any]],
         projection: _Projection,
         stop_on_exception: bool = False,
         exclude: set[str] | None = None,

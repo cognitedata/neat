@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import cast, overload
+from typing import Any, cast, overload
 from zipfile import ZipExtFile
 
 import pandas as pd
@@ -239,14 +239,18 @@ class NeatGraphStore:
         class_uri: URIRef,
         named_graph: URIRef | None = None,
         property_renaming_config: dict[URIRef, str] | None = None,
-    ) -> Iterable[tuple[URIRef, dict[str | InstanceType, list[str] | list[URIRef]]]]:
+        remove_uri_namespace: bool = True,
+    ) -> Iterable[tuple[URIRef, dict[str | InstanceType, list[Any]]]]:
         named_graph = named_graph or self.default_named_graph
 
         instance_ids = self.queries.list_instances_ids_of_class(class_uri, named_graph=named_graph)
 
         for instance_id in instance_ids:
             if res := self.queries.describe(
-                instance_id=instance_id, instance_type=class_uri, property_renaming_config=property_renaming_config
+                instance_id=instance_id,
+                instance_type=class_uri,
+                property_renaming_config=property_renaming_config,
+                remove_uri_namespace=remove_uri_namespace,
             ):
                 yield res
 

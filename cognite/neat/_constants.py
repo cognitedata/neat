@@ -201,13 +201,3 @@ DMS_RESERVED_PROPERTIES = frozenset(
         "endNode",
     }
 )
-
-# These are properties that can contain space in their URIRef.
-SPACE_PROPERTIES = frozenset(
-    {
-        "startNode",
-        "endNode",
-        "start_node",
-        "end_node",
-    }
-)
