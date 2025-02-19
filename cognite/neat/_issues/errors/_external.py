@@ -24,6 +24,14 @@ class FileReadError(NeatError, RuntimeError):
 
 
 @dataclass(unsafe_hash=True)
+class OxigraphStorageLockedError(NeatError, RuntimeError):
+    """Oxigraph on-disk storage locked at the path {filepath}"""
+
+    fix = "Delete LOCK file in the {filepath} folder to unlock the storage or use another storage path"
+    filepath: Path
+
+
+@dataclass(unsafe_hash=True)
 class FileNotFoundNeatError(NeatError, FileNotFoundError):
     """File {filepath} not found"""
 

@@ -38,6 +38,6 @@ neat = NeatSession()
 neat._state.instances._store = store
 
 # use the neat session as usual, e.g.:
-neat.read.rdf.examples.nordic44()
+neat.read.examples.nordic44()
 
 ```

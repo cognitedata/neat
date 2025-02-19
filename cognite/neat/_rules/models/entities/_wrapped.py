@@ -201,3 +201,6 @@ class RawFilter(DMSFilter):
 
     def __repr__(self) -> str:
         return self.filter
+
+    def __str__(self):
+        return f"{self.name}({self.filter})"

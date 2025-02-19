@@ -1,9 +1,10 @@
 import re
+import urllib.parse
 from collections.abc import Collection
 from typing import Any
 
 
-def to_camel(string: str) -> str:
+def to_camel_case(string: str) -> str:
     """Convert snake_case_name to camelCaseName.
 
     Args:
@@ -12,36 +13,53 @@ def to_camel(string: str) -> str:
         camelCase of the input string.
 
     Examples:
-        >>> to_camel("a_b")
+        >>> to_camel_case("a_b")
         'aB'
-        >>> to_camel("ScenarioInstance_priceForecast")
+        >>> to_camel_case("ScenarioInstance_priceForecast")
         'scenarioInstancePriceForecast'
     """
+    string = re.sub(r"[^a-zA-Z0-9_]", "_", string)
+    string = re.sub("_+", "_", string)
+    is_all_upper = string.upper() == string
+    is_first_upper = (
+        len(string) >= 2 and string[:2].upper() == string[:2] and "_" not in string[:2] and not is_all_upper
+    )
+    return _to_camel_case(string, is_all_upper, is_first_upper)
+
+
+def _to_camel_case(string, is_all_upper: bool, is_first_upper: bool):
     if "_" in string:
-        # Could be a combination of snake and pascal/camel case
-        parts = string.split("_")
-        pascal_splits = [to_pascal(subpart) for part in parts for subpart in part.split("-") if subpart]
-    elif "-" in string:
-        # Could be a combination of kebab and pascal/camel case
-        parts = string.split("-")
-        pascal_splits = [to_pascal(subpart) for part in parts for subpart in part.split("_") if subpart]
+        pascal_splits = [
+            _to_pascal_case(part, is_all_upper, is_first_upper and no == 0)
+            for no, part in enumerate(string.split("_"), 0)
+        ]
     else:
-        # Assume is pascal/camel case
         # Ensure pascal
-        string = string[0].upper() + string[1:]
+        if string:
+            string = string[0].upper() + string[1:]
         pascal_splits = [string]
-    string_split = []
+    cleaned: list[str] = []
     for part in pascal_splits:
+        if part.upper() == part and is_all_upper:
+            cleaned.append(part.capitalize())
+        else:
+            cleaned.append(part)
+
+    string_split = []
+    for part in cleaned:
         string_split.extend(re.findall(r"[A-Z][a-z0-9]*", part))
     if not string_split:
         string_split = [string]
-    try:
-        return string_split[0].casefold() + "".join(word.capitalize() for word in string_split[1:])
-    except IndexError:
+    if len(string_split) == 0:
         return ""
+    # The first word is a single letter, keep the original case
+    if is_first_upper:
+        return "".join(word for word in string_split)
+    else:
+        return string_split[0].casefold() + "".join(word for word in string_split[1:])
 
 
-def to_pascal(string: str) -> str:
+def to_pascal_case(string: str) -> str:
     """Convert string to PascalCaseName.
 
     Args:
@@ -50,16 +68,20 @@ def to_pascal(string: str) -> str:
         PascalCase of the input string.
 
     Examples:
-        >>> to_pascal("a_b")
+        >>> to_pascal_case("a_b")
         'AB'
-        >>> to_pascal('camel_case')
+        >>> to_pascal_case('camel_case')
         'CamelCase'
     """
-    camel = to_camel(string)
+    return _to_pascal_case(string, string == string.upper(), True)
+
+
+def _to_pascal_case(string: str, is_all_upper: bool, is_first_upper: bool) -> str:
+    camel = _to_camel_case(string, is_all_upper, is_first_upper)
     return f"{camel[0].upper()}{camel[1:]}" if camel else ""
 
 
-def to_snake(string: str) -> str:
+def to_snake_case(string: str) -> str:
     """
     Convert input string to snake_case
 
@@ -69,33 +91,33 @@ def to_snake(string: str) -> str:
         snake_case of the input string.
 
     Examples:
-        >>> to_snake("aB")
+        >>> to_snake_case("aB")
         'a_b'
-        >>> to_snake('CamelCase')
+        >>> to_snake_case('CamelCase')
         'camel_case'
-        >>> to_snake('camelCamelCase')
+        >>> to_snake_case('camelCamelCase')
         'camel_camel_case'
-        >>> to_snake('Camel2Camel2Case')
+        >>> to_snake_case('Camel2Camel2Case')
         'camel_2_camel_2_case'
-        >>> to_snake('getHTTPResponseCode')
+        >>> to_snake_case('getHTTPResponseCode')
         'get_http_response_code'
-        >>> to_snake('get200HTTPResponseCode')
+        >>> to_snake_case('get200HTTPResponseCode')
         'get_200_http_response_code'
-        >>> to_snake('getHTTP200ResponseCode')
+        >>> to_snake_case('getHTTP200ResponseCode')
         'get_http_200_response_code'
-        >>> to_snake('HTTPResponseCode')
+        >>> to_snake_case('HTTPResponseCode')
         'http_response_code'
-        >>> to_snake('ResponseHTTP')
+        >>> to_snake_case('ResponseHTTP')
         'response_http'
-        >>> to_snake('ResponseHTTP2')
+        >>> to_snake_case('ResponseHTTP2')
         'response_http_2'
-        >>> to_snake('Fun?!awesome')
+        >>> to_snake_case('Fun?!awesome')
         'fun_awesome'
-        >>> to_snake('Fun?!Awesome')
+        >>> to_snake_case('Fun?!Awesome')
         'fun_awesome'
-        >>> to_snake('10CoolDudes')
+        >>> to_snake_case('10CoolDudes')
         '10_cool_dudes'
-        >>> to_snake('20coolDudes')
+        >>> to_snake_case('20coolDudes')
         '20_cool_dudes'
     """
     pattern = re.compile(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\d|\W|$)|\d+")
@@ -115,7 +137,7 @@ def sentence_or_string_to_camel(string: str) -> str:
         except IndexError:
             return ""
     else:
-        return to_camel(string)
+        return to_camel_case(string)
 
 
 def replace_non_alphanumeric_with_underscore(text: str) -> str:
@@ -135,3 +157,33 @@ def humanize_collection(collection: Collection[Any], /, *, sort: bool = True) ->
         sequence = list(strings)
 
     return f"{', '.join(sequence[:-1])} and {sequence[-1]}"
+
+
+class NamingStandardization:
+    _clean_pattern = re.compile(r"[^a-zA-Z0-9_]+")
+    _multi_underscore_pattern = re.compile(r"_+")
+    _start_letter_pattern = re.compile(r"^[a-zA-Z]")
+
+    @classmethod
+    def standardize_class_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw)
+        if not cls._start_letter_pattern.match(clean):
+            # Underscore ensure that 'Class' it treated as a separate word
+            # in the to_pascale function
+            clean = f"Class_{clean}"
+        return to_pascal_case(clean)
+
+    @classmethod
+    def standardize_property_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw)
+        if not cls._start_letter_pattern.match(clean):
+            # Underscore ensure that 'property' it treated as a separate word
+            # in the to_camel function
+            clean = f"property_{clean}"
+        return to_camel_case(clean)
+
+    @classmethod
+    def _clean_string(cls, raw: str) -> str:
+        raw = urllib.parse.unquote(raw)
+        raw = cls._clean_pattern.sub("_", raw)
+        return cls._multi_underscore_pattern.sub("_", raw)

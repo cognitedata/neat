@@ -1,5 +1,5 @@
 import difflib
-from collections.abc import Callable
+from collections.abc import Callable, Set
 from typing import Literal, overload
 
 import pandas as pd
@@ -48,7 +48,6 @@ class InspectAPI:
         self.issues = InspectIssues(state)
         self.outcome = InspectOutcome(state)
 
-    @property
     def properties(self) -> pd.DataFrame:
         """Returns the properties of the current data model.
 
@@ -59,7 +58,23 @@ class InspectAPI:
             neat.inspect.properties
             ```
         """
-        df = self._state.rule_store.last_verified_rule.properties.to_pandas()
+        if self._state.rule_store.empty:
+            return pd.DataFrame()
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        if last_entity.dms:
+            df = last_entity.dms.properties.to_pandas()
+        else:
+            df = last_entity.information.properties.to_pandas()
+        df.drop(columns=["neatId"], errors="ignore", inplace=True)
+        return df
+
+    def views(self) -> pd.DataFrame:
+        if self._state.rule_store.empty:
+            return pd.DataFrame()
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        if last_entity.dms is None:
+            return pd.DataFrame()
+        df = last_entity.dms.views.to_pandas()
         df.drop(columns=["neatId"], errors="ignore", inplace=True)
         return df
 
@@ -70,11 +85,13 @@ class InspectIssues:
 
     def __init__(self, state: SessionState) -> None:
         self._state = state
+        self._max_display = 50
 
     @overload
     def __call__(
         self,
         search: str | None = None,
+        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
         return_dataframe: Literal[True] = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame: ...
 
@@ -82,23 +99,31 @@ class InspectIssues:
     def __call__(
         self,
         search: str | None = None,
+        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
         return_dataframe: Literal[False] = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> None: ...
 
     def __call__(
         self,
         search: str | None = None,
+        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the issues of the current data model."""
-        if self._state.rule_store.provenance:
-            issues = self._state.rule_store.last_issues
-        elif self._state.instances.store.provenance:
+        issues = self._state.rule_store.last_issues
+        if issues is None and self._state.instances.store.provenance:
             last_change = self._state.instances.store.provenance[-1]
             issues = last_change.target_entity.issues
-        else:
+        elif issues is None:
             self._print("No issues found.")
             return pd.DataFrame() if return_dataframe else None
+        include_set = {include} if isinstance(include, str) else include
+        if "all" in include_set:
+            include_set = {"errors", "warning"}
+        if "warning" not in include_set:
+            issues = issues.errors
+        if "errors" not in include_set:
+            issues = issues.warnings
 
         if issues and search is not None:
             unique_types = {type(issue).__name__ for issue in issues}
@@ -106,7 +131,11 @@ class InspectIssues:
             issues = IssueList([issue for issue in issues if type(issue).__name__ in closest_match])
 
         issue_str = "\n".join(
-            [f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}" for issue in issues]
+            [
+                f"  * **{type(issue).__name__}**: {issue.as_message(include_type=False)}"
+                for issue in issues[: self._max_display]
+            ]
+            + ([] if len(issues) <= 50 else [f"  * ... {len(issues) - self._max_display} more"])
         )
         markdown_str = f"### {len(issues)} issues found\n\n{issue_str}"
 
@@ -156,6 +185,7 @@ class InspectOutcome:
 class InspectUploadOutcome:
     def __init__(self, get_last_outcome: Callable[[], UploadResultList]) -> None:
         self._get_last_outcome = get_last_outcome
+        self._max_display = 50
 
     @staticmethod
     def _as_set(value: str | list[str] | None) -> set[str] | None:
@@ -209,7 +239,7 @@ class InspectUploadOutcome:
             from IPython.display import Markdown, display
 
             lines: list[str] = []
-            for item in outcome:
+            for line_no, item in enumerate(outcome):
                 lines.append(f"### {item.name}")
                 if unique_errors := set(item.error_messages):
                     lines.append("#### Errors")
@@ -240,6 +270,10 @@ class InspectUploadOutcome:
 
                         else:
                             lines.append(f"  * {value}")
+
+                if line_no >= self._max_display:
+                    lines.append(f"### ... {len(outcome) - self._max_display} more")
+                    break
 
             display(Markdown("\n".join(lines)))
 

@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any
 
 import pandas as pd
+from cognite.client import data_modeling as dm
 from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -36,6 +37,7 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     updated: datetime | str | None = None
     physical: str | URIRef | None = None
     conceptual: str | URIRef | None = None
+    source_id: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[InformationMetadata]:
@@ -48,6 +50,9 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
         if self.updated is None:
             output["updated"] = datetime.now()
         return output
+
+    def as_data_model_id(self) -> dm.DataModelId:
+        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
 
     @property
     def prefix(self) -> str:
@@ -79,7 +84,7 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     min_count: int | None = None
     max_count: int | float | None = None
     default: Any | None = None
-    instance_source: str | None = None
+    instance_source: str | list[str] | None = None
     # Only used internally
     inherited: bool = False
     neatId: str | URIRef | None = None
@@ -105,6 +110,7 @@ class InformationInputClass(InputComponent[InformationClass]):
     name: str | None = None
     description: str | None = None
     implements: str | list[ClassEntity] | None = None
+    instance_source: str | None = None
     neatId: str | URIRef | None = None
     # linking
     physical: str | URIRef | None = None

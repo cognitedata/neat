@@ -35,27 +35,22 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
         in_ = rules.rules
         if in_ is None:
             raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
-        error_args = rules.read_context
         verified_rules: T_VerifiedRules | None = None
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
-        # For example, which row in the spreadsheet the error occurred o
-        with catch_issues(error_args=error_args) as issues:
+        # For example, which row in the spreadsheet the error occurred.
+        with catch_issues(rules.read_context) as issues:
             rules_cls = self._get_rules_cls(rules)
             dumped = in_.dump()
             verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]
             if self.validate:
                 validation_cls = self._get_validation_cls(verified_rules)  # type: ignore[arg-type]
                 if issubclass(validation_cls, DMSValidation):
-                    validation_issues = DMSValidation(verified_rules, self._client).validate()  # type: ignore[arg-type]
+                    validation_issues = DMSValidation(verified_rules, self._client, rules.read_context).validate()  # type: ignore[arg-type]
                 elif issubclass(validation_cls, InformationValidation):
-                    validation_issues = InformationValidation(verified_rules).validate()  # type: ignore[arg-type]
+                    validation_issues = InformationValidation(verified_rules, rules.read_context).validate()  # type: ignore[arg-type]
                 else:
                     raise NeatValueError("Unsupported rule type")
-
-                # Need to trigger and raise such that the catch_issues can add the extra context
-                validation_issues.trigger_warnings()
-                if validation_issues.has_errors:
-                    raise MultiValueError(validation_issues.errors)
+                issues.extend(validation_issues)
 
         # Raise issues which is expected to be handled outside of this method
         issues.trigger_warnings()

@@ -1,12 +1,11 @@
 from cognite.neat._issues import IssueList
-from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
 from cognite.neat._rules.transformers import (
     AsParentPropertyId,
     ChangeViewPrefix,
     IncludeReferenced,
     RuleMapper,
-    RulesTransformer,
+    VerifiedRulesTransformer,
 )
 
 from ._state import SessionState
@@ -43,15 +42,16 @@ class DataModelMappingAPI:
             neat.mapping.classic_to_core(company_prefix="WindFarmX", use_parent_property_name=True)
             ```
         """
-        rules = self._state.rule_store.get_last_successful_entity().result
-        if not isinstance(rules, DMSRules):
-            # Todo better hint of what you should do.
-            raise NeatSessionError(f"Expected DMSRules, got {type(rules)}")
-
+        if self._state.rule_store.empty:
+            raise NeatSessionError("No rules to map")
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        if last_entity.dms is None:
+            raise NeatSessionError("Data model not converted to DMS. Try running `neat.convert('dms')` first.")
+        rules = last_entity.dms
         if self._state.client is None:
             raise NeatSessionError("Client is required to map classic to core")
 
-        transformers: list[RulesTransformer] = []
+        transformers: list[VerifiedRulesTransformer] = []
         if company_prefix:
             transformers.append(ChangeViewPrefix("Classic", company_prefix))
         transformers.extend(

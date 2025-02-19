@@ -1,6 +1,8 @@
 import json
 import re
 import sys
+import typing
+import urllib.parse
 import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
@@ -16,7 +18,8 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
-from cognite.neat._issues.warnings import CDFAuthWarning
+from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
@@ -72,6 +75,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case (bool, optional): Whether to use camelCase instead of snake_case for property names.
             Defaults to True.
         as_write (bool, optional): Whether to use the write/request format of the items. Defaults to False.
+        prefix (str, optional): A prefix to add to the rdf type. Defaults to None.
+        identifier (Literal["id", "externalId"], optional): The identifier to use. Defaults to "id".
     """
 
     _default_rdf_type: str
@@ -90,6 +95,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -101,9 +107,18 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.camel_case = camel_case
         self.as_write = as_write
         self.prefix = prefix
+        self.identifier = identifier
+        # If identifier=externalId, we need to keep track of the external ids
+        # and use them in linking of Files, Sequences, TimeSeries, and Events.
+        self.asset_external_ids_by_id: dict[int, str] = {}
+        self.lookup_dataset_external_id: Callable[[int], str] | None = None
+        # Used by the ClassicGraphExtractor to log URIRefs
+        self._log_urirefs = False
+        self._uriref_by_external_id: dict[str, URIRef] = {}
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
+        from ._assets import AssetsExtractor
 
         if self.total is not None and self.total > 0:
             to_iterate = iterate_progress_bar_if_above_config_threshold(
@@ -111,21 +126,40 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             )
         else:
             to_iterate = self.items
+        if self.identifier == "externalId" and isinstance(self, AssetsExtractor):
+            to_iterate = self._store_asset_external_ids(to_iterate)  # type: ignore[attr-defined]
+
         for no, asset in enumerate(to_iterate):
             yield from self._item2triples(asset)
             if self.limit and no >= self.limit:
                 break
 
-    def _item2triples(self, item: T_CogniteResource) -> list[Triple]:
-        id_value: str | None
-        if hasattr(item, "id"):
-            id_value = str(item.id)
-        else:
-            id_value = self._fallback_id(item)
-        if id_value is None:
-            return []
+    def _store_asset_external_ids(self, items: Iterable[T_CogniteResource]) -> Iterable[T_CogniteResource]:
+        for item in items:
+            if hasattr(item, "id") and hasattr(item, "external_id"):
+                self.asset_external_ids_by_id[item.id] = item.external_id
+            yield item
 
-        id_ = self.namespace[f"{self._instance_id_prefix}{id_value}"]
+    def _item2triples(self, item: T_CogniteResource) -> list[Triple]:
+        if self.identifier == "id":
+            id_value: str | None
+            if hasattr(item, "id"):
+                id_value = str(item.id)
+            else:
+                id_value = self._fallback_id(item)
+            if id_value is None:
+                return []
+            id_suffix = id_value
+        elif self.identifier == "externalId":
+            if not hasattr(item, "external_id"):
+                return []
+            id_suffix = self._external_id_as_uri_suffix(item.external_id)
+        else:
+            raise NeatValueError(f"Unknown identifier {self.identifier}")
+
+        id_ = self.namespace[f"{self._instance_id_prefix}{id_suffix}"]
+        if self._log_urirefs and hasattr(item, "external_id"):
+            self._uriref_by_external_id[item.external_id] = id_
 
         type_ = self._get_rdf_type(item)
 
@@ -154,10 +188,25 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         """This can be overridden to handle special cases for the item."""
         return []
 
+    @classmethod
+    def _external_id_as_uri_suffix(cls, external_id: str | None) -> str:
+        if external_id == "":
+            warnings.warn(NeatValueWarning(f"Empty external id in {cls._default_rdf_type}"), stacklevel=2)
+            return "empty"
+        elif external_id == "\x00":
+            warnings.warn(NeatValueWarning(f"Null external id in {cls._default_rdf_type}"), stacklevel=2)
+            return "null"
+        elif external_id is None:
+            warnings.warn(NeatValueWarning(f"None external id in {cls._default_rdf_type}"), stacklevel=2)
+            return "None"
+        # The external ID needs to pass the ^[^\\x00]{1,256}$ regex for the DMS API.
+        # In addition, neat internals requires the external ID to be a valid URI.
+        return urllib.parse.quote(external_id)
+
     def _fallback_id(self, item: T_CogniteResource) -> str | None:
         raise AttributeError(
             f"Item of type {type(item)} does not have an id attribute. "
-            f"Please implement the _fallback_id method in the extractor."
+            "Please implement the _fallback_id method in the extractor."
         )
 
     def _metadata_to_triples(self, id_: URIRef, metadata: dict[str, str]) -> Iterable[Triple]:
@@ -181,10 +230,29 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return self._SPACE_PATTERN.sub("_", type_)
 
     def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
+        """Return properly formatted object part of s-p-o triple"""
         if key in {"data_set_id", "dataSetId"}:
-            return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
+            if self.identifier == "externalId" and self.lookup_dataset_external_id:
+                try:
+                    data_set_external_id = self.lookup_dataset_external_id(raw)
+                except KeyError:
+                    return Literal("Unknown data set")
+                else:
+                    return self.namespace[
+                        f"{InstanceIdPrefix.data_set}{self._external_id_as_uri_suffix(data_set_external_id)}"
+                    ]
+            else:
+                return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
         elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
-            return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
+            if self.identifier == "id":
+                return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
+            else:
+                try:
+                    asset_external_id = self._external_id_as_uri_suffix(self.asset_external_ids_by_id[raw])
+                except KeyError:
+                    return Literal("Unknown asset", datatype=XSD.string)
+                else:
+                    return self.namespace[f"{InstanceIdPrefix.asset}{asset_external_id}"]
         elif key in {
             "startTime",
             "endTime",
@@ -223,10 +291,21 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+            items,
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata,
+            skip_metadata_values,
+            camel_case,
+            as_write,
+            prefix,
+            identifier,
         )
 
     @classmethod
@@ -249,10 +328,21 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
         return cls(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+            items,
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata,
+            skip_metadata_values,
+            camel_case,
+            as_write,
+            prefix,
+            identifier,
         )
 
     @classmethod
@@ -274,10 +364,21 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         camel_case: bool = True,
         as_write: bool = False,
         prefix: str | None = None,
+        identifier: typing.Literal["id", "externalId"] = "id",
     ):
         total, items = cls._from_file(file_path)
         return cls(
-            items, namespace, to_type, total, limit, unpack_metadata, skip_metadata_values, camel_case, as_write, prefix
+            items,
+            namespace,
+            to_type,
+            total,
+            limit,
+            unpack_metadata,
+            skip_metadata_values,
+            camel_case,
+            as_write,
+            prefix,
+            identifier,
         )
 
     @classmethod

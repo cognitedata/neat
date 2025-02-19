@@ -13,6 +13,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
+from cognite.neat._rules._constants import get_internal_properties
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
     ExtensionCategory,
@@ -22,6 +23,7 @@ from cognite.neat._rules.models import (
 from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
+from cognite.neat._utils.spreadsheet import find_column_with_value
 
 from ._base import BaseExporter
 
@@ -69,6 +71,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         new_model_id: tuple[str, str] | None = None,
         sheet_prefix: str | None = None,
         reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None,
+        add_empty_rows: bool = False,
+        hide_internal_columns: bool = True,
+        include_properties: Literal["same-space", "all"] = "all",
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -77,6 +82,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self._styling_level = self.style_options.index(styling)
         self.new_model_id = new_model_id
         self.reference_rules_with_prefix = reference_rules_with_prefix
+        self.add_empty_rows = add_empty_rows
+        self.hide_internal_columns = hide_internal_columns
+        self.include_properties = include_properties
 
     @property
     def description(self) -> str:
@@ -111,6 +119,16 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
+
+        if self.hide_internal_columns:
+            for sheet in workbook.sheetnames:
+                if sheet.lower() == "metadata":
+                    continue
+                ws = workbook[sheet]
+                for col in get_internal_properties():
+                    column_letter = find_column_with_value(ws, col)
+                    if column_letter:
+                        ws.column_dimensions[column_letter].hidden = True
 
         return workbook
 
@@ -149,12 +167,18 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 is_properties = sheet_name == "Properties"
                 is_new_class = class_ != last_class and last_class is not None
                 if self._styling_level > 2 and is_new_class and is_properties:
-                    sheet.append([""] * len(headers))
+                    if self.add_empty_rows:
+                        sheet.append([""] * len(headers))
                     for cell in sheet[sheet.max_row]:
                         cell.fill = PatternFill(fgColor=fill_color, patternType="solid")
                         side = Side(style="thin", color="000000")
                         cell.border = Border(left=side, right=side, top=side, bottom=side)
                     fill_color = next(fill_colors)
+
+                if is_properties and self.include_properties == "same-space":
+                    space = class_.split(":")[0] if ":" in class_ else rules.metadata.space
+                    if space != rules.metadata.space:
+                        continue
 
                 sheet.append(row)
                 if self._styling_level > 2 and is_properties:

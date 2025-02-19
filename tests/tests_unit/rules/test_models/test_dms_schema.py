@@ -35,7 +35,7 @@ def invalid_schema_test_cases() -> Iterable[ParameterSet]:
             ResourceDuplicatedError(
                 identifier=dm.ViewId("my_space", "my_view1", "1"),
                 resource_type="view",
-                location=repr(dm.DataModelId("my_space", "my_data_model", "1")),
+                location=f"DMS {dm.DataModelId('my_space', 'my_data_model', '1')!r}",
             ),
             ResourceNotFoundError(
                 dm.ViewId("my_space", "my_view1", "1"),

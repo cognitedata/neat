@@ -18,7 +18,7 @@ class MultiValueTypeInfo(BaseModel):
     types: list[DataType | ClassEntity]
 
     def __str__(self) -> str:
-        return " | ".join([str(t) for t in self.types])
+        return ", ".join([str(t) for t in self.types])
 
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
@@ -52,7 +52,7 @@ class MultiValueTypeInfo(BaseModel):
 
     @classmethod
     def _parse(cls, raw: str) -> dict:
-        if not (types := [type_.strip() for type_ in raw.split("|")]):
+        if not (types := [type_.strip() for type_ in raw.split(",")]):
             return {"types": [UnknownEntity()]}
         else:
             return {

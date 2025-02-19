@@ -1,8 +1,8 @@
 from cognite.client.data_classes import AssetList
 from cognite.client.testing import monkeypatch_cognite_client
 
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors import AssetsExtractor
-from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
@@ -18,8 +18,5 @@ def test_asset_extractor():
     extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44", unpack_metadata=True)
     store.write(extractor)
 
-    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
-    store.add_rules(rules)
-
-    assert len([instance for instance in store.read("Asset")]) == 4
+    assert len([instance for instance in store.read(DEFAULT_NAMESPACE.Asset)]) == 4
     assert len(store.dataset) == 73

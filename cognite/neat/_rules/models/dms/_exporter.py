@@ -292,10 +292,11 @@ class _DMSExporter:
         for container in containers:
             container_id = container.as_id()
             if not (container_properties := container_properties_by_id.get(container_id)):
-                warnings.warn(
-                    EmptyContainerWarning(container_id),
-                    stacklevel=2,
-                )
+                if container_id.space not in COGNITE_SPACES:
+                    warnings.warn(
+                        EmptyContainerWarning(container_id),
+                        stacklevel=2,
+                    )
                 container_to_drop.add(container_id)
                 continue
             for prop in container_properties:

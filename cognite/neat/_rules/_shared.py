@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Generic, TypeAlias, TypeVar
+from typing import Generic, TypeAlias, TypeVar
 
 from cognite.neat._rules.models import (
     DMSRules,
@@ -7,6 +7,7 @@ from cognite.neat._rules.models import (
 )
 from cognite.neat._rules.models.dms._rules_input import DMSInputRules
 from cognite.neat._rules.models.information._rules_input import InformationInputRules
+from cognite.neat._utils.spreadsheet import SpreadsheetRead
 
 VerifiedRules: TypeAlias = InformationRules | DMSRules
 
@@ -20,7 +21,7 @@ class ReadRules(Generic[T_InputRules]):
     """This represents a rules that has been read."""
 
     rules: T_InputRules | None
-    read_context: dict[str, Any]
+    read_context: dict[str, SpreadsheetRead]
 
     @classmethod
     def display_type_name(cls) -> str:

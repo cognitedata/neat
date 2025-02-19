@@ -3,8 +3,9 @@ name: WT-01
 parentExternalId: Utsira
 description: Wind turbine 01
 metadata:
-  blob: data
+  assetCategory: Turbine
   turbineType: V112/3075
+  maxCapacity: 3
 source: manufacturer1
 labels:
 - externalId: WindTurbine

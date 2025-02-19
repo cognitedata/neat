@@ -20,12 +20,10 @@ class TestRead:
         # The data product should lookup the describable properties and include them.
         view = cognite_client.data_modeling.views.retrieve(("cdf_cdm", "CogniteDescribable", "v1"))[0]
 
-        neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
+        issues = neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
+        assert not issues.has_errors, issues
 
-        issues = neat.verify()
-        assert not issues.has_errors
-
-        neat.prepare.data_model.to_data_product(("sp_my_space", "MyProduct", "v1"), org_name="")
+        neat.create.data_product_model(("sp_my_space", "MyProduct", "v1"))
 
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
@@ -39,17 +37,14 @@ class TestRead:
     def test_read_pump_hello_world(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
 
-        neat.read.excel(hello_world_pump)
-
-        issues = neat.verify()
-        neat.prepare.data_model.include_referenced()
+        issues = neat.read.excel(hello_world_pump)
 
         assert not issues.has_errors
 
     def test_store_read_neat_session(self, tmp_path: Path) -> None:
         neat = NeatSession()
 
-        _ = neat.read.rdf.examples.nordic44()
+        _ = neat.read.examples.nordic44()
 
         session_file = tmp_path / "session.zip"
         try:
@@ -58,6 +53,11 @@ class TestRead:
             neat2 = NeatSession()
             neat2.read.session(session_file)
 
-            assert (neat2._state.instances.store.dataset - neat._state.instances.store.dataset).serialize() == "\n"
+            assert set(neat2._state.instances.store.dataset) - set(neat._state.instances.store.dataset) == set()
         finally:
             session_file.unlink()
+
+    def test_read_pump_with_duplicates(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(client=cognite_client)
+        neat.read.excel(data.DATA_DIR / "pump_example_duplicated_resources.xlsx")
+        assert len(neat._state.rule_store.last_issues) == 4

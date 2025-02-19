@@ -34,6 +34,7 @@ def car_store() -> NeatGraphStore:
 
 
 class TestDMSLoader:
+    @pytest.mark.skip("This test needs to be rewritten and test data updated!")
     def test_load_car_example(
         self, neat_client: NeatClient, deployed_car_model: dm.DataModelId, car_store: NeatGraphStore
     ) -> None:

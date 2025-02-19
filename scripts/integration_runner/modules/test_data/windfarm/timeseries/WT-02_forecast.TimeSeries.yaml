@@ -2,7 +2,7 @@ externalId: WT-02_forecast
 name: WT-02 forecast
 isString: false
 metadata:
-  blob: data
+  timeSeriesCategory: Forecast
 unitExternalId: power:megaw
 isStep: false
 description: WT-02 forecast

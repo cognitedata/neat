@@ -2,7 +2,7 @@ externalId: WT-01_production
 name: WT-01 production
 isString: false
 metadata:
-  blob: data
+  timeSeriesCategory: Production
 unitExternalId: power:megaw
 isStep: false
 description: WT-01 production

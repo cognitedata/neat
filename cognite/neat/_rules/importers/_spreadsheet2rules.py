@@ -37,15 +37,15 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
         "Properties",
         "Properties",
         {
-            RoleTypes.information: "Property",
-            RoleTypes.dms: "View Property",
+            RoleTypes.information: ["Class", "Property"],
+            RoleTypes.dms: ["View", "View Property"],
         },
     ),
-    ("Classes", "Classes", "Class"),
-    ("Containers", "Containers", "Container"),
-    ("Views", "Views", "View"),
-    ("Enum", "Enum", "Collection"),
-    ("Nodes", "Nodes", "Node"),
+    ("Classes", "Classes", ["Class"]),
+    ("Containers", "Containers", ["Container"]),
+    ("Views", "Views", ["View"]),
+    ("Enum", "Enum", ["Collection"]),
+    ("Nodes", "Nodes", ["Node"]),
 ]
 
 
@@ -231,7 +231,10 @@ class SpreadsheetReader:
 
             try:
                 sheets[target_sheet_name], read_info_by_sheet[source_sheet_name] = read_individual_sheet(
-                    excel_file, source_sheet_name, return_read_info=True, expected_headers=[headers]
+                    excel_file,
+                    source_sheet_name,
+                    return_read_info=True,
+                    expected_headers=headers,
                 )
             except Exception as e:
                 self.issue_list.append(FileReadError(cast(Path, excel_file.io), str(e)))
@@ -273,7 +276,7 @@ class ExcelImporter(BaseImporter[T_InputRules]):
 
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))
-        return ReadRules(rules, {"read_info_by_sheet": read_info_by_sheet})
+        return ReadRules(rules, read_info_by_sheet)
 
     @property
     def description(self) -> str:

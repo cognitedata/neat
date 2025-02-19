@@ -21,6 +21,7 @@ from typing import (
 )
 
 import pandas as pd
+from cognite.client import data_modeling as dm
 from pydantic import (
     BaseModel,
     BeforeValidator,
@@ -125,7 +126,6 @@ class SchemaModel(BaseModel):
         extra="ignore",
         use_enum_values=True,
     )
-    validators_to_skip: set[str] = Field(default_factory=set, exclude=True)
 
     @classmethod
     def mandatory_fields(cls, use_alias=False) -> set[str]:
@@ -180,6 +180,12 @@ class BaseMetadata(SchemaModel):
         description="Date of the data model update",
     )
 
+    source_id: URIRefType | None = Field(
+        None,
+        description="Id of source that produced this rules",
+        alias="sourceId",
+    )
+
     @field_validator("*", mode="before")
     def strip_string(cls, value: Any) -> Any:
         if isinstance(value, str):
@@ -213,9 +219,6 @@ class BaseMetadata(SchemaModel):
     def prefix(self) -> str:
         return self.space
 
-    def as_identifier(self) -> str:
-        return f"{self.prefix}:{self.external_id}"
-
     def get_prefix(self) -> str:
         return self.prefix
 
@@ -234,6 +237,12 @@ class BaseMetadata(SchemaModel):
         """Namespace for the data model used for the entities in the data model."""
         return Namespace(f"{self.identifier}/")
 
+    def as_data_model_id(self) -> dm.DataModelId:
+        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
+
+    def as_identifier(self) -> str:
+        return repr(self.as_data_model_id())
+
 
 class BaseRules(SchemaModel, ABC):
     """
@@ -246,7 +255,6 @@ class BaseRules(SchemaModel, ABC):
 
     Args:
         metadata: Data model metadata
-        validators_to_skip: List of validators to skip. Defaults to []
     """
 
     metadata: BaseMetadata
@@ -291,6 +299,7 @@ class BaseRules(SchemaModel, ABC):
     def dump(
         self,
         entities_exclude_defaults: bool = True,
+        sort: bool = False,
         mode: Literal["python", "json"] = "python",
         by_alias: bool = False,
         exclude: IncEx | None = None,
@@ -307,6 +316,7 @@ class BaseRules(SchemaModel, ABC):
                 For example, given a class that is dumped as 'my_prefix:MyClass', if the prefix for the rules
                 set in metadata.prefix = 'my_prefix', then this class will be dumped as 'MyClass' when this flag is set.
                 Defaults to True.
+            sort: Whether to sort the entities in the output.
             mode: The mode in which `to_python` should run.
                 If mode is 'json', the output will only contain JSON serializable types.
                 If mode is 'python', the output may contain non-JSON-serializable Python objects.
@@ -316,11 +326,12 @@ class BaseRules(SchemaModel, ABC):
             exclude_unset: Whether to exclude fields that have not been explicitly set.
             exclude_defaults: Whether to exclude fields that are set to their default value.
         """
-        for field_name in self.model_fields.keys():
-            value = getattr(self, field_name)
-            # Ensure deterministic order of properties, classes, views, and so on
-            if isinstance(value, SheetList):
-                value.sort(key=lambda x: x._identifier())
+        if sort:
+            for field_name in self.model_fields.keys():
+                value = getattr(self, field_name)
+                # Ensure deterministic order of properties, classes, views, and so on
+                if isinstance(value, SheetList):
+                    value.sort(key=lambda x: x._identifier())
 
         context: dict[str, Any] = {}
         if entities_exclude_defaults:
@@ -328,7 +339,7 @@ class BaseRules(SchemaModel, ABC):
 
         exclude_input: IncEx | None = exclude
 
-        output = self.model_dump(
+        return self.model_dump(
             mode=mode,
             by_alias=by_alias,
             exclude=exclude_input,
@@ -337,8 +348,6 @@ class BaseRules(SchemaModel, ABC):
             exclude_defaults=exclude_defaults,
             context=context,
         )
-
-        return output
 
 
 class SheetRow(SchemaModel):

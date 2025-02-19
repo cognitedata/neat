@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from ._base import NeatError, NeatIssueList, NeatWarning
+from ._base import IssueList, NeatError, NeatWarning
 
 __all__ = ["FORMATTER_BY_NAME", "BasicHTML", "Formatter"]
 
@@ -13,14 +13,14 @@ class Formatter(ABC):
     default_file_prefix: str = "validation_report"
 
     @abstractmethod
-    def create_report(self, issues: NeatIssueList) -> str:
+    def create_report(self, issues: IssueList) -> str:
         raise NotImplementedError()
 
     @property
     def default_file_name(self) -> str:
         return f"{self.default_file_prefix}_{type(self).__name__.lower()}{self.file_suffix}"
 
-    def write_to_file(self, issues: NeatIssueList, file_or_dir_path: Path | None = None) -> None:
+    def write_to_file(self, issues: IssueList, file_or_dir_path: Path | None = None) -> None:
         if file_or_dir_path is None:
             file_or_dir_path = Path(self.default_file_name)
         elif file_or_dir_path.is_dir():
@@ -41,7 +41,7 @@ class BasicHTML(Formatter):
         self._doc = ET.Element("html")
         self._body = ET.SubElement(self._doc, "body")
 
-    def create_report(self, issues: NeatIssueList) -> str:
+    def create_report(self, issues: IssueList) -> str:
         errors = [issue for issue in issues if isinstance(issue, NeatError)]
         warnings_ = [issue for issue in issues if isinstance(issue, NeatWarning)]
         self._doc.clear()

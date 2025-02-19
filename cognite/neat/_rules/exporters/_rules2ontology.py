@@ -15,7 +15,7 @@ from cognite.neat._issues.errors import (
 )
 from cognite.neat._issues.warnings import PropertyDefinitionDuplicatedWarning
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity
 from cognite.neat._rules.models.information import (
@@ -121,11 +121,12 @@ class Ontology(OntologyModel):
                 )
             raise MultiValueError(errors)
 
-        class_dict = InformationAnalysis(rules).as_class_dict()
+        analysis = RulesAnalysis(rules)
+        class_dict = analysis.class_by_suffix()
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(definition, rules.metadata.namespace)
-                for definition in InformationAnalysis(rules).as_property_dict().values()
+                for definition in analysis.property_by_id().values()
             ],
             classes=[
                 OWLClass.from_class(definition, rules.metadata.namespace, rules.prefixes)
@@ -137,7 +138,7 @@ class Ontology(OntologyModel):
                     list(properties.values()),
                     rules.metadata.namespace,
                 )
-                for class_, properties in InformationAnalysis(rules).class_property_pairs().items()
+                for class_, properties in analysis.properties_by_id_by_class().items()
             ]
             + [
                 SHACLNodeShape.from_rules(

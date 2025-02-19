@@ -38,7 +38,9 @@ def _custom_error(exc_factory: Callable[[str | None, Exception], Any]) -> Any:
     def _validator(value: Any, next_: Any, ctx: ValidationInfo) -> Any:
         try:
             return next_(value, ctx)
-        except Exception:
+        except ValueError as e:
+            if value is None:
+                raise e
             raise exc_factory(ctx.field_name, value) from None
 
     return WrapValidator(_validator)
@@ -130,7 +132,7 @@ def _external_id_validation_factory(entity_type: EntityTypes, location: str):
 
 SpaceType = Annotated[
     str,
-    AfterValidator(_external_id_validation_factory(EntityTypes.space, "space entry in metadata")),
+    AfterValidator(_external_id_validation_factory(EntityTypes.space, "")),
 ]
 
 InformationPropertyType = Annotated[

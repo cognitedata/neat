@@ -2,7 +2,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError, PropertyNotFoundError, RowError
+from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError, PropertyNotFoundError
 from cognite.neat._issues.formatters import BasicHTML
 
 
@@ -10,15 +10,6 @@ from cognite.neat._issues.formatters import BasicHTML
 def issues() -> IssueList:
     return IssueList(
         [
-            RowError(
-                sheet_name="Properties",
-                column="IsList",
-                row=4,
-                type="bool_parsing",
-                msg="Input should be a valid boolean, unable to interpret input",
-                input="Apple",
-                url="https://errors.pydantic.dev/2.6/v/bool_parsing",
-            ),
             PropertyDefinitionDuplicatedError[ContainerId](
                 ContainerId("neat", "Flowable"),
                 "Container",

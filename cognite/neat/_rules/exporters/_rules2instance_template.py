@@ -9,7 +9,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.analysis import InformationAnalysis
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models.entities._single_value import ClassEntity
 from cognite.neat._rules.models.information._rules import InformationRules
 
@@ -55,7 +55,7 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        for class_, properties in InformationAnalysis(rules).class_property_pairs().items():
+        for class_, properties in RulesAnalysis(rules).properties_by_id_by_class().items():
             workbook.create_sheet(title=class_.suffix)
 
             # Add header rows

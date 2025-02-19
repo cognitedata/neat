@@ -3,11 +3,13 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationInputRules, InformationRules
 from cognite.neat._rules.models.dms import DMSInputRules
 from cognite.neat._utils.spreadsheet import read_individual_sheet
 from tests.config import DATA_FOLDER, DOC_RULES
+from tests.data import COGNITE_CORE_ZIP
 
 
 @pytest.fixture(scope="session")
@@ -110,3 +112,8 @@ def svein_harald_dms_rules() -> DMSRules:
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> DMSRules:
     return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_verified_rules()
+
+
+@pytest.fixture(scope="session")
+def cognite_core_schema() -> DMSSchema:
+    return DMSSchema.from_zip(COGNITE_CORE_ZIP)

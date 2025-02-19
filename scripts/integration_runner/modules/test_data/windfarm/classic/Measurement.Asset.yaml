@@ -2,7 +2,7 @@ externalId: Measurement
 name: Measurement
 description: Measurement
 metadata:
-  blob: data
+  assetCategory: root
 source: manufacturer2
 labels:
 - externalId: Measurement

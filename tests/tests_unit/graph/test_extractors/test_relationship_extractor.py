@@ -14,7 +14,9 @@ def test_asset_extractor():
 
     g = Graph()
 
-    for triple in RelationshipsExtractor.from_dataset(client_mock, data_set_external_id="some data set").extract():
+    for triple in RelationshipsExtractor.from_dataset(
+        client_mock, data_set_external_id="some data set", identifier="externalId"
+    ).extract():
         g.add(triple)
 
     assert len(g) == 44

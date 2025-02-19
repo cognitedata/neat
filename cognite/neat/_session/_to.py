@@ -4,14 +4,19 @@ from collections.abc import Collection
 from pathlib import Path
 from typing import Any, Literal, overload
 
-from cognite.client.data_classes.data_modeling import SpaceApply
+from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
+from cognite.neat._alpha import AlphaFlags
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
+from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.exporters._rules2dms import Component
+from cognite.neat._rules.importers import DMSImporter
+from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._utils.upload import UploadResultList
 
@@ -34,15 +39,21 @@ class ToAPI:
     def excel(
         self,
         io: Any,
-        include_reference: bool = True,
-    ) -> None:
+        include_reference: bool | DataModelIdentifier = True,
+        include_properties: Literal["same-space", "all"] = "all",
+        add_empty_rows: bool = False,
+    ) -> IssueList | None:
         """Export the verified data model to Excel.
 
         Args:
             io: The file path or file-like object to write the Excel file to.
             include_reference: If True, the reference data model will be included. Defaults to True.
                 Note that this only applies if you have created the data model using the
-                .to_enterprise(), .to_solution(), or .to_data_product() methods.
+                create.enterprise_model(...), create.solution_model(), or create.data_product_model() methods.
+                You can also provide a DataModelIdentifier directly, which will be read from CDF
+            include_properties: The properties to include in the Excel file. Defaults to "all".
+                - "same-space": Only properties that are in the same space as the data model will be included.
+            add_empty_rows: If True, empty rows will be added between each component. Defaults to False.
 
         Example:
             Export information model to excel rules sheet
@@ -58,29 +69,65 @@ class ToAPI:
             neat = NeatSession(client)
 
             neat.read.cdf(("cdf_cdm", "CogniteCore", "v1"))
-            neat.verify()
-            neat.prepare.data_model.to_enterprise(
+            neat.create.enterprise_model(
                 data_model_id=("sp_doctrino_space", "ExtensionCore", "v1"),
                 org_name="MyOrg",
-                move_connections=True
             )
             dms_rules_file_name = "dms_rules.xlsx"
             neat.to.excel(dms_rules_file_name, include_reference=True)
             ```
+
+        Example:
+            Read the data model ("my_space", "ISA95Model", "v5") and export it to an excel file with the
+            CogniteCore model in the reference sheets.
+            ```python
+            client = CogniteClient()
+            neat = NeatSession(client)
+
+            neat.read.cdf(("my_space", "ISA95Model", "v5"))
+            dms_rules_file_name = "dms_rules.xlsx"
+            neat.to.excel(dms_rules_file_name, include_reference=("cdf_cdm", "CogniteCore", "v1"))
         """
         reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None
-        if include_reference and self._state.last_reference:
-            if (
-                isinstance(self._state.last_reference.metadata, DMSMetadata)
-                and self._state.last_reference.metadata.as_data_model_id() in COGNITE_MODELS
-            ):
-                prefix = "CDM"
-            else:
-                prefix = "Ref"
-            reference_rules_with_prefix = self._state.last_reference, prefix
+        include_properties = include_properties.strip().lower()
 
-        exporter = exporters.ExcelExporter(styling="maximal", reference_rules_with_prefix=reference_rules_with_prefix)
-        return self._state.rule_store.export_to_file(exporter, Path(io))
+        if include_reference is not False:
+            if include_reference is True and self._state.last_reference is not None:
+                ref_rules: InformationRules | DMSRules | None = self._state.last_reference
+            elif include_reference is True:
+                ref_rules = None
+            else:
+                if not self._state.client:
+                    raise NeatSessionError("No client provided!")
+                ref_rules = None
+                with catch_issues() as issues:
+                    ref_read = DMSImporter.from_data_model_id(self._state.client, include_reference).to_rules()
+                    if ref_read.rules is not None:
+                        ref_rules = ref_read.rules.as_verified_rules()
+                if ref_rules is None or issues.has_errors:
+                    issues.action = f"Read {include_reference}"
+                    return issues
+            if ref_rules is not None:
+                prefix = "Ref"
+                if (
+                    isinstance(ref_rules.metadata, DMSMetadata)
+                    and ref_rules.metadata.as_data_model_id() in COGNITE_MODELS
+                ):
+                    prefix = "CDM"
+                reference_rules_with_prefix = ref_rules, prefix
+
+        if include_properties == "same-space":
+            warnings.filterwarnings("default")
+            AlphaFlags.same_space_properties_only_export.warn()
+
+        exporter = exporters.ExcelExporter(
+            styling="maximal",
+            reference_rules_with_prefix=reference_rules_with_prefix,
+            add_empty_rows=add_empty_rows,
+            include_properties=include_properties,  # type: ignore
+        )
+        self._state.rule_store.export_to_file(exporter, Path(io))
+        return None
 
     def session(self, io: Any) -> None:
         """Export the current session to a file.
@@ -194,12 +241,33 @@ class CDFToAPI:
         self._state = state
         self._verbose = verbose
 
-    def instances(self, space: str | None = None) -> UploadResultList:
+    def instances(
+        self,
+        space: str | None = None,
+        space_property: str | None = None,
+    ) -> UploadResultList:
         """Export the verified DMS instances to CDF.
 
         Args:
             space: Name of instance space to use. Default is to suffix the schema space with '_instances'.
-            Note this space is required to be different than the space with the data model.
+                Note this space is required to be different from the space with the data model.
+            space_property: This is an alternative to the 'space' argument. If provided, the space will set to the
+                value of the property with the given name for each instance. If the property is not found, the
+                'space' argument will be used. Defaults to None.
+
+        Returns:
+            UploadResultList: The result of the upload.
+
+        Example:
+            Export instances to CDF
+            ```python
+            neat.to.cdf.instances()
+            ```
+
+            Export instances to CDF using the `dataSetId` property as the space
+            ```python
+            neat.to.cdf.instances(space_property="dataSetId")
+            ```
 
         """
         if not self._state.client:
@@ -213,14 +281,20 @@ class CDFToAPI:
             raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
         if not client.data_modeling.spaces.retrieve(space):
-            client.data_modeling.spaces.apply(SpaceApply(space=space))
+            client.data_modeling.spaces.apply(dm.SpaceApply(space=space))
 
-        loader = loaders.DMSLoader.from_rules(
+        loader = loaders.DMSLoader(
             self._state.rule_store.last_verified_dms_rules,
+            self._state.rule_store.last_verified_information_rules,
             self._state.instances.store,
             instance_space=space,
             client=client,
+            space_property=space_property,
+            # In case urllib.parse.quote() was run on the extraction, we need to run
+            # urllib.parse.unquote() on the load.
+            unquote_external_ids=self._state.quoted_source_identifiers,
         )
+
         result = loader.load_into_cdf(client)
         self._state.instances.outcome.append(result)
         print("You can inspect the details with the .inspect.outcome.instances(...) method.")

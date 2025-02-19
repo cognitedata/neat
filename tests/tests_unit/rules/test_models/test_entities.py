@@ -1,6 +1,7 @@
 import pytest
 from cognite.client.data_classes.data_modeling import DataModelId
 
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules._constants import ENTITY_PATTERN
 from cognite.neat._rules.models.entities import (
     AssetEntity,
@@ -121,6 +122,12 @@ class TestEntities:
 
         dumped = loaded.dump(**defaults)
         assert dumped == raw
+
+    def test_load_bad_entity(self) -> None:
+        with pytest.raises(ValueError) as e:
+            ViewEntity.load("bad(entity)", space=DEFAULT_SPACE, version=DEFAULT_VERSION)
+        error = e.value.errors()[0]["ctx"]["error"]
+        assert NeatValueError("Invalid view entity: 'bad(entity)'") == error
 
 
 class TestEntityPattern:

@@ -19,7 +19,7 @@ from cognite.neat._rules.importers._dtdl2rules.dtdl_converter import _DTDLConver
 from cognite.neat._rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
 from cognite.neat._rules.models import InformationInputRules
 from cognite.neat._rules.models.information import InformationInputMetadata
-from cognite.neat._utils.text import humanize_collection, to_pascal
+from cognite.neat._utils.text import humanize_collection, to_pascal_case
 
 
 class DTDLImporter(BaseImporter[InformationInputRules]):
@@ -130,7 +130,7 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
         metadata = self._default_metadata()
 
         if self.name:
-            metadata["name"] = to_pascal(self.name)
+            metadata["name"] = to_pascal_case(self.name)
         try:
             most_common_prefix = converter.get_most_common_prefix()
         except ValueError:

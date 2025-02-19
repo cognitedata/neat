@@ -16,11 +16,126 @@ Changes are grouped as follows:
 - `Security` in case of vulnerabilities.
 
 ## TBD
+### Fixed
+- Passing `space_property` to `neat.to.cdf.instances()` is no longer ignored.
+- The `neat.inspect.issues(...)` and `neat.inspect.outcome.issues(...)` now prints out a maximum of 50 issues. This is
+  to avoid the output being too large. You can pass `return_dataframe=True` to get all issues as a DataFrame.
+
+## [0.110.0] - 17-02-**2025**
+### Added
+- Validation of DMS rules does not allow re-definition of any of the resources
+- Validation of INFO rules does not allow re-definition of any of the resources
+
+## [0.110.0] - 17-02-**2025**
+### Added
+- Validation of DMS rules does not allow re-definition of any of the resources
+
+## [0.110.0] - 17-02-**2025**
+### Added
+- [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.
+- The `neat.to.excel(...)` now supports passing a data model directly in the `include_reference` parameter.
+- [ALPHA] Ability to subset data model to desired concepts (classes/views) via `neat.subset.data_model` endpoint
+
+### Fixed
+- In Model was not automatically set to True importing from spreadsheet missing value in this column
+- Change the `Instance source` field on InformationProperty to be less restrictive. All URIs are now allowed.
+- The `neat.infer()` maintains acronyms when renaming invalid properties/classes.
+- neat.show.data_model() fixed for information rules
+
+### Changed
+- Moved examples under neat.read.examples[nordic44, pump_example]
+- [BREAKING] In Information rules, the `Instance Source` field is now a URIRef list instead of a RDFPath. In addition,
+  the classes now also have an `Instance Source` column with the rdf:type of the class.
+
+### Improved
+- The `neat.read.excel(...)` now gives more information about the location of the error in the Excel file.
+- Automatic drop of rows in Excel rules if cells for critical columns are missing
+- [BREAKING] multi value types are now serialized as a comma separated values (previous we used `|` as separator)
+- The `neat.infer()` now is case-insensitive when inferring the data model. This is to match CDF's behavior.
+
+## [0.109.4] - 03-02-**2025**
+### Fixed
+- The `neat.create.enterprise_model()` now sorts properties based on (view + property) in alphabetical order.
+
+## [0.109.3] - 03-02-**2025**
+### Added
+- Support for standardizing of naming in the `neat.prepare.data_model.standardize_naming()` method.
+
+### Improved
+- `neat.inspect.issues()` for errors in Metadata sheet and ill-formed views in te Views and Properties sheets
+- `neat.infer()` now automatically makes the inferred classes and properties comply with the CDF naming conventions.
+
+### Fixed
+- The `neat.create` + `neat.to.excel(..., include_reference=True)` now correctly includes the reference data model
+  in the Excel file.
+
+## [0.109.2] - 31-01-**2025**
+### Added
+- [ALPHA] Support for external modification of data model from NeatSession and its re-import
+- Export of data model to Excel will now automatically hide the columns used for the internal neat processes.
+- [ALPHA] when exporting data model to Excel one can specify to export only properties of views which are in the same space as the data model
+
+### Fixed
+- The `neat.create.data_product_model` no longer includes properties pointing to views not in the model.
+
+## [0.109.1] - 28-01-**2025**
+
+### Fixed
+- The `neat.inspect.issue()` now returns data model issues.
+- Issue with setting new data model id for rules that have raw filter
+
+## [0.109.0] - 28-01-**2025**
+### Improved
+- AML and DEXPI reader for neat session automatically perform extraction and transformation
+- The `get_cognite_client` function no longer prints an irrelevant warning message when running outside a git
+  repository.
+- The `neat.verify()` no longer gives warnings about empty `Cognite` system containers.
+- The `neat.infer()` is now much faster for large number of instances. (It now scales linearly with number of properties
+  and not instances.). In addition, it supports inferring schema with an existing data model.
+
+### Changed
+- [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids is moved under NeatSession.fix.data_model.cdf_compliant_external_ids
+- [BREAKING] `cdf_compliant_external_ids` expects validated InformationRules as input instead of InformationInputRules
+- [BREAKING] The `neat.prepare.data_model.to_solution/to_enterprise/to_data_product` methods are moved to
+  `neat.create.solution_model/enterprise_model/data_product_model`. In addition, the methods been simplified with
+  fewer parameters and better defaults.
+- [BREAKING] NeatSession.prepare.data_model.prefix works only on verified Information and DMS rules, where in case of both rules are provided, it will use DMS rules
+- [BREAKING] The `neat.convert()` no longer takes a target parameter. Only conversion from Information to DMS rules is
+  supported.
+- [BREAKING] The `neat.prepare.data_model.drop(...)` has been moved to `neat.drop.data_model.views(...)`. In addition,
+  the `drop` paramter has been split into `view_external_id` and `group` to differentiate between dropping individual
+  views and groups of views.
+
+### Removed
+- [BREAKING] NeatSession.prepare.dexpi and NeatSession.prepare.aml methods are removed. Use NeatSession.read.rdf.dexpi and NeatSession.read.rdf.aml instead.
+- [BREAKING] NeatSession.prepare.data_model.cdf_compliant_external_ids
+
+### Fixed
+- Fixed issue with not correctly set of max count when inferring properties which value type are multi type
+- `neat.read.cdf.classic.graph` no longer requires read access to data sets in CDF.
+
+### Added
+- Support for "on-disk" storage for oxigraph in NeatSession
+- New method `neat.inspect.views()` to check the views in the data model.
+
+## [0.108.0] - 22-01-**2025**
 ### Added
 - Support RDF Datasets in NeatGraphStore enabling writing of sources triples to dedicated named graphs
+- Support for classic graph using externalIDs `neat.read.cdf.classic.graph(..., id="externalId")`
 
 ### Improved
 - The `neat.infer()` no longer skips `externalId`/`external_id` properties when inferring the data model.
+- Importing rules which were exported then modified externally then re-imported to the neat session
+- The `neat.read.cdf.classic.graph(...)` gives an error is the root asset is not found in CDF.
+- The `neat.read.cdf.graph(...)` method now shows progress bars for each view when loading large graphs.
+- Initiating NeatSession will automatically select the best possible graph storage
+- Form of internal neat data model
+- The `neat.read.cdf.classic.graph(...)` now looks-up internal ids for external ids upon extraction instead of a
+  separate step. This has a significant performance improvement for large graphs.
+
+### Changed
+- The `neat.read.cdf.graph(...)` no longer extracts instances from cognite views by default. Instead, the parameter
+  `skip_cognite_views` has been added to the method to allow for this.
 
 ## [0.107.0] - 15-01-**2025**
 ### Fixed
@@ -389,7 +504,7 @@ Changes are grouped as follows:
 - Graph transformer `SplitMultiValueProperty` which splits multi-value properties into separate properties with single value
 - Support for `xsd:decimal` which is now mapped to `float64` in DMS rules
 - Added RDF based readers for `NeatSession`
-- `NeatSession.read.rdf.examples.nordic44`
+- `NeatSession.read.examples.nordic44`
 - `NeatSession.show.data_model` show data model in UI
 
 ### Removed

@@ -261,21 +261,9 @@ function highlightFilter(filter) {
                             >
                                 <option selected>Select a Node by ID</option>
                                 
-                                    <option value="DoctrinoIncTimeSeries">DoctrinoIncTimeSeries</option>
+                                    <option value="Activity">Activity</option>
                                 
-                                    <option value="DoctrinoIncAsset">DoctrinoIncAsset</option>
-                                
-                                    <option value="DoctrinoIncSourceSystem">DoctrinoIncSourceSystem</option>
-                                
-                                    <option value="DoctrinoIncAssetToAssetEdge">DoctrinoIncAssetToAssetEdge</option>
-                                
-                                    <option value="DoctrinoIncLabel">DoctrinoIncLabel</option>
-                                
-                                    <option value="DoctrinoIncEvent">DoctrinoIncEvent</option>
-                                
-                                    <option value="DoctrinoIncSequence">DoctrinoIncSequence</option>
-                                
-                                    <option value="DoctrinoIncFile">DoctrinoIncFile</option>
+                                    <option value="Asset">Asset</option>
                                 
                             </select>
                         </div>
@@ -329,8 +317,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "DoctrinoIncTimeSeries", "label": "DoctrinoIncTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncAsset", "label": "DoctrinoIncAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncSourceSystem", "label": "DoctrinoIncSourceSystem", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncAssetToAssetEdge", "label": "DoctrinoIncAssetToAssetEdge", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncLabel", "label": "DoctrinoIncLabel", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncEvent", "label": "DoctrinoIncEvent", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncSequence", "label": "DoctrinoIncSequence", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "DoctrinoIncFile", "label": "DoctrinoIncFile", "shape": "dot", "size": 10}]);
-                  edges = new vis.DataSet([{"arrows": "to", "from": "DoctrinoIncTimeSeries", "label": "assetId", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAsset", "label": "parentId", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAsset", "label": "source", "to": "DoctrinoIncSourceSystem", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAsset", "label": "relationshipAsset", "to": "DoctrinoIncAssetToAssetEdge", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAssetToAssetEdge", "label": "startNode", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncAssetToAssetEdge", "label": "labels", "to": "DoctrinoIncLabel", "width": 1}, {"arrows": "to", "from": "DoctrinoIncEvent", "label": "assetIds", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncEvent", "label": "source", "to": "DoctrinoIncSourceSystem", "width": 1}, {"arrows": "to", "from": "DoctrinoIncSequence", "label": "assetId", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncFile", "label": "assetIds", "to": "DoctrinoIncAsset", "width": 1}, {"arrows": "to", "from": "DoctrinoIncFile", "label": "source", "to": "DoctrinoIncSourceSystem", "width": 1}]);
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "Activity", "label": "Activity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "Asset", "label": "Asset", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "Activity", "label": "asset", "to": "Asset", "width": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });

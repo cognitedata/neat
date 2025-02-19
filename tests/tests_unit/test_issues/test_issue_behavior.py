@@ -4,7 +4,12 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat._issues import IssueList, catch_issues, catch_warnings
-from cognite.neat._issues.errors import ResourceCreationError, ResourceNotDefinedError
+from cognite.neat._issues.errors import (
+    NeatValueError,
+    PropertyValueError,
+    ResourceCreationError,
+    ResourceNotDefinedError,
+)
 from cognite.neat._issues.warnings import NeatValueWarning
 
 
@@ -46,3 +51,7 @@ class TestIssues:
         dumped = my_issue.dump()
 
         assert isinstance(dumped, dict)
+
+    def test_wrapper_issue_as_message(self) -> None:
+        issue = PropertyValueError(row=4, column="Is List", error=NeatValueError("Expected a bool type, got 'Apple'"))
+        assert issue.as_message(include_type=False) == "In row 4, column 'Is List': Expected a bool type, got 'Apple'"

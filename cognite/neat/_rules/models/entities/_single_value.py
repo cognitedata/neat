@@ -134,7 +134,12 @@ class Entity(BaseModel, extra="ignore"):
         content = result.group("content")
         if content is None:
             return dict(prefix=prefix, suffix=suffix)
-        extra_args = dict(SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content))
+        try:
+            extra_args = dict(
+                SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content)
+            )
+        except ValueError:
+            raise NeatValueError(f"Invalid {cls.type_.value} entity: {raw!r}") from None
         expected_args = {
             field_.alias or field_name: field_.annotation for field_name, field_ in cls.model_fields.items()
         }

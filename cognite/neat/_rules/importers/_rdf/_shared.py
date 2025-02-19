@@ -136,7 +136,7 @@ def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueL
                 properties[id_]["value_type"].append(res["value_type"])
 
     for prop in properties.values():
-        prop["value_type"] = "|".join(prop["value_type"])
+        prop["value_type"] = ", ".join(prop["value_type"])
 
     if not properties:
         issue_list.append(NeatValueError("Unable to parse properties"))

@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 
 import yaml
@@ -37,23 +38,25 @@ RESERVED_PROPERTIES = frozenset(
 class TestExtractToLoadFlow:
     def test_classic_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira")
-        neat.convert("dms")
+        neat.read.cdf.classic.graph("Utsira", identifier="id")
+        neat.convert()
         neat.mapping.data_model.classic_to_core("Classic")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
 
         # Hack to get the instances.
         dms_rules = neat._state.rule_store.last_verified_dms_rules
+        info_rules = neat._state.rule_store.last_verified_information_rules
+
         store = neat._state.instances.store
         instances = [
             self._standardize_instance(instance)
-            for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+            for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space", "dataSetId").load()
             if isinstance(instance, InstanceApply)
         ]
 
         rules_str = neat.to.yaml(format="neat")
 
-        neat.prepare.data_model.to_data_product(("sp_data_product", "DataProduct", "v1"))
+        neat.create.data_product_model(("sp_data_product", "DataProduct", "v1"))
 
         data_product_dict = yaml.safe_load(neat.to.yaml(format="neat"))
 
@@ -67,28 +70,24 @@ class TestExtractToLoadFlow:
         )
 
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
-        neat = NeatSession(cognite_client, storage="oxigraph")
-        # Hack to read in the test data.
-
-        neat._state.instances.store.graph().parse(DATA_FOLDER / "dexpi-raw-graph.ttl")
-        neat.prepare.instances.dexpi()
-        neat.infer(max_number_of_instance=-1)
+        neat = NeatSession(cognite_client)
+        neat.read.xml.dexpi(DATA_FOLDER / "depxi_example.xml")
+        neat.infer()
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_unverified_rule
-        rules.metadata.created = "2024-09-19T00:00:00Z"
-        rules.metadata.updated = "2024-09-19T00:00:00Z"
+        rules = neat._state.rule_store.last_verified_information_rules
+        rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
-        neat.verify()
-
-        neat.convert("dms")
+        neat.convert()
         neat.set.data_model_id(("dexpi_playground", "DEXPI", "v1.3.1"))
 
         if True:
             # In progress, not yet supported.
             dms_rules = neat._state.rule_store.last_verified_dms_rules
+            info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
+            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
@@ -109,34 +108,30 @@ class TestExtractToLoadFlow:
         assert len(edges) == 40
 
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
-        neat = NeatSession(cognite_client, storage="oxigraph")
-        # Hack to read in the test data.
-
-        neat._state.instances.store.graph().parse(DATA_FOLDER / "aml-raw-graph.ttl")
-        neat.prepare.instances.aml()
-        neat.infer(max_number_of_instance=-1)
+        neat = NeatSession(cognite_client)
+        neat.read.xml.aml(DATA_FOLDER / "aml_example.aml")
+        neat.infer()
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_unverified_rule
-        rules.metadata.created = "2024-09-19T00:00:00Z"
-        rules.metadata.updated = "2024-09-19T00:00:00Z"
+        rules = neat._state.rule_store.last_verified_information_rules
+        rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
-        neat.verify()
-
-        neat.convert("dms")
+        neat.convert()
         neat.set.data_model_id(("aml_playground", "AML", "terminology_3.0"))
 
         if True:
             # In progress, not yet supported.
             dms_rules = neat._state.rule_store.last_verified_dms_rules
+            info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load())
+            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
             instances = [
                 self._standardize_instance(instance)
-                for instance in DMSLoader.from_rules(dms_rules, store, "sp_instance_space").load()
+                for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
             ]
 
         else:
@@ -177,8 +172,8 @@ class TestExtractToLoadFlow:
 
     def test_classic_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira")
-        neat.convert("dms")
+        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
+        neat.convert()
 
         neat.mapping.data_model.classic_to_core("NeatInc")
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
@@ -187,6 +182,22 @@ class TestExtractToLoadFlow:
         has_errors = {res.name: res.error_messages for res in model_result if res.error_messages}
         assert not has_errors, has_errors
 
-        instance_result = neat.to.cdf.instances()
+        instance_result = neat.to.cdf.instances("sp_windfarm_instance_external_ids")
         has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not has_errors, has_errors
+
+    def test_snapshot_to_enterprise(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.cdf._graph(
+            ("sp_windfarm", "WindFarm", "v1"),
+            instance_space="sp_windfarm_instance_external_ids",
+            unpack_json=True,
+            str_to_ideal_type=True,
+        )
+        neat.set.instances.type_using_property("NeatIncAsset", "assetCategory")
+        neat._infer_subclasses()
+
+        neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
+
+        neat.to.cdf.data_model(existing="recreate")
+        neat.to.cdf.instances()

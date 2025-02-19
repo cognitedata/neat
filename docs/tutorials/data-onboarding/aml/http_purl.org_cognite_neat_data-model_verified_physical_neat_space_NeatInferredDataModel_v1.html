@@ -263,9 +263,9 @@ function highlightFilter(filter) {
                                 
                                     <option value="InternalElement">InternalElement</option>
                                 
-                                    <option value="InternalLink">InternalLink</option>
-                                
                                     <option value="ExternalInterface">ExternalInterface</option>
+                                
+                                    <option value="InternalLink">InternalLink</option>
                                 
                             </select>
                         </div>
@@ -319,8 +319,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "InternalElement", "label": "InternalElement", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "InternalLink", "label": "InternalLink", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ExternalInterface", "label": "ExternalInterface", "shape": "dot", "size": 10}]);
-                  edges = new vis.DataSet([{"arrows": "to", "from": "InternalElement", "label": "internalElement", "to": "InternalElement", "width": 1}, {"arrows": "to", "from": "InternalElement", "label": "internalLink", "to": "InternalLink", "width": 1}, {"arrows": "to", "from": "InternalElement", "label": "externalInterface", "to": "ExternalInterface", "width": 1}, {"arrows": "to", "from": "InternalLink", "label": "RefPartnerSideB", "to": "ExternalInterface", "width": 1}]);
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "InternalElement", "label": "InternalElement", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "ExternalInterface", "label": "ExternalInterface", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "InternalLink", "label": "InternalLink", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "InternalElement", "label": "externalInterface", "to": "ExternalInterface", "width": 1}, {"arrows": "to", "from": "InternalElement", "label": "internalElement", "to": "InternalElement", "width": 1}, {"arrows": "to", "from": "InternalElement", "label": "internalLink", "to": "InternalLink", "width": 1}, {"arrows": "to", "from": "InternalLink", "label": "RefPartnerSideB", "to": "ExternalInterface", "width": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });

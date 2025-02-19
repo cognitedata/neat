@@ -1,4 +1,3 @@
-import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Literal, cast, overload
@@ -8,14 +7,9 @@ from rdflib import Literal as RdfLiteral
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.query import ResultRow
 
-from cognite.neat._constants import UNKNOWN_TYPE
-from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information import InformationRules
+from cognite.neat._constants import NEAT
 from cognite.neat._shared import InstanceType
 from cognite.neat._utils.rdf_ import remove_instance_ids_in_batch, remove_namespace_from_uri
-
-from ._construct import build_construct_query
 
 
 class Queries:
@@ -24,11 +18,9 @@ class Queries:
     def __init__(
         self,
         dataset: Dataset,
-        rules: dict[URIRef, InformationRules] | None = None,
         default_named_graph: URIRef | None = None,
     ):
         self.dataset = dataset
-        self.rules = rules or {}
         self.default_named_graph = default_named_graph or DATASET_DEFAULT_GRAPH_ID
 
     def graph(self, named_graph: URIRef | None = None) -> Graph:
@@ -81,6 +73,20 @@ class Queries:
             for (type_,) in list(self.graph(named_graph).query(query))
         }
 
+    def properties_by_type(self, named_graph: URIRef | None = None) -> dict[URIRef, dict[URIRef, str]]:
+        """Properties and their short form in the graph by type
+
+        Args:
+            named_graph: Named graph to query over, default None (default graph)
+
+        """
+        query = """SELECT DISTINCT ?type ?property
+               WHERE {?s a ?type . ?s ?property ?o . FILTER(?property != rdf:type)}"""
+        properties_by_type: dict[URIRef, dict[URIRef, str]] = defaultdict(dict)
+        for type_, property_ in cast(ResultRow, list(self.graph(named_graph).query(query))):
+            properties_by_type[type_][property_] = remove_namespace_from_uri(property_)  # type: ignore[index]
+        return properties_by_type
+
     def property_uri(self, property_: str, named_graph: URIRef | None = None) -> list[URIRef]:
         """Get the URIRef of a property
 
@@ -126,38 +132,6 @@ class Queries:
         # Select queries gives an iterable of result rows
         return cast(list[ResultRow], list(self.graph(named_graph).query(query)))
 
-    def triples_of_type_instances(
-        self, rdf_type: str | URIRef, named_graph: URIRef | None = None
-    ) -> list[tuple[str, str, str]]:
-        """Get all triples of a given type.
-
-        Args:
-            rdf_type: Type URI to query
-            named_graph: Named graph to query over, default None (default graph)
-        """
-        named_graph = named_graph or self.default_named_graph
-        if isinstance(rdf_type, URIRef):
-            rdf_uri = rdf_type
-        elif isinstance(rdf_type, str) and self.rules and self.rules.get(named_graph):
-            rdf_uri = self.rules[named_graph].metadata.namespace[rdf_type]
-        else:
-            warnings.warn(
-                "Unknown namespace. Please either provide a URIRef or set the rules of the store.",
-                stacklevel=2,
-            )
-            return []
-
-        query = (
-            "SELECT ?instance ?prop ?value "
-            f"WHERE {{ ?instance a <{rdf_uri}> . ?instance ?prop ?value . }} "
-            "order by ?instance"
-        )
-
-        result = self.graph(named_graph).query(query)
-
-        # We cannot include the RDF.type in case there is a neat:type property
-        return [remove_namespace_from_uri(list(triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index, arg-type]
-
     def type_with_property(self, type_: URIRef, property_uri: URIRef, named_graph: URIRef | None = None) -> bool:
         """Check if a property exists in the graph store
 
@@ -185,6 +159,10 @@ class Queries:
         query = f"ASK WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?p), STR(<{namespace}>))) }}"
         return bool(self.graph(named_graph).query(query))
 
+    def has_data(self) -> bool:
+        """Check if the graph store has data"""
+        return cast(bool, next(iter(self.dataset.query("ASK WHERE { ?s ?p ?o }"))))
+
     def has_type(self, type_: URIRef, named_graph: URIRef | None = None) -> bool:
         """Check if a type exists in the graph store
 
@@ -201,9 +179,8 @@ class Queries:
     def describe(
         self,
         instance_id: URIRef,
-        instance_type: str | None = None,
+        instance_type: URIRef | None = None,
         property_renaming_config: dict | None = None,
-        property_types: dict[str, EntityTypes] | None = None,
         named_graph: URIRef | None = None,
     ) -> tuple[str, dict[str | InstanceType, list[str]]] | None:
         """DESCRIBE instance for a given class from the graph store
@@ -212,7 +189,6 @@ class Queries:
             instance_id: Instance id for which we want to generate query
             instance_type: Type of the instance, default None (will be inferred from triples)
             property_renaming_config: Dictionary to rename properties, default None (no renaming)
-            property_types: Dictionary of property types, default None (helper for removal of namespace)
             named_graph: Named graph to query over, default None (default graph)
 
 
@@ -233,9 +209,7 @@ class Queries:
             # set property
             if property_renaming_config and predicate != RDF.type:
                 property_ = remove_namespace_from_uri(predicate, validation="prefix")
-                renamed_property_ = property_renaming_config.get(
-                    predicate, remove_namespace_from_uri(predicate, validation="prefix")
-                )
+                renamed_property_ = property_renaming_config.get(predicate, property_)
 
             elif not property_renaming_config and predicate != RDF.type:
                 property_ = remove_namespace_from_uri(predicate, validation="prefix")
@@ -245,40 +219,12 @@ class Queries:
                 property_ = RDF.type
                 renamed_property_ = property_
 
-            # set value
-            # if it is URIRef and property type is object property, we need to remove namespace
-            # if it URIref but we are doing this into data type property, we do not remove namespace
-            # case 1 for RDF type we remove namespace
-            if property_ == RDF.type:
+            if isinstance(object_, URIRef):
                 value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 2 for define object properties we remove namespace
-            elif (
-                isinstance(object_, URIRef)
-                and property_types
-                and (
-                    property_types.get(property_, None) == EntityTypes.object_property
-                    or property_types.get(property_, None) == EntityTypes.undefined
-                )
-            ):
-                value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 3 purposely we are converting URIRef to string while removing namespace
-            elif (
-                isinstance(object_, URIRef)
-                and property_types
-                and property_types.get(property_, None) == EntityTypes.data_property
-            ):
-                value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 4 when property type is not defined and returned value is URIRef we remove namespace
-            elif isinstance(object_, URIRef) and not property_types:
-                value = remove_namespace_from_uri(object_, validation="prefix")
-
-            # case 5 for data type properties we do not remove namespace but keep the entire value
-            # but we drop the datatype part, and keep everything to be string (data loader will do the conversion)
-            # for value type it expects (if possible)
+            elif isinstance(object_, RdfLiteral):
+                value = object_.toPython()
             else:
+                # It is a blank node
                 value = str(object_)
 
             # add type to the dictionary
@@ -287,7 +233,9 @@ class Queries:
             else:
                 # guarding against multiple rdf:type values as this is not allowed in CDF
                 if RDF.type not in property_values:
-                    property_values[RDF.type].append(instance_type if instance_type else value)
+                    property_values[RDF.type].append(
+                        remove_namespace_from_uri(instance_type, validation="prefix") if instance_type else value
+                    )
                 else:
                     # we should not have multiple rdf:type values
                     continue
@@ -298,52 +246,6 @@ class Queries:
             )
         else:
             return None
-
-    def construct_instances_of_class(
-        self,
-        class_: str,
-        properties_optional: bool = True,
-        instance_id: URIRef | None = None,
-        named_graph: URIRef | None = None,
-    ) -> list[tuple[str, str, str]]:
-        """CONSTRUCT instances for a given class from the graph store
-
-        Args:
-            class_: Class entity for which we want to generate query
-            properties_optional: Whether to make all properties optional, default True
-            instance_ids: List of instance ids to filter on, default None (all)
-            named_graph: Named graph to query over, default None (default graph
-
-        Returns:
-            List of triples for instances of the given class
-        """
-        named_graph = named_graph or self.default_named_graph
-        if (
-            self.rules
-            and self.rules.get(named_graph)
-            and (
-                query := build_construct_query(
-                    class_=ClassEntity(
-                        prefix=self.rules[named_graph].metadata.prefix,
-                        suffix=class_,
-                    ),
-                    graph=self.graph(named_graph),
-                    rules=self.rules[named_graph],
-                    properties_optional=properties_optional,
-                    instance_id=instance_id,
-                )
-            )
-        ):
-            result = self.graph(named_graph).query(query)
-
-            # We cannot include the RDF.type in case there is a neat:type property
-            return [remove_namespace_from_uri(cast(ResultRow, triple)) for triple in result if triple[1] != RDF.type]  # type: ignore[misc, index, arg-type]
-        else:
-            warnings.warn(
-                "No rules found for the graph store, returning empty list.",
-                stacklevel=2,
-            )
-            return []
 
     def list_triples(self, limit: int = 25, named_graph: URIRef | None = None) -> list[ResultRow]:
         """List triples in the graph store
@@ -372,7 +274,7 @@ class Queries:
     def list_types(
         self,
         remove_namespace: bool = False,
-        limit: int = 25,
+        limit: int | None = 25,
         named_graph: URIRef | None = None,
     ) -> list[ResultRow] | list[str]:
         """List types in the graph store
@@ -384,7 +286,9 @@ class Queries:
         Returns:
             List of types
         """
-        query = f"SELECT DISTINCT ?type WHERE {{ ?subject a ?type }} LIMIT {limit}"
+        query = "SELECT DISTINCT ?type WHERE { ?subject a ?type }"
+        if limit is not None:
+            query += f" LIMIT {limit}"
         result = cast(list[ResultRow], list(self.graph(named_graph).query(query)))
         if remove_namespace:
             return [remove_namespace_from_uri(res[0]) for res in result]
@@ -417,7 +321,7 @@ class Queries:
             value_types,
         ) in cast(
             ResultRow,
-            self.graph(named_graph).query(query.format(unknownType=str(UNKNOWN_TYPE))),
+            self.graph(named_graph).query(query.format(unknownType=str(NEAT.UnknownType))),
         ):
             yield cast(URIRef, source_type), cast(URIRef, property_), [URIRef(uri) for uri in value_types.split(",")]
 
@@ -464,3 +368,23 @@ class Queries:
             result[remove_namespace_from_uri(instance)] = remove_namespace_from_uri(types.split(","))
 
         return result
+
+    def count_of_type(self, class_uri: URIRef, named_graph: URIRef | None = None) -> int:
+        query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
+        return int(next(iter(self.graph(named_graph).query(query)))[0])  # type: ignore[arg-type, index]
+
+    def list_instances_ids_by_space(
+        self, space_property: URIRef, named_graph: URIRef | None = None
+    ) -> Iterable[tuple[URIRef, str]]:
+        """Returns instance ids by space"""
+        query = f"""SELECT DISTINCT ?instance ?space
+                   WHERE {{?instance <{space_property}> ?space}}"""
+
+        for result in cast(Iterable[ResultRow], self.graph(named_graph).query(query)):
+            instance_id, space = cast(tuple[URIRef, URIRef | RdfLiteral], result)
+            if isinstance(space, URIRef):
+                yield instance_id, remove_namespace_from_uri(space)
+            elif isinstance(space, RdfLiteral):
+                yield instance_id, str(space.toPython())
+            else:
+                yield instance_id, str(space)

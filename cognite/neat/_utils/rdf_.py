@@ -154,7 +154,7 @@ def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
     return hierarchy
 
 
-def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list:
+def get_inheritance_path(child: Any, child_parent: dict[Any, set[Any]]) -> list[Any]:
     """Returns the inheritance path for a given child
 
     Args:
@@ -167,7 +167,7 @@ def get_inheritance_path(child: Any, child_parent: dict[Any, list[Any]]) -> list
     !!! note "No Circular Inheritance"
         This method assumes that the child_parent dictionary is a tree and does not contain any cycles.
     """
-    path = []
+    path: list[Any] = []
     if child in child_parent:
         path.extend(child_parent[child])
         for parent in child_parent[child]:

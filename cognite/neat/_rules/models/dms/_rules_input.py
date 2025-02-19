@@ -37,6 +37,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
     created: datetime | str | None = None
     updated: datetime | str | None = None
     logical: str | URIRef | None = None
+    source_id: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSMetadata]:
@@ -76,6 +77,9 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
             creator = ["MISSING"]
             description = None
         return description, creator
+
+    def as_data_model_id(self) -> dm.DataModelId:
+        return dm.DataModelId(space=self.space, external_id=self.external_id, version=self.version)
 
     @property
     def identifier(self) -> URIRef:
@@ -188,6 +192,10 @@ class DMSInputView(InputComponent[DMSView]):
     in_model: bool = True
     neatId: str | URIRef | None = None
     logical: str | URIRef | None = None
+
+    def __post_init__(self):
+        if self.in_model is None:
+            self.in_model = True
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSView]:

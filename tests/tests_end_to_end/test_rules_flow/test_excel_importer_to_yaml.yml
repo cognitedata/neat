@@ -47,6 +47,7 @@ metadata:
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0
   name: Power to Consumer Data Model
   role: DMS Architect
+  source_id: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0
   space: power
   updated: '2024-02-09T00:00:00'
   version: 0.1.0
