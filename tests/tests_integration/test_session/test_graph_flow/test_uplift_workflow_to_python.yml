@@ -376,7 +376,7 @@ instances:
         externalId: DataSet_source_ds
         space: sp_windfarm_enterprise_instances
       description: Power curve from manufacturer 1
-      name: Power
+      name: Wind speed
     source:
       externalId: NeatIncSequence
       space: sp_windfarm_enterprise
