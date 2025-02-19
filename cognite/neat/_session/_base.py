@@ -77,6 +77,7 @@ class NeatSession:
         self._verbose = verbose
         self._state = SessionState(store_type=storage, client=NeatClient(client) if client else None)
         self.read = ReadAPI(self._state, verbose)
+        self.test = "test"
         self.to = ToAPI(self._state, verbose)
         self.prepare = PrepareAPI(self._state, verbose)
         self.show = ShowAPI(self._state)

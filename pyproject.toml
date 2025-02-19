@@ -103,6 +103,7 @@ mkdocstrings = { version = "*", optional = true, extras = ["python"] }
 # 3.1.0 breaks nbconvert
 mistune= {version ="3.0.2", optional= true}
 pyvis = "^0.3.2"
+ipykernel = "^6.29.5"
 
 [tool.poetry.extras]
 docs = [

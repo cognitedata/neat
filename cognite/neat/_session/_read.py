@@ -15,6 +15,7 @@ from cognite.neat._rules import catalog, importers
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.transformers import ClassicPrepareCore
 from cognite.neat._utils.reader import NeatReader
+from cognite.neat._cfihos.processing.base_starter import base_starter_class
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, XMLFileType, object_wizard, rdf_dm_wizard, xml_format_wizard
@@ -35,6 +36,7 @@ class ReadAPI:
         self.csv = CSVReadAPI(state, verbose)
         self.yaml = YamlReadAPI(state, verbose)
         self.xml = XMLReadAPI(state, verbose)
+        self.cfihos = CFIHOSReadAPI(state, verbose)
 
     def session(self, io: Any) -> None:
         """Reads a Neat Session from a zip file.
@@ -58,6 +60,34 @@ class BaseReadAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
+
+@session_class_wrapper
+class CFIHOSReadAPI(BaseReadAPI):
+    """Reads a csv that contains a column to use as primary key which will be the unique identifier for the type of
+    data you want to read in. Ex. a csv can hold information about assets, and their identifiers are specified in
+    a "ASSET_TAG" column.
+
+    Args:
+        io: file path or url to the csv
+        type: string that specifies what type of data the csv contains. For instance "Asset" or "Equipment"
+        primary_key: string name of the column that should be used as the unique identifier for each row of data
+
+    Example:
+        ```python
+        type_described_in_table = "Turbine"
+        column_with_identifier = "UNIQUE_TAG_NAME"
+        neat.read.csv("url_or_path_to_csv_file", type=type_described_in_table, primary_key=column_with_identifier)
+        ```
+    """
+
+
+    def from_config_definitions(self, io: Any)  :
+        print("from_config_definitions")
+        filePath = NeatReader.create(io).materialize_path()
+        print("filePath",filePath)
+        CFIHOS_Handler =  base_starter_class(filePath)
+        CFIHOS_Handler.process_model()
+
 
 
 @session_class_wrapper

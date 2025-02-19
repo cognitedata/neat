@@ -1,0 +1,5 @@
+CFIHOS ID,name,inherited core model type,description
+CFIHOS-00000023,add file,"CogniteFile","to be defined"
+CFIHOS-00000022,document master,"CogniteDescribable,CogniteSourceable","to be defined"
+CFIHOS-00000028,tag,"CogniteAsset","to be defined"
+CFIHOS-00000035,document revision,"CogniteSourceable","to be defined"
