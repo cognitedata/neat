@@ -189,25 +189,24 @@ class DMSExtractor(BaseExtractor):
         for view_id, properties in instance.properties.items():
             namespace = self._get_namespace(view_id.space)
             for key, value in properties.items():
-                for predicate_str, object_ in self._get_predicate_objects_pair(key, value):
+                for predicate_str, object_ in self._get_predicate_objects_pair(key, value, self.unpack_json):
                     yield id_, namespace[urllib.parse.quote(predicate_str)], object_
 
-    def _get_predicate_objects_pair(self, key: str, value: PropertyValue) -> Iterable[tuple[str, Literal | URIRef]]:
+    def _get_predicate_objects_pair(
+        self, key: str, value: PropertyValue, unpack_json: bool
+    ) -> Iterable[tuple[str, Literal | URIRef]]:
         if isinstance(value, str | float | bool | int):
             yield key, Literal(value)
         elif isinstance(value, dict) and "space" in value and "externalId" in value:
             yield key, self._as_uri_ref(dm.DirectRelationReference.load(value))
-        elif isinstance(value, dict) and self.unpack_json:
+        elif isinstance(value, dict) and unpack_json:
             yield from self._unpack_json(value)
         elif isinstance(value, dict):
             # This object is a json object.
             yield key, Literal(str(value), datatype=XSD._NS["json"])
         elif isinstance(value, list):
             for item in value:
-                if isinstance(item, dict) and self.unpack_json:
-                    yield from self._unpack_json(item, parent=key)
-                else:
-                    yield from self._get_predicate_objects_pair(key, item)
+                yield from self._get_predicate_objects_pair(key, item, False)
 
     def _unpack_json(self, value: dict, parent: str | None = None) -> Iterable[tuple[str, Literal | URIRef]]:
         for sub_key, sub_value in value.items():
@@ -228,7 +227,7 @@ class DMSExtractor(BaseExtractor):
                     if isinstance(item, dict):
                         yield from self._unpack_json(item, key)
                     else:
-                        yield from self._get_predicate_objects_pair(key, item)
+                        yield from self._get_predicate_objects_pair(key, item, self.unpack_json)
             else:
                 yield key, Literal(str(sub_value))
 

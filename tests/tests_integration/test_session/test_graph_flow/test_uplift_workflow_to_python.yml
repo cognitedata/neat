@@ -364,28 +364,6 @@ instances:
   type:
     externalId: NeatIncRelationship
     space: sp_windfarm_enterprise
-- externalId: Sequence_power_curve_manufacturer1
-  instanceType: node
-  sources:
-  - properties:
-      assetId:
-        externalId: Asset_WT-01
-        space: sp_windfarm_enterprise_instances
-      classicExternalId: power_curve_manufacturer1
-      dataSetId:
-        externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
-      description: Power curve from manufacturer 1
-      name: Wind speed
-    source:
-      externalId: NeatIncSequence
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: DataSet_source_ds
-  type:
-    externalId: NeatIncSequence
-    space: sp_windfarm_enterprise
 - externalId: TimeSeries_WT-01_forecast
   instanceType: node
   sources:
@@ -2778,6 +2756,16 @@ rules:
     value_type: text
     view: ClassicSequence
     view_property: classicExternalId
+  - container: ClassicSequence
+    container_property: columns
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/columns
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/columns
+    nullable: true
+    value_type: json
+    view: ClassicSequence
+    view_property: columns
   - connection: direct
     container: ClassicSequence
     container_property: dataSetId
@@ -2809,6 +2797,16 @@ rules:
     value_type: text
     view: ClassicSequence
     view_property: name
+  - container: ClassicSequence
+    container_property: rows
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/rows
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/rows
+    nullable: true
+    value_type: json
+    view: ClassicSequence
+    view_property: rows
   - container: ClassicSourceSystem
     container_property: classicSourceSystemGUID
     immutable: false
@@ -3554,6 +3552,16 @@ rules:
     value_type: text
     view: NeatIncSequence
     view_property: classicExternalId
+  - container: ClassicSequence
+    container_property: columns
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/columns
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/columns
+    nullable: true
+    value_type: json
+    view: NeatIncSequence
+    view_property: columns
   - connection: direct
     container: ClassicSequence
     container_property: dataSetId
@@ -3585,6 +3593,16 @@ rules:
     value_type: text
     view: NeatIncSequence
     view_property: name
+  - container: ClassicSequence
+    container_property: rows
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/rows
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/rows
+    nullable: true
+    value_type: json
+    view: NeatIncSequence
+    view_property: rows
   - container: NeatIncSourceSystem
     container_property: classicSourceSystemGUID
     immutable: false

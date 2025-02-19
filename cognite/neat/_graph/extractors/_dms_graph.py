@@ -185,8 +185,12 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 prop
                 for prop in dms_rules.properties
                 if not (
-                    isinstance(prop.value_type, Json)
-                    or (isinstance(prop.value_type, str) and prop.value_type == json_name)
+                    (
+                        isinstance(prop.value_type, Json)
+                        or (isinstance(prop.value_type, str) and prop.value_type == json_name)
+                    )
+                    # We are not unpacking list of JSONs.
+                    and prop.is_list is not True
                 )
             ]
 
