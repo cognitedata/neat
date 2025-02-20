@@ -1,0 +1,318 @@
+{
+  data_model_name: "NEAT CFIHOS Model",
+  data_model_external_id: "NEAT_CFIHOS_Model_2",  
+  data_model_description: "Generated NEAT Domain Model based on CFIHOS",
+  container_data_model_space: "NEAT_CFIHOS_Model_2_containers",
+  views_data_model_space: "NEAT_CFIHOS_Model_2_views",
+  model_version: "2",
+  model_creator: "ALM",
+  allow-breaking-change: False,
+  model_processors_config:
+       [
+      {
+        STANDARD-CFIHOS:
+           {
+            processor_engine: CFIHOS,
+            source: github,
+            abs_fpath_model_raw_data_folder: cognite/neat/_cfihos/src/1.5/,
+            rdl_master_objects_fname: CFIHOS RDL Master Objects v1.5.csv,
+            rdl_master_object_id_col_name: CFIHOS unique id,
+            rdl_master_object_name_col_name: CFIHOS name,
+            included_cfihos_types_config:
+              [
+                {
+                  type: cfihosTypeEntity,
+                  data_folder_abs_fpath: cognite/neat/_cfihos/src/1.5/,
+                  entities_fname: CFIHOS entities v1.5 extended.csv,
+                  entities_attrib_fname: CFIHOS entity attributes v1.5 extended.csv,
+                  entities_attrib_relation_fname: CFIHOS entity attribute relationships v1.5 extended.csv,
+                  entities_edges: ,
+                },
+                {
+                  type: cfihosTypeEquipment,
+                  data_folder_abs_fpath: cognite/neat/_cfihos/src/1.5/,
+                  entities_fname: "CFIHOS equipment class v1.5.csv",
+                  entities_attrib_fname: "CFIHOS equipment class properties v1.5.csv",
+                  property_metadata_fname: "CFIHOS property v1.5.csv",
+                },
+                {
+                  type: cfihosTypeTag,
+                  data_folder_abs_fpath: cognite/neat/_cfihos/src/1.5/,
+                  entities_fname: "CFIHOS tag class v1.5.csv",
+                  entities_attrib_fname: "CFIHOS tag class properties v1.5.csv",
+                  property_metadata_fname: "CFIHOS property v1.5.csv",
+                },
+              ],
+          },
+        # AKSO-Noafulla:
+        #   {
+        #     processor_engine: CFIHOS,
+        #     source: github,
+        #     abs_fpath_model_raw_data_folder: common/use case definition material/generated/,
+        #     rdl_master_objects_fname: RDL Master Objects.csv,
+        #     rdl_master_object_id_col_name: CFIHOS unique id,
+        #     rdl_master_object_name_col_name: CFIHOS name,
+        #     included_cfihos_types_config:
+        #       [
+        #         {
+        #           type: cfihosTypeEntity,
+        #           data_folder_abs_fpath: common/use case definition material/generated/,
+        #           entities_fname: entities.csv,
+        #           entities_attrib_fname: entity attributes.csv,
+        #           entities_attrib_relation_fname: "entity attribute relationships.csv",
+        #           entities_edges: EPC entities edges.csv,
+        #           type_id_prefix: EPC-0001,
+        #           id_prefix: EPC-,
+        #         },
+        #         {
+        #           type: cfihosTypeTag,
+        #           data_folder_abs_fpath: common/use case definition material/generated/,
+        #           entities_fname: "tag class.csv",
+        #           entities_attrib_fname: "tag class properties.csv",
+        #           property_metadata_fname: "property.csv",
+        #         },
+        #       ],
+        #   },
+      },
+    ],
+  scope_config: Scoped, # All, Tags, Equipment, Scoped,
+  scope:
+    [
+      TCFIHOS-30000674,
+      TCFIHOS-30000649,
+      TCFIHOS-30000310,
+      TCFIHOS-30000752,
+      CFIHOS-00000028,
+      TCFIHOS-30000698,
+      CFIHOS-00000012,
+      TCFIHOS-30000673,
+      TCFIHOS-30000295,
+      TCFIHOS-30000098,
+      TCFIHOS-30000923,
+      TCFIHOS-30000661,
+      TCFIHOS-30000521,
+      CFIHOS-00000035,
+    ],
+
+    custom_extended_properties:
+    [
+      # CFIHOS-00000028:
+      # [
+      #     {
+      #     property_id: Name,
+      #     property_mapped_reference: CFIHOS-10000166,
+      #     container_id: CFIHOS-00000028,
+      #     property_name: Name,
+      #     property_description: CDF search extended property used to provided the name of an item ,
+      #     },
+      #     {
+      #     property_id: Description,
+      #     property_mapped_reference: CFIHOS-10000177,
+      #     container_id: CFIHOS-00000028,
+      #     property_name: Description,
+      #     property_description: CDF search extended property used to provided the description of an item ,
+      #     },
+      # ]
+    ],
+
+    containers_indexes:
+    {
+      CFIHOS_00000003:
+      [
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+      ],
+      EPC_00010005:
+      [
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+          {
+          index_id: EPC_10010018_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010018],
+          },
+      ],
+      CFIHOS_00000031:
+      [
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+      ],
+      CFIHOS_00000028:
+      [
+          {
+          index_id: CFIHOS_10000001_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001_rel],
+          },
+          {
+          index_id: CFIHOS_10000001_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001],
+          },
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+          {
+          index_id: CFIHOS_10000166_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000166],
+          },
+          {
+          index_id: CFIHOS_10000157_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157_rel],
+          },
+          {
+          index_id: CFIHOS_10000157_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157],
+          },
+          {
+          index_id: EPC_10010018_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010018],
+          },
+          {
+          index_id: EPC_10010027_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010027],
+          },
+          {
+          index_id: EPC_10010030_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010030],
+          },
+      ],
+      CFIHOS_1_10000001_10000101_1:
+      [
+          {
+          index_id: CFIHOS_10000001_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+      ],
+      CFIHOS_1_10000101_10000201:
+      [
+          {
+          index_id: CFIHOS_10000166_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000166],
+          },
+          {
+          index_id: CFIHOS_10000157_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157],
+          },
+      ],
+      CFIHOS_1_10000101_10000201_ext:
+      [
+          {
+          index_id: CFIHOS_10000166_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000166_rel],
+          },
+          {
+          index_id: CFIHOS_10000157_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157_rel],
+          },
+      ],
+      CFIHOS_1_10000001_10000101_ext:
+      [
+          {
+          index_id: CFIHOS_10000001_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel_index],
+          },
+      ],
+      EPC_10010001_10010101_ext:
+      [
+          {
+          index_id: EPC_10010007_rel_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010007_rel],
+          },
+      ],
+      EPC_10010001_10010101_1:
+      [
+          {
+          index_id: EPC_10010007_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010007],
+          },
+          {
+          index_id: EPC_10010030_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010030],
+          },
+      ],
+      EPC_00010001:
+      [
+          {
+          index_id: CFIHOS_10000153_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000153_rel],
+          },
+          {
+          index_id: CFIHOS_10000153_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000153],
+          },
+          {
+          index_id: CFIHOS_10000157_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157_rel],
+          },
+          {
+          index_id: CFIHOS_10000157_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157],
+          },
+      ],
+      EntityTypeGroup:
+      [
+          {
+          index_id: entityType_index,
+          index_type: BTreeIndex,
+          properties: [entityType],
+          },
+      ]
+    }
+
+}
