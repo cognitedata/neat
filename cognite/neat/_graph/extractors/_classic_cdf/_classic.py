@@ -133,6 +133,14 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._extracted_data_sets = False
         self._asset_external_ids_by_id: dict[int, str] = {}
         self._dataset_external_ids_by_id: dict[int, str] = {}
+        self.neat_prefix_by_predicate_uri: dict[URIRef, str] = {
+            self._namespace["dataSetId"]: InstanceIdPrefix.data_set,
+            self._namespace["assetId"]: InstanceIdPrefix.asset,
+            self._namespace["assetIds"]: InstanceIdPrefix.asset,
+            self._namespace["parentId"]: InstanceIdPrefix.asset,
+            self._namespace["rootId"]: InstanceIdPrefix.asset,
+            self._namespace["labels"]: InstanceIdPrefix.label,
+        }
 
     def _get_activity_names(self) -> list[str]:
         activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
