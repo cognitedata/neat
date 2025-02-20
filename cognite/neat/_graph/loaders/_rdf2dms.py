@@ -29,6 +29,7 @@ from cognite.neat._issues.errors import (
     ResourceNotFoundError,
 )
 from cognite.neat._issues.warnings import (
+    NeatValueWarning,
     PropertyDirectRelationLimitWarning,
     PropertyMultipleValueWarning,
     PropertyTypeNotSupportedWarning,
@@ -44,7 +45,7 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat._utils.text import NamingStandardization, humanize_collection
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
@@ -283,11 +284,21 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, total, f"Looking up spaces for {total} instances..."
         )
+        warned_spaces: set[str] = set()
         for instance, space in instance_iterable:
             identifier = remove_namespace_from_uri(instance)
             if self._unquote_external_ids:
                 identifier = urllib.parse.unquote(identifier)
-            self._space_by_uri[identifier] = space
+            clean_space = NamingStandardization.standardize_space_str(space)
+            if clean_space != space and space not in warned_spaces:
+                issues.append(
+                    NeatValueWarning(
+                        f"Invalid space in property {self._space_property}: {space}. Fixed to {clean_space}"
+                    )
+                )
+                warned_spaces.add(space)
+
+            self._space_by_uri[identifier] = clean_space
         return issues
 
     def _create_instance_space_if_not_exists(self) -> IssueList:

@@ -24,6 +24,7 @@ Changes are grouped as follows:
   label.dataSetId.
 - The `neat.read.cdf.graph()` extracts json as a json-string instead of a regular string.
 - The `neat.read.cdf.graph()` has start and endNode properties for edges.
+- The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
 
 ## [0.110.0] - 17-02-**2025**
 ### Added
