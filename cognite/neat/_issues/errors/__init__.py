@@ -3,6 +3,7 @@ from cognite.neat._issues._base import NeatError, _get_subclasses
 from ._external import (
     AuthorizationError,
     CDFMissingClientError,
+    CDFMissingResourcesError,
     FileMissingRequiredFieldError,
     FileNotAFileError,
     FileNotFoundNeatError,
@@ -45,6 +46,7 @@ from ._wrapper import (
 __all__ = [
     "AuthorizationError",
     "CDFMissingClientError",
+    "CDFMissingResourcesError",
     "ClassValueError",
     "ContainerValueError",
     "EnumValueError",

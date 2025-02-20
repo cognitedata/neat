@@ -80,3 +80,10 @@ class CDFMissingClientError(NeatError, RuntimeError):
     """CDF client is required: {reason}"""
 
     reason: str
+
+
+@dataclass(unsafe_hash=True)
+class CDFMissingResourcesError(NeatError, RuntimeError):
+    """Following CDF resources are missing: {resources}"""
+
+    resources: str

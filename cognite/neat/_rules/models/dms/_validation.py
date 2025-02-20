@@ -27,6 +27,7 @@ from cognite.neat._issues.errors import (
     ResourceNotFoundError,
     ReversedConnectionNotFeasibleError,
 )
+from cognite.neat._issues.errors._external import CDFMissingResourcesError
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
@@ -113,6 +114,14 @@ class DMSValidation:
             referenced_containers = self._client.loaders.containers.retrieve(
                 list(imported_containers), include_connected=True
             )
+
+            missing_views = {view.as_id() for view in imported_views} - {view.as_id() for view in referenced_views}
+            missing_containers = {container.as_id() for container in imported_containers} - {
+                container.as_id() for container in referenced_containers
+            }
+
+            if missing_views or missing_containers:
+                raise CDFMissingResourcesError(resources=f"{missing_views.union(missing_containers)}")
 
         # Setup data structures for validation
         dms_schema = self._rules.as_schema()
