@@ -405,6 +405,31 @@ class Queries:
             )
         ]
 
+    def properties_with_count(
+        self, remove_namespace: bool = True, named_graph: URIRef | None = None
+    ) -> list[dict[str, Any]]:
+        instance_count_by_type = {
+            entry["type"]: entry["instanceCount"]
+            for entry in self.types_with_instance_and_property_count(remove_namespace=False, named_graph=named_graph)
+        }
+        query = """SELECT ?type ?property (COUNT(DISTINCT ?instance) AS ?instanceCount)
+WHERE {
+  ?instance a ?type .
+  ?instance ?property ?value .
+  FILTER(?property != rdf:type)
+}
+GROUP BY ?type ?property
+ORDER BY ASC(?type) ASC(?property)"""
+        return [
+            {
+                "type": remove_namespace_from_uri(type_) if remove_namespace else type_,
+                "property": remove_namespace_from_uri(property) if remove_namespace else property,
+                "instanceCount": cast(RdfLiteral, instance_count).toPython(),
+                "total": instance_count_by_type[type_],
+            }
+            for type_, property, instance_count in list(cast(list[ResultRow], self.graph(named_graph).query(query)))
+        ]
+
     def list_instances_ids_by_space(
         self, space_property: URIRef, named_graph: URIRef | None = None
     ) -> Iterable[tuple[URIRef, str]]:

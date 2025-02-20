@@ -19,4 +19,4 @@ class ExploreAPI:
 
     def properties(self) -> pd.DataFrame:
         """List all the properties of a type of instances in the session."""
-        raise NotImplementedError()
+        return pd.DataFrame(self._state.instances.store.queries.properties_with_count())
