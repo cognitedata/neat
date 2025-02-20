@@ -281,7 +281,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 # This is a private attribute, but we need to set it to log the target nodes.
                 extractor._log_target_nodes = True
                 if self._identifier == "id":
-                    extractor._uri_by_external_id_by_by_type = self._uris_by_external_id_by_type
+                    extractor._uri_by_external_id_by_type = self._uris_by_external_id_by_type
 
                 yield from extractor.extract()
 
