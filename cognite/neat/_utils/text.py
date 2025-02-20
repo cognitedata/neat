@@ -195,8 +195,10 @@ class NamingStandardization:
             clean = f"my_{clean}"
         if len(clean) > 43:
             clean = clean[:43]
-        while clean and not clean[-1].isalpha():
-            clean = clean[:-1]
+        if not clean[-1].isalpha() and len(clean) == 43:
+            clean = f"{clean[:-1]}x"
+        elif not clean[-1].isalpha():
+            clean = f"{clean}x"
         if not clean:
             raise ValueError("Space name must contain at least one letter.")
         return to_snake_case(clean)
