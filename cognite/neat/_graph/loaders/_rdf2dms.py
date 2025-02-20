@@ -171,6 +171,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     raise space_creation.as_exception()
                 yield from space_creation.errors
 
+        if self.neat_prefix_by_predicate_uri:
+            self._try_remove_prefixes()
+
         for it in view_iterations:
             view = it.view
             if view is None:
@@ -309,6 +312,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             self._space_by_uri[identifier] = clean_space
         return issues
+
+    def _try_remove_prefixes(self) -> None:
+        raise NotImplementedError()
 
     def _create_instance_space_if_not_exists(self) -> IssueList:
         issues = IssueList()
