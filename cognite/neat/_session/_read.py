@@ -229,6 +229,7 @@ class CDFClassicAPI(BaseReadAPI):
         identifier: Literal["id", "externalId"] = "id",
         reference_timeseries: bool = False,
         reference_files: bool = False,
+        unpack_metadata: bool = False,
     ) -> IssueList:
         namespace = CLASSIC_CDF_NAMESPACE
         extractor = extractors.ClassicGraphExtractor(
@@ -238,6 +239,7 @@ class CDFClassicAPI(BaseReadAPI):
             namespace=namespace,
             prefix="Classic",
             identifier=identifier,
+            unpack_metadata=unpack_metadata,
         )
         self._state.instances.neat_prefix_by_predicate_uri.update(extractor.neat_prefix_by_predicate_uri)
         extract_issues = self._state.write_graph(extractor)

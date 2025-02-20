@@ -102,6 +102,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         limit_per_type: int | None = None,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
+        unpack_metadata: bool = False,
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -111,7 +112,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._namespace = namespace or CLASSIC_CDF_NAMESPACE
         self._extractor_args = dict(
             namespace=self._namespace,
-            unpack_metadata=False,
+            unpack_metadata=unpack_metadata,
             as_write=True,
             camel_case=True,
             limit=limit_per_type,
