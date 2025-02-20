@@ -342,6 +342,9 @@ instances:
       dataSetId:
         externalId: DataSet_2458119666837052
         space: sp_windfarm_enterprise_instances
+      neatIncRelationshipLabels:
+        externalId: Label_metMast
+        space: sp_windfarm_enterprise_instances
       sourceType: Asset
       targetType: Asset
     source:
@@ -366,6 +369,9 @@ instances:
       classicExternalId: WT-02_to_MetMast
       dataSetId:
         externalId: DataSet_2458119666837052
+        space: sp_windfarm_enterprise_instances
+      neatIncRelationshipLabels:
+        externalId: Label_metMast
         space: sp_windfarm_enterprise_instances
       sourceType: Asset
       targetType: Asset
@@ -659,6 +665,8 @@ rules:
     used_for: node
   - container: NeatIncFile
     used_for: node
+  - container: NeatIncRelationship
+    used_for: edge
   - container: NeatIncSequence
     used_for: node
   - container: NeatIncSequence
@@ -3655,6 +3663,16 @@ rules:
     value_type: NeatIncLabel
     view: NeatIncRelationship
     view_property: labels
+  - connection: direct
+    container: NeatIncRelationship
+    container_property: neatIncRelationshipLabels
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/neatIncRelationshipLabels
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/neatIncRelationshipLabels
+    nullable: true
+    value_type: NeatIncLabel
+    view: NeatIncRelationship
+    view_property: neatIncRelationshipLabels
   - container: ClassicRelationship
     container_property: sourceType
     immutable: false
