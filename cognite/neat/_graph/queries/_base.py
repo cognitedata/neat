@@ -1,8 +1,8 @@
 from collections import defaultdict
 from collections.abc import Iterable
-from typing import Literal, cast, overload
+from typing import Any, Literal, cast, overload
 
-from rdflib import RDF, Dataset, Graph, Namespace, URIRef
+from rdflib import RDF, XSD, Dataset, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.query import ResultRow
@@ -182,7 +182,8 @@ class Queries:
         instance_type: URIRef | None = None,
         property_renaming_config: dict | None = None,
         named_graph: URIRef | None = None,
-    ) -> tuple[str, dict[str | InstanceType, list[str]]] | None:
+        remove_uri_namespace: bool = True,
+    ) -> tuple[URIRef, dict[str | InstanceType, list[Any]]] | None:
         """DESCRIBE instance for a given class from the graph store
 
         Args:
@@ -190,13 +191,13 @@ class Queries:
             instance_type: Type of the instance, default None (will be inferred from triples)
             property_renaming_config: Dictionary to rename properties, default None (no renaming)
             named_graph: Named graph to query over, default None (default graph)
+            remove_uri_namespace: Whether to remove the namespace from the URI, by default True
 
 
         Returns:
             Dictionary of instance properties
         """
-        property_values: dict[str, list[str]] = defaultdict(list)
-        identifier = remove_namespace_from_uri(instance_id, validation="prefix")
+        property_values: dict[str, list[str] | list[URIRef]] = defaultdict(list)
         for _, predicate, object_ in cast(list[ResultRow], self.graph(named_graph).query(f"DESCRIBE <{instance_id}>")):
             if object_.lower() in [
                 "",
@@ -219,29 +220,37 @@ class Queries:
                 property_ = RDF.type
                 renamed_property_ = property_
 
-            if isinstance(object_, URIRef):
+            value: Any
+            if isinstance(object_, URIRef) and remove_uri_namespace:
+                # These properties contain the space in the Namespace.
                 value = remove_namespace_from_uri(object_, validation="prefix")
+            elif isinstance(object_, URIRef):
+                value = object_
             elif isinstance(object_, RdfLiteral):
-                value = object_.toPython()
+                if object_.datatype == XSD._NS["json"]:
+                    # For JSON literals, the .toPython() returns a Literal object.
+                    value = str(object_)
+                else:
+                    value = object_.toPython()
             else:
                 # It is a blank node
                 value = str(object_)
 
             # add type to the dictionary
             if predicate != RDF.type:
-                property_values[renamed_property_].append(value)
+                property_values[renamed_property_].append(value)  # type: ignore[arg-type]
             else:
                 # guarding against multiple rdf:type values as this is not allowed in CDF
                 if RDF.type not in property_values:
                     property_values[RDF.type].append(
-                        remove_namespace_from_uri(instance_type, validation="prefix") if instance_type else value
+                        remove_namespace_from_uri(instance_type, validation="prefix") if instance_type else value  # type: ignore[arg-type]
                     )
                 else:
                     # we should not have multiple rdf:type values
                     continue
         if property_values:
             return (
-                identifier,
+                instance_id,
                 property_values,
             )
         else:

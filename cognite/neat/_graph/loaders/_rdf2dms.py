@@ -16,7 +16,7 @@ from cognite.client.data_classes.data_modeling.data_types import ListablePropert
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
-from rdflib import RDF
+from rdflib import RDF, URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._client._api_client import SchemaAPI
@@ -43,7 +43,7 @@ from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.upload import UploadResult
 
@@ -80,6 +80,13 @@ class _Projection:
     edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]]
 
 
+@dataclass
+class _SpaceIdentifierPair:
+    space: str
+    identifier: str
+    error: NeatIssue | None = None
+
+
 class DMSLoader(CDFLoader[dm.InstanceApply]):
     """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
 
@@ -102,6 +109,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         graph_store: NeatGraphStore,
         instance_space: str,
         space_property: str | None = None,
+        use_source_space: bool = False,
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
@@ -111,6 +119,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self.info_rules = info_rules
         self._instance_space = instance_space
         self._space_property = space_property
+        self._use_source_space = use_source_space
         self._space_by_uri: dict[str, str] = defaultdict(lambda: instance_space)
         self._issues = IssueList(create_issues or [])
         self._client = client
@@ -164,7 +173,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             projection, issues = self._create_projection(view)
             yield from issues
             query = it.query
-            reader = self.graph_store.read(query.rdf_type, property_renaming_config=query.property_renaming_config)
+            reader = self.graph_store.read(
+                query.rdf_type,
+                property_renaming_config=query.property_renaming_config,
+                remove_uri_namespace=not self._use_source_space,
+            )
             instance_iterable = iterate_progress_bar_if_above_config_threshold(
                 reader, it.instance_count, f"Loading {it.view_id!r}"
             )
@@ -209,6 +222,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 for missing_view in missing:
                     issues.append(ResourceNotFoundError(missing_view, "view", more="The view is not found in CDF."))
                 return [], issues
+            # Todo: Remove if this turns out to be unnecessary.
+            hierarchical_properties_by_view_id: dict[dm.ViewId, set[str]] = {}
         else:
             views = dm.ViewList([])
             with catch_issues() as issues:
@@ -216,8 +231,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 views.extend(read_model.views)
             if issues.has_errors:
                 return [], issues
+            hierarchical_properties_by_view_id = {}
         views_by_id = {view.as_id(): view for view in views}
-        hierarchical_properties_by_view_id = SchemaAPI.get_hierarchical_properties(views)
 
         def sort_by_instance_type(id_: dm.ViewId) -> int:
             if id_ not in views_by_id:
@@ -437,15 +452,18 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _create_instances(
         self,
-        identifier: str,
-        properties: dict[str | InstanceType, list[str]],
+        instance_id: URIRef,
+        properties: dict[str | InstanceType, list[Any]],
         projection: _Projection,
         stop_on_exception: bool = False,
         exclude: set[str] | None = None,
         include: set[str] | None = None,
     ) -> Iterable[dm.InstanceApply | NeatIssue]:
-        if self._unquote_external_ids:
-            identifier = urllib.parse.unquote(identifier)
+        pair = self._to_space_identifier(instance_id, "node", stop_on_exception)
+        if pair.error:
+            yield pair.error
+            return
+        space, identifier = pair.space, pair.identifier
         start_node, end_node = self._pop_start_end_node(properties)
         is_edge = start_node and end_node
         instance_type = "edge" if is_edge else "node"
@@ -467,11 +485,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield error
             return
         _ = properties.pop(RDF.type)[0]
-        if start_node and self._unquote_external_ids:
-            start_node = urllib.parse.unquote(start_node)
-        if end_node and self._unquote_external_ids:
-            end_node = urllib.parse.unquote(end_node)
-
         if exclude:
             properties = {k: v for k, v in properties.items() if k not in exclude}
         if include:
@@ -496,25 +509,37 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
 
         if start_node and end_node:
-            yield dm.EdgeApply(
-                space=self._space_by_uri[identifier],
-                external_id=identifier,
-                type=(projection.view_id.space, projection.view_id.external_id),
-                start_node=(self._space_by_uri[start_node], start_node),
-                end_node=(self._space_by_uri[end_node], end_node),
-                sources=sources,
-            )
+            start = self._to_space_identifier(start_node, "edge", stop_on_exception)
+            end = self._to_space_identifier(end_node, "edge", stop_on_exception)
+            if start.error:
+                yield start.error
+            if end.error:
+                yield end.error
+            if not (start.error or end.error):
+                yield dm.EdgeApply(
+                    space=space,
+                    external_id=identifier,
+                    type=(projection.view_id.space, projection.view_id.external_id),
+                    start_node=(start.space, start.identifier),
+                    end_node=(end.space, end.identifier),
+                    sources=sources,
+                )
         else:
             yield dm.NodeApply(
-                space=self._space_by_uri[identifier],
+                space=space,
                 external_id=identifier,
                 type=(projection.view_id.space, projection.view_id.external_id),
                 sources=sources,
             )
-        yield from self._create_edges_without_properties(identifier, properties, projection)
+        yield from self._create_edges_without_properties(space, identifier, properties, projection, stop_on_exception)
 
     def _create_edges_without_properties(
-        self, identifier: str, properties: dict[str | InstanceType, list[str]], projection: _Projection
+        self,
+        space: str,
+        identifier: str,
+        properties: dict[str | InstanceType, list[str] | list[URIRef]],
+        projection: _Projection,
+        stop_on_exception: bool,
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for predicate, values in properties.items():
             if predicate in projection.edge_by_type:
@@ -532,15 +557,22 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 yield error
                 continue
             for target in values:
+                res = self._to_space_identifier(target, "edge", stop_on_exception)
+                if res.error:
+                    yield res.error
+                    continue
+                if isinstance(target, URIRef):
+                    target = remove_namespace_from_uri(target)
                 external_id = f"{identifier}.{prop_id}.{target}"
+
                 start_node, end_node = (
-                    (self._space_by_uri[identifier], identifier),
-                    (self._space_by_uri[target], target),
+                    (space, identifier),
+                    (res.space, res.identifier),
                 )
                 if edge.direction == "inwards":
                     start_node, end_node = end_node, start_node
                 yield dm.EdgeApply(
-                    space=self._space_by_uri[identifier],
+                    space=space,
                     external_id=(external_id if len(external_id) < 256 else create_sha256_hash(external_id)),
                     type=edge.type,
                     start_node=start_node,
@@ -548,7 +580,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 )
 
     @staticmethod
-    def _pop_start_end_node(properties: dict[str | InstanceType, list[str]]) -> tuple[str, str] | tuple[None, None]:
+    def _pop_start_end_node(
+        properties: dict[str | InstanceType, list[str] | list[URIRef]],
+    ) -> tuple[URIRef | str, URIRef | str] | tuple[None, None]:
         start_node = properties.pop("startNode", [None])[0]
         if not start_node:
             start_node = properties.pop("start_node", [None])[0]
@@ -558,6 +592,36 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if start_node and end_node:
             return start_node, end_node
         return None, None
+
+    def _to_space_identifier(
+        self, raw: URIRef | str, instance_type: str, stop_on_exception: bool = False
+    ) -> _SpaceIdentifierPair:
+        error: ResourceCreationError | None = None
+        if self._use_source_space:
+            error_candidate = ResourceCreationError(raw, instance_type, f"Could not find space for {raw!s}.")
+            if isinstance(raw, URIRef):
+                namespace, target_identifier = split_uri(raw)
+                target_space = namespace_as_space(namespace)
+                if target_space is None:
+                    error = error_candidate
+                target_space = target_space or self._instance_space
+            else:
+                target_space = self._instance_space
+                target_identifier = raw
+                error = error_candidate
+            if self._unquote_external_ids:
+                target_identifier = urllib.parse.unquote(target_identifier)
+        else:
+            if isinstance(raw, URIRef):
+                target_identifier = remove_namespace_from_uri(raw)
+            else:
+                target_identifier = raw
+            if self._unquote_external_ids:
+                target_identifier = urllib.parse.unquote(target_identifier)
+            target_space = self._space_by_uri[target_identifier]
+        if stop_on_exception and error:
+            raise error
+        return _SpaceIdentifierPair(target_space, target_identifier, error)
 
     def _get_required_capabilities(self) -> list[Capability]:
         return [
