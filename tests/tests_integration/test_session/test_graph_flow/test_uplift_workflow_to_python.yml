@@ -25,7 +25,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncAsset
     space: sp_windfarm_enterprise
@@ -50,7 +50,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncAsset
     space: sp_windfarm_enterprise
@@ -81,7 +81,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncAsset
     space: sp_windfarm_enterprise
@@ -112,7 +112,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncAsset
     space: sp_windfarm_enterprise
@@ -226,7 +226,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_maintenance
+  space: maintenance
   type:
     externalId: NeatIncEvent
     space: sp_windfarm_enterprise
@@ -251,7 +251,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncFile
     space: sp_windfarm_enterprise
@@ -270,7 +270,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncLabel
     space: sp_windfarm_enterprise
@@ -289,7 +289,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncLabel
     space: sp_windfarm_enterprise
@@ -308,7 +308,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncLabel
     space: sp_windfarm_enterprise
@@ -327,13 +327,13 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncLabel
     space: sp_windfarm_enterprise
 - endNode:
-    externalId: MetMast
-    space: sp_windfarm_dataset
+    externalId: Asset_MetMast
+    space: source_ds
   externalId: Relationship_WT-01_to_MetMast
   instanceType: edge
   sources:
@@ -352,16 +352,16 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_2458119666837052
+  space: sp
   startNode:
-    externalId: WT-01
-    space: sp_windfarm_dataset
+    externalId: Asset_WT-01
+    space: source_ds
   type:
     externalId: NeatIncRelationship
     space: sp_windfarm_enterprise
 - endNode:
-    externalId: MetMast
-    space: sp_windfarm_dataset
+    externalId: Asset_MetMast
+    space: source_ds
   externalId: Relationship_WT-02_to_MetMast
   instanceType: edge
   sources:
@@ -380,10 +380,10 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_2458119666837052
+  space: sp
   startNode:
-    externalId: WT-02
-    space: sp_windfarm_dataset
+    externalId: Asset_WT-02
+    space: source_ds
   type:
     externalId: NeatIncRelationship
     space: sp_windfarm_enterprise
@@ -422,7 +422,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncSequence
     space: sp_windfarm_enterprise
@@ -450,7 +450,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_usecase_01
+  space: usecase
   type:
     externalId: NeatIncTimeSeries
     space: sp_windfarm_enterprise
@@ -478,7 +478,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncTimeSeries
     space: sp_windfarm_enterprise
@@ -506,7 +506,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_usecase_01
+  space: usecase
   type:
     externalId: NeatIncTimeSeries
     space: sp_windfarm_enterprise
@@ -534,7 +534,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: DataSet_source_ds
+  space: source_ds
   type:
     externalId: NeatIncTimeSeries
     space: sp_windfarm_enterprise
