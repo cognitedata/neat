@@ -421,8 +421,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    external_ids = (remove_namespace_from_uri(v) for v in value)
-                    result = [{"space": self._space_by_uri[e], "externalId": e} for e in external_ids]
+                    space_identifier_pairs = (self._to_space_identifier(v, "node") for v in value)
+                    result = [{"space": pair.space, "externalId": pair.identifier} for pair in space_identifier_pairs]
+
                     # Todo: Account for max_list_limit
                     if len(result) <= DMS_DIRECT_RELATION_LIST_LIMIT:
                         return result
@@ -439,8 +440,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     result.sort(key=lambda x: (x["space"], x["externalId"]))
                     return result[:DMS_DIRECT_RELATION_LIST_LIMIT]
                 elif value:
-                    external_id = remove_namespace_from_uri(value[0])
-                    return {"space": self._space_by_uri[external_id], "externalId": external_id}
+                    pair = self._to_space_identifier(value[0], "node")
+                    return {"space": pair.space, "externalId": pair.identifier}
                 return {}
 
             validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
@@ -617,7 +618,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return None, None
 
     def _to_space_identifier(
-        self, raw: URIRef | str, instance_type: str, stop_on_exception: bool = False
+        self, raw: Any, instance_type: str, stop_on_exception: bool = False
     ) -> _SpaceIdentifierPair:
         error: ResourceCreationError | None = None
         if self._use_source_space:
@@ -638,7 +639,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if isinstance(raw, URIRef):
                 target_identifier = remove_namespace_from_uri(raw)
             else:
-                target_identifier = raw
+                target_identifier = str(raw)
             if self._unquote_external_ids:
                 target_identifier = urllib.parse.unquote(target_identifier)
             target_space = self._space_by_uri[target_identifier]
