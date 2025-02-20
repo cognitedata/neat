@@ -70,10 +70,10 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         triples: list[Triple] = []
         if (source_external_id := dumped.pop("sourceExternalId")) and "sourceType" in dumped:
             source_type = dumped["sourceType"]
-            instance_type = InstanceIdPrefix.from_str(source_type)
+            instance_prefix = InstanceIdPrefix.from_str(source_type)
             if self.identifier == "id":
                 try:
-                    source_uri = self._uri_by_external_id_by_type[instance_type][source_external_id]
+                    source_uri = self._uri_by_external_id_by_type[instance_prefix][source_external_id]
                 except KeyError:
                     warnings.warn(
                         NeatValueWarning(f"Missing externalId {source_external_id} for {source_type}"), stacklevel=2
@@ -82,7 +82,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
                     triples.append((id_, self.namespace["sourceExternalId"], source_uri))
             elif self.identifier == "externalId":
                 triples.append(
-                    (id_, self.namespace["sourceExternalId"], self.namespace[f"{source_type}{source_external_id}"])
+                    (id_, self.namespace["sourceExternalId"], self.namespace[f"{instance_prefix}{source_external_id}"])
                 )
         if (target_external_id := dumped.pop("targetExternalId")) and "targetType" in dumped:
             target_type = dumped["targetType"]
