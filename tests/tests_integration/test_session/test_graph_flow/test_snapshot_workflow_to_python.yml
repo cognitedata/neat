@@ -1842,7 +1842,7 @@ instances:
   - properties:
       classicExternalId: WT-01_to_MetMast
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_windfarm_dataset
       sourceType: Asset
       targetType: Asset
@@ -1851,7 +1851,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: sp
+  space: source_ds
   startNode:
     externalId: Asset_WT-01
     space: source_ds
@@ -1863,10 +1863,10 @@ instances:
     space: source_ds
   externalId: Relationship_WT-01_to_MetMast.labels.Label_metMast
   instanceType: edge
-  space: sp
+  space: source_ds
   startNode:
     externalId: Relationship_WT-01_to_MetMast
-    space: sp
+    space: source_ds
   type:
     externalId: ClassicRelationship.labels
     space: sp_windfarm
@@ -1879,7 +1879,7 @@ instances:
   - properties:
       classicExternalId: WT-02_to_MetMast
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_windfarm_dataset
       sourceType: Asset
       targetType: Asset
@@ -1888,7 +1888,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: sp
+  space: source_ds
   startNode:
     externalId: Asset_WT-02
     space: source_ds
@@ -1900,10 +1900,10 @@ instances:
     space: source_ds
   externalId: Relationship_WT-02_to_MetMast.labels.Label_metMast
   instanceType: edge
-  space: sp
+  space: source_ds
   startNode:
     externalId: Relationship_WT-02_to_MetMast
-    space: sp
+    space: source_ds
   type:
     externalId: ClassicRelationship.labels
     space: sp_windfarm
@@ -1972,7 +1972,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: usecase
+  space: usecase_01
   type:
     externalId: ClassicTimeSeries
     space: sp_windfarm
@@ -2030,7 +2030,7 @@ instances:
       space: sp_windfarm
       type: view
       version: v1
-  space: usecase
+  space: usecase_01
   type:
     externalId: ClassicTimeSeries
     space: sp_windfarm
