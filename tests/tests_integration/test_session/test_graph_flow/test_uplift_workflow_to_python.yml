@@ -7,16 +7,16 @@ instances:
       classicExternalId: MetMast
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Meteorological mast
       height: 100
       name: MetMast
       parent:
-        externalId: Unknown%20asset
-        space: sp_windfarm_enterprise_instances
+        externalId: Unknown asset
+        space: sp_windfarm_dataset
       source:
         externalId: ClassicSourceSystem_manufacturer2
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       tags:
       - Label_Measurement
       - Label_metMast
@@ -37,12 +37,12 @@ instances:
       classicExternalId: Utsira
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Utsira wind farm
       name: Utsira
       source:
         externalId: ClassicSourceSystem_manufacturer1
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
     source:
@@ -62,16 +62,16 @@ instances:
       classicExternalId: WT-01
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Wind turbine 01
       maxCapacity: 3
       name: WT-01
       parent:
         externalId: Asset_Utsira
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       source:
         externalId: ClassicSourceSystem_manufacturer1
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
@@ -93,16 +93,16 @@ instances:
       classicExternalId: WT-02
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Wind turbine 02
       maxCapacity: 3
       name: WT-02
       parent:
         externalId: Asset_Utsira
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       source:
         externalId: ClassicSourceSystem_manufacturer1
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
@@ -207,17 +207,17 @@ instances:
   - properties:
       assets:
       - externalId: Asset_WT-01
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       blob: data
       classicExternalId: planned:WT-01:2022-01-01
       dataSetId:
         externalId: DataSet_maintenance
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Planned maintenance
       endTime: '1970-01-01T00:00:00.500+00:00'
       source:
         externalId: ClassicSourceSystem_manufacturer1
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       startTime: '1970-01-01T00:00:00.400+00:00'
       subtype: Planned
       type: Maintenance
@@ -236,16 +236,16 @@ instances:
   - properties:
       assets:
       - externalId: Asset_WT-01
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       classicExternalId: WT-01_datasheet
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       fileCategory: DataSheet
       name: WT-01_datasheet.txt
       source:
         externalId: ClassicSourceSystem_manufacturer1
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
     source:
       externalId: NeatIncFile
       space: sp_windfarm_enterprise
@@ -262,7 +262,7 @@ instances:
       classicExternalId: Measurement
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Measurement
       name: Measurement
     source:
@@ -281,7 +281,7 @@ instances:
       classicExternalId: PowerGeneratingUnit
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Power generating unit
       name: Power generating unit
     source:
@@ -300,7 +300,7 @@ instances:
       classicExternalId: WindTurbine
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Wind turbine
       name: Wind turbine
     source:
@@ -319,7 +319,7 @@ instances:
       classicExternalId: metMast
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Meteorological mast
       name: Meteorological mast
     source:
@@ -341,10 +341,10 @@ instances:
       classicExternalId: WT-01_to_MetMast
       dataSetId:
         externalId: DataSet_2458119666837052
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       neatIncRelationshipLabels:
         externalId: Label_metMast
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       sourceType: Asset
       targetType: Asset
     source:
@@ -369,10 +369,10 @@ instances:
       classicExternalId: WT-02_to_MetMast
       dataSetId:
         externalId: DataSet_2458119666837052
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       neatIncRelationshipLabels:
         externalId: Label_metMast
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       sourceType: Asset
       targetType: Asset
     source:
@@ -393,7 +393,7 @@ instances:
   - properties:
       assetId:
         externalId: Asset_WT-01
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       blob: data
       classicExternalId: power_curve_manufacturer1
       columns:
@@ -413,7 +413,7 @@ instances:
         valueType: DOUBLE
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: Power curve from manufacturer 1
       name: Power curve Manufacturer 1
       turbineType: V112/3075
@@ -432,18 +432,18 @@ instances:
   - properties:
       assets:
       - externalId: Asset_WT-01
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       classicExternalId: WT-01_forecast
       dataSetId:
         externalId: DataSet_usecase_01
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: WT-01 forecast
       isStep: false
       name: WT-01 forecast
       timeSeriesCategory: Forecast
       type: numeric
       unit:
-        externalId: power%3Amegaw
+        externalId: power:megaw
         space: cdf_cdm_units
     source:
       externalId: NeatIncTimeSeries
@@ -460,18 +460,18 @@ instances:
   - properties:
       assets:
       - externalId: Asset_WT-01
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       classicExternalId: WT-01_production
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: WT-01 production
       isStep: false
       name: WT-01 production
       timeSeriesCategory: Production
       type: numeric
       unit:
-        externalId: power%3Amegaw
+        externalId: power:megaw
         space: cdf_cdm_units
     source:
       externalId: NeatIncTimeSeries
@@ -488,18 +488,18 @@ instances:
   - properties:
       assets:
       - externalId: Asset_WT-02
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       classicExternalId: WT-02_forecast
       dataSetId:
         externalId: DataSet_usecase_01
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: WT-02 forecast
       isStep: false
       name: WT-02 forecast
       timeSeriesCategory: Forecast
       type: numeric
       unit:
-        externalId: power%3Amegaw
+        externalId: power:megaw
         space: cdf_cdm_units
     source:
       externalId: NeatIncTimeSeries
@@ -516,18 +516,18 @@ instances:
   - properties:
       assets:
       - externalId: Asset_WT-02
-        space: sp_windfarm_enterprise_instances
+        space: source_ds
       classicExternalId: WT-02_production
       dataSetId:
         externalId: DataSet_source_ds
-        space: sp_windfarm_enterprise_instances
+        space: sp_windfarm_dataset
       description: WT-02 production
       isStep: false
       name: WT-02 production
       timeSeriesCategory: Production
       type: numeric
       unit:
-        externalId: power%3Amegaw
+        externalId: power:megaw
         space: cdf_cdm_units
     source:
       externalId: NeatIncTimeSeries
