@@ -215,7 +215,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 if value and (self.skip_metadata_values is None or value.casefold() not in self.skip_metadata_values):
                     yield (
                         id_,
-                        self.namespace[key],
+                        self.namespace[urllib.parse.quote(key)],
                         Literal(string_to_ideal_type(value)),
                     )
         else:
