@@ -99,6 +99,7 @@ class _DMSExporter:
             key=lambda x: x.as_tuple(),  # type: ignore[union-attr]
         )
         spaces = self._create_spaces(rules.metadata, containers, views, data_model)
+
         return DMSSchema(
             spaces=spaces,
             data_model=data_model,
@@ -114,7 +115,11 @@ class _DMSExporter:
         views: ViewApplyDict,
         data_model: dm.DataModelApply,
     ) -> SpaceApplyDict:
-        used_spaces = {container.space for container in containers.values()} | {view.space for view in views.values()}
+        used_spaces = (
+            {container.space for container in containers.values()}
+            | {view.space for view in views.values()}
+            | {data_model.space}
+        )
         if len(used_spaces) == 1:
             # We skip the default space and only use this space for the data model
             data_model.space = used_spaces.pop()
