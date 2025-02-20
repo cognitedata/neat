@@ -21,7 +21,7 @@ Changes are grouped as follows:
 - The `neat.inspect.issues(...)` and `neat.inspect.outcome.issues(...)` now prints out a maximum of 50 issues. This is
   to avoid the output being too large. You can pass `return_dataframe=True` to get all issues as a DataFrame.
 - The `neat.read.cdf.classic.graph(..., identifier="externalId")` now correctly looks up external ID for
-  label.dataSetId.
+  label.dataSetId, relationship.dataSetId, relationship.sourceExternalId, and relationship.targetExternalId.
 - The `neat.read.cdf.graph()` extracts json as a json-string instead of a regular string.
 - The `neat.read.cdf.graph()` has start and endNode properties for edges.
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
