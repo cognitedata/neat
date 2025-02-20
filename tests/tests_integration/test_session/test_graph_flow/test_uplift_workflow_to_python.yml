@@ -340,7 +340,7 @@ instances:
   - properties:
       classicExternalId: WT-01_to_MetMast
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_windfarm_dataset
       neatIncRelationshipLabels:
         externalId: Label_metMast
@@ -352,7 +352,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: sp
+  space: source_ds
   startNode:
     externalId: Asset_WT-01
     space: source_ds
@@ -368,7 +368,7 @@ instances:
   - properties:
       classicExternalId: WT-02_to_MetMast
       dataSetId:
-        externalId: DataSet_2458119666837052
+        externalId: DataSet_source_ds
         space: sp_windfarm_dataset
       neatIncRelationshipLabels:
         externalId: Label_metMast
@@ -380,7 +380,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: sp
+  space: source_ds
   startNode:
     externalId: Asset_WT-02
     space: source_ds
@@ -450,7 +450,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: usecase
+  space: usecase_01
   type:
     externalId: NeatIncTimeSeries
     space: sp_windfarm_enterprise
@@ -506,7 +506,7 @@ instances:
       space: sp_windfarm_enterprise
       type: view
       version: v1
-  space: usecase
+  space: usecase_01
   type:
     externalId: NeatIncTimeSeries
     space: sp_windfarm_enterprise
