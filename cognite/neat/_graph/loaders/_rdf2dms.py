@@ -451,7 +451,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             def parse_direct_relation_to_unit(cls, value: Any, info: ValidationInfo) -> dict | list[dict]:
                 if value:
-                    return {"space": "cdf_cdm_units", "externalId": remove_namespace_from_uri(value[0])}
+                    external_id = remove_namespace_from_uri(value[0])
+                    if self._unquote_external_ids:
+                        external_id = urllib.parse.unquote(external_id)
+                    return {"space": "cdf_cdm_units", "externalId": external_id}
                 return {}
 
             validators["parse_direct_relation_to_unit"] = field_validator(*unit_properties, mode="before")(  # type: ignore[assignment]
