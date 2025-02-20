@@ -282,6 +282,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 extractor._log_target_nodes = True
                 if self._identifier == "id":
                     extractor._uri_by_external_id_by_type = self._uris_by_external_id_by_type
+                elif self._identifier == "externalId":
+                    extractor.lookup_dataset_external_id = self._lookup_dataset
 
                 yield from extractor.extract()
 
