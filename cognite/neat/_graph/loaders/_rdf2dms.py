@@ -101,6 +101,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         client (NeatClient | None): This is used to lookup containers such that the loader
             creates instances in accordance with required constraints. Defaults to None.
         unquote_external_ids (bool): If True, the loader will unquote external ids before creating the instances.
+        neat_prefix_by_predicate_uri (dict[URIRef, str] | None): A dictionary that maps a predicate URIRef to a
+            prefix that Neat added to the object upon extraction. This is used to remove the prefix from the
+            object before creating the instance.
     """
 
     def __init__(
@@ -114,10 +117,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
+        neat_prefix_by_predicate_uri: dict[URIRef, str] | None = None,
     ):
         super().__init__(graph_store)
         self.dms_rules = dms_rules
         self.info_rules = info_rules
+        self.neat_prefix_by_predicate_uri = neat_prefix_by_predicate_uri or {}
         self._instance_space = instance_space
         self._space_property = space_property
         self._use_source_space = use_source_space
@@ -284,11 +289,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, total, f"Looking up spaces for {total} instances..."
         )
+        neat_prefix = self.neat_prefix_by_predicate_uri.get(space_property_uri)
         warned_spaces: set[str] = set()
         for instance, space in instance_iterable:
             identifier = remove_namespace_from_uri(instance)
             if self._unquote_external_ids:
                 identifier = urllib.parse.unquote(identifier)
+            if neat_prefix:
+                space = space.removeprefix(neat_prefix)
+
             clean_space = NamingStandardization.standardize_space_str(space)
             if clean_space != space and space not in warned_spaces:
                 issues.append(
