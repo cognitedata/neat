@@ -382,6 +382,29 @@ class Queries:
         query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
         return int(next(iter(self.graph(named_graph).query(query)))[0])  # type: ignore[arg-type, index]
 
+    def types_with_instance_and_property_count(
+        self, remove_namespace: bool = True, named_graph: URIRef | None = None
+    ) -> list[dict[str, Any]]:
+        query = """
+        SELECT ?type (COUNT(DISTINCT ?instance) AS ?instanceCount) (COUNT(DISTINCT ?property) AS ?propertyCount)
+                WHERE {
+                  ?instance a ?type .
+                  ?instance ?property ?value .
+                  FILTER(?property != rdf:type)
+                }
+                GROUP BY ?type
+                ORDER BY DESC(?instanceCount)"""
+        return [
+            {
+                "type": remove_namespace_from_uri(type_) if remove_namespace else type_,
+                "instanceCount": cast(RdfLiteral, instance_count).toPython(),
+                "propertyCount": cast(RdfLiteral, property_count).toPython(),
+            }
+            for type_, instance_count, property_count in list(
+                cast(list[ResultRow], self.graph(named_graph).query(query))
+            )
+        ]
+
     def list_instances_ids_by_space(
         self, space_property: URIRef, named_graph: URIRef | None = None
     ) -> Iterable[tuple[URIRef, str]]:
