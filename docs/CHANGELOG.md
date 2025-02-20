@@ -24,6 +24,11 @@ Changes are grouped as follows:
   label.dataSetId.
 - The `neat.read.cdf.graph()` extracts json as a json-string instead of a regular string.
 - The `neat.read.cdf.graph()` has start and endNode properties for edges.
+- Now DMS rules validation are checked for existence of all components of schema, raise error if at least one is missing
+
+### Added
+- Enable data model to be composed of views from multiple spaces with warning being raised
+
 
 ## [0.110.0] - 17-02-**2025**
 ### Added
