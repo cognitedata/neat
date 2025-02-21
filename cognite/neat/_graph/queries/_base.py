@@ -1,3 +1,4 @@
+import urllib.parse
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any, Literal, cast, overload
@@ -396,7 +397,7 @@ class Queries:
                 ORDER BY DESC(?instanceCount)"""
         return [
             {
-                "type": remove_namespace_from_uri(type_) if remove_namespace else type_,
+                "type": urllib.parse.unquote(remove_namespace_from_uri(type_)) if remove_namespace else type_,
                 "instanceCount": cast(RdfLiteral, instance_count).toPython(),
                 "propertyCount": cast(RdfLiteral, property_count).toPython(),
             }
@@ -422,8 +423,8 @@ GROUP BY ?type ?property
 ORDER BY ASC(?type) ASC(?property)"""
         return [
             {
-                "type": remove_namespace_from_uri(type_) if remove_namespace else type_,
-                "property": remove_namespace_from_uri(property) if remove_namespace else property,
+                "type": urllib.parse.unquote(remove_namespace_from_uri(type_)) if remove_namespace else type_,
+                "property": urllib.parse.unquote(remove_namespace_from_uri(property)) if remove_namespace else property,
                 "instanceCount": cast(RdfLiteral, instance_count).toPython(),
                 "total": instance_count_by_type[type_],
             }
