@@ -1,9 +1,40 @@
 instances:
+- externalId: ClassicSourceSystem_manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer1
+    source:
+      externalId: NeatIncSourceSystem
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncSourceSystem
+    space: sp_windfarm_enterprise
+- externalId: ClassicSourceSystem_manufacturer2
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer2
+    source:
+      externalId: NeatIncSourceSystem
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncSourceSystem
+    space: sp_windfarm_enterprise
 - externalId: Measurement
   instanceType: node
   sources:
   - properties:
       classicExternalId: Measurement
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Measurement
       name: Measurement
     source:
@@ -21,9 +52,18 @@ instances:
   - properties:
       assetCategory: MetMast
       classicExternalId: MetMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Meteorological mast
       height: 100
       name: MetMast
+      parent:
+        externalId: Unknown asset
+        space: sp_windfarm_dataset
+      source:
+        externalId: ClassicSourceSystem_manufacturer2
+        space: sp_windfarm_dataset
       tags:
       - Label_Measurement
       - Label_metMast
@@ -41,6 +81,9 @@ instances:
   sources:
   - properties:
       classicExternalId: PowerGeneratingUnit
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Power generating unit
       name: Power generating unit
     source:
@@ -58,8 +101,14 @@ instances:
   - properties:
       assetCategory: WindFarm
       classicExternalId: Utsira
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Utsira wind farm
       name: Utsira
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
     source:
@@ -77,12 +126,18 @@ instances:
   - properties:
       assetCategory: Turbine
       classicExternalId: WT-01
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Wind turbine 01
       maxCapacity: 3
       name: WT-01
       parent:
         externalId: Utsira
         space: source_ds
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
@@ -104,8 +159,14 @@ instances:
       - externalId: WT-01
         space: source_ds
       classicExternalId: WT-01_datasheet
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       fileCategory: DataSheet
       name: WT-01_datasheet.txt
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
     source:
       externalId: NeatIncFile
       space: sp_windfarm_enterprise
@@ -123,6 +184,9 @@ instances:
       - externalId: WT-01
         space: source_ds
       classicExternalId: WT-01_forecast
+      dataSetId:
+        externalId: usecase_01
+        space: sp_windfarm_dataset
       description: WT-01 forecast
       isStep: false
       name: WT-01 forecast
@@ -148,6 +212,9 @@ instances:
       - externalId: WT-01
         space: source_ds
       classicExternalId: WT-01_production
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: WT-01 production
       isStep: false
       name: WT-01 production
@@ -173,6 +240,9 @@ instances:
   sources:
   - properties:
       classicExternalId: WT-01_to_MetMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       neatIncRelationshipLabels:
         externalId: metMast
         space: source_ds
@@ -196,12 +266,18 @@ instances:
   - properties:
       assetCategory: Turbine
       classicExternalId: WT-02
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Wind turbine 02
       maxCapacity: 3
       name: WT-02
       parent:
         externalId: Utsira
         space: source_ds
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
       - Label_WindTurbine
@@ -223,6 +299,9 @@ instances:
       - externalId: WT-02
         space: source_ds
       classicExternalId: WT-02_forecast
+      dataSetId:
+        externalId: usecase_01
+        space: sp_windfarm_dataset
       description: WT-02 forecast
       isStep: false
       name: WT-02 forecast
@@ -248,6 +327,9 @@ instances:
       - externalId: WT-02
         space: source_ds
       classicExternalId: WT-02_production
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: WT-02 production
       isStep: false
       name: WT-02 production
@@ -273,6 +355,9 @@ instances:
   sources:
   - properties:
       classicExternalId: WT-02_to_MetMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       neatIncRelationshipLabels:
         externalId: metMast
         space: source_ds
@@ -295,6 +380,9 @@ instances:
   sources:
   - properties:
       classicExternalId: WindTurbine
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Wind turbine
       name: Wind turbine
     source:
@@ -306,11 +394,33 @@ instances:
   type:
     externalId: NeatIncLabel
     space: sp_windfarm_enterprise
+- externalId: maintenance
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: maintenance
+      description: Maintenance data set
+      information: here
+      name: Maintenance
+      some: other
+      writeProtected: true
+    source:
+      externalId: NeatIncDataSet
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncDataSet
+    space: sp_windfarm_enterprise
 - externalId: metMast
   instanceType: node
   sources:
   - properties:
       classicExternalId: metMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Meteorological mast
       name: Meteorological mast
     source:
@@ -331,8 +441,14 @@ instances:
         space: source_ds
       blob: data
       classicExternalId: planned:WT-01:2022-01-01
+      dataSetId:
+        externalId: maintenance
+        space: sp_windfarm_dataset
       description: Planned maintenance
       endTime: '1970-01-01T00:00:00.500+00:00'
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
       startTime: '1970-01-01T00:00:00.400+00:00'
       subtype: Planned
       type: Maintenance
@@ -369,6 +485,9 @@ instances:
           blob: data
         name: Wind speed
         valueType: DOUBLE
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Power curve from manufacturer 1
       name: Power curve Manufacturer 1
       turbineType: V112/3075
@@ -380,6 +499,44 @@ instances:
   space: source_ds
   type:
     externalId: NeatIncSequence
+    space: sp_windfarm_enterprise
+- externalId: source_ds
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: source_ds
+      description: Source data set
+      information: here
+      name: Source DS
+      some: extra
+      writeProtected: true
+    source:
+      externalId: NeatIncDataSet
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncDataSet
+    space: sp_windfarm_enterprise
+- externalId: usecase_01
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: usecase_01
+      description: Usecase 01 data set
+      information: here
+      name: Usecase 01
+      some: other
+      writeProtected: false
+    source:
+      externalId: NeatIncDataSet
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncDataSet
     space: sp_windfarm_enterprise
 rules:
   containers:
@@ -497,6 +654,10 @@ rules:
   - container: NeatIncAsset
     used_for: node
   - container: NeatIncAsset
+    used_for: node
+  - container: NeatIncDataSet
+    used_for: node
+  - container: NeatIncDataSet
     used_for: node
   - container: NeatIncEquipment
     used_for: node
@@ -3062,6 +3223,15 @@ rules:
     value_type: text
     view: NeatIncDataSet
     view_property: description
+  - container: NeatIncDataSet
+    container_property: information
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/information
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/information
+    nullable: true
+    value_type: text
+    view: NeatIncDataSet
+    view_property: information
   - container: ClassicDataSet
     container_property: name
     immutable: false
@@ -3072,6 +3242,15 @@ rules:
     value_type: text
     view: NeatIncDataSet
     view_property: name
+  - container: NeatIncDataSet
+    container_property: some
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/some
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/some
+    nullable: true
+    value_type: text
+    view: NeatIncDataSet
+    view_property: some
   - container: ClassicDataSet
     container_property: writeProtected
     immutable: false
