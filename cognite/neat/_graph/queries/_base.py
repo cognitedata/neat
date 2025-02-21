@@ -431,6 +431,32 @@ ORDER BY ASC(?type) ASC(?property)"""
             for type_, property, instance_count in list(cast(list[ResultRow], self.graph(named_graph).query(query)))
         ]
 
+    @overload
+    def instances_with_properties(
+        self, type: URIRef, remove_namespace: Literal[False], named_graph: URIRef | None = None
+    ) -> dict[URIRef, set[URIRef]]: ...
+
+    @overload
+    def instances_with_properties(
+        self, type: URIRef, remove_namespace: Literal[True], named_graph: URIRef | None = None
+    ) -> dict[str, set[str]]: ...
+
+    def instances_with_properties(
+        self, type: URIRef, remove_namespace: bool = True, named_graph: URIRef | None = None
+    ) -> dict[str, set[str]] | dict[URIRef, set[URIRef]]:
+        query = """SELECT DISTINCT ?instance ?property
+WHERE {{
+    ?instance a <{type}> .
+    ?instance ?property ?value .
+    FILTER(?property != rdf:type)
+}}"""
+        result = defaultdict(set)
+        for instance, property_ in cast(Iterable[ResultRow], self.graph(named_graph).query(query.format(type=type))):
+            instance_str = urllib.parse.unquote(remove_namespace_from_uri(instance)) if remove_namespace else instance
+            property_str = urllib.parse.unquote(remove_namespace_from_uri(property_)) if remove_namespace else property_
+            result[instance_str].add(property_str)
+        return result
+
     def list_instances_ids_by_space(
         self, space_property: URIRef, named_graph: URIRef | None = None
     ) -> Iterable[tuple[URIRef, str]]:
