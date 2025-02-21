@@ -28,9 +28,8 @@ class Queries:
         """Get named graph from the dataset to query over"""
         return self.dataset.graph(named_graph or self.default_named_graph)
 
-    def summarize_instances(self, named_graph: URIRef | None = None) -> list[tuple]:
+    def summarize_instances(self, named_graph: URIRef | None = None) -> list[tuple[str, int]]:
         """Summarize instances in the graph store by class and count"""
-
         query_statement = """ SELECT ?class (COUNT(?instance) AS ?instanceCount)
                              WHERE {
                              ?instance a ?class .
@@ -38,12 +37,12 @@ class Queries:
                              GROUP BY ?class
                              ORDER BY DESC(?instanceCount) """
 
-        return [
+        return [  # type: ignore[misc]
             (
-                remove_namespace_from_uri(cast(URIRef, cast(tuple, res)[0])),
-                cast(RdfLiteral, cast(tuple, res)[1]).value,
+                remove_namespace_from_uri(cast(URIRef, class_)),
+                cast(RdfLiteral, count).value,
             )
-            for res in list(self.graph(named_graph=named_graph).query(query_statement))
+            for class_, count in self.graph(named_graph=named_graph).query(query_statement)
         ]
 
     def types(self, named_graph: URIRef | None = None) -> dict[URIRef, str]:
@@ -129,41 +128,6 @@ class Queries:
             query += f" LIMIT {limit}"
         # MyPy is not very happy with RDFLib, so just ignore the type hinting here
         return (tuple(res) if class_uri is None else res[0] for res in self.graph(named_graph).query(query))  # type: ignore[index, return-value, arg-type]
-
-    def instance_count(self, class_uri: URIRef | None = None, named_graph: URIRef | None = None) -> int:
-        """Aggregate instance count
-
-        Args:
-            class_uri: Class for which instances are to be found, default None (all instances)
-            named_graph: Named graph to query over, default None (default graph)
-
-        Returns:
-            Count of instances
-        """
-        query = "SELECT (COUNT(DISTINCT ?subject) as ?count)"
-        if class_uri:
-            query += f" WHERE {{ ?subject a <{class_uri}> .}}"
-        else:
-            query += " WHERE {{ ?subject a ?type .}}"
-        return int(next(iter(self.graph(named_graph).query(query)))[0])  # type: ignore[arg-type, index]
-
-    def list_instances_of_type(self, class_uri: URIRef, named_graph: URIRef | None = None) -> list[ResultRow]:
-        """Get all triples for instances of a given class
-
-        Args:
-            class_uri: Class for which instances are to be found
-            named_graph: Named graph to query over, default None (default graph)
-
-        Returns:
-            List of triples for instances of the given class in the named graph
-        """
-        query = (
-            f"SELECT ?instance ?prop ?value "
-            f"WHERE {{ ?instance rdf:type <{class_uri}> . ?instance ?prop ?value . }} order by ?instance "
-        )
-
-        # Select queries gives an iterable of result rows
-        return cast(list[ResultRow], list(self.graph(named_graph).query(query)))
 
     def type_with_property(self, type_: URIRef, property_uri: URIRef, named_graph: URIRef | None = None) -> bool:
         """Check if a property exists in the graph store

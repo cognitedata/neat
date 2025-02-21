@@ -311,7 +311,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not self.neat_prefix_by_type_uri:
             return
 
-        count = self.graph_store.queries.instance_count()
+        count = sum(count for _, count in self.graph_store.queries.summarize_instances())
         instance_iterable = self.graph_store.queries.list_instances_ids()
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, count, f"Looking up identifiers for {count} instances..."
