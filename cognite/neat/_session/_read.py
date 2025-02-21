@@ -244,6 +244,7 @@ class CDFClassicAPI(BaseReadAPI):
             skip_sequence_rows=skip_sequence_rows,
         )
         self._state.instances.neat_prefix_by_predicate_uri.update(extractor.neat_prefix_by_predicate_uri)
+        self._state.instances.neat_prefix_by_type_uri.update(extractor.neat_prefix_by_type_uri)
         extract_issues = self._state.write_graph(extractor)
         if identifier == "externalId":
             self._state.quoted_source_identifiers = True
