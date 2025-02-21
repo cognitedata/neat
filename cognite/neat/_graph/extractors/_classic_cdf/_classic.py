@@ -144,16 +144,21 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             self._namespace["rootId"]: InstanceIdPrefix.asset,
             self._namespace["labels"]: InstanceIdPrefix.label,
         }
-        self.neat_prefix_by_type_uri = {
-            self._namespace[AssetsExtractor._default_rdf_type]: InstanceIdPrefix.asset,
-            self._namespace[TimeSeriesExtractor._default_rdf_type]: InstanceIdPrefix.time_series,
-            self._namespace[SequencesExtractor._default_rdf_type]: InstanceIdPrefix.sequence,
-            self._namespace[EventsExtractor._default_rdf_type]: InstanceIdPrefix.event,
-            self._namespace[FilesExtractor._default_rdf_type]: InstanceIdPrefix.file,
-            self._namespace[RelationshipsExtractor._default_rdf_type]: InstanceIdPrefix.relationship,
-            self._namespace[LabelsExtractor._default_rdf_type]: InstanceIdPrefix.label,
-            self._namespace[DataSetExtractor._default_rdf_type]: InstanceIdPrefix.data_set,
-        }
+        self.neat_prefix_by_type_uri: dict[URIRef, str] = {}
+        for extractor_cls, type_prefix in [
+            (AssetsExtractor, InstanceIdPrefix.asset),
+            (TimeSeriesExtractor, InstanceIdPrefix.time_series),
+            (SequencesExtractor, InstanceIdPrefix.sequence),
+            (EventsExtractor, InstanceIdPrefix.event),
+            (FilesExtractor, InstanceIdPrefix.file),
+            (RelationshipsExtractor, InstanceIdPrefix.relationship),
+            (LabelsExtractor, InstanceIdPrefix.label),
+            (DataSetExtractor, InstanceIdPrefix.data_set),
+        ]:
+            rdf_type = extractor_cls._default_rdf_type  # type: ignore[attr-defined]
+            if prefix:
+                rdf_type = f"{prefix}{rdf_type}"
+            self.neat_prefix_by_type_uri[self._namespace[rdf_type]] = type_prefix
 
     def _get_activity_names(self) -> list[str]:
         activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
