@@ -539,7 +539,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             sources = [
                 dm.NodeOrEdgeData(
                     projection.view_id,
-                    projection.pydantic_cls.model_validate(properties).model_dump(exclude_unset=True),
+                    projection.pydantic_cls.model_validate(properties).model_dump(
+                        exclude_unset=True, exclude_none=True
+                    ),
                 )
             ]
         for issue in property_issues:
