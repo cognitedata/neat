@@ -263,7 +263,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             "created_time",
             "last_updated_time",
         } and isinstance(raw, int):
-            return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            try:
+                return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            except OSError as e:
+                warnings.warn(NeatValueWarning(f"Failed to convert timestamp {raw} to datetime: {e}"), stacklevel=2)
+                return Literal(raw)
         elif key == "labels":
             from ._labels import LabelsExtractor
 
