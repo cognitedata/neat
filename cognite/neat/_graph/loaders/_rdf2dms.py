@@ -509,7 +509,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         instance_uri: URIRef,
         properties: dict[str | InstanceType, list[Any]],
         projection: _Projection,
-        stop_on_exception: bool = False,
+        stop_on_exception: Literal[True, False] = False,
         exclude: set[str] | None = None,
         include: set[str] | None = None,
     ) -> Iterable[dm.InstanceApply | NeatIssue]:
@@ -593,7 +593,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         identifier: str,
         properties: dict[str | InstanceType, list[str] | list[URIRef]],
         projection: _Projection,
-        stop_on_exception: bool,
+        stop_on_exception: Literal[True, False],
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for predicate, values in properties.items():
             if predicate in projection.edge_by_type:
