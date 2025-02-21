@@ -88,6 +88,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf._graph(
             ("sp_windfarm", "WindFarm", "v1"),
+            instance_space=["sp_windfarm_dataset", "usecase_01", "source_ds", "maintenance"],
             unpack_json=True,
             str_to_ideal_type=True,
         )
@@ -110,6 +111,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf._graph(
             ("sp_windfarm", "WindFarm", "v1"),
+            instance_space=["sp_windfarm_dataset", "usecase_01", "source_ds", "maintenance"],
             unpack_json=True,
             str_to_ideal_type=True,
         )
