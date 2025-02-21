@@ -26,6 +26,9 @@ Changes are grouped as follows:
 - The `neat.read.cdf.graph()` has start and endNode properties for edges.
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
 
+### Added
+- The `neat.set.data_model_id()` now also sets the display name of the data model.
+
 ## [0.110.0] - 17-02-**2025**
 ### Added
 - Validation of DMS rules does not allow re-definition of any of the resources
