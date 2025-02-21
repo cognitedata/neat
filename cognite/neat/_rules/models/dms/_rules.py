@@ -168,6 +168,21 @@ class DMSProperty(SheetRow):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
 
+    @field_validator("default", mode="after")
+    def set_proper_type_on_default(cls, value: Any, info: ValidationInfo) -> Any:
+        if not value:
+            return value
+        value_type = info.data.get("value_type")
+        if not isinstance(value_type, DataType):
+            print(f"Default value {value} set to connection {value_type} will be ignored")
+            return None
+        else:
+            try:
+                return value_type.convert_value(value)
+            except ValueError:
+                print(f"Could not convert {value} to {value_type}")
+                return None
+
     @field_validator("container", "container_property", mode="after")
     def container_set_correctly(cls, value: Any, info: ValidationInfo) -> Any:
         if (connection := info.data.get("connection")) is None:
