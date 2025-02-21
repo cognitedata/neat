@@ -129,7 +129,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self._instance_space = instance_space
         self._space_property = space_property
         self._use_source_space = use_source_space
-        self._space_by_external_id: dict[str, str] = defaultdict(lambda: instance_space)
+        self._space_by_instance_uri: dict[URIRef, str] = defaultdict(lambda: instance_space)
         self._external_id_by_uri: dict[URIRef, str] = {}
         self._issues = IssueList(create_issues or [])
         self._client = client
@@ -189,7 +189,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             reader = self.graph_store.read(
                 query.rdf_type,
                 property_renaming_config=query.property_renaming_config,
-                remove_uri_namespace=not self._use_source_space,
+                remove_uri_namespace=False,
             )
             instance_iterable = iterate_progress_bar_if_above_config_threshold(
                 reader, it.instance_count, f"Loading {it.view_id!r}"
@@ -299,9 +299,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         neat_prefix = self.neat_prefix_by_predicate_uri.get(space_property_uri)
         warned_spaces: set[str] = set()
         for instance, space in instance_iterable:
-            identifier = remove_namespace_from_uri(instance)
-            if self._unquote_external_ids:
-                identifier = urllib.parse.unquote(identifier)
             if neat_prefix:
                 space = space.removeprefix(neat_prefix)
 
@@ -314,7 +311,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 )
                 warned_spaces.add(space)
 
-            self._space_by_external_id[identifier] = clean_space
+            self._space_by_instance_uri[instance] = clean_space
         return issues
 
     def _lookup_identifier_by_uri(self) -> None:
@@ -345,7 +342,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not self._client:
             return issues
 
-        instance_spaces = set(self._space_by_external_id.values()) - {self._instance_space}
+        instance_spaces = set(self._space_by_instance_uri.values()) - {self._instance_space}
         existing_spaces = {space.space for space in self._client.data_modeling.spaces.retrieve(list(instance_spaces))}
         if missing_spaces := (instance_spaces - existing_spaces):
             try:
@@ -496,8 +493,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             def parse_text(cls, value: Any, info: ValidationInfo) -> str | list[str]:
                 if isinstance(value, list):
-                    return [str(v) for v in value]
-                return str(value)
+                    return [remove_namespace_from_uri(v) if isinstance(v, URIRef) else str(v) for v in value]
+                return remove_namespace_from_uri(value) if isinstance(value, URIRef) else str(value)
 
             validators["parse_text"] = field_validator(*text_fields, mode="before")(parse_text)  # type: ignore[assignment, arg-type]
 
@@ -611,7 +608,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 yield error
                 continue
             for target in values:
-                target_id = self._create_instance_id(target, "edge", stop_on_exception)
+                target_id = self._create_instance_id(target, "edge", stop_on_exception)  # type: ignore[call-overload]
                 if not isinstance(target_id, InstanceId):
                     yield target_id
                     continue
@@ -636,7 +633,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     @staticmethod
     def _pop_start_end_node(
         properties: dict[str | InstanceType, list[str] | list[URIRef]],
-    ) -> tuple[URIRef | str, URIRef | str] | tuple[None, None]:
+    ) -> tuple[URIRef, URIRef] | tuple[None, None]:
         start_node = properties.pop("startNode", [None])[0]
         if not start_node:
             start_node = properties.pop("start_node", [None])[0]
@@ -644,48 +641,43 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not end_node:
             end_node = properties.pop("end_node", [None])[0]
         if start_node and end_node:
-            return start_node, end_node
+            return start_node, end_node  # type: ignore[return-value]
         return None, None
 
     @overload
     def _create_instance_id(
-        self, raw: Any, instance_type: str, stop_on_exception: Literal[False] = False
+        self, uri: URIRef, instance_type: str, stop_on_exception: Literal[False] = False
     ) -> InstanceId | NeatError: ...
 
     @overload
     def _create_instance_id(
-        self, raw: Any, instance_type: str, stop_on_exception: Literal[True] = True
+        self, uri: URIRef, instance_type: str, stop_on_exception: Literal[True] = True
     ) -> InstanceId: ...
 
     def _create_instance_id(
-        self, raw: Any, instance_type: str, stop_on_exception: bool = False
+        self, uri: URIRef, instance_type: str, stop_on_exception: bool = False
     ) -> InstanceId | NeatError:
         space: str | None = None
         external_id: str | None = None
         error: NeatError | None = None
-        if self._use_source_space and isinstance(raw, URIRef):
-            namespace, external_id = split_uri(raw)
+        if self._use_source_space:
+            namespace, external_id = split_uri(uri)
             space = namespace_as_space(namespace)
             if space is None:
-                error = ResourceCreationError(raw, instance_type, f"Could not find space for {raw!s}.")
-        elif self._use_source_space:
-            error = ResourceCreationError(raw, instance_type, f"Expected URIRef, got {type(raw).__name__}.")
+                error = ResourceCreationError(uri, instance_type, f"Could not find space for {uri!s}.")
         else:
-            if isinstance(raw, URIRef):
-                if raw in self._external_id_by_uri:
-                    external_id = self._external_id_by_uri[raw]
-                else:
-                    external_id = remove_namespace_from_uri(raw)
+            space = self._space_by_instance_uri[uri]
+            if uri in self._external_id_by_uri:
+                external_id = self._external_id_by_uri[uri]
             else:
-                external_id = str(raw)
-            space = self._space_by_external_id[external_id]
+                external_id = remove_namespace_from_uri(uri)
 
         if external_id and self._unquote_external_ids:
             external_id = urllib.parse.unquote(external_id)
         if space and external_id:
             return InstanceId(space, external_id)
         if error is None:
-            raise ValueError(f"Bug in neat. Failed to create instance ID and determine error for {raw!r}")
+            raise ValueError(f"Bug in neat. Failed to create instance ID and determine error for {uri!r}")
         if stop_on_exception:
             raise error
         return error
