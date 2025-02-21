@@ -97,23 +97,44 @@ class Queries:
         """
         return [k for k, v in self.properties(named_graph).items() if v == property_]
 
-    def list_instances_ids_of_class(
-        self, class_uri: URIRef, limit: int = -1, named_graph: URIRef | None = None
-    ) -> list[URIRef]:
-        """Get instances ids for a given class
+    def list_instances_ids(
+        self, class_uri: URIRef | None = None, limit: int = -1, named_graph: URIRef | None = None
+    ) -> Iterable[URIRef]:
+        """List all instance IDs
 
         Args:
-            class_uri: Class for which instances are to be found
+            class_uri: Class for which instances are to be found, default None (all instances)
             limit: Max number of instances to return, by default -1 meaning all instances
             named_graph: Named graph to query over, default None (default graph)
 
         Returns:
             List of class instance URIs
         """
-        query_statement = "SELECT DISTINCT ?subject WHERE { ?subject a <class> .} LIMIT X".replace(
-            "class", class_uri
-        ).replace("LIMIT X", "" if limit == -1 else f"LIMIT {limit}")
-        return [cast(tuple, res)[0] for res in list(self.graph(named_graph).query(query_statement))]
+        query = "SELECT DISTINCT ?subject"
+        if class_uri:
+            query += f" WHERE {{ ?subject a <{class_uri}> .}}"
+        else:
+            query += " WHERE {{ ?subject a ?type .}}"
+        if limit != -1:
+            query += f" LIMIT {limit}"
+        return (cast(URIRef, res[0]) for res in self.graph(named_graph).query(query))  # type: ignore[index]
+
+    def aggregate_instance_count(self, class_uri: URIRef | None = None, named_graph: URIRef | None = None) -> int:
+        """Aggregate instance count
+
+        Args:
+            class_uri: Class for which instances are to be found, default None (all instances)
+            named_graph: Named graph to query over, default None (default graph)
+
+        Returns:
+            Count of instances
+        """
+        query = "SELECT (COUNT(DISTINCT ?subject) as ?count)"
+        if class_uri:
+            query += f" WHERE {{ ?subject a <{class_uri}> .}}"
+        else:
+            query += " WHERE {{ ?subject a ?type .}}"
+        return int(next(iter(self.graph(named_graph).query(query)))[0])  # type: ignore[arg-type, index]
 
     def list_instances_of_type(self, class_uri: URIRef, named_graph: URIRef | None = None) -> list[ResultRow]:
         """Get all triples for instances of a given class
@@ -351,7 +372,7 @@ class Queries:
         """
         dropped_types: dict[URIRef, int] = {}
         for t in type_:
-            instance_ids = self.list_instances_ids_of_class(t)
+            instance_ids = list(self.list_instances_ids(t))
             dropped_types[t] = len(instance_ids)
             remove_instance_ids_in_batch(self.graph(named_graph), instance_ids)
         return dropped_types

@@ -118,11 +118,13 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
         neat_prefix_by_predicate_uri: dict[URIRef, str] | None = None,
+        neat_prefix_by_type_uri: dict[URIRef, str] | None = None,
     ):
         super().__init__(graph_store)
         self.dms_rules = dms_rules
         self.info_rules = info_rules
         self.neat_prefix_by_predicate_uri = neat_prefix_by_predicate_uri or {}
+        self.neat_prefix_by_type_uri = neat_prefix_by_type_uri or {}
         self._instance_space = instance_space
         self._space_property = space_property
         self._use_source_space = use_source_space
@@ -171,8 +173,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     raise space_creation.as_exception()
                 yield from space_creation.errors
 
-        if self.neat_prefix_by_predicate_uri:
-            self._try_remove_prefixes()
+        if self.neat_prefix_by_type_uri:
+            self._lookup_identifier_by_uri()
 
         for it in view_iterations:
             view = it.view
@@ -313,8 +315,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             self._space_by_uri[identifier] = clean_space
         return issues
 
-    def _try_remove_prefixes(self) -> None:
-        raise NotImplementedError()
+    def _lookup_identifier_by_uri(self) -> None: ...
 
     def _create_instance_space_if_not_exists(self) -> IssueList:
         issues = IssueList()
