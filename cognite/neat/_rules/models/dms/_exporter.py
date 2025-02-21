@@ -119,14 +119,9 @@ class _DMSExporter:
             {container.space for container in containers.values()}
             | {view.space for view in views.values()}
             | {data_model.space}
+            | {metadata.space}
         )
-        if len(used_spaces) == 1:
-            # We skip the default space and only use this space for the data model
-            data_model.space = used_spaces.pop()
-            spaces = SpaceApplyDict([dm.SpaceApply(space=data_model.space)])
-        else:
-            used_spaces.add(metadata.space)
-            spaces = SpaceApplyDict([dm.SpaceApply(space=space) for space in used_spaces])
+        spaces = SpaceApplyDict([dm.SpaceApply(space=space) for space in used_spaces])
         if self.instance_space and self.instance_space not in spaces:
             spaces[self.instance_space] = dm.SpaceApply(space=self.instance_space, name=self.instance_space)
         return spaces
