@@ -116,7 +116,7 @@ class DMSProperty(SheetRow):
         description="Used to indicate whether the property holds single or multiple values (list). "
         "Only applies to primitive types.",
     )
-    default: str | int | dict | None = Field(
+    default: bool | str | int | float | dict | None = Field(
         None, alias="Default", description="Specifies default value for the property."
     )
     container: ContainerEntityType | None = Field(
