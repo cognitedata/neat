@@ -121,6 +121,7 @@ class _DMSExporter:
             | {data_model.space}
             | {metadata.space}
         )
+
         spaces = SpaceApplyDict([dm.SpaceApply(space=space) for space in used_spaces])
         if self.instance_space and self.instance_space not in spaces:
             spaces[self.instance_space] = dm.SpaceApply(space=self.instance_space, name=self.instance_space)
