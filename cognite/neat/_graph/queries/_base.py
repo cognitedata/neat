@@ -99,13 +99,13 @@ class Queries:
 
     @overload
     def list_instances_ids(
-        self, class_uri: URIRef, limit: int = -1, named_graph: URIRef | None = None
-    ) -> Iterable[URIRef]: ...
+        self, class_uri: None = None, limit: int = -1, named_graph: URIRef | None = None
+    ) -> Iterable[tuple[URIRef, URIRef]]: ...
 
     @overload
     def list_instances_ids(
-        self, class_uri: None = None, limit: int = -1, named_graph: URIRef | None = None
-    ) -> Iterable[tuple[URIRef, URIRef]]: ...
+        self, class_uri: URIRef, limit: int = -1, named_graph: URIRef | None = None
+    ) -> Iterable[URIRef]: ...
 
     def list_instances_ids(
         self, class_uri: URIRef | None = None, limit: int = -1, named_graph: URIRef | None = None
@@ -128,7 +128,7 @@ class Queries:
         if limit != -1:
             query += f" LIMIT {limit}"
         # MyPy is not very happy with RDFLib, so just ignore the type hinting here
-        return (res[0] if class_uri is None else tuple(res) for res in self.graph(named_graph).query(query))  # type: ignore[index, return-value, arg-type]
+        return (tuple(res) if class_uri is None else res[0] for res in self.graph(named_graph).query(query))  # type: ignore[index, return-value, arg-type]
 
     def instance_count(self, class_uri: URIRef | None = None, named_graph: URIRef | None = None) -> int:
         """Aggregate instance count
