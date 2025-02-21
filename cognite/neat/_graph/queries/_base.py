@@ -97,9 +97,19 @@ class Queries:
         """
         return [k for k, v in self.properties(named_graph).items() if v == property_]
 
+    @overload
+    def list_instances_ids(
+        self, class_uri: URIRef, limit: int = -1, named_graph: URIRef | None = None
+    ) -> Iterable[URIRef]: ...
+
+    @overload
+    def list_instances_ids(
+        self, class_uri: None = None, limit: int = -1, named_graph: URIRef | None = None
+    ) -> Iterable[tuple[URIRef, URIRef]]: ...
+
     def list_instances_ids(
         self, class_uri: URIRef | None = None, limit: int = -1, named_graph: URIRef | None = None
-    ) -> Iterable[URIRef]:
+    ) -> Iterable[URIRef] | Iterable[tuple[URIRef, URIRef]]:
         """List all instance IDs
 
         Args:
@@ -114,12 +124,13 @@ class Queries:
         if class_uri:
             query += f" WHERE {{ ?subject a <{class_uri}> .}}"
         else:
-            query += " WHERE {{ ?subject a ?type .}}"
+            query += " ?type WHERE {{ ?subject a ?type .}}"
         if limit != -1:
             query += f" LIMIT {limit}"
-        return (cast(URIRef, res[0]) for res in self.graph(named_graph).query(query))  # type: ignore[index]
+        # MyPy is not very happy with RDFLib, so just ignore the type hinting here
+        return (res[0] if class_uri is None else tuple(res) for res in self.graph(named_graph).query(query))  # type: ignore[index, return-value, arg-type]
 
-    def aggregate_instance_count(self, class_uri: URIRef | None = None, named_graph: URIRef | None = None) -> int:
+    def instance_count(self, class_uri: URIRef | None = None, named_graph: URIRef | None = None) -> int:
         """Aggregate instance count
 
         Args:
