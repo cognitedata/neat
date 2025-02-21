@@ -40,11 +40,15 @@ class TestExtractToLoadFlow:
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.cdf.classic.graph("Utsira", identifier="externalId")
-        neat.convert()
-        neat.mapping.data_model.classic_to_core("Classic")
+        issues = neat.read.cdf.classic.graph("Utsira", identifier="externalId")
+        assert not issues.has_errors
+        issues = neat.convert()
+        assert not issues.has_errors
+        issues = neat.mapping.data_model.classic_to_core("Classic")
+        assert not issues.has_errors
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
-        instances, _ = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
+        instances, issues = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
+        assert not issues.has_errors
 
         rules_str = neat.to.yaml(format="neat")
 
@@ -84,6 +88,7 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf._graph(
             ("sp_windfarm", "WindFarm", "v1"),
+            instance_space=["sp_windfarm_dataset", "usecase_01", "source_ds", "maintenance"],
             unpack_json=True,
             str_to_ideal_type=True,
         )
@@ -106,13 +111,17 @@ class TestExtractToLoadFlow:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf._graph(
             ("sp_windfarm", "WindFarm", "v1"),
+            instance_space=["sp_windfarm_dataset", "usecase_01", "source_ds", "maintenance"],
             unpack_json=True,
             str_to_ideal_type=True,
         )
         neat.infer()
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
-        neat.to.cdf.data_model(existing="force")
-        neat.to.cdf._instances(use_source_space=True)
+        result = neat.to.cdf.data_model(existing="force")
+        assert not any(res.error_messages for res in result)
+        instance_result = neat.to.cdf._instances(use_source_space=True)
+        errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
+        assert not errors, errors
 
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)

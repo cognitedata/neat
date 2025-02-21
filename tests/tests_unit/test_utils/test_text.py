@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat._utils.text import to_camel_case
+from cognite.neat._utils.text import NamingStandardization, to_camel_case
 
 
 class TestToCamel:
@@ -19,3 +19,17 @@ class TestToCamel:
     )
     def test_to_camel(self, actual: str, expected: str) -> None:
         assert to_camel_case(actual) == expected
+
+
+class TestNamingStandardization:
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("long" * 43, ("long" * 43)[:43]),
+            ("space", "my_space"),
+            ("1_my_space", "sp_1_my_space"),
+            ("my-$@#@#-space", "my_space"),
+        ],
+    )
+    def test_space_standardization(self, raw: str, expected: str) -> None:
+        assert NamingStandardization.standardize_space_str(raw) == expected

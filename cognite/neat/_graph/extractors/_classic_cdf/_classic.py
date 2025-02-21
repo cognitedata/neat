@@ -133,6 +133,14 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._extracted_data_sets = False
         self._asset_external_ids_by_id: dict[int, str] = {}
         self._dataset_external_ids_by_id: dict[int, str] = {}
+        self.neat_prefix_by_predicate_uri: dict[URIRef, str] = {
+            self._namespace["dataSetId"]: InstanceIdPrefix.data_set,
+            self._namespace["assetId"]: InstanceIdPrefix.asset,
+            self._namespace["assetIds"]: InstanceIdPrefix.asset,
+            self._namespace["parentId"]: InstanceIdPrefix.asset,
+            self._namespace["rootId"]: InstanceIdPrefix.asset,
+            self._namespace["labels"]: InstanceIdPrefix.label,
+        }
 
     def _get_activity_names(self) -> list[str]:
         activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
@@ -273,7 +281,9 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 # This is a private attribute, but we need to set it to log the target nodes.
                 extractor._log_target_nodes = True
                 if self._identifier == "id":
-                    extractor._uri_by_external_id_by_by_type = self._uris_by_external_id_by_type
+                    extractor._uri_by_external_id_by_type = self._uris_by_external_id_by_type
+                elif self._identifier == "externalId":
+                    extractor.lookup_dataset_external_id = self._lookup_dataset
 
                 yield from extractor.extract()
 

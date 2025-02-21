@@ -304,6 +304,7 @@ class CDFToAPI:
             # In case urllib.parse.quote() was run on the extraction, we need to run
             # urllib.parse.unquote() on the load.
             unquote_external_ids=True,
+            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
         )
 
         result = loader.load_into_cdf(client)
@@ -402,6 +403,7 @@ class ToPythonAPI:
             space_property=space_from_property,
             use_source_space=use_source_space,
             unquote_external_ids=True,
+            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
         )
         issue_list = IssueList()
         instances: list[dm.InstanceApply] = []
