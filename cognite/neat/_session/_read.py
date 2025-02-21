@@ -259,6 +259,8 @@ class CDFClassicAPI(BaseReadAPI):
         self._state.instances.store.transform(
             LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
         )
+        # The above transformations creates a new type, so we need to update
+        self._state.instances.neat_prefix_by_type_uri.update({namespace["ClassicSourceSystem"]: "ClassicSourceSystem_"})
         # Updating the information model.
         prepare_issues = self._state.rule_store.transform(
             ClassicPrepareCore(namespace, reference_timeseries, reference_files)
