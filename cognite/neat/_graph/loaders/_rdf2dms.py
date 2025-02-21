@@ -82,13 +82,6 @@ class _Projection:
     edge_by_prop_id: dict[str, tuple[str, dm.EdgeConnection]]
 
 
-@dataclass
-class _InstanceID:
-    space: str
-    external_id: str
-    error: NeatIssue | None = None
-
-
 class DMSLoader(CDFLoader[dm.InstanceApply]):
     """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
 
