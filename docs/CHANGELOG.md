@@ -31,6 +31,7 @@ Changes are grouped as follows:
 
 ### Improved
 - Setting of proper value type for default
+- Errors that do not have loc are now well handled in neat session
 
 ## [0.110.0] - 17-02-**2025**
 ### Added
