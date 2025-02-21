@@ -35,7 +35,15 @@ def from_warning(warning: WarningMessage) -> NeatWarning:
 def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead]) -> NeatError:
     neat_error = _create_neat_value_error(error)
     location = error["loc"]
-    return SpreadsheetError.create(location, neat_error, read_info_by_sheet.get(cast(str, location[0])))
+
+    # only errors caused in model_validate will have location information
+    if location:
+        return SpreadsheetError.create(location, neat_error, read_info_by_sheet.get(cast(str, location[0])))
+
+    # errors that occur while for example parsing spreadsheet in input rules
+    # will not have location information so we return neat_error as is
+    # this is workaround until more elegant solution is found
+    return neat_error
 
 
 def _create_neat_value_error(error: ErrorDetails) -> NeatValueError:
