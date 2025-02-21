@@ -29,6 +29,7 @@ from cognite.neat._issues.errors import (
     ResourceNotFoundError,
 )
 from cognite.neat._issues.warnings import (
+    NeatValueWarning,
     PropertyDirectRelationLimitWarning,
     PropertyMultipleValueWarning,
     PropertyTypeNotSupportedWarning,
@@ -44,7 +45,7 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat._utils.text import NamingStandardization, humanize_collection
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
@@ -100,6 +101,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         client (NeatClient | None): This is used to lookup containers such that the loader
             creates instances in accordance with required constraints. Defaults to None.
         unquote_external_ids (bool): If True, the loader will unquote external ids before creating the instances.
+        neat_prefix_by_predicate_uri (dict[URIRef, str] | None): A dictionary that maps a predicate URIRef to a
+            prefix that Neat added to the object upon extraction. This is used to remove the prefix from the
+            object before creating the instance.
     """
 
     def __init__(
@@ -113,10 +117,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
+        neat_prefix_by_predicate_uri: dict[URIRef, str] | None = None,
     ):
         super().__init__(graph_store)
         self.dms_rules = dms_rules
         self.info_rules = info_rules
+        self.neat_prefix_by_predicate_uri = neat_prefix_by_predicate_uri or {}
         self._instance_space = instance_space
         self._space_property = space_property
         self._use_source_space = use_source_space
@@ -283,11 +289,25 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, total, f"Looking up spaces for {total} instances..."
         )
+        neat_prefix = self.neat_prefix_by_predicate_uri.get(space_property_uri)
+        warned_spaces: set[str] = set()
         for instance, space in instance_iterable:
             identifier = remove_namespace_from_uri(instance)
             if self._unquote_external_ids:
                 identifier = urllib.parse.unquote(identifier)
-            self._space_by_uri[identifier] = space
+            if neat_prefix:
+                space = space.removeprefix(neat_prefix)
+
+            clean_space = NamingStandardization.standardize_space_str(space)
+            if clean_space != space and space not in warned_spaces:
+                issues.append(
+                    NeatValueWarning(
+                        f"Invalid space in property {self._space_property}: {space}. Fixed to {clean_space}"
+                    )
+                )
+                warned_spaces.add(space)
+
+            self._space_by_uri[identifier] = clean_space
         return issues
 
     def _create_instance_space_if_not_exists(self) -> IssueList:
@@ -401,8 +421,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    external_ids = (remove_namespace_from_uri(v) for v in value)
-                    result = [{"space": self._space_by_uri[e], "externalId": e} for e in external_ids]
+                    space_identifier_pairs = (self._to_space_identifier(v, "node") for v in value)
+                    result = [{"space": pair.space, "externalId": pair.identifier} for pair in space_identifier_pairs]
+
                     # Todo: Account for max_list_limit
                     if len(result) <= DMS_DIRECT_RELATION_LIST_LIMIT:
                         return result
@@ -419,8 +440,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     result.sort(key=lambda x: (x["space"], x["externalId"]))
                     return result[:DMS_DIRECT_RELATION_LIST_LIMIT]
                 elif value:
-                    external_id = remove_namespace_from_uri(value[0])
-                    return {"space": self._space_by_uri[external_id], "externalId": external_id}
+                    pair = self._to_space_identifier(value[0], "node")
+                    return {"space": pair.space, "externalId": pair.identifier}
                 return {}
 
             validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
@@ -431,7 +452,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             def parse_direct_relation_to_unit(cls, value: Any, info: ValidationInfo) -> dict | list[dict]:
                 if value:
-                    return {"space": "cdf_cdm_units", "externalId": remove_namespace_from_uri(value[0])}
+                    external_id = remove_namespace_from_uri(value[0])
+                    if self._unquote_external_ids:
+                        external_id = urllib.parse.unquote(external_id)
+                    return {"space": "cdf_cdm_units", "externalId": external_id}
                 return {}
 
             validators["parse_direct_relation_to_unit"] = field_validator(*unit_properties, mode="before")(  # type: ignore[assignment]
@@ -594,7 +618,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         return None, None
 
     def _to_space_identifier(
-        self, raw: URIRef | str, instance_type: str, stop_on_exception: bool = False
+        self, raw: Any, instance_type: str, stop_on_exception: bool = False
     ) -> _SpaceIdentifierPair:
         error: ResourceCreationError | None = None
         if self._use_source_space:
@@ -615,7 +639,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if isinstance(raw, URIRef):
                 target_identifier = remove_namespace_from_uri(raw)
             else:
-                target_identifier = raw
+                target_identifier = str(raw)
             if self._unquote_external_ids:
                 target_identifier = urllib.parse.unquote(target_identifier)
             target_space = self._space_by_uri[target_identifier]

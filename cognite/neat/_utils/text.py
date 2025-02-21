@@ -1,7 +1,10 @@
 import re
 import urllib.parse
 from collections.abc import Collection
+from re import Pattern
 from typing import Any
+
+from cognite.neat._rules._constants import get_reserved_words
 
 
 def to_camel_case(string: str) -> str:
@@ -160,7 +163,8 @@ def humanize_collection(collection: Collection[Any], /, *, sort: bool = True) ->
 
 
 class NamingStandardization:
-    _clean_pattern = re.compile(r"[^a-zA-Z0-9_]+")
+    _letter_number_underscore = re.compile(r"[^a-zA-Z0-9_]+")
+    _letter_number_underscore_hyphen = re.compile(r"[^a-zA-Z0-9_-]+")
     _multi_underscore_pattern = re.compile(r"_+")
     _start_letter_pattern = re.compile(r"^[a-zA-Z]")
 
@@ -183,7 +187,24 @@ class NamingStandardization:
         return to_camel_case(clean)
 
     @classmethod
-    def _clean_string(cls, raw: str) -> str:
+    def standardize_space_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw, cls._letter_number_underscore_hyphen)
+        if not cls._start_letter_pattern.match(clean):
+            clean = f"sp_{clean}"
+        if clean in set(get_reserved_words("space")):
+            clean = f"my_{clean}"
+        if len(clean) > 43:
+            clean = clean[:43]
+        if not (clean[-1].isalnum()) and len(clean) == 43:
+            clean = f"{clean[:-1]}x"
+        elif not clean[-1].isalnum():
+            clean = f"{clean}x"
+        if not clean:
+            raise ValueError("Space name must contain at least one letter.")
+        return to_snake_case(clean)
+
+    @classmethod
+    def _clean_string(cls, raw: str, clean_pattern: Pattern[str] = _letter_number_underscore) -> str:
         raw = urllib.parse.unquote(raw)
-        raw = cls._clean_pattern.sub("_", raw)
+        raw = clean_pattern.sub("_", raw)
         return cls._multi_underscore_pattern.sub("_", raw)
