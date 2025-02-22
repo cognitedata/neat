@@ -183,6 +183,7 @@ class CDFReadAPI(BaseReadAPI):
             self._get_client,
             db_name=db_name,
             table_name=table_name,
+            table_type=type,
             unpack_json=unpack_json,
             str_to_ideal_type=str_to_ideal_type,
         )
