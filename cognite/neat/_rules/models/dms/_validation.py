@@ -27,10 +27,12 @@ from cognite.neat._issues.errors import (
     ResourceNotFoundError,
     ReversedConnectionNotFeasibleError,
 )
+from cognite.neat._issues.errors._external import CDFMissingResourcesError
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
     UndefinedViewWarning,
+    user_modeling,
 )
 from cognite.neat._issues.warnings.user_modeling import (
     ContainerPropertyLimitWarning,
@@ -114,6 +116,14 @@ class DMSValidation:
                 list(imported_containers), include_connected=True
             )
 
+            missing_views = {view.as_id() for view in imported_views} - {view.as_id() for view in referenced_views}
+            missing_containers = {container.as_id() for container in imported_containers} - {
+                container.as_id() for container in referenced_containers
+            }
+
+            if missing_views or missing_containers:
+                raise CDFMissingResourcesError(resources=f"{missing_views.union(missing_containers)}")
+
         # Setup data structures for validation
         dms_schema = self._rules.as_schema()
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
@@ -153,6 +163,26 @@ class DMSValidation:
         )
         issue_list.extend(self._validate_schema(dms_schema, all_views_by_id, all_containers_by_id))
         issue_list.extend(self._validate_referenced_container_limits(dms_schema.views, view_properties_by_id))
+        issue_list.extend(self._same_space_views_and_data_model())
+        return issue_list
+
+    def _same_space_views_and_data_model(self) -> IssueList:
+        issue_list = IssueList()
+
+        schema = self._rules.as_schema(remove_cdf_spaces=True)
+
+        if schema.data_model:
+            data_model_space = schema.data_model.space
+            views_spaces = {view.space for view in schema.views.values()}
+
+            if data_model_space not in views_spaces:
+                issue_list.append(
+                    user_modeling.ViewsAndDataModelNotInSameSpaceWarning(
+                        data_model_space=data_model_space,
+                        views_spaces=humanize_collection(views_spaces),
+                    )
+                )
+
         return issue_list
 
     def _duplicated_resources(self) -> IssueList:
