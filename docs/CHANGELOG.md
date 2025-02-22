@@ -30,6 +30,7 @@ Changes are grouped as follows:
 ### Added
 - Enable data model to be composed of views from multiple spaces with warning being raised
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
+- The `neat.read.cdf.raw(...)` method which supports reading raw data from CDF.
 
 ## [0.110.0] - 17-02-**2025**
 ### Added

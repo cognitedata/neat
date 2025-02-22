@@ -13,7 +13,7 @@ from ._base import BaseExtractor
 from ._dict import DEFAULT_EMPTY_VALUES, DictExtractor
 
 
-class CDFRAWExtractor(BaseExtractor):
+class RAWExtractor(BaseExtractor):
     def __init__(
         self,
         client: NeatClient,
