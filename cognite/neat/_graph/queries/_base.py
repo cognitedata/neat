@@ -1,3 +1,4 @@
+import urllib.parse
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import Any, Literal, cast, overload
@@ -381,6 +382,80 @@ class Queries:
     def count_of_type(self, class_uri: URIRef, named_graph: URIRef | None = None) -> int:
         query = f"SELECT (COUNT(?instance) AS ?instanceCount) WHERE {{ ?instance a <{class_uri}> }}"
         return int(next(iter(self.graph(named_graph).query(query)))[0])  # type: ignore[arg-type, index]
+
+    def types_with_instance_and_property_count(
+        self, remove_namespace: bool = True, named_graph: URIRef | None = None
+    ) -> list[dict[str, Any]]:
+        query = """
+        SELECT ?type (COUNT(DISTINCT ?instance) AS ?instanceCount) (COUNT(DISTINCT ?property) AS ?propertyCount)
+                WHERE {
+                  ?instance a ?type .
+                  ?instance ?property ?value .
+                  FILTER(?property != rdf:type)
+                }
+                GROUP BY ?type
+                ORDER BY DESC(?instanceCount)"""
+        return [
+            {
+                "type": urllib.parse.unquote(remove_namespace_from_uri(type_)) if remove_namespace else type_,
+                "instanceCount": cast(RdfLiteral, instance_count).toPython(),
+                "propertyCount": cast(RdfLiteral, property_count).toPython(),
+            }
+            for type_, instance_count, property_count in list(
+                cast(list[ResultRow], self.graph(named_graph).query(query))
+            )
+        ]
+
+    def properties_with_count(
+        self, remove_namespace: bool = True, named_graph: URIRef | None = None
+    ) -> list[dict[str, Any]]:
+        instance_count_by_type = {
+            entry["type"]: entry["instanceCount"]
+            for entry in self.types_with_instance_and_property_count(remove_namespace=False, named_graph=named_graph)
+        }
+        query = """SELECT ?type ?property (COUNT(DISTINCT ?instance) AS ?instanceCount)
+WHERE {
+  ?instance a ?type .
+  ?instance ?property ?value .
+  FILTER(?property != rdf:type)
+}
+GROUP BY ?type ?property
+ORDER BY ASC(?type) ASC(?property)"""
+        return [
+            {
+                "type": urllib.parse.unquote(remove_namespace_from_uri(type_)) if remove_namespace else type_,
+                "property": urllib.parse.unquote(remove_namespace_from_uri(property)) if remove_namespace else property,
+                "instanceCount": cast(RdfLiteral, instance_count).toPython(),
+                "total": instance_count_by_type[type_],
+            }
+            for type_, property, instance_count in list(cast(list[ResultRow], self.graph(named_graph).query(query)))
+        ]
+
+    @overload
+    def instances_with_properties(
+        self, type: URIRef, remove_namespace: Literal[False], named_graph: URIRef | None = None
+    ) -> dict[URIRef, set[URIRef]]: ...
+
+    @overload
+    def instances_with_properties(
+        self, type: URIRef, remove_namespace: Literal[True], named_graph: URIRef | None = None
+    ) -> dict[str, set[str]]: ...
+
+    def instances_with_properties(
+        self, type: URIRef, remove_namespace: bool = True, named_graph: URIRef | None = None
+    ) -> dict[str, set[str]] | dict[URIRef, set[URIRef]]:
+        query = """SELECT DISTINCT ?instance ?property
+WHERE {{
+    ?instance a <{type}> .
+    ?instance ?property ?value .
+    FILTER(?property != rdf:type)
+}}"""
+        result = defaultdict(set)
+        for instance, property_ in cast(Iterable[ResultRow], self.graph(named_graph).query(query.format(type=type))):
+            instance_str = urllib.parse.unquote(remove_namespace_from_uri(instance)) if remove_namespace else instance
+            property_str = urllib.parse.unquote(remove_namespace_from_uri(property_)) if remove_namespace else property_
+            result[instance_str].add(property_str)
+        return result
 
     def list_instances_ids_by_space(
         self, space_property: URIRef, named_graph: URIRef | None = None

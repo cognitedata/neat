@@ -87,8 +87,9 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
+        skip_rows: bool = False,
     ):
-        total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
+        total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id, skip_rows))
         return cls(
             items,
             namespace,
@@ -119,8 +120,9 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
+        skip_rows: bool = False,
     ):
-        total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
+        total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id, skip_rows))
         return cls(
             items,
             namespace,
@@ -169,23 +171,29 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
 
     @classmethod
     def _from_dataset(
-        cls, client: CogniteClient, data_set_external_id: str
+        cls, client: CogniteClient, data_set_external_id: str, skip_rows: bool = False
     ) -> tuple[int | None, Iterable[NeatSequence]]:
         total = client.sequences.aggregate_count(
             filter=SequenceFilter(data_set_ids=[{"externalId": data_set_external_id}])
         )
         items = client.sequences(data_set_external_ids=data_set_external_id)
-        return total, cls._lookup_rows(items, client)
+        if skip_rows:
+            return total, (NeatSequence.from_cognite_sequence(seq) for seq in items)
+        else:
+            return total, cls._lookup_rows(items, client)
 
     @classmethod
     def _from_hierarchy(
-        cls, client: CogniteClient, root_asset_external_id: str
+        cls, client: CogniteClient, root_asset_external_id: str, skip_rows: bool = False
     ) -> tuple[int | None, Iterable[NeatSequence]]:
         total = client.sequences.aggregate_count(
             filter=SequenceFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
         )
         items = client.sequences(asset_subtree_external_ids=[root_asset_external_id])
-        return total, cls._lookup_rows(items, client)
+        if skip_rows:
+            return total, (NeatSequence.from_cognite_sequence(seq) for seq in items)
+        else:
+            return total, cls._lookup_rows(items, client)
 
     @classmethod
     def _from_file(cls, file_path: str | Path) -> tuple[int | None, Iterable[NeatSequence]]:

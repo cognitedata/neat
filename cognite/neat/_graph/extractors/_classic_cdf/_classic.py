@@ -102,6 +102,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         limit_per_type: int | None = None,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
+        unpack_metadata: bool = False,
+        skip_sequence_rows: bool = False,
     ):
         self._client = client
         if sum([bool(data_set_external_id), bool(root_asset_external_id)]) != 1:
@@ -111,7 +113,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._namespace = namespace or CLASSIC_CDF_NAMESPACE
         self._extractor_args = dict(
             namespace=self._namespace,
-            unpack_metadata=False,
+            unpack_metadata=unpack_metadata,
             as_write=True,
             camel_case=True,
             limit=limit_per_type,
@@ -121,6 +123,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._identifier = identifier
         self._prefix = prefix
         self._limit_per_type = limit_per_type
+        self._skip_sequence_rows = skip_sequence_rows
 
         self._uris_by_external_id_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
         self._source_external_ids_by_type: dict[InstanceIdPrefix, set[str]] = defaultdict(set)
@@ -245,14 +248,14 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
     def _extract_core_start_nodes(self):
         for core_node in self._classic_node_types:
+            kwargs = self._extractor_args.copy()
+            if core_node.extractor_cls == SequencesExtractor and self._skip_sequence_rows:
+                kwargs["skip_rows"] = True
+
             if self._data_set_external_id:
-                extractor = core_node.extractor_cls.from_dataset(
-                    self._client, self._data_set_external_id, **self._extractor_args
-                )
+                extractor = core_node.extractor_cls.from_dataset(self._client, self._data_set_external_id, **kwargs)
             elif self._root_asset_external_id:
-                extractor = core_node.extractor_cls.from_hierarchy(
-                    self._client, self._root_asset_external_id, **self._extractor_args
-                )
+                extractor = core_node.extractor_cls.from_hierarchy(self._client, self._root_asset_external_id, **kwargs)
             else:
                 raise ValueError("Exactly one of data_set_external_id or root_asset_external_id must be set.")
 
