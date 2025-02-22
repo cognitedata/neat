@@ -741,7 +741,7 @@ rules:
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm_enterprise/WindFarmEnterprise/v1
     space: sp_windfarm_enterprise
-    updated: '2025-02-13T12:08:14.630000Z'
+    updated: '2025-02-22T08:34:08.687000Z'
     version: v1
   properties:
   - connection: direct
