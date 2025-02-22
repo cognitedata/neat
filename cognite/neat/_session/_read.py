@@ -175,7 +175,7 @@ class CDFReadAPI(BaseReadAPI):
 
         Example:
             ```python
-            neat.read.cdf.raw("my_db", "my_table")
+            neat.read.cdf.raw("my_db", "my_table", "Asset")
             ```
 
         """
