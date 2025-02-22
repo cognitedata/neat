@@ -157,6 +157,7 @@ class CDFReadAPI(BaseReadAPI):
         self,
         db_name: str,
         table_name: str,
+        type: str | None = None,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
     ) -> IssueList:
@@ -165,6 +166,7 @@ class CDFReadAPI(BaseReadAPI):
         Args:
             db_name: The name of the database
             table_name: The name of the table, this will be assumed to be the type of the instances.
+            type: The type of instances in the table. If None, the table name will be used.
             unpack_json: If True, the JSON objects will be unpacked into the graph.
             str_to_ideal_type: If True, the string values will be converted to ideal types.
 
