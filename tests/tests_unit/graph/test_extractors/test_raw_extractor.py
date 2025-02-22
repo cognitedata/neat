@@ -15,7 +15,7 @@ class TestRAWExtractor:
         extractor = RAWExtractor(client, "my_db", "my_table")
         ns = extractor.namespace
 
-        triples = list(extractor.extract())
+        triples = set(extractor.extract())
 
         assert triples == {
             (ns["key1"], RDF.type, ns["my_table"]),
