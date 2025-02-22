@@ -153,6 +153,39 @@ class CDFReadAPI(BaseReadAPI):
         )
         return self._state.write_graph(extractor)
 
+    def raw(
+        self,
+        db_name: str,
+        table_name: str,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
+    ) -> IssueList:
+        """Reads a raw table from CDF to the knowledge graph.
+
+        Args:
+            db_name: The name of the database
+            table_name: The name of the table, this will be assumed to be the type of the instances.
+            unpack_json: If True, the JSON objects will be unpacked into the graph.
+            str_to_ideal_type: If True, the string values will be converted to ideal types.
+
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        Example:
+            ```python
+            neat.read.cdf.raw("my_db", "my_table")
+            ```
+
+        """
+        extractor = extractors.RAWExtractor(
+            self._get_client,
+            db_name=db_name,
+            table_name=table_name,
+            unpack_json=unpack_json,
+            str_to_ideal_type=str_to_ideal_type,
+        )
+        return self._state.instances.store.write(extractor)
+
 
 @session_class_wrapper
 class CDFClassicAPI(BaseReadAPI):
