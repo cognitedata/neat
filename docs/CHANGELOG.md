@@ -26,7 +26,7 @@ Changes are grouped as follows:
 - The `neat.read.cdf.graph()` has start and endNode properties for edges.
 - Now DMS rules validation are checked for existence of all components of schema, raise error if at least one is missing
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters
-- RawFilter was not properly parsed from DMS data model
+- Filters were not taken into account when importing DMS Data Model
 - Description was not properly parsed from DMS data model (e.g. split between creator and description)
 
 ### Added
