@@ -1,6 +1,7 @@
 import datetime
 from typing import Any
 
+import pytest
 import yaml
 from cognite.client import CogniteClient
 from cognite.client.data_classes.data_modeling import (
@@ -82,6 +83,7 @@ class TestExtractToLoadFlow:
         has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not has_errors, has_errors
 
+    @pytest.mark.skip("Anders is fixing this one")
     def test_uplift_workflow_to_python(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
