@@ -34,6 +34,7 @@ Changes are grouped as follows:
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
 - Support for less restrictive edge type
 - Public interface for exporting data model to ontology via `neat.to.ontology()`
+- Alpha flags to readers / to-ers that are not critical for v1 of neat
 
 ### Improved
 - Setting of proper value type for default
