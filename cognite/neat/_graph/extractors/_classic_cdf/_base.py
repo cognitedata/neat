@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import WriteableCogniteResource
@@ -115,6 +115,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         # Used by the ClassicGraphExtractor to log URIRefs
         self._log_urirefs = False
         self._uriref_by_external_id: dict[str, URIRef] = {}
+        self.asset_parent_uri_by_id: dict[int, URIRef] = {}
+        self.asset_parent_uri_by_external_id: dict[str, URIRef] = {}
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -174,6 +176,9 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
 
         triples.extend(self._item2triples_special_cases(id_, dumped))
 
+        parent_renaming = {"parent_external_id": "parent_id", "parentExternalId": "parentId"}
+        parent_key = set(parent_renaming.keys()) | set(parent_renaming.values())
+
         for key, value in dumped.items():
             if value is None or value == []:
                 continue
@@ -182,11 +187,17 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 object_ = self._as_object(raw, key)
                 if object_ is None:
                     continue
-                # Parent external ID must be renamed to parent id to match the data model.
-                key = {
-                    "parent_external_id": "parent_id",
-                    "parentExternalId": "parentId",
-                }.get(key, key)
+                if key in parent_key:
+                    if isinstance(raw, str):
+                        self.asset_parent_uri_by_external_id[raw] = cast(URIRef, object_)
+                    elif isinstance(raw, int):
+                        self.asset_parent_uri_by_id[raw] = cast(URIRef, object_)
+                    # We add a triple to include the parent. This is such that for example the parent
+                    # externalID will remove the prefix when loading.
+                    triples.append((cast(URIRef, object_), RDF.type, self.namespace[self._get_rdf_type(None)]))
+                    # Parent external ID must be renamed to parent id to match the data model.
+                    key = parent_renaming.get(key, key)
+
                 triples.append((id_, self.namespace[key], object_))
         return triples
 
@@ -227,9 +238,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         else:
             yield id_, self.namespace.metadata, Literal(json.dumps(metadata), datatype=XSD._NS["json"])
 
-    def _get_rdf_type(self, item: T_CogniteResource) -> str:
+    def _get_rdf_type(self, item: T_CogniteResource | None = None) -> str:
         type_ = self._default_rdf_type
         if self.to_type:
+            if item is None:
+                raise ValueError("Item is None, but to_type is set.")
             type_ = self.to_type(item) or type_
         if self.prefix:
             type_ = f"{self.prefix}{type_}"
