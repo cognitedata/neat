@@ -828,7 +828,7 @@ data_product:
     view_property: geoLocation
   - container: cdf_cdm:CogniteFile
     container_property: isUploaded
-    default: 'False'
+    default: false
     description: Specifies if the file content has been uploaded to Cognite Data Fusion
       or not.
     immutable: false
