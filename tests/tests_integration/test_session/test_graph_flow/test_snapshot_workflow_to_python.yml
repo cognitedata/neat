@@ -1492,7 +1492,23 @@ data_product:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     view: ClassicTimeSeries
 instances:
-- externalId: Measurement
+- externalId: Asset_Measurement
+  instanceType: node
+  sources:
+  - properties:
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+    source:
+      externalId: ClassicAsset
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: ClassicAsset
+    space: sp_windfarm
+- externalId: Label_Measurement
   instanceType: node
   sources:
   - properties:
@@ -1525,8 +1541,8 @@ instances:
         height: '100'
       name: MetMast
       parent:
-        externalId: Unknown asset
-        space: sp_windfarm_dataset
+        externalId: Asset_Measurement
+        space: source_ds
       source:
         externalId: manufacturer2
         space: sp_windfarm_dataset
