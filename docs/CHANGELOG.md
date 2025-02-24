@@ -20,8 +20,16 @@ Changes are grouped as follows:
 - Passing `space_property` to `neat.to.cdf.instances()` is no longer ignored.
 - The `neat.inspect.issues(...)` and `neat.inspect.outcome.issues(...)` now prints out a maximum of 50 issues. This is
   to avoid the output being too large. You can pass `return_dataframe=True` to get all issues as a DataFrame.
-- Description and creator were not properly parsed from DMS data model
-- RawFilter was not properly parsed from DMS data model
+- The `neat.read.cdf.classic.graph(..., identifier="externalId")` now correctly looks up external ID for
+  label.dataSetId, relationship.dataSetId, relationship.sourceExternalId, and relationship.targetExternalId.
+- The `neat.read.cdf.graph()` extracts json as a json-string instead of a regular string.
+- The `neat.read.cdf.graph()` has start and endNode properties for edges.
+- Now DMS rules validation are checked for existence of all components of schema, raise error if at least one is missing
+- The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.- RawFilter was not properly parsed from DMS data model
+
+### Added
+- Enable data model to be composed of views from multiple spaces with warning being raised
+- The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
 
 ## [0.110.0] - 17-02-**2025**
 ### Added

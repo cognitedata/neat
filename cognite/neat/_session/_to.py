@@ -10,7 +10,7 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.neat._alpha import AlphaFlags
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
-from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._rules._shared import VerifiedRules
@@ -35,6 +35,7 @@ class ToAPI:
         self._state = state
         self._verbose = verbose
         self.cdf = CDFToAPI(state, verbose)
+        self._python = ToPythonAPI(state, verbose)
 
     def excel(
         self,
@@ -270,29 +271,40 @@ class CDFToAPI:
             ```
 
         """
+        return self._instances(instance_space=space, space_from_property=space_property)
+
+    def _instances(
+        self,
+        instance_space: str | None = None,
+        space_from_property: str | None = None,
+        use_source_space: bool = False,
+    ) -> UploadResultList:
         if not self._state.client:
             raise NeatSessionError("No CDF client provided!")
         client = self._state.client
-        space = space or f"{self._state.rule_store.last_verified_dms_rules.metadata.space}_instances"
+        dms_rules = self._state.rule_store.last_verified_dms_rules
+        instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
 
-        if space and space == self._state.rule_store.last_verified_dms_rules.metadata.space:
+        if instance_space and instance_space == dms_rules.metadata.space:
             raise NeatSessionError("Space for instances must be different from the data model space.")
-        elif not PATTERNS.space_compliance.match(str(space)):
+        elif not PATTERNS.space_compliance.match(str(instance_space)):
             raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
-        if not client.data_modeling.spaces.retrieve(space):
-            client.data_modeling.spaces.apply(dm.SpaceApply(space=space))
+        if not client.data_modeling.spaces.retrieve(instance_space):
+            client.data_modeling.spaces.apply(dm.SpaceApply(space=instance_space))
 
         loader = loaders.DMSLoader(
             self._state.rule_store.last_verified_dms_rules,
             self._state.rule_store.last_verified_information_rules,
             self._state.instances.store,
-            instance_space=space,
+            instance_space=instance_space,
             client=client,
-            space_property=space_property,
+            space_property=space_from_property,
+            use_source_space=use_source_space,
             # In case urllib.parse.quote() was run on the extraction, we need to run
             # urllib.parse.unquote() on the load.
-            unquote_external_ids=self._state.quoted_source_identifiers,
+            unquote_external_ids=True,
+            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
         )
 
         result = loader.load_into_cdf(client)
@@ -335,3 +347,69 @@ class CDFToAPI:
         result = self._state.rule_store.export_to_cdf(exporter, self._state.client, dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
+
+
+@session_class_wrapper
+class ToPythonAPI:
+    """API used to write the contents of a NeatSession to Python objects"""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+
+    def instances(
+        self,
+        instance_space: str | None = None,
+        space_from_property: str | None = None,
+        use_source_space: bool = False,
+    ) -> tuple[list[dm.InstanceApply], IssueList]:
+        """Export the verified DMS instances to Python objects.
+
+        Args:
+            instance_space: The name of the instance space to use. Defaults to None.
+            space_from_property: This is an alternative to the 'instance_space' argument. If provided,
+                the space will be set to the value of the property with the given name for each instance.
+                If the property is not found, the 'instance_space' argument will be used. Defaults to None.
+            use_source_space: If True, the instance space will be set to the source space of the instance.
+                This is only relevant if the instances were extracted from CDF data models. Defaults to False.
+
+        Returns:
+            list[dm.InstanceApply]: The instances as Python objects.
+
+        Example:
+            Export instances to Python objects
+            ```python
+            instances = neat.to._python.instances()
+            ```
+
+            Export instances to Python objects using the `dataSetId` property as the space
+            ```python
+            instances = neat.to._python.instances(space_from_property="dataSetId")
+            ```
+        """
+        dms_rules = self._state.rule_store.last_verified_dms_rules
+        instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
+
+        if instance_space and instance_space == dms_rules.metadata.space:
+            raise NeatSessionError("Space for instances must be different from the data model space.")
+        elif not PATTERNS.space_compliance.match(str(instance_space)):
+            raise NeatSessionError(f"Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
+
+        loader = loaders.DMSLoader(
+            self._state.rule_store.last_verified_dms_rules,
+            self._state.rule_store.last_verified_information_rules,
+            self._state.instances.store,
+            instance_space=instance_space,
+            space_property=space_from_property,
+            use_source_space=use_source_space,
+            unquote_external_ids=True,
+            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+        )
+        issue_list = IssueList()
+        instances: list[dm.InstanceApply] = []
+        for item in loader.load(stop_on_exception=False):
+            if isinstance(item, dm.InstanceApply):
+                instances.append(item)
+            elif isinstance(item, NeatIssue):
+                issue_list.append(item)
+        return instances, issue_list

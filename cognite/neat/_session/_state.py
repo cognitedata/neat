@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Literal, cast
 
+from rdflib import URIRef
+
 from cognite.neat._client import NeatClient
 from cognite.neat._graph.extractors import KnowledgeGraphExtractor
 from cognite.neat._issues import IssueList
@@ -74,6 +76,7 @@ class InstancesState:
         self.storage_path = storage_path
         self.issue_lists = IssueList()
         self.outcome = UploadResultList()
+        self.neat_prefix_by_predicate_uri: dict[URIRef, str] = {}
 
         # Ensure that error handling is done in the constructor
         self.store: NeatGraphStore = _session_method_wrapper(self._create_store, "NeatSession")()

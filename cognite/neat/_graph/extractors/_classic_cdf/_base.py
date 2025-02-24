@@ -215,7 +215,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 if value and (self.skip_metadata_values is None or value.casefold() not in self.skip_metadata_values):
                     yield (
                         id_,
-                        self.namespace[key],
+                        self.namespace[urllib.parse.quote(key)],
                         Literal(string_to_ideal_type(value)),
                     )
         else:
@@ -263,7 +263,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             "created_time",
             "last_updated_time",
         } and isinstance(raw, int):
-            return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            try:
+                return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            except (OSError, ValueError) as e:
+                warnings.warn(NeatValueWarning(f"Failed to convert timestamp {raw} to datetime: {e!s}"), stacklevel=2)
+                return Literal(raw)
         elif key == "labels":
             from ._labels import LabelsExtractor
 

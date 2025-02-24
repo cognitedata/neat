@@ -59,6 +59,7 @@ data_product:
   metadata:
     created: '2025-01-03T00:00:00'
     creator: MISSING
+    description: Cognite core data model
     external_id: DataProduct
     name: data_product data model
     role: DMS Architect
@@ -1571,6 +1572,7 @@ enterprise:
   metadata:
     created: '2025-01-03T00:00:00'
     creator: MISSING
+    description: Cognite core data model
     external_id: Enterprise
     name: Neat enterprise data model
     role: DMS Architect
@@ -2806,6 +2808,7 @@ solution:
   metadata:
     created: '2025-01-03T00:00:00'
     creator: MISSING
+    description: Cognite core data model
     external_id: Solution
     name: solution data model
     role: DMS Architect

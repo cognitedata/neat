@@ -55,6 +55,7 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
     failed_upserted: set[T_ID] = field(default_factory=set)
     failed_changed: set[T_ID] = field(default_factory=set)
     failed_deleted: set[T_ID] = field(default_factory=set)
+    failed_items: list = field(default_factory=list)
 
     @property
     def failed(self) -> int:
@@ -129,4 +130,5 @@ class UploadResult(UploadResultCore, Generic[T_ID]):
             failed_upserted=self.failed_upserted.union(other.failed_upserted),
             failed_changed=self.failed_changed.union(other.failed_changed),
             failed_deleted=self.failed_deleted.union(other.failed_deleted),
+            failed_items=self.failed_items + other.failed_items,
         )

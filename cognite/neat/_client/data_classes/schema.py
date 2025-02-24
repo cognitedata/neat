@@ -167,7 +167,7 @@ class DMSSchema:
                     if "." not in filename.stem:
                         continue
                     resource_type = filename.stem.rsplit(".", 1)[-1]
-                    if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type):
+                    if attr_name := cls._FIELD_NAME_BY_RESOURCE_TYPE.get(resource_type.casefold()):
                         data.setdefault(attr_name, [])
                         context.setdefault(attr_name, [])
                         try:
