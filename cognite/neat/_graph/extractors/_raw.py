@@ -3,6 +3,7 @@ from collections.abc import Iterable, Set
 from typing import Any, cast
 
 from cognite.client.data_classes import Row, RowList
+from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, Namespace, URIRef
 
 from cognite.neat._client import NeatClient
@@ -20,6 +21,7 @@ class RAWExtractor(BaseExtractor):
         db_name: str,
         table_name: str,
         table_type: str | None = None,
+        foreign_keys: str | SequenceNotStr[str] | None = None,
         namespace: Namespace | None = None,
         empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
         str_to_ideal_type: bool = False,
@@ -29,7 +31,8 @@ class RAWExtractor(BaseExtractor):
         self.db_name = db_name
         self.table_name = table_name
         self.table_type = table_type
-        self.namespace = namespace or Namespace(DEFAULT_RAW_URI.format(db=db_name))
+        self.foreign_keys = {foreign_keys} if isinstance(foreign_keys, str) else set(foreign_keys or [])
+        self.namespace = namespace or Namespace(DEFAULT_RAW_URI)
         self.empty_values = empty_values
         self.str_to_ideal_type = str_to_ideal_type
         self.unpack_json = unpack_json
@@ -54,5 +57,11 @@ class RAWExtractor(BaseExtractor):
         yield identifier, RDF.type, self._rdf_type
 
         yield from DictExtractor(
-            identifier, data, self.namespace, self.empty_values, self.str_to_ideal_type, self.unpack_json
+            identifier,
+            data,
+            self.namespace,
+            self.foreign_keys,
+            self.empty_values,
+            self.str_to_ideal_type,
+            self.unpack_json,
         ).extract()

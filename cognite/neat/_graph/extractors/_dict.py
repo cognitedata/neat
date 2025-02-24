@@ -21,6 +21,7 @@ class DictExtractor(BaseExtractor):
         id_: URIRef,
         data: Mapping[str, Any],
         namespace: Namespace,
+        uri_ref_keys: set[str] | None = None,
         empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
         str_to_ideal_type: bool = False,
         unpack_json: bool = False,
@@ -28,6 +29,7 @@ class DictExtractor(BaseExtractor):
         self.id_ = id_
         self.namespace = namespace
         self.data = data
+        self.uri_ref_keys = uri_ref_keys or set()
         self.empty_values = empty_values
         self.str_to_ideal_type = str_to_ideal_type
         self.unpack_json = unpack_json
@@ -40,6 +42,8 @@ class DictExtractor(BaseExtractor):
     def _get_predicate_objects_pair(
         self, key: str, value: Any, unpack_json: bool
     ) -> Iterable[tuple[str, Literal | URIRef]]:
+        if key in self.uri_ref_keys and not isinstance(value, dict | list):
+            yield key, URIRef(self.namespace[urllib.parse.quote(value)])
         if isinstance(value, str | float | bool | int):
             yield key, Literal(value)
         elif isinstance(value, dict) and unpack_json:
