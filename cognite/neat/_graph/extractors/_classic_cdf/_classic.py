@@ -144,6 +144,21 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             self._namespace["rootId"]: InstanceIdPrefix.asset,
             self._namespace["labels"]: InstanceIdPrefix.label,
         }
+        self.neat_prefix_by_type_uri: dict[URIRef, str] = {}
+        for extractor_cls, type_prefix in [
+            (AssetsExtractor, InstanceIdPrefix.asset),
+            (TimeSeriesExtractor, InstanceIdPrefix.time_series),
+            (SequencesExtractor, InstanceIdPrefix.sequence),
+            (EventsExtractor, InstanceIdPrefix.event),
+            (FilesExtractor, InstanceIdPrefix.file),
+            (RelationshipsExtractor, InstanceIdPrefix.relationship),
+            (LabelsExtractor, InstanceIdPrefix.label),
+            (DataSetExtractor, InstanceIdPrefix.data_set),
+        ]:
+            rdf_type = extractor_cls._default_rdf_type  # type: ignore[attr-defined]
+            if prefix:
+                rdf_type = f"{prefix}{rdf_type}"
+            self.neat_prefix_by_type_uri[self._namespace[rdf_type]] = type_prefix
 
     def _get_activity_names(self) -> list[str]:
         activities = [data_access_object.extractor_cls.__name__ for data_access_object in self._classic_node_types] + [
