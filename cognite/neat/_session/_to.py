@@ -37,6 +37,31 @@ class ToAPI:
         self.cdf = CDFToAPI(state, verbose)
         self._python = ToPythonAPI(state, verbose)
 
+    def ontology(self, io: Any) -> None:
+        """Export the data model to ontology.
+
+        Args:
+            io: The file path to file-like object to write the session to.
+
+        Example:
+            Export the session to a file
+            ```python
+            ontology_file_name = "neat_session.ttl"
+            neat.to.ontology(ontology_file_name)
+            ```
+        """
+        warnings.filterwarnings("default")
+        AlphaFlags.to_ontology.warn()
+
+        filepath = Path(io)
+        if filepath.suffix != ".ttl":
+            warnings.warn("File extension is not .ttl, adding it to the file name", stacklevel=2)
+            filepath = filepath.with_suffix(".ttl")
+
+        exporter = exporters.OWLExporter()
+        self._state.rule_store.export_to_file(exporter, Path(io))
+        return None
+
     def excel(
         self,
         io: Any,
@@ -210,6 +235,7 @@ class ToAPI:
             neat.to.yaml(your_folder_name, format="toolkit")
             ```
         """
+
         if format == "neat":
             exporter = exporters.YAMLExporter()
             if io is None:
@@ -305,6 +331,7 @@ class CDFToAPI:
             # urllib.parse.unquote() on the load.
             unquote_external_ids=True,
             neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+            neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
 
         result = loader.load_into_cdf(client)
@@ -404,6 +431,7 @@ class ToPythonAPI:
             use_source_space=use_source_space,
             unquote_external_ids=True,
             neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+            neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
         issue_list = IssueList()
         instances: list[dm.InstanceApply] = []

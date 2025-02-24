@@ -243,7 +243,7 @@ class NeatGraphStore:
     ) -> Iterable[tuple[URIRef, dict[str | InstanceType, list[Any]]]]:
         named_graph = named_graph or self.default_named_graph
 
-        instance_ids = self.queries.list_instances_ids_of_class(class_uri, named_graph=named_graph)
+        instance_ids = self.queries.list_instances_ids(class_uri, named_graph=named_graph)
 
         for instance_id in instance_ids:
             if res := self.queries.describe(
