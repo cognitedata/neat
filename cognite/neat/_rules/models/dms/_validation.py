@@ -171,7 +171,7 @@ class DMSValidation:
 
         schema = self._rules.as_schema(remove_cdf_spaces=True)
 
-        if schema.data_model:
+        if schema.data_model and schema.views:
             data_model_space = schema.data_model.space
             views_spaces = {view.space for view in schema.views.values()}
 

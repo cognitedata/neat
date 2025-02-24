@@ -35,6 +35,7 @@ else:
 from cognite.neat._rules._constants import (
     ENTITY_PATTERN,
     SPLIT_ON_COMMA_PATTERN,
+    SPLIT_ON_EDGE_ENTITY_ARGS_PATTERN,
     SPLIT_ON_EQUAL_PATTERN,
     EntityTypes,
 )
@@ -135,9 +136,13 @@ class Entity(BaseModel, extra="ignore"):
         if content is None:
             return dict(prefix=prefix, suffix=suffix)
         try:
-            extra_args = dict(
-                SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content)
-            )
+            if cls == EdgeEntity:
+                matches = SPLIT_ON_EDGE_ENTITY_ARGS_PATTERN.findall(content)
+                extra_args = {key: value for key, value in matches}
+            else:
+                extra_args = dict(
+                    SPLIT_ON_EQUAL_PATTERN.split(pair.strip()) for pair in SPLIT_ON_COMMA_PATTERN.split(content)
+                )
         except ValueError:
             raise NeatValueError(f"Invalid {cls.type_.value} entity: {raw!r}") from None
         expected_args = {

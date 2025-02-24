@@ -828,7 +828,7 @@ data_product:
     view_property: geoLocation
   - container: cdf_cdm:CogniteFile
     container_property: isUploaded
-    default: 'False'
+    default: false
     description: Specifies if the file content has been uploaded to Cognite Data Fusion
       or not.
     immutable: false
@@ -3084,17 +3084,26 @@ rules:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/Cognite360ImageAnnotation
     view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
   - description: Represents a logical collection of Cognite360Image instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d",
+      "Cognite3DModel", "type"], "value": "Image360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/Cognite360ImageCollection
     view: cdf_cdm:Cognite360ImageCollection(version=v1)
   - description: Navigational aid for traversing Cognite360ImageModel instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+      "type"], "value": "Image360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/Cognite360ImageModel
     view: cdf_cdm:Cognite360ImageModel(version=v1)
   - description: A way to group images across collections. Used for creating visual
       scan history
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DGroup"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DGroup",
+      "groupType"], "value": "Station360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/Cognite360ImageStation
@@ -3159,6 +3168,9 @@ rules:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteAssetType
     view: cdf_cdm:CogniteAssetType(version=v1)
   - description: Navigational aid for traversing CogniteCADModel instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+      "type"], "value": "CAD"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteCADModel
@@ -3169,6 +3181,9 @@ rules:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteCADNode
     view: cdf_cdm:CogniteCADNode(version=v1)
   - description: ''
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d",
+      "Cognite3DModel", "type"], "value": "CAD"}}]})'
     implements: cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteCADRevision
