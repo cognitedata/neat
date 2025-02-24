@@ -169,8 +169,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             item = item.as_write()
         dumped = item.dump(self.camel_case)
         dumped.pop("id", None)
-        # We have parentId so we don't need parentExternalId
-        dumped.pop("parentExternalId", None)
         if "metadata" in dumped:
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
 
@@ -181,7 +179,10 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 continue
             values = value if isinstance(value, Sequence) and not isinstance(value, str) else [value]
             for raw in values:
-                triples.append((id_, self.namespace[key], self._as_object(raw, key)))
+                object_ = self._as_object(raw, key)
+                if object_ is None:
+                    continue
+                triples.append((id_, self.namespace[key], object_))
         return triples
 
     def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
@@ -190,7 +191,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
 
     @classmethod
     def _external_id_as_uri_suffix(cls, external_id: str | None) -> str:
-        if external_id == "":
+        if external_id == "" or (isinstance(external_id, str) and external_id.strip() == ""):
             warnings.warn(NeatValueWarning(f"Empty external id in {cls._default_rdf_type}"), stacklevel=2)
             return "empty"
         elif external_id == "\x00":
@@ -229,7 +230,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             type_ = f"{self.prefix}{type_}"
         return self._SPACE_PATTERN.sub("_", type_)
 
-    def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
+    def _as_object(self, raw: Any, key: str) -> Literal | URIRef | None:
         """Return properly formatted object part of s-p-o triple"""
         if key in {"data_set_id", "dataSetId"}:
             if self.identifier == "externalId" and self.lookup_dataset_external_id:
@@ -243,13 +244,26 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                     ]
             else:
                 return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
-        elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
+        elif key in {"parentId", "parent_id", "parentExternalId", "parent_external_id"}:
+            if self.identifier == "id" and key in {"parent_id", "parentId"}:
+                return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
+            elif (
+                self.identifier == "externalId"
+                and key in {"parent_external_id", "parentExternalId"}
+                and isinstance(raw, str)
+            ):
+                return self.namespace[f"{InstanceIdPrefix.asset}{self._external_id_as_uri_suffix(raw)}"]
+            else:
+                # Skip it
+                return None
+        elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "rootId", "root_id"}:
             if self.identifier == "id":
                 return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
             else:
                 try:
                     asset_external_id = self._external_id_as_uri_suffix(self.asset_external_ids_by_id[raw])
                 except KeyError:
+                    warnings.warn(NeatValueWarning(f"Unknown asset id {raw}"), stacklevel=2)
                     return Literal("Unknown asset", datatype=XSD.string)
                 else:
                     return self.namespace[f"{InstanceIdPrefix.asset}{asset_external_id}"]
