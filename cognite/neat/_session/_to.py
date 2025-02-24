@@ -305,6 +305,7 @@ class CDFToAPI:
             # urllib.parse.unquote() on the load.
             unquote_external_ids=True,
             neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+            neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
 
         result = loader.load_into_cdf(client)
@@ -404,6 +405,7 @@ class ToPythonAPI:
             use_source_space=use_source_space,
             unquote_external_ids=True,
             neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+            neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
         issue_list = IssueList()
         instances: list[dm.InstanceApply] = []
