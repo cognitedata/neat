@@ -182,6 +182,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 object_ = self._as_object(raw, key)
                 if object_ is None:
                     continue
+                # Parent external ID must be renamed to parent id to match the data model.
+                key = {
+                    "parent_external_id": "parent_id",
+                    "parentExternalId": "parentId",
+                }.get(key, key)
                 triples.append((id_, self.namespace[key], object_))
         return triples
 
