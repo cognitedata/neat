@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -174,13 +175,18 @@ class DMSProperty(SheetRow):
             return value
         value_type = info.data.get("value_type")
         if not isinstance(value_type, DataType):
-            print(f"Default value {value} set to connection {value_type} will be ignored")
+            warnings.filterwarnings("default")
+            warnings.warn(
+                f"Default value {value} set to connection {value_type} will be ignored",
+                stacklevel=2,
+            )
             return None
         else:
             try:
                 return value_type.convert_value(value)
             except ValueError:
-                print(f"Could not convert {value} to {value_type}")
+                warnings.filterwarnings("default")
+                warnings.warn(f"Could not convert {value} to {value_type}", stacklevel=2)
                 return None
 
     @field_validator("container", "container_property", mode="after")
