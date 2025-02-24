@@ -32,13 +32,13 @@ Changes are grouped as follows:
 ### Added
 - Enable data model to be composed of views from multiple spaces with warning being raised
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
-
-### Added
 - Support for less restrictive edge type
+- Public interface for exporting data model to ontology via `neat.to.ontology()`
 
 ### Improved
 - Setting of proper value type for default
 - Errors that do not have loc are now well handled in neat session
+- Validation on used spaces
 
 ## [0.110.0] - 17-02-**2025**
 ### Added
