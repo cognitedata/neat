@@ -90,7 +90,7 @@ class DMSPropertyExtractor(DictExtractor):
         str_to_ideal_type: bool = False,
         unpack_json: bool = False,
     ) -> None:
-        super().__init__(id_, data, namespace, empty_values, str_to_ideal_type, unpack_json)
+        super().__init__(id_, data, namespace, None, empty_values, str_to_ideal_type, unpack_json)
         self.as_uri_ref = as_uri_ref
 
     def _get_predicate_objects_pair(
