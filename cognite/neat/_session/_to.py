@@ -50,6 +50,8 @@ class ToAPI:
             neat.to.ontology(ontology_file_name)
             ```
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.to_ontology.warn()
 
         filepath = Path(io)
         if filepath.suffix != ".ttl":
