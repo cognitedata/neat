@@ -367,6 +367,9 @@ class CSVReadAPI(BaseReadAPI):
     """
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
+        warnings.filterwarnings("default")
+        AlphaFlags.csv_read.warn()
+
         engine = import_engine()
         engine.set.format = "csv"
         engine.set.file = NeatReader.create(io).materialize_path()
@@ -422,6 +425,9 @@ class XMLReadAPI(BaseReadAPI):
             - remove associations between nodes that do not exist in the extracted graph
             - remove edges to nodes that do not exist in the extracted graph
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.dexpi_read.warn()
+
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
         engine.set.format = "dexpi"
@@ -473,6 +479,9 @@ class XMLReadAPI(BaseReadAPI):
             - remove unused attributes
             - remove edges to nodes that do not exist in the extracted graph
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.aml_read.warn()
+
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
         engine.set.format = "aml"
@@ -524,6 +533,9 @@ class RDFReadAPI(BaseReadAPI):
             neat.read.rdf.ontology("url_or_path_to_owl_source")
             ```
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.ontology_read.warn()
+
         reader = NeatReader.create(io)
         importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.rule_import(importer)
@@ -539,9 +551,17 @@ class RDFReadAPI(BaseReadAPI):
             neat.read.rdf.imf("url_or_path_to_imf_source")
             ```
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.imf_read.warn()
+
         reader = NeatReader.create(io)
         importer = importers.IMFImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.rule_import(importer)
+
+    def instances(self, io: Any) -> IssueList:
+        reader = NeatReader.create(io)
+        self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
+        return IssueList()
 
     def __call__(
         self,
@@ -566,9 +586,8 @@ class RDFReadAPI(BaseReadAPI):
                 raise ValueError(f"Expected ontology, imf types or instances, got {source}")
 
         elif type == "instances":
-            reader = NeatReader.create(io)
-            self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
-            return IssueList()
+            return self.instances(io)
+
         else:
             raise NeatSessionError(f"Expected data model or instances, got {type}")
 
