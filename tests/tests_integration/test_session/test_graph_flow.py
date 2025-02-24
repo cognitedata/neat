@@ -83,7 +83,8 @@ class TestExtractToLoadFlow:
         has_errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not has_errors, has_errors
 
-    @pytest.mark.skip("Anders is fixing this one")
+
+    @pytest.mark.skip("Skipping test as it is being worked on other branch")
     def test_uplift_workflow_to_python(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
