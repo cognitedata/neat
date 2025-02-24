@@ -188,13 +188,14 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 if object_ is None:
                     continue
                 if key in parent_key:
+                    parent_id = cast(URIRef, object_)
                     if isinstance(raw, str):
-                        self.asset_parent_uri_by_external_id[raw] = cast(URIRef, object_)
+                        self.asset_parent_uri_by_external_id[raw] = parent_id
                     elif isinstance(raw, int):
-                        self.asset_parent_uri_by_id[raw] = cast(URIRef, object_)
+                        self.asset_parent_uri_by_id[raw] = parent_id
                     # We add a triple to include the parent. This is such that for example the parent
                     # externalID will remove the prefix when loading.
-                    triples.append((cast(URIRef, object_), RDF.type, self.namespace[self._get_rdf_type(None)]))
+                    triples.append((parent_id, RDF.type, self.namespace[self._get_rdf_type(None)]))
                     # Parent external ID must be renamed to parent id to match the data model.
                     key = parent_renaming.get(key, key)
 
