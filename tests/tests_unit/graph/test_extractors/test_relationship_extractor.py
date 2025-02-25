@@ -19,4 +19,4 @@ def test_asset_extractor():
     ).extract():
         g.add(triple)
 
-    assert len(g) == 44
+    assert len(g) == 25

@@ -51,7 +51,7 @@ def test_sequences_extractor(client_mock: CogniteClient) -> None:
 def test_sequence_extractor_unpack_columns(client_mock: CogniteClient) -> None:
     g = Graph()
     for triple in SequencesExtractor.from_dataset(
-        client_mock, data_set_external_id="some data set", as_write=True
+        client_mock, data_set_external_id="some data set", as_write=True, unpack_columns=True
     ).extract():
         g.add(triple)
 

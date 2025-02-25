@@ -67,8 +67,10 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
 
     def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
         triples: list[Triple] = []
-        if (source_external_id := dumped.pop("sourceExternalId")) and "sourceType" in dumped:
-            source_type = dumped["sourceType"]
+        source_id = "sourceExternalId" if self.camel_case else "source_external_id"
+        source_type = "sourceType" if self.camel_case else "source_type"
+        if (source_external_id := dumped.pop(source_id)) and source_type in dumped:
+            source_type = dumped[source_type]
             source_prefix = InstanceIdPrefix.from_str(source_type)
             if self.identifier == "id":
                 try:
@@ -78,21 +80,19 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
                         NeatValueWarning(f"Missing externalId {source_external_id} for {source_type}"), stacklevel=2
                     )
                 else:
-                    triples.append((id_, self.namespace["sourceExternalId"], source_uri))
+                    triples.append((id_, self.namespace[source_id], source_uri))
             elif self.identifier == "externalId":
-                triples.append(
-                    (id_, self.namespace["sourceExternalId"], self.namespace[f"{source_prefix}{source_external_id}"])
-                )
-        if (target_external_id := dumped.pop("targetExternalId")) and "targetType" in dumped:
-            target_type = dumped["targetType"]
+                triples.append((id_, self.namespace[source_id], self.namespace[f"{source_prefix}{source_external_id}"]))
+        target_id = "targetExternalId" if self.camel_case else "target_external_id"
+        target_type = "targetType" if self.camel_case else "target_type"
+        if (target_external_id := dumped.pop(target_id)) and target_type in dumped:
+            target_type = dumped[target_type]
             if self.identifier == "id":
                 # We do not yet have the target nodes, so we log them for later extraction.
-                self._target_triples.append((id_, self.namespace["targetExternalId"], target_type, target_external_id))
+                self._target_triples.append((id_, self.namespace[target_id], target_type, target_external_id))
             elif self.identifier == "externalId":
                 target_prefix = InstanceIdPrefix.from_str(target_type)
-                triples.append(
-                    (id_, self.namespace["targetExternalId"], self.namespace[f"{target_prefix}{target_external_id}"])
-                )
+                triples.append((id_, self.namespace[target_id], self.namespace[f"{target_prefix}{target_external_id}"]))
         return triples
 
     @classmethod
