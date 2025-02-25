@@ -487,10 +487,6 @@ class RulesAnalysis:
 
         rules = self.dms
 
-        # Views with properties or used as ValueType
-        # If a view is not used in properties or as ValueType, it is not added to the graph
-        # as we typically do not have the properties for it.
-
         # Add nodes and edges from Views sheet
         for view in rules.views:
             di_graph.add_node(view.view.suffix, label=view.view.suffix)
