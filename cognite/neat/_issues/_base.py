@@ -276,6 +276,16 @@ class IssueList(list, Sequence[NeatIssue]):
         """Return True if this list contains any warnings of the given type."""
         return any(isinstance(issue, warning_type) for issue in self)
 
+    def errors_of_type(self, error_type: type[NeatError] | str) -> Self:
+        """Return all the errors of the given type in this list."""
+        return type(self)([issue for issue in self if self._is_of_type(issue, error_type)])
+
+    @staticmethod
+    def _is_of_type(issue: NeatIssue, issue_type: type[NeatIssue] | str) -> bool:
+        if isinstance(issue_type, str):
+            return type(issue).__name__.casefold() == issue_type.casefold()
+        return isinstance(issue, issue_type)
+
     def as_errors(self, operation: str = "Operation failed") -> ExceptionGroup:
         """Return an ExceptionGroup with all the errors in this list."""
         return ExceptionGroup(
