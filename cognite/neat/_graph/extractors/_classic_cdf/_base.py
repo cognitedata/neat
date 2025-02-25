@@ -61,8 +61,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     Args:
         items (Iterable[T_CogniteResource]): An iterable of classic resource.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[T_CogniteResource], str | None], optional): A function to convert an item to a type.
-            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
         total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
             is installed. Defaults to None.
         limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
