@@ -88,6 +88,9 @@ gspread = { version = "*", optional = true }
 google-api-python-client = { version = "*", optional = true }
 google-auth-oauthlib = { version = "*", optional = true }
 
+# Used for comparision
+deepdiff = { version = ">0.1.1", optional = true }
+
 # Documentation dependencies
 mkdocs = { version = "*", optional = true }
 mkdocs-jupyter = { version = "*", optional = true }
@@ -120,11 +123,13 @@ docs = [
 ]
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
+compare = ["deepdiff"]
 
 all = [
     "pyoxigraph",
     "oxrdflib",
     "lxml",
+    "deepdiff",
 ]
 
 [tool.poetry.dev-dependencies]
