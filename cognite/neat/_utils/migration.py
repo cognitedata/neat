@@ -46,7 +46,7 @@ def display_diffs(
         sources=target_view,
     )
     node_by_id = {node.external_id: node for node in target_instances.nodes}
-    type_ = type(source_items[0])
+    type_ = type(source_items[0]).__name__
     for item in source_items:
         if item.external_id not in node_by_id:
             print(f"{type_} {item.external_id} is missing")
@@ -55,7 +55,7 @@ def display_diffs(
         classic_node = as_classic(node, item)
         if classic_node != item:
             print(f"Failed: {type_} {item.external_id!r}")
-            pprint(DeepDiff(classic_node.dump(), item.dump()))
+            pprint(DeepDiff(item.dump(), classic_node.dump()))
 
 
 def as_classic(node: Node, classic: T_Classic) -> T_Classic:
@@ -95,6 +95,9 @@ def as_classic(node: Node, classic: T_Classic) -> T_Classic:
                     data["metadata"][source_key] = source_value
                 else:
                     data["metadata"][source_key] = str(target[target_key])
+            elif source_value in {"nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined"}:
+                # These are filtered out by neat.
+                data["metadata"][source_key] = source_value
     return cast(T_Classic, type(classic)._load(data))
 
 
