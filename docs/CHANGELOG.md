@@ -37,7 +37,6 @@ Changes are grouped as follows:
 - Public interface for exporting data model to ontology via `neat.to.ontology()`
 - The `neat.set.data_model_id()` now also sets the display name of the data model.
 - Alpha flags to readers / to-ers that are not critical for v1 of neat
-- The `neat.set.data_model_id()` now also sets the display name of the data model.
 
 ### Improved
 - Setting of proper value type for default
