@@ -1,7 +1,7 @@
 import itertools
 import json
 import typing
-from collections.abc import Callable, Iterable, Set
+from collections.abc import Iterable, Set
 from pathlib import Path
 from typing import Any
 
@@ -46,7 +46,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         self,
         items: Iterable[NeatSequence],
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         total: int | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
@@ -60,7 +59,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         super().__init__(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -78,7 +76,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -93,7 +90,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -111,7 +107,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         client: CogniteClient,
         root_asset_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -126,7 +121,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -143,7 +137,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         cls,
         file_path: str | Path,
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -157,7 +150,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,

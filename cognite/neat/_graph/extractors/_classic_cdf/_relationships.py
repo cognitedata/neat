@@ -46,7 +46,6 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         super().__init__(
             to_iterate,
             namespace=namespace,
-            to_type=to_type,
             total=total,
             limit=limit,
             unpack_metadata=unpack_metadata,

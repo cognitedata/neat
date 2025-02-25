@@ -15,12 +15,7 @@ def test_asset_extractor_with_lambda_unpacked_metadata():
 
     store = NeatGraphStore.from_memory_store()
 
-    extractor = AssetsExtractor.from_dataset(
-        client_mock,
-        data_set_external_id="nordic44",
-        to_type=lambda a: a.metadata.get("type", "Unknown"),
-        unpack_metadata=True,
-    )
+    extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44", unpack_metadata=True)
     store.write(extractor)
 
     label_id = DEFAULT_NAMESPACE["Label_Substation"]
@@ -44,11 +39,7 @@ def test_asset_extractor_with_packed_metadata():
 
     store = NeatGraphStore.from_memory_store()
 
-    extractor = AssetsExtractor.from_dataset(
-        client_mock,
-        data_set_external_id="nordic44",
-        unpack_metadata=False,
-    )
+    extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44", unpack_metadata=False)
     store.write(extractor)
 
     assert len(store.dataset) == 43
