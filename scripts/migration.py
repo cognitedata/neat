@@ -1,3 +1,7 @@
+"""This is a developer utils functions to compare the differences between the source and target objects.
+
+It is not distributed with the package and is not intended for production use.
+"""
 import typing
 from pprint import pprint
 from typing import Any, TypeVar, cast
@@ -9,7 +13,7 @@ from cognite.client.data_classes.data_modeling import Node, ViewId
 
 from cognite.neat._rules._constants import get_reserved_words
 
-from .auxiliary import local_import
+from deepdiff import DeepDiff
 
 T_Classic = TypeVar("T_Classic", bound=Asset | TimeSeries | Event | Sequence | FileMetadata)
 
@@ -38,9 +42,6 @@ def display_diffs(
         NeatImportError: If the deepdiff package is not installed.
 
     """
-    local_import("deepdiff", "compare")
-    from deepdiff import DeepDiff
-
     target_client = target or source
     dataset_by_id = {
         d.id: d.external_id
