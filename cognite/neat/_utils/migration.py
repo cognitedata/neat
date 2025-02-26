@@ -26,7 +26,18 @@ def display_diffs(
     source: CogniteClient,
     target: CogniteClient | None = None,
 ) -> None:
-    """Displays the differences between the source and target objects."""
+    """Prints the differences between the source and target objects.
+
+    Args:
+        source_items (typing.Sequence[Asset | TimeSeries | Event | Sequence | FileMetadata]): The source objects.
+        target_view (ViewId | tuple[str, str, str]): The target view.
+        source (CogniteClient): The source client.
+        target (CogniteClient, optional): The target client. Defaults to the source client
+
+    Raises:
+        NeatImportError: If the deepdiff package is not installed.
+
+    """
     local_import("deepdiff", "compare")
     from deepdiff import DeepDiff
 
@@ -59,7 +70,7 @@ def display_diffs(
 
 
 def as_classic(node: Node, classic: T_Classic) -> T_Classic:
-    """Converts a Node to is corresponding Asset/TimeSeries/Event/Sequence/FileMetadata object.
+    """Converts a Node to its corresponding Asset/TimeSeries/Event/Sequence/FileMetadata object.
 
     The use case for this function is to compare a migrated node with its source in the asset-centric schema in CDF.
 
