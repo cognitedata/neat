@@ -25,6 +25,34 @@ instances:
   type:
     externalId: NeatIncAsset
     space: sp_windfarm_enterprise
+- externalId: ClassicSourceSystem_manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer1
+    source:
+      externalId: NeatIncSourceSystem
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncSourceSystem
+    space: sp_windfarm_enterprise
+- externalId: ClassicSourceSystem_manufacturer2
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer2
+    source:
+      externalId: NeatIncSourceSystem
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncSourceSystem
+    space: sp_windfarm_enterprise
 - externalId: Label_Measurement
   instanceType: node
   sources:
@@ -49,6 +77,9 @@ instances:
   sources:
   - properties:
       classicExternalId: Measurement
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
       description: Measurement
       name: Measurement
     source:
@@ -783,7 +814,7 @@ rules:
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm_enterprise/WindFarmEnterprise/v1
     space: sp_windfarm_enterprise
-    updated: '2025-02-26T15:54:18.353000Z'
+    updated: '2025-02-26T16:20:49.783000Z'
     version: v1
   properties:
   - connection: direct
