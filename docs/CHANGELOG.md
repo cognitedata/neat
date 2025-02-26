@@ -28,6 +28,9 @@ Changes are grouped as follows:
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters
 - Filters were not taken into account when importing DMS Data Model
 - Description was not properly parsed from DMS data model (e.g. split between creator and description)
+- The `neat.read.cdf.graph( , identifier="externalId")` no longer loses information about parents.
+- The `neat.to.cdf.instances()` now removes the `CogniteSourceSystem_` prefix if it can if the data was read using the 
+  `neat.read.cdf.classic.graph(...)` method.
 
 ### Added
 - Enable data model to be composed of views from multiple spaces with warning being raised
