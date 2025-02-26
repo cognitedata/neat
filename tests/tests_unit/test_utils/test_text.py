@@ -34,7 +34,7 @@ class TestToWords:
         ],
     )
     def test_to_words(self, input_: str, expected: list[str]) -> None:
-        assert to_words(actual) == expected
+        assert to_words(input_) == expected
 
 
 class TestNamingStandardization:
