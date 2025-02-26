@@ -38,6 +38,7 @@ nav:
         - AML Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
       - Data Modeling:
         - My First Data Model: tutorials/data-modeling/cold_start.ipynb
+        - Extending Core Data Model via Concept Selection: tutorials/data-modeling/core_extension_via_subset.ipynb
         - Extending Data Model: tutorials/data-modeling/core_extension.ipynb
   - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
