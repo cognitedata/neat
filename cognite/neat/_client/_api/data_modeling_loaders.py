@@ -302,6 +302,10 @@ class DataModelingLoader(
     def items_from_schema(cls, schema: DMSSchema) -> T_CogniteResourceList:
         raise NotImplementedError
 
+    @abstractmethod
+    def merge(self, local: T_WriteClass, remote: T_WritableCogniteResource) -> T_WritableCogniteResource:
+        raise NotImplementedError
+
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"

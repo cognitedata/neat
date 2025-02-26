@@ -13,6 +13,7 @@ from cognite.client.data_classes._base import (
 from cognite.client.data_classes.data_modeling import (
     DataModelApplyList,
     DataModelId,
+    NodeApply,
     SpaceApply,
     ViewApplyList,
 )
@@ -95,7 +96,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         self,
         export_components: Component | Collection[Component] | None = None,
         include_space: set[str] | None = None,
-        existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
+        existing: Literal["fail", "skip", "update", "merge", "force", "recreate"] = "update",
         instance_space: str | None = None,
         suppress_warnings: bool = False,
         drop_data: bool = False,
@@ -347,6 +348,8 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     categorized.to_create.append(item)
             elif loader.are_equal(item, cdf_item):
                 categorized.unchanged.append(item)
+            elif self.existing == "merge" and not isinstance(item, SpaceApply | NodeApply):
+                categorized.to_update.append(loader.merge(item, item))
             else:
                 categorized.to_update.append(item)
         return categorized
