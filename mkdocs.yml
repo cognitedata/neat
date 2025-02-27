@@ -69,7 +69,7 @@ nav:
           - Warnings:
             -  Main: reference/issues/warnings.md
             -  UserModeling: reference/issues/user_model_warnings.md
-  - Changelog: CHANGELOG.md
+  - Changelog: https://github.com/cognitedata/neat/releases
 
 markdown_extensions:
   - pymdownx.superfences
