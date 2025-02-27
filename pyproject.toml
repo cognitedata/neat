@@ -121,7 +121,6 @@ docs = [
 google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
 oxi = ["oxrdflib", "pyoxigraph"]
 
-
 all = [
     "pyoxigraph",
     "oxrdflib",
@@ -155,7 +154,6 @@ types-tqdm = "^4.67.0.20241221"
 networkx-stubs = "^0.0.1"
 cognite-toolkit = "^0.4.8"
 tqdm = "^4.67.1"
-deepdiff = { version = ">0.1.1", optional = true }
 
 [build-system]
 requires = ["poetry>=0.12"]
