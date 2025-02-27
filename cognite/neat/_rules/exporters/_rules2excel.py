@@ -20,10 +20,15 @@ from cognite.neat._rules.models import (
     SchemaCompleteness,
     SheetRow,
 )
+from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat._rules.models.dms import DMSMetadata
+from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._utils.spreadsheet import find_column_with_value
+from cognite.neat._utils.spreadsheet import (
+    find_column_with_value,
+    generate_data_validation,
+)
 
 from ._base import BaseExporter
 
@@ -74,6 +79,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         add_empty_rows: bool = False,
         hide_internal_columns: bool = True,
         include_properties: Literal["same-space", "all"] = "all",
+        add_drop_downs: bool = True,
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -85,6 +91,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self.add_empty_rows = add_empty_rows
         self.hide_internal_columns = hide_internal_columns
         self.include_properties = include_properties
+        self.add_drop_downs = add_drop_downs
 
     @property
     def description(self) -> str:
@@ -130,7 +137,95 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                     if column_letter:
                         ws.column_dimensions[column_letter].hidden = True
 
+        # Only add drop downs if the rules are DMSRules
+        if self.add_drop_downs and isinstance(rules, DMSRules):
+            self._add_drop_downs(workbook)
+
         return workbook
+
+    def _add_drop_downs(self, workbook: Workbook, no_rows: int = 500) -> None:
+        """Adds drop down menus to specific columns for fast and accurate data entry.
+
+        Args:
+            workbook: Workbook representation of the Excel file.
+            no_rows: number of rows to add drop down menus. Defaults to 500.
+        """
+
+        self._make_helper_sheet(workbook)
+
+        dv_views = generate_data_validation("_helper", "A", no_header_rows=0, no_rows=no_rows)
+        dv_containers = generate_data_validation("_helper", "b", no_header_rows=0, no_rows=no_rows)
+        dv_value_types = generate_data_validation("_helper", "C", no_header_rows=0, no_rows=no_rows)
+        dv_immutable = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
+        dv_nullable = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
+        dv_is_list = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
+        dv_in_model = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
+        dv_used_for = generate_data_validation("_helper", "E", no_header_rows=0, no_rows=3)
+
+        workbook["Properties"].add_data_validation(dv_views)
+        workbook["Properties"].add_data_validation(dv_containers)
+        workbook["Properties"].add_data_validation(dv_value_types)
+        workbook["Properties"].add_data_validation(dv_nullable)
+        workbook["Properties"].add_data_validation(dv_is_list)
+        workbook["Properties"].add_data_validation(dv_immutable)
+        workbook["Views"].add_data_validation(dv_in_model)
+        workbook["Containers"].add_data_validation(dv_used_for)
+
+        if column := find_column_with_value(workbook["Properties"], "View"):
+            dv_views.add(f"{column}{3}:{column}{no_rows}")
+
+        if column := find_column_with_value(workbook["Properties"], "Container"):
+            dv_containers.add(f"{column}{3}:{column}{no_rows}")
+
+        if column := find_column_with_value(workbook["Properties"], "Value Type"):
+            dv_value_types.add(f"{column}{3}:{column}{no_rows}")
+
+        if column := find_column_with_value(workbook["Properties"], "Nullable"):
+            dv_nullable.add(f"{column}{3}:{column}{no_rows}")
+
+        if column := find_column_with_value(workbook["Properties"], "Is List"):
+            dv_is_list.add(f"{column}{3}:{column}{no_rows}")
+
+        if column := find_column_with_value(workbook["Properties"], "Immutable"):
+            dv_immutable.add(f"{column}{3}:{column}{no_rows}")
+
+        if column := find_column_with_value(workbook["Views"], "In Model"):
+            dv_in_model.add(f"{column}{3}:{column}{no_rows}")
+
+        if column := find_column_with_value(workbook["Containers"], "Used For"):
+            dv_used_for.add(f"{column}{3}:{column}{no_rows}")
+
+    def _make_helper_sheet(self, workbook: Workbook) -> None:
+        """This helper sheet is used as source of data for drop down menus creation"""
+        workbook.create_sheet(title="_helper")
+
+        for counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
+            workbook["_helper"].cell(row=counter + 1, column=3, value=dtype)
+
+        for i in range(100):
+            workbook["_helper"].cell(
+                row=i + 1,
+                column=1,
+                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
+            )
+            workbook["_helper"].cell(
+                row=i + 1,
+                column=2,
+                value=f'=IF(ISBLANK(Containers!A{i + 3}), "", Containers!A{i + 3})',
+            )
+            workbook["_helper"].cell(
+                row=counter + i + 2,
+                column=3,
+                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
+            )
+
+        for i, value in enumerate([True, False, ""]):
+            workbook["_helper"].cell(row=i + 1, column=4, value=cast(bool | str, value))
+
+        for i, value in enumerate(["node", "edge", "all"]):
+            workbook["_helper"].cell(row=i + 1, column=5, value=value)
+
+        workbook["_helper"].sheet_state = "hidden"
 
     def _write_sheets(
         self,
