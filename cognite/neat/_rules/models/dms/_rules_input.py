@@ -212,6 +212,8 @@ class DMSInputView(InputComponent[DMSView]):
         return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
 
     def _load_implements(self, default_space: str, default_version: str) -> list[ViewEntity] | None:
+        self.implements = self.implements.strip() if self.implements else None
+
         return (
             [
                 ViewEntity.load(implement, strict=True, space=default_space, version=default_version)
