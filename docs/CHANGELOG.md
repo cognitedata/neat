@@ -37,6 +37,7 @@ Changes are grouped as follows:
 - Support for less restrictive edge type
 - Public interface for exporting data model to ontology via `neat.to.ontology()`
 - Alpha flags to readers / to-ers that are not critical for v1 of neat
+- The `neat.read.cdf.raw(...)` method which supports reading raw data from CDF.
 - Added "Extending Core Data Model via Concept Selection" tutorial to docs
 
 ### Improved
