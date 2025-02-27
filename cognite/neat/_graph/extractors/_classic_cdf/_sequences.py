@@ -1,7 +1,7 @@
 import itertools
 import json
 import typing
-from collections.abc import Callable, Iterable, Set
+from collections.abc import Iterable, Set
 from pathlib import Path
 from typing import Any
 
@@ -21,8 +21,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
     Args:
         items (Iterable[T_CogniteResource]): An iterable of classic resource.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[T_CogniteResource], str | None], optional): A function to convert an item to a type.
-            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
         total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
             is installed. Defaults to None.
         limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
@@ -46,7 +44,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         self,
         items: Iterable[NeatSequence],
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         total: int | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
@@ -60,7 +57,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         super().__init__(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -78,7 +74,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -93,7 +88,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -111,7 +105,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         client: CogniteClient,
         root_asset_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -126,7 +119,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -143,7 +135,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         cls,
         file_path: str | Path,
         namespace: Namespace | None = None,
-        to_type: Callable[[NeatSequence], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -157,7 +148,6 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
