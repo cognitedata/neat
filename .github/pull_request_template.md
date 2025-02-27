@@ -2,12 +2,13 @@
 
 Please describe the change you have made.
 
-## Changelog
+## Bump
 
 - [ ] Patch
 - [ ] Minor
 - [ ] Skip
 
+## Changelog
 ### Added/Changed/Improved/Removed
 
 - My change.

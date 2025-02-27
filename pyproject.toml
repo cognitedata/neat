@@ -144,6 +144,7 @@ memray = [
     { version = "^1.7", platform = "linux" },
 ]
 httpx = "*"
+marko = "^2.1.2"
 mypy = "^1.4"
 pandas-stubs = "^2"
 types-PyYAML = "^6"
