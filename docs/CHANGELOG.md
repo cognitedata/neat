@@ -28,6 +28,8 @@ Changes are grouped as follows:
 - The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters
 - Filters were not taken into account when importing DMS Data Model
 - Description was not properly parsed from DMS data model (e.g. split between creator and description)
+- Print out of errors in `neat.inspect.issues()`
+- Handling of empty strings for implements in DMS and Information rules
 
 ### Added
 - Enable data model to be composed of views from multiple spaces with warning being raised
@@ -35,11 +37,14 @@ Changes are grouped as follows:
 - Support for less restrictive edge type
 - Public interface for exporting data model to ontology via `neat.to.ontology()`
 - Alpha flags to readers / to-ers that are not critical for v1 of neat
+- The `neat.read.cdf.raw(...)` method which supports reading raw data from CDF.
+- Added "Extending Core Data Model via Concept Selection" tutorial to docs
 
 ### Improved
 - Setting of proper value type for default
 - Errors that do not have loc are now well handled in neat session
 - Validation on used spaces
+- The `neat.set.data_model_id()` now also sets the display name of the data model.
 - Data model implements visualization in NeatSession
 
 ## [0.110.0] - 17-02-**2025**
