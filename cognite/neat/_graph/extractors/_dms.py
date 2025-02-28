@@ -1,4 +1,3 @@
-import json
 import urllib.parse
 from collections.abc import Iterable, Iterator, Set
 from functools import cached_property
@@ -7,20 +6,18 @@ from typing import cast
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
-from cognite.client.data_classes.data_modeling.instances import Instance, InstanceSort, PropertyValue
+from cognite.client.data_classes.data_modeling.instances import Instance, InstanceSort
 from cognite.client.utils.useful_types import SequenceNotStr
-from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat._config import GLOBAL_CONFIG
 from cognite.neat._constants import DEFAULT_SPACE_URI, is_readonly_property
 from cognite.neat._issues.errors import ResourceRetrievalError
 from cognite.neat._shared import Triple
-from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.collection_ import iterate_progress_bar
 
 from ._base import BaseExtractor
-
-DEFAULT_EMPTY_VALUES = frozenset({"nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined"})
+from ._dict import DEFAULT_EMPTY_VALUES, DMSPropertyExtractor
 
 
 class DMSExtractor(BaseExtractor):
@@ -189,48 +186,15 @@ class DMSExtractor(BaseExtractor):
 
         for view_id, properties in instance.properties.items():
             namespace = self._get_namespace(view_id.space)
-            for key, value in properties.items():
-                for predicate_str, object_ in self._get_predicate_objects_pair(key, value, self.unpack_json):
-                    yield id_, namespace[urllib.parse.quote(predicate_str)], object_
-
-    def _get_predicate_objects_pair(
-        self, key: str, value: PropertyValue, unpack_json: bool
-    ) -> Iterable[tuple[str, Literal | URIRef]]:
-        if isinstance(value, str | float | bool | int):
-            yield key, Literal(value)
-        elif isinstance(value, dict) and "space" in value and "externalId" in value:
-            yield key, self._as_uri_ref(dm.DirectRelationReference.load(value))
-        elif isinstance(value, dict) and unpack_json:
-            yield from self._unpack_json(value)
-        elif isinstance(value, dict):
-            # This object is a json object.
-            yield key, Literal(json.dumps(value), datatype=XSD._NS["json"])
-        elif isinstance(value, list):
-            for item in value:
-                yield from self._get_predicate_objects_pair(key, item, False)
-
-    def _unpack_json(self, value: dict, parent: str | None = None) -> Iterable[tuple[str, Literal | URIRef]]:
-        for sub_key, sub_value in value.items():
-            key = f"{parent}_{sub_key}" if parent else sub_key
-            if isinstance(sub_value, str):
-                if sub_value.casefold() in self.empty_values:
-                    continue
-                if self.str_to_ideal_type:
-                    yield key, Literal(string_to_ideal_type(sub_value))
-                else:
-                    yield key, Literal(sub_value)
-            elif isinstance(sub_value, int | float | bool):
-                yield key, Literal(sub_value)
-            elif isinstance(sub_value, dict):
-                yield from self._unpack_json(sub_value, key)
-            elif isinstance(sub_value, list):
-                for no, item in enumerate(sub_value, 1):
-                    if isinstance(item, dict):
-                        yield from self._unpack_json(item, f"{key}_{no}")
-                    else:
-                        yield from self._get_predicate_objects_pair(key, item, self.unpack_json)
-            else:
-                yield key, Literal(str(sub_value))
+            yield from DMSPropertyExtractor(
+                id_,
+                properties,
+                namespace,
+                self._as_uri_ref,
+                self.empty_values,
+                self.str_to_ideal_type,
+                self.unpack_json,
+            ).extract()
 
     def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
         return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
