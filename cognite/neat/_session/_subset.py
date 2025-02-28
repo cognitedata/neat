@@ -34,18 +34,14 @@ class SubsetAPI:
             IssueList: A list of issues that occurred during the transformation.
 
         Example:
-
             Read the CogniteCore data model and reduce the data model to only the 'CogniteAsset' concept.
-
             ```python
-            # From an active NeatSession
             neat = NeatSession(CogniteClient())
 
             neat.read.examples.core_data_model()
 
             neat.subset.data_model("CogniteAsset")
             ```
-
         """
         if self._state.rule_store.empty:
             raise NeatSessionError("No rules to set the data model ID.")
