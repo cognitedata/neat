@@ -152,14 +152,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             no_rows: number of rows to add drop down menus. Defaults to 100*100.
 
         !!! note "Why no_rows=100?"
-            Maximum number of views per data model is 100, reflecting max number of rows
+            Maximum number of views per data model is 100, thus this value is set accordingly
 
         !!! note "Why defining individual data validation per desired column?
             This is due to the internal working of openpyxl. Adding same validation to
-            different column leads to unexpected behavior when exporting workbook as Excel file.
-            Most likely this originates in the way the openpyxl implements of data validation, which holds
-            the validation as a reference to a python object, instead of actual storing actual validation
-            object.
+            different column leads to unexpected behavior when the openpyxl workbook is exported
+            as and Excel file. Probably, the validation is not copied to the new column,
+            but instead reference to the data validation object is added.
         """
 
         self._make_helper_sheet(workbook)
