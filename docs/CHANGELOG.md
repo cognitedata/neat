@@ -15,7 +15,7 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## TBD
+## [0.111.0] - 27-02-**2025**
 ### Fixed
 - Passing `space_property` to `neat.to.cdf.instances()` is no longer ignored.
 - The `neat.inspect.issues(...)` and `neat.inspect.outcome.issues(...)` now prints out a maximum of 50 issues. This is
