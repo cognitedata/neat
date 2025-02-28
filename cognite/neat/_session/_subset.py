@@ -33,7 +33,7 @@ class SubsetAPI:
         Returns:
             IssueList: A list of issues that occurred during the transformation.
 
-        Examples:
+        Example:
 
             Read the CogniteCore data model and reduce the data model to only the 'CogniteAsset' concept.
 
