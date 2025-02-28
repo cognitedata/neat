@@ -4,7 +4,7 @@ name: Release NEAT
 on:
   push:
     branches:
-      - release
+      - main
 
 env:
   PYTHON_VERSION: "3.11"
