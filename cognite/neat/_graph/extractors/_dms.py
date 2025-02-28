@@ -6,20 +6,18 @@ from typing import cast
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
-from cognite.client.data_classes.data_modeling.instances import Instance, PropertyValue
+from cognite.client.data_classes.data_modeling.instances import Instance, InstanceSort
 from cognite.client.utils.useful_types import SequenceNotStr
-from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat._config import GLOBAL_CONFIG
 from cognite.neat._constants import DEFAULT_SPACE_URI, is_readonly_property
 from cognite.neat._issues.errors import ResourceRetrievalError
 from cognite.neat._shared import Triple
-from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.collection_ import iterate_progress_bar
 
 from ._base import BaseExtractor
-
-DEFAULT_EMPTY_VALUES = frozenset({"nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined"})
+from ._dict import DEFAULT_EMPTY_VALUES, DMSPropertyExtractor
 
 
 class DMSExtractor(BaseExtractor):
@@ -188,39 +186,15 @@ class DMSExtractor(BaseExtractor):
 
         for view_id, properties in instance.properties.items():
             namespace = self._get_namespace(view_id.space)
-            for key, value in properties.items():
-                for predicate_str, object_ in self._get_predicate_objects_pair(key, value):
-                    yield id_, namespace[urllib.parse.quote(predicate_str)], object_
-
-    def _get_predicate_objects_pair(self, key: str, value: PropertyValue) -> Iterable[tuple[str, Literal | URIRef]]:
-        if isinstance(value, str | float | bool | int):
-            yield key, Literal(value)
-        elif isinstance(value, dict) and "space" in value and "externalId" in value:
-            yield key, self._as_uri_ref(dm.DirectRelationReference.load(value))
-        elif isinstance(value, dict) and self.unpack_json:
-            for sub_key, sub_value in value.items():
-                if isinstance(sub_value, str):
-                    if sub_value.casefold() in self.empty_values:
-                        continue
-                    if self.str_to_ideal_type:
-                        yield sub_key, Literal(string_to_ideal_type(sub_value))
-                    else:
-                        yield sub_key, Literal(sub_value)
-                elif isinstance(sub_value, int | float | bool):
-                    yield sub_key, Literal(sub_value)
-                elif isinstance(sub_value, dict):
-                    yield from self._get_predicate_objects_pair(f"{key}_{sub_key}", sub_value)
-                elif isinstance(sub_value, list):
-                    for item in sub_value:
-                        yield from self._get_predicate_objects_pair(f"{key}_{sub_key}", item)
-                else:
-                    yield sub_key, Literal(str(sub_value))
-        elif isinstance(value, dict):
-            # This object is a json object.
-            yield key, Literal(str(value), datatype=XSD._NS["json"])
-        elif isinstance(value, list):
-            for item in value:
-                yield from self._get_predicate_objects_pair(key, item)
+            yield from DMSPropertyExtractor(
+                id_,
+                properties,
+                namespace,
+                self._as_uri_ref,
+                self.empty_values,
+                self.str_to_ideal_type,
+                self.unpack_json,
+            ).extract()
 
     def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
         return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
@@ -270,8 +244,16 @@ class _ViewInstanceIterator(Iterable[Instance]):
         }
         # All nodes and edges with properties
         if self.view.used_for in ("node", "all"):
+            # Without a sort, the sort is implicitly by the internal id, as cursoring needs a stable sort.
+            # By making the sort be on external_id, Postgres should pick the index
+            # that's on (project_id, space, external_id)
+            # WHERE deleted_at IS NULL. In other words, avoiding soft deleted instances.
             node_iterable: Iterable[Instance] = self.client.data_modeling.instances(
-                chunk_size=None, instance_type="node", sources=[view_id], space=self.instance_space
+                chunk_size=None,
+                instance_type="node",
+                sources=[view_id],
+                space=self.instance_space,
+                sort=InstanceSort(["node", "externalId"]),
             )
             if read_only_properties:
                 node_iterable = self._remove_read_only_properties(node_iterable, read_only_properties, view_id)
@@ -279,7 +261,11 @@ class _ViewInstanceIterator(Iterable[Instance]):
 
         if self.view.used_for in ("edge", "all"):
             yield from self.client.data_modeling.instances(
-                chunk_size=None, instance_type="edge", sources=[view_id], space=self.instance_space
+                chunk_size=None,
+                instance_type="edge",
+                sources=[view_id],
+                space=self.instance_space,
+                sort=InstanceSort(["edge", "externalId"]),
             )
 
         for prop in self.view.properties.values():
@@ -294,6 +280,7 @@ class _ViewInstanceIterator(Iterable[Instance]):
                         ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
                     ),
                     space=self.instance_space,
+                    sort=InstanceSort(["edge", "externalId"]),
                 )
 
     @staticmethod

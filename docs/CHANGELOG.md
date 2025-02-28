@@ -15,6 +15,47 @@ Changes are grouped as follows:
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.111.0] - 27-02-**2025**
+### Fixed
+- Passing `space_property` to `neat.to.cdf.instances()` is no longer ignored.
+- The `neat.inspect.issues(...)` and `neat.inspect.outcome.issues(...)` now prints out a maximum of 50 issues. This is
+  to avoid the output being too large. You can pass `return_dataframe=True` to get all issues as a DataFrame.
+- The `neat.read.cdf.classic.graph(..., identifier="externalId")` now correctly looks up external ID for
+  label.dataSetId, relationship.dataSetId, relationship.sourceExternalId, and relationship.targetExternalId.
+- The `neat.read.cdf.graph()` extracts json as a json-string instead of a regular string.
+- The `neat.read.cdf.graph()` has start and endNode properties for edges.
+- Now DMS rules validation are checked for existence of all components of schema, raise error if at least one is missing
+- The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters
+- Filters were not taken into account when importing DMS Data Model
+- Description was not properly parsed from DMS data model (e.g. split between creator and description)
+- Print out of errors in `neat.inspect.issues()`
+- Handling of empty strings for implements in DMS and Information rules
+
+### Added
+- Enable data model to be composed of views from multiple spaces with warning being raised
+- The `neat.to.cdf.instances(space_property=)'` now automatically fixes spaces with invalid characters.
+- Support for less restrictive edge type
+- Public interface for exporting data model to ontology via `neat.to.ontology()`
+- Alpha flags to readers / to-ers that are not critical for v1 of neat
+- The `neat.read.cdf.raw(...)` method which supports reading raw data from CDF.
+- Added "Extending Core Data Model via Concept Selection" tutorial to docs
+
+### Improved
+- Setting of proper value type for default
+- Errors that do not have loc are now well handled in neat session
+- Validation on used spaces
+- The `neat.set.data_model_id()` now also sets the display name of the data model.
+- Data model implements visualization in NeatSession
+
+## [0.110.0] - 17-02-**2025**
+### Added
+- Validation of DMS rules does not allow re-definition of any of the resources
+- Validation of INFO rules does not allow re-definition of any of the resources
+
+## [0.110.0] - 17-02-**2025**
+### Added
+- Validation of DMS rules does not allow re-definition of any of the resources
+
 ## [0.110.0] - 17-02-**2025**
 ### Added
 - [ALPHA] Added standardization of version and space for views in DMS data model under `neat.prepare.data_model.standardize_space_and_version()`.

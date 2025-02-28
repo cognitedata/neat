@@ -95,6 +95,13 @@ TEST_CASES = [
     ),
     (
         EdgeEntity,
+        "edge(type=MySpace:ns=3;i=4924)",
+        EdgeEntity(
+            type=DMSNodeEntity(space="MySpace", externalId="ns=3;i=4924"),
+        ),
+    ),
+    (
+        EdgeEntity,
         "edge(direction=inwards,properties=StartEndTime)",
         EdgeEntity(
             properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="StartEndTime"),

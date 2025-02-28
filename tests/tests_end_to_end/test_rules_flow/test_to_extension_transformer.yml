@@ -59,6 +59,7 @@ data_product:
   metadata:
     created: '2025-01-03T00:00:00'
     creator: MISSING
+    description: Cognite core data model
     external_id: DataProduct
     name: data_product data model
     role: DMS Architect
@@ -1571,6 +1572,7 @@ enterprise:
   metadata:
     created: '2025-01-03T00:00:00'
     creator: MISSING
+    description: Cognite core data model
     external_id: Enterprise
     name: Neat enterprise data model
     role: DMS Architect
@@ -2429,17 +2431,26 @@ enterprise:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageAnnotation
     view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
   - description: Represents a logical collection of Cognite360Image instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d",
+      "Cognite3DModel", "type"], "value": "Image360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageCollection
     view: cdf_cdm:Cognite360ImageCollection(version=v1)
   - description: Navigational aid for traversing Cognite360ImageModel instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+      "type"], "value": "Image360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageModel
     view: cdf_cdm:Cognite360ImageModel(version=v1)
   - description: A way to group images across collections. Used for creating visual
       scan history
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DGroup"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DGroup",
+      "groupType"], "value": "Station360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageStation
@@ -2504,6 +2515,9 @@ enterprise:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetType
     view: cdf_cdm:CogniteAssetType(version=v1)
   - description: Navigational aid for traversing CogniteCADModel instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+      "type"], "value": "CAD"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADModel
@@ -2514,6 +2528,9 @@ enterprise:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode
     view: cdf_cdm:CogniteCADNode(version=v1)
   - description: ''
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d",
+      "Cognite3DModel", "type"], "value": "CAD"}}]})'
     implements: cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADRevision
@@ -2559,11 +2576,17 @@ enterprise:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFileCategory
     view: cdf_cdm:CogniteFileCategory(version=v1)
   - description: Navigational aid for traversing CognitePointCloudModel instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+      "type"], "value": "PointCloud"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudModel
     view: cdf_cdm:CognitePointCloudModel(version=v1)
   - description: Navigational aid for traversing CognitePointCloudRevision instances
+    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+      "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d",
+      "Cognite3DModel", "type"], "value": "PointCloud"}}]})'
     implements: cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudRevision
@@ -2806,6 +2829,7 @@ solution:
   metadata:
     created: '2025-01-03T00:00:00'
     creator: MISSING
+    description: Cognite core data model
     external_id: Solution
     name: solution data model
     role: DMS Architect

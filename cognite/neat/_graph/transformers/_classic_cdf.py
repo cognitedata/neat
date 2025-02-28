@@ -240,50 +240,36 @@ class AssetRelationshipConnector(BaseTransformerStandardised):
             str(extractors.RelationshipsExtractor.__name__),
         }
     )
-    _asset_template: str = """SELECT ?source ?target WHERE {{
-                              <{relationship_id}> <{relationship_source_xid_prop}> ?source_xid .
-                              ?source <{asset_xid_property}> ?source_xid .
-                              ?source a <{asset_type}> .
-
-                              <{relationship_id}> <{relationship_target_xid_prop}> ?target_xid .
-                              ?target <{asset_xid_property}> ?target_xid .
-                              ?target a <{asset_type}> .}}"""
 
     def _count_query(self) -> str:
-        query = """SELECT (COUNT(?target) as ?count) WHERE {{
+        query = """SELECT (COUNT(?target_xid) as ?count) WHERE {{
                    ?relationship a <{relationship_type}> .
                    ?relationship <{relationship_source_xid_prop}> ?source_xid .
-                   ?source <{asset_xid_property}> ?source_xid .
-                   ?source a <{asset_type}> .
+                   ?source_xid a <{asset_type}> .
 
                    ?relationship <{relationship_target_xid_prop}> ?target_xid .
-                   ?target <{asset_xid_property}> ?target_xid .
-                   ?target a <{asset_type}> .}}"""
+                   ?target_xid a <{asset_type}> .}}"""
 
         return query.format(
             relationship_type=self.relationship_type,
             relationship_source_xid_prop=self.relationship_source_xid_prop,
             relationship_target_xid_prop=self.relationship_target_xid_prop,
-            asset_xid_property=self.asset_xid_property,
             asset_type=self.asset_type,
         )
 
     def _iterate_query(self) -> str:
-        query = """SELECT ?source ?relationship ?target WHERE {{
+        query = """SELECT ?source_xid ?relationship ?target_xid WHERE {{
                    ?relationship a <{relationship_type}> .
                    ?relationship <{relationship_source_xid_prop}> ?source_xid .
-                   ?source <{asset_xid_property}> ?source_xid .
-                   ?source a <{asset_type}> .
+                   ?source_xid a <{asset_type}> .
 
                    ?relationship <{relationship_target_xid_prop}> ?target_xid .
-                   ?target <{asset_xid_property}> ?target_xid .
-                   ?target a <{asset_type}> .}}"""
+                   ?target_xid a <{asset_type}> .}}"""
 
         return query.format(
             relationship_type=self.relationship_type,
             relationship_source_xid_prop=self.relationship_source_xid_prop,
             relationship_target_xid_prop=self.relationship_target_xid_prop,
-            asset_xid_property=self.asset_xid_property,
             asset_type=self.asset_type,
         )
 
@@ -293,13 +279,11 @@ class AssetRelationshipConnector(BaseTransformerStandardised):
         relationship_type: URIRef | None = None,
         relationship_source_xid_prop: URIRef | None = None,
         relationship_target_xid_prop: URIRef | None = None,
-        asset_xid_property: URIRef | None = None,
     ):
         self.asset_type = asset_type or DEFAULT_NAMESPACE.Asset
         self.relationship_type = relationship_type or DEFAULT_NAMESPACE.Relationship
         self.relationship_source_xid_prop = relationship_source_xid_prop or DEFAULT_NAMESPACE.sourceExternalId
         self.relationship_target_xid_prop = relationship_target_xid_prop or DEFAULT_NAMESPACE.targetExternalId
-        self.asset_xid_property = asset_xid_property or DEFAULT_NAMESPACE.externalId
 
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()

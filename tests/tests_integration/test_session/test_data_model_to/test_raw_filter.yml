@@ -1,0 +1,57 @@
+rules:
+  containers:
+  - container: MyConcept
+    used_for: node
+  metadata:
+    created: '2024-09-19T00:00:00Z'
+    creator: Nikola
+    description: This is a test data model for RawFilter
+    external_id: nikola_external_id
+    name: nikola dm
+    role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1
+    space: nikola_space
+    updated: '2024-09-19T00:00:00Z'
+    version: v1
+  properties:
+  - container: MyConcept
+    container_property: altName
+    immutable: true
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/altName
+    nullable: true
+    value_type: text
+    view: MyConcept
+    view_property: altName
+  - container: MyConcept
+    container_property: name
+    immutable: true
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/name
+    nullable: true
+    value_type: text
+    view: MyConcept
+    view_property: name
+  - container: MyConcept
+    container_property: oneMoreName
+    immutable: true
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/oneMoreName
+    nullable: true
+    value_type: text
+    view: MyConcept
+    view_property: oneMoreName
+  - container: MyConcept
+    container_property: yetAnotherName
+    immutable: true
+    is_list: false
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/yetAnotherName
+    nullable: true
+    value_type: text
+    view: MyConcept
+    view_property: yetAnotherName
+  views:
+  - filter_: 'rawFilter({"exists": {"property": ["nikola_space", "MyConcept", "altName"]}})'
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept
+    view: MyConcept

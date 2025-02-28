@@ -21,6 +21,7 @@ from cognite.neat._rules.models.entities import (
     load_connection,
     load_dms_value_type,
 )
+from cognite.neat._rules.models.entities._wrapped import DMSFilter
 from cognite.neat._utils.rdf_ import uri_display_name
 
 from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
@@ -69,7 +70,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
     def _get_description_and_creator(cls, description_raw: str | None) -> tuple[str | None, list[str]]:
         if description_raw and (description_match := re.search(r"Creator: (.+)", description_raw)):
             creator = description_match.group(1).split(", ")
-            description = description_raw.replace(description_match.string, "").strip() or None
+            description = description_raw.replace(description_match[0], "").strip() or None
         elif description_raw:
             creator = ["MISSING"]
             description = description_raw
@@ -211,6 +212,8 @@ class DMSInputView(InputComponent[DMSView]):
         return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
 
     def _load_implements(self, default_space: str, default_version: str) -> list[ViewEntity] | None:
+        self.implements = self.implements.strip() if self.implements else None
+
         return (
             [
                 ViewEntity.load(implement, strict=True, space=default_space, version=default_version)
@@ -234,6 +237,7 @@ class DMSInputView(InputComponent[DMSView]):
             implements=", ".join([str(ViewEntity.from_id(parent, _DEFAULT_VERSION)) for parent in view.implements])
             or None,
             in_model=in_model,
+            filter_=(str(DMSFilter.from_dms_filter(view.filter)) if view.filter else None),
         )
 
 

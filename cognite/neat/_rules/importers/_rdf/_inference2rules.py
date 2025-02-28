@@ -10,6 +10,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, RDFS, Graph, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
 
+from cognite.neat._config import GLOBAL_CONFIG
 from cognite.neat._constants import NEAT, get_default_prefixes_and_namespaces
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
@@ -27,6 +28,7 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import INSTANCES_ENTITY
 from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
+from cognite.neat._utils.text import NamingStandardization
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
 
@@ -403,7 +405,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
         else:
             existing_classes = {}
         classes: list[InformationInputClass] = []
-        properties_by_class_suffix_by_property_id_lowered: dict[str, dict[str, InformationInputProperty]] = {}
+        properties_by_class_suffix_by_property_id: dict[str, dict[str, InformationInputProperty]] = {}
 
         # Help for IDE
         type_uri: URIRef
@@ -455,7 +457,8 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    if existing_prop := properties_by_id.get(property_id.casefold()):
+                    property_id_standardized = NamingStandardization.standardize_property_str(property_uri)
+                    if existing_prop := properties_by_id.get(property_id_standardized):
                         if not isinstance(existing_prop.instance_source, list):
                             existing_prop.instance_source = (
                                 [existing_prop.instance_source] if existing_prop.instance_source else []
@@ -463,29 +466,28 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         existing_prop.instance_source.append(property_uri)
                         continue
                     else:
-                        properties_by_id[property_id.casefold()] = self._create_property(
+                        properties_by_id[property_id_standardized] = self._create_property(
                             read_properties, class_suffix, property_uri, property_id, prefixes
                         )
-                properties_by_class_suffix_by_property_id_lowered[class_suffix] = properties_by_id
+                properties_by_class_suffix_by_property_id[class_suffix] = properties_by_id
             if parent_suffix:
                 properties_by_id = {}
                 for property_uri, read_properties in shared_properties.items():
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    if existing_prop := properties_by_id.get(property_id.casefold()):
+                    property_id_standardized = NamingStandardization.standardize_property_str(property_uri)
+                    if existing_prop := properties_by_id.get(property_id_standardized):
                         if not isinstance(existing_prop.instance_source, list):
                             existing_prop.instance_source = (
                                 [existing_prop.instance_source] if existing_prop.instance_source else []
                             )
                         existing_prop.instance_source.append(property_uri)
                     else:
-                        properties_by_id[property_uri.casefold()] = self._create_property(
+                        properties_by_id[property_id_standardized] = self._create_property(
                             read_properties, parent_suffix, property_uri, property_id, prefixes
                         )
         return classes, [
-            prop
-            for properties in properties_by_class_suffix_by_property_id_lowered.values()
-            for prop in properties.values()
+            prop for properties in properties_by_class_suffix_by_property_id.values() for prop in properties.values()
         ]
 
     @staticmethod
@@ -522,7 +524,11 @@ class SubclassInferenceImporter(BaseRDFImporter):
             existing_classes = {}
         properties_by_class_by_subclass: list[_ReadProperties] = []
         existing_class: InformationClass | None
-        for type_uri, instance_count in count_by_type.items():
+        total_instance_count = sum(count_by_type.values())
+        iterable = count_by_type.items()
+        if GLOBAL_CONFIG.use_iterate_bar_threshold and total_instance_count > GLOBAL_CONFIG.use_iterate_bar_threshold:
+            iterable = iterate_progress_bar(iterable, len(count_by_type), "Inferring types...")  # type: ignore[assignment]
+        for type_uri, instance_count in iterable:
             property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
             class_suffix = remove_namespace_from_uri(type_uri)
             if (existing_class := existing_classes.get(class_suffix)) and existing_class.instance_source is None:

@@ -153,6 +153,45 @@ class CDFReadAPI(BaseReadAPI):
         )
         return self._state.write_graph(extractor)
 
+    def raw(
+        self,
+        db_name: str,
+        table_name: str,
+        type: str | None = None,
+        foreign_keys: str | SequenceNotStr[str] | None = None,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
+    ) -> IssueList:
+        """Reads a raw table from CDF to the knowledge graph.
+
+        Args:
+            db_name: The name of the database
+            table_name: The name of the table, this will be assumed to be the type of the instances.
+            type: The type of instances in the table. If None, the table name will be used.
+            foreign_keys: The name of the columns that are foreign keys. If None, no foreign keys are used.
+            unpack_json: If True, the JSON objects will be unpacked into the graph.
+            str_to_ideal_type: If True, the string values will be converted to ideal types.
+
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        Example:
+            ```python
+            neat.read.cdf.raw("my_db", "my_table", "Asset")
+            ```
+
+        """
+        extractor = extractors.RAWExtractor(
+            self._get_client,
+            db_name=db_name,
+            table_name=table_name,
+            table_type=type,
+            foreign_keys=foreign_keys,
+            unpack_json=unpack_json,
+            str_to_ideal_type=str_to_ideal_type,
+        )
+        return self._state.instances.store.write(extractor)
+
 
 @session_class_wrapper
 class CDFClassicAPI(BaseReadAPI):
@@ -229,6 +268,8 @@ class CDFClassicAPI(BaseReadAPI):
         identifier: Literal["id", "externalId"] = "id",
         reference_timeseries: bool = False,
         reference_files: bool = False,
+        unpack_metadata: bool = False,
+        skip_sequence_rows: bool = False,
     ) -> IssueList:
         namespace = CLASSIC_CDF_NAMESPACE
         extractor = extractors.ClassicGraphExtractor(
@@ -238,7 +279,11 @@ class CDFClassicAPI(BaseReadAPI):
             namespace=namespace,
             prefix="Classic",
             identifier=identifier,
+            unpack_metadata=unpack_metadata,
+            skip_sequence_rows=skip_sequence_rows,
         )
+        self._state.instances.neat_prefix_by_predicate_uri.update(extractor.neat_prefix_by_predicate_uri)
+        self._state.instances.neat_prefix_by_type_uri.update(extractor.neat_prefix_by_type_uri)
         extract_issues = self._state.write_graph(extractor)
         if identifier == "externalId":
             self._state.quoted_source_identifiers = True
@@ -361,6 +406,9 @@ class CSVReadAPI(BaseReadAPI):
     """
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
+        warnings.filterwarnings("default")
+        AlphaFlags.csv_read.warn()
+
         engine = import_engine()
         engine.set.format = "csv"
         engine.set.file = NeatReader.create(io).materialize_path()
@@ -416,6 +464,9 @@ class XMLReadAPI(BaseReadAPI):
             - remove associations between nodes that do not exist in the extracted graph
             - remove edges to nodes that do not exist in the extracted graph
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.dexpi_read.warn()
+
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
         engine.set.format = "dexpi"
@@ -467,6 +518,9 @@ class XMLReadAPI(BaseReadAPI):
             - remove unused attributes
             - remove edges to nodes that do not exist in the extracted graph
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.aml_read.warn()
+
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
         engine.set.format = "aml"
@@ -518,6 +572,9 @@ class RDFReadAPI(BaseReadAPI):
             neat.read.rdf.ontology("url_or_path_to_owl_source")
             ```
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.ontology_read.warn()
+
         reader = NeatReader.create(io)
         importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.rule_import(importer)
@@ -533,9 +590,17 @@ class RDFReadAPI(BaseReadAPI):
             neat.read.rdf.imf("url_or_path_to_imf_source")
             ```
         """
+        warnings.filterwarnings("default")
+        AlphaFlags.imf_read.warn()
+
         reader = NeatReader.create(io)
         importer = importers.IMFImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.rule_import(importer)
+
+    def instances(self, io: Any) -> IssueList:
+        reader = NeatReader.create(io)
+        self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
+        return IssueList()
 
     def __call__(
         self,
@@ -560,9 +625,8 @@ class RDFReadAPI(BaseReadAPI):
                 raise ValueError(f"Expected ontology, imf types or instances, got {source}")
 
         elif type == "instances":
-            reader = NeatReader.create(io)
-            self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
-            return IssueList()
+            return self.instances(io)
+
         else:
             raise NeatSessionError(f"Expected data model or instances, got {type}")
 

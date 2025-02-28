@@ -23,14 +23,20 @@ class SetAPI:
         self._verbose = verbose
         self.instances = SetInstances(state, verbose)
 
-    def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str]) -> IssueList:
+    def data_model_id(self, new_model_id: dm.DataModelId | tuple[str, str, str], name: str | None = None) -> IssueList:
         """Sets the data model ID of the latest verified data model. Set the data model id as a tuple of strings
         following the template (<data_model_space>, <data_model_name>, <data_model_version>).
+
+        Args:
+            new_model_id (dm.DataModelId | tuple[str, str, str]): The new data model id.
+            name (str, optional): The display name of the data model. If not set, the external ID will be used
+                to generate the name.
 
         Example:
             Set a new data model id:
             ```python
             neat.set.data_model_id(("my_data_model_space", "My_Data_Model", "v1"))
+            neat.set.data_model_id(("my_data_model_space", "MyDataModel", "v1"), name="My Data Model")
             ```
         """
         if self._state.rule_store.empty:

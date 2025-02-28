@@ -27,10 +27,12 @@ from cognite.neat._issues.errors import (
     ResourceNotFoundError,
     ReversedConnectionNotFeasibleError,
 )
+from cognite.neat._issues.errors._external import CDFMissingResourcesError
 from cognite.neat._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
     UndefinedViewWarning,
+    user_modeling,
 )
 from cognite.neat._issues.warnings.user_modeling import (
     ContainerPropertyLimitWarning,
@@ -43,6 +45,7 @@ from cognite.neat._rules.models.entities._single_value import (
     ViewEntity,
 )
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from cognite.neat._utils.text import humanize_collection
 
 from ._rules import DMSProperty, DMSRules
 
@@ -113,6 +116,14 @@ class DMSValidation:
                 list(imported_containers), include_connected=True
             )
 
+            missing_views = {view.as_id() for view in imported_views} - {view.as_id() for view in referenced_views}
+            missing_containers = {container.as_id() for container in imported_containers} - {
+                container.as_id() for container in referenced_containers
+            }
+
+            if missing_views or missing_containers:
+                raise CDFMissingResourcesError(resources=f"{missing_views.union(missing_containers)}")
+
         # Setup data structures for validation
         dms_schema = self._rules.as_schema()
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
@@ -130,6 +141,10 @@ class DMSValidation:
         parents_view_ids_by_child_id = self._parent_view_ids_by_child_id(all_views_by_id)
 
         issue_list = IssueList()
+
+        # Validated for duplicated resource
+        issue_list.extend(self._duplicated_resources())
+
         # Neat DMS classes Validation
         # These are errors that can only happen due to the format of the Neat DMS classes
         issue_list.extend(self._validate_raw_filter())
@@ -148,6 +163,91 @@ class DMSValidation:
         )
         issue_list.extend(self._validate_schema(dms_schema, all_views_by_id, all_containers_by_id))
         issue_list.extend(self._validate_referenced_container_limits(dms_schema.views, view_properties_by_id))
+        issue_list.extend(self._same_space_views_and_data_model())
+        return issue_list
+
+    def _same_space_views_and_data_model(self) -> IssueList:
+        issue_list = IssueList()
+
+        schema = self._rules.as_schema(remove_cdf_spaces=True)
+
+        if schema.data_model and schema.views:
+            data_model_space = schema.data_model.space
+            views_spaces = {view.space for view in schema.views.values()}
+
+            if data_model_space not in views_spaces:
+                issue_list.append(
+                    user_modeling.ViewsAndDataModelNotInSameSpaceWarning(
+                        data_model_space=data_model_space,
+                        views_spaces=humanize_collection(views_spaces),
+                    )
+                )
+
+        return issue_list
+
+    def _duplicated_resources(self) -> IssueList:
+        issue_list = IssueList()
+
+        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
+        views_sheet = self._read_info_by_spreadsheet.get("Views")
+        containers_sheet = self._read_info_by_spreadsheet.get("Containers")
+
+        visited = defaultdict(list)
+        for row_no, property_ in enumerate(self._properties):
+            visited[property_._identifier()].append(
+                properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1
+            )
+
+        for identifier, rows in visited.items():
+            if len(rows) == 1:
+                continue
+            issue_list.append(
+                ResourceDuplicatedError(
+                    identifier[1],
+                    "property",
+                    (
+                        f"the Properties sheet at row {humanize_collection(rows)} "
+                        "if data model is read from a spreadsheet."
+                    ),
+                )
+            )
+
+        visited = defaultdict(list)
+        for row_no, view in enumerate(self._views):
+            visited[view._identifier()].append(views_sheet.adjusted_row_number(row_no) if views_sheet else row_no + 1)
+
+        for identifier, rows in visited.items():
+            if len(rows) == 1:
+                continue
+            issue_list.append(
+                ResourceDuplicatedError(
+                    identifier[0],
+                    "view",
+                    (f"the Views sheet at row {humanize_collection(rows)} if data model is read from a spreadsheet."),
+                )
+            )
+
+        if self._containers:
+            visited = defaultdict(list)
+            for row_no, container in enumerate(self._containers):
+                visited[container._identifier()].append(
+                    containers_sheet.adjusted_row_number(row_no) if containers_sheet else row_no + 1
+                )
+
+            for identifier, rows in visited.items():
+                if len(rows) == 1:
+                    continue
+                issue_list.append(
+                    ResourceDuplicatedError(
+                        identifier[0],
+                        "container",
+                        (
+                            f"the Containers sheet at row {humanize_collection(rows)} "
+                            "if data model is read from a spreadsheet."
+                        ),
+                    )
+                )
+
         return issue_list
 
     @staticmethod
@@ -595,7 +695,7 @@ class DMSValidation:
                         ResourceDuplicatedError(
                             view_id,
                             "view",
-                            repr(model.as_id()),
+                            f"DMS {model.as_id()!r}",
                         )
                     )
 

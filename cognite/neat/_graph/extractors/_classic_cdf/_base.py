@@ -61,8 +61,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     Args:
         items (Iterable[T_CogniteResource]): An iterable of classic resource.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[T_CogniteResource], str | None], optional): A function to convert an item to a type.
-            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
         total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
             is installed. Defaults to None.
         limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
@@ -87,7 +85,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self,
         items: Iterable[T_CogniteResource],
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         total: int | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
@@ -99,7 +96,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
-        self.to_type = to_type
         self.total = total
         self.limit = min(limit, total) if limit and total else limit
         self.unpack_metadata = unpack_metadata
@@ -161,7 +157,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         if self._log_urirefs and hasattr(item, "external_id"):
             self._uriref_by_external_id[item.external_id] = id_
 
-        type_ = self._get_rdf_type(item)
+        type_ = self._get_rdf_type()
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
@@ -215,16 +211,14 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 if value and (self.skip_metadata_values is None or value.casefold() not in self.skip_metadata_values):
                     yield (
                         id_,
-                        self.namespace[key],
+                        self.namespace[urllib.parse.quote(key)],
                         Literal(string_to_ideal_type(value)),
                     )
         else:
             yield id_, self.namespace.metadata, Literal(json.dumps(metadata), datatype=XSD._NS["json"])
 
-    def _get_rdf_type(self, item: T_CogniteResource) -> str:
+    def _get_rdf_type(self) -> str:
         type_ = self._default_rdf_type
-        if self.to_type:
-            type_ = self.to_type(item) or type_
         if self.prefix:
             type_ = f"{self.prefix}{type_}"
         return self._SPACE_PATTERN.sub("_", type_)
@@ -263,7 +257,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             "created_time",
             "last_updated_time",
         } and isinstance(raw, int):
-            return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            try:
+                return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            except (OSError, ValueError) as e:
+                warnings.warn(NeatValueWarning(f"Failed to convert timestamp {raw} to datetime: {e!s}"), stacklevel=2)
+                return Literal(raw)
         elif key == "labels":
             from ._labels import LabelsExtractor
 
@@ -284,7 +282,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -297,7 +294,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -321,7 +317,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         client: CogniteClient,
         root_asset_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -334,7 +329,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -357,7 +351,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         cls,
         file_path: str | Path,
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -370,7 +363,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,

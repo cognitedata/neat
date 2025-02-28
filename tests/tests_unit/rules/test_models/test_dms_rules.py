@@ -15,6 +15,10 @@ from cognite.neat._client.data_classes.data_modeling import (
 )
 from cognite.neat._issues import NeatError, catch_issues
 from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError
+from cognite.neat._issues.errors._resources import ResourceDuplicatedError
+from cognite.neat._issues.warnings.user_modeling import (
+    ViewsAndDataModelNotInSameSpaceWarning,
+)
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -833,20 +837,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     view="Plant",
                     view_property="reservoir",
                 ),
-                DMSInputProperty(
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-                DMSInputProperty(
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
             ],
             containers=[
                 DMSInputContainer(container="Asset"),
@@ -892,20 +882,6 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     container_property="child",
                     view="Plant",
                     view_property="reservoir",
-                ),
-                DMSInputProperty(
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
-                ),
-                DMSInputProperty(
-                    value_type="text",
-                    container="Asset",
-                    container_property="name",
-                    view="Asset",
-                    view_property="name",
                 ),
             ],
             containers=[
@@ -967,7 +943,16 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 frozenset({"float64", "float32"}),
                 (0, 1),
                 "rows",
-            )
+            ),
+            ResourceDuplicatedError(
+                identifier="maxPower",
+                resource_type="property",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition value type",
     )
@@ -1015,7 +1000,16 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 frozenset({True, False}),
                 (0, 1),
                 "rows",
-            )
+            ),
+            ResourceDuplicatedError(
+                identifier="maxPower",
+                resource_type="property",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition isList",
     )
@@ -1062,7 +1056,16 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 frozenset({True, False}),
                 (0, 1),
                 "rows",
-            )
+            ),
+            ResourceDuplicatedError(
+                identifier="maxPower",
+                resource_type="property",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition nullable",
     )
@@ -1109,7 +1112,16 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 frozenset({"name", "name_index"}),
                 (0, 1),
                 "rows",
-            )
+            ),
+            ResourceDuplicatedError(
+                identifier="maxPower",
+                resource_type="property",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition index",
     )
@@ -1156,7 +1168,16 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 frozenset({"unique_name", "name"}),
                 (0, 1),
                 "rows",
-            )
+            ),
+            ResourceDuplicatedError(
+                identifier="maxPower",
+                resource_type="property",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition constraint",
     )
@@ -1260,7 +1281,7 @@ class TestDMSRules:
         rules = raw.as_verified_rules()
         issues = DMSValidation(rules).validate()
 
-        assert len(issues.errors) == 1, "Expected there to be exactly one validation error"
+        assert len(issues.errors) == 2
 
         assert sorted(issues) == sorted(expected_errors)
 

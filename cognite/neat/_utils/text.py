@@ -1,6 +1,43 @@
 import re
-from collections.abc import Collection
+import urllib.parse
+from collections.abc import Collection, Set
+from re import Pattern
 from typing import Any
+
+from cognite.neat._rules._constants import get_reserved_words
+
+PREPOSITIONS = frozenset(
+    {
+        "in",
+        "on",
+        "at",
+        "by",
+        "for",
+        "with",
+        "about",
+        "against",
+        "between",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "to",
+        "from",
+        "up",
+        "down",
+        "out",
+        "off",
+        "over",
+        "under",
+        "again",
+        "further",
+        "then",
+        "once",
+    }
+)
 
 
 def to_camel_case(string: str) -> str:
@@ -127,6 +164,18 @@ def to_snake_case(string: str) -> str:
     return "_".join(map(str.lower, words))
 
 
+def to_words(string: str) -> str:
+    """Converts snake_case camelCase or PascalCase to words."""
+    return to_snake_case(string).replace("_", " ")
+
+
+def title(text: str, skip_words: Set[str] = PREPOSITIONS) -> str:
+    """Converts text to title case, skipping prepositions."""
+    words = (word.lower() for word in text.split())
+    titled_words = (word.capitalize() if word not in skip_words else word for word in words)
+    return " ".join(titled_words)
+
+
 def sentence_or_string_to_camel(string: str) -> str:
     # Could be a combination of kebab and pascal/camel case
     if " " in string:
@@ -159,7 +208,8 @@ def humanize_collection(collection: Collection[Any], /, *, sort: bool = True) ->
 
 
 class NamingStandardization:
-    _clean_pattern = re.compile(r"[^a-zA-Z0-9_]+")
+    _letter_number_underscore = re.compile(r"[^a-zA-Z0-9_]+")
+    _letter_number_underscore_hyphen = re.compile(r"[^a-zA-Z0-9_-]+")
     _multi_underscore_pattern = re.compile(r"_+")
     _start_letter_pattern = re.compile(r"^[a-zA-Z]")
 
@@ -182,6 +232,24 @@ class NamingStandardization:
         return to_camel_case(clean)
 
     @classmethod
-    def _clean_string(cls, raw: str) -> str:
-        raw = cls._clean_pattern.sub("_", raw)
+    def standardize_space_str(cls, raw: str) -> str:
+        clean = cls._clean_string(raw, cls._letter_number_underscore_hyphen)
+        if not cls._start_letter_pattern.match(clean):
+            clean = f"sp_{clean}"
+        if clean in set(get_reserved_words("space")):
+            clean = f"my_{clean}"
+        if len(clean) > 43:
+            clean = clean[:43]
+        if not (clean[-1].isalnum()) and len(clean) == 43:
+            clean = f"{clean[:-1]}x"
+        elif not clean[-1].isalnum():
+            clean = f"{clean}x"
+        if not clean:
+            raise ValueError("Space name must contain at least one letter.")
+        return to_snake_case(clean)
+
+    @classmethod
+    def _clean_string(cls, raw: str, clean_pattern: Pattern[str] = _letter_number_underscore) -> str:
+        raw = urllib.parse.unquote(raw)
+        raw = clean_pattern.sub("_", raw)
         return cls._multi_underscore_pattern.sub("_", raw)
