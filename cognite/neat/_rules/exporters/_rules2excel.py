@@ -59,6 +59,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
     Style = Literal["none", "minimal", "default", "maximal"]
     DumpOptions = Literal["user", "last", "reference"]
+    _helper_sheet_name: str = "_helper"
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
         "Properties": "Definition of Properties per Class",
         "Classes": "Definition of Classes",
@@ -143,24 +144,37 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         return workbook
 
-    def _add_drop_downs(self, workbook: Workbook, no_rows: int = 500) -> None:
+    def _add_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry.
 
         Args:
             workbook: Workbook representation of the Excel file.
-            no_rows: number of rows to add drop down menus. Defaults to 500.
+            no_rows: number of rows to add drop down menus. Defaults to 100*100.
+
+        !!! note "Why no_rows=100?"
+            Maximum number of views per data model is 100, reflecting max number of rows
+
+        !!! note "Why defining individual data validation per desired column?
+            This is due to the internal working of openpyxl. Adding same validation to
+            different column leads to unexpected behavior when exporting workbook as Excel file.
+            Most likely this originates in the way the openpyxl implements of data validation, which holds
+            the validation as a reference to a python object, instead of actual storing actual validation
+            object.
         """
 
         self._make_helper_sheet(workbook)
 
-        dv_views = generate_data_validation("_helper", "A", no_header_rows=0, no_rows=no_rows)
-        dv_containers = generate_data_validation("_helper", "b", no_header_rows=0, no_rows=no_rows)
-        dv_value_types = generate_data_validation("_helper", "C", no_header_rows=0, no_rows=no_rows)
-        dv_immutable = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
-        dv_nullable = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
-        dv_is_list = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
-        dv_in_model = generate_data_validation("_helper", "D", no_header_rows=0, no_rows=3)
-        dv_used_for = generate_data_validation("_helper", "E", no_header_rows=0, no_rows=3)
+        # We need create individual data validation and cannot re-use the same one due
+        # the internals of openpyxl
+        dv_views = generate_data_validation(self._helper_sheet_name, "A", no_header_rows=0, no_rows=no_rows)
+        dv_containers = generate_data_validation(self._helper_sheet_name, "b", no_header_rows=0, no_rows=no_rows)
+        dv_value_types = generate_data_validation(self._helper_sheet_name, "C", no_header_rows=0, no_rows=no_rows)
+
+        dv_immutable = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
+        dv_nullable = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
+        dv_is_list = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
+        dv_in_model = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
+        dv_used_for = generate_data_validation(self._helper_sheet_name, "E", no_header_rows=0, no_rows=3)
 
         workbook["Properties"].add_data_validation(dv_views)
         workbook["Properties"].add_data_validation(dv_containers)
@@ -171,23 +185,24 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         workbook["Views"].add_data_validation(dv_in_model)
         workbook["Containers"].add_data_validation(dv_used_for)
 
+        # we multiply no_rows with 100 since a view can have max 100 properties per view
         if column := find_column_with_value(workbook["Properties"], "View"):
-            dv_views.add(f"{column}{3}:{column}{no_rows}")
+            dv_views.add(f"{column}{3}:{column}{no_rows * 100}")
 
         if column := find_column_with_value(workbook["Properties"], "Container"):
-            dv_containers.add(f"{column}{3}:{column}{no_rows}")
+            dv_containers.add(f"{column}{3}:{column}{no_rows * 100}")
 
         if column := find_column_with_value(workbook["Properties"], "Value Type"):
-            dv_value_types.add(f"{column}{3}:{column}{no_rows}")
+            dv_value_types.add(f"{column}{3}:{column}{no_rows * 100}")
 
         if column := find_column_with_value(workbook["Properties"], "Nullable"):
-            dv_nullable.add(f"{column}{3}:{column}{no_rows}")
+            dv_nullable.add(f"{column}{3}:{column}{no_rows * 100}")
 
         if column := find_column_with_value(workbook["Properties"], "Is List"):
-            dv_is_list.add(f"{column}{3}:{column}{no_rows}")
+            dv_is_list.add(f"{column}{3}:{column}{no_rows * 100}")
 
         if column := find_column_with_value(workbook["Properties"], "Immutable"):
-            dv_immutable.add(f"{column}{3}:{column}{no_rows}")
+            dv_immutable.add(f"{column}{3}:{column}{no_rows * 100}")
 
         if column := find_column_with_value(workbook["Views"], "In Model"):
             dv_in_model.add(f"{column}{3}:{column}{no_rows}")
@@ -196,36 +211,41 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             dv_used_for.add(f"{column}{3}:{column}{no_rows}")
 
     def _make_helper_sheet(self, workbook: Workbook) -> None:
-        """This helper sheet is used as source of data for drop down menus creation"""
-        workbook.create_sheet(title="_helper")
+        """This helper sheet is used as source of data for drop down menus creation
+
+        !!! note "Why 100 rows?"
+            The number of rows is set to 100 since this is the maximum number of views
+            per data model.
+        """
+        workbook.create_sheet(title=self._helper_sheet_name)
 
         for counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
-            workbook["_helper"].cell(row=counter + 1, column=3, value=dtype)
+            workbook[self._helper_sheet_name].cell(row=counter + 1, column=3, value=dtype)
 
         for i in range(100):
-            workbook["_helper"].cell(
+            workbook[self._helper_sheet_name].cell(
                 row=i + 1,
                 column=1,
                 value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
             )
-            workbook["_helper"].cell(
+            workbook[self._helper_sheet_name].cell(
                 row=i + 1,
                 column=2,
                 value=f'=IF(ISBLANK(Containers!A{i + 3}), "", Containers!A{i + 3})',
             )
-            workbook["_helper"].cell(
+            workbook[self._helper_sheet_name].cell(
                 row=counter + i + 2,
                 column=3,
                 value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
             )
 
         for i, value in enumerate([True, False, ""]):
-            workbook["_helper"].cell(row=i + 1, column=4, value=cast(bool | str, value))
+            workbook[self._helper_sheet_name].cell(row=i + 1, column=4, value=cast(bool | str, value))
 
         for i, value in enumerate(["node", "edge", "all"]):
-            workbook["_helper"].cell(row=i + 1, column=5, value=value)
+            workbook[self._helper_sheet_name].cell(row=i + 1, column=5, value=value)
 
-        workbook["_helper"].sheet_state = "hidden"
+        workbook[self._helper_sheet_name].sheet_state = "hidden"
 
     def _write_sheets(
         self,
