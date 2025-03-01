@@ -86,6 +86,11 @@ class DMSValidation:
                 imported_views.add(prop.view)
             view_with_properties.add(prop.view)
 
+        for container in self._containers or []:
+            for required in container.constraint or []:
+                if required not in existing_containers:
+                    imported_containers.add(required)
+
         if include_views_with_no_properties:
             extra_views = existing_views - view_with_properties
             imported_views.update({view for view in extra_views})
