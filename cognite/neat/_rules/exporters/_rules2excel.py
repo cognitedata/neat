@@ -55,7 +55,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     Style = Literal["none", "minimal", "default", "maximal"]
     DumpOptions = Literal["user", "last", "reference"]
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
-        "Properties": "Definition of Properties per Class",
+        "Properties": "Definition of Properties",
         "Classes": "Definition of Classes",
         "Views": "Definition of Views",
         "Containers": "Definition of Containers",

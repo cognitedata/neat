@@ -23,7 +23,7 @@ class TestToCamel:
 
 class TestToWords:
     @pytest.mark.parametrize(
-        "actual, expected",
+        "input_, expected",
         [
             ("tagName", "tag name"),
             ("aB", "a b"),
@@ -33,8 +33,8 @@ class TestToWords:
             ("shouting_snake_case_1234", "shouting snake case 1234"),
         ],
     )
-    def test_to_words(self, actual: str, expected: list[str]) -> None:
-        assert to_words(actual) == expected
+    def test_to_words(self, input_: str, expected: list[str]) -> None:
+        assert to_words(input_) == expected
 
 
 class TestNamingStandardization:
