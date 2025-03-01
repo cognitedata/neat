@@ -151,7 +151,6 @@ jobs:
             coverageFile: coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
             thresholdAll: 0.6
-
   validate-description:
     name: Validate PR description
     runs-on: ubuntu-latest

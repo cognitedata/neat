@@ -75,7 +75,7 @@ def create_changelog_entry() -> None:
     if version_bump == "skip":
         print("No changes to release.")
         return
-    if changelog_text:
+    if changelog_text is None:
         print(f"No changelog entry found in the last commit message. This is required for a {version_bump} release.")
         raise SystemExit(1)
     _validate_changelog_entry(changelog_text)
