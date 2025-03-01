@@ -815,7 +815,7 @@ files = [
 name = "deepdiff"
 version = "8.2.0"
 description = "Deep Difference and Search of any Python object/data. Recreate objects by adding adding deltas to each other."
-optional = true
+optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 markers = "(sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"darwin\" and sys_platform != \"linux\") and (python_version <= \"3.11\" or python_version >= \"3.12\")"
@@ -3301,7 +3301,7 @@ et-xmlfile = "*"
 name = "orderly-set"
 version = "5.3.0"
 description = "Orderly set"
-optional = true
+optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 markers = "(sys_platform == \"darwin\" or sys_platform == \"linux\" or sys_platform != \"darwin\" and sys_platform != \"linux\") and (python_version <= \"3.11\" or python_version >= \"3.12\")"
@@ -5613,4 +5613,4 @@ oxi = ["oxrdflib", "pyoxigraph"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "95cfcb3ffd7f3f8970116a5226d73beff8fe7fd62e498da8bc9166fb2ca00e82"
+content-hash = "328d1300e614521a0228912244279796ec774abeead38307c3074ca514af948a"
