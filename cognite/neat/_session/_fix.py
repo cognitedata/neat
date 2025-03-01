@@ -9,7 +9,7 @@ from .exceptions import session_class_wrapper
 
 @session_class_wrapper
 class FixAPI:
-    """Apply variety of fix methods to data model and isntances"""
+    """Apply variety of fix methods to data model and instances"""
 
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
