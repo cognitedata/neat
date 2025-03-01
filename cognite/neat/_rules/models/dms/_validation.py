@@ -2,7 +2,6 @@ import warnings
 from collections import Counter, defaultdict
 from collections.abc import Mapping
 from functools import lru_cache
-from typing import ClassVar
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerList, ViewId, ViewList
@@ -53,10 +52,6 @@ from ._rules import DMSProperty, DMSRules
 class DMSValidation:
     """This class does all the validation of the DMS rules that have dependencies between
     components."""
-
-    # When checking for changes extension=addition, we need to check if the new view has changed.
-    # For example, changing the filter is allowed, but changing the properties is not.
-    changeable_view_attributes: ClassVar[set[str]] = {"filter"}
 
     def __init__(
         self,
