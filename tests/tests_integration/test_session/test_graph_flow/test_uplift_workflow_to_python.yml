@@ -1,30 +1,4 @@
 instances:
-- externalId: Asset_Measurement
-  instanceType: node
-  sources:
-  - properties: {}
-    source:
-      externalId: NeatIncAsset
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: source_ds
-  type:
-    externalId: NeatIncAsset
-    space: sp_windfarm_enterprise
-- externalId: Asset_Measurement
-  instanceType: node
-  sources:
-  - properties: {}
-    source:
-      externalId: NeatIncAsset
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: sp_windfarm_dataset
-  type:
-    externalId: NeatIncAsset
-    space: sp_windfarm_enterprise
 - externalId: ClassicSourceSystem_manufacturer1
   instanceType: node
   sources:
@@ -52,25 +26,6 @@ instances:
   space: sp_windfarm_dataset
   type:
     externalId: NeatIncSourceSystem
-    space: sp_windfarm_enterprise
-- externalId: Label_Measurement
-  instanceType: node
-  sources:
-  - properties:
-      classicExternalId: Measurement
-      dataSetId:
-        externalId: source_ds
-        space: sp_windfarm_dataset
-      description: Measurement
-      name: Measurement
-    source:
-      externalId: NeatIncLabel
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: source_ds
-  type:
-    externalId: NeatIncLabel
     space: sp_windfarm_enterprise
 - externalId: Measurement
   instanceType: node
@@ -104,10 +59,10 @@ instances:
       height: 100
       name: MetMast
       parent:
-        externalId: Asset_Measurement
+        externalId: Unknown asset
         space: sp_windfarm_dataset
       source:
-        externalId: manufacturer2
+        externalId: ClassicSourceSystem_manufacturer2
         space: sp_windfarm_dataset
       tags:
       - Label_Measurement
@@ -152,7 +107,7 @@ instances:
       description: Utsira wind farm
       name: Utsira
       source:
-        externalId: manufacturer1
+        externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
@@ -181,7 +136,7 @@ instances:
         externalId: Utsira
         space: source_ds
       source:
-        externalId: manufacturer1
+        externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
@@ -210,7 +165,7 @@ instances:
       fileCategory: DataSheet
       name: WT-01_datasheet.txt
       source:
-        externalId: manufacturer1
+        externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
     source:
       externalId: NeatIncFile
@@ -321,7 +276,7 @@ instances:
         externalId: Utsira
         space: source_ds
       source:
-        externalId: manufacturer1
+        externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
@@ -458,34 +413,6 @@ instances:
   type:
     externalId: NeatIncDataSet
     space: sp_windfarm_enterprise
-- externalId: manufacturer1
-  instanceType: node
-  sources:
-  - properties:
-      name: manufacturer1
-    source:
-      externalId: NeatIncSourceSystem
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: sp_windfarm_dataset
-  type:
-    externalId: NeatIncSourceSystem
-    space: sp_windfarm_enterprise
-- externalId: manufacturer2
-  instanceType: node
-  sources:
-  - properties:
-      name: manufacturer2
-    source:
-      externalId: NeatIncSourceSystem
-      space: sp_windfarm_enterprise
-      type: view
-      version: v1
-  space: sp_windfarm_dataset
-  type:
-    externalId: NeatIncSourceSystem
-    space: sp_windfarm_enterprise
 - externalId: metMast
   instanceType: node
   sources:
@@ -520,7 +447,7 @@ instances:
       description: Planned maintenance
       endTime: '1970-01-01T00:00:00.500+00:00'
       source:
-        externalId: manufacturer1
+        externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
       startTime: '1970-01-01T00:00:00.400+00:00'
       subtype: Planned
@@ -810,11 +737,11 @@ rules:
     creator: Cognite
     external_id: WindFarmEnterprise
     logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1
-    name: Wind Farm Enterprise
+    name: ClassicDataModel
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm_enterprise/WindFarmEnterprise/v1
     space: sp_windfarm_enterprise
-    updated: '2025-02-26T16:20:49.783000Z'
+    updated: '2025-02-22T08:34:08.687000Z'
     version: v1
   properties:
   - connection: direct
@@ -1837,7 +1764,7 @@ rules:
     view_property: equipment
   - container: cdf_cdm:CogniteFile
     container_property: isUploaded
-    default: false
+    default: 'False'
     description: Specifies if the file content has been uploaded to Cognite Data Fusion
       or not.
     immutable: false
@@ -2189,7 +2116,7 @@ rules:
     view_property: equipment
   - container: cdf_cdm:CogniteTimeSeries
     container_property: isStep
-    default: false
+    default: 'False'
     description: Specifies whether the time series is a step time series or not.
     immutable: false
     is_list: false
@@ -4009,18 +3936,12 @@ rules:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageAnnotation
     view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
   - description: Represents a logical collection of Cognite360Image instances
-    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
-      "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d",
-      "Cognite3DModel", "type"], "value": "Image360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageCollection
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageCollection
     view: cdf_cdm:Cognite360ImageCollection(version=v1)
   - description: Navigational aid for traversing Cognite360ImageModel instances
-    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
-      "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
-      "type"], "value": "Image360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageModel
@@ -4028,9 +3949,6 @@ rules:
     view: cdf_cdm:Cognite360ImageModel(version=v1)
   - description: A way to group images across collections. Used for creating visual
       scan history
-    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
-      "externalId": "Cognite3DGroup"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DGroup",
-      "groupType"], "value": "Station360"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1)
     in_model: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageStation
@@ -4105,9 +4023,6 @@ rules:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetType
     view: cdf_cdm:CogniteAssetType(version=v1)
   - description: Navigational aid for traversing CogniteCADModel instances
-    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
-      "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
-      "type"], "value": "CAD"}}]})'
     implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
     in_model: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADModel
@@ -4120,9 +4035,6 @@ rules:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode
     view: cdf_cdm:CogniteCADNode(version=v1)
   - description: ''
-    filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
-      "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d",
-      "Cognite3DModel", "type"], "value": "CAD"}}]})'
     implements: cdf_cdm:Cognite3DRevision(version=v1)
     in_model: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADRevision
