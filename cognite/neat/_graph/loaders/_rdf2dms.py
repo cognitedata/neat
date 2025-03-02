@@ -21,7 +21,7 @@ from rdflib import RDF, URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._client._api_client import SchemaAPI
-from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT, is_readonly_property
+from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT, is_readonly_property
 from cognite.neat._issues import IssueList, NeatError, NeatIssue, catch_issues
 from cognite.neat._issues.errors import (
     AuthorizationError,
@@ -417,20 +417,20 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     ids = (self._create_instance_id(v, "node", stop_on_exception=True) for v in value)
                     result = [id_.dump(camel_case=True, include_instance_type=False) for id_ in ids]
                     # Todo: Account for max_list_limit
-                    if len(result) <= DMS_DIRECT_RELATION_LIST_LIMIT:
+                    if len(result) <= DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT:
                         return result
                     warnings.warn(
                         PropertyDirectRelationLimitWarning(
                             identifier="unknown",
                             resource_type="view property",
                             property_name=cast(str, cls.model_fields[info.field_name].alias or info.field_name),
-                            limit=DMS_DIRECT_RELATION_LIST_LIMIT,
+                            limit=DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
                         ),
                         stacklevel=2,
                     )
                     # To get deterministic results, we sort by space and externalId
                     result.sort(key=lambda x: (x["space"], x["externalId"]))
-                    return result[:DMS_DIRECT_RELATION_LIST_LIMIT]
+                    return result[:DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT]
                 elif value:
                     return self._create_instance_id(value[0], "node", stop_on_exception=True).dump(
                         camel_case=True, include_instance_type=False

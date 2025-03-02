@@ -106,9 +106,9 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     name: str | None = None
     description: str | None = None
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None = None
-    nullable: bool | None = None
+    min_count: int | None = None
+    max_count: int | float | None = None
     immutable: bool | None = None
-    is_list: bool | None = None
     default: str | int | dict | None = None
     container: str | None = None
     container_property: str | None = None
@@ -116,6 +116,19 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
     logical: str | URIRef | None = None
+
+    @property
+    def nullable(self) -> bool | None:
+        """Used to indicate whether the property is required or not. Only applies to primitive type."""
+        return self.min_count in {0, None}
+
+    @property
+    def is_list(self) -> bool | None:
+        """Used to indicate whether the property holds single or multiple values (list). "
+        "Only applies to primitive types."""
+        return self.max_count in {float("inf"), None} or (
+            isinstance(self.max_count, int | float) and self.max_count > 1
+        )
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSProperty]:
