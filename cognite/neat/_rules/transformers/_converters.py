@@ -1528,9 +1528,15 @@ class _InformationRulesConverter:
 
         container: ContainerEntity | None = None
         container_property: str | None = None
-        min_count = info_property.min_count
+        # DMS should have min count of either 0 or 1
+        min_count = min(1, max(0, info_property.min_count or 0))
+        max_count = info_property.max_count
         if isinstance(connection, EdgeEntity):
-            min_count = None
+            min_count = 0
+            max_count = 1 if max_count == 1 else float("inf")
+        elif isinstance(connection, ReverseConnectionEntity):
+            min_count = 0
+            max_count = 1 if max_count == 1 else float("inf")
         elif connection == "direct":
             min_count = 0
             container, container_property = self._get_container(info_property, default_space)
@@ -1541,7 +1547,7 @@ class _InformationRulesConverter:
             name=info_property.name,
             value_type=value_type,
             min_count=min_count,
-            max_count=info_property.max_count,
+            max_count=max_count,
             connection=connection,
             default=info_property.default,
             container=container,
