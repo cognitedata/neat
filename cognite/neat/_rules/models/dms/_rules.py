@@ -102,6 +102,20 @@ class DMSProperty(SheetRow):
         alias="Value Type",
         description="Value type that the property can hold. It takes either subset of CDF primitive types or a View id",
     )
+    min_count: int | None = Field(
+        alias="Min Count",
+        default=None,
+        description="Minimum number of values that the property can hold. "
+        "If no value is provided, the default value is  `0`, "
+        "which means that the property is optional.",
+    )
+    max_count: int | None = Field(
+        alias="Max Count",
+        default=None,
+        description="Maximum number of values that the property can hold. "
+        "If no value is provided, the default value is  `inf`, "
+        "which means that the property can hold any number of values (listable).",
+    )
     nullable: bool | None = Field(
         default=None,
         alias="Nullable",
