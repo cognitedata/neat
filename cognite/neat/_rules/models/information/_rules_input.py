@@ -128,6 +128,7 @@ class InformationInputClass(InputComponent[InformationClass]):
         output = super().dump()
         parent: list[ClassEntity] | None = None
         if isinstance(self.implements, str):
+            self.implements = self.implements.strip()
             parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
         elif isinstance(self.implements, list):
             parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]

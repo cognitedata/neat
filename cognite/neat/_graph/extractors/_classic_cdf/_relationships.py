@@ -1,7 +1,7 @@
 import typing
 import warnings
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Set
+from collections.abc import Iterable, Set
 from pathlib import Path
 from typing import Any
 
@@ -26,7 +26,6 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         self,
         items: Iterable[Relationship],
         namespace: Namespace | None = None,
-        to_type: Callable[[Relationship], str | None] | None = None,
         total: int | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
@@ -46,7 +45,6 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         super().__init__(
             to_iterate,
             namespace=namespace,
-            to_type=to_type,
             total=total,
             limit=limit,
             unpack_metadata=unpack_metadata,
