@@ -24,7 +24,6 @@ data_product:
   properties:
   - connection: reverse(property=assets)
     description: An automatically updated list of activities related to the asset.
-    is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/neatId_4487a4a9_6e1e_4fde_871c_de37ea8134eb
     value_type: ClassicEvent
@@ -34,16 +33,15 @@ data_product:
     container_property: aliases
     description: Alternative names for the node
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: aliases
   - connection: reverse(property=parent)
     description: An automatically updated list of assets with this asset as their
       parent.
-    is_list: true
     name: Children
     neatId: http://purl.org/cognite/neat/neatId_04c63f13_3088_4d24_9494_7f6948feb498
     value_type: ClassicAsset
@@ -51,36 +49,33 @@ data_product:
     view_property: children
   - container: sp_windfarm:ClassicAsset
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: classicExternalId
   - connection: direct
     container: sp_windfarm:ClassicAsset
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicAsset
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/description
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/description
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: description
   - connection: reverse(property=asset)
     description: An automatically updated list of equipment related to the asset.
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_46d2b553_9e62_4cb8_bdd7_7bcea1f5d989
     value_type: ClassicEquipment
@@ -88,7 +83,6 @@ data_product:
     view_property: equipment
   - connection: reverse(property=assets)
     description: An automatically updated list of files related to the asset.
-    is_list: true
     name: Files
     neatId: http://purl.org/cognite/neat/neatId_e515ea88_f19d_4069_b88d_b3244fd87cf4
     value_type: ClassicFile
@@ -96,19 +90,19 @@ data_product:
     view_property: files
   - container: sp_windfarm:ClassicAsset
     container_property: geoLocation
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
-    nullable: true
     value_type: json
     view: ClassicAsset
     view_property: geoLocation
   - container: sp_windfarm:ClassicAsset
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
-    nullable: true
     value_type: json
     view: ClassicAsset
     view_property: metadata
@@ -116,10 +110,8 @@ data_product:
     container_property: name
     immutable: false
     index: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/name
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: name
@@ -127,10 +119,8 @@ data_product:
     container: cdf_cdm:CogniteAsset
     container_property: assetHierarchy_parent
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
-    nullable: true
     value_type: ClassicAsset
     view: ClassicAsset
     view_property: parent
@@ -141,10 +131,8 @@ data_product:
       starting with the root asset. Enables subtree filtering to find all assets under
       a parent.
     immutable: false
-    is_list: true
     name: Path
     neatId: http://purl.org/cognite/neat/neatId_11622da5_9e91_4699_b69c_174b054a1a93
-    nullable: true
     value_type: ClassicAsset
     view: ClassicAsset
     view_property: path
@@ -152,10 +140,10 @@ data_product:
     container_property: assetHierarchy_path_last_updated_time
     description: The last time the path was updated for this asset.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     name: Path last updated time
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteAsset/pathLastUpdatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicAsset
     view_property: pathLastUpdatedTime
@@ -165,10 +153,8 @@ data_product:
     description: An automatically updated reference to the top-level asset of the
       hierarchy.
     immutable: false
-    is_list: false
     name: Root
     neatId: http://purl.org/cognite/neat/neatId_11138a07_144c_4998_a51d_4fbced64ce3d
-    nullable: true
     value_type: ClassicAsset
     view: ClassicAsset
     view_property: root
@@ -177,10 +163,8 @@ data_product:
     container_property: source
     immutable: false
     index: source
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/source
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/source
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicAsset
     view_property: source
@@ -189,9 +173,9 @@ data_product:
     description: Context of the source id. For systems where the sourceId is globally
       unique, the sourceContext is expected to not be set.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: sourceContext
@@ -200,9 +184,9 @@ data_product:
     description: When the instance was created in source system (if available)
     immutable: false
     index: sourceCreatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicAsset
     view_property: sourceCreatedTime
@@ -211,9 +195,9 @@ data_product:
     description: User identifier from the source system on who created the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: sourceCreatedUser
@@ -222,9 +206,9 @@ data_product:
     description: Identifier from the source system
     immutable: false
     index: sourceId
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: sourceId
@@ -233,9 +217,9 @@ data_product:
     description: When the instance was last updated in the source system (if available)
     immutable: false
     index: sourceUpdatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicAsset
     view_property: sourceUpdatedTime
@@ -244,25 +228,22 @@ data_product:
     description: User identifier from the source system on who last updated the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: sourceUpdatedUser
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: tags
   - connection: reverse(property=assets)
     description: An automatically updated list of time series related to the asset.
-    is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_53bf067f_d9de_4ef0_945c_8024e9ed8981
     value_type: ClassicTimeSeries
@@ -270,52 +251,51 @@ data_product:
     view_property: timeSeries
   - container: sp_windfarm:ClassicDataSet
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicDataSet
     view_property: classicExternalId
   - container: sp_windfarm:ClassicDataSet
     container_property: description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
-    nullable: true
     value_type: text
     view: ClassicDataSet
     view_property: description
   - container: sp_windfarm:ClassicDataSet
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
-    nullable: true
     value_type: json
     view: ClassicDataSet
     view_property: metadata
   - container: sp_windfarm:ClassicDataSet
     container_property: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
-    nullable: true
     value_type: text
     view: ClassicDataSet
     view_property: name
   - container: sp_windfarm:ClassicDataSet
     container_property: writeProtected
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
-    nullable: true
     value_type: boolean
     view: ClassicDataSet
     view_property: writeProtected
   - connection: reverse(property=equipment)
     description: An automatically updated list of activities related to the equipment.
-    is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/neatId_c25997c1_a8c4_4c29_9517_3188cfe433b4
     value_type: ClassicEvent
@@ -325,9 +305,9 @@ data_product:
     container_property: aliases
     description: Alternative names for the node
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: aliases
@@ -336,19 +316,15 @@ data_product:
     container_property: asset
     description: The asset the equipment is related to.
     immutable: false
-    is_list: false
     name: Asset
     neatId: http://purl.org/cognite/neat/neatId_5e08021f_2315_4b48_a769_b824abc215a0
-    nullable: true
     value_type: ClassicAsset
     view: ClassicEquipment
     view_property: asset
   - container: sp_windfarm:ClassicEquipment
     container_property: classicEquipmentGUID
     immutable: false
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_d22d3e64_b57e_4fef_921f_6aa05cbc563b
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: classicEquipmentGUID
@@ -356,9 +332,9 @@ data_product:
     container_property: description
     description: Description of the instance
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: description
@@ -367,10 +343,8 @@ data_product:
     container_property: files
     description: A list of files the equipment relates to.
     immutable: false
-    is_list: true
     name: Files
     neatId: http://purl.org/cognite/neat/neatId_3bd8dc76_ccec_4790_afc1_ad4c5dbdcadb
-    nullable: true
     value_type: ClassicFile
     view: ClassicEquipment
     view_property: files
@@ -379,10 +353,10 @@ data_product:
     description: The manufacturer of the equipment.
     immutable: false
     index: manufacturer
-    is_list: false
+    max_count: 1
+    min_count: 0
     name: Manufacturer
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteEquipment/manufacturer
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: manufacturer
@@ -391,9 +365,9 @@ data_product:
     description: Name of the instance
     immutable: false
     index: name
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: name
@@ -402,10 +376,10 @@ data_product:
     description: The serial number of the equipment.
     immutable: false
     index: serialNumber
-    is_list: false
+    max_count: 1
+    min_count: 0
     name: Serial number
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteEquipment/serialNumber
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: serialNumber
@@ -415,9 +389,7 @@ data_product:
     description: Direct relation to a source system
     immutable: false
     index: source
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_4f64197b_ac89_4963_bdd5_527e7b1f6d4b
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicEquipment
     view_property: source
@@ -426,9 +398,9 @@ data_product:
     description: Context of the source id. For systems where the sourceId is globally
       unique, the sourceContext is expected to not be set.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: sourceContext
@@ -437,9 +409,9 @@ data_product:
     description: When the instance was created in source system (if available)
     immutable: false
     index: sourceCreatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicEquipment
     view_property: sourceCreatedTime
@@ -448,9 +420,9 @@ data_product:
     description: User identifier from the source system on who created the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: sourceCreatedUser
@@ -459,9 +431,9 @@ data_product:
     description: Identifier from the source system
     immutable: false
     index: sourceId
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: sourceId
@@ -470,9 +442,9 @@ data_product:
     description: When the instance was last updated in the source system (if available)
     immutable: false
     index: sourceUpdatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicEquipment
     view_property: sourceUpdatedTime
@@ -481,9 +453,9 @@ data_product:
     description: User identifier from the source system on who last updated the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: sourceUpdatedUser
@@ -491,15 +463,14 @@ data_product:
     container_property: tags
     description: Text based labels for generic use, limited to 1000
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: tags
   - connection: reverse(property=equipment)
     description: An automatically updated list of time series related to the equipment.
-    is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_e8c0570d_3a83_4b4d_8a7c_93e73a066e0c
     value_type: ClassicTimeSeries
@@ -509,9 +480,9 @@ data_product:
     container_property: aliases
     description: Alternative names for the node
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: aliases
@@ -519,39 +490,35 @@ data_product:
     container: cdf_cdm:CogniteActivity
     container_property: assets
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
-    nullable: true
     value_type: ClassicAsset
     view: ClassicEvent
     view_property: assets
   - container: sp_windfarm:ClassicEvent
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: classicExternalId
   - connection: direct
     container: sp_windfarm:ClassicEvent
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicEvent
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/description
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/description
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: description
@@ -559,10 +526,8 @@ data_product:
     container_property: endTime
     immutable: false
     index: endTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: endTime
@@ -571,19 +536,17 @@ data_product:
     container_property: equipment
     description: A list of equipment the activity is related to.
     immutable: false
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_02efaf0e_d311_4b1f_9cbd_fa43c6141606
-    nullable: true
     value_type: ClassicEquipment
     view: ClassicEvent
     view_property: equipment
   - container: sp_windfarm:ClassicEvent
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
-    nullable: true
     value_type: json
     view: ClassicEvent
     view_property: metadata
@@ -592,9 +555,9 @@ data_product:
     description: Name of the instance
     immutable: false
     index: name
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: name
@@ -603,9 +566,9 @@ data_product:
     description: The planned end time of an activity (or similar that extends this)
     immutable: false
     index: scheduledEndTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSchedulable/scheduledEndTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: scheduledEndTime
@@ -614,9 +577,9 @@ data_product:
     description: The planned start time of an activity (or similar that extends this)
     immutable: false
     index: scheduledStartTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSchedulable/scheduledStartTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: scheduledStartTime
@@ -625,10 +588,8 @@ data_product:
     container_property: source
     immutable: false
     index: source
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/source
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/source
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicEvent
     view_property: source
@@ -637,9 +598,9 @@ data_product:
     description: Context of the source id. For systems where the sourceId is globally
       unique, the sourceContext is expected to not be set.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: sourceContext
@@ -648,9 +609,9 @@ data_product:
     description: When the instance was created in source system (if available)
     immutable: false
     index: sourceCreatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: sourceCreatedTime
@@ -659,9 +620,9 @@ data_product:
     description: User identifier from the source system on who created the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: sourceCreatedUser
@@ -670,9 +631,9 @@ data_product:
     description: Identifier from the source system
     immutable: false
     index: sourceId
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: sourceId
@@ -681,9 +642,9 @@ data_product:
     description: When the instance was last updated in the source system (if available)
     immutable: false
     index: sourceUpdatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: sourceUpdatedTime
@@ -692,9 +653,9 @@ data_product:
     description: User identifier from the source system on who last updated the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: sourceUpdatedUser
@@ -702,19 +663,17 @@ data_product:
     container_property: startTime
     immutable: false
     index: startTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: startTime
   - container: sp_windfarm:ClassicEvent
     container_property: subtype
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: subtype
@@ -722,9 +681,9 @@ data_product:
     container_property: tags
     description: Text based labels for generic use, limited to 1000
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: tags
@@ -733,19 +692,17 @@ data_product:
     container_property: timeSeries
     description: A list of time series the activity is related to.
     immutable: false
-    is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_a0c5e084_cdf1_49cf_9d39_0997c06d2f3b
-    nullable: true
     value_type: ClassicTimeSeries
     view: ClassicEvent
     view_property: timeSeries
   - container: sp_windfarm:ClassicEvent
     container_property: type
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/type
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/type
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: type
@@ -753,9 +710,9 @@ data_product:
     container_property: aliases
     description: Alternative names for the node
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: aliases
@@ -763,29 +720,27 @@ data_product:
     container: cdf_cdm:CogniteFile
     container_property: assets
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
-    nullable: true
     value_type: ClassicAsset
     view: ClassicFile
     view_property: assets
   - container: sp_windfarm:ClassicFile
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: classicExternalId
   - connection: direct
     container: sp_windfarm:ClassicFile
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicFile
     view_property: dataSetId
@@ -793,25 +748,22 @@ data_product:
     container_property: description
     description: Description of the instance
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: description
   - container: cdf_cdm:CogniteFile
     container_property: directory
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/directory
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/directory
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: directory
   - connection: reverse(property=files)
     description: An automatically updated list of equipment this file is related to.
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_527cc7c9_d504_41a7_b25d_f64ba2906a99
     value_type: ClassicEquipment
@@ -819,10 +771,10 @@ data_product:
     view_property: equipment
   - container: sp_windfarm:ClassicFile
     container_property: geoLocation
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
-    nullable: true
     value_type: json
     view: ClassicFile
     view_property: geoLocation
@@ -832,29 +784,27 @@ data_product:
     description: Specifies if the file content has been uploaded to Cognite Data Fusion
       or not.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     name: Is uploaded
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteFile/isUploaded
-    nullable: true
     value_type: boolean
     view: ClassicFile
     view_property: isUploaded
   - container: sp_windfarm:ClassicFile
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
-    nullable: true
     value_type: json
     view: ClassicFile
     view_property: metadata
   - container: cdf_cdm:CogniteFile
     container_property: mimeType
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: mimeType
@@ -862,19 +812,17 @@ data_product:
     container_property: name
     immutable: false
     index: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/name
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: name
   - container: sp_windfarm:ClassicFile
     container_property: securityCategories
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
-    nullable: true
     value_type: int64
     view: ClassicFile
     view_property: securityCategories
@@ -883,10 +831,8 @@ data_product:
     container_property: source
     immutable: false
     index: source
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/source
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/source
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicFile
     view_property: source
@@ -895,9 +841,9 @@ data_product:
     description: Context of the source id. For systems where the sourceId is globally
       unique, the sourceContext is expected to not be set.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: sourceContext
@@ -905,10 +851,8 @@ data_product:
     container_property: sourceCreatedTime
     immutable: false
     index: sourceCreatedTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicFile
     view_property: sourceCreatedTime
@@ -917,9 +861,9 @@ data_product:
     description: User identifier from the source system on who created the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: sourceCreatedUser
@@ -928,9 +872,9 @@ data_product:
     description: Identifier from the source system
     immutable: false
     index: sourceId
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: sourceId
@@ -938,10 +882,8 @@ data_product:
     container_property: sourceUpdatedTime
     immutable: false
     index: sourceUpdatedTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
-    nullable: true
     value_type: timestamp
     view: ClassicFile
     view_property: sourceUpdatedTime
@@ -950,19 +892,17 @@ data_product:
     description: User identifier from the source system on who last updated the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: sourceUpdatedUser
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/labels
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/labels
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: tags
@@ -970,192 +910,193 @@ data_product:
     container_property: uploadedTime
     description: The time the file upload completed.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     name: Uploaded time
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteFile/uploadedTime
-    nullable: true
     value_type: timestamp
     view: ClassicFile
     view_property: uploadedTime
   - container: sp_windfarm:ClassicLabel
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicLabel
     view_property: classicExternalId
   - connection: direct
     container: sp_windfarm:ClassicLabel
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicLabel
     view_property: dataSetId
   - container: sp_windfarm:ClassicLabel
     container_property: description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/description
-    nullable: true
     value_type: text
     view: ClassicLabel
     view_property: description
   - container: sp_windfarm:ClassicLabel
     container_property: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/name
-    nullable: true
     value_type: text
     view: ClassicLabel
     view_property: name
   - container: sp_windfarm:ClassicRelationship
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicRelationship
     view_property: classicExternalId
   - container: sp_windfarm:ClassicRelationship
     container_property: confidence
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
-    nullable: true
     value_type: float64
     view: ClassicRelationship
     view_property: confidence
   - connection: direct
     container: sp_windfarm:ClassicRelationship
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicRelationship
     view_property: dataSetId
   - container: sp_windfarm:ClassicRelationship
     container_property: endTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
-    nullable: true
     value_type: timestamp
     view: ClassicRelationship
     view_property: endTime
   - connection: edge
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
+    max_count: .inf
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
     value_type: ClassicLabel
     view: ClassicRelationship
     view_property: labels
   - container: sp_windfarm:ClassicRelationship
     container_property: sourceType
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
-    nullable: true
     value_type: text
     view: ClassicRelationship
     view_property: sourceType
   - container: sp_windfarm:ClassicRelationship
     container_property: startTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
-    nullable: true
     value_type: timestamp
     view: ClassicRelationship
     view_property: startTime
   - container: sp_windfarm:ClassicRelationship
     container_property: targetType
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
-    nullable: true
     value_type: text
     view: ClassicRelationship
     view_property: targetType
   - connection: direct
     container: sp_windfarm:ClassicSequence
     container_property: assetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
-    nullable: true
     value_type: ClassicAsset
     view: ClassicSequence
     view_property: assetId
   - container: sp_windfarm:ClassicSequence
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicSequence
     view_property: classicExternalId
   - container: sp_windfarm:ClassicSequence
     container_property: columns
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
+    max_count: 400
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
-    nullable: true
     value_type: json
     view: ClassicSequence
     view_property: columns
   - connection: direct
     container: sp_windfarm:ClassicSequence
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicSequence
     view_property: dataSetId
   - container: sp_windfarm:ClassicSequence
     container_property: description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/description
-    nullable: true
     value_type: text
     view: ClassicSequence
     view_property: description
   - container: sp_windfarm:ClassicSequence
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
-    nullable: true
     value_type: json
     view: ClassicSequence
     view_property: metadata
   - container: sp_windfarm:ClassicSequence
     container_property: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/name
-    nullable: true
     value_type: text
     view: ClassicSequence
     view_property: name
   - container: sp_windfarm:ClassicSequence
     container_property: rows
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
-    nullable: true
     value_type: json
     view: ClassicSequence
     view_property: rows
@@ -1163,18 +1104,16 @@ data_product:
     container_property: aliases
     description: Alternative names for the node
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: aliases
   - container: sp_windfarm:ClassicSourceSystem
     container_property: classicSourceSystemGUID
     immutable: false
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_baba86c4_fed1_4faf_8e48_b5f1e8179a50
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: classicSourceSystemGUID
@@ -1182,9 +1121,9 @@ data_product:
     container_property: description
     description: Description of the instance
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: description
@@ -1192,19 +1131,17 @@ data_product:
     container_property: manufacturer
     description: Manufacturer of the source system
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceSystem/manufacturer
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: manufacturer
   - container: cdf_cdm:CogniteDescribable
     container_property: name
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: name
@@ -1212,9 +1149,9 @@ data_product:
     container_property: tags
     description: Text based labels for generic use, limited to 1000
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: tags
@@ -1222,16 +1159,15 @@ data_product:
     container_property: version
     description: Version identifier for the source system
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceSystem/version
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: version
   - connection: reverse(property=timeSeries)
     description: An automatically updated list of activities the time series is related
       to.
-    is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/neatId_eb1527e5_e163_4d50_bcee_dd2546b7691f
     value_type: ClassicEvent
@@ -1241,9 +1177,9 @@ data_product:
     container_property: aliases
     description: Alternative names for the node
     immutable: false
-    is_list: true
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: aliases
@@ -1251,39 +1187,35 @@ data_product:
     container: cdf_cdm:CogniteTimeSeries
     container_property: assets
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
-    nullable: true
     value_type: ClassicAsset
     view: ClassicTimeSeries
     view_property: assets
   - container: sp_windfarm:ClassicTimeSeries
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: classicExternalId
   - connection: direct
     container: sp_windfarm:ClassicTimeSeries
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicTimeSeries
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: description
@@ -1292,10 +1224,8 @@ data_product:
     container_property: equipment
     description: A list of equipment the time series is related to.
     immutable: false
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_1fc3b262_51f2_444b_b105_2e5bf1feb3df
-    nullable: true
     value_type: ClassicEquipment
     view: ClassicTimeSeries
     view_property: equipment
@@ -1303,19 +1233,17 @@ data_product:
     container_property: isStep
     default: 0
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
-    nullable: false
     value_type: boolean
     view: ClassicTimeSeries
     view_property: isStep
   - container: sp_windfarm:ClassicTimeSeries
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
-    nullable: true
     value_type: json
     view: ClassicTimeSeries
     view_property: metadata
@@ -1323,10 +1251,8 @@ data_product:
     container_property: name
     immutable: false
     index: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: name
@@ -1336,9 +1262,7 @@ data_product:
     description: Direct relation to a source system
     immutable: false
     index: source
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_b5d6ecd8_d48b_439d_892c_3d6e1bc7ffca
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicTimeSeries
     view_property: source
@@ -1347,9 +1271,9 @@ data_product:
     description: Context of the source id. For systems where the sourceId is globally
       unique, the sourceContext is expected to not be set.
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceContext
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: sourceContext
@@ -1358,9 +1282,9 @@ data_product:
     description: When the instance was created in source system (if available)
     immutable: false
     index: sourceCreatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicTimeSeries
     view_property: sourceCreatedTime
@@ -1369,9 +1293,9 @@ data_product:
     description: User identifier from the source system on who created the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedUser
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: sourceCreatedUser
@@ -1380,19 +1304,17 @@ data_product:
     description: Identifier from the source system
     immutable: false
     index: sourceId
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: sourceId
   - container: cdf_cdm:CogniteTimeSeries
     container_property: sourceUnit
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: sourceUnit
@@ -1401,9 +1323,9 @@ data_product:
     description: When the instance was last updated in the source system (if available)
     immutable: false
     index: sourceUpdatedTime
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicTimeSeries
     view_property: sourceUpdatedTime
@@ -1412,29 +1334,25 @@ data_product:
     description: User identifier from the source system on who last updated the source
       data. This identifier is not guaranteed to match the user identifiers in CDF
     immutable: false
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedUser
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: sourceUpdatedUser
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: tags
   - container: cdf_cdm:CogniteTimeSeries
     container_property: type
     immutable: true
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
-    nullable: false
     value_type: enum(collection=timeseriesType)
     view: ClassicTimeSeries
     view_property: type
@@ -1558,9 +1476,7 @@ instances:
       source:
         externalId: ClassicSourceSystem_manufacturer2
         space: sp_windfarm_dataset
-      tags:
-      - Label_Measurement
-      - Label_metMast
+      tags: Label_Measurement
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1604,8 +1520,7 @@ instances:
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
-      tags:
-      - Label_PowerGeneratingUnit
+      tags: Label_PowerGeneratingUnit
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1635,9 +1550,7 @@ instances:
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
-      tags:
-      - Label_PowerGeneratingUnit
-      - Label_WindTurbine
+      tags: Label_PowerGeneratingUnit
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1652,7 +1565,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: WT-01
+        externalId: WT-01
         space: source_ds
       classicExternalId: WT-01_datasheet
       dataSetId:
@@ -1678,7 +1591,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: WT-01
+        externalId: WT-01
         space: source_ds
       classicExternalId: WT-01_forecast
       dataSetId:
@@ -1707,7 +1620,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: WT-01
+        externalId: WT-01
         space: source_ds
       classicExternalId: WT-01_production
       dataSetId:
@@ -1788,9 +1701,7 @@ instances:
       source:
         externalId: ClassicSourceSystem_manufacturer1
         space: sp_windfarm_dataset
-      tags:
-      - Label_PowerGeneratingUnit
-      - Label_WindTurbine
+      tags: Label_PowerGeneratingUnit
     source:
       externalId: ClassicAsset
       space: sp_windfarm
@@ -1805,7 +1716,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: WT-02
+        externalId: WT-02
         space: source_ds
       classicExternalId: WT-02_forecast
       dataSetId:
@@ -1834,7 +1745,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: WT-02
+        externalId: WT-02
         space: source_ds
       classicExternalId: WT-02_production
       dataSetId:
@@ -1958,7 +1869,7 @@ instances:
   sources:
   - properties:
       assets:
-      - externalId: WT-01
+        externalId: WT-01
         space: source_ds
       classicExternalId: planned:WT-01:2022-01-01
       dataSetId:
@@ -2198,7 +2109,6 @@ rules:
   properties:
   - connection: reverse(property=assets)
     description: An automatically updated list of activities related to the asset.
-    is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/neatId_4487a4a9_6e1e_4fde_871c_de37ea8134eb
     value_type: ClassicEvent
@@ -2207,7 +2117,6 @@ rules:
   - connection: reverse(property=parent)
     description: An automatically updated list of assets with this asset as their
       parent.
-    is_list: true
     name: Children
     neatId: http://purl.org/cognite/neat/neatId_04c63f13_3088_4d24_9494_7f6948feb498
     value_type: ClassicAsset
@@ -2215,36 +2124,33 @@ rules:
     view_property: children
   - container: ClassicAsset
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: classicExternalId
   - connection: direct
     container: ClassicAsset
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicAsset
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/description
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/description
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: description
   - connection: reverse(property=asset)
     description: An automatically updated list of equipment related to the asset.
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_46d2b553_9e62_4cb8_bdd7_7bcea1f5d989
     value_type: ClassicEquipment
@@ -2252,7 +2158,6 @@ rules:
     view_property: equipment
   - connection: reverse(property=assets)
     description: An automatically updated list of files related to the asset.
-    is_list: true
     name: Files
     neatId: http://purl.org/cognite/neat/neatId_e515ea88_f19d_4069_b88d_b3244fd87cf4
     value_type: ClassicFile
@@ -2260,19 +2165,19 @@ rules:
     view_property: files
   - container: ClassicAsset
     container_property: geoLocation
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
-    nullable: true
     value_type: json
     view: ClassicAsset
     view_property: geoLocation
   - container: ClassicAsset
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
-    nullable: true
     value_type: json
     view: ClassicAsset
     view_property: metadata
@@ -2280,10 +2185,8 @@ rules:
     container_property: name
     immutable: false
     index: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/name
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: name
@@ -2291,10 +2194,8 @@ rules:
     container: cdf_cdm:CogniteAsset
     container_property: assetHierarchy_parent
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
-    nullable: true
     value_type: ClassicAsset
     view: ClassicAsset
     view_property: parent
@@ -2305,10 +2206,8 @@ rules:
       starting with the root asset. Enables subtree filtering to find all assets under
       a parent.
     immutable: false
-    is_list: true
     name: Path
     neatId: http://purl.org/cognite/neat/neatId_11622da5_9e91_4699_b69c_174b054a1a93
-    nullable: true
     value_type: ClassicAsset
     view: ClassicAsset
     view_property: path
@@ -2318,10 +2217,8 @@ rules:
     description: An automatically updated reference to the top-level asset of the
       hierarchy.
     immutable: false
-    is_list: false
     name: Root
     neatId: http://purl.org/cognite/neat/neatId_11138a07_144c_4998_a51d_4fbced64ce3d
-    nullable: true
     value_type: ClassicAsset
     view: ClassicAsset
     view_property: root
@@ -2330,26 +2227,21 @@ rules:
     container_property: source
     immutable: false
     index: source
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/source
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/source
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicAsset
     view_property: source
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
-    nullable: true
     value_type: text
     view: ClassicAsset
     view_property: tags
   - connection: reverse(property=assets)
     description: An automatically updated list of time series related to the asset.
-    is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_53bf067f_d9de_4ef0_945c_8024e9ed8981
     value_type: ClassicTimeSeries
@@ -2357,52 +2249,51 @@ rules:
     view_property: timeSeries
   - container: ClassicDataSet
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicDataSet
     view_property: classicExternalId
   - container: ClassicDataSet
     container_property: description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
-    nullable: true
     value_type: text
     view: ClassicDataSet
     view_property: description
   - container: ClassicDataSet
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
-    nullable: true
     value_type: json
     view: ClassicDataSet
     view_property: metadata
   - container: ClassicDataSet
     container_property: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
-    nullable: true
     value_type: text
     view: ClassicDataSet
     view_property: name
   - container: ClassicDataSet
     container_property: writeProtected
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
-    nullable: true
     value_type: boolean
     view: ClassicDataSet
     view_property: writeProtected
   - connection: reverse(property=equipment)
     description: An automatically updated list of activities related to the equipment.
-    is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/neatId_c25997c1_a8c4_4c29_9517_3188cfe433b4
     value_type: ClassicEvent
@@ -2413,19 +2304,15 @@ rules:
     container_property: asset
     description: The asset the equipment is related to.
     immutable: false
-    is_list: false
     name: Asset
     neatId: http://purl.org/cognite/neat/neatId_5e08021f_2315_4b48_a769_b824abc215a0
-    nullable: true
     value_type: ClassicAsset
     view: ClassicEquipment
     view_property: asset
   - container: ClassicEquipment
     container_property: classicEquipmentGUID
     immutable: false
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_d22d3e64_b57e_4fef_921f_6aa05cbc563b
-    nullable: true
     value_type: text
     view: ClassicEquipment
     view_property: classicEquipmentGUID
@@ -2434,10 +2321,8 @@ rules:
     container_property: files
     description: A list of files the equipment relates to.
     immutable: false
-    is_list: true
     name: Files
     neatId: http://purl.org/cognite/neat/neatId_3bd8dc76_ccec_4790_afc1_ad4c5dbdcadb
-    nullable: true
     value_type: ClassicFile
     view: ClassicEquipment
     view_property: files
@@ -2447,15 +2332,12 @@ rules:
     description: Direct relation to a source system
     immutable: false
     index: source
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_4f64197b_ac89_4963_bdd5_527e7b1f6d4b
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicEquipment
     view_property: source
   - connection: reverse(property=equipment)
     description: An automatically updated list of time series related to the equipment.
-    is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_e8c0570d_3a83_4b4d_8a7c_93e73a066e0c
     value_type: ClassicTimeSeries
@@ -2465,39 +2347,35 @@ rules:
     container: cdf_cdm:CogniteActivity
     container_property: assets
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
-    nullable: true
     value_type: ClassicAsset
     view: ClassicEvent
     view_property: assets
   - container: ClassicEvent
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: classicExternalId
   - connection: direct
     container: ClassicEvent
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicEvent
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/description
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/description
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: description
@@ -2505,10 +2383,8 @@ rules:
     container_property: endTime
     immutable: false
     index: endTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: endTime
@@ -2517,19 +2393,17 @@ rules:
     container_property: equipment
     description: A list of equipment the activity is related to.
     immutable: false
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_02efaf0e_d311_4b1f_9cbd_fa43c6141606
-    nullable: true
     value_type: ClassicEquipment
     view: ClassicEvent
     view_property: equipment
   - container: ClassicEvent
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
-    nullable: true
     value_type: json
     view: ClassicEvent
     view_property: metadata
@@ -2538,10 +2412,8 @@ rules:
     container_property: source
     immutable: false
     index: source
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/source
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/source
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicEvent
     view_property: source
@@ -2549,19 +2421,17 @@ rules:
     container_property: startTime
     immutable: false
     index: startTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
-    nullable: true
     value_type: timestamp
     view: ClassicEvent
     view_property: startTime
   - container: ClassicEvent
     container_property: subtype
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: subtype
@@ -2570,19 +2440,17 @@ rules:
     container_property: timeSeries
     description: A list of time series the activity is related to.
     immutable: false
-    is_list: true
     name: Time series
     neatId: http://purl.org/cognite/neat/neatId_a0c5e084_cdf1_49cf_9d39_0997c06d2f3b
-    nullable: true
     value_type: ClassicTimeSeries
     view: ClassicEvent
     view_property: timeSeries
   - container: ClassicEvent
     container_property: type
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/type
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/type
-    nullable: true
     value_type: text
     view: ClassicEvent
     view_property: type
@@ -2590,45 +2458,40 @@ rules:
     container: cdf_cdm:CogniteFile
     container_property: assets
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
-    nullable: true
     value_type: ClassicAsset
     view: ClassicFile
     view_property: assets
   - container: ClassicFile
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: classicExternalId
   - connection: direct
     container: ClassicFile
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicFile
     view_property: dataSetId
   - container: cdf_cdm:CogniteFile
     container_property: directory
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/directory
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/directory
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: directory
   - connection: reverse(property=files)
     description: An automatically updated list of equipment this file is related to.
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_527cc7c9_d504_41a7_b25d_f64ba2906a99
     value_type: ClassicEquipment
@@ -2636,29 +2499,27 @@ rules:
     view_property: equipment
   - container: ClassicFile
     container_property: geoLocation
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
-    nullable: true
     value_type: json
     view: ClassicFile
     view_property: geoLocation
   - container: ClassicFile
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
-    nullable: true
     value_type: json
     view: ClassicFile
     view_property: metadata
   - container: cdf_cdm:CogniteFile
     container_property: mimeType
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: mimeType
@@ -2666,19 +2527,17 @@ rules:
     container_property: name
     immutable: false
     index: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/name
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: name
   - container: ClassicFile
     container_property: securityCategories
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
-    nullable: true
     value_type: int64
     view: ClassicFile
     view_property: securityCategories
@@ -2687,10 +2546,8 @@ rules:
     container_property: source
     immutable: false
     index: source
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/source
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/source
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicFile
     view_property: source
@@ -2698,10 +2555,8 @@ rules:
     container_property: sourceCreatedTime
     immutable: false
     index: sourceCreatedTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
-    nullable: true
     value_type: timestamp
     view: ClassicFile
     view_property: sourceCreatedTime
@@ -2709,228 +2564,220 @@ rules:
     container_property: sourceUpdatedTime
     immutable: false
     index: sourceUpdatedTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
-    nullable: true
     value_type: timestamp
     view: ClassicFile
     view_property: sourceUpdatedTime
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/labels
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/labels
-    nullable: true
     value_type: text
     view: ClassicFile
     view_property: tags
   - container: ClassicLabel
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicLabel
     view_property: classicExternalId
   - connection: direct
     container: ClassicLabel
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicLabel
     view_property: dataSetId
   - container: ClassicLabel
     container_property: description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/description
-    nullable: true
     value_type: text
     view: ClassicLabel
     view_property: description
   - container: ClassicLabel
     container_property: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/name
-    nullable: true
     value_type: text
     view: ClassicLabel
     view_property: name
   - container: ClassicRelationship
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicRelationship
     view_property: classicExternalId
   - container: ClassicRelationship
     container_property: confidence
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
-    nullable: true
     value_type: float64
     view: ClassicRelationship
     view_property: confidence
   - connection: direct
     container: ClassicRelationship
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicRelationship
     view_property: dataSetId
   - container: ClassicRelationship
     container_property: endTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
-    nullable: true
     value_type: timestamp
     view: ClassicRelationship
     view_property: endTime
   - connection: edge
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
+    max_count: .inf
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
     value_type: ClassicLabel
     view: ClassicRelationship
     view_property: labels
   - container: ClassicRelationship
     container_property: sourceType
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
-    nullable: true
     value_type: text
     view: ClassicRelationship
     view_property: sourceType
   - container: ClassicRelationship
     container_property: startTime
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
-    nullable: true
     value_type: timestamp
     view: ClassicRelationship
     view_property: startTime
   - container: ClassicRelationship
     container_property: targetType
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
-    nullable: true
     value_type: text
     view: ClassicRelationship
     view_property: targetType
   - connection: direct
     container: ClassicSequence
     container_property: assetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
-    nullable: true
     value_type: ClassicAsset
     view: ClassicSequence
     view_property: assetId
   - container: ClassicSequence
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicSequence
     view_property: classicExternalId
   - container: ClassicSequence
     container_property: columns
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
+    max_count: 400
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
-    nullable: true
     value_type: json
     view: ClassicSequence
     view_property: columns
   - connection: direct
     container: ClassicSequence
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicSequence
     view_property: dataSetId
   - container: ClassicSequence
     container_property: description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/description
-    nullable: true
     value_type: text
     view: ClassicSequence
     view_property: description
   - container: ClassicSequence
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
-    nullable: true
     value_type: json
     view: ClassicSequence
     view_property: metadata
   - container: ClassicSequence
     container_property: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/name
-    nullable: true
     value_type: text
     view: ClassicSequence
     view_property: name
   - container: ClassicSequence
     container_property: rows
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
+    max_count: 1000
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
-    nullable: true
     value_type: json
     view: ClassicSequence
     view_property: rows
   - container: ClassicSourceSystem
     container_property: classicSourceSystemGUID
     immutable: false
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_baba86c4_fed1_4faf_8e48_b5f1e8179a50
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: classicSourceSystemGUID
   - container: cdf_cdm:CogniteDescribable
     container_property: name
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
-    nullable: true
     value_type: text
     view: ClassicSourceSystem
     view_property: name
   - connection: reverse(property=timeSeries)
     description: An automatically updated list of activities the time series is related
       to.
-    is_list: true
     name: Activities
     neatId: http://purl.org/cognite/neat/neatId_eb1527e5_e163_4d50_bcee_dd2546b7691f
     value_type: ClassicEvent
@@ -2940,39 +2787,35 @@ rules:
     container: cdf_cdm:CogniteTimeSeries
     container_property: assets
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
-    nullable: true
     value_type: ClassicAsset
     view: ClassicTimeSeries
     view_property: assets
   - container: ClassicTimeSeries
     container_property: classicExternalId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/classicExternalId
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: classicExternalId
   - connection: direct
     container: ClassicTimeSeries
     container_property: dataSetId
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
-    nullable: true
     value_type: ClassicDataSet
     view: ClassicTimeSeries
     view_property: dataSetId
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: description
@@ -2981,10 +2824,8 @@ rules:
     container_property: equipment
     description: A list of equipment the time series is related to.
     immutable: false
-    is_list: true
     name: Equipment
     neatId: http://purl.org/cognite/neat/neatId_1fc3b262_51f2_444b_b105_2e5bf1feb3df
-    nullable: true
     value_type: ClassicEquipment
     view: ClassicTimeSeries
     view_property: equipment
@@ -2992,19 +2833,17 @@ rules:
     container_property: isStep
     default: 0
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
-    nullable: false
     value_type: boolean
     view: ClassicTimeSeries
     view_property: isStep
   - container: ClassicTimeSeries
     container_property: metadata
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
-    nullable: true
     value_type: json
     view: ClassicTimeSeries
     view_property: metadata
@@ -3012,10 +2851,8 @@ rules:
     container_property: name
     immutable: false
     index: name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: name
@@ -3025,39 +2862,31 @@ rules:
     description: Direct relation to a source system
     immutable: false
     index: source
-    is_list: false
     neatId: http://purl.org/cognite/neat/neatId_b5d6ecd8_d48b_439d_892c_3d6e1bc7ffca
-    nullable: true
     value_type: ClassicSourceSystem
     view: ClassicTimeSeries
     view_property: source
   - container: cdf_cdm:CogniteTimeSeries
     container_property: sourceUnit
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: sourceUnit
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
-    nullable: true
     value_type: text
     view: ClassicTimeSeries
     view_property: tags
   - container: cdf_cdm:CogniteTimeSeries
     container_property: type
     immutable: true
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
-    nullable: false
     value_type: enum(collection=timeseriesType)
     view: ClassicTimeSeries
     view_property: type
@@ -3065,10 +2894,8 @@ rules:
     container: cdf_cdm:CogniteTimeSeries
     container_property: unit
     immutable: false
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
-    nullable: true
     value_type: cdf_cdm:CogniteUnit(version=v1)
     view: ClassicTimeSeries
     view_property: unit
