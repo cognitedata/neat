@@ -49,8 +49,13 @@ def invalid_rules_filepaths():
             [
                 PropertyValueError(
                     row=5,
-                    column="Is List",
-                    error=NeatValueError("Expected a bool type, got 'Apple'"),
+                    column="Max Count",
+                    error=NeatValueError("Expected a float type, got 'Apple'"),
+                ),
+                PropertyValueError(
+                    row=5,
+                    column="Max Count",
+                    error=NeatValueError("Expected a int type, got 'Apple'"),
                 ),
             ]
         ),
