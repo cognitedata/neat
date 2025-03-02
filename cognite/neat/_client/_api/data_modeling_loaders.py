@@ -302,8 +302,9 @@ class DataModelingLoader(
     def items_from_schema(cls, schema: DMSSchema) -> T_CogniteResourceList:
         raise NotImplementedError
 
+    @classmethod
     @abstractmethod
-    def merge(self, local: T_WriteClass, remote: T_WritableCogniteResource) -> T_WritableCogniteResource:
+    def merge(cls, local: T_WriteClass, remote: T_WritableCogniteResource) -> T_WriteClass:
         raise NotImplementedError
 
 
@@ -317,6 +318,10 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         if isinstance(item, dict):
             return item["space"]
         return item
+
+    @classmethod
+    def merge(cls, local: SpaceApply, remote: Space) -> SpaceApply:
+        raise NotImplementedError("Spaces cannot be merged")
 
     def _create(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self._client.data_modeling.spaces.apply(items)
@@ -404,6 +409,10 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         if isinstance(item, dict):
             return ContainerId.load(item)
         return item
+
+    @classmethod
+    def merge(cls, local: ContainerApply, remote: Container) -> ContainerApply:
+        raise NotImplementedError("Spaces cannot be merged")
 
     def sort_by_dependencies(self, items: Sequence[ContainerApply]) -> list[ContainerApply]:
         container_by_id = {container.as_id(): container for container in items}
@@ -564,6 +573,10 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         if isinstance(item, dict):
             return ViewId.load(item)
         return item
+
+    @classmethod
+    def merge(cls, local: ViewApply, remote: View) -> ViewApply:
+        raise NotImplementedError
 
     def _create(self, items: Sequence[ViewApply]) -> ViewList:
         return self._client.data_modeling.views.apply(items)
@@ -740,6 +753,10 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
             return DataModelId.load(item)
         return item
 
+    @classmethod
+    def merge(cls, local: DataModelApply, remote: DataModel) -> DataModelApply:
+        raise NotImplementedError
+
     def _create(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self._client.data_modeling.data_models.apply(items)
 
@@ -786,6 +803,10 @@ class NodeLoader(DataModelingLoader[NodeId, NodeApply, Node, NodeApplyList, Node
         if isinstance(item, dict):
             return NodeId.load(item)
         return item
+
+    @classmethod
+    def merge(cls, local: NodeApply, remote: Node) -> NodeApply:
+        raise NotImplementedError("Nodes cannot be merged")
 
     def _create(self, items: Sequence[NodeApply]) -> NodeList:
         self._client.data_modeling.instances.apply(items)
