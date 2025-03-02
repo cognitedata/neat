@@ -311,6 +311,7 @@ class _DMSExporter:
                 args: dict[str, Any] = {}
                 if issubclass(type_cls, ListablePropertyType):
                     args["is_list"] = prop.is_list or False
+                    args["max_list_size"] = prop.max_count
                 if isinstance(prop.value_type, Double | Float) and isinstance(prop.value_type.unit, UnitEntity):
                     args["unit"] = prop.value_type.unit.as_reference()
                 if isinstance(prop.value_type, Enum):
