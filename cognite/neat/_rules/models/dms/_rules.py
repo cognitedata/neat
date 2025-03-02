@@ -1,3 +1,4 @@
+import math
 import warnings
 from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
@@ -171,6 +172,12 @@ class DMSProperty(SheetRow):
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
         if info.data.get("connection") == "direct" and value not in {0, None}:
             raise ValueError("Direct relation must have min count set to 0")
+        return value
+
+    @field_validator("max_count", mode="before")
+    def as_integer(cls, value: Any) -> Any:
+        if isinstance(value, float) and not math.isinf(value):
+            return int(value)
         return value
 
     @field_validator("max_count")
