@@ -1541,6 +1541,8 @@ class _InformationRulesConverter:
         dms_property = DMSProperty(
             name=info_property.name,
             value_type=value_type,
+            min_count=info_property.min_count,
+            max_count=info_property.max_count,
             nullable=nullable,
             is_list=is_list,
             connection=connection,
@@ -1759,8 +1761,8 @@ class _DMSRulesConverter:
                 property_=property_.view_property,
                 value_type=value_type,
                 description=property_.description,
-                min_count=(0 if property_.nullable or property_.nullable is None else 1),
-                max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
+                min_count=property_.min_count,
+                max_count=property_.max_count,
             )
 
             # Linking
