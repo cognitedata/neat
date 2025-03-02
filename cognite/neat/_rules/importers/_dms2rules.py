@@ -7,8 +7,12 @@ from typing import Literal, cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
+from cognite.client.data_classes.data_modeling.data_types import (
+    DirectRelation,
+    ListablePropertyType,
+    PropertyTypeWithUnit,
+)
 from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
-from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType, PropertyTypeWithUnit
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
     MultiReverseDirectRelationApply,
@@ -19,7 +23,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT, DMS_PRIMITIVE_LIST_DEFAULT_LIMIT
 from cognite.neat._issues import IssueList, MultiValueError, NeatIssue, catch_issues
 from cognite.neat._issues.errors import (
     FileTypeUnexpectedError,
@@ -440,8 +444,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     return 1
                 elif isinstance(prop_type.max_list_size, int):
                     return prop_type.max_list_size
-                else:
+                elif isinstance(prop_type, DirectRelation):
                     return DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+                else:
+                    return DMS_PRIMITIVE_LIST_DEFAULT_LIMIT
             else:
                 return 1
         elif isinstance(prop, MultiEdgeConnectionApply | MultiReverseDirectRelationApply):
