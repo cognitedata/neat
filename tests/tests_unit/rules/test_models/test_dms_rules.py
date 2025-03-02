@@ -423,6 +423,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 container_property="root",
                 view="Asset",
                 view_property="root",
+                max_count=1,
             ),
             DMSInputProperty(
                 value_type="Asset",
@@ -437,6 +438,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 container_property="name",
                 view="CogniteTimeseries",
                 view_property="name",
+                max_count=1,
             ),
             DMSInputProperty(
                 value_type="Asset",
@@ -445,11 +447,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 container_property="asset",
                 view="CogniteTimeseries",
                 view_property="asset",
+                max_count=1,
             ),
             DMSInputProperty(
                 value_type="Activity",
                 connection="direct",
-                max_count=1000,
+                max_count=100,
                 container="CogniteTimeseries",
                 container_property="activities",
                 view="CogniteTimeseries",
@@ -457,7 +460,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
             DMSInputProperty(
                 value_type="CogniteTimeseries",
-                max_count=1000,
+                max_count=float("inf"),
                 connection="reverse(property=activities)",
                 view="Activity",
                 view_property="timeseries",

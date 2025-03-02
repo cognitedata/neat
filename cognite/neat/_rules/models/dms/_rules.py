@@ -160,9 +160,9 @@ class DMSProperty(SheetRow):
     def is_list(self) -> bool | None:
         """Used to indicate whether the property holds single or multiple values (list). "
         "Only applies to primitive types."""
-        return self.max_count in {float("inf"), None} or (
-            isinstance(self.max_count, int | float) and self.max_count > 1
-        )
+        if self.max_count is None:
+            return None
+        return self.max_count is float("inf") or (isinstance(self.max_count, int | float) and self.max_count > 1)
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.view, self.view_property
