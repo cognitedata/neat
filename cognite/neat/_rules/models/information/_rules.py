@@ -144,7 +144,7 @@ class InformationProperty(SheetRow):
         "If no value is provided, the default value is  `0`, "
         "which means that the property is optional.",
     )
-    max_count: int | None = Field(
+    max_count: int | float | None = Field(
         alias="Max Count",
         default=None,
         description="Maximum number of values that the property can hold. "

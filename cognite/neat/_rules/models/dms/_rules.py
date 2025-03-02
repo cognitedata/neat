@@ -109,28 +109,17 @@ class DMSProperty(SheetRow):
         "If no value is provided, the default value is  `0`, "
         "which means that the property is optional.",
     )
-    max_count: int | None = Field(
+    max_count: int | float | None = Field(
         alias="Max Count",
         default=None,
         description="Maximum number of values that the property can hold. "
         "If no value is provided, the default value is  `inf`, "
         "which means that the property can hold any number of values (listable).",
     )
-    nullable: bool | None = Field(
-        default=None,
-        alias="Nullable",
-        description="Used to indicate whether the property is required or not. Only applies to primitive type.",
-    )
     immutable: bool | None = Field(
         default=None,
         alias="Immutable",
         description="sed to indicate whether the property is can only be set once. Only applies to primitive type.",
-    )
-    is_list: bool | None = Field(
-        default=None,
-        alias="Is List",
-        description="Used to indicate whether the property holds single or multiple values (list). "
-        "Only applies to primitive types.",
     )
     default: bool | str | int | float | dict | None = Field(
         None, alias="Default", description="Specifies default value for the property."
@@ -160,6 +149,19 @@ class DMSProperty(SheetRow):
         alias="Logical",
         description="Used to make connection between physical and logical data model aspect",
     )
+
+    @property
+    def nullable(self) -> bool | None:
+        """Used to indicate whether the property is required or not. Only applies to primitive type."""
+        return self.min_count in {0, None}
+
+    @property
+    def is_list(self) -> bool | None:
+        """Used to indicate whether the property holds single or multiple values (list). "
+        "Only applies to primitive types."""
+        return self.max_count in {float("inf"), None} or (
+            isinstance(self.max_count, int | float) and self.max_count > 1
+        )
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.view, self.view_property
