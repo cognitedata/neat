@@ -17,36 +17,36 @@ rules:
   - container: MyConcept
     container_property: altName
     immutable: true
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/altName
-    nullable: true
     value_type: text
     view: MyConcept
     view_property: altName
   - container: MyConcept
     container_property: name
     immutable: true
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/name
-    nullable: true
     value_type: text
     view: MyConcept
     view_property: name
   - container: MyConcept
     container_property: oneMoreName
     immutable: true
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/oneMoreName
-    nullable: true
     value_type: text
     view: MyConcept
     view_property: oneMoreName
   - container: MyConcept
     container_property: yetAnotherName
     immutable: true
-    is_list: false
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/nikola_space/nikola_external_id/v1/MyConcept/yetAnotherName
-    nullable: true
     value_type: text
     view: MyConcept
     view_property: yetAnotherName
