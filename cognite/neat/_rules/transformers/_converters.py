@@ -1569,7 +1569,9 @@ class _InformationRulesConverter:
         ):
             edge_value_type = edge_value_types_by_class_property_pair[(prop.class_, prop.property_)]
             return EdgeEntity(properties=edge_value_type.as_view_entity(default_space, default_version))
-        if isinstance(value_type, ViewEntity) and prop.is_list:
+        if (isinstance(value_type, ViewEntity) and prop.max_count in {float("inf"), None}) or (
+            isinstance(prop.max_count, int | float) and prop.max_count > 1
+        ):
             return EdgeEntity()
         elif isinstance(value_type, ViewEntity):
             return "direct"
