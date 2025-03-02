@@ -8,6 +8,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._constants import DMS_CONTAINER_MAX_LIST_SIZE
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._general import NeatValueWarning
 from cognite.neat._rules.models._base_rules import (
@@ -166,10 +167,21 @@ class DMSProperty(SheetRow):
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.view, self.view_property
 
-    @field_validator("nullable")
+    @field_validator("min_count")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
-        if info.data.get("connection") == "direct" and value is False:
-            raise ValueError("Direct relation must be nullable")
+        if info.data.get("connection") == "direct" and value not in {0, None}:
+            raise ValueError("Direct relation must have min count set to 0")
+        return value
+
+    @field_validator("max_count")
+    def max_list_size(cls, value: Any, info: ValidationInfo) -> Any:
+        if isinstance(info.data.get("connection"), EdgeEntity | ReverseConnectionEntity):
+            if value is not None and value != float("inf") and not (isinstance(value, int) and value == 1):
+                raise ValueError("Edge and reverse connections must have max count set to inf or 1")
+            return value
+        # We do not have a connection, so we can check the max list size.
+        if isinstance(value, int) and value > DMS_CONTAINER_MAX_LIST_SIZE:
+            raise ValueError(f"Max list size cannot be greater than {DMS_CONTAINER_MAX_LIST_SIZE}")
         return value
 
     @field_validator("value_type", mode="after")
