@@ -46,7 +46,7 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
-from cognite.neat._utils.text import NamingStandardization, humanize_collection
+from cognite.neat._utils.text import NamingStandardization
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
@@ -59,14 +59,12 @@ class _ViewIterator:
     Args:
         view_id: The view to iterate over
         instance_count: The number of instances in the view
-        hierarchical_properties: The properties that are hierarchical, meaning they point to the same instances.
         query: The query to get the instances from the store.
         view: The view object from the client.
     """
 
     view_id: dm.ViewId
     instance_count: int
-    hierarchical_properties: set[str]
     query: ViewQuery
     view: dm.View | None = None
 
@@ -189,32 +187,11 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             )
             yield _START_OF_CLASS(view.external_id)
             for identifier, properties in instance_iterable:
-                yield from self._create_instances(
-                    identifier, properties, projection, stop_on_exception, exclude=it.hierarchical_properties
-                )
-            if it.hierarchical_properties:
-                # Force the creation of instances, before we create the hierarchical properties.
-                yield _END_OF_CLASS
-                yield _START_OF_CLASS(f"{view.external_id} ({humanize_collection(it.hierarchical_properties)})")
-                yield from self._create_hierarchical_properties(it, projection, stop_on_exception)
-            if reader is not instance_iterable:
+                yield from self._create_instances(identifier, properties, projection, stop_on_exception)
+            if reader is instance_iterable:
                 print(f"Loaded {it.instance_count} instances for {it.view_id!r}")
 
             yield _END_OF_CLASS
-
-    def _create_hierarchical_properties(
-        self, it: _ViewIterator, projection: _Projection, stop_on_exception: bool
-    ) -> Iterable[dm.InstanceApply | NeatIssue]:
-        reader = self.graph_store.read(it.query.rdf_type, property_renaming_config=it.query.property_renaming_config)
-        instance_iterable = iterate_progress_bar_if_above_config_threshold(
-            reader,
-            it.instance_count,
-            f"Loading {it.view_id!r} hierarchical properties: {humanize_collection(it.hierarchical_properties)}",
-        )
-        for identifier, properties in instance_iterable:
-            yield from self._create_instances(
-                identifier, properties, projection, stop_on_exception, include=it.hierarchical_properties
-            )
 
     def _create_view_iterations(self) -> tuple[list[_ViewIterator], IssueList]:
         view_query_by_id = RulesAnalysis(self.info_rules, self.dms_rules).view_query_by_id
@@ -228,8 +205,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 for missing_view in missing:
                     issues.append(ResourceNotFoundError(missing_view, "view", more="The view is not found in CDF."))
                 return [], issues
-            # Todo: Remove if this turns out to be unnecessary.
-            hierarchical_properties_by_view_id: dict[dm.ViewId, set[str]] = {}
         else:
             views = dm.ViewList([])
             with catch_issues() as issues:
@@ -237,7 +212,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 views.extend(read_model.views)
             if issues.has_errors:
                 return [], issues
-            hierarchical_properties_by_view_id = {}
         views_by_id = {view.as_id(): view for view in views}
 
         def sort_by_instance_type(id_: dm.ViewId) -> int:
@@ -254,7 +228,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 continue
             view_iteration = iterations_by_view_id[view_id]
             view_iteration.view = views_by_id.get(view_id)
-            view_iteration.hierarchical_properties = hierarchical_properties_by_view_id.get(view_id, set())
             view_iterations.append(view_iteration)
         return view_iterations, issues
 
@@ -264,7 +237,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         for view_id, query in view_query_by_id.items():
             count = self.graph_store.queries.count_of_type(query.rdf_type)
             if count > 0:
-                view_iterations[view_id] = _ViewIterator(view_id, count, set(), query)
+                view_iterations[view_id] = _ViewIterator(view_id, count, query)
         return view_iterations
 
     def _lookup_space_by_uri(self, view_iterations: list[_ViewIterator], stop_on_exception: bool = False) -> IssueList:
@@ -500,8 +473,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         properties: dict[str | InstanceType, list[Any]],
         projection: _Projection,
         stop_on_exception: Literal[True, False] = False,
-        exclude: set[str] | None = None,
-        include: set[str] | None = None,
     ) -> Iterable[dm.InstanceApply | NeatIssue]:
         instance_id = self._create_instance_id(instance_uri, "node", stop_on_exception)
         if not isinstance(instance_id, InstanceId):
@@ -529,17 +500,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield error
             return
         _ = properties.pop(RDF.type)[0]
-        if exclude:
-            properties = {k: v for k, v in properties.items() if k not in exclude}
-        if include:
-            properties = {k: v for k, v in properties.items() if k in include}
 
         sources = []
         with catch_issues() as property_issues:
             sources = [
                 dm.NodeOrEdgeData(
                     projection.view_id,
-                    projection.pydantic_cls.model_validate(properties).model_dump(exclude_unset=True),
+                    projection.pydantic_cls.model_validate(properties).model_dump(
+                        exclude_unset=True,
+                        exclude_none=True,
+                    ),
                 )
             ]
         for issue in property_issues:

@@ -1,10 +1,43 @@
 import re
 import urllib.parse
-from collections.abc import Collection
+from collections.abc import Collection, Set
 from re import Pattern
 from typing import Any
 
 from cognite.neat._rules._constants import get_reserved_words
+
+PREPOSITIONS = frozenset(
+    {
+        "in",
+        "on",
+        "at",
+        "by",
+        "for",
+        "with",
+        "about",
+        "against",
+        "between",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "to",
+        "from",
+        "up",
+        "down",
+        "out",
+        "off",
+        "over",
+        "under",
+        "again",
+        "further",
+        "then",
+        "once",
+    }
+)
 
 
 def to_camel_case(string: str) -> str:
@@ -129,6 +162,18 @@ def to_snake_case(string: str) -> str:
     else:
         words = pattern.findall(string)
     return "_".join(map(str.lower, words))
+
+
+def to_words(string: str) -> str:
+    """Converts snake_case camelCase or PascalCase to words."""
+    return to_snake_case(string).replace("_", " ")
+
+
+def title(text: str, skip_words: Set[str] = PREPOSITIONS) -> str:
+    """Converts text to title case, skipping prepositions."""
+    words = (word.lower() for word in text.split())
+    titled_words = (word.capitalize() if word not in skip_words else word for word in words)
+    return " ".join(titled_words)
 
 
 def sentence_or_string_to_camel(string: str) -> str:

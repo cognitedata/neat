@@ -25,6 +25,24 @@ class SubsetAPI:
         self._state = state
 
     def data_model(self, concepts: str | list[str]) -> IssueList:
+        """Subset the data model to the desired concepts.
+
+        Args:
+            concepts: The concepts to subset the data model to.
+
+        Returns:
+            IssueList: A list of issues that occurred during the transformation.
+
+        Example:
+            Read the CogniteCore data model and reduce the data model to only the 'CogniteAsset' concept.
+            ```python
+            neat = NeatSession(CogniteClient())
+
+            neat.read.examples.core_data_model()
+
+            neat.subset.data_model("CogniteAsset")
+            ```
+        """
         if self._state.rule_store.empty:
             raise NeatSessionError("No rules to set the data model ID.")
 
