@@ -1,6 +1,6 @@
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client._api.data_modeling_loaders import DataModelLoader
+from cognite.neat._client._api.data_modeling_loaders import DataModelLoader, ViewLoader
 
 _DEFAULT_ARGS = dict(is_global=False, created_time=1, last_updated_time=1, name=None, description=None)
 
@@ -27,12 +27,55 @@ class TestDataModelLoader:
 
         merged = DataModelLoader.merge(local, remote)
 
-        assert merged == dm.DataModelApply(
+        assert (
+            merged.dump()
+            == dm.DataModelApply(
+                "my_space",
+                "my_model",
+                "v1",
+                views=[
+                    dm.ViewId("my_space", "view2", "v1"),
+                    dm.ViewId("my_space", "view1", "v1"),
+                ],
+            ).dump()
+        )
+
+
+class TestViewLoader:
+    def test_merge_views(self) -> None:
+        local = dm.ViewApply(
             "my_space",
-            "my_model",
+            "view1",
             "v1",
-            views=[
-                dm.ViewId("my_space", "view1", "v1"),
-                dm.ViewId("my_space", "view2", "v1"),
-            ],
+            properties={
+                "prop1": dm.MappedPropertyApply(dm.ContainerId("my_space", "container"), "prop1"),
+            },
+        )
+        remote = dm.View(
+            "my_space",
+            "view1",
+            "v1",
+            properties={
+                "prop2": dm.MappedProperty(
+                    dm.ContainerId("my_space", "container"), "prop2", dm.data_types.Text(), True, False, False
+                ),
+            },
+            used_for="node",
+            writable=True,
+            filter=None,
+            implements=[dm.ViewId("my_space", "view2", "v1")],
+            **_DEFAULT_ARGS,
+        )
+
+        merged = ViewLoader.merge(local, remote)
+
+        assert merged.dump() == dm.ViewApply(
+            "my_space",
+            "view1",
+            "v1",
+            properties={
+                "prop2": dm.MappedPropertyApply(dm.ContainerId("my_space", "container"), "prop2"),
+                "prop1": dm.MappedPropertyApply(dm.ContainerId("my_space", "container"), "prop1"),
+            },
+            implements=[dm.ViewId("my_space", "view2", "v1")],
         )

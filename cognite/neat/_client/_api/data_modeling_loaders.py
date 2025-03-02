@@ -755,7 +755,29 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
 
     @classmethod
     def merge(cls, local: DataModelApply, remote: DataModel) -> DataModelApply:
-        raise NotImplementedError
+        if local.as_id() != remote.as_id():
+            raise ValueError(f"Cannot merge data models with different IDs: {local.as_id()} and {remote.as_id()}")
+        existing_view = {
+            view.as_id() if isinstance(view, View) else view: view.as_write() if isinstance(view, View) else view
+            for view in remote.views
+        }
+        new_views = {view.as_id() if isinstance(view, ViewApply) else view: view for view in local.views or []}
+        merged_views: list[ViewId | ViewApply] = []
+        for view_id, view in existing_view.items():
+            if view_id in new_views:
+                merged_views.append(new_views.pop(view_id))
+            else:
+                merged_views.append(view)
+        merged_views.extend(new_views.values())
+
+        return DataModelApply(
+            space=local.space,
+            external_id=local.external_id,
+            version=local.version,
+            description=local.description or remote.description,
+            name=local.name or remote.name,
+            views=merged_views,
+        )
 
     def _create(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self._client.data_modeling.data_models.apply(items)
