@@ -374,7 +374,7 @@ class TestDMSExporter:
                 dm.ViewId(space, "NewView", existing_data_model.version),
             }
             container = neat_client.data_modeling.containers.retrieve((space, "ExistingContainer"))
-            assert set(container.properties) == {"existingProp", "newProp"}
+            assert set(container.properties) == {"existing", "newProp"}
         finally:
             neat_client.data_modeling.data_models.delete(existing_data_model.as_id())
             neat_client.data_modeling.views.delete(dm.ViewId(space, "NewView", existing_data_model.version))
