@@ -1,4 +1,5 @@
 import re
+import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime
@@ -27,6 +28,11 @@ from cognite.neat._rules.models.entities._wrapped import DMSFilter
 from cognite.neat._utils.rdf_ import uri_display_name
 
 from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 @dataclass
