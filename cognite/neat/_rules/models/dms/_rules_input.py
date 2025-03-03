@@ -3,7 +3,7 @@ import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal, Self
+from typing import Any, Literal
 
 import pandas as pd
 from cognite.client import data_modeling as dm
