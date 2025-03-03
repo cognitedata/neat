@@ -9,6 +9,6 @@ Please describe the change you have made.
 - [ ] Skip
 
 ## Changelog
-### Added/Changed/Improved/Removed
+### Added/Changed/Improved/Removed/Fixed
 
 - My change.
