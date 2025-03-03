@@ -117,11 +117,12 @@ DEFAULT_URI = ""
 
 DEFAULT_DOCS_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/"
 
+# These are the API limits for the DMS API, https://docs.cognite.com/cdf/dm/dm_reference/dm_limits_and_restrictions
 DMS_CONTAINER_PROPERTY_SIZE_LIMIT = 100
 DMS_VIEW_CONTAINER_SIZE_LIMIT = 10
 DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT = 100
 DMS_PRIMITIVE_LIST_DEFAULT_LIMIT = 1000
-DMS_CONTAINER_MAX_LIST_SIZE = 2000
+DMS_CONTAINER_LIST_MAX_LIMIT = 2000
 
 _ASSET_ROOT_PROPERTY = {
     "connection": "direct",

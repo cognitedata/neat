@@ -9,7 +9,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._constants import DMS_CONTAINER_MAX_LIST_SIZE
+from cognite.neat._constants import DMS_CONTAINER_LIST_MAX_LIMIT
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._general import NeatValueWarning
 from cognite.neat._rules.models._base_rules import (
@@ -187,8 +187,8 @@ class DMSProperty(SheetRow):
                 raise ValueError("Edge and reverse connections must have max count set to inf or 1")
             return value
         # We do not have a connection, so we can check the max list size.
-        if isinstance(value, int) and value > DMS_CONTAINER_MAX_LIST_SIZE:
-            raise ValueError(f"Max list size cannot be greater than {DMS_CONTAINER_MAX_LIST_SIZE}")
+        if isinstance(value, int) and value > DMS_CONTAINER_LIST_MAX_LIMIT:
+            raise ValueError(f"Max list size cannot be greater than {DMS_CONTAINER_LIST_MAX_LIMIT}")
         return value
 
     @field_validator("value_type", mode="after")
