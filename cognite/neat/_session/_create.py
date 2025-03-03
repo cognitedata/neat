@@ -29,7 +29,7 @@ class CreateAPI:
     def enterprise_model(
         self,
         data_model_id: DataModelIdentifier,
-        org_name: str = "My",
+        org_name: str = "CopyOf",
         dummy_property: str = "GUID",
     ) -> IssueList:
         """Uses the current data model as a basis to create enterprise data model
