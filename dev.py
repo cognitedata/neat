@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).parent
 VERSION_FILE = REPO_ROOT / "cognite" / "neat" / "_version.py"
 
 
-VALID_CHANGELOG_HEADERS = {"Added", "Changed", "Removed", "Fixed"}
+VALID_CHANGELOG_HEADERS = {"Added", "Changed", "Removed", "Fixed", "Improved"}
 BUMP_OPTIONS = Literal["major", "minor", "patch", "skip"]
 VALID_BUMP_OPTIONS = get_args(BUMP_OPTIONS)
 LAST_GIT_MESSAGE_FILE = REPO_ROOT / "last_git_message.txt"
@@ -75,13 +75,16 @@ def create_changelog_entry() -> None:
     if version_bump == "skip":
         print("No changes to release.")
         return
+    if changelog_text is None:
+        print(f"No changelog entry found in the last commit message. This is required for a {version_bump} release.")
+        raise SystemExit(1)
     _validate_changelog_entry(changelog_text)
 
     CHANGELOG_ENTRY_FILE.write_text(changelog_text, encoding="utf-8")
     print(f"Changelog entry written to {CHANGELOG_ENTRY_FILE}.")
 
 
-def _read_last_commit_message() -> tuple[str, str]:
+def _read_last_commit_message() -> tuple[str, str | None]:
     last_git_message = LAST_GIT_MESSAGE_FILE.read_text()
     if "## Bump" not in last_git_message:
         print("No bump entry found in the last commit message.")
@@ -89,8 +92,7 @@ def _read_last_commit_message() -> tuple[str, str]:
 
     after_bump = last_git_message.split("## Bump")[1].strip()
     if "## Changelog" not in after_bump:
-        print("No changelog entry found in the last commit message.")
-        raise SystemExit(1)
+        return after_bump, None
 
     bump_text, changelog_text = after_bump.split("## Changelog")
     return bump_text, changelog_text
@@ -117,7 +119,7 @@ def _validate_changelog_entry(changelog_text: str) -> None:
                 raise SystemExit(1)
             header_text = item.children[0].children
             if header_text not in VALID_CHANGELOG_HEADERS:
-                print(f"Unexpected header in changelog: {header_text}. Must be one of {header_text}.")
+                print(f"Unexpected header in changelog: {header_text}. Must be one of {VALID_CHANGELOG_HEADERS}.")
                 raise SystemExit(1)
             if header_text in seen_headers:
                 print(f"Duplicate header in changelog: {header_text}.")
@@ -157,8 +159,8 @@ def _get_change(bump_text: str) -> Literal["major", "minor", "patch", "skip"]:
         list_text = child.children[0].children[0].children
         if list_text.startswith("[ ]"):
             continue
-        elif list_text.startswith("[x]"):
-            change_type = list_text.removeprefix("[x]").strip()
+        elif list_text.casefold().startswith("[x]"):
+            change_type = list_text[3:].strip()
             if change_type.casefold() not in VALID_BUMP_OPTIONS:
                 print(f"Unexpected change type in bump section {change_type}")
                 raise SystemExit(1)
