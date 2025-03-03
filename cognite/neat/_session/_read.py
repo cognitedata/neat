@@ -87,12 +87,6 @@ class CDFReadAPI(BaseReadAPI):
         super().__init__(state, verbose)
         self.classic = CDFClassicAPI(state, verbose)
 
-    @property
-    def _get_client(self) -> NeatClient:
-        if self._state.client is None:
-            raise NeatValueError("No client provided. Please provide a client to read a data model.")
-        return self._state.client
-
     def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
         """Reads a Data Model from CDF to the knowledge graph.
 
@@ -111,7 +105,13 @@ class CDFReadAPI(BaseReadAPI):
         if not data_model_id.version:
             raise NeatSessionError("Data model version is required to read a data model.")
 
-        importer = importers.DMSImporter.from_data_model_id(self._get_client, data_model_id)
+        self._state._raise_exception_if_condition_not_met(
+            "Read data model from CDF",
+            empty_rules_store_required=True,
+            client_required=True,
+        )
+
+        importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
         return self._state.rule_import(importer)
 
     def graph(
@@ -132,6 +132,12 @@ class CDFReadAPI(BaseReadAPI):
             IssueList: A list of issues that occurred during the extraction.
 
         """
+        self._state._raise_exception_if_condition_not_met(
+            "Read DMS Graph",
+            empty_rules_store_required=True,
+            empty_instances_store_required=True,
+            client_required=True,
+        )
         return self._graph(data_model_id, instance_space, skip_cognite_views, unpack_json=False)
 
     def _graph(
@@ -145,7 +151,7 @@ class CDFReadAPI(BaseReadAPI):
         extractor = extractors.DMSGraphExtractor.from_data_model_id(
             # We are skipping the Cognite Views
             data_model_id,
-            self._get_client,
+            cast(NeatClient, self._state.client),
             instance_space=instance_space,
             skip_cognite_views=skip_cognite_views,
             unpack_json=unpack_json,
@@ -181,8 +187,13 @@ class CDFReadAPI(BaseReadAPI):
             ```
 
         """
+        self._state._raise_exception_if_condition_not_met(
+            "Read RAW",
+            client_required=True,
+        )
+
         extractor = extractors.RAWExtractor(
-            self._get_client,
+            cast(NeatClient, self._state.client),
             db_name=db_name,
             table_name=table_name,
             table_type=type,
@@ -199,12 +210,6 @@ class CDFClassicAPI(BaseReadAPI):
     Use the `.graph()` method to load CDF core resources to the knowledge graph.
 
     """
-
-    @property
-    def _get_client(self) -> NeatClient:
-        if self._state.client is None:
-            raise ValueError("No client provided. Please provide a client to read a data model.")
-        return self._state.client
 
     def graph(
         self,
@@ -257,6 +262,13 @@ class CDFClassicAPI(BaseReadAPI):
             neat.read.cdf.graph("root_asset_external_id")
             ```
         """
+        self._state._raise_exception_if_condition_not_met(
+            "Read classic graph",
+            empty_rules_store_required=True,
+            empty_instances_store_required=True,
+            client_required=True,
+        )
+
         return self._graph(
             root_asset_external_id, limit_per_type, identifier, reference_timeseries=False, reference_files=False
         )
@@ -273,7 +285,7 @@ class CDFClassicAPI(BaseReadAPI):
     ) -> IssueList:
         namespace = CLASSIC_CDF_NAMESPACE
         extractor = extractors.ClassicGraphExtractor(
-            self._get_client,
+            cast(NeatClient, self._state.client),
             root_asset_external_id=root_asset_external_id,
             limit_per_type=limit_per_type,
             namespace=namespace,
@@ -467,6 +479,12 @@ class XMLReadAPI(BaseReadAPI):
         warnings.filterwarnings("default")
         AlphaFlags.dexpi_read.warn()
 
+        self._state._raise_exception_if_condition_not_met(
+            "Read DEXPI file",
+            empty_rules_store_required=True,
+            empty_instances_store_required=True,
+        )
+
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
         engine.set.format = "dexpi"
@@ -520,6 +538,12 @@ class XMLReadAPI(BaseReadAPI):
         """
         warnings.filterwarnings("default")
         AlphaFlags.aml_read.warn()
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read AML file",
+            empty_rules_store_required=True,
+            empty_instances_store_required=True,
+        )
 
         path = NeatReader.create(io).materialize_path()
         engine = import_engine()
@@ -575,6 +599,11 @@ class RDFReadAPI(BaseReadAPI):
         warnings.filterwarnings("default")
         AlphaFlags.ontology_read.warn()
 
+        self._state._raise_exception_if_condition_not_met(
+            "Read Ontology file",
+            empty_rules_store_required=True,
+        )
+
         reader = NeatReader.create(io)
         importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.rule_import(importer)
@@ -592,6 +621,11 @@ class RDFReadAPI(BaseReadAPI):
         """
         warnings.filterwarnings("default")
         AlphaFlags.imf_read.warn()
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read IMF file",
+            empty_rules_store_required=True,
+        )
 
         reader = NeatReader.create(io)
         importer = importers.IMFImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
@@ -646,16 +680,34 @@ class Examples:
 
     def nordic44(self) -> IssueList:
         """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read Nordic44 graph example",
+            empty_instances_store_required=True,
+            empty_rules_store_required=True,
+        )
+
         self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
         return IssueList()
 
     def pump_example(self) -> IssueList:
         """Reads the Hello World pump example into the NeatSession."""
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read Pump Data Model example",
+            empty_rules_store_required=True,
+        )
+
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
         return self._state.rule_import(importer)
 
     def core_data_model(self) -> IssueList:
         """Reads the core data model example into the NeatSession."""
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read Core Data Model example",
+            empty_rules_store_required=True,
+        )
 
         cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
         importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(self._get_client, cdm_v1)
