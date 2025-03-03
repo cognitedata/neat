@@ -291,6 +291,8 @@ class DataModelingLoader(
     ResourceLoader[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList],
     ABC,
 ):
+    support_merge: ClassVar[bool] = True
+
     @classmethod
     def in_space(cls, item: T_WriteClass | T_WritableCogniteResource | T_ID, space: set[str]) -> bool:
         if hasattr(item, "space"):
@@ -310,6 +312,7 @@ class DataModelingLoader(
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"
+    support_merge = False
 
     @classmethod
     def get_id(cls, item: Space | SpaceApply | str | dict) -> str:
@@ -853,6 +856,7 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
 class NodeLoader(DataModelingLoader[NodeId, NodeApply, Node, NodeApplyList, NodeList]):
     resource_name = "nodes"
     dependencies = frozenset({SpaceLoader, ContainerLoader, ViewLoader})
+    support_merge = False
 
     @classmethod
     def get_id(cls, item: Node | NodeApply | NodeId | dict) -> NodeId:
