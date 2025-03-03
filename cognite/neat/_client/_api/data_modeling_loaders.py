@@ -412,7 +412,25 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
 
     @classmethod
     def merge(cls, local: ContainerApply, remote: Container) -> ContainerApply:
-        raise NotImplementedError("Spaces cannot be merged")
+        if local.as_id() != remote.as_id():
+            raise ValueError(f"Cannot merge containers with different IDs: {local.as_id()} and {remote.as_id()}")
+        if local.used_for != remote.used_for:
+            raise ValueError(f"Cannot merge containers with different used_for: {local.used_for} and {remote.used_for}")
+        remote_write = remote.as_write()
+        existing_properties = remote_write.properties or {}
+        merged_properties = {**existing_properties, **(local.properties or {})}
+        merged_indices = {**remote_write.indexes, **local.indexes}
+        merged_constrains = {**remote_write.constraints, **local.constraints}
+        return ContainerApply(
+            space=remote.space,
+            external_id=remote.external_id,
+            properties=merged_properties,
+            description=local.description or remote.description,
+            name=local.name or remote.name,
+            used_for=local.used_for,
+            constraints=merged_constrains,
+            indexes=merged_indices,
+        )
 
     def sort_by_dependencies(self, items: Sequence[ContainerApply]) -> list[ContainerApply]:
         container_by_id = {container.as_id(): container for container in items}

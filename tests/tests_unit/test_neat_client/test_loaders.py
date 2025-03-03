@@ -1,6 +1,7 @@
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 
-from cognite.neat._client._api.data_modeling_loaders import DataModelLoader, ViewLoader
+from cognite.neat._client._api.data_modeling_loaders import ContainerLoader, DataModelLoader, ViewLoader
 
 _DEFAULT_ARGS = dict(is_global=False, created_time=1, last_updated_time=1, name=None, description=None)
 
@@ -69,13 +70,71 @@ class TestViewLoader:
 
         merged = ViewLoader.merge(local, remote)
 
-        assert merged.dump() == dm.ViewApply(
+        assert (
+            merged.dump()
+            == dm.ViewApply(
+                "my_space",
+                "view1",
+                "v1",
+                properties={
+                    "prop2": dm.MappedPropertyApply(dm.ContainerId("my_space", "container"), "prop2"),
+                    "prop1": dm.MappedPropertyApply(dm.ContainerId("my_space", "container"), "prop1"),
+                },
+                implements=[dm.ViewId("my_space", "view2", "v1")],
+            ).dump()
+        )
+
+
+class TestContainerLoader:
+    def test_merge_containers(self) -> None:
+        local = dm.ContainerApply(
             "my_space",
-            "view1",
-            "v1",
-            properties={
-                "prop2": dm.MappedPropertyApply(dm.ContainerId("my_space", "container"), "prop2"),
-                "prop1": dm.MappedPropertyApply(dm.ContainerId("my_space", "container"), "prop1"),
+            "container",
+            {
+                "prop1": dm.ContainerProperty(dm.data_types.Text()),
             },
-            implements=[dm.ViewId("my_space", "view2", "v1")],
+            used_for="node",
+            constraints={
+                "requiresDescribable": dm.RequiresConstraint(dm.ContainerId("cdf_cdm", "CogniteDescribable")),
+            },
+            indexes={
+                "index1": BTreeIndex(["prop1"], cursorable=True),
+            },
+        )
+        remote = dm.Container(
+            "my_space",
+            "container",
+            {
+                "prop2": dm.ContainerProperty(dm.data_types.Text()),
+            },
+            used_for="node",
+            constraints={
+                "requiresDescribable": dm.RequiresConstraint(dm.ContainerId("cdf_cdm", "CogniteDescribable")),
+            },
+            indexes={
+                "index2": BTreeIndex(["prop2"], cursorable=True),
+            },
+            **_DEFAULT_ARGS,
+        )
+
+        merged = ContainerLoader.merge(local, remote)
+
+        assert (
+            merged.dump()
+            == dm.ContainerApply(
+                "my_space",
+                "container",
+                {
+                    "prop2": dm.ContainerProperty(dm.data_types.Text()),
+                    "prop1": dm.ContainerProperty(dm.data_types.Text()),
+                },
+                used_for="node",
+                constraints={
+                    "requiresDescribable": dm.RequiresConstraint(dm.ContainerId("cdf_cdm", "CogniteDescribable")),
+                },
+                indexes={
+                    "index1": BTreeIndex(["prop1"], cursorable=True),
+                    "index2": BTreeIndex(["prop2"], cursorable=True),
+                },
+            ).dump()
         )
