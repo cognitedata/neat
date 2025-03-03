@@ -2,6 +2,7 @@ name: Check Quality and Test
 
 on:
   pull_request:
+    branches: [main]
 
 env:
   # Used for linting, docker images, and docs.
@@ -151,7 +152,6 @@ jobs:
             coverageFile: coverage.xml
             token: ${{ secrets.GITHUB_TOKEN }}
             thresholdAll: 0.6
-
   validate-description:
     name: Validate PR description
     runs-on: ubuntu-latest

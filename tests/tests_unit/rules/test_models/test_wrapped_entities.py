@@ -106,6 +106,11 @@ class TestWrappedEntities:
                     ]
                 ),
             ),
+            pytest.param(
+                dm.filters.Equals(["govern-space", "Property", "type"], "Input"),
+                RawFilter(filter='{"equals": {"property": ["govern-space", "Property", "type"], "value": "Input"}}'),
+                id="Equal filter on property",
+            ),
         ],
     )
     def test_from_dms_filter(self, filter_: dm.Filter, expected: DMSFilter) -> None:
