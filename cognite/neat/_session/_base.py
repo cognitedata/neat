@@ -202,6 +202,7 @@ class NeatSession:
             neat.infer()
             ```
         """
+        self._state._raise_exception_if_condition_not_met("Data model inference", instances_required=True)
         return self._infer_subclasses(model_id)
 
     def _previous_inference(
