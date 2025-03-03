@@ -166,7 +166,7 @@ jobs:
         with:
           version: 1.5.1
       - name: Install dependencies
-        run: poetry install -E all
+        run: poetry install --all-extras
       - name: Dump description to file
         uses: actions/github-script@v7
         with:
