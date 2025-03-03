@@ -58,7 +58,7 @@ class CreateAPI:
                 - Charts
 
         """
-        last_rules = self._get_last_rules()
+        last_rules = self.self._state.rule_store.last_verified_rules
         issues = self._state.rule_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
@@ -70,12 +70,6 @@ class CreateAPI:
         if last_rules and not issues.has_errors:
             self._state.last_reference = last_rules
         return issues
-
-    def _get_last_rules(self) -> InformationRules | DMSRules | None:
-        if not self._state.rule_store.provenance:
-            return None
-        last_entity = self._state.rule_store.provenance[-1].target_entity
-        return last_entity.dms or last_entity.information
 
     def solution_model(
         self,

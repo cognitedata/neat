@@ -1798,8 +1798,9 @@ class _DMSRulesConverter:
 class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     """Subsets DMSRules to only include the specified views."""
 
-    def __init__(self, views: set[ViewEntity]):
+    def __init__(self, views: set[ViewEntity], subset_via_implements: bool = False):
         self._views = views
+        self._subset_via_implements = subset_via_implements
 
     def transform(self, rules: DMSRules) -> DMSRules:
         analysis = RulesAnalysis(dms=rules)
