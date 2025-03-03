@@ -4,7 +4,7 @@ from typing import Any, Literal, cast
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from cognite.neat._alpha import AlphaFlags
+from cognite.neat._alpha import ExperimentalFlags
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
     CLASSIC_CDF_NAMESPACE,
@@ -359,7 +359,7 @@ class ExcelReadAPI(BaseReadAPI):
 
         if enable_manual_edit:
             warnings.filterwarnings("default")
-            AlphaFlags.manual_rules_edit.warn()
+            ExperimentalFlags.manual_rules_edit.warn()
 
         return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
 
@@ -419,7 +419,7 @@ class CSVReadAPI(BaseReadAPI):
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         warnings.filterwarnings("default")
-        AlphaFlags.csv_read.warn()
+        ExperimentalFlags.csv_read.warn()
 
         engine = import_engine()
         engine.set.format = "csv"
@@ -477,7 +477,7 @@ class XMLReadAPI(BaseReadAPI):
             - remove edges to nodes that do not exist in the extracted graph
         """
         warnings.filterwarnings("default")
-        AlphaFlags.dexpi_read.warn()
+        ExperimentalFlags.dexpi_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read DEXPI file",
@@ -537,7 +537,7 @@ class XMLReadAPI(BaseReadAPI):
             - remove edges to nodes that do not exist in the extracted graph
         """
         warnings.filterwarnings("default")
-        AlphaFlags.aml_read.warn()
+        ExperimentalFlags.aml_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read AML file",
@@ -597,7 +597,7 @@ class RDFReadAPI(BaseReadAPI):
             ```
         """
         warnings.filterwarnings("default")
-        AlphaFlags.ontology_read.warn()
+        ExperimentalFlags.ontology_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read Ontology file",
@@ -620,7 +620,7 @@ class RDFReadAPI(BaseReadAPI):
             ```
         """
         warnings.filterwarnings("default")
-        AlphaFlags.imf_read.warn()
+        ExperimentalFlags.imf_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read IMF file",

@@ -4,7 +4,7 @@ from typing import Any
 
 from rdflib import URIRef
 
-from cognite.neat._alpha import AlphaFlags
+from cognite.neat._alpha import ExperimentalFlags
 from cognite.neat._graph.transformers import (
     ConnectionToLiteral,
     ConvertLiteral,
@@ -273,7 +273,7 @@ class DataModelPrepareAPI:
         For properties, the naming will be standardized to camelCase.
         """
         warnings.filterwarnings("default")
-        AlphaFlags.standardize_naming.warn()
+        ExperimentalFlags.standardize_naming.warn()
         return self._state.rule_transform(StandardizeNaming())
 
     def standardize_space_and_version(self) -> IssueList:
@@ -282,5 +282,5 @@ class DataModelPrepareAPI:
         This method will standardize the space and version in the data model to the Cognite standard.
         """
         warnings.filterwarnings("default")
-        AlphaFlags.standardize_space_and_version.warn()
+        ExperimentalFlags.standardize_space_and_version.warn()
         return self._state.rule_transform(StandardizeSpaceAndVersion())
