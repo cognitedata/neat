@@ -170,16 +170,12 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         dv_value_types = generate_data_validation(self._helper_sheet_name, "C", no_header_rows=0, no_rows=no_rows)
 
         dv_immutable = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
-        dv_nullable = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
-        dv_is_list = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
         dv_in_model = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
         dv_used_for = generate_data_validation(self._helper_sheet_name, "E", no_header_rows=0, no_rows=3)
 
         workbook["Properties"].add_data_validation(dv_views)
         workbook["Properties"].add_data_validation(dv_containers)
         workbook["Properties"].add_data_validation(dv_value_types)
-        workbook["Properties"].add_data_validation(dv_nullable)
-        workbook["Properties"].add_data_validation(dv_is_list)
         workbook["Properties"].add_data_validation(dv_immutable)
         workbook["Views"].add_data_validation(dv_in_model)
         workbook["Containers"].add_data_validation(dv_used_for)
@@ -193,12 +189,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         if column := find_column_with_value(workbook["Properties"], "Value Type"):
             dv_value_types.add(f"{column}{3}:{column}{no_rows * 100}")
-
-        if column := find_column_with_value(workbook["Properties"], "Nullable"):
-            dv_nullable.add(f"{column}{3}:{column}{no_rows * 100}")
-
-        if column := find_column_with_value(workbook["Properties"], "Is List"):
-            dv_is_list.add(f"{column}{3}:{column}{no_rows * 100}")
 
         if column := find_column_with_value(workbook["Properties"], "Immutable"):
             dv_immutable.add(f"{column}{3}:{column}{no_rows * 100}")
