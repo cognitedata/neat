@@ -160,7 +160,7 @@ def _get_change(bump_text: str) -> Literal["major", "minor", "patch", "skip"]:
         if list_text.startswith("[ ]"):
             continue
         elif list_text.casefold().startswith("[x]"):
-            change_type = list_text[:3].strip()
+            change_type = list_text[3:].strip()
             if change_type.casefold() not in VALID_BUMP_OPTIONS:
                 print(f"Unexpected change type in bump section {change_type}")
                 raise SystemExit(1)
