@@ -1,14 +1,16 @@
 import re
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 import pandas as pd
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+from cognite.neat._issues.warnings import DeprecatedWarning
 from cognite.neat._rules.models._base_input import InputComponent, InputRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import (
@@ -151,6 +153,42 @@ class DMSInputProperty(InputComponent[DMSProperty]):
 
     def referenced_container(self, default_space: str) -> ContainerEntity | None:
         return ContainerEntity.load(self.container, strict=True, space=default_space) if self.container else None
+
+    @classmethod
+    def _load(cls, data: dict[str, Any]) -> Self:
+        # For backwards compatability, we need to convert nullable and Is List to min and max count
+        for min_count_key, nullable_key in [("Min Count", "Nullable"), ("min_count", "nullable")]:
+            if nullable_key in data and min_count_key not in data:
+                if isinstance(data[nullable_key], bool | float):
+                    data[min_count_key] = 0 if data[nullable_key] else 1
+                else:
+                    data[min_count_key] = None
+                warnings.warn(
+                    DeprecatedWarning(f"{nullable_key} column", replacement=f"{min_count_key} column"), stacklevel=2
+                )
+                data.pop(nullable_key)
+                break
+        for max_count_key, is_list_key, connection_key in [
+            ("Max Count", "Is List", "Connection"),
+            ("max_count", "is_list", "connection"),
+        ]:
+            if is_list_key in data and max_count_key not in data:
+                if isinstance(data[is_list_key], bool | float):
+                    if not data[is_list_key]:
+                        data[max_count_key] = 1
+                    elif connection_key in data and "direct" in data[connection_key]:
+                        data[max_count_key] = DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+                    else:
+                        # Reverse or edge connection
+                        data[max_count_key] = float("inf")
+                else:
+                    data[max_count_key] = 1
+                warnings.warn(
+                    DeprecatedWarning(f"{is_list_key} column", replacement=f"{max_count_key} column"), stacklevel=2
+                )
+                data.pop(is_list_key)
+                break
+        return super()._load(data)
 
 
 @dataclass
