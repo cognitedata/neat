@@ -2,12 +2,13 @@ import warnings
 import zipfile
 from collections.abc import Collection
 from pathlib import Path
-from typing import Any, Literal, overload
+from typing import Any, Literal, cast, overload
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._alpha import AlphaFlags
+from cognite.neat._client._api_client import NeatClient
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, NeatIssue, catch_issues
@@ -305,9 +306,12 @@ class CDFToAPI:
         space_from_property: str | None = None,
         use_source_space: bool = False,
     ) -> UploadResultList:
-        if not self._state.client:
-            raise NeatSessionError("No CDF client provided!")
-        client = self._state.client
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS instances to CDF",
+            client_required=True,
+        )
+
+        client = cast(NeatClient, self._state.client)
         dms_rules = self._state.rule_store.last_verified_dms_rules
         instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
 
@@ -366,12 +370,14 @@ class CDFToAPI:
 
         """
 
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS data model to CDF",
+            client_required=True,
+        )
+
         exporter = exporters.DMSExporter(existing=existing, export_components=components, drop_data=drop_data)
 
-        if not self._state.client:
-            raise NeatSessionError("No client provided!")
-
-        result = self._state.rule_store.export_to_cdf(exporter, self._state.client, dry_run)
+        result = self._state.rule_store.export_to_cdf(exporter, cast(NeatClient, self._state.client), dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
 
