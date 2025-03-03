@@ -165,8 +165,10 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: 1.5.1
-      - name: Install dependencies
-        run: poetry install --all-extras --with dev
+      - name: Install core dependencies
+        run: |
+          poetry config virtualenvs.create false
+          poetry install -E all
       - name: Dump description to file
         uses: actions/github-script@v7
         with:
