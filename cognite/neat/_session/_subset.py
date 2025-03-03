@@ -12,7 +12,10 @@ from cognite.neat._issues._base import IssueList
 from cognite.neat._rules import importers
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.transformers import SubsetDMSRules, SubsetInformationRules
-from cognite.neat._rules.transformers._converters import ToEnterpriseModel
+from cognite.neat._rules.transformers._converters import (
+    SubsetEditableCDMRules,
+    ToEnterpriseModel,
+)
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -178,12 +181,10 @@ class DataModelSubsetAPI:
             ```
 
         !!! note "Bundle of actions"
-            This method is helper method that bundles the following actions:
-            - Import the Cognite Core Data Model
-            - Makes editable copy of the Cognite Core Data Model concepts
-            - Subsets the copy to the desired concepts
-            which will be otherwise done by calling multiple methods
-
+            This method is a helper method that bundles the following actions:
+            - Imports the latest version of Cognite's Core Data Model (CDM)
+            - Makes editable copy of the CDM concepts
+            - Subsets the copy to the desired concepts to desired set of concepts
         """
 
         concepts = concepts if isinstance(concepts, list | set) else [concepts]
@@ -201,7 +202,7 @@ class DataModelSubsetAPI:
             COGNITE_CORE_FEATURES
         ):
             raise NeatSessionError(
-                f"Concept(s) {', '.join(not_in_cognite_core)} is/are not part of the Cognite Core Data Model"
+                f"Concept(s) {', '.join(not_in_cognite_core)} is/are not part of the Cognite Core Data Model. Remove them and try again."
             )
 
         cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
@@ -227,4 +228,17 @@ class DataModelSubsetAPI:
         if issues.has_errors:
             return issues
 
-        views_to_remove = { for view in self._state.rule_store.last_verified_dms_rules.views if view.view.external_id not in concepts}
+        return issues.extend(
+            self._state.rule_transform(
+                SubsetEditableCDMRules(
+                    views={
+                        ViewEntity(
+                            space=cdm_v1.space,
+                            externalId=concept,
+                            version=cdm_v1.version,
+                        )
+                        for concept in concepts
+                    }
+                )
+            )
+        )

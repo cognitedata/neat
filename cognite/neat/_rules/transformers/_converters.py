@@ -17,6 +17,8 @@ from rdflib import Namespace
 from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._constants import (
+    COGNITE_CORE_CONCEPTS,
+    COGNITE_CORE_FEATURES,
     COGNITE_MODELS,
     COGNITE_SPACES,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
@@ -1795,12 +1797,41 @@ class _DMSRulesConverter:
         )
 
 
+class SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
+    """Subsets EditableCDMRules to only include the specified views.
+
+    !!! note "Platypus UI limitations"
+        This is temporal solution to enable cleaner extension of core data model,
+        assuring that Platypus UI will work correctly.
+    """
+
+    def __init__(self, views: set[ViewEntity]):
+
+        if not_in_cognite_core := {
+            view.external_id for view in views
+        } - COGNITE_CORE_CONCEPTS.union(COGNITE_CORE_FEATURES):
+            raise NeatValueError(
+                f"Concept(s) {', '.join(not_in_cognite_core)} is/are not part of the Cognite Core Data Model. Aborting."
+            )
+
+        self._views = views
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        # should check to make sure data model is based on the editable CDM
+        # if not raise an error
+
+        ...
+
+        # get all the editable views to keep
+        # remove editable views that are not in the subset from both Views, Properties and Containers
+        # remove connections from Properties which do not have a connection to a view in the subset
+
+
 class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     """Subsets DMSRules to only include the specified views."""
 
-    def __init__(self, views: set[ViewEntity], subset_via_implements: bool = False):
+    def __init__(self, views: set[ViewEntity]):
         self._views = views
-        self._subset_via_implements = subset_via_implements
 
     def transform(self, rules: DMSRules) -> DMSRules:
         analysis = RulesAnalysis(dms=rules)
