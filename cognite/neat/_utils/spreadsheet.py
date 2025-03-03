@@ -3,6 +3,7 @@ from typing import Any, Literal, cast, overload
 
 import pandas as pd
 from openpyxl import load_workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._rules._constants import get_internal_properties
@@ -133,3 +134,12 @@ def find_column_with_value(sheet: Worksheet, value: Any) -> str | None:
                 return cell.column_letter  # type: ignore
 
     return None
+
+
+def generate_data_validation(sheet: str, column: str, no_header_rows: int, no_rows: int) -> DataValidation:
+    "Creates openpyxl data validation object for a cell in a sheet"
+
+    return DataValidation(
+        type="list",
+        formula1=f"={sheet}!{column}${no_header_rows + 1}:{column}${no_rows}",
+    )

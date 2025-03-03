@@ -7,7 +7,7 @@ from typing import ClassVar, NamedTuple, cast
 
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteAPIError
-from rdflib import Namespace, URIRef
+from rdflib import Literal, Namespace, URIRef
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
 from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
@@ -136,6 +136,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
         self._extracted_data_sets = False
         self._asset_external_ids_by_id: dict[int, str] = {}
         self._dataset_external_ids_by_id: dict[int, str] = {}
+        self._asset_parent_uri_by_id: dict[int, URIRef] = {}
+        self._asset_parent_uri_by_external_id: dict[str, URIRef] = {}
         self.neat_prefix_by_predicate_uri: dict[URIRef, str] = {
             self._namespace["dataSetId"]: InstanceIdPrefix.data_set,
             self._namespace["assetId"]: InstanceIdPrefix.asset,
@@ -196,6 +198,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             warnings.warn(CDFAuthWarning("extract data sets", str(e)), stacklevel=2)
         else:
             self._extracted_data_sets = True
+
+        yield from self._extract_asset_parent_data_sets()
 
     def get_information_rules(self) -> InformationRules:
         # To avoid circular imports
@@ -288,6 +292,10 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             if self._identifier == "id":
                 self._uris_by_external_id_by_type[core_node.resource_type].update(extractor._uriref_by_external_id)
 
+            if isinstance(extractor, AssetsExtractor):
+                self._asset_parent_uri_by_id.update(extractor.asset_parent_uri_by_id)
+                self._asset_parent_uri_by_external_id.update(extractor.asset_parent_uri_by_external_id)
+
     def _extract_start_node_relationships(self):
         for start_resource_type, source_external_ids in self._source_external_ids_by_type.items():
             start_type = start_resource_type.removesuffix("_")
@@ -324,6 +332,10 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                     # We need to store all future target triples which we will lookup after fetching
                     # the target nodes.
                     self._relationship_subject_predicate_type_external_id.extend(extractor._target_triples)
+
+                if isinstance(extractor, AssetsExtractor):
+                    self._asset_parent_uri_by_id.update(extractor.asset_parent_uri_by_id)
+                    self._asset_parent_uri_by_external_id.update(extractor.asset_parent_uri_by_external_id)
 
     def _extract_core_end_nodes(self):
         for core_node in self._classic_node_types:
@@ -371,6 +383,36 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 external_ids=list(chunk), ignore_unknown_ids=True
             )
             yield from DataSetExtractor(data_set_iterator, **self._extractor_args).extract()
+
+    def _extract_asset_parent_data_sets(self):
+        if self._asset_parent_uri_by_id:
+            for chunk in self._chunk(
+                list(self._asset_parent_uri_by_id.keys()), description="Extracting asset parent data sets"
+            ):
+                assets = self._client.assets.retrieve_multiple(id=list(chunk), ignore_unknown_ids=True)
+                for asset in assets:
+                    if asset.data_set_id is None:
+                        continue
+                    object_ = (
+                        Literal(self._lookup_dataset(asset.data_set_id))
+                        if self._identifier == "externalId"
+                        else Literal(asset.data_set_id)
+                    )
+                    yield self._asset_parent_uri_by_id[asset.id], self._namespace.dataSetId, object_
+        if self._asset_parent_uri_by_external_id:
+            for chunk in self._chunk(
+                list(self._asset_parent_uri_by_external_id.keys()), description="Extracting asset parent data sets"
+            ):
+                assets = self._client.assets.retrieve_multiple(external_ids=list(chunk), ignore_unknown_ids=True)
+                for asset in assets:
+                    if asset.data_set_id is None:
+                        continue
+                    object_ = (
+                        Literal(self._lookup_dataset(asset.data_set_id))
+                        if self._identifier == "externalId"
+                        else Literal(asset.data_set_id)
+                    )
+                    yield self._asset_parent_uri_by_external_id[asset.external_id], self._namespace.dataSetId, object_
 
     def _extract_with_logging_label_dataset(
         self, extractor: ClassicCDFBaseExtractor, resource_type: InstanceIdPrefix | None = None
