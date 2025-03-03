@@ -576,7 +576,25 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
 
     @classmethod
     def merge(cls, local: ViewApply, remote: View) -> ViewApply:
-        raise NotImplementedError
+        if local.as_id() != remote.as_id():
+            raise ValueError(f"Cannot merge views with different IDs: {local.as_id()} and {remote.as_id()}")
+        remote_write = remote.as_write()
+        existing_properties = remote_write.properties or {}
+        merged_properties = {**existing_properties, **(local.properties or {})}
+        merged_implements = list(remote_write.implements or [])
+        for view_id in local.implements or []:
+            if view_id not in merged_implements:
+                merged_implements.append(view_id)
+        return ViewApply(
+            space=remote.space,
+            external_id=remote.external_id,
+            version=remote.version,
+            properties=merged_properties,
+            description=local.description or remote.description,
+            name=local.name or remote.name,
+            filter=local.filter or remote.filter,
+            implements=merged_implements,
+        )
 
     def _create(self, items: Sequence[ViewApply]) -> ViewList:
         return self._client.data_modeling.views.apply(items)
