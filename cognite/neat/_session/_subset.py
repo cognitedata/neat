@@ -141,6 +141,8 @@ class DataModelSubsetAPI:
         if issues.has_errors:
             return issues
 
+        cdm_rules = self._state.rule_store.last_verified_rules
+
         issues.extend(
             self._state.rule_transform(
                 ToEnterpriseModel(
@@ -169,5 +171,8 @@ class DataModelSubsetAPI:
                 )
             )
         )
+
+        if cdm_rules and not issues.has_errors:
+            self._state.last_reference = cdm_rules
 
         return issues
