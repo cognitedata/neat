@@ -15,9 +15,7 @@ class ExperimentalFlags:
     standardize_naming = ExperimentalFeatureWarning("standardize_naming")
     standardize_space_and_version = ExperimentalFeatureWarning("standardize_space_and_version")
     data_model_subsetting = ExperimentalFeatureWarning("data_model_subsetting")
-    core_data_model_subsetting = ExperimentalFeatureWarning(
-        "core_data_model_subsetting"
-    )
+    core_data_model_subsetting = ExperimentalFeatureWarning("core_data_model_subsetting")
     ontology_read = ExperimentalFeatureWarning("ontology_read")
     imf_read = ExperimentalFeatureWarning("imf_read")
     dexpi_read = ExperimentalFeatureWarning("dexpi_read")
