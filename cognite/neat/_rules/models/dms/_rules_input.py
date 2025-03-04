@@ -182,7 +182,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
                 if isinstance(data[is_list_key], bool | float):
                     if not data[is_list_key]:
                         data[max_count_key] = 1
-                    elif isinstance(data.get(connection_key), str) and "direct" in data[connection_key]:
+                    elif "direct" in data.get(connection_key, "") and "edge" not in data.get(connection_key, ""):
                         data[max_count_key] = DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
                     else:
                         # Reverse or edge connection

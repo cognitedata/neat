@@ -27,11 +27,7 @@ class TestDataModelPrepare:
         rules_str = neat.to.yaml(format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
-        data_regression.check(
-            {
-                "rules": rules_dict,
-            }
-        )
+        data_regression.check({"rules": rules_dict})
 
     def test_prefix_info_rules_entities(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
