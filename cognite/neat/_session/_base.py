@@ -165,6 +165,9 @@ class NeatSession:
             neat.convert()
             ```
         """
+        self._state._raise_exception_if_condition_not_met(
+            "Convert to physical", has_dms_rules=False, has_information_rules=True
+        )
         converter = InformationToDMS(reserved_properties=reserved_properties)
 
         issues = self._state.rule_transform(converter)

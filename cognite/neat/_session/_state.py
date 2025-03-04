@@ -72,6 +72,8 @@ class SessionState:
         empty_instances_store_required: bool = False,
         instances_required: bool = False,
         client_required: bool = False,
+        has_information_rules: bool | None = None,
+        has_dms_rules: bool | None = None,
     ) -> None:
         """Set conditions for raising an error in the session that are used by various methods in the session."""
         condition = set()
@@ -80,6 +82,12 @@ class SessionState:
         if client_required and not self.client:
             condition.add(f"{activity} expects a client in NEAT session")
             suggestion.add("Please provide a client")
+        if has_information_rules is True and self.rule_store.try_get_last_information_rules is None:
+            condition.add(f"{activity} expects information rules in NEAT session")
+            suggestion.add("Read in information rules to neat session")
+        if has_dms_rules is False and self.rule_store.try_get_last_dms_rules is not None:
+            condition.add(f"{activity} expects no DMS rules in NEAT session")
+            suggestion.add("Start new session")
         if empty_rules_store_required and not self.rule_store.empty:
             condition.add(f"{activity} expects no data model in NEAT session")
             suggestion.add("Start new session")
