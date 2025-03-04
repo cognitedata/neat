@@ -44,7 +44,7 @@ rules:
     container: cdf_cdm:CogniteFile
     container_property: assets
     immutable: false
-    max_count: .inf
+    max_count: 100
     min_count: 0
     name: relatedPumps
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Documentation/relatedPumps
