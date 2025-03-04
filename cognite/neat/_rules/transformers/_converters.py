@@ -60,7 +60,7 @@ from cognite.neat._rules.models.entities import (
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
 from cognite.neat._utils.rdf_ import get_inheritance_path
-from cognite.neat._utils.text import NamingStandardization, to_camel_case
+from cognite.neat._utils.text import NamingStandardization, title, to_camel_case, to_words
 
 from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -561,8 +561,9 @@ _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 
 
 class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
-    def __init__(self, new_id: DataModelId | tuple[str, str, str]):
+    def __init__(self, new_id: DataModelId | tuple[str, str, str], name: str | None = None):
         self.new_id = DataModelId.load(new_id)
+        self.name = name
 
     @property
     def description(self) -> str:
@@ -575,9 +576,13 @@ class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
         dump["metadata"]["space"] = self.new_id.space
         dump["metadata"]["external_id"] = self.new_id.external_id
         dump["metadata"]["version"] = self.new_id.version
+        dump["metadata"]["name"] = self.name or self._generate_name()
         # Serialize and deserialize to set the new space and external_id
         # as the default values for the new model.
         return DMSRules.model_validate(DMSInputRules.load(dump).dump())
+
+    def _generate_name(self) -> str:
+        return title(to_words(self.new_id.external_id))
 
 
 class ToExtensionModel(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):

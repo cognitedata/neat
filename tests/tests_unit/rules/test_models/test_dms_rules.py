@@ -16,6 +16,9 @@ from cognite.neat._client.data_classes.data_modeling import (
 from cognite.neat._issues import NeatError, catch_issues
 from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError
 from cognite.neat._issues.errors._resources import ResourceDuplicatedError
+from cognite.neat._issues.warnings.user_modeling import (
+    ViewsAndDataModelNotInSameSpaceWarning,
+)
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
@@ -946,6 +949,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 resource_type="property",
                 location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition value type",
     )
@@ -999,6 +1006,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 resource_type="property",
                 location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition isList",
     )
@@ -1050,6 +1061,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 identifier="maxPower",
                 resource_type="property",
                 location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
             ),
         ],
         id="Inconsistent container definition nullable",
@@ -1103,6 +1118,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 resource_type="property",
                 location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
+            ),
         ],
         id="Inconsistent container definition index",
     )
@@ -1154,6 +1173,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 identifier="maxPower",
                 resource_type="property",
                 location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ViewsAndDataModelNotInSameSpaceWarning(
+                data_model_space="my_space",
+                views_spaces="sp_core",
             ),
         ],
         id="Inconsistent container definition constraint",

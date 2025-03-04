@@ -8,12 +8,10 @@ from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
 
 def test_asset_relationship_connector_transformer():
     store = NeatGraphStore.from_memory_store()
-
     # Extract assets
     store.write(
         extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", identifier="externalId")
     )
-
     # Extract time series
     store.write(
         extractors.RelationshipsExtractor.from_file(

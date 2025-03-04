@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
@@ -8,6 +9,7 @@ from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.warnings._general import NeatValueWarning
 from cognite.neat._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
@@ -116,7 +118,7 @@ class DMSProperty(SheetRow):
         description="Used to indicate whether the property holds single or multiple values (list). "
         "Only applies to primitive types.",
     )
-    default: str | int | dict | None = Field(
+    default: bool | str | int | float | dict | None = Field(
         None, alias="Default", description="Specifies default value for the property."
     )
     container: ContainerEntityType | None = Field(
@@ -167,6 +169,29 @@ class DMSProperty(SheetRow):
         elif isinstance(connection, ReverseConnectionEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Reverse connection must have a value type that points to a view, got {value}")
         return value
+
+    @field_validator("default", mode="after")
+    def set_proper_type_on_default(cls, value: Any, info: ValidationInfo) -> Any:
+        if not value:
+            return value
+        value_type = info.data.get("value_type")
+        if not isinstance(value_type, DataType):
+            warnings.filterwarnings("default")
+            warnings.warn(
+                NeatValueWarning(f"Default value {value} set to connection {value_type} will be ignored"),
+                stacklevel=2,
+            )
+            return None
+        else:
+            try:
+                return value_type.convert_value(value)
+            except ValueError:
+                warnings.filterwarnings("default")
+                warnings.warn(
+                    NeatValueWarning(f"Could not convert {value} to {value_type}"),
+                    stacklevel=2,
+                )
+                return None
 
     @field_validator("container", "container_property", mode="after")
     def container_set_correctly(cls, value: Any, info: ValidationInfo) -> Any:

@@ -1,7 +1,10 @@
+import datetime
 from pathlib import Path
 
 import pytest
+import yaml
 from cognite.client import data_modeling as dm
+from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._client import NeatClient
@@ -148,3 +151,28 @@ class TestRulesStoreProvenanceSyncing:
 
         assert len(neat._state.rule_store.provenance) == 3
         assert neat._state.rule_store.provenance[-1].description == "Manual transformation of rules outside of NEAT"
+
+    def test_raw_filter(self, neat_client: NeatClient, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(neat_client)
+        neat.read.excel(DATA_DIR / "dm_raw_filter.xlsx")
+
+        rules = neat._state.rule_store.last_verified_dms_rules
+        rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        neat.to.cdf.data_model(existing="recreate")
+
+        neat = NeatSession(neat_client)
+        neat.read.cdf.data_model(("nikola_space", "nikola_external_id", "v1"))
+
+        rules = neat._state.rule_store.last_verified_dms_rules
+        rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+        rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
+
+        rules_str = neat.to.yaml(format="neat")
+        rules_dict = yaml.safe_load(rules_str)
+
+        data_regression.check(
+            {
+                "rules": rules_dict,
+            }
+        )

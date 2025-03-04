@@ -130,6 +130,13 @@ class DataType(BaseModel):
     def as_xml_uri_ref(cls) -> URIRef:
         return XML_SCHEMA_NAMESPACE[cls.xsd]
 
+    @classmethod
+    def convert_value(cls, value: Any) -> Any:
+        if cls != Boolean:
+            return cls.python(value)
+        else:
+            return value.strip().lower() in {"true", "1", "yes"}
+
 
 class Boolean(DataType):
     python = bool

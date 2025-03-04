@@ -5,7 +5,6 @@ from typing import cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.instances import Instance
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors import DMSExtractor
 from tests.data import car
 
@@ -23,10 +22,7 @@ class TestDMSExtractor:
             instances.append(instance)
             total_instances_pair_by_view[view_id] = total_instances + 1, instances
 
-        extractor = DMSExtractor(
-            total_instances_pair_by_view,
-            overwrite_namespace=DEFAULT_NAMESPACE,
-        )
+        extractor = DMSExtractor(total_instances_pair_by_view)
         expected_triples = set(car.TRIPLES)
 
         triples = set(extractor.extract())

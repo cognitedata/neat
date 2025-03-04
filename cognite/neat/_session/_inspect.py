@@ -138,15 +138,14 @@ class InspectIssues:
             + ([] if len(issues) <= 50 else [f"  * ... {len(issues) - self._max_display} more"])
         )
         markdown_str = f"### {len(issues)} issues found\n\n{issue_str}"
-
         if IN_NOTEBOOK:
             from IPython.display import Markdown, display
 
             display(Markdown(markdown_str))
         elif RICH_AVAILABLE:
-            from rich import print
+            from rich import print as rprint
 
-            print(RichMarkdown(markdown_str))
+            rprint(RichMarkdown(markdown_str))
 
         if return_dataframe:
             return issues.to_pandas()

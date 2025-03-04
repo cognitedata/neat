@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import WriteableCogniteResource
@@ -61,8 +61,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     Args:
         items (Iterable[T_CogniteResource]): An iterable of classic resource.
         namespace (Namespace, optional): The namespace to use. Defaults to DEFAULT_NAMESPACE.
-        to_type (Callable[[T_CogniteResource], str | None], optional): A function to convert an item to a type.
-            Defaults to None. If None or if the function returns None, the asset will be set to the default type.
         total (int, optional): The total number of items to load. If passed, you will get a progress bar if rich
             is installed. Defaults to None.
         limit (int, optional): The maximal number of items to load. Defaults to None. This is typically used for
@@ -87,7 +85,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self,
         items: Iterable[T_CogniteResource],
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         total: int | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
@@ -99,7 +96,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
-        self.to_type = to_type
         self.total = total
         self.limit = min(limit, total) if limit and total else limit
         self.unpack_metadata = unpack_metadata
@@ -115,6 +111,8 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         # Used by the ClassicGraphExtractor to log URIRefs
         self._log_urirefs = False
         self._uriref_by_external_id: dict[str, URIRef] = {}
+        self.asset_parent_uri_by_id: dict[int, URIRef] = {}
+        self.asset_parent_uri_by_external_id: dict[str, URIRef] = {}
 
     def extract(self) -> Iterable[Triple]:
         """Extracts an asset with the given asset_id."""
@@ -161,7 +159,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         if self._log_urirefs and hasattr(item, "external_id"):
             self._uriref_by_external_id[item.external_id] = id_
 
-        type_ = self._get_rdf_type(item)
+        type_ = self._get_rdf_type()
 
         # Set rdf type
         triples: list[Triple] = [(id_, RDF.type, self.namespace[type_])]
@@ -169,19 +167,36 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             item = item.as_write()
         dumped = item.dump(self.camel_case)
         dumped.pop("id", None)
-        # We have parentId so we don't need parentExternalId
-        dumped.pop("parentExternalId", None)
+
         if "metadata" in dumped:
             triples.extend(self._metadata_to_triples(id_, dumped.pop("metadata")))
 
         triples.extend(self._item2triples_special_cases(id_, dumped))
+
+        parent_renaming = {"parent_external_id": "parent_id", "parentExternalId": "parentId"}
+        parent_key = set(parent_renaming.keys()) | set(parent_renaming.values())
 
         for key, value in dumped.items():
             if value is None or value == []:
                 continue
             values = value if isinstance(value, Sequence) and not isinstance(value, str) else [value]
             for raw in values:
-                triples.append((id_, self.namespace[key], self._as_object(raw, key)))
+                object_ = self._as_object(raw, key)
+                if object_ is None:
+                    continue
+                if key in parent_key:
+                    parent_id = cast(URIRef, object_)
+                    if isinstance(raw, str):
+                        self.asset_parent_uri_by_external_id[raw] = parent_id
+                    elif isinstance(raw, int):
+                        self.asset_parent_uri_by_id[raw] = parent_id
+                    # We add a triple to include the parent. This is such that for example the parent
+                    # externalID will remove the prefix when loading.
+                    triples.append((parent_id, RDF.type, self.namespace[self._get_rdf_type()]))
+                    # Parent external ID must be renamed to parent id to match the data model.
+                    key = parent_renaming.get(key, key)
+
+                triples.append((id_, self.namespace[key], object_))
         return triples
 
     def _item2triples_special_cases(self, id_: URIRef, dumped: dict[str, Any]) -> list[Triple]:
@@ -190,7 +205,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
 
     @classmethod
     def _external_id_as_uri_suffix(cls, external_id: str | None) -> str:
-        if external_id == "":
+        if external_id == "" or (isinstance(external_id, str) and external_id.strip() == ""):
             warnings.warn(NeatValueWarning(f"Empty external id in {cls._default_rdf_type}"), stacklevel=2)
             return "empty"
         elif external_id == "\x00":
@@ -215,21 +230,19 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 if value and (self.skip_metadata_values is None or value.casefold() not in self.skip_metadata_values):
                     yield (
                         id_,
-                        self.namespace[key],
+                        self.namespace[urllib.parse.quote(key)],
                         Literal(string_to_ideal_type(value)),
                     )
         else:
             yield id_, self.namespace.metadata, Literal(json.dumps(metadata), datatype=XSD._NS["json"])
 
-    def _get_rdf_type(self, item: T_CogniteResource) -> str:
+    def _get_rdf_type(self) -> str:
         type_ = self._default_rdf_type
-        if self.to_type:
-            type_ = self.to_type(item) or type_
         if self.prefix:
             type_ = f"{self.prefix}{type_}"
         return self._SPACE_PATTERN.sub("_", type_)
 
-    def _as_object(self, raw: Any, key: str) -> Literal | URIRef:
+    def _as_object(self, raw: Any, key: str) -> Literal | URIRef | None:
         """Return properly formatted object part of s-p-o triple"""
         if key in {"data_set_id", "dataSetId"}:
             if self.identifier == "externalId" and self.lookup_dataset_external_id:
@@ -243,13 +256,26 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                     ]
             else:
                 return self.namespace[f"{InstanceIdPrefix.data_set}{raw}"]
-        elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "parentId", "rootId", "parent_id", "root_id"}:
+        elif key in {"parentId", "parent_id", "parentExternalId", "parent_external_id"}:
+            if self.identifier == "id" and key in {"parent_id", "parentId"}:
+                return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
+            elif (
+                self.identifier == "externalId"
+                and key in {"parent_external_id", "parentExternalId"}
+                and isinstance(raw, str)
+            ):
+                return self.namespace[f"{InstanceIdPrefix.asset}{self._external_id_as_uri_suffix(raw)}"]
+            else:
+                # Skip it
+                return None
+        elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "rootId", "root_id"}:
             if self.identifier == "id":
                 return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
             else:
                 try:
                     asset_external_id = self._external_id_as_uri_suffix(self.asset_external_ids_by_id[raw])
                 except KeyError:
+                    warnings.warn(NeatValueWarning(f"Unknown asset id {raw}"), stacklevel=2)
                     return Literal("Unknown asset", datatype=XSD.string)
                 else:
                     return self.namespace[f"{InstanceIdPrefix.asset}{asset_external_id}"]
@@ -263,7 +289,11 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             "created_time",
             "last_updated_time",
         } and isinstance(raw, int):
-            return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            try:
+                return Literal(datetime.fromtimestamp(raw / 1000, timezone.utc), datatype=XSD.dateTime)
+            except (OSError, ValueError) as e:
+                warnings.warn(NeatValueWarning(f"Failed to convert timestamp {raw} to datetime: {e!s}"), stacklevel=2)
+                return Literal(raw)
         elif key == "labels":
             from ._labels import LabelsExtractor
 
@@ -284,7 +314,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         client: CogniteClient,
         data_set_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -297,7 +326,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -321,7 +349,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         client: CogniteClient,
         root_asset_external_id: str,
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -334,7 +361,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,
@@ -357,7 +383,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         cls,
         file_path: str | Path,
         namespace: Namespace | None = None,
-        to_type: Callable[[T_CogniteResource], str | None] | None = None,
         limit: int | None = None,
         unpack_metadata: bool = True,
         skip_metadata_values: Set[str] | None = DEFAULT_SKIP_METADATA_VALUES,
@@ -370,7 +395,6 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         return cls(
             items,
             namespace,
-            to_type,
             total,
             limit,
             unpack_metadata,

@@ -1,0 +1,4223 @@
+instances:
+- externalId: ClassicSourceSystem_manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer1
+    source:
+      externalId: NeatIncSourceSystem
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncSourceSystem
+    space: sp_windfarm_enterprise
+- externalId: ClassicSourceSystem_manufacturer2
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer2
+    source:
+      externalId: NeatIncSourceSystem
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncSourceSystem
+    space: sp_windfarm_enterprise
+- externalId: Measurement
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: Measurement
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Measurement
+      name: Measurement
+    source:
+      externalId: NeatIncLabel
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncLabel
+    space: sp_windfarm_enterprise
+- externalId: MetMast
+  instanceType: node
+  sources:
+  - properties:
+      assetCategory: MetMast
+      classicExternalId: MetMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Meteorological mast
+      height: 100
+      name: MetMast
+      parent:
+        externalId: Unknown asset
+        space: sp_windfarm_dataset
+      source:
+        externalId: ClassicSourceSystem_manufacturer2
+        space: sp_windfarm_dataset
+      tags:
+      - Label_Measurement
+      - Label_metMast
+    source:
+      externalId: NeatIncAsset
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncAsset
+    space: sp_windfarm_enterprise
+- externalId: PowerGeneratingUnit
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: PowerGeneratingUnit
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Power generating unit
+      name: Power generating unit
+    source:
+      externalId: NeatIncLabel
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncLabel
+    space: sp_windfarm_enterprise
+- externalId: Utsira
+  instanceType: node
+  sources:
+  - properties:
+      assetCategory: WindFarm
+      classicExternalId: Utsira
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Utsira wind farm
+      name: Utsira
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
+      tags:
+      - Label_PowerGeneratingUnit
+    source:
+      externalId: NeatIncAsset
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncAsset
+    space: sp_windfarm_enterprise
+- externalId: WT-01
+  instanceType: node
+  sources:
+  - properties:
+      assetCategory: Turbine
+      classicExternalId: WT-01
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Wind turbine 01
+      maxCapacity: 3
+      name: WT-01
+      parent:
+        externalId: Utsira
+        space: source_ds
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
+      tags:
+      - Label_PowerGeneratingUnit
+      - Label_WindTurbine
+      turbineType: V112/3075
+    source:
+      externalId: NeatIncAsset
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncAsset
+    space: sp_windfarm_enterprise
+- externalId: WT-01_datasheet
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: WT-01
+        space: source_ds
+      classicExternalId: WT-01_datasheet
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      fileCategory: DataSheet
+      name: WT-01_datasheet.txt
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
+    source:
+      externalId: NeatIncFile
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncFile
+    space: sp_windfarm_enterprise
+- externalId: WT-01_forecast
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: WT-01
+        space: source_ds
+      classicExternalId: WT-01_forecast
+      dataSetId:
+        externalId: usecase_01
+        space: sp_windfarm_dataset
+      description: WT-01 forecast
+      isStep: false
+      name: WT-01 forecast
+      timeSeriesCategory: Forecast
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
+    source:
+      externalId: NeatIncTimeSeries
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: usecase_01
+  type:
+    externalId: NeatIncTimeSeries
+    space: sp_windfarm_enterprise
+- externalId: WT-01_production
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: WT-01
+        space: source_ds
+      classicExternalId: WT-01_production
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: WT-01 production
+      isStep: false
+      name: WT-01 production
+      timeSeriesCategory: Production
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
+    source:
+      externalId: NeatIncTimeSeries
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncTimeSeries
+    space: sp_windfarm_enterprise
+- endNode:
+    externalId: MetMast
+    space: source_ds
+  externalId: WT-01_to_MetMast
+  instanceType: edge
+  sources:
+  - properties:
+      classicExternalId: WT-01_to_MetMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      neatIncRelationshipLabels:
+        externalId: metMast
+        space: source_ds
+      sourceType: Asset
+      targetType: Asset
+    source:
+      externalId: NeatIncRelationship
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  startNode:
+    externalId: WT-01
+    space: source_ds
+  type:
+    externalId: NeatIncRelationship
+    space: sp_windfarm_enterprise
+- externalId: WT-02
+  instanceType: node
+  sources:
+  - properties:
+      assetCategory: Turbine
+      classicExternalId: WT-02
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Wind turbine 02
+      maxCapacity: 3
+      name: WT-02
+      parent:
+        externalId: Utsira
+        space: source_ds
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
+      tags:
+      - Label_PowerGeneratingUnit
+      - Label_WindTurbine
+      turbineType: V112/3075
+    source:
+      externalId: NeatIncAsset
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncAsset
+    space: sp_windfarm_enterprise
+- externalId: WT-02_forecast
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: WT-02
+        space: source_ds
+      classicExternalId: WT-02_forecast
+      dataSetId:
+        externalId: usecase_01
+        space: sp_windfarm_dataset
+      description: WT-02 forecast
+      isStep: false
+      name: WT-02 forecast
+      timeSeriesCategory: Forecast
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
+    source:
+      externalId: NeatIncTimeSeries
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: usecase_01
+  type:
+    externalId: NeatIncTimeSeries
+    space: sp_windfarm_enterprise
+- externalId: WT-02_production
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: WT-02
+        space: source_ds
+      classicExternalId: WT-02_production
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: WT-02 production
+      isStep: false
+      name: WT-02 production
+      timeSeriesCategory: Production
+      type: numeric
+      unit:
+        externalId: power:megaw
+        space: cdf_cdm_units
+    source:
+      externalId: NeatIncTimeSeries
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncTimeSeries
+    space: sp_windfarm_enterprise
+- endNode:
+    externalId: MetMast
+    space: source_ds
+  externalId: WT-02_to_MetMast
+  instanceType: edge
+  sources:
+  - properties:
+      classicExternalId: WT-02_to_MetMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      neatIncRelationshipLabels:
+        externalId: metMast
+        space: source_ds
+      sourceType: Asset
+      targetType: Asset
+    source:
+      externalId: NeatIncRelationship
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  startNode:
+    externalId: WT-02
+    space: source_ds
+  type:
+    externalId: NeatIncRelationship
+    space: sp_windfarm_enterprise
+- externalId: WindTurbine
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: WindTurbine
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Wind turbine
+      name: Wind turbine
+    source:
+      externalId: NeatIncLabel
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncLabel
+    space: sp_windfarm_enterprise
+- externalId: maintenance
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: maintenance
+      description: Maintenance data set
+      information: here
+      name: Maintenance
+      some: other
+      writeProtected: true
+    source:
+      externalId: NeatIncDataSet
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncDataSet
+    space: sp_windfarm_enterprise
+- externalId: metMast
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: metMast
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Meteorological mast
+      name: Meteorological mast
+    source:
+      externalId: NeatIncLabel
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncLabel
+    space: sp_windfarm_enterprise
+- externalId: planned:WT-01:2022-01-01
+  instanceType: node
+  sources:
+  - properties:
+      assets:
+      - externalId: WT-01
+        space: source_ds
+      blob: data
+      classicExternalId: planned:WT-01:2022-01-01
+      dataSetId:
+        externalId: maintenance
+        space: sp_windfarm_dataset
+      description: Planned maintenance
+      endTime: '1970-01-01T00:00:00.500+00:00'
+      source:
+        externalId: ClassicSourceSystem_manufacturer1
+        space: sp_windfarm_dataset
+      startTime: '1970-01-01T00:00:00.400+00:00'
+      subtype: Planned
+      type: Maintenance
+    source:
+      externalId: NeatIncEvent
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: maintenance
+  type:
+    externalId: NeatIncEvent
+    space: sp_windfarm_enterprise
+- externalId: power_curve_manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      assetId:
+        externalId: WT-01
+        space: source_ds
+      blob: data
+      classicExternalId: power_curve_manufacturer1
+      columns:
+      - colNumber: 2
+        description: Power
+        externalId: power
+        metadata:
+          blob: data
+        name: Power
+        valueType: DOUBLE
+      - colNumber: 1
+        description: Wind speed
+        externalId: wind_speed
+        metadata:
+          blob: data
+        name: Wind speed
+        valueType: DOUBLE
+      dataSetId:
+        externalId: source_ds
+        space: sp_windfarm_dataset
+      description: Power curve from manufacturer 1
+      name: Power curve Manufacturer 1
+      turbineType: V112/3075
+    source:
+      externalId: NeatIncSequence
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: source_ds
+  type:
+    externalId: NeatIncSequence
+    space: sp_windfarm_enterprise
+- externalId: source_ds
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: source_ds
+      description: Source data set
+      information: here
+      name: Source DS
+      some: extra
+      writeProtected: true
+    source:
+      externalId: NeatIncDataSet
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncDataSet
+    space: sp_windfarm_enterprise
+- externalId: usecase_01
+  instanceType: node
+  sources:
+  - properties:
+      classicExternalId: usecase_01
+      description: Usecase 01 data set
+      information: here
+      name: Usecase 01
+      some: other
+      writeProtected: false
+    source:
+      externalId: NeatIncDataSet
+      space: sp_windfarm_enterprise
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: NeatIncDataSet
+    space: sp_windfarm_enterprise
+rules:
+  containers:
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable
+    container: cdf_cdm:CogniteActivity
+    description: Represent an activity
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteAnnotation
+    description: Annotation represents contextualization results or links
+    used_for: edge
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteVisualizable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteAsset
+    description: The asset is the bare bone representation of assets in our asset
+      centric world
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteAssetClass
+    description: This identifies the class of an asset
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteAssetType
+    description: This identifies the type of an asset
+    used_for: node
+  - container: cdf_cdm:CogniteDescribable
+    description: The describable core concept is used as a standard way of holding
+      the bare minimum of information about the instance.
+    used_for: all
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteEquipment
+    description: Represent a physical piece of equipment
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteEquipmentType
+    description: This identifies the type of an equipment
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteFile
+    description: This concept models the underlying file from the Files resource type
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteFileCategory
+    description: Specifies the category for a file (as a result of categorization/classification))
+    used_for: node
+  - container: cdf_cdm:CogniteSchedulable
+    description: CogniteSchedulable represents the metadata about when an activity
+      (or similar) starts and ends
+    used_for: node
+  - container: cdf_cdm:CogniteSourceSystem
+    description: The CogniteSourceSystem core concept is used to standardize the way
+      source system is stored.
+    used_for: node
+  - container: cdf_cdm:CogniteSourceable
+    description: The CogniteSourceable core concept is used to standardize the way
+      source information is stored.
+    used_for: all
+  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+    container: cdf_cdm:CogniteTimeSeries
+    used_for: node
+  - constraint: cdf_cdm:CogniteDescribable
+    container: cdf_cdm:CogniteUnit
+    description: Represents a single unit of measurement
+    used_for: node
+  - container: cdf_cdm:CogniteVisualizable
+    description: CogniteVisualizable defines the standard way to reference a related
+      3D resource
+    used_for: node
+  - container: cdf_cdm_3d:Cognite360Image
+    used_for: node
+  - container: cdf_cdm_3d:Cognite360ImageAnnotation
+    used_for: edge
+  - container: cdf_cdm_3d:Cognite3DGroup
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DModel
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DObject
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DRevision
+    used_for: node
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    used_for: all
+  - container: cdf_cdm_3d:CogniteCADNode
+    used_for: node
+  - container: cdf_cdm_3d:CogniteCADRevision
+    used_for: node
+  - container: cdf_cdm_3d:CogniteCubeMap
+    used_for: node
+  - container: cdf_cdm_3d:CognitePointCloudVolume
+    used_for: node
+  - container: ClassicAsset
+    used_for: node
+  - container: ClassicDataSet
+    used_for: node
+  - container: ClassicEquipment
+    used_for: node
+  - container: ClassicEvent
+    used_for: node
+  - container: ClassicFile
+    used_for: node
+  - container: ClassicLabel
+    used_for: node
+  - container: ClassicRelationship
+    used_for: edge
+  - container: ClassicSequence
+    used_for: node
+  - container: ClassicSourceSystem
+    description: A source system that provides data to the data model.
+    used_for: node
+  - container: ClassicTimeSeries
+    used_for: node
+  - container: NeatIncAsset
+    used_for: node
+  - container: NeatIncAsset
+    used_for: node
+  - container: NeatIncAsset
+    used_for: node
+  - container: NeatIncAsset
+    used_for: node
+  - container: NeatIncDataSet
+    used_for: node
+  - container: NeatIncDataSet
+    used_for: node
+  - container: NeatIncEquipment
+    used_for: node
+  - container: NeatIncEvent
+    used_for: node
+  - container: NeatIncFile
+    used_for: node
+  - container: NeatIncRelationship
+    used_for: edge
+  - container: NeatIncSequence
+    used_for: node
+  - container: NeatIncSequence
+    used_for: node
+  - container: NeatIncSourceSystem
+    used_for: node
+  - container: NeatIncTimeSeries
+    used_for: node
+  enum:
+  - collection: Cognite3DGroup.groupType
+    name: Station360
+    value: Station360
+  - collection: Cognite3DModel.type
+    name: CAD
+    value: CAD
+  - collection: Cognite3DModel.type
+    name: Image360
+    value: Image360
+  - collection: Cognite3DModel.type
+    name: PointCloud
+    value: PointCloud
+  - collection: Cognite3DRevision.status
+    name: Done
+    value: Done
+  - collection: Cognite3DRevision.status
+    name: Failed
+    value: Failed
+  - collection: Cognite3DRevision.status
+    name: Processing
+    value: Processing
+  - collection: Cognite3DRevision.status
+    name: Queued
+    value: Queued
+  - collection: Cognite3DRevision.type
+    name: CAD
+    value: CAD
+  - collection: Cognite3DRevision.type
+    name: Image360
+    value: Image360
+  - collection: Cognite3DRevision.type
+    name: PointCloud
+    value: PointCloud
+  - collection: CogniteAnnotation.status
+    name: Approved
+    value: Approved
+  - collection: CogniteAnnotation.status
+    name: Rejected
+    value: Rejected
+  - collection: CogniteAnnotation.status
+    name: Suggested
+    value: Suggested
+  - collection: CognitePointCloudVolume.volumeType
+    name: Box
+    value: Box
+  - collection: CognitePointCloudVolume.volumeType
+    name: Cylinder
+    value: Cylinder
+  - collection: CogniteTimeSeries.type
+    description: Time series with double floating point data points.
+    name: numeric
+    value: numeric
+  - collection: CogniteTimeSeries.type
+    description: Time series with string data points.
+    name: string
+    value: string
+  metadata:
+    created: '2025-02-13T12:08:14.630000Z'
+    creator: Cognite
+    external_id: WindFarmEnterprise
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1
+    name: ClassicDataModel
+    role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm_enterprise/WindFarmEnterprise/v1
+    space: sp_windfarm_enterprise
+    updated: '2025-02-22T08:34:08.687000Z'
+    version: v1
+  properties:
+  - connection: direct
+    container: cdf_cdm_3d:Cognite360Image
+    container_property: collection360
+    description: Direct relation to Cognite360ImageCollection
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360Image/collection360
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360Image/collection360
+    nullable: true
+    value_type: cdf_cdm:Cognite360ImageCollection(version=v1)
+    view: cdf_cdm:Cognite360Image(version=v1)
+    view_property: collection360
+  - connection: direct
+    container: cdf_cdm_3d:Cognite360Image
+    container_property: group3d
+    description: Direct relation to Cognite3DGroup instance that groups different
+      Cognite360Image instances to the same station
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360Image/station360
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360Image/station360
+    nullable: true
+    value_type: cdf_cdm:Cognite360ImageStation(version=v1)
+    view: cdf_cdm:Cognite360Image(version=v1)
+    view_property: station360
+  - container: cdf_cdm_3d:Cognite360Image
+    container_property: takenAt
+    description: The timestamp when the 6 photos were taken
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360Image/takenAt
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360Image/takenAt
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:Cognite360Image(version=v1)
+    view_property: takenAt
+  - container: cdf_cdm_3d:Cognite360ImageAnnotation
+    container_property: formatVersion
+    description: Specifies the storage representation for the polygon
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageAnnotation/formatVersion
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageAnnotation/formatVersion
+    nullable: true
+    value_type: text
+    view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
+    view_property: formatVersion
+  - container: cdf_cdm_3d:Cognite360ImageAnnotation
+    container_property: polygon
+    description: List of floats representing the polygon. Format depends on formatVersion
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageAnnotation/polygon
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageAnnotation/polygon
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
+    view_property: polygon
+  - connection: direct
+    container: cdf_cdm_3d:Cognite3DRevision
+    container_property: model3D
+    description: ''
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageCollection/model3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageCollection/model3D
+    nullable: true
+    value_type: cdf_cdm:Cognite360ImageModel(version=v1)
+    view: cdf_cdm:Cognite360ImageCollection(version=v1)
+    view_property: model3D
+  - connection: reverse(property=model3D)
+    description: List Cognite360Image collections for this instance
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageModel/collections
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageModel/collections
+    value_type: cdf_cdm:Cognite360ImageCollection(version=v1)
+    view: cdf_cdm:Cognite360ImageModel(version=v1)
+    view_property: collections
+  - container: cdf_cdm_3d:Cognite3DGroup
+    container_property: groupType
+    description: Type of group
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageStation/groupType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageStation/groupType
+    nullable: true
+    value_type: enum(collection=Cognite3DGroup.groupType)
+    view: cdf_cdm:Cognite360ImageStation(version=v1)
+    view_property: groupType
+  - connection: direct
+    container: cdf_cdm_3d:Cognite3DModel
+    container_property: thumbnail
+    description: Thumbnail of the 3D model
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DModel/thumbnail
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DModel/thumbnail
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:Cognite3DModel(version=v1)
+    view_property: thumbnail
+  - container: cdf_cdm_3d:Cognite3DModel
+    container_property: type
+    description: CAD, PointCloud or Image360
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DModel/type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DModel/type
+    nullable: true
+    value_type: enum(collection=Cognite3DModel.type)
+    view: cdf_cdm:Cognite3DModel(version=v1)
+    view_property: type
+  - connection: reverse(property=object3D)
+    description: Asset that is tied to this 3D object
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/asset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/asset
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: asset
+  - connection: reverse(property=object3D)
+    description: List of up to 1000 CADNodes that represents the connected CogniteAsset
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/cadNodes
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/cadNodes
+    value_type: cdf_cdm:CogniteCADNode(version=v1)
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: cadNodes
+  - connection: edge(properties=cdf_cdm:Cognite360ImageAnnotation(version=v1),type=cdf_cdm:image-360-annotation)
+    description: Edge connection to Cognite360Image annotations that represents the
+      connected CogniteAsset
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/images360
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/images360
+    value_type: cdf_cdm:Cognite360Image(version=v1)
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: images360
+  - connection: reverse(property=object3D)
+    description: List of up to 1000 PointCloudVolumes that represents the connected
+      CogniteAsset
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/pointCloudVolumes
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/pointCloudVolumes
+    value_type: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: pointCloudVolumes
+  - container: cdf_cdm_3d:Cognite3DObject
+    container_property: xMax
+    description: Highest X value in bounding box
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/xMax
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/xMax
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: xMax
+  - container: cdf_cdm_3d:Cognite3DObject
+    container_property: xMin
+    description: Lowest X value in bounding box
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/xMin
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/xMin
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: xMin
+  - container: cdf_cdm_3d:Cognite3DObject
+    container_property: yMax
+    description: Highest Y value in bounding box
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/yMax
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/yMax
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: yMax
+  - container: cdf_cdm_3d:Cognite3DObject
+    container_property: yMin
+    description: Lowest Y value in bounding box
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/yMin
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/yMin
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: yMin
+  - container: cdf_cdm_3d:Cognite3DObject
+    container_property: zMax
+    description: Highest Z value in bounding box
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/zMax
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/zMax
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: zMax
+  - container: cdf_cdm_3d:Cognite3DObject
+    container_property: zMin
+    description: Lowest Z value in bounding box
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject/zMin
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject/zMin
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DObject(version=v1)
+    view_property: zMin
+  - connection: direct
+    container: cdf_cdm_3d:Cognite3DRevision
+    container_property: model3D
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DRevision/model3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DRevision/model3D
+    nullable: true
+    value_type: cdf_cdm:Cognite3DModel(version=v1)
+    view: cdf_cdm:Cognite3DRevision(version=v1)
+    view_property: model3D
+  - container: cdf_cdm_3d:Cognite3DRevision
+    container_property: published
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DRevision/published
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DRevision/published
+    nullable: true
+    value_type: boolean
+    view: cdf_cdm:Cognite3DRevision(version=v1)
+    view_property: published
+  - container: cdf_cdm_3d:Cognite3DRevision
+    container_property: status
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DRevision/status
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DRevision/status
+    nullable: true
+    value_type: enum(collection=Cognite3DRevision.status)
+    view: cdf_cdm:Cognite3DRevision(version=v1)
+    view_property: status
+  - container: cdf_cdm_3d:Cognite3DRevision
+    container_property: type
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DRevision/type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DRevision/type
+    nullable: true
+    value_type: enum(collection=Cognite3DRevision.type)
+    view: cdf_cdm:Cognite3DRevision(version=v1)
+    view_property: type
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: eulerRotationX
+    description: The rotation of the object around the X-axis in radians
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/eulerRotationX
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/eulerRotationX
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: eulerRotationX
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: eulerRotationY
+    description: The rotation of the object around the Y-axis in radians
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/eulerRotationY
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/eulerRotationY
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: eulerRotationY
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: eulerRotationZ
+    description: The rotation of the object around the Z-axis in radians
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/eulerRotationZ
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/eulerRotationZ
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: eulerRotationZ
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: scaleX
+    description: The scaling factor applied to the object along the X-axis
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/scaleX
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/scaleX
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: scaleX
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: scaleY
+    description: The scaling factor applied to the object along the Y-axis
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/scaleY
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/scaleY
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: scaleY
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: scaleZ
+    description: The scaling factor applied to the object along the Z-axis
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/scaleZ
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/scaleZ
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: scaleZ
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: translationX
+    description: The displacement of the object along the X-axis in the 3D coordinate
+      system
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/translationX
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/translationX
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: translationX
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: translationY
+    description: The displacement of the object along the Y-axis in the 3D coordinate
+      system
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/translationY
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/translationY
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: translationY
+  - container: cdf_cdm_3d:Cognite3DTransformation
+    container_property: translationZ
+    description: The displacement of the object along the Z-axis in the 3D coordinate
+      system
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/translationZ
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation/translationZ
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+    view_property: translationZ
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: assets
+    description: A list of assets the activity is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteActivity/assets
+    name: Assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteActivity/assets
+    nullable: true
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteActivity(version=v1)
+    view_property: assets
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: equipment
+    description: A list of equipment the activity is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteActivity/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteActivity/equipment
+    nullable: true
+    value_type: cdf_cdm:CogniteEquipment(version=v1)
+    view: cdf_cdm:CogniteActivity(version=v1)
+    view_property: equipment
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: timeSeries
+    description: A list of time series the activity is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteActivity/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteActivity/timeSeries
+    nullable: true
+    value_type: cdf_cdm:CogniteTimeSeries(version=v1)
+    view: cdf_cdm:CogniteActivity(version=v1)
+    view_property: timeSeries
+  - container: cdf_cdm:CogniteAnnotation
+    container_property: confidence
+    description: The confidence that the annotation is a good match
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAnnotation/confidence
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAnnotation/confidence
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:CogniteAnnotation(version=v1)
+    view_property: confidence
+  - container: cdf_cdm:CogniteAnnotation
+    container_property: status
+    description: The status of the annotation
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAnnotation/status
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAnnotation/status
+    nullable: true
+    value_type: enum(collection=CogniteAnnotation.status)
+    view: cdf_cdm:CogniteAnnotation(version=v1)
+    view_property: status
+  - connection: reverse(property=assets)
+    description: An automatically updated list of activities related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/activities
+    value_type: cdf_cdm:CogniteActivity(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: activities
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetClass
+    description: Specifies the class of the asset. It's a direct relation to CogniteAssetClass.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/assetClass
+    name: Asset class
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/assetClass
+    nullable: true
+    value_type: cdf_cdm:CogniteAssetClass(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: assetClass
+  - connection: reverse(property=parent)
+    description: An automatically updated list of assets with this asset as their
+      parent.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/children
+    name: Children
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/children
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: children
+  - connection: reverse(property=asset)
+    description: An automatically updated list of equipment related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/equipment
+    value_type: cdf_cdm:CogniteEquipment(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: equipment
+  - connection: reverse(property=assets)
+    description: An automatically updated list of files related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/files
+    name: Files
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/files
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: files
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_parent
+    description: The parent of the asset.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/parent
+    name: Parent
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/parent
+    nullable: true
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: parent
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_path
+    description: An automatically updated ordered list of this asset's ancestors,
+      starting with the root asset. Enables subtree filtering to find all assets under
+      a parent.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/path
+    name: Path
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/path
+    nullable: true
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: path
+  - container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_path_last_updated_time
+    description: The last time the path was updated for this asset.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/pathLastUpdatedTime
+    name: Path last updated time
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/pathLastUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: pathLastUpdatedTime
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_root
+    description: An automatically updated reference to the top-level asset of the
+      hierarchy.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/root
+    name: Root
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/root
+    nullable: true
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: root
+  - connection: reverse(property=assets)
+    description: An automatically updated list of time series related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/timeSeries
+    value_type: cdf_cdm:CogniteTimeSeries(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: timeSeries
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: type
+    description: Specifies the type of the asset. It's a direct relation to CogniteAssetType.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset/type
+    name: Asset type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset/type
+    nullable: true
+    value_type: cdf_cdm:CogniteAssetType(version=v1)
+    view: cdf_cdm:CogniteAsset(version=v1)
+    view_property: type
+  - constraint: uniqueCodeConstraint
+    container: cdf_cdm:CogniteAssetClass
+    container_property: code
+    description: A unique identifier for the class of asset.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAssetClass/code
+    name: Code
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetClass/code
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteAssetClass(version=v1)
+    view_property: code
+  - constraint: uniqueCodeConstraint
+    container: cdf_cdm:CogniteAssetClass
+    container_property: standard
+    description: A text string to specify which standard the class is from.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAssetClass/standard
+    name: Standard
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetClass/standard
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteAssetClass(version=v1)
+    view_property: standard
+  - connection: direct
+    container: cdf_cdm:CogniteAssetType
+    container_property: assetClass
+    description: Specifies the class the type belongs to. It's a direct relation to
+      CogniteAssetClass.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAssetType/assetClass
+    name: Asset class
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetType/assetClass
+    nullable: true
+    value_type: cdf_cdm:CogniteAssetClass(version=v1)
+    view: cdf_cdm:CogniteAssetType(version=v1)
+    view_property: assetClass
+  - container: cdf_cdm:CogniteAssetType
+    container_property: code
+    description: A unique identifier for the type of asset.
+    immutable: false
+    index: code,standard
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAssetType/code
+    name: Code
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetType/code
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteAssetType(version=v1)
+    view_property: code
+  - container: cdf_cdm:CogniteAssetType
+    container_property: standard
+    description: A text string to specify which standard the type is from.
+    immutable: false
+    index: standard
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAssetType/standard
+    name: Standard
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetType/standard
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteAssetType(version=v1)
+    view_property: standard
+  - connection: reverse(property=model3D)
+    description: List of revisions for this CAD model
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADModel/revisions
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADModel/revisions
+    value_type: cdf_cdm:CogniteCADRevision(version=v1)
+    view: cdf_cdm:CogniteCADModel(version=v1)
+    view_property: revisions
+  - container: cdf_cdm_3d:CogniteCADNode
+    container_property: cadNodeReference
+    description: Reference to a node within a CAD model from the 3D API
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADNode/cadNodeReference
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode/cadNodeReference
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteCADNode(version=v1)
+    view_property: cadNodeReference
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCADNode
+    container_property: model3D
+    description: Direct relation to Cognite3DModel
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADNode/model3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode/model3D
+    nullable: true
+    value_type: cdf_cdm:CogniteCADModel(version=v1)
+    view: cdf_cdm:CogniteCADNode(version=v1)
+    view_property: model3D
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCADNode
+    container_property: object3D
+    description: Direct relation to object3D grouping for this node
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADNode/object3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode/object3D
+    nullable: true
+    value_type: cdf_cdm:Cognite3DObject(version=v1)
+    view: cdf_cdm:CogniteCADNode(version=v1)
+    view_property: object3D
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCADNode
+    container_property: revisions
+    description: List of direct relations to instances of Cognite3DRevision which
+      this CogniteCADNode exists in.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADNode/revisions
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode/revisions
+    nullable: true
+    value_type: cdf_cdm:CogniteCADRevision(version=v1)
+    view: cdf_cdm:CogniteCADNode(version=v1)
+    view_property: revisions
+  - container: cdf_cdm_3d:CogniteCADNode
+    container_property: subTreeSizes
+    description: List of subtree sizes in the same order as revisions. Used by Reveal
+      and similar applications to know how many nodes exists below this node in the
+      hierarchy
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADNode/subTreeSizes
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode/subTreeSizes
+    nullable: true
+    value_type: int64
+    view: cdf_cdm:CogniteCADNode(version=v1)
+    view_property: subTreeSizes
+  - container: cdf_cdm_3d:CogniteCADNode
+    container_property: treeIndexes
+    description: List of tree indexes in the same order as revisions. Used by Reveal
+      and similar applications to map from CogniteCADNode to tree index
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADNode/treeIndexes
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode/treeIndexes
+    nullable: true
+    value_type: int64
+    view: cdf_cdm:CogniteCADNode(version=v1)
+    view_property: treeIndexes
+  - connection: direct
+    container: cdf_cdm_3d:Cognite3DRevision
+    container_property: model3D
+    description: .
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADRevision/model3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADRevision/model3D
+    nullable: true
+    value_type: cdf_cdm:CogniteCADModel(version=v1)
+    view: cdf_cdm:CogniteCADRevision(version=v1)
+    view_property: model3D
+  - container: cdf_cdm_3d:CogniteCADRevision
+    container_property: revisionId
+    description: The 3D API revision identifier for this CAD model
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADRevision/revisionId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADRevision/revisionId
+    nullable: true
+    value_type: int64
+    view: cdf_cdm:CogniteCADRevision(version=v1)
+    view_property: revisionId
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCubeMap
+    container_property: back
+    description: Direct relation to a file holding the back projection of the cube
+      map
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCubeMap/back
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCubeMap/back
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+    view_property: back
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCubeMap
+    container_property: bottom
+    description: Direct relation to a file holding the bottom projection of the cube
+      map
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCubeMap/bottom
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCubeMap/bottom
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+    view_property: bottom
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCubeMap
+    container_property: front
+    description: Direct relation to a file holding the front projection of the cube
+      map
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCubeMap/front
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCubeMap/front
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+    view_property: front
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCubeMap
+    container_property: left
+    description: Direct relation to a file holding the left projection of the cube
+      map
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCubeMap/left
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCubeMap/left
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+    view_property: left
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCubeMap
+    container_property: right
+    description: Direct relation to a file holding the right projection of the cube
+      map
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCubeMap/right
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCubeMap/right
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+    view_property: right
+  - connection: direct
+    container: cdf_cdm_3d:CogniteCubeMap
+    container_property: top
+    description: Direct relation to a file holding the top projection of the cube
+      map
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCubeMap/top
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCubeMap/top
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+    view_property: top
+  - container: cdf_cdm:CogniteDescribable
+    container_property: aliases
+    description: Alternative names for the node
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteDescribable/aliases
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteDescribable/aliases
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteDescribable(version=v1)
+    view_property: aliases
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    description: Description of the instance
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteDescribable/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteDescribable/description
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteDescribable(version=v1)
+    view_property: description
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    description: Name of the instance
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteDescribable/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteDescribable/name
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteDescribable(version=v1)
+    view_property: name
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    description: Text based labels for generic use, limited to 1000
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteDescribable/tags
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteDescribable/tags
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteDescribable(version=v1)
+    view_property: tags
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of activities related to the equipment.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment/activities
+    value_type: cdf_cdm:CogniteActivity(version=v1)
+    view: cdf_cdm:CogniteEquipment(version=v1)
+    view_property: activities
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: asset
+    description: The asset the equipment is related to.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment/asset
+    name: Asset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment/asset
+    nullable: true
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteEquipment(version=v1)
+    view_property: asset
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: equipmentType
+    description: Specifies the type of the equipment. It's a direct relation to CogniteEquipmentType.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment/equipmentType
+    name: Equipment type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment/equipmentType
+    nullable: true
+    value_type: cdf_cdm:CogniteEquipmentType(version=v1)
+    view: cdf_cdm:CogniteEquipment(version=v1)
+    view_property: equipmentType
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: files
+    description: A list of files the equipment relates to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment/files
+    name: Files
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment/files
+    nullable: true
+    value_type: cdf_cdm:CogniteFile(version=v1)
+    view: cdf_cdm:CogniteEquipment(version=v1)
+    view_property: files
+  - container: cdf_cdm:CogniteEquipment
+    container_property: manufacturer
+    description: The manufacturer of the equipment.
+    immutable: false
+    index: manufacturer
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment/manufacturer
+    name: Manufacturer
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment/manufacturer
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteEquipment(version=v1)
+    view_property: manufacturer
+  - container: cdf_cdm:CogniteEquipment
+    container_property: serialNumber
+    description: The serial number of the equipment.
+    immutable: false
+    index: serialNumber
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment/serialNumber
+    name: Serial number
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment/serialNumber
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteEquipment(version=v1)
+    view_property: serialNumber
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of time series related to the equipment.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment/timeSeries
+    value_type: cdf_cdm:CogniteTimeSeries(version=v1)
+    view: cdf_cdm:CogniteEquipment(version=v1)
+    view_property: timeSeries
+  - constraint: uniqueCodeConstraint
+    container: cdf_cdm:CogniteEquipmentType
+    container_property: code
+    description: A unique identifier for the type of equipment.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/code
+    name: Code
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/code
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
+    view_property: code
+  - container: cdf_cdm:CogniteEquipmentType
+    container_property: equipmentClass
+    description: Represents the class of equipment.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/equipmentClass
+    name: Equipment class
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/equipmentClass
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
+    view_property: equipmentClass
+  - constraint: uniqueCodeConstraint
+    container: cdf_cdm:CogniteEquipmentType
+    container_property: standard
+    description: An identifier for the standard this equipment type is sourced from,
+      for example, ISO14224.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/standard
+    name: Standard
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/standard
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
+    view_property: standard
+  - container: cdf_cdm:CogniteEquipmentType
+    container_property: standardReference
+    description: A reference to the source of the equipment standard.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/standardReference
+    name: Standard reference
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipmentType/standardReference
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
+    view_property: standardReference
+  - connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: assets
+    description: A list of assets this file is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile/assets
+    name: Assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile/assets
+    nullable: true
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteFile(version=v1)
+    view_property: assets
+  - connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: category
+    description: Specifies the detected category the file belongs to. It's a direct
+      relation to an instance of CogniteFileCategory.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile/category
+    name: Category
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile/category
+    nullable: true
+    value_type: cdf_cdm:CogniteFileCategory(version=v1)
+    view: cdf_cdm:CogniteFile(version=v1)
+    view_property: category
+  - container: cdf_cdm:CogniteFile
+    container_property: directory
+    description: Contains the path elements from the source (if the source system
+      has a file system hierarchy or similar.)
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile/directory
+    name: Directory
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile/directory
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteFile(version=v1)
+    view_property: directory
+  - connection: reverse(property=files)
+    description: An automatically updated list of equipment this file is related to.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile/equipment
+    value_type: cdf_cdm:CogniteEquipment(version=v1)
+    view: cdf_cdm:CogniteFile(version=v1)
+    view_property: equipment
+  - container: cdf_cdm:CogniteFile
+    container_property: isUploaded
+    default: 'False'
+    description: Specifies if the file content has been uploaded to Cognite Data Fusion
+      or not.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile/isUploaded
+    name: Is uploaded
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile/isUploaded
+    nullable: true
+    value_type: boolean
+    view: cdf_cdm:CogniteFile(version=v1)
+    view_property: isUploaded
+  - container: cdf_cdm:CogniteFile
+    container_property: mimeType
+    description: The MIME type of the file.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile/mimeType
+    name: MIME type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile/mimeType
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteFile(version=v1)
+    view_property: mimeType
+  - container: cdf_cdm:CogniteFile
+    container_property: uploadedTime
+    description: The time the file upload completed.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile/uploadedTime
+    name: Uploaded time
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile/uploadedTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteFile(version=v1)
+    view_property: uploadedTime
+  - constraint: uniqueCodeConstraint
+    container: cdf_cdm:CogniteFileCategory
+    container_property: code
+    description: An identifier for the category, for example, 'AA' for Accounting
+      (from Norsok.)
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFileCategory/code
+    name: Code
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFileCategory/code
+    nullable: false
+    value_type: text
+    view: cdf_cdm:CogniteFileCategory(version=v1)
+    view_property: code
+  - constraint: uniqueCodeConstraint
+    container: cdf_cdm:CogniteFileCategory
+    container_property: standard
+    description: The name of the standard the category originates from, for example,
+      'Norsok'.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFileCategory/standard
+    name: Standard
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFileCategory/standard
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteFileCategory(version=v1)
+    view_property: standard
+  - container: cdf_cdm:CogniteFileCategory
+    container_property: standardReference
+    description: A reference to the source of the category standard.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFileCategory/standardReference
+    name: Standard reference
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFileCategory/standardReference
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteFileCategory(version=v1)
+    view_property: standardReference
+  - container: cdf_cdm_3d:CognitePointCloudVolume
+    container_property: formatVersion
+    description: Specifies the version the ‘volume’ field is following. Volume definition
+      is today 9 floats (property volume)
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/formatVersion
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/formatVersion
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view_property: formatVersion
+  - connection: direct
+    container: cdf_cdm_3d:CognitePointCloudVolume
+    container_property: model3D
+    description: Direct relation to Cognite3DModel instance
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/model3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/model3D
+    nullable: true
+    value_type: cdf_cdm:CogniteCADModel(version=v1)
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view_property: model3D
+  - connection: direct
+    container: cdf_cdm_3d:CognitePointCloudVolume
+    container_property: object3D
+    description: Direct relation to object3D grouping for this node
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/object3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/object3D
+    nullable: true
+    value_type: cdf_cdm:Cognite3DObject(version=v1)
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view_property: object3D
+  - connection: direct
+    container: cdf_cdm_3d:CognitePointCloudVolume
+    container_property: revisions
+    description: List of direct relations to revision information
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/revisions
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/revisions
+    nullable: true
+    value_type: cdf_cdm:CogniteCADRevision(version=v1)
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view_property: revisions
+  - container: cdf_cdm_3d:CognitePointCloudVolume
+    container_property: volume
+    description: Relevant coordinates for the volume type, 9 floats in total, that
+      defines the volume
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/volume
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/volume
+    nullable: true
+    value_type: float64
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view_property: volume
+  - container: cdf_cdm_3d:CognitePointCloudVolume
+    container_property: volumeReferences
+    description: Unique volume metric hashes used to access the 3D specialized data
+      storage
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/volumeReferences
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/volumeReferences
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view_property: volumeReferences
+  - container: cdf_cdm_3d:CognitePointCloudVolume
+    container_property: volumeType
+    description: Type of volume (Cylinder or Box)
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/volumeType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume/volumeType
+    nullable: true
+    value_type: enum(collection=CognitePointCloudVolume.volumeType)
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+    view_property: volumeType
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: endTime
+    description: The actual end time of an activity (or similar that extends this)
+    immutable: false
+    index: endTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSchedulable/endTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSchedulable/endTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteSchedulable(version=v1)
+    view_property: endTime
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: scheduledEndTime
+    description: The planned end time of an activity (or similar that extends this)
+    immutable: false
+    index: scheduledEndTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSchedulable/scheduledEndTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSchedulable/scheduledEndTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteSchedulable(version=v1)
+    view_property: scheduledEndTime
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: scheduledStartTime
+    description: The planned start time of an activity (or similar that extends this)
+    immutable: false
+    index: scheduledStartTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSchedulable/scheduledStartTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSchedulable/scheduledStartTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteSchedulable(version=v1)
+    view_property: scheduledStartTime
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: startTime
+    description: The actual start time of an activity (or similar that extends this)
+    immutable: false
+    index: startTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSchedulable/startTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSchedulable/startTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteSchedulable(version=v1)
+    view_property: startTime
+  - container: cdf_cdm:CogniteSourceSystem
+    container_property: manufacturer
+    description: Manufacturer of the source system
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceSystem/manufacturer
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceSystem/manufacturer
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteSourceSystem(version=v1)
+    view_property: manufacturer
+  - container: cdf_cdm:CogniteSourceSystem
+    container_property: version
+    description: Version identifier for the source system
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceSystem/version
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceSystem/version
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteSourceSystem(version=v1)
+    view_property: version
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    description: Direct relation to a source system
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable/source
+    nullable: true
+    value_type: cdf_cdm:CogniteSourceSystem(version=v1)
+    view: cdf_cdm:CogniteSourceable(version=v1)
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceContext
+    description: Context of the source id. For systems where the sourceId is globally
+      unique, the sourceContext is expected to not be set.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceContext
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceContext
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteSourceable(version=v1)
+    view_property: sourceContext
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    description: When the instance was created in source system (if available)
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceCreatedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteSourceable(version=v1)
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedUser
+    description: User identifier from the source system on who created the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceCreatedUser
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceCreatedUser
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteSourceable(version=v1)
+    view_property: sourceCreatedUser
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceId
+    description: Identifier from the source system
+    immutable: false
+    index: sourceId
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceId
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteSourceable(version=v1)
+    view_property: sourceId
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    description: When the instance was last updated in the source system (if available)
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceUpdatedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: cdf_cdm:CogniteSourceable(version=v1)
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedUser
+    description: User identifier from the source system on who last updated the source
+      data. This identifier is not guaranteed to match the user identifiers in CDF
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceUpdatedUser
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable/sourceUpdatedUser
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteSourceable(version=v1)
+    view_property: sourceUpdatedUser
+  - connection: reverse(property=timeSeries)
+    description: An automatically updated list of activities the time series is related
+      to.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/activities
+    value_type: cdf_cdm:CogniteActivity(version=v1)
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+    view_property: activities
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: assets
+    description: A list of assets the time series is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/assets
+    name: Assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/assets
+    nullable: true
+    value_type: cdf_cdm:CogniteAsset(version=v1)
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+    view_property: assets
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: equipment
+    description: A list of equipment the time series is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/equipment
+    nullable: true
+    value_type: cdf_cdm:CogniteEquipment(version=v1)
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+    view_property: equipment
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: isStep
+    default: 'False'
+    description: Specifies whether the time series is a step time series or not.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/isStep
+    name: Is step
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/isStep
+    nullable: false
+    value_type: boolean
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+    view_property: isStep
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: sourceUnit
+    description: The unit specified in the source system.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/sourceUnit
+    name: Source unit
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/sourceUnit
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+    view_property: sourceUnit
+  - container: cdf_cdm:CogniteTimeSeries
+    container_property: type
+    description: Specifies the data type of the data points.
+    immutable: true
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/type
+    name: Type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/type
+    nullable: false
+    value_type: enum(collection=CogniteTimeSeries.type)
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+    view_property: type
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: unit
+    description: The unit of the time series.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/unit
+    name: Unit
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries/unit
+    nullable: true
+    value_type: cdf_cdm:CogniteUnit(version=v1)
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+    view_property: unit
+  - container: cdf_cdm:CogniteUnit
+    container_property: quantity
+    description: Specifies the physical quantity the unit measures
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteUnit/quantity
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteUnit/quantity
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteUnit(version=v1)
+    view_property: quantity
+  - container: cdf_cdm:CogniteUnit
+    container_property: source
+    description: Source of the unit definition
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteUnit/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteUnit/source
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteUnit(version=v1)
+    view_property: source
+  - container: cdf_cdm:CogniteUnit
+    container_property: sourceReference
+    description: Reference to the source of the unit definition
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteUnit/sourceReference
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteUnit/sourceReference
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteUnit(version=v1)
+    view_property: sourceReference
+  - container: cdf_cdm:CogniteUnit
+    container_property: symbol
+    description: The symbol for the unit of measurement
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteUnit/symbol
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteUnit/symbol
+    nullable: true
+    value_type: text
+    view: cdf_cdm:CogniteUnit(version=v1)
+    view_property: symbol
+  - connection: direct
+    constraint: uniqueObject3D
+    container: cdf_cdm:CogniteVisualizable
+    container_property: object3D
+    description: Direct relation to an Object3D instance representing the 3D resource
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteVisualizable/object3D
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteVisualizable/object3D
+    nullable: true
+    value_type: cdf_cdm:Cognite3DObject(version=v1)
+    view: cdf_cdm:CogniteVisualizable(version=v1)
+    view_property: object3D
+  - connection: reverse(property=assets)
+    description: An automatically updated list of activities related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/activities
+    value_type: ClassicEvent
+    view: ClassicAsset
+    view_property: activities
+  - connection: reverse(property=parent)
+    description: An automatically updated list of assets with this asset as their
+      parent.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/children
+    name: Children
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/children
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: children
+  - container: ClassicAsset
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicAsset
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicAsset
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/description
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: description
+  - connection: reverse(property=asset)
+    description: An automatically updated list of equipment related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/equipment
+    value_type: ClassicEquipment
+    view: ClassicAsset
+    view_property: equipment
+  - connection: reverse(property=assets)
+    description: An automatically updated list of files related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/files
+    name: Files
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/files
+    value_type: ClassicFile
+    view: ClassicAsset
+    view_property: files
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/name
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: name
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_parent
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/parent
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/parent
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: parent
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_path
+    description: An automatically updated ordered list of this asset's ancestors,
+      starting with the root asset. Enables subtree filtering to find all assets under
+      a parent.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/path
+    name: Path
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/path
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: path
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_root
+    description: An automatically updated reference to the top-level asset of the
+      hierarchy.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/root
+    name: Root
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/root
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicAsset
+    view_property: root
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicAsset
+    view_property: source
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/tags
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/tags
+    nullable: true
+    value_type: text
+    view: ClassicAsset
+    view_property: tags
+  - connection: reverse(property=assets)
+    description: An automatically updated list of time series related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset/timeSeries
+    value_type: ClassicTimeSeries
+    view: ClassicAsset
+    view_property: timeSeries
+  - container: ClassicDataSet
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicDataSet/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicDataSet/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicDataSet
+    view_property: classicExternalId
+  - container: ClassicDataSet
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicDataSet/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicDataSet/description
+    nullable: true
+    value_type: text
+    view: ClassicDataSet
+    view_property: description
+  - container: ClassicDataSet
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicDataSet/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicDataSet/name
+    nullable: true
+    value_type: text
+    view: ClassicDataSet
+    view_property: name
+  - container: ClassicDataSet
+    container_property: writeProtected
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicDataSet/writeProtected
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicDataSet/writeProtected
+    nullable: true
+    value_type: boolean
+    view: ClassicDataSet
+    view_property: writeProtected
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of activities related to the equipment.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEquipment/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEquipment/activities
+    value_type: ClassicEvent
+    view: ClassicEquipment
+    view_property: activities
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: asset
+    description: The asset the equipment is related to.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEquipment/asset
+    name: Asset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEquipment/asset
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicEquipment
+    view_property: asset
+  - container: ClassicEquipment
+    container_property: classicEquipmentGUID
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEquipment/classicEquipmentGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEquipment/classicEquipmentGUID
+    nullable: true
+    value_type: text
+    view: ClassicEquipment
+    view_property: classicEquipmentGUID
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: files
+    description: A list of files the equipment relates to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEquipment/files
+    name: Files
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEquipment/files
+    nullable: true
+    value_type: ClassicFile
+    view: ClassicEquipment
+    view_property: files
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    description: Direct relation to a source system
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEquipment/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEquipment/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicEquipment
+    view_property: source
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of time series related to the equipment.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEquipment/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEquipment/timeSeries
+    value_type: ClassicTimeSeries
+    view: ClassicEquipment
+    view_property: timeSeries
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/assets
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicEvent
+    view_property: assets
+  - container: ClassicEvent
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicEvent
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicEvent
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/description
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: description
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: endTime
+    immutable: false
+    index: endTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/endTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/endTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: endTime
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: equipment
+    description: A list of equipment the activity is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/equipment
+    nullable: true
+    value_type: ClassicEquipment
+    view: ClassicEvent
+    view_property: equipment
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicEvent
+    view_property: source
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: startTime
+    immutable: false
+    index: startTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/startTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/startTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicEvent
+    view_property: startTime
+  - container: ClassicEvent
+    container_property: subtype
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/subtype
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/subtype
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: subtype
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: timeSeries
+    description: A list of time series the activity is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/timeSeries
+    nullable: true
+    value_type: ClassicTimeSeries
+    view: ClassicEvent
+    view_property: timeSeries
+  - container: ClassicEvent
+    container_property: type
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent/type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent/type
+    nullable: true
+    value_type: text
+    view: ClassicEvent
+    view_property: type
+  - connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/assets
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicFile
+    view_property: assets
+  - container: ClassicFile
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicFile
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicFile
+    view_property: dataSetId
+  - connection: reverse(property=files)
+    description: An automatically updated list of equipment this file is related to.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/equipment
+    value_type: ClassicEquipment
+    view: ClassicFile
+    view_property: equipment
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/name
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: name
+  - container: ClassicFile
+    container_property: securityCategories
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/securityCategories
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/securityCategories
+    nullable: true
+    value_type: int64
+    view: ClassicFile
+    view_property: securityCategories
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicFile
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/sourceCreatedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicFile
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/sourceUpdatedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/sourceUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicFile
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile/tags
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile/tags
+    nullable: true
+    value_type: text
+    view: ClassicFile
+    view_property: tags
+  - container: ClassicLabel
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicLabel/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicLabel/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicLabel
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicLabel
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicLabel/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicLabel/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicLabel
+    view_property: dataSetId
+  - container: ClassicLabel
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicLabel/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicLabel/description
+    nullable: true
+    value_type: text
+    view: ClassicLabel
+    view_property: description
+  - container: ClassicLabel
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicLabel/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicLabel/name
+    nullable: true
+    value_type: text
+    view: ClassicLabel
+    view_property: name
+  - container: ClassicRelationship
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicRelationship
+    view_property: classicExternalId
+  - container: ClassicRelationship
+    container_property: confidence
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/confidence
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/confidence
+    nullable: true
+    value_type: float64
+    view: ClassicRelationship
+    view_property: confidence
+  - connection: direct
+    container: ClassicRelationship
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicRelationship
+    view_property: dataSetId
+  - container: ClassicRelationship
+    container_property: endTime
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/endTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/endTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicRelationship
+    view_property: endTime
+  - connection: edge
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/labels
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/labels
+    value_type: ClassicLabel
+    view: ClassicRelationship
+    view_property: labels
+  - container: ClassicRelationship
+    container_property: sourceType
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/sourceType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/sourceType
+    nullable: true
+    value_type: text
+    view: ClassicRelationship
+    view_property: sourceType
+  - container: ClassicRelationship
+    container_property: startTime
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/startTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/startTime
+    nullable: true
+    value_type: timestamp
+    view: ClassicRelationship
+    view_property: startTime
+  - container: ClassicRelationship
+    container_property: targetType
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship/targetType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship/targetType
+    nullable: true
+    value_type: text
+    view: ClassicRelationship
+    view_property: targetType
+  - connection: direct
+    container: ClassicSequence
+    container_property: assetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/assetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/assetId
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicSequence
+    view_property: assetId
+  - container: ClassicSequence
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicSequence
+    view_property: classicExternalId
+  - container: ClassicSequence
+    container_property: columns
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/columns
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/columns
+    nullable: true
+    value_type: json
+    view: ClassicSequence
+    view_property: columns
+  - connection: direct
+    container: ClassicSequence
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicSequence
+    view_property: dataSetId
+  - container: ClassicSequence
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/description
+    nullable: true
+    value_type: text
+    view: ClassicSequence
+    view_property: description
+  - container: ClassicSequence
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/name
+    nullable: true
+    value_type: text
+    view: ClassicSequence
+    view_property: name
+  - container: ClassicSequence
+    container_property: rows
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence/rows
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence/rows
+    nullable: true
+    value_type: json
+    view: ClassicSequence
+    view_property: rows
+  - container: ClassicSourceSystem
+    container_property: classicSourceSystemGUID
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSourceSystem/classicSourceSystemGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSourceSystem/classicSourceSystemGUID
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: classicSourceSystemGUID
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSourceSystem/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSourceSystem/name
+    nullable: true
+    value_type: text
+    view: ClassicSourceSystem
+    view_property: name
+  - connection: reverse(property=timeSeries)
+    description: An automatically updated list of activities the time series is related
+      to.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/activities
+    value_type: ClassicEvent
+    view: ClassicTimeSeries
+    view_property: activities
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/assets
+    nullable: true
+    value_type: ClassicAsset
+    view: ClassicTimeSeries
+    view_property: assets
+  - container: ClassicTimeSeries
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/classicExternalId
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicTimeSeries
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/dataSetId
+    nullable: true
+    value_type: ClassicDataSet
+    view: ClassicTimeSeries
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/description
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: description
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: equipment
+    description: A list of equipment the time series is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/equipment
+    nullable: true
+    value_type: ClassicEquipment
+    view: ClassicTimeSeries
+    view_property: equipment
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/name
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: name
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    description: Direct relation to a source system
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/source
+    nullable: true
+    value_type: ClassicSourceSystem
+    view: ClassicTimeSeries
+    view_property: source
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/tags
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries/tags
+    nullable: true
+    value_type: text
+    view: ClassicTimeSeries
+    view_property: tags
+  - connection: reverse(property=assets)
+    description: An automatically updated list of activities related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/activities
+    value_type: NeatIncEvent
+    view: NeatIncAsset
+    view_property: activities
+  - container: NeatIncAsset
+    container_property: assetCategory
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/assetCategory
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/assetCategory
+    nullable: true
+    value_type: text
+    view: NeatIncAsset
+    view_property: assetCategory
+  - connection: reverse(property=parent)
+    description: An automatically updated list of assets with this asset as their
+      parent.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/children
+    name: Children
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/children
+    value_type: NeatIncAsset
+    view: NeatIncAsset
+    view_property: children
+  - container: ClassicAsset
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncAsset
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicAsset
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/dataSetId
+    nullable: true
+    value_type: NeatIncDataSet
+    view: NeatIncAsset
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/description
+    nullable: true
+    value_type: text
+    view: NeatIncAsset
+    view_property: description
+  - connection: reverse(property=asset)
+    description: An automatically updated list of equipment related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/equipment
+    value_type: NeatIncEquipment
+    view: NeatIncAsset
+    view_property: equipment
+  - connection: reverse(property=assets)
+    description: An automatically updated list of files related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/files
+    name: Files
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/files
+    value_type: NeatIncFile
+    view: NeatIncAsset
+    view_property: files
+  - container: NeatIncAsset
+    container_property: height
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/height
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/height
+    nullable: true
+    value_type: int64
+    view: NeatIncAsset
+    view_property: height
+  - container: NeatIncAsset
+    container_property: maxCapacity
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/maxCapacity
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/maxCapacity
+    nullable: true
+    value_type: int64
+    view: NeatIncAsset
+    view_property: maxCapacity
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/name
+    nullable: true
+    value_type: text
+    view: NeatIncAsset
+    view_property: name
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_parent
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/parent
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/parent
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncAsset
+    view_property: parent
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_path
+    description: An automatically updated ordered list of this asset's ancestors,
+      starting with the root asset. Enables subtree filtering to find all assets under
+      a parent.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/path
+    name: Path
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/path
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncAsset
+    view_property: path
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_root
+    description: An automatically updated reference to the top-level asset of the
+      hierarchy.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/root
+    name: Root
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/root
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncAsset
+    view_property: root
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/source
+    nullable: true
+    value_type: NeatIncSourceSystem
+    view: NeatIncAsset
+    view_property: source
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/tags
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/tags
+    nullable: true
+    value_type: text
+    view: NeatIncAsset
+    view_property: tags
+  - connection: reverse(property=assets)
+    description: An automatically updated list of time series related to the asset.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/timeSeries
+    value_type: NeatIncTimeSeries
+    view: NeatIncAsset
+    view_property: timeSeries
+  - container: NeatIncAsset
+    container_property: turbineType
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset/turbineType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset/turbineType
+    nullable: true
+    value_type: text
+    view: NeatIncAsset
+    view_property: turbineType
+  - container: ClassicDataSet
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncDataSet
+    view_property: classicExternalId
+  - container: ClassicDataSet
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/description
+    nullable: true
+    value_type: text
+    view: NeatIncDataSet
+    view_property: description
+  - container: NeatIncDataSet
+    container_property: information
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/information
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/information
+    nullable: true
+    value_type: text
+    view: NeatIncDataSet
+    view_property: information
+  - container: ClassicDataSet
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/name
+    nullable: true
+    value_type: text
+    view: NeatIncDataSet
+    view_property: name
+  - container: NeatIncDataSet
+    container_property: some
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/some
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/some
+    nullable: true
+    value_type: text
+    view: NeatIncDataSet
+    view_property: some
+  - container: ClassicDataSet
+    container_property: writeProtected
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet/writeProtected
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet/writeProtected
+    nullable: true
+    value_type: boolean
+    view: NeatIncDataSet
+    view_property: writeProtected
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of activities related to the equipment.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEquipment/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEquipment/activities
+    value_type: NeatIncEvent
+    view: NeatIncEquipment
+    view_property: activities
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: asset
+    description: The asset the equipment is related to.
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEquipment/asset
+    name: Asset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEquipment/asset
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncEquipment
+    view_property: asset
+  - container: NeatIncEquipment
+    container_property: classicEquipmentGUID
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEquipment/classicEquipmentGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEquipment/classicEquipmentGUID
+    nullable: true
+    value_type: text
+    view: NeatIncEquipment
+    view_property: classicEquipmentGUID
+  - connection: direct
+    container: cdf_cdm:CogniteEquipment
+    container_property: files
+    description: A list of files the equipment relates to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEquipment/files
+    name: Files
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEquipment/files
+    nullable: true
+    value_type: NeatIncFile
+    view: NeatIncEquipment
+    view_property: files
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    description: Direct relation to a source system
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEquipment/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEquipment/source
+    nullable: true
+    value_type: NeatIncSourceSystem
+    view: NeatIncEquipment
+    view_property: source
+  - connection: reverse(property=equipment)
+    description: An automatically updated list of time series related to the equipment.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEquipment/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEquipment/timeSeries
+    value_type: NeatIncTimeSeries
+    view: NeatIncEquipment
+    view_property: timeSeries
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/assets
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncEvent
+    view_property: assets
+  - container: NeatIncEvent
+    container_property: blob
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/blob
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/blob
+    nullable: true
+    value_type: text
+    view: NeatIncEvent
+    view_property: blob
+  - container: ClassicEvent
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncEvent
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicEvent
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/dataSetId
+    nullable: true
+    value_type: NeatIncDataSet
+    view: NeatIncEvent
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/description
+    nullable: true
+    value_type: text
+    view: NeatIncEvent
+    view_property: description
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: endTime
+    immutable: false
+    index: endTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/endTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/endTime
+    nullable: true
+    value_type: timestamp
+    view: NeatIncEvent
+    view_property: endTime
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: equipment
+    description: A list of equipment the activity is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/equipment
+    nullable: true
+    value_type: NeatIncEquipment
+    view: NeatIncEvent
+    view_property: equipment
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/source
+    nullable: true
+    value_type: NeatIncSourceSystem
+    view: NeatIncEvent
+    view_property: source
+  - container: cdf_cdm:CogniteSchedulable
+    container_property: startTime
+    immutable: false
+    index: startTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/startTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/startTime
+    nullable: true
+    value_type: timestamp
+    view: NeatIncEvent
+    view_property: startTime
+  - container: ClassicEvent
+    container_property: subtype
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/subtype
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/subtype
+    nullable: true
+    value_type: text
+    view: NeatIncEvent
+    view_property: subtype
+  - connection: direct
+    container: cdf_cdm:CogniteActivity
+    container_property: timeSeries
+    description: A list of time series the activity is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/timeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/timeSeries
+    nullable: true
+    value_type: NeatIncTimeSeries
+    view: NeatIncEvent
+    view_property: timeSeries
+  - container: ClassicEvent
+    container_property: type
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent/type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent/type
+    nullable: true
+    value_type: text
+    view: NeatIncEvent
+    view_property: type
+  - connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/assets
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncFile
+    view_property: assets
+  - container: ClassicFile
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncFile
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicFile
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/dataSetId
+    nullable: true
+    value_type: NeatIncDataSet
+    view: NeatIncFile
+    view_property: dataSetId
+  - connection: reverse(property=files)
+    description: An automatically updated list of equipment this file is related to.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/equipment
+    value_type: NeatIncEquipment
+    view: NeatIncFile
+    view_property: equipment
+  - container: NeatIncFile
+    container_property: fileCategory
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/fileCategory
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/fileCategory
+    nullable: true
+    value_type: text
+    view: NeatIncFile
+    view_property: fileCategory
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/name
+    nullable: true
+    value_type: text
+    view: NeatIncFile
+    view_property: name
+  - container: ClassicFile
+    container_property: securityCategories
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/securityCategories
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/securityCategories
+    nullable: true
+    value_type: int64
+    view: NeatIncFile
+    view_property: securityCategories
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/source
+    nullable: true
+    value_type: NeatIncSourceSystem
+    view: NeatIncFile
+    view_property: source
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceCreatedTime
+    immutable: false
+    index: sourceCreatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/sourceCreatedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/sourceCreatedTime
+    nullable: true
+    value_type: timestamp
+    view: NeatIncFile
+    view_property: sourceCreatedTime
+  - container: cdf_cdm:CogniteSourceable
+    container_property: sourceUpdatedTime
+    immutable: false
+    index: sourceUpdatedTime
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/sourceUpdatedTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/sourceUpdatedTime
+    nullable: true
+    value_type: timestamp
+    view: NeatIncFile
+    view_property: sourceUpdatedTime
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile/tags
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile/tags
+    nullable: true
+    value_type: text
+    view: NeatIncFile
+    view_property: tags
+  - container: ClassicLabel
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncLabel/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncLabel/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncLabel
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicLabel
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncLabel/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncLabel/dataSetId
+    nullable: true
+    value_type: NeatIncDataSet
+    view: NeatIncLabel
+    view_property: dataSetId
+  - container: ClassicLabel
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncLabel/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncLabel/description
+    nullable: true
+    value_type: text
+    view: NeatIncLabel
+    view_property: description
+  - container: ClassicLabel
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncLabel/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncLabel/name
+    nullable: true
+    value_type: text
+    view: NeatIncLabel
+    view_property: name
+  - container: ClassicRelationship
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncRelationship
+    view_property: classicExternalId
+  - container: ClassicRelationship
+    container_property: confidence
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/confidence
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/confidence
+    nullable: true
+    value_type: float64
+    view: NeatIncRelationship
+    view_property: confidence
+  - connection: direct
+    container: ClassicRelationship
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/dataSetId
+    nullable: true
+    value_type: NeatIncDataSet
+    view: NeatIncRelationship
+    view_property: dataSetId
+  - container: ClassicRelationship
+    container_property: endTime
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/endTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/endTime
+    nullable: true
+    value_type: timestamp
+    view: NeatIncRelationship
+    view_property: endTime
+  - connection: edge
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/labels
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/labels
+    value_type: NeatIncLabel
+    view: NeatIncRelationship
+    view_property: labels
+  - connection: direct
+    container: NeatIncRelationship
+    container_property: neatIncRelationshipLabels
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/neatIncRelationshipLabels
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/neatIncRelationshipLabels
+    nullable: true
+    value_type: NeatIncLabel
+    view: NeatIncRelationship
+    view_property: neatIncRelationshipLabels
+  - container: ClassicRelationship
+    container_property: sourceType
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/sourceType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/sourceType
+    nullable: true
+    value_type: text
+    view: NeatIncRelationship
+    view_property: sourceType
+  - container: ClassicRelationship
+    container_property: startTime
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/startTime
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/startTime
+    nullable: true
+    value_type: timestamp
+    view: NeatIncRelationship
+    view_property: startTime
+  - container: ClassicRelationship
+    container_property: targetType
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship/targetType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship/targetType
+    nullable: true
+    value_type: text
+    view: NeatIncRelationship
+    view_property: targetType
+  - connection: direct
+    container: ClassicSequence
+    container_property: assetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/assetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/assetId
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncSequence
+    view_property: assetId
+  - container: NeatIncSequence
+    container_property: blob
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/blob
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/blob
+    nullable: true
+    value_type: text
+    view: NeatIncSequence
+    view_property: blob
+  - container: ClassicSequence
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncSequence
+    view_property: classicExternalId
+  - container: ClassicSequence
+    container_property: columns
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/columns
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/columns
+    nullable: true
+    value_type: json
+    view: NeatIncSequence
+    view_property: columns
+  - connection: direct
+    container: ClassicSequence
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/dataSetId
+    nullable: true
+    value_type: NeatIncDataSet
+    view: NeatIncSequence
+    view_property: dataSetId
+  - container: ClassicSequence
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/description
+    nullable: true
+    value_type: text
+    view: NeatIncSequence
+    view_property: description
+  - container: ClassicSequence
+    container_property: name
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/name
+    nullable: true
+    value_type: text
+    view: NeatIncSequence
+    view_property: name
+  - container: ClassicSequence
+    container_property: rows
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/rows
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/rows
+    nullable: true
+    value_type: json
+    view: NeatIncSequence
+    view_property: rows
+  - container: NeatIncSequence
+    container_property: turbineType
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence/turbineType
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence/turbineType
+    nullable: true
+    value_type: text
+    view: NeatIncSequence
+    view_property: turbineType
+  - container: NeatIncSourceSystem
+    container_property: classicSourceSystemGUID
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSourceSystem/classicSourceSystemGUID
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSourceSystem/classicSourceSystemGUID
+    nullable: true
+    value_type: text
+    view: NeatIncSourceSystem
+    view_property: classicSourceSystemGUID
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSourceSystem/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSourceSystem/name
+    nullable: true
+    value_type: text
+    view: NeatIncSourceSystem
+    view_property: name
+  - connection: reverse(property=timeSeries)
+    description: An automatically updated list of activities the time series is related
+      to.
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/activities
+    name: Activities
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/activities
+    value_type: NeatIncEvent
+    view: NeatIncTimeSeries
+    view_property: activities
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: assets
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/assets
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/assets
+    nullable: true
+    value_type: NeatIncAsset
+    view: NeatIncTimeSeries
+    view_property: assets
+  - container: ClassicTimeSeries
+    container_property: classicExternalId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/classicExternalId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/classicExternalId
+    nullable: true
+    value_type: text
+    view: NeatIncTimeSeries
+    view_property: classicExternalId
+  - connection: direct
+    container: ClassicTimeSeries
+    container_property: dataSetId
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/dataSetId
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/dataSetId
+    nullable: true
+    value_type: NeatIncDataSet
+    view: NeatIncTimeSeries
+    view_property: dataSetId
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/description
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/description
+    nullable: true
+    value_type: text
+    view: NeatIncTimeSeries
+    view_property: description
+  - connection: direct
+    container: cdf_cdm:CogniteTimeSeries
+    container_property: equipment
+    description: A list of equipment the time series is related to.
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/equipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/equipment
+    nullable: true
+    value_type: NeatIncEquipment
+    view: NeatIncTimeSeries
+    view_property: equipment
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    index: name
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/name
+    nullable: true
+    value_type: text
+    view: NeatIncTimeSeries
+    view_property: name
+  - connection: direct
+    container: cdf_cdm:CogniteSourceable
+    container_property: source
+    description: Direct relation to a source system
+    immutable: false
+    index: source
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/source
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/source
+    nullable: true
+    value_type: NeatIncSourceSystem
+    view: NeatIncTimeSeries
+    view_property: source
+  - container: cdf_cdm:CogniteDescribable
+    container_property: tags
+    immutable: false
+    is_list: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/tags
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/tags
+    nullable: true
+    value_type: text
+    view: NeatIncTimeSeries
+    view_property: tags
+  - container: NeatIncTimeSeries
+    container_property: timeSeriesCategory
+    is_list: false
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/timeSeriesCategory
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries/timeSeriesCategory
+    nullable: true
+    value_type: text
+    view: NeatIncTimeSeries
+    view_property: timeSeriesCategory
+  views:
+  - description: ''
+    implements: cdf_cdm:Cognite3DTransformation(version=v1),cdf_cdm:CogniteCubeMap(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360Image
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360Image
+    view: cdf_cdm:Cognite360Image(version=v1)
+  - description: ''
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteAnnotation(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageAnnotation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageAnnotation
+    view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
+  - description: Represents a logical collection of Cognite360Image instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageCollection
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageCollection
+    view: cdf_cdm:Cognite360ImageCollection(version=v1)
+  - description: Navigational aid for traversing Cognite360ImageModel instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageModel
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageModel
+    view: cdf_cdm:Cognite360ImageModel(version=v1)
+  - description: A way to group images across collections. Used for creating visual
+      scan history
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite360ImageStation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite360ImageStation
+    view: cdf_cdm:Cognite360ImageStation(version=v1)
+  - description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
+      Image360)
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DModel
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DModel
+    view: cdf_cdm:Cognite3DModel(version=v1)
+  - description: This is the virtual position representation of an object in the physical
+      world, connecting an asset to one or more 3D resources
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DObject
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DObject
+    view: cdf_cdm:Cognite3DObject(version=v1)
+  - description: Shared revision information for various 3D data types. Normally not
+      used directly, but through CognitePointCloudRevision, Image360Collection or
+      CogniteCADRevision
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DRevision
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DRevision
+    view: cdf_cdm:Cognite3DRevision(version=v1)
+  - description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
+      enabling precise adjustments to an object's position, orientation, and size
+      in the 3D coordinate system. It allows for the translation of objects along
+      the three spatial axes, rotation around these axes using Euler angles, and scaling
+      along each axis to modify the object's dimensions. The object's transformation
+      is defined in "CDF space", a coordinate system where the positive Z axis is
+      the up direction
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/Cognite3DTransformation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/Cognite3DTransformation
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+  - description: Represents activities. Activities typically happen over a period
+      and have a start and end time.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteSchedulable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteActivity
+    name: Activity
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteActivity
+    view: cdf_cdm:CogniteActivity(version=v1)
+  - description: Annotation represents contextualization results or links
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAnnotation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAnnotation
+    view: cdf_cdm:CogniteAnnotation(version=v1)
+  - description: Assets represent systems that support industrial functions or processes.
+      Assets are often called 'functional location'.
+    implements: cdf_cdm:CogniteVisualizable(version=v1),cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAsset
+    name: Asset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAsset
+    view: cdf_cdm:CogniteAsset(version=v1)
+  - description: Represents the class of an asset.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAssetClass
+    name: Asset class
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetClass
+    view: cdf_cdm:CogniteAssetClass(version=v1)
+  - description: Represents the type of an asset.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteAssetType
+    name: Asset type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteAssetType
+    view: cdf_cdm:CogniteAssetType(version=v1)
+  - description: Navigational aid for traversing CogniteCADModel instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADModel
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADModel
+    view: cdf_cdm:CogniteCADModel(version=v1)
+  - description: Represents nodes from the 3D model that have been contextualized
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADNode
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADNode
+    view: cdf_cdm:CogniteCADNode(version=v1)
+  - description: ''
+    implements: cdf_cdm:Cognite3DRevision(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCADRevision
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCADRevision
+    view: cdf_cdm:CogniteCADRevision(version=v1)
+  - description: The cube map holds references to 6 images in used to visually represent
+      the surrounding environment
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteCubeMap
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteCubeMap
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+  - description: The describable core concept is used as a standard way of holding
+      the bare minimum of information about the instance
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteDescribable
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteDescribable
+    view: cdf_cdm:CogniteDescribable(version=v1)
+  - description: Equipment represents physical supplies or devices.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipment
+    view: cdf_cdm:CogniteEquipment(version=v1)
+  - description: Represents the type of equipment.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteEquipmentType
+    name: Equipment type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteEquipmentType
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
+  - description: Represents files.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFile
+    name: File
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFile
+    view: cdf_cdm:CogniteFile(version=v1)
+  - description: Represents the categories of files as determined by contextualization
+      or categorization.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteFileCategory
+    name: File category
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteFileCategory
+    view: cdf_cdm:CogniteFileCategory(version=v1)
+  - description: PointCloud volume definition
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CognitePointCloudVolume
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+  - description: CogniteSchedulable represents the metadata about when an activity
+      (or similar) starts and ends.
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSchedulable
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSchedulable
+    view: cdf_cdm:CogniteSchedulable(version=v1)
+  - description: The CogniteSourceSystem core concept is used to standardize the way
+      source system is stored.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceSystem
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceSystem
+    view: cdf_cdm:CogniteSourceSystem(version=v1)
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteSourceable
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteSourceable
+    view: cdf_cdm:CogniteSourceable(version=v1)
+  - description: Represents a series of data points in time order.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteTimeSeries
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteTimeSeries
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+  - description: Represents a single unit of measurement
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteUnit
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteUnit
+    view: cdf_cdm:CogniteUnit(version=v1)
+  - description: CogniteVisualizable defines the standard way to reference a related
+      3D resource
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/CogniteVisualizable
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/CogniteVisualizable
+    view: cdf_cdm:CogniteVisualizable(version=v1)
+  - implements: cdf_cdm:CogniteAsset(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicAsset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicAsset
+    view: ClassicAsset
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicDataSet
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicDataSet
+    view: ClassicDataSet
+  - description: Equipment represents physical supplies or devices.
+    implements: cdf_cdm:CogniteEquipment(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEquipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEquipment
+    view: ClassicEquipment
+  - implements: cdf_cdm:CogniteActivity(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicEvent
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicEvent
+    view: ClassicEvent
+  - implements: cdf_cdm:CogniteFile(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicFile
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicFile
+    view: ClassicFile
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicLabel
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicLabel
+    view: ClassicLabel
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicRelationship
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicRelationship
+    view: ClassicRelationship
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSequence
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSequence
+    view: ClassicSequence
+  - description: A source system that provides data to the data model.
+    implements: cdf_cdm:CogniteSourceSystem(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicSourceSystem
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicSourceSystem
+    view: ClassicSourceSystem
+  - implements: cdf_cdm:CogniteTimeSeries(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/ClassicTimeSeries
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/ClassicTimeSeries
+    view: ClassicTimeSeries
+  - implements: cdf_cdm:CogniteAsset(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncAsset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncAsset
+    view: NeatIncAsset
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncDataSet
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncDataSet
+    view: NeatIncDataSet
+  - description: Equipment represents physical supplies or devices.
+    implements: cdf_cdm:CogniteEquipment(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEquipment
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEquipment
+    view: NeatIncEquipment
+  - implements: cdf_cdm:CogniteActivity(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncEvent
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncEvent
+    view: NeatIncEvent
+  - implements: cdf_cdm:CogniteFile(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncFile
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncFile
+    view: NeatIncFile
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncLabel
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncLabel
+    view: NeatIncLabel
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncRelationship
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncRelationship
+    view: NeatIncRelationship
+  - in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSequence
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSequence
+    view: NeatIncSequence
+  - description: A source system that provides data to the data model.
+    implements: cdf_cdm:CogniteSourceSystem(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncSourceSystem
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncSourceSystem
+    view: NeatIncSourceSystem
+  - implements: cdf_cdm:CogniteTimeSeries(version=v1)
+    in_model: true
+    logical: http://purl.org/cognite/neat/data-model/verified/logical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1/NeatIncTimeSeries
+    view: NeatIncTimeSeries

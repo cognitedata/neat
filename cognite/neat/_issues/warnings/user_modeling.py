@@ -20,7 +20,19 @@ __all__ = [
     "NodeTypeFilterOnParentViewWarning",
     "NotNeatSupportedFilterWarning",
     "ParentInDifferentSpaceWarning",
+    "ViewsAndDataModelNotInSameSpaceWarning",
 ]
+
+
+@dataclass(unsafe_hash=True)
+class ViewsAndDataModelNotInSameSpaceWarning(UserModelingWarning):
+    """The data model is in {data_model_space}, while views are in {views_spaces} space(s).
+    This is strongly discouraged as it can lead to confusion and unnecessary complexity.
+    """
+
+    fix = "Ensure that views and data model are in the same space and have same version"
+    data_model_space: str
+    views_spaces: str
 
 
 @dataclass(unsafe_hash=True)

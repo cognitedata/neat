@@ -104,7 +104,11 @@ class DMSFilter(WrappedEntity):
     @classmethod
     def from_dms_filter(cls, filter: dm.Filter) -> "DMSFilter":
         dumped = filter.dump()
-        if (body := dumped.get(dm.filters.Equals._filter_name)) and (value := body.get("value")):
+        if (
+            (body := dumped.get(dm.filters.Equals._filter_name))
+            and (value := body.get("value"))
+            and isinstance(value, dict)
+        ):
             space = value.get("space")
             external_id = value.get("externalId")
             if space is not None and external_id is not None:
@@ -127,8 +131,8 @@ class DMSFilter(WrappedEntity):
                     if isinstance(entry, dict) and "space" in entry and "externalId" in entry
                 ]
             )
-
-        raise ValueError(f"Cannot convert {filter._filter_name} to {cls.__name__}")
+        # fall back to raw filter to preserve the information
+        return RawFilter(filter=json.dumps(dumped))
 
 
 class NodeTypeFilter(DMSFilter):

@@ -11,10 +11,12 @@ from ._classic_cdf._relationships import RelationshipsExtractor
 from ._classic_cdf._sequences import SequencesExtractor
 from ._classic_cdf._timeseries import TimeSeriesExtractor
 from ._dexpi import DexpiExtractor
+from ._dict import DictExtractor
 from ._dms import DMSExtractor
 from ._dms_graph import DMSGraphExtractor
 from ._iodd import IODDExtractor
 from ._mock_graph_generator import MockGraphGenerator
+from ._raw import RAWExtractor
 from ._rdf_file import RdfFileExtractor
 
 __all__ = [
@@ -25,12 +27,14 @@ __all__ = [
     "DMSGraphExtractor",
     "DataSetExtractor",
     "DexpiExtractor",
+    "DictExtractor",
     "EventsExtractor",
     "FilesExtractor",
     "IODDExtractor",
     "KnowledgeGraphExtractor",
     "LabelsExtractor",
     "MockGraphGenerator",
+    "RAWExtractor",
     "RdfFileExtractor",
     "RelationshipsExtractor",
     "SequencesExtractor",

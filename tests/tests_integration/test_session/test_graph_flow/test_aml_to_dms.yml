@@ -12,7 +12,7 @@ rules:
     creator: NEAT
     external_id: AML
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1
-    name: Inferred Model
+    name: Aml
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/aml_playground/AML/terminology_3.0
     space: aml_playground

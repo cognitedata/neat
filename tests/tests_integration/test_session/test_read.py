@@ -6,6 +6,9 @@ from cognite.client import CogniteClient
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
+from cognite.neat._issues.warnings.user_modeling import (
+    ViewsAndDataModelNotInSameSpaceWarning,
+)
 from cognite.neat._rules.catalog import hello_world_pump
 from tests import data
 
@@ -61,3 +64,12 @@ class TestRead:
         neat = NeatSession(client=cognite_client)
         neat.read.excel(data.DATA_DIR / "pump_example_duplicated_resources.xlsx")
         assert len(neat._state.rule_store.last_issues) == 4
+
+    def test_data_model_views_not_in_same_space(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(client=cognite_client)
+        neat.read.excel(data.DATA_DIR / "dm_view_space_different.xlsx")
+        assert len(neat._state.rule_store.last_issues) == 1
+        assert isinstance(
+            neat._state.rule_store.last_issues[0],
+            ViewsAndDataModelNotInSameSpaceWarning,
+        )

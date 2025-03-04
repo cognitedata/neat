@@ -1,15 +1,27 @@
 """This is an internal CLI for the development team. It is intended for automating development tasks."""
 
-from datetime import date
 from pathlib import Path
+from typing import Literal, get_args
 
+import marko
+import marko.block
+import marko.element
+import marko.inline
 import typer
 from packaging.version import Version, parse
 
 REPO_ROOT = Path(__file__).parent
-CHANGELOG = REPO_ROOT / "docs" / "CHANGELOG.md"
 VERSION_FILE = REPO_ROOT / "cognite" / "neat" / "_version.py"
-TBD_HEADING = "## TBD"
+
+
+VALID_CHANGELOG_HEADERS = {"Added", "Changed", "Removed", "Fixed", "Improved"}
+BUMP_OPTIONS = Literal["major", "minor", "patch", "skip"]
+VALID_BUMP_OPTIONS = get_args(BUMP_OPTIONS)
+LAST_GIT_MESSAGE_FILE = REPO_ROOT / "last_git_message.txt"
+CHANGELOG_ENTRY_FILE = REPO_ROOT / "last_changelog_entry.md"
+LAST_VERSION = REPO_ROOT / "last_version.txt"
+VERSION_PLACEHOLDER = "0.0.0"
+
 
 dev_app = typer.Typer(
     add_completion=False,
@@ -21,69 +33,149 @@ dev_app = typer.Typer(
 
 
 @dev_app.command()
-def bump(
-    major: bool = False,
-    minor: bool = False,
-    patch: bool = False,
-    alpha: bool = False,
-    beta: bool = False,
-    verbose: bool = False,
-) -> None:
+def bump(verbose: bool = False) -> None:
     version_files = [
         REPO_ROOT / "pyproject.toml",
         REPO_ROOT / "cognite" / "neat" / "_version.py",
     ]
-    version_file_content = VERSION_FILE.read_text().split("\n")[0]
-    version_raw = version_file_content.split(" = ")[1].strip().strip('"')
+    last_version_str = LAST_VERSION.read_text().strip().removeprefix("v")
+    try:
+        last_version = parse(last_version_str)
+    except ValueError:
+        print(f"Invalid last version: {last_version_str}")
+        raise SystemExit(1) from None
 
-    version = parse(version_raw)
+    bump_text, _ = _read_last_commit_message()
+    version_bump = _get_change(bump_text)
 
-    if alpha and version.is_prerelease and version.pre[0] == "a":
-        suffix = f"a{version.pre[1] + 1}"
-    elif alpha and version.is_prerelease and version.pre[0] == "b":
-        raise typer.BadParameter("Cannot bump to alpha version when current version is a beta prerelease.")
-    elif alpha and not version.is_prerelease:
-        suffix = "a1"
-    elif beta and version.is_prerelease and version.pre[0] == "a":
-        suffix = "b1"
-    elif beta and version.is_prerelease and version.pre[0] == "b":
-        suffix = f"b{version.pre[1] + 1}"
-    elif beta and not version.is_prerelease:
-        raise typer.BadParameter("Cannot bump to beta version when current version is not an alpha prerelease.")
-    else:
-        suffix = ""
-
-    if major:
-        new_version = Version(f"{version.major + 1}.0.0{suffix}")
-    elif minor:
-        new_version = Version(f"{version.major}.{version.minor + 1}.0{suffix}")
-    elif patch:
-        new_version = Version(f"{version.major}.{version.minor}.{version.micro + 1}{suffix}")
-    elif alpha or beta:
-        new_version = Version(f"{version.major}.{version.minor}.{version.micro}{suffix}")
+    if version_bump == "skip":
+        print("No changes to release.")
+        return
+    if version_bump == "major":
+        new_version = Version(f"{last_version.major + 1}.0.0")
+    elif version_bump == "minor":
+        new_version = Version(f"{last_version.major}.{last_version.minor + 1}.0")
+    elif version_bump == "patch":
+        new_version = Version(f"{last_version.major}.{last_version.minor}.{last_version.micro + 1}")
     else:
         raise typer.BadParameter("You must specify one of major, minor, patch, alpha, or beta.")
 
-    # Update the changelog
-    changelog = CHANGELOG.read_text()
-    if TBD_HEADING not in changelog:
-        raise ValueError(
-            f"There are no changes to release. The changelog does not contain a TBD section: {TBD_HEADING}."
-        )
-
-    today = date.today().strftime("%d-%m-**%Y**")
-    new_heading = f"## [{new_version}] - {today}"
-
-    changelog = changelog.replace(TBD_HEADING, new_heading)
-    CHANGELOG.write_text(changelog)
-    typer.echo(f"Updated changelog with new heading: {new_heading}")
-
     for file in version_files:
-        file.write_text(file.read_text().replace(str(version), str(new_version), 1))
+        file.write_text(file.read_text().replace(str(VERSION_PLACEHOLDER), str(new_version), 1))
         if verbose:
-            typer.echo(f"Bumped version from {version} to {new_version} in {file}.")
+            typer.echo(f"Bumped version from {last_version} to {new_version} in {file}.")
 
-    typer.echo(f"Bumped version from {version} to {new_version} in {len(version_files)} files.")
+    typer.echo(f"Bumped version from {last_version} to {new_version} in {len(version_files)} files.")
+
+
+@dev_app.command("changelog")
+def create_changelog_entry() -> None:
+    bump_text, changelog_text = _read_last_commit_message()
+    version_bump = _get_change(bump_text)
+    if version_bump == "skip":
+        print("No changes to release.")
+        return
+    if changelog_text is None:
+        print(f"No changelog entry found in the last commit message. This is required for a {version_bump} release.")
+        raise SystemExit(1)
+    _validate_changelog_entry(changelog_text)
+
+    CHANGELOG_ENTRY_FILE.write_text(changelog_text, encoding="utf-8")
+    print(f"Changelog entry written to {CHANGELOG_ENTRY_FILE}.")
+
+
+def _read_last_commit_message() -> tuple[str, str | None]:
+    last_git_message = LAST_GIT_MESSAGE_FILE.read_text()
+    if "## Bump" not in last_git_message:
+        print("No bump entry found in the last commit message.")
+        raise SystemExit(1)
+
+    after_bump = last_git_message.split("## Bump")[1].strip()
+    if "## Changelog" not in after_bump:
+        return after_bump, None
+
+    bump_text, changelog_text = after_bump.split("## Changelog")
+    return bump_text, changelog_text
+
+
+def _validate_changelog_entry(changelog_text: str) -> None:
+    items = [item for item in marko.parse(changelog_text).children if not isinstance(item, marko.block.BlankLine)]
+    if not items:
+        print("No entries found in the changelog section of the changelog.")
+        raise SystemExit(1)
+    seen_headers = set()
+
+    last_header: str = ""
+    for item in items:
+        if isinstance(item, marko.block.Heading):
+            if last_header:
+                print(f"Expected a list of changes after the {last_header} header.")
+                raise SystemExit(1)
+            elif item.level != 3:
+                print(f"Unexpected header level in changelog: {item}. Should be level 3.")
+                raise SystemExit(1)
+            elif not isinstance(item.children[0], marko.inline.RawText):
+                print(f"Unexpected header in changelog: {item}.")
+                raise SystemExit(1)
+            header_text = item.children[0].children
+            if header_text not in VALID_CHANGELOG_HEADERS:
+                print(f"Unexpected header in changelog: {header_text}. Must be one of {VALID_CHANGELOG_HEADERS}.")
+                raise SystemExit(1)
+            if header_text in seen_headers:
+                print(f"Duplicate header in changelog: {header_text}.")
+                raise SystemExit(1)
+            seen_headers.add(header_text)
+            last_header = header_text
+        elif isinstance(item, marko.block.List):
+            if not last_header:
+                print("Expected a header before the list of changes.")
+                raise SystemExit(1)
+            last_header = ""
+        else:
+            print(f"Unexpected item in changelog: {item}.")
+            raise SystemExit(1)
+
+
+def _get_change(bump_text: str) -> Literal["major", "minor", "patch", "skip"]:
+    items = [item for item in marko.parse(bump_text).children if not isinstance(item, marko.block.BlankLine)]
+    if not items:
+        print("No items found in the bump section of the commit message.")
+        raise SystemExit(1)
+    item = items[0]
+    if not isinstance(item, marko.block.List):
+        print("The first item in the bump must be a list with the type of change.")
+        raise SystemExit(1)
+    selected: list[Literal["major", "minor", "patch", "skip"]] = []
+    for child in item.children:
+        if not isinstance(child, marko.block.ListItem):
+            print(f"Unexpected item in bump section: {child}")
+            raise SystemExit(1)
+        if not isinstance(child.children[0], marko.block.Paragraph):
+            print(f"Unexpected item in bump section: {child.children[0]}")
+            raise SystemExit(1)
+        if not isinstance(child.children[0].children[0], marko.inline.RawText):
+            print(f"Unexpected item in bump section: {child.children[0].children[0]}")
+            raise SystemExit(1)
+        list_text = child.children[0].children[0].children
+        if list_text.startswith("[ ]"):
+            continue
+        elif list_text.casefold().startswith("[x]"):
+            change_type = list_text[3:].strip()
+            if change_type.casefold() not in VALID_BUMP_OPTIONS:
+                print(f"Unexpected change type in bump section {change_type}")
+                raise SystemExit(1)
+            selected.append(change_type.casefold())
+        else:
+            print(f"Unexpected item in bump section: {list_text}")
+            raise SystemExit(1)
+
+    if len(selected) > 1:
+        print(f"You can only select one type of change, got {selected}.")
+        raise SystemExit(1)
+    if not selected:
+        print("You must select exactly one type of change, got nothing.")
+        raise SystemExit(1)
+    return selected[0]
 
 
 if __name__ == "__main__":

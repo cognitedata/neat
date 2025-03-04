@@ -38,6 +38,7 @@ nav:
         - AML Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
       - Data Modeling:
         - My First Data Model: tutorials/data-modeling/cold_start.ipynb
+        - Extending Core Data Model via Concept Selection: tutorials/data-modeling/core_extension_via_subset.ipynb
         - Extending Data Model: tutorials/data-modeling/core_extension.ipynb
   - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
@@ -55,7 +56,12 @@ nav:
   - NeatSession:
       - Session: reference/NeatSession/base.md
       - Read: reference/NeatSession/read.md
+      - Create: reference/NeatSession/create.md
       - Prepare: reference/NeatSession/prepare.md
+      - Fix: reference/NeatSession/fix.md
+      - Mapping: reference/NeatSession/mapping.md
+      - Set: reference/NeatSession/set.md
+      - Subset: reference/NeatSession/subset.md
       - To: reference/NeatSession/to.md
       - Inspect: reference/NeatSession/inspect.md
       - Show: reference/NeatSession/show.md
@@ -68,7 +74,7 @@ nav:
           - Warnings:
             -  Main: reference/issues/warnings.md
             -  UserModeling: reference/issues/user_model_warnings.md
-  - Changelog: CHANGELOG.md
+  - Changelog: https://github.com/cognitedata/neat/releases
 
 markdown_extensions:
   - pymdownx.superfences

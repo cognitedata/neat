@@ -4,7 +4,7 @@ name: Release NEAT
 on:
   push:
     branches:
-      - release
+      - main
 
 env:
   PYTHON_VERSION: "3.11"
@@ -15,6 +15,8 @@ jobs:
     environment: CD
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -25,39 +27,64 @@ jobs:
           poetry config virtualenvs.create false
           poetry install -E all
 
+      - name: Dump last commit message to file
+        run: git log -1 --pretty=%B > last_git_message.txt
+      - name: Dump last tag to file
+        run: git describe --tags --abbrev=0 > last_version.txt
+      - name: Bump Version
+        run: python dev.py bump --verbose
+      - id: version
+        name: Read the new version
+        # Read the version from the cognite/neat/_version.py file
+        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
+      - name: Create CHANGELOG entry
+        if: env.version != '0.0.0'
+        run: python dev.py changelog
       - name: Build package
+        if: env.version != '0.0.0'
         run: poetry build
 
       - name: Release to PyPI
+        if: env.version != '0.0.0'
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: twine upload --skip-existing --verbose dist/*
 
-  release-to-docker-hub:
-    runs-on: ubuntu-latest
-    environment: CD
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Add entry to CHANGELOG
+        if: env.version != '0.0.0'
+        uses: ncipollo/release-action@v1
         with:
-          version: 1.8.3
+            token: ${{ secrets.GITHUB_TOKEN }}
+            prerelease: false
+            draft: false
+            tag: ${{ env.version }}
+            bodyFile: last_changelog_entry.md
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
-
-      - name: Export dependencies
-        run: |
-          poetry export -f requirements.txt --output requirements.txt --extras "all"
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+#  release-to-docker-hub:
+#    runs-on: ubuntu-latest
+#    environment: CD
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v3
+#
+#      - name: Install Poetry
+#        uses: snok/install-poetry@v1
+#        with:
+#          version: 1.8.3
+#
+#      - name: Login to Docker Hub
+#        uses: docker/login-action@v2
+#        with:
+#          username: ${{ secrets.DOCKERHUB_USER }}
+#          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+#
+#      - name: Export dependencies
+#        run: |
+#          poetry export -f requirements.txt --output requirements.txt --extras "all"
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v2
 
 #      - id: version
 #        name: NEAT Version
@@ -72,43 +99,43 @@ jobs:
 #          platforms: linux/amd64,linux/arm64/v8
 #          push: true
 #          tags: cognite/neat:latest, cognite/neat:${{ env.version }}
-
-  release-to-f25e:
-    runs-on: ubuntu-latest
-    environment: main
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-            version: 1.8.3
-            virtualenvs-create: false
-
-      - name: Azure login
-        uses: azure/login@v1
-        with:
-          client-id: 7e26ba04-3da0-4241-b517-c12b8205af8a
-          tenant-id: a9ae5b54-3600-4917-a9dc-3020723360b3
-          subscription-id: fd108646-dc13-4d9a-9b8c-d9dbde664887
-
-      - run: az acr login --name scsproduction
-
-      - name: Export dependencies
-        run: |
-          poetry export -f requirements.txt --output requirements.txt --extras "all"
-
-      - id: version
-        name: Build Version
-        run: echo "version=$(date -u '+%Y%m%dT%H%M%SZ')"  >> $GITHUB_ENV
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+#
+#  release-to-f25e:
+#    runs-on: ubuntu-latest
+#    environment: main
+#    permissions:
+#      id-token: write
+#      contents: read
+#
+#    steps:
+#      - name: Checkout repository
+#        uses: actions/checkout@v3
+#
+#      - name: Install Poetry
+#        uses: snok/install-poetry@v1
+#        with:
+#            version: 1.8.3
+#            virtualenvs-create: false
+#
+#      - name: Azure login
+#        uses: azure/login@v1
+#        with:
+#          client-id: 7e26ba04-3da0-4241-b517-c12b8205af8a
+#          tenant-id: a9ae5b54-3600-4917-a9dc-3020723360b3
+#          subscription-id: fd108646-dc13-4d9a-9b8c-d9dbde664887
+#
+#      - run: az acr login --name scsproduction
+#
+#      - name: Export dependencies
+#        run: |
+#          poetry export -f requirements.txt --output requirements.txt --extras "all"
+#
+#      - id: version
+#        name: Build Version
+#        run: echo "version=$(date -u '+%Y%m%dT%H%M%SZ')"  >> $GITHUB_ENV
+#
+#      - name: Set up Docker Buildx
+#        uses: docker/setup-buildx-action@v2
 
 #      - name: Build and push
 #        uses: docker/build-push-action@v4
