@@ -33,6 +33,8 @@ class SessionState:
     def rule_transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
+        if not self.rule_store.provenance:
+            raise NeatSessionError("No data model in NEAT session. Use .read() to read in a data model.")
 
         start = self.rule_store.provenance[-1].target_entity.display_name
         issues = self.rule_store.transform(*transformer)
