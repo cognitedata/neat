@@ -25,7 +25,7 @@ class SessionState:
         storage_path: Path | None = None,
         client: NeatClient | None = None,
     ) -> None:
-        self.rule_store =NeatRulesStore()
+        self.rule_store = NeatRulesStore()
         self.instances = InstancesState(store_type, storage_path=storage_path)
         self.manager = NeatStoreManager(self.instances.store, self.rule_store)
         self.client = client
