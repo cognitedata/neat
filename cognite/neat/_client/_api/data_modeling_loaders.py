@@ -423,7 +423,7 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         existing_properties = remote_write.properties or {}
         merged_properties = {**existing_properties, **(local.properties or {})}
         merged_indices = {**remote_write.indexes, **local.indexes}
-        merged_constrains = {**remote_write.constraints, **local.constraints}
+        merged_constraints = {**remote_write.constraints, **local.constraints}
         return ContainerApply(
             space=remote.space,
             external_id=remote.external_id,
@@ -431,7 +431,7 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
             description=local.description or remote.description,
             name=local.name or remote.name,
             used_for=local.used_for,
-            constraints=merged_constrains,
+            constraints=merged_constraints,
             indexes=merged_indices,
         )
 
