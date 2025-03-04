@@ -57,3 +57,12 @@ class EmptyStore(NeatStoreError, RuntimeError):
     """Raised when the store is empty"""
 
     ...
+
+
+class InvalidAction(NeatStoreError, RuntimeError):
+    def __init__(self, action: str, error_message: str) -> None:
+        self.action = action
+        self.error_message = error_message
+
+    def __str__(self) -> str:
+        return f"Cannot do {self.action}: {self.error_message}"
