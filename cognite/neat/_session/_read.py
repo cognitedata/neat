@@ -4,7 +4,7 @@ from typing import Any, Literal, cast
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from cognite.neat._alpha import AlphaFlags
+from cognite.neat._alpha import ExperimentalFlags
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import (
     CLASSIC_CDF_NAMESPACE,
@@ -361,7 +361,7 @@ class ExcelReadAPI(BaseReadAPI):
 
         if enable_manual_edit:
             warnings.filterwarnings("default")
-            AlphaFlags.manual_rules_edit.warn()
+            ExperimentalFlags.manual_rules_edit.warn()
 
         return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
 
@@ -421,7 +421,7 @@ class CSVReadAPI(BaseReadAPI):
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
         warnings.filterwarnings("default")
-        AlphaFlags.csv_read.warn()
+        ExperimentalFlags.csv_read.warn()
 
         engine = import_engine()
         engine.set.format = "csv"
@@ -479,7 +479,7 @@ class XMLReadAPI(BaseReadAPI):
             - remove edges to nodes that do not exist in the extracted graph
         """
         warnings.filterwarnings("default")
-        AlphaFlags.dexpi_read.warn()
+        ExperimentalFlags.dexpi_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read DEXPI file",
@@ -539,7 +539,7 @@ class XMLReadAPI(BaseReadAPI):
             - remove edges to nodes that do not exist in the extracted graph
         """
         warnings.filterwarnings("default")
-        AlphaFlags.aml_read.warn()
+        ExperimentalFlags.aml_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read AML file",
@@ -599,7 +599,7 @@ class RDFReadAPI(BaseReadAPI):
             ```
         """
         warnings.filterwarnings("default")
-        AlphaFlags.ontology_read.warn()
+        ExperimentalFlags.ontology_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read Ontology file",
@@ -622,7 +622,7 @@ class RDFReadAPI(BaseReadAPI):
             ```
         """
         warnings.filterwarnings("default")
-        AlphaFlags.imf_read.warn()
+        ExperimentalFlags.imf_read.warn()
 
         self._state._raise_exception_if_condition_not_met(
             "Read IMF file",
@@ -674,12 +674,6 @@ class Examples:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    @property
-    def _get_client(self) -> NeatClient:
-        if self._state.client is None:
-            raise NeatValueError("No client provided. Please provide a client to read a data model.")
-        return self._state.client
-
     def nordic44(self) -> IssueList:
         """Reads the Nordic 44 knowledge graph into the NeatSession graph store."""
 
@@ -709,8 +703,11 @@ class Examples:
         self._state._raise_exception_if_condition_not_met(
             "Read Core Data Model example",
             empty_rules_store_required=True,
+            client_required=True,
         )
 
         cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
-        importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(self._get_client, cdm_v1)
+        importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
+            cast(NeatClient, self._state.client), cdm_v1
+        )
         return self._state.rule_import(importer)

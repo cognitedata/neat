@@ -3,7 +3,6 @@ from typing import Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._issues import IssueList
-from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     IncludeReferenced,
@@ -29,7 +28,7 @@ class CreateAPI:
     def enterprise_model(
         self,
         data_model_id: DataModelIdentifier,
-        org_name: str = "My",
+        org_name: str = "CopyOf",
         dummy_property: str = "GUID",
     ) -> IssueList:
         """Uses the current data model as a basis to create enterprise data model
@@ -58,7 +57,7 @@ class CreateAPI:
                 - Charts
 
         """
-        last_rules = self._get_last_rules()
+        last_rules = self._state.rule_store.last_verified_rules
         issues = self._state.rule_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
@@ -70,12 +69,6 @@ class CreateAPI:
         if last_rules and not issues.has_errors:
             self._state.last_reference = last_rules
         return issues
-
-    def _get_last_rules(self) -> InformationRules | DMSRules | None:
-        if not self._state.rule_store.provenance:
-            return None
-        last_entity = self._state.rule_store.provenance[-1].target_entity
-        return last_entity.dms or last_entity.information
 
     def solution_model(
         self,
@@ -110,7 +103,7 @@ class CreateAPI:
             the containers in the solution data model space.
 
         """
-        last_rules = self._get_last_rules()
+        last_rules = self._state.rule_store.last_verified_rules
         issues = self._state.rule_transform(
             ToSolutionModel(
                 new_model_id=data_model_id,
@@ -144,7 +137,7 @@ class CreateAPI:
                 If you set same-space, only the properties of the views in the same space as the data model
                 will be included.
         """
-        last_rules = self._get_last_rules()
+        last_rules = self._state.rule_store.last_verified_rules
         view_ids, container_ids = DMSValidation(
             self._state.rule_store.last_verified_dms_rules
         ).imported_views_and_containers_ids()

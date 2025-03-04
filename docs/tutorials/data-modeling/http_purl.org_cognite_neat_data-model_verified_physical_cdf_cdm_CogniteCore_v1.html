@@ -261,21 +261,21 @@ function highlightFilter(filter) {
                             >
                                 <option selected>Select a Node by ID</option>
                                 
-                                    <option value="CogniteActivity">CogniteActivity</option>
-                                
                                     <option value="CogniteAsset">CogniteAsset</option>
                                 
                                     <option value="CogniteEquipment">CogniteEquipment</option>
                                 
-                                    <option value="CogniteTimeSeries">CogniteTimeSeries</option>
+                                    <option value="CogniteActivity">CogniteActivity</option>
                                 
-                                    <option value="CogniteDescribable">CogniteDescribable</option>
+                                    <option value="CogniteTimeSeries">CogniteTimeSeries</option>
                                 
                                     <option value="CogniteSourceable">CogniteSourceable</option>
                                 
                                     <option value="CogniteSchedulable">CogniteSchedulable</option>
                                 
                                     <option value="CogniteVisualizable">CogniteVisualizable</option>
+                                
+                                    <option value="CogniteDescribable">CogniteDescribable</option>
                                 
                             </select>
                         </div>
@@ -329,8 +329,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "CogniteActivity", "label": "CogniteActivity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteAsset", "label": "CogniteAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteEquipment", "label": "CogniteEquipment", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteTimeSeries", "label": "CogniteTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteDescribable", "label": "CogniteDescribable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSourceable", "label": "CogniteSourceable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSchedulable", "label": "CogniteSchedulable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteVisualizable", "label": "CogniteVisualizable", "shape": "dot", "size": 10}]);
-                  edges = new vis.DataSet([{"arrows": "to", "from": "CogniteActivity", "label": "Assets", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteActivity", "label": "Equipment", "to": "CogniteEquipment", "width": 1}, {"arrows": "to", "from": "CogniteActivity", "label": "Time series", "to": "CogniteTimeSeries", "width": 1}, {"arrows": "to", "from": "CogniteEquipment", "label": "Asset", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteEquipment", "label": "Activities", "to": "CogniteActivity", "width": 1}, {"arrows": "to", "from": "CogniteEquipment", "label": "Time series", "to": "CogniteTimeSeries", "width": 1}, {"arrows": "to", "from": "CogniteTimeSeries", "label": "Assets", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteTimeSeries", "label": "Equipment", "to": "CogniteEquipment", "width": 1}, {"arrows": "to", "from": "CogniteTimeSeries", "label": "Activities", "to": "CogniteActivity", "width": 1}, {"arrows": "to", "from": "CogniteAsset", "label": "Children", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteAsset", "label": "Equipment", "to": "CogniteEquipment", "width": 1}, {"arrows": "to", "from": "CogniteAsset", "label": "Activities", "to": "CogniteActivity", "width": 1}, {"arrows": "to", "from": "CogniteAsset", "label": "Time series", "to": "CogniteTimeSeries", "width": 1}]);
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "CogniteAsset", "label": "CogniteAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteEquipment", "label": "CogniteEquipment", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteActivity", "label": "CogniteActivity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteTimeSeries", "label": "CogniteTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSourceable", "label": "CogniteSourceable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSchedulable", "label": "CogniteSchedulable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteVisualizable", "label": "CogniteVisualizable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteDescribable", "label": "CogniteDescribable", "shape": "dot", "size": 10}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "CogniteAsset", "label": "Children", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteAsset", "label": "Equipment", "to": "CogniteEquipment", "width": 1}, {"arrows": "to", "from": "CogniteAsset", "label": "Activities", "to": "CogniteActivity", "width": 1}, {"arrows": "to", "from": "CogniteAsset", "label": "Time series", "to": "CogniteTimeSeries", "width": 1}, {"arrows": "to", "from": "CogniteEquipment", "label": "Asset", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteEquipment", "label": "Activities", "to": "CogniteActivity", "width": 1}, {"arrows": "to", "from": "CogniteEquipment", "label": "Time series", "to": "CogniteTimeSeries", "width": 1}, {"arrows": "to", "from": "CogniteTimeSeries", "label": "Assets", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteTimeSeries", "label": "Equipment", "to": "CogniteEquipment", "width": 1}, {"arrows": "to", "from": "CogniteTimeSeries", "label": "Activities", "to": "CogniteActivity", "width": 1}, {"arrows": "to", "from": "CogniteActivity", "label": "Assets", "to": "CogniteAsset", "width": 1}, {"arrows": "to", "from": "CogniteActivity", "label": "Equipment", "to": "CogniteEquipment", "width": 1}, {"arrows": "to", "from": "CogniteActivity", "label": "Time series", "to": "CogniteTimeSeries", "width": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });

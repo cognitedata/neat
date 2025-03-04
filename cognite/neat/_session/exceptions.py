@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Callable
 from typing import Any
 
-from cognite.neat._alpha import AlphaWarning
+from cognite.neat._alpha import ExperimentalFeatureWarning
 from cognite.neat._issues.errors import CDFMissingClientError, NeatImportError
 from cognite.neat._issues.errors._external import OxigraphStorageLockedError
 from cognite.neat._issues.errors._general import NeatValueError
@@ -38,7 +38,7 @@ def _session_method_wrapper(func: Callable, cls_name: str):
             with warnings.catch_warnings(record=True) as w:
                 result = func(*args, **kwargs)
                 for warning in w:
-                    if isinstance(warning.message, AlphaWarning):
+                    if isinstance(warning.message, ExperimentalFeatureWarning):
                         print(f"{_WARNING_PREFIX} {warning.message}")
 
             return result

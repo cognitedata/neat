@@ -436,6 +436,13 @@ class NeatRulesStore:
         return self.provenance[-1].target_entity.information
 
     @property
+    def last_verified_rules(self) -> InformationRules | DMSRules | None:
+        if not self.provenance:
+            return None
+        last_entity = self.provenance[-1].target_entity
+        return last_entity.dms or last_entity.information
+
+    @property
     def last_issues(self) -> IssueList | None:
         return self._last_issues
 
