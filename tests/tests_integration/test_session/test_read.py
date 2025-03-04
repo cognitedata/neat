@@ -73,3 +73,10 @@ class TestRead:
             neat._state.rule_store.last_issues[0],
             ViewsAndDataModelNotInSameSpaceWarning,
         )
+
+    def test_read_core_no_warnings(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(client=cognite_client)
+
+        issues = neat.read.examples.core_data_model()
+
+        assert len(issues) == 0
