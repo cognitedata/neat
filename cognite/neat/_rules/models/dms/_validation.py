@@ -15,7 +15,12 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.data_modeling import ViewApplyDict
 from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._constants import COGNITE_MODELS, DMS_CONTAINER_PROPERTY_SIZE_LIMIT, DMS_VIEW_CONTAINER_SIZE_LIMIT
+from cognite.neat._constants import (
+    COGNITE_MODELS,
+    COGNITE_SPACES,
+    DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
+    DMS_VIEW_CONTAINER_SIZE_LIMIT,
+)
 from cognite.neat._issues import IssueList, NeatError
 from cognite.neat._issues.errors import (
     CDFMissingClientError,
@@ -455,7 +460,7 @@ class DMSValidation:
     def _validate_raw_filter(self) -> IssueList:
         issue_list = IssueList()
         for view in self._views:
-            if view.filter_ and isinstance(view.filter_, RawFilter):
+            if view.filter_ and isinstance(view.filter_, RawFilter) and view.view.space not in COGNITE_SPACES:
                 issue_list.append(
                     NotNeatSupportedFilterWarning(view.view.as_id()),
                 )

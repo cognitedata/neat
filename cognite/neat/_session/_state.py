@@ -65,6 +65,34 @@ class SessionState:
         issues.extend(extract_issues)
         return issues
 
+    def _raise_exception_if_condition_not_met(
+        self,
+        activity: str,
+        empty_rules_store_required: bool = False,
+        empty_instances_store_required: bool = False,
+        instances_required: bool = False,
+        client_required: bool = False,
+    ) -> None:
+        """Set conditions for raising an error in the session that are used by various methods in the session."""
+        condition = set()
+        suggestion = set()
+
+        if client_required and not self.client:
+            condition.add(f"{activity} expects a client in NEAT session")
+            suggestion.add("Please provide a client")
+        if empty_rules_store_required and not self.rule_store.empty:
+            condition.add(f"{activity} expects no data model in NEAT session")
+            suggestion.add("Start new session")
+        if empty_instances_store_required and not self.instances.empty:
+            condition.add(f"{activity} expects no instances in NEAT session")
+            suggestion.add("Start new session")
+        if instances_required and self.instances.empty:
+            condition.add(f"{activity} expects instances in NEAT session")
+            suggestion.add("Read in instances to neat session")
+
+        if condition:
+            raise NeatSessionError(". ".join(condition) + ". " + ". ".join(suggestion) + ". And try again.")
+
 
 class InstancesState:
     def __init__(

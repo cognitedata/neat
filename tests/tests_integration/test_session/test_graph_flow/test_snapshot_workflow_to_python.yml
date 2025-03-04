@@ -1492,35 +1492,20 @@ data_product:
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     view: ClassicTimeSeries
 instances:
-- externalId: ClassicSourceSystem_manufacturer1
+- externalId: Asset_Measurement
   instanceType: node
   sources:
-  - properties:
-      name: manufacturer1
+  - properties: {}
     source:
-      externalId: ClassicSourceSystem
+      externalId: ClassicAsset
       space: sp_windfarm
       type: view
       version: v1
   space: sp_windfarm_dataset
   type:
-    externalId: ClassicSourceSystem
+    externalId: ClassicAsset
     space: sp_windfarm
-- externalId: ClassicSourceSystem_manufacturer2
-  instanceType: node
-  sources:
-  - properties:
-      name: manufacturer2
-    source:
-      externalId: ClassicSourceSystem
-      space: sp_windfarm
-      type: view
-      version: v1
-  space: sp_windfarm_dataset
-  type:
-    externalId: ClassicSourceSystem
-    space: sp_windfarm
-- externalId: Measurement
+- externalId: Label_Measurement
   instanceType: node
   sources:
   - properties:
@@ -1553,10 +1538,10 @@ instances:
         height: '100'
       name: MetMast
       parent:
-        externalId: Unknown asset
+        externalId: Asset_Measurement
         space: sp_windfarm_dataset
       source:
-        externalId: ClassicSourceSystem_manufacturer2
+        externalId: manufacturer2
         space: sp_windfarm_dataset
       tags:
       - Label_Measurement
@@ -1602,7 +1587,7 @@ instances:
         assetCategory: WindFarm
       name: Utsira
       source:
-        externalId: ClassicSourceSystem_manufacturer1
+        externalId: manufacturer1
         space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
@@ -1633,7 +1618,7 @@ instances:
         externalId: Utsira
         space: source_ds
       source:
-        externalId: ClassicSourceSystem_manufacturer1
+        externalId: manufacturer1
         space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
@@ -1662,7 +1647,7 @@ instances:
         fileCategory: DataSheet
       name: WT-01_datasheet.txt
       source:
-        externalId: ClassicSourceSystem_manufacturer1
+        externalId: manufacturer1
         space: sp_windfarm_dataset
     source:
       externalId: ClassicFile
@@ -1786,7 +1771,7 @@ instances:
         externalId: Utsira
         space: source_ds
       source:
-        externalId: ClassicSourceSystem_manufacturer1
+        externalId: manufacturer1
         space: sp_windfarm_dataset
       tags:
       - Label_PowerGeneratingUnit
@@ -1934,6 +1919,34 @@ instances:
   type:
     externalId: ClassicDataSet
     space: sp_windfarm
+- externalId: manufacturer1
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer1
+    source:
+      externalId: ClassicSourceSystem
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: ClassicSourceSystem
+    space: sp_windfarm
+- externalId: manufacturer2
+  instanceType: node
+  sources:
+  - properties:
+      name: manufacturer2
+    source:
+      externalId: ClassicSourceSystem
+      space: sp_windfarm
+      type: view
+      version: v1
+  space: sp_windfarm_dataset
+  type:
+    externalId: ClassicSourceSystem
+    space: sp_windfarm
 - externalId: metMast
   instanceType: node
   sources:
@@ -1969,7 +1982,7 @@ instances:
       metadata:
         blob: data
       source:
-        externalId: ClassicSourceSystem_manufacturer1
+        externalId: manufacturer1
         space: sp_windfarm_dataset
       startTime: '1970-01-01T00:00:00.400+00:00'
       subtype: Planned
