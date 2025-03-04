@@ -36,7 +36,7 @@ from cognite.neat._rules.models.dms import (
     DMSValidation,
 )
 from cognite.neat._rules.models.dms._exporter import _DMSExporter
-from cognite.neat._rules.models.entities._single_value import UnknownEntity, ViewEntity
+from cognite.neat._rules.models.entities._single_value import ContainerEntity, UnknownEntity, ViewEntity
 from cognite.neat._rules.transformers import (
     DMSToInformation,
     InformationToDMS,
@@ -1779,3 +1779,32 @@ class TestDMSExporter:
         actual = exporter._edge_types_by_view_property_id(properties_by_view_id, view_by_id)
 
         assert actual == expected_edge_types_by_view_property_id
+
+
+class TestDMSValidation:
+    @pytest.mark.parametrize(
+        "input_rules, expected_views, expected_containers",
+        [
+            pytest.param(
+                DMSInputRules(
+                    DMSInputMetadata("my_space", "MyModel", "Me", "v1"),
+                    properties=[
+                        DMSInputProperty("MyView", "name", "text", container="MyContainer", container_property="name"),
+                    ],
+                    views=[DMSInputView("MyView")],
+                    containers=[DMSInputContainer("MyContainer", constraint="cdf_cdm:CogniteDescribable")],
+                ),
+                set(),
+                {ContainerEntity(space="cdf_cdm", externalId="CogniteDescribable")},
+                id="Container requiring other container",
+            )
+        ],
+    )
+    def test_imported_views_and_containers_ids(
+        self, input_rules: DMSInputRules, expected_views: set[ViewEntity], expected_containers: set[ContainerEntity]
+    ) -> None:
+        validation = DMSValidation(input_rules.as_verified_rules())
+        actual_views, actual_containers = validation.imported_views_and_containers_ids()
+
+        assert actual_views == expected_views
+        assert actual_containers == expected_containers
