@@ -705,12 +705,6 @@ class Examples:
 
     def core_data_model(self) -> IssueList:
         """Reads the core data model example into the NeatSession."""
-
-        self._state._raise_exception_if_condition_not_met(
-            "Read Core Data Model example",
-            empty_rules_store_required=True,
-        )
-
         cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
         importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(self._get_client, cdm_v1)
-        return self._state.rule_import(importer)
+        return self._state.change(importer, "Read Core Data Model example")
