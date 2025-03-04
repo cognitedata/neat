@@ -12,6 +12,7 @@ from cognite.neat._rules.transformers import (
     VerifiedRulesTransformer,
 )
 from cognite.neat._store import NeatGraphStore, NeatRulesStore, NeatStoreManager
+from cognite.neat._store._manager import Action
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError, _session_method_wrapper
@@ -27,8 +28,8 @@ class SessionState:
         self.rule_store =NeatRulesStore()
         self.instances = InstancesState(store_type, storage_path=storage_path)
         self.manager = NeatStoreManager(self.instances.store, self.rule_store)
-        self.last_reference: DMSRules | InformationRules | None = None
         self.client = client
+        self.last_reference: DMSRules | InformationRules | None = None
         self.quoted_source_identifiers = False
 
     def change(self, action: Action, description: str | None = None) -> IssueList:
