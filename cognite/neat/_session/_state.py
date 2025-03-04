@@ -11,7 +11,7 @@ from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import (
     VerifiedRulesTransformer,
 )
-from cognite.neat._store import NeatGraphStore, NeatRulesStore
+from cognite.neat._store import NeatGraphStore, NeatRulesStore, NeatStoreManager
 from cognite.neat._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError, _session_method_wrapper
@@ -24,11 +24,18 @@ class SessionState:
         storage_path: Path | None = None,
         client: NeatClient | None = None,
     ) -> None:
+        self.rule_store =NeatRulesStore()
         self.instances = InstancesState(store_type, storage_path=storage_path)
-        self.rule_store = NeatRulesStore()
+        self.manager = NeatStoreManager(self.instances.store, self.rule_store)
         self.last_reference: DMSRules | InformationRules | None = None
         self.client = client
         self.quoted_source_identifiers = False
+
+    def change(self, action: Action, description: str | None = None) -> IssueList:
+        issues = self.manager.change(action, description)
+        issues.hint = "Use the .inspect.issues() for more details."
+        # Todo Depending on the action, change the issue.action to reflect the action taken.
+        return issues
 
     def rule_transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not transformer:
