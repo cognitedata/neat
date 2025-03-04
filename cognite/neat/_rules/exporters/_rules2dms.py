@@ -344,9 +344,15 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
                     categorized.to_skip.append(cdf_item)
                 else:
                     categorized.to_delete.append(cdf_item.as_write())
-                    categorized.to_create.append(item)
+                    if isinstance(item, dm.DataModelApply) and self.existing != "recreate":
+                        # Mypy failing to understand the output of merge is T_WriteClass.
+                        categorized.to_create.append(loader.merge(item, cdf_item))  # type: ignore[arg-type]
+                    else:
+                        categorized.to_create.append(item)
             elif loader.are_equal(item, cdf_item):
                 categorized.unchanged.append(item)
+            elif loader.support_merge:
+                categorized.to_update.append(loader.merge(item, cdf_item))
             else:
                 categorized.to_update.append(item)
         return categorized

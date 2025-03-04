@@ -364,7 +364,9 @@ class CDFToAPI:
         !!! note "Data Model creation modes"
             - "fail": If any component already exists, the export will fail.
             - "skip": If any component already exists, it will be skipped.
-            - "update": If any component already exists, it will be updated.
+            - "update": If any component already exists, it will be updated. For data models, views, and containers
+                this means combining the existing and new component. Fo example, for data models the new
+                views will be added to the existing views.
             - "force": If any component already exists, and the update fails, it will be deleted and recreated.
             - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
 

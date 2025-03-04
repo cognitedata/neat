@@ -1,13 +1,22 @@
 import itertools
+from collections.abc import Iterable
 
 import pytest
 from cognite.client import CogniteClient
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes import Row
 
+from cognite.neat._client import NeatClient
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules, SheetList
-from cognite.neat._rules.models.dms import DMSInputRules
+from cognite.neat._rules.models.dms import (
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputRules,
+    DMSInputView,
+)
 from cognite.neat._rules.models.information import (
     InformationClass,
     InformationMetadata,
@@ -297,3 +306,75 @@ class TestDMSExporters:
 
         assert uploaded_by_name["spaces"].success == 1
         assert uploaded_by_name["spaces"].failed == 0
+
+
+@pytest.fixture()
+def existing_data_model(neat_client: NeatClient) -> Iterable[dm.DataModel]:
+    space = dm.SpaceApply("neat_integration_test")
+    created = neat_client.data_modeling.spaces.apply(space)
+    assert created is not None
+    container = dm.ContainerApply(
+        space.space,
+        "ExistingContainer",
+        properties={
+            "existing": dm.ContainerProperty(dm.data_types.Text()),
+        },
+        used_for="node",
+    )
+    created = neat_client.data_modeling.containers.apply(container)
+    assert created is not None
+    view = dm.ViewApply(
+        space.space,
+        "ExistingView",
+        "v1",
+        properties={"existing": dm.MappedPropertyApply(container.as_id(), "existing")},
+    )
+    created = neat_client.data_modeling.views.apply(view)
+    assert created is not None
+    data_model = dm.DataModelApply(space.space, "ExportModelMergeWithExisting", "v1", views=[view.as_id()])
+    created = neat_client.data_modeling.data_models.apply(data_model)
+    assert created is not None
+    try:
+        yield data_model
+    finally:
+        neat_client.data_modeling.data_models.delete(data_model.as_id())
+        neat_client.data_modeling.views.delete(view.as_id())
+        neat_client.data_modeling.containers.delete(container.as_id())
+
+
+class TestDMSExporter:
+    def test_export_model_merge_with_existing(self, existing_data_model: dm.DataModel, neat_client: NeatClient):
+        space = existing_data_model.space
+        rules = DMSInputRules(
+            DMSInputMetadata(
+                space=space,
+                external_id=existing_data_model.external_id,
+                version=existing_data_model.version,
+                creator="doctrino",
+            ),
+            properties=[
+                DMSInputProperty(
+                    "NewView", "newProp", "text", container="ExistingContainer", container_property="newProp"
+                ),
+            ],
+            views=[DMSInputView("NewView")],
+            containers=[DMSInputContainer("ExistingContainer", used_for="node")],
+        ).as_verified_rules()
+
+        try:
+            uploaded = DMSExporter(existing="update").export_to_cdf(rules, neat_client, dry_run=False)
+            error_messages: list[str] = []
+            for item in uploaded:
+                error_messages.extend(item.error_messages)
+            assert len(error_messages) == 0, error_messages
+
+            data_model = neat_client.data_modeling.data_models.retrieve(existing_data_model.as_id()).latest_version()
+            assert set(data_model.views) == {
+                dm.ViewId(space, "ExistingView", "v1"),
+                dm.ViewId(space, "NewView", existing_data_model.version),
+            }
+            container = neat_client.data_modeling.containers.retrieve((space, "ExistingContainer"))
+            assert set(container.properties) == {"existing", "newProp"}
+        finally:
+            neat_client.data_modeling.data_models.delete(existing_data_model.as_id())
+            neat_client.data_modeling.views.delete(dm.ViewId(space, "NewView", existing_data_model.version))
