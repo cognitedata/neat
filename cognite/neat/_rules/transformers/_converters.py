@@ -716,9 +716,9 @@ class ToEnterpriseModel(ToExtensionModel):
                 view=view_entity,
                 view_property=property_id,
                 value_type=String(),
-                nullable=True,
+                min_count=0,
                 immutable=False,
-                is_list=False,
+                max_count=1,
                 container=container_entity,
                 container_property=property_id,
             )
@@ -923,9 +923,9 @@ class ToSolutionModel(ToExtensionModel):
                         view=view.view,
                         view_property=f"{prefix}{self.dummy_property}",
                         value_type=String(),
-                        nullable=True,
+                        min_count=0,
+                        max_count=1,
                         immutable=False,
-                        is_list=False,
                         container=container_entity,
                         container_property=f"{prefix}{self.dummy_property}",
                     )
@@ -942,9 +942,9 @@ class ToSolutionModel(ToExtensionModel):
                         view=view.view,
                         view_property=self.direct_property,
                         value_type=read_view,
-                        nullable=True,
+                        min_count=0,
+                        max_count=1,
                         immutable=False,
-                        is_list=False,
                         container=container_entity,
                         container_property=self.direct_property,
                     )
@@ -1528,12 +1528,17 @@ class _InformationRulesConverter:
 
         container: ContainerEntity | None = None
         container_property: str | None = None
-        is_list: bool | None = info_property.is_list
-        nullable: bool | None = not info_property.is_mandatory
+        # DMS should have min count of either 0 or 1
+        min_count = min(1, max(0, info_property.min_count or 0))
+        max_count = info_property.max_count
         if isinstance(connection, EdgeEntity):
-            nullable = None
+            min_count = 0
+            max_count = 1 if max_count == 1 else float("inf")
+        elif isinstance(connection, ReverseConnectionEntity):
+            min_count = 0
+            max_count = 1 if max_count == 1 else float("inf")
         elif connection == "direct":
-            nullable = True
+            min_count = 0
             container, container_property = self._get_container(info_property, default_space)
         else:
             container, container_property = self._get_container(info_property, default_space)
@@ -1541,8 +1546,8 @@ class _InformationRulesConverter:
         dms_property = DMSProperty(
             name=info_property.name,
             value_type=value_type,
-            nullable=nullable,
-            is_list=is_list,
+            min_count=min_count,
+            max_count=max_count,
             connection=connection,
             default=info_property.default,
             container=container,
@@ -1570,7 +1575,9 @@ class _InformationRulesConverter:
         ):
             edge_value_type = edge_value_types_by_class_property_pair[(prop.class_, prop.property_)]
             return EdgeEntity(properties=edge_value_type.as_view_entity(default_space, default_version))
-        if isinstance(value_type, ViewEntity) and prop.is_list:
+        if isinstance(value_type, ViewEntity) and (
+            prop.max_count in {float("inf"), None} or (isinstance(prop.max_count, int | float) and prop.max_count > 1)
+        ):
             return EdgeEntity()
         elif isinstance(value_type, ViewEntity):
             return "direct"
@@ -1759,8 +1766,8 @@ class _DMSRulesConverter:
                 property_=property_.view_property,
                 value_type=value_type,
                 description=property_.description,
-                min_count=(0 if property_.nullable or property_.nullable is None else 1),
-                max_count=(float("inf") if property_.is_list or property_.nullable is None else 1),
+                min_count=property_.min_count,
+                max_count=property_.max_count,
             )
 
             # Linking

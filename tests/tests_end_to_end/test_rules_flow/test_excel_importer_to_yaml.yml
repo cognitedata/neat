@@ -54,195 +54,199 @@ metadata:
 properties:
 - container: CircuitBreaker
   container_property: maxCapacity
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/CircuitBreaker/maxCapacity
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/CircuitBreaker/maxCapacity
-  nullable: true
   value_type: float32
   view: CircuitBreaker
   view_property: maxCapacity
 - container: CurrentTransformer
   container_property: maxCapacity
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/CurrentTransformer/maxCapacity
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/CurrentTransformer/maxCapacity
-  nullable: true
   value_type: float32
   view: CurrentTransformer
   view_property: maxCapacity
 - container: DisconnectSwitch
   container_property: maxCapacity
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DisconnectSwitch/maxCapacity
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/DisconnectSwitch/maxCapacity
-  nullable: true
   value_type: float32
   view: DisconnectSwitch
   view_property: maxCapacity
 - connection: direct
   container: DistributionSubstation
   container_property: primaryPowerLine
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DistributionSubstation/primaryPowerLine
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/DistributionSubstation/primaryPowerLine
-  nullable: true
   value_type: Transmission
   view: DistributionSubstation
   view_property: primaryPowerLine
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/DistributionSubstation/secondaryPowerLine
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/DistributionSubstation/secondaryPowerLine
   value_type: DistributionLine
   view: DistributionSubstation
   view_property: secondaryPowerLine
 - container: EnergyArea
   container_property: activePower
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea/activePower
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyArea/activePower
-  nullable: false
   value_type: timeseries
   view: EnergyArea
   view_property: activePower
 - connection: direct
   container: EnergyArea
   container_property: geoLocation
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea/geoLocation
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyArea/geoLocation
-  nullable: true
   value_type: Polygon
   view: EnergyArea
   view_property: geoLocation
 - container: EnergyArea
   container_property: name
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea/name
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyArea/name
-  nullable: false
   value_type: text
   view: EnergyArea
   view_property: name
 - container: EnergyArea
   container_property: ratedPower
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea/ratedPower
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyArea/ratedPower
-  nullable: false
   value_type: float32
   view: EnergyArea
   view_property: ratedPower
 - container: EnergyConsumer
   container_property: load
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyConsumer/load
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyConsumer/load
-  nullable: false
   value_type: timeseries
   view: EnergyConsumer
   view_property: load
 - connection: direct
   container: EnergyConsumer
   container_property: location
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyConsumer/location
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyConsumer/location
-  nullable: true
   value_type: Point
   view: EnergyConsumer
   view_property: location
 - container: EnergyConsumer
   container_property: name
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyConsumer/name
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyConsumer/name
-  nullable: false
   value_type: text
   view: EnergyConsumer
   view_property: name
 - container: GeneratingUnit
   container_property: activePower
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/activePower
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/activePower
-  nullable: false
   value_type: timeseries
   view: GeneratingUnit
   view_property: activePower
 - connection: direct
   container: GeneratingUnit
   container_property: geoLocation
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/geoLocation
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/geoLocation
-  nullable: true
   value_type: Point
   view: GeneratingUnit
   view_property: geoLocation
 - container: GeneratingUnit
   container_property: name
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/name
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/name
-  nullable: false
   value_type: text
   view: GeneratingUnit
   view_property: name
 - container: GeneratingUnit
   container_property: type
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/type
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/type
-  nullable: false
   value_type: text
   view: GeneratingUnit
   view_property: type
 - container: GeoLocation
   container_property: name
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeoLocation/name
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeoLocation/name
-  nullable: false
   value_type: text
   view: GeoLocation
   view_property: name
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Meter/consumer
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Meter/consumer
   value_type: ElectricCarCharger
   view: Meter
   view_property: consumer
 - container: Meter
   container_property: consumption
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Meter/consumption
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Meter/consumption
-  nullable: false
   value_type: timeseries
   view: Meter
   view_property: consumption
 - connection: direct
   container: Meter
   container_property: powerLine
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Meter/powerLine
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Meter/powerLine
-  nullable: true
   value_type: DistributionLine
   view: Meter
   view_property: powerLine
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/MultiLineString/point
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/MultiLineString/point
   value_type: Point
   view: MultiLineString
   view_property: point
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OffshoreSubstation/primaryPowerLine
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/OffshoreSubstation/primaryPowerLine
   value_type: ArrayCable
   view: OffshoreSubstation
@@ -250,215 +254,220 @@ properties:
 - connection: direct
   container: OffshoreSubstation
   container_property: secondaryPowerLine
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OffshoreSubstation/secondaryPowerLine
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/OffshoreSubstation/secondaryPowerLine
-  nullable: true
   value_type: ExportCable
   view: OffshoreSubstation
   view_property: secondaryPowerLine
 - connection: direct
   container: OnshoreSubstation
   container_property: primaryPowerLine
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OnshoreSubstation/primaryPowerLine
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/OnshoreSubstation/primaryPowerLine
-  nullable: true
   value_type: ExportCable
   view: OnshoreSubstation
   view_property: primaryPowerLine
 - connection: direct
   container: OnshoreSubstation
   container_property: secondaryPowerLine
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/OnshoreSubstation/secondaryPowerLine
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/OnshoreSubstation/secondaryPowerLine
-  nullable: true
   value_type: Transmission
   view: OnshoreSubstation
   view_property: secondaryPowerLine
 - container: Point
   container_property: latitude
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Point/latitude
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Point/latitude
-  nullable: false
   value_type: float32
   view: Point
   view_property: latitude
 - container: Point
   container_property: longitude
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Point/longitude
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Point/longitude
-  nullable: false
   value_type: float32
   view: Point
   view_property: longitude
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Polygon/point
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Polygon/point
   value_type: Point
   view: Polygon
   view_property: point
 - container: PowerLine
   container_property: currentVoltage
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine/currentVoltage
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/PowerLine/currentVoltage
-  nullable: false
   value_type: timeseries
   view: PowerLine
   view_property: currentVoltage
 - connection: direct
   container: PowerLine
   container_property: geoLocation
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine/geoLocation
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/PowerLine/geoLocation
-  nullable: true
   value_type: MultiLineString
   view: PowerLine
   view_property: geoLocation
 - container: PowerLine
   container_property: length
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine/length
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/PowerLine/length
-  nullable: true
   value_type: float32
   view: PowerLine
   view_property: length
 - connection: direct
   container: PowerLine
   container_property: voltageLevel
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/PowerLine/voltageLevel
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/PowerLine/voltageLevel
-  nullable: true
   value_type: VoltageLevel
   view: PowerLine
   view_property: voltageLevel
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/circuitBreaker
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/circuitBreaker
   value_type: CircuitBreaker
   view: Substation
   view_property: circuitBreaker
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/currentTransformer
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/currentTransformer
   value_type: CurrentTransformer
   view: Substation
   view_property: currentTransformer
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/disconnectSwitch
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/disconnectSwitch
   value_type: DisconnectSwitch
   view: Substation
   view_property: disconnectSwitch
 - container: Substation
   container_property: location
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/location
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/location
-  nullable: true
   value_type: text
   view: Substation
   view_property: location
 - connection: direct
   container: Substation
   container_property: mainTransformer
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/mainTransformer
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/mainTransformer
-  nullable: true
   value_type: VoltageTransformer
   view: Substation
   view_property: mainTransformer
 - container: Substation
   container_property: name
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/name
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/name
-  nullable: false
   value_type: text
   view: Substation
   view_property: name
 - connection: direct
   container: Substation
   container_property: primaryPowerLine
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/primaryPowerLine
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/primaryPowerLine
-  nullable: true
   value_type: PowerLine
   view: Substation
   view_property: primaryPowerLine
 - container: Substation
   container_property: primaryVoltage
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/primaryVoltage
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/primaryVoltage
-  nullable: false
   value_type: timeseries
   view: Substation
   view_property: primaryVoltage
 - connection: direct
   container: Substation
   container_property: secondaryPowerLine
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/secondaryPowerLine
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/secondaryPowerLine
-  nullable: true
   value_type: PowerLine
   view: Substation
   view_property: secondaryPowerLine
 - container: Substation
   container_property: secondaryVoltage
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/Substation/secondaryVoltage
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/Substation/secondaryVoltage
-  nullable: false
   value_type: timeseries
   view: Substation
   view_property: secondaryVoltage
 - container: VoltageLevel
   container_property: maxLevel
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageLevel/maxLevel
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/VoltageLevel/maxLevel
-  nullable: false
   value_type: float32
   view: VoltageLevel
   view_property: maxLevel
 - connection: direct
   container: VoltageTransformer
   container_property: inputVoltageLevel
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageTransformer/inputVoltageLevel
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/VoltageTransformer/inputVoltageLevel
-  nullable: true
   value_type: VoltageLevel
   view: VoltageTransformer
   view_property: inputVoltageLevel
 - connection: direct
   container: VoltageTransformer
   container_property: outputVoltageLevel
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/VoltageTransformer/outputVoltageLevel
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/VoltageTransformer/outputVoltageLevel
-  nullable: true
   value_type: VoltageLevel
   view: VoltageTransformer
   view_property: outputVoltageLevel
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm/arrayCable
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindFarm/arrayCable
   value_type: ArrayCable
   view: WindFarm
@@ -466,26 +475,27 @@ properties:
 - connection: direct
   container: WindFarm
   container_property: exportCable
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm/exportCable
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindFarm/exportCable
-  nullable: true
   value_type: ExportCable
   view: WindFarm
   view_property: exportCable
 - connection: direct
   container: WindFarm
   container_property: substation
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm/substation
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindFarm/substation
-  nullable: true
   value_type: OffshoreSubstation
   view: WindFarm
   view_property: substation
 - connection: edge
-  is_list: true
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm/windTurbines
+  max_count: .inf
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindFarm/windTurbines
   value_type: WindTurbine
   view: WindFarm
@@ -493,46 +503,46 @@ properties:
 - connection: direct
   container: WindTurbine
   container_property: arrayCableConnection
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine/arrayCableConnection
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindTurbine/arrayCableConnection
-  nullable: true
   value_type: ArrayCable
   view: WindTurbine
   view_property: arrayCableConnection
 - container: WindTurbine
   container_property: hubHeight
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine/hubHeight
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindTurbine/hubHeight
-  nullable: false
   value_type: float32
   view: WindTurbine
   view_property: hubHeight
 - container: WindTurbine
   container_property: lifeExpectancy
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine/lifeExpectancy
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindTurbine/lifeExpectancy
-  nullable: true
   value_type: int32
   view: WindTurbine
   view_property: lifeExpectancy
 - container: WindTurbine
   container_property: manufacturer
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine/manufacturer
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindTurbine/manufacturer
-  nullable: true
   value_type: text
   view: WindTurbine
   view_property: manufacturer
 - container: WindTurbine
   container_property: ratedPower
-  is_list: false
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine/ratedPower
+  max_count: 1
+  min_count: 1
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindTurbine/ratedPower
-  nullable: false
   value_type: float32
   view: WindTurbine
   view_property: ratedPower

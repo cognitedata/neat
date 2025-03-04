@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_LIMIT
+from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
 from cognite.neat._issues._base import ResourceType
 
 from ._resources import ResourceNeatWarning, T_Identifier, T_ReferenceIdentifier
@@ -79,7 +79,7 @@ class PropertyDirectRelationLimitWarning(PropertyWarning[T_Identifier]):
 
     resource_type = "view"
 
-    limit: int = DMS_DIRECT_RELATION_LIST_LIMIT
+    limit: int = DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
 
 
 @dataclass(unsafe_hash=True)

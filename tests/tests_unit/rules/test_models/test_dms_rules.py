@@ -200,7 +200,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             DMSInputProperty(
                 value_type="WindTurbine",
                 connection="direct",
-                is_list=True,
+                max_count=100,
                 container="WindFarm",
                 container_property="windTurbines",
                 view="WindFarm",
@@ -412,7 +412,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             DMSInputProperty(
                 value_type="CogniteTimeseries",
                 connection="reverse(property=asset)",
-                is_list=True,
+                max_count=float("inf"),
                 view="Asset",
                 view_property="timeseries",
             ),
@@ -423,11 +423,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 container_property="root",
                 view="Asset",
                 view_property="root",
+                max_count=1,
             ),
             DMSInputProperty(
                 value_type="Asset",
                 connection="reverse(property=root)",
-                is_list=True,
+                max_count=float("inf"),
                 view="Asset",
                 view_property="children",
             ),
@@ -437,6 +438,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 container_property="name",
                 view="CogniteTimeseries",
                 view_property="name",
+                max_count=1,
             ),
             DMSInputProperty(
                 value_type="Asset",
@@ -445,11 +447,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 container_property="asset",
                 view="CogniteTimeseries",
                 view_property="asset",
+                max_count=1,
             ),
             DMSInputProperty(
                 value_type="Activity",
                 connection="direct",
-                is_list=True,
+                max_count=100,
                 container="CogniteTimeseries",
                 container_property="activities",
                 view="CogniteTimeseries",
@@ -457,7 +460,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
             DMSInputProperty(
                 value_type="CogniteTimeseries",
-                is_list=True,
+                max_count=float("inf"),
                 connection="reverse(property=activities)",
                 view="Activity",
                 view_property="timeseries",
@@ -914,7 +917,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             properties=[
                 DMSInputProperty(
                     value_type="float64",
-                    is_list=False,
+                    max_count=1,
                     container="GeneratingUnit",
                     container_property="maxPower",
                     view="sp_core:Asset",
@@ -970,7 +973,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             properties=[
                 DMSInputProperty(
                     value_type="float64",
-                    is_list=True,
+                    max_count=1000,
                     container="GeneratingUnit",
                     container_property="maxPower",
                     view="sp_core:Asset",
@@ -978,7 +981,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
                 DMSInputProperty(
                     value_type="float64",
-                    is_list=False,
+                    max_count=1,
                     container="GeneratingUnit",
                     container_property="maxPower",
                     view="sp_core:Asset",
@@ -1026,7 +1029,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
             properties=[
                 DMSInputProperty(
                     value_type="float64",
-                    nullable=True,
+                    min_count=0,
                     container="GeneratingUnit",
                     container_property="maxPower",
                     view="sp_core:Asset",
@@ -1034,7 +1037,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
                 DMSInputProperty(
                     value_type="float64",
-                    nullable=False,
+                    min_count=1,
                     container="GeneratingUnit",
                     container_property="maxPower",
                     view="sp_core:Asset",
@@ -1453,7 +1456,7 @@ class TestDMSRules:
                     view_property="object3D",
                     value_type="Cognite3DObject",
                     connection="direct",
-                    is_list=False,
+                    max_count=1,
                     container="CogniteVisualizable",
                     container_property="object3D",
                 ),
@@ -1491,7 +1494,7 @@ class TestDMSRules:
                     view_property="object3D",
                     value_type="Cognite3DObject",
                     connection="direct",
-                    is_list=False,
+                    max_count=1,
                     container="CogniteVisualizable",
                     container_property="object3D",
                 ),
@@ -1530,7 +1533,7 @@ class TestDMSRules:
                     view_property="object3D",
                     value_type="Cognite3DObject",
                     connection="direct",
-                    is_list=False,
+                    max_count=1,
                     container="CogniteVisualizable",
                     container_property="object3D",
                 ),
@@ -1604,7 +1607,7 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
                     view_property="windFarm",
                     value_type="WindFarm",
                     connection="edge",
-                    is_list=False,
+                    max_count=1,
                 ),
                 DMSInputProperty(
                     view="WindFarm",
@@ -1645,7 +1648,7 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
                     view_property="units",
                     value_type="GeneratingUnit",
                     connection="edge",
-                    is_list=False,
+                    max_count=1,
                 ),
                 DMSInputProperty(
                     view="WindFarm",

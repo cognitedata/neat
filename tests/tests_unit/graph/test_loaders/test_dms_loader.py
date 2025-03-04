@@ -4,7 +4,7 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 
 from cognite.neat import NeatSession
 from cognite.neat._client.testing import monkeypatch_neat_client
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DMS_DIRECT_RELATION_LIST_LIMIT
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
 from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._issues import IssueList
@@ -112,4 +112,4 @@ def test_extract_above_direct_relation_limit() -> None:
     assert client.data_modeling.instances.apply.call_count == 3
     file_node = client.data_modeling.instances.apply.call_args_list[2].args[0][0]
     assert file_node.sources[0].source.external_id == "ClassicFile"
-    assert len(file_node.sources[0].properties["assetIds"]) == DMS_DIRECT_RELATION_LIST_LIMIT
+    assert len(file_node.sources[0].properties["assetIds"]) == DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
