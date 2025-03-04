@@ -481,9 +481,9 @@ class RulesAnalysis:
 
         return query_configs
 
-    def _dms_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.DiGraph:
-        """Generate a DiGraph from the DMS rules."""
-        di_graph = nx.DiGraph()
+    def _dms_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
+        """Generate a MultiDiGraph from the DMS rules."""
+        di_graph = nx.MultiDiGraph()
 
         rules = self.dms
 
@@ -515,11 +515,11 @@ class RulesAnalysis:
 
         return di_graph
 
-    def _info_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.DiGraph:
-        """Generate DiGraph representing information data model."""
+    def _info_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
+        """Generate MultiDiGraph representing information data model."""
 
         rules = self.information
-        di_graph = nx.DiGraph()
+        di_graph = nx.MultiDiGraph()
 
         # Add nodes and edges from Views sheet
         for class_ in rules.classes:
