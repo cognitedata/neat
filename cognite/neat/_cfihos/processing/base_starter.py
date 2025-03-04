@@ -114,7 +114,7 @@ class base_starter_class:
         )
 
         logging.info(f"STEP 4: exporting NEAT rules sheet ...")
-        generate_neat_rules_sheet("/Users/ali.majed@cognitedata.com/projects/neat-xom/neat/cfihos_src/dmsTemplates/cfihos_neat_1.xlsx",
+        generate_neat_rules_sheet("/Users/ali.majed@cognitedata.com/projects/neat-xom/neat/cfihos_src/dmsTemplates/cfihos_neat_model.xlsx",
                                   pd.DataFrame(df_container_model_metadata),
                                   pd.DataFrame(lst_properties),
                                   pd.DataFrame(lst_views),

@@ -151,7 +151,7 @@ def create_container_from_property_struct_dict(
 
     # print(df_containers)
     
-    # #pecify the existing file and sheet name irjfjirejjjgegioiergie jgerjgoerjgoiejoejgoierjgiuewhfrioegjieurgioejgiuerjguehgegioj iigjg ujifiuefgjrgojergj ali maje lali maje jdfhhjf grej9i8erug gjeoigrggj
+    # #pecify the existing file and sheet name
     # file_path = NeatReader.create("cfihos_src/dmsTemplates/cdf-dms-xom-draft_population.xlsx").materialize_path()
     # sheet_name = "Containers"
 
