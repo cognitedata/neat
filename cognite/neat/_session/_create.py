@@ -3,7 +3,6 @@ from typing import Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._issues import IssueList
-from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     IncludeReferenced,
@@ -58,7 +57,7 @@ class CreateAPI:
                 - Charts
 
         """
-        last_rules = self.self._state.rule_store.last_verified_rules
+        last_rules = self._state.rule_store.last_verified_rules
         issues = self._state.rule_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
@@ -104,7 +103,7 @@ class CreateAPI:
             the containers in the solution data model space.
 
         """
-        last_rules = self._get_last_rules()
+        last_rules = self._state.rule_store.last_verified_rules
         issues = self._state.rule_transform(
             ToSolutionModel(
                 new_model_id=data_model_id,
@@ -138,7 +137,7 @@ class CreateAPI:
                 If you set same-space, only the properties of the views in the same space as the data model
                 will be included.
         """
-        last_rules = self._get_last_rules()
+        last_rules = self._state.rule_store.last_verified_rules
         view_ids, container_ids = DMSValidation(
             self._state.rule_store.last_verified_dms_rules
         ).imported_views_and_containers_ids()

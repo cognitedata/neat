@@ -706,6 +706,6 @@ class Examples:
 
         cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
         importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
-            cast(NeatClient, self._state), cdm_v1
+            cast(NeatClient, self._state.client), cdm_v1
         )
         return self._state.rule_import(importer)

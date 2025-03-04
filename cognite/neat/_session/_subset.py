@@ -1,11 +1,8 @@
-from typing import cast
 import warnings
-
+from typing import cast
 
 from cognite.client.data_classes.data_modeling import DataModelId
 
-
-from cognite.neat._constants import COGNITE_CORE_CONCEPTS, COGNITE_CORE_FEATURES
 from cognite.neat._alpha import ExperimentalFlags
 from cognite.neat._client._api_client import NeatClient
 from cognite.neat._issues._base import IssueList
@@ -13,8 +10,8 @@ from cognite.neat._rules import importers
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.transformers import SubsetDMSRules, SubsetInformationRules
 from cognite.neat._rules.transformers._converters import (
-    SubsetEditableCDMRules,
     ToEnterpriseModel,
+    _SubsetEditableCDMRules,
 )
 
 from ._state import SessionState
@@ -35,8 +32,15 @@ class SubsetAPI:
 
     def __init__(self, state: SessionState):
         self._state = state
+        self.data_model = DataModelSubsetAPI(state)
 
-    def data_model(self, concepts: str | list[str]) -> IssueList:
+
+@session_class_wrapper
+class DataModelSubsetAPI:
+    def __init__(self, state: SessionState):
+        self._state = state
+
+    def __call__(self, concepts: str | list[str]) -> IssueList:
         """Subset the data model to the desired concepts.
 
         Args:
@@ -93,76 +97,6 @@ class SubsetAPI:
 
         return issues
 
-
-@session_class_wrapper
-class DataModelSubsetAPI:
-    def __init__(self, state: SessionState):
-        self._state = state
-
-    def __call__(self, concepts: str | list[str]) -> IssueList:
-        """Subset the data model to the desired concepts.
-
-        Args:
-            concepts: The concepts to subset the data model to.
-
-        Returns:
-            IssueList: A list of issues that occurred during the transformation.
-
-        Example:
-            Read the CogniteCore data model and reduce the data model to only the 'CogniteAsset' concept.
-            ```python
-            neat = NeatSession(CogniteClient())
-
-            neat.read.examples.core_data_model()
-
-            neat.subset.data_model("CogniteAsset")
-            ```
-        """
-        if self._state.rule_store.empty:
-            raise NeatSessionError("No rules to set the data model ID.")
-
-        warnings.filterwarnings("default")
-        ExperimentalFlags.data_model_subsetting.warn()
-
-        dms = self._state.rule_store.provenance[-1].target_entity.dms
-        information = self._state.rule_store.provenance[-1].target_entity.information
-
-        if dms:
-            views = {
-                ViewEntity(
-                    space=dms.metadata.space,
-                    externalId=concept,
-                    version=dms.metadata.version,
-                )
-                for concept in concepts
-            }
-
-            issues = self._state.rule_transform(SubsetDMSRules(views=views))
-            if not issues:
-                after = len(self._state.rule_store.last_verified_dms_rules.views)
-
-        elif information:
-            classes = {
-                ClassEntity(prefix=information.metadata.space, suffix=concept)
-                for concept in concepts
-            }
-
-            issues = self._state.rule_transform(SubsetInformationRules(classes=classes))
-            if not issues:
-                after = len(
-                    self._state.rule_store.last_verified_information_rules.classes
-                )
-
-        else:
-            raise NeatSessionError(
-                "Something went terrible wrong. Please contact the neat team."
-            )
-
-        if not issues:
-            print(f"Subset to {after} concepts.")
-
-        return issues
-
     def core_data_model(self, concepts: str | list[str]) -> IssueList:
         """Subset the data model to the desired concepts.
 
@@ -198,16 +132,9 @@ class DataModelSubsetAPI:
         warnings.filterwarnings("default")
         ExperimentalFlags.core_data_model_subsetting.warn()
 
-        if not_in_cognite_core := set(concepts) - COGNITE_CORE_CONCEPTS.union(
-            COGNITE_CORE_FEATURES
-        ):
-            raise NeatSessionError(
-                f"Concept(s) {', '.join(not_in_cognite_core)} is/are not part of the Cognite Core Data Model. Remove them and try again."
-            )
-
         cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
         importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
-            cast(NeatClient, self._state), cdm_v1
+            cast(NeatClient, self._state.client), cdm_v1
         )
         issues = self._state.rule_import(importer)
 
@@ -228,17 +155,19 @@ class DataModelSubsetAPI:
         if issues.has_errors:
             return issues
 
-        return issues.extend(
+        issues.extend(
             self._state.rule_transform(
-                SubsetEditableCDMRules(
+                _SubsetEditableCDMRules(
                     views={
                         ViewEntity(
                             space=cdm_v1.space,
                             externalId=concept,
-                            version=cdm_v1.version,
+                            version=cast(str, cdm_v1.version),
                         )
                         for concept in concepts
                     }
                 )
             )
         )
+
+        return issues
