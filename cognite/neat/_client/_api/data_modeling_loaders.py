@@ -291,6 +291,8 @@ class DataModelingLoader(
     ResourceLoader[T_ID, T_WriteClass, T_WritableCogniteResource, T_CogniteResourceList, T_WritableCogniteResourceList],
     ABC,
 ):
+    support_merge: ClassVar[bool] = True
+
     @classmethod
     def in_space(cls, item: T_WriteClass | T_WritableCogniteResource | T_ID, space: set[str]) -> bool:
         if hasattr(item, "space"):
@@ -302,9 +304,15 @@ class DataModelingLoader(
     def items_from_schema(cls, schema: DMSSchema) -> T_CogniteResourceList:
         raise NotImplementedError
 
+    @classmethod
+    @abstractmethod
+    def merge(cls, local: T_WriteClass, remote: T_WritableCogniteResource) -> T_WriteClass:
+        raise NotImplementedError
+
 
 class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, SpaceList]):
     resource_name = "spaces"
+    support_merge = False
 
     @classmethod
     def get_id(cls, item: Space | SpaceApply | str | dict) -> str:
@@ -313,6 +321,10 @@ class SpaceLoader(DataModelingLoader[str, SpaceApply, Space, SpaceApplyList, Spa
         if isinstance(item, dict):
             return item["space"]
         return item
+
+    @classmethod
+    def merge(cls, local: SpaceApply, remote: Space) -> SpaceApply:
+        raise NotImplementedError("Spaces cannot be merged")
 
     def _create(self, items: Sequence[SpaceApply]) -> SpaceList:
         return self._client.data_modeling.spaces.apply(items)
@@ -400,6 +412,28 @@ class ContainerLoader(DataModelingLoader[ContainerId, ContainerApply, Container,
         if isinstance(item, dict):
             return ContainerId.load(item)
         return item
+
+    @classmethod
+    def merge(cls, local: ContainerApply, remote: Container) -> ContainerApply:
+        if local.as_id() != remote.as_id():
+            raise ValueError(f"Cannot merge containers with different IDs: {local.as_id()} and {remote.as_id()}")
+        if local.used_for != remote.used_for:
+            raise ValueError(f"Cannot merge containers with different used_for: {local.used_for} and {remote.used_for}")
+        remote_write = remote.as_write()
+        existing_properties = remote_write.properties or {}
+        merged_properties = {**existing_properties, **(local.properties or {})}
+        merged_indices = {**remote_write.indexes, **local.indexes}
+        merged_constraints = {**remote_write.constraints, **local.constraints}
+        return ContainerApply(
+            space=remote.space,
+            external_id=remote.external_id,
+            properties=merged_properties,
+            description=local.description or remote.description,
+            name=local.name or remote.name,
+            used_for=local.used_for,
+            constraints=merged_constraints,
+            indexes=merged_indices,
+        )
 
     def sort_by_dependencies(self, items: Sequence[ContainerApply]) -> list[ContainerApply]:
         container_by_id = {container.as_id(): container for container in items}
@@ -560,6 +594,28 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
         if isinstance(item, dict):
             return ViewId.load(item)
         return item
+
+    @classmethod
+    def merge(cls, local: ViewApply, remote: View) -> ViewApply:
+        if local.as_id() != remote.as_id():
+            raise ValueError(f"Cannot merge views with different IDs: {local.as_id()} and {remote.as_id()}")
+        remote_write = remote.as_write()
+        existing_properties = remote_write.properties or {}
+        merged_properties = {**existing_properties, **(local.properties or {})}
+        merged_implements = list(remote_write.implements or [])
+        for view_id in local.implements or []:
+            if view_id not in merged_implements:
+                merged_implements.append(view_id)
+        return ViewApply(
+            space=remote.space,
+            external_id=remote.external_id,
+            version=remote.version,
+            properties=merged_properties,
+            description=local.description or remote.description,
+            name=local.name or remote.name,
+            filter=local.filter or remote.filter,
+            implements=merged_implements,
+        )
 
     def _create(self, items: Sequence[ViewApply]) -> ViewList:
         return self._client.data_modeling.views.apply(items)
@@ -736,6 +792,32 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
             return DataModelId.load(item)
         return item
 
+    @classmethod
+    def merge(cls, local: DataModelApply, remote: DataModel) -> DataModelApply:
+        if local.as_id() != remote.as_id():
+            raise ValueError(f"Cannot merge data models with different IDs: {local.as_id()} and {remote.as_id()}")
+        existing_view = {
+            view.as_id() if isinstance(view, View) else view: view.as_write() if isinstance(view, View) else view
+            for view in remote.views
+        }
+        new_views = {view.as_id() if isinstance(view, ViewApply) else view: view for view in local.views or []}
+        merged_views: list[ViewId | ViewApply] = []
+        for view_id, view in existing_view.items():
+            if view_id in new_views:
+                merged_views.append(new_views.pop(view_id))
+            else:
+                merged_views.append(view)
+        merged_views.extend(new_views.values())
+
+        return DataModelApply(
+            space=local.space,
+            external_id=local.external_id,
+            version=local.version,
+            description=local.description or remote.description,
+            name=local.name or remote.name,
+            views=merged_views,
+        )
+
     def _create(self, items: Sequence[DataModelApply]) -> DataModelList:
         return self._client.data_modeling.data_models.apply(items)
 
@@ -774,6 +856,7 @@ class DataModelLoader(DataModelingLoader[DataModelId, DataModelApply, DataModel,
 class NodeLoader(DataModelingLoader[NodeId, NodeApply, Node, NodeApplyList, NodeList]):
     resource_name = "nodes"
     dependencies = frozenset({SpaceLoader, ContainerLoader, ViewLoader})
+    support_merge = False
 
     @classmethod
     def get_id(cls, item: Node | NodeApply | NodeId | dict) -> NodeId:
@@ -782,6 +865,10 @@ class NodeLoader(DataModelingLoader[NodeId, NodeApply, Node, NodeApplyList, Node
         if isinstance(item, dict):
             return NodeId.load(item)
         return item
+
+    @classmethod
+    def merge(cls, local: NodeApply, remote: Node) -> NodeApply:
+        raise NotImplementedError("Nodes cannot be merged")
 
     def _create(self, items: Sequence[NodeApply]) -> NodeList:
         self._client.data_modeling.instances.apply(items)
