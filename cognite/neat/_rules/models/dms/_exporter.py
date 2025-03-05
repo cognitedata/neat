@@ -20,7 +20,11 @@ from cognite.neat._client.data_classes.data_modeling import (
     ViewApplyDict,
 )
 from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._constants import COGNITE_SPACES
+from cognite.neat._constants import (
+    COGNITE_SPACES,
+    DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+    DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
+)
 from cognite.neat._issues.errors import NeatTypeError, NeatValueError, ResourceNotFoundError
 from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
 from cognite.neat._issues.warnings.user_modeling import (
@@ -310,7 +314,16 @@ class _DMSExporter:
 
                 args: dict[str, Any] = {}
                 if issubclass(type_cls, ListablePropertyType):
-                    args["is_list"] = prop.is_list or False
+                    is_list = args["is_list"] = prop.is_list or False
+                    if is_list:
+                        if type_cls is dm.DirectRelation and prop.max_count == DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT:
+                            # Use default of API.
+                            args["max_list_size"] = None
+                        elif type_cls is not dm.DirectRelation and prop.max_count == DMS_PRIMITIVE_LIST_DEFAULT_LIMIT:
+                            # Use default of API.
+                            args["max_list_size"] = None
+                        else:
+                            args["max_list_size"] = prop.max_count
                 if isinstance(prop.value_type, Double | Float) and isinstance(prop.value_type.unit, UnitEntity):
                     args["unit"] = prop.value_type.unit.as_reference()
                 if isinstance(prop.value_type, Enum):

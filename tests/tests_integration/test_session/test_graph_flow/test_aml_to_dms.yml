@@ -21,402 +21,405 @@ rules:
   properties:
   - container: ExternalInterface
     container_property: Description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Description
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: Description
   - container: ExternalInterface
     container_property: Name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Name
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: Name
   - container: ExternalInterface
     container_property: RefBaseClassPath
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/RefBaseClassPath
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/RefBaseClassPath
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: RefBaseClassPath
   - container: ExternalInterface
     container_property: active
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/active
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/active
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: active
   - container: ExternalInterface
     container_property: communicationType
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/communicationType
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/communicationType
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: communicationType
   - container: ExternalInterface
     container_property: direction
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/direction
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/direction
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: direction
   - container: ExternalInterface
     container_property: invertSignal
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/invertSignal
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/invertSignal
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: invertSignal
   - container: ExternalInterface
     container_property: signalClass
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/signalClass
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/signalClass
-    nullable: true
     value_type: text
     view: ExternalInterface
     view_property: signalClass
   - container: InternalElement
     container_property: Description
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/Description
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/Description
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: Description
   - container: InternalElement
     container_property: Name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/Name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/Name
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: Name
   - container: InternalElement
     container_property: RefBaseSystemUnitPath
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/RefBaseSystemUnitPath
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/RefBaseSystemUnitPath
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: RefBaseSystemUnitPath
   - container: InternalElement
     container_property: RoleRequirements
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/RoleRequirements
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/RoleRequirements
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: RoleRequirements
   - container: InternalElement
     container_property: SISNotation
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/SISNotation
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/SISNotation
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: SISNotation
   - container: InternalElement
     container_property: Version
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/Version
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/Version
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: Version
   - container: InternalElement
     container_property: additionalText
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/additionalText
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/additionalText
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: additionalText
   - container: InternalElement
     container_property: approvedBy
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/approvedBy
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/approvedBy
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: approvedBy
   - container: InternalElement
     container_property: area
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/area
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/area
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: area
   - container: InternalElement
     container_property: checkedBy
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/checkedBy
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/checkedBy
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: checkedBy
   - container: InternalElement
     container_property: controlFunctionIntegration
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlFunctionIntegration
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlFunctionIntegration
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: controlFunctionIntegration
   - container: InternalElement
     container_property: controlMode
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlMode
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlMode
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: controlMode
   - container: InternalElement
     container_property: controlNode
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNode
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNode
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: controlNode
   - container: InternalElement
     container_property: controlNodeIN
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeIN
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeIN
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: controlNodeIN
   - container: InternalElement
     container_property: controlNodeOUT
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeOUT
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeOUT
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: controlNodeOUT
   - container: InternalElement
     container_property: coordinateSystem
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/coordinateSystem
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/coordinateSystem
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: coordinateSystem
   - container: InternalElement
     container_property: createdBy
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/createdBy
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/createdBy
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: createdBy
   - container: InternalElement
     container_property: drawingOrigin
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingOrigin
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingOrigin
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: drawingOrigin
   - container: InternalElement
     container_property: drawingReference
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingReference
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingReference
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: drawingReference
   - container: InternalElement
     container_property: drawingSize
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingSize
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingSize
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: drawingSize
   - connection: edge
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/externalInterface
+    max_count: .inf
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/externalInterface
     value_type: ExternalInterface
     view: InternalElement
     view_property: externalInterface
   - connection: edge
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/internalElement
+    max_count: .inf
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/internalElement
     value_type: InternalElement
     view: InternalElement
     view_property: internalElement
   - connection: edge
-    is_list: true
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/internalLink
+    max_count: .inf
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/internalLink
     value_type: InternalLink
     view: InternalElement
     view_property: internalLink
   - container: InternalElement
     container_property: layer
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/layer
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/layer
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: layer
   - container: InternalElement
     container_property: notation
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/notation
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/notation
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: notation
   - container: InternalElement
     container_property: noteRef
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/noteRef
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/noteRef
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: noteRef
   - container: InternalElement
     container_property: orientation
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/orientation
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/orientation
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: orientation
   - container: InternalElement
     container_property: reference
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/reference
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/reference
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: reference
   - container: InternalElement
     container_property: revisionDate
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/revisionDate
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/revisionDate
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: revisionDate
   - container: InternalElement
     container_property: scale
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/scale
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/scale
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: scale
   - container: InternalElement
     container_property: symbolType
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/symbolType
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/symbolType
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: symbolType
   - container: InternalElement
     container_property: typical
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/typical
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/typical
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: typical
   - container: InternalElement
     container_property: x
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/x
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/x
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: x
   - container: InternalElement
     container_property: y
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/y
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/y
-    nullable: true
     value_type: text
     view: InternalElement
     view_property: y
   - container: InternalLink
     container_property: Name
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalLink/Name
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalLink/Name
-    nullable: true
     value_type: text
     view: InternalLink
     view_property: Name
   - connection: direct
     container: InternalLink
     container_property: RefPartnerSideA
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideA
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideA
-    nullable: true
     value_type: ExternalInterface
     view: InternalLink
     view_property: RefPartnerSideA
   - connection: direct
     container: InternalLink
     container_property: RefPartnerSideB
-    is_list: false
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideB
+    max_count: 1
+    min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideB
-    nullable: true
     value_type: ExternalInterface
     view: InternalLink
     view_property: RefPartnerSideB

@@ -13,13 +13,14 @@ from cognite.neat._issues.errors import (
     PropertyValueError,
 )
 from cognite.neat._issues.warnings import (
+    DeprecatedWarning,
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
 )
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import VerifyAnyRules
-from tests.config import DATA_FOLDER, DOC_RULES
+from cognite.neat._rules.transformers import VerifyAnyRules, VerifyDMSRules
+from tests.config import CAR_DMS_RULES_DEPRECATED, DATA_FOLDER, DOC_RULES
 from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
 
@@ -49,8 +50,13 @@ def invalid_rules_filepaths():
             [
                 PropertyValueError(
                     row=5,
-                    column="Is List",
-                    error=NeatValueError("Expected a bool type, got 'Apple'"),
+                    column="Max Count",
+                    error=NeatValueError("Expected a float type, got 'Apple'"),
+                ),
+                PropertyValueError(
+                    row=5,
+                    column="Max Count",
+                    error=NeatValueError("Expected a int type, got 'Apple'"),
                 ),
             ]
         ),
@@ -189,3 +195,25 @@ class TestExcelImporter:
 
         assert len(issues) == 1
         assert issues[0].row == 15
+
+    def test_load_deprecated_rules(self) -> None:
+        """Tests that DMS Rules with nullable and Is List columns are
+        correctly translated into min and max count properties"""
+        importer = ExcelImporter(DATA_FOLDER / CAR_DMS_RULES_DEPRECATED)
+        with catch_issues() as issues:
+            read_rules = importer.to_rules()
+            dms_rules = VerifyDMSRules(validate=False).transform(read_rules)
+
+        deprecation_warning_count = sum(1 for issue in issues if isinstance(issue, DeprecatedWarning))
+        assert deprecation_warning_count == 2 * len(dms_rules.properties)
+        actual_properties = {
+            (prop.view.external_id, prop.view_property): {"min_count": prop.min_count, "max_count": prop.max_count}
+            for prop in dms_rules.properties
+        }
+        assert actual_properties == {
+            ("Car", "make"): {"min_count": None, "max_count": float("inf")},
+            ("Car", "year"): {"min_count": 0, "max_count": 1},
+            ("Car", "color"): {"min_count": 0, "max_count": 1},
+            ("Manufacturer", "name"): {"min_count": 0, "max_count": 1},
+            ("Color", "name"): {"min_count": 0, "max_count": 1},
+        }

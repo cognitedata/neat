@@ -422,6 +422,20 @@ class NeatRulesStore:
         return identifier + f"/Iteration_{self._iteration_by_id[identifier]}"
 
     @property
+    def try_get_last_dms_rules(self) -> DMSRules | None:
+        if not self.provenance:
+            return None
+        if self.provenance[-1].target_entity.dms is None:
+            return None
+        return self.provenance[-1].target_entity.dms
+
+    @property
+    def try_get_last_information_rules(self) -> InformationRules | None:
+        if not self.provenance:
+            return None
+        return self.provenance[-1].target_entity.information
+
+    @property
     def last_verified_dms_rules(self) -> DMSRules:
         if not self.provenance:
             raise EmptyStore()
