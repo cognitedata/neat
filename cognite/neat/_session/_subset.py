@@ -1,18 +1,9 @@
 import warnings
-from typing import cast
-
-from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat._alpha import ExperimentalFlags
-from cognite.neat._client._api_client import NeatClient
 from cognite.neat._issues._base import IssueList
-from cognite.neat._rules import importers
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.transformers import SubsetDMSRules, SubsetInformationRules
-from cognite.neat._rules.transformers._converters import (
-    ToEnterpriseModel,
-    _SubsetEditableCDMRules,
-)
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -32,15 +23,8 @@ class SubsetAPI:
 
     def __init__(self, state: SessionState):
         self._state = state
-        self.data_model = DataModelSubsetAPI(state)
 
-
-@session_class_wrapper
-class DataModelSubsetAPI:
-    def __init__(self, state: SessionState):
-        self._state = state
-
-    def __call__(self, concepts: str | list[str]) -> IssueList:
+    def data_model(self, concepts: str | list[str]) -> IssueList:
         """Subset the data model to the desired concepts.
 
         Args:
@@ -94,85 +78,5 @@ class DataModelSubsetAPI:
 
         if not issues:
             print(f"Subset to {after} concepts.")
-
-        return issues
-
-    def core_data_model(self, concepts: str | list[str]) -> IssueList:
-        """Subset the data model to the desired concepts.
-
-        Args:
-            concepts: The concepts to subset the data model to.
-
-        Returns:
-            IssueList: A list of issues that occurred during the transformation.
-
-        Example:
-            Read the CogniteCore data model and reduce the data model to only the 'CogniteAsset' concept.
-            ```python
-            neat = NeatSession(CogniteClient())
-
-            neat.subset.data_model.core_data_model(concepts=["CogniteAsset", "CogniteEquipment"])
-            ```
-
-        !!! note "Bundle of actions"
-            This method is a helper method that bundles the following actions:
-            - Imports the latest version of Cognite's Core Data Model (CDM)
-            - Makes editable copy of the CDM concepts
-            - Subsets the copy to the desired concepts to desired set of concepts
-        """
-
-        concepts = concepts if isinstance(concepts, list | set) else [concepts]
-
-        self._state._raise_exception_if_condition_not_met(
-            "Subset Core Data Model",
-            empty_rules_store_required=True,
-            client_required=True,
-        )
-
-        warnings.filterwarnings("default")
-        ExperimentalFlags.core_data_model_subsetting.warn()
-
-        cdm_v1 = DataModelId.load(("cdf_cdm", "CogniteCore", "v1"))
-        importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
-            cast(NeatClient, self._state.client), cdm_v1
-        )
-        issues = self._state.rule_import(importer)
-
-        if issues.has_errors:
-            return issues
-
-        cdm_rules = self._state.rule_store.last_verified_rules
-
-        issues.extend(
-            self._state.rule_transform(
-                ToEnterpriseModel(
-                    new_model_id=("my_space", "MyCDMSubset", "v1"),
-                    org_name="CopyOf",
-                    dummy_property="GUID",
-                    move_connections=True,
-                )
-            )
-        )
-
-        if issues.has_errors:
-            return issues
-
-        issues.extend(
-            self._state.rule_transform(
-                _SubsetEditableCDMRules(
-                    views={
-                        ViewEntity(
-                            space=cdm_v1.space,
-                            externalId=concept,
-                            version=cast(str, cdm_v1.version),
-                        )
-                        for concept in concepts
-                    }
-                )
-            )
-        )
-
-        if cdm_rules and not issues.has_errors:
-            self._state.last_reference = cdm_rules
 
         return issues
