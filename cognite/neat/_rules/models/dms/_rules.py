@@ -1,3 +1,4 @@
+import math
 import warnings
 from collections.abc import Hashable
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
@@ -8,6 +9,7 @@ from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._constants import DMS_CONTAINER_LIST_MAX_LIMIT
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings._general import NeatValueWarning
 from cognite.neat._rules.models._base_rules import (
@@ -102,21 +104,24 @@ class DMSProperty(SheetRow):
         alias="Value Type",
         description="Value type that the property can hold. It takes either subset of CDF primitive types or a View id",
     )
-    nullable: bool | None = Field(
+    min_count: int | None = Field(
+        alias="Min Count",
         default=None,
-        alias="Nullable",
-        description="Used to indicate whether the property is required or not. Only applies to primitive type.",
+        description="Minimum number of values that the property can hold. "
+        "If no value is provided, the default value is  `0`, "
+        "which means that the property is optional.",
+    )
+    max_count: int | float | None = Field(
+        alias="Max Count",
+        default=None,
+        description="Maximum number of values that the property can hold. "
+        "If no value is provided, the default value is  `inf`, "
+        "which means that the property can hold any number of values (listable).",
     )
     immutable: bool | None = Field(
         default=None,
         alias="Immutable",
         description="sed to indicate whether the property is can only be set once. Only applies to primitive type.",
-    )
-    is_list: bool | None = Field(
-        default=None,
-        alias="Is List",
-        description="Used to indicate whether the property holds single or multiple values (list). "
-        "Only applies to primitive types.",
     )
     default: bool | str | int | float | dict | None = Field(
         None, alias="Default", description="Specifies default value for the property."
@@ -147,13 +152,43 @@ class DMSProperty(SheetRow):
         description="Used to make connection between physical and logical data model aspect",
     )
 
+    @property
+    def nullable(self) -> bool | None:
+        """Used to indicate whether the property is required or not. Only applies to primitive type."""
+        return self.min_count in {0, None}
+
+    @property
+    def is_list(self) -> bool | None:
+        """Used to indicate whether the property holds single or multiple values (list). "
+        "Only applies to primitive types."""
+        if self.max_count is None:
+            return None
+        return self.max_count is float("inf") or (isinstance(self.max_count, int | float) and self.max_count > 1)
+
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.view, self.view_property
 
-    @field_validator("nullable")
+    @field_validator("min_count")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
-        if info.data.get("connection") == "direct" and value is False:
-            raise ValueError("Direct relation must be nullable")
+        if info.data.get("connection") == "direct" and value not in {0, None}:
+            raise ValueError("Direct relation must have min count set to 0")
+        return value
+
+    @field_validator("max_count", mode="before")
+    def as_integer(cls, value: Any) -> Any:
+        if isinstance(value, float) and not math.isinf(value):
+            return int(value)
+        return value
+
+    @field_validator("max_count")
+    def max_list_size(cls, value: Any, info: ValidationInfo) -> Any:
+        if isinstance(info.data.get("connection"), EdgeEntity | ReverseConnectionEntity):
+            if value is not None and value != float("inf") and not (isinstance(value, int) and value == 1):
+                raise ValueError("Edge and reverse connections must have max count set to inf or 1")
+            return value
+        # We do not have a connection, so we can check the max list size.
+        if isinstance(value, int) and value > DMS_CONTAINER_LIST_MAX_LIMIT:
+            raise ValueError(f"Max list size cannot be greater than {DMS_CONTAINER_LIST_MAX_LIMIT}")
         return value
 
     @field_validator("value_type", mode="after")

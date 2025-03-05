@@ -1,4 +1,6 @@
 import re
+import sys
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal
@@ -8,7 +10,8 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace, URIRef
 
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat._constants import DEFAULT_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+from cognite.neat._issues.warnings import DeprecatedWarning
 from cognite.neat._rules.models._base_input import InputComponent, InputRules
 from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import (
@@ -25,6 +28,11 @@ from cognite.neat._rules.models.entities._wrapped import DMSFilter
 from cognite.neat._utils.rdf_ import uri_display_name
 
 from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 
 @dataclass
@@ -106,9 +114,9 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     name: str | None = None
     description: str | None = None
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None = None
-    nullable: bool | None = None
+    min_count: int | None = None
+    max_count: int | float | None = None
     immutable: bool | None = None
-    is_list: bool | None = None
     default: str | int | dict | None = None
     container: str | None = None
     container_property: str | None = None
@@ -116,6 +124,19 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
     logical: str | URIRef | None = None
+
+    @property
+    def nullable(self) -> bool | None:
+        """Used to indicate whether the property is required or not. Only applies to primitive type."""
+        return self.min_count in {0, None}
+
+    @property
+    def is_list(self) -> bool | None:
+        """Used to indicate whether the property holds single or multiple values (list). "
+        "Only applies to primitive types."""
+        return self.max_count in {float("inf"), None} or (
+            isinstance(self.max_count, int | float) and self.max_count > 1
+        )
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSProperty]:
@@ -138,6 +159,44 @@ class DMSInputProperty(InputComponent[DMSProperty]):
 
     def referenced_container(self, default_space: str) -> ContainerEntity | None:
         return ContainerEntity.load(self.container, strict=True, space=default_space) if self.container else None
+
+    @classmethod
+    def _load(cls, data: dict[str, Any]) -> Self:
+        # For backwards compatability, we need to convert nullable and Is List to min and max count
+        for min_count_key, nullable_key in [("Min Count", "Nullable"), ("min_count", "nullable")]:
+            if nullable_key in data and min_count_key not in data:
+                if isinstance(data[nullable_key], bool | float):
+                    data[min_count_key] = 0 if data[nullable_key] else 1
+                else:
+                    data[min_count_key] = None
+                warnings.warn(
+                    DeprecatedWarning(f"{nullable_key} column", replacement=f"{min_count_key} column"), stacklevel=2
+                )
+                data.pop(nullable_key)
+                break
+        for max_count_key, is_list_key, connection_key in [
+            ("Max Count", "Is List", "Connection"),
+            ("max_count", "is_list", "connection"),
+        ]:
+            if is_list_key in data and max_count_key not in data:
+                if isinstance(data[is_list_key], bool | float):
+                    if not data[is_list_key]:
+                        data[max_count_key] = 1
+                    elif "direct" in (data.get(connection_key, "") or "") and "edge" not in (
+                        data.get(connection_key, "") or ""
+                    ):
+                        data[max_count_key] = DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+                    else:
+                        # Reverse or edge connection
+                        data[max_count_key] = float("inf")
+                else:
+                    data[max_count_key] = 1
+                warnings.warn(
+                    DeprecatedWarning(f"{is_list_key} column", replacement=f"{max_count_key} column"), stacklevel=2
+                )
+                data.pop(is_list_key)
+                break
+        return super()._load(data)
 
 
 @dataclass
