@@ -7,8 +7,12 @@ from typing import Literal, cast
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
+from cognite.client.data_classes.data_modeling.data_types import (
+    DirectRelation,
+    ListablePropertyType,
+    PropertyTypeWithUnit,
+)
 from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
-from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType, PropertyTypeWithUnit
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
     MultiReverseDirectRelationApply,
@@ -19,6 +23,7 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.utils import ms_to_datetime
 
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT, DMS_PRIMITIVE_LIST_DEFAULT_LIMIT
 from cognite.neat._issues import IssueList, MultiValueError, NeatIssue, catch_issues
 from cognite.neat._issues.errors import (
     FileTypeUnexpectedError,
@@ -336,8 +341,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             name=prop.name,
             connection=self._get_connection_type(prop),
             value_type=str(value_type),
-            is_list=self._get_is_list(prop),
-            nullable=self._get_nullable(prop),
+            min_count=self._get_min_count(prop),
+            max_count=self._get_max_count(prop),
             immutable=self._get_immutable(prop),
             default=self._get_default(prop),
             container=(
@@ -419,9 +424,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             )
             return None
 
-    def _get_nullable(self, prop: ViewPropertyApply) -> bool | None:
+    def _get_min_count(self, prop: ViewPropertyApply) -> int | None:
         if isinstance(prop, dm.MappedPropertyApply):
-            return self._container_prop_unsafe(prop).nullable
+            return int(not self._container_prop_unsafe(prop).nullable)
         else:
             return None
 
@@ -431,15 +436,26 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         else:
             return None
 
-    def _get_is_list(self, prop: ViewPropertyApply) -> bool | None:
+    def _get_max_count(self, prop: ViewPropertyApply) -> int | float | None:
         if isinstance(prop, dm.MappedPropertyApply):
             prop_type = self._container_prop_unsafe(prop).type
-            return isinstance(prop_type, ListablePropertyType) and prop_type.is_list
+            if isinstance(prop_type, ListablePropertyType):
+                if prop_type.is_list is False:
+                    return 1
+                elif isinstance(prop_type.max_list_size, int):
+                    return prop_type.max_list_size
+                elif isinstance(prop_type, DirectRelation):
+                    return DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+                else:
+                    return DMS_PRIMITIVE_LIST_DEFAULT_LIMIT
+            else:
+                return 1
         elif isinstance(prop, MultiEdgeConnectionApply | MultiReverseDirectRelationApply):
-            return True
+            return float("inf")
         elif isinstance(prop, SingleEdgeConnectionApply | SingleReverseDirectRelationApply):
-            return False
+            return 1
         else:
+            # Unknown type.
             return None
 
     def _get_default(self, prop: ViewPropertyApply) -> str | None:

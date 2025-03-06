@@ -33,7 +33,6 @@ class SessionState:
     def rule_transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
-
         start = self.rule_store.provenance[-1].target_entity.display_name
         issues = self.rule_store.transform(*transformer)
         last_entity = self.rule_store.provenance[-1].target_entity
@@ -72,14 +71,23 @@ class SessionState:
         empty_instances_store_required: bool = False,
         instances_required: bool = False,
         client_required: bool = False,
+        has_information_rules: bool | None = None,
+        has_dms_rules: bool | None = None,
     ) -> None:
         """Set conditions for raising an error in the session that are used by various methods in the session."""
         condition = set()
         suggestion = set()
-
+        try_again = True
         if client_required and not self.client:
             condition.add(f"{activity} expects a client in NEAT session")
             suggestion.add("Please provide a client")
+        if has_information_rules is True and self.rule_store.try_get_last_information_rules is None:
+            condition.add(f"{activity} expects information rules in NEAT session")
+            suggestion.add("Read in information rules to neat session")
+        if has_dms_rules is False and self.rule_store.try_get_last_dms_rules is not None:
+            condition.add(f"{activity} expects no DMS data model in NEAT session")
+            suggestion.add("You already have a DMS data model in the session")
+            try_again = False
         if empty_rules_store_required and not self.rule_store.empty:
             condition.add(f"{activity} expects no data model in NEAT session")
             suggestion.add("Start new session")
@@ -91,7 +99,10 @@ class SessionState:
             suggestion.add("Read in instances to neat session")
 
         if condition:
-            raise NeatSessionError(". ".join(condition) + ". " + ". ".join(suggestion) + ". And try again.")
+            message = ". ".join(condition) + ". " + ". ".join(suggestion) + "."
+            if try_again:
+                message += " And try again."
+            raise NeatSessionError(message)
 
 
 class InstancesState:

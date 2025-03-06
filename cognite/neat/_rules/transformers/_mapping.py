@@ -112,7 +112,7 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
     """
 
     _mapping_fields: ClassVar[frozenset[str]] = frozenset(
-        ["connection", "value_type", "nullable", "immutable", "is_list", "default", "index", "constraint"]
+        ["connection", "value_type", "min_count", "immutable", "max_count", "default", "index", "constraint"]
     )
 
     def __init__(self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite") -> None:

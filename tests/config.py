@@ -33,3 +33,4 @@ IMF_EXAMPLE = DATA_FOLDER / "TempTransmitterComplete.ttl"
 CLASSIC_CDF_EXTRACTOR_DATA = DATA_FOLDER / "class_cdf_extractor_data"
 
 IODD_EXAMPLE = DATA_FOLDER / "Piab-piCOMPACT10X-20230509-IODD1.1.xml"
+CAR_DMS_RULES_DEPRECATED = DATA_FOLDER / "car_dms_rules_deprecated.xlsx"
