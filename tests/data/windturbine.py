@@ -138,7 +138,7 @@ SCHEMA = DMSSchema(
 
 _TODAY = datetime.datetime.now()
 
-_DEFAULTS: dict[str, Any] = dict(immutable=False, nullable=True, is_list=False)
+_DEFAULTS: dict[str, Any] = dict(immutable=False, min_count=0, max_count=1)
 
 
 INPUT_RULES = DMSInputRules(
@@ -180,7 +180,7 @@ INPUT_RULES = DMSInputRules(
             "metmasts",
             "MetMast",
             connection="edge(properties=Distance, type=distance)",
-            is_list=True,
+            max_count=float("inf"),
         ),
         DMSInputProperty(
             "MetMast",
@@ -203,7 +203,7 @@ INPUT_RULES = DMSInputRules(
             "windTurbines",
             "WindTurbine",
             connection="edge(properties=Distance, type=distance, direction=inwards)",
-            is_list=True,
+            max_count=float("inf"),
         ),
         DMSInputProperty(
             "Distance",

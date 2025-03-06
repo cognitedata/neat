@@ -34,3 +34,13 @@ class MissingCogniteClientWarning(NeatWarning):
     """Missing Cognite Client required for {functionality}"""
 
     functionality: str
+
+
+@dataclass(unsafe_hash=True)
+class DeprecatedWarning(NeatWarning):
+    """{feature} is deprecated"""
+
+    extra = "{replacement}"
+
+    feature: str
+    replacement: str | None = None

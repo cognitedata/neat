@@ -13,9 +13,9 @@ properties:
 - container: sp_referencing_core:MyDescribable
   container_property: UUID
   immutable: false
-  is_list: false
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_referencing_core/ReferencingCore/v1/MyDescribable/UUID
-  nullable: true
   value_type: text
   view: MyDescribable
   view_property: UUID
@@ -23,9 +23,9 @@ properties:
   container_property: aliases
   description: Alternative names for the node
   immutable: false
-  is_list: true
+  max_count: 1000
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
-  nullable: true
   value_type: text
   view: MyDescribable
   view_property: aliases
@@ -33,9 +33,9 @@ properties:
   container_property: description
   description: Description of the instance
   immutable: false
-  is_list: false
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
-  nullable: true
   value_type: text
   view: MyDescribable
   view_property: description
@@ -44,9 +44,9 @@ properties:
   description: Name of the instance
   immutable: false
   index: name
-  is_list: false
+  max_count: 1
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
-  nullable: true
   value_type: text
   view: MyDescribable
   view_property: name
@@ -54,9 +54,9 @@ properties:
   container_property: tags
   description: Text based labels for generic use, limited to 1000
   immutable: false
-  is_list: true
+  max_count: 1000
+  min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
-  nullable: true
   value_type: text
   view: MyDescribable
   view_property: tags

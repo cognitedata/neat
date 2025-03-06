@@ -13,7 +13,13 @@ from ._external import (
     FileReadWarning,
     FileTypeUnexpectedWarning,
 )
-from ._general import MissingCogniteClientWarning, NeatValueWarning, NotSupportedWarning, RegexViolationWarning
+from ._general import (
+    DeprecatedWarning,
+    MissingCogniteClientWarning,
+    NeatValueWarning,
+    NotSupportedWarning,
+    RegexViolationWarning,
+)
 from ._models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
@@ -50,6 +56,7 @@ __all__ = [
     "CDFAuthWarning",
     "CDFMaxIterationsWarning",
     "CDFNotSupportedWarning",
+    "DeprecatedWarning",
     "FileItemNotSupportedWarning",
     "FileMissingRequiredFieldWarning",
     "FileReadWarning",

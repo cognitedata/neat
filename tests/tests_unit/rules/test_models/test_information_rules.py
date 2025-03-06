@@ -334,6 +334,7 @@ class TestInformationRulesConverter:
                     class_="MassiveClass",
                     property_=f"property_{no}",
                     value_type="string",
+                    max_count=1,
                 )
                 for no in range(DMS_CONTAINER_PROPERTY_SIZE_LIMIT + 1)
             ],
