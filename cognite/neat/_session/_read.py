@@ -362,6 +362,11 @@ class ExcelReadAPI(BaseReadAPI):
         if enable_manual_edit:
             warnings.filterwarnings("default")
             AlphaFlags.manual_rules_edit.warn()
+        else:
+            self._state._raise_exception_if_condition_not_met(
+                "Read Excel Rules",
+                empty_rules_store_required=True,
+            )
 
         return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
 
@@ -381,6 +386,10 @@ class YamlReadAPI(BaseReadAPI):
             neat.read.yaml("path_to_toolkit_yamls")
             ```
         """
+        self._state._raise_exception_if_condition_not_met(
+            "Read YAML data model",
+            empty_rules_store_required=True,
+        )
         reader = NeatReader.create(io)
         path = reader.materialize_path()
         importer: BaseImporter
@@ -634,6 +643,10 @@ class RDFReadAPI(BaseReadAPI):
         return self._state.rule_import(importer)
 
     def instances(self, io: Any) -> IssueList:
+        self._state._raise_exception_if_condition_not_met(
+            "Read RDF Instances",
+            empty_rules_store_required=True,
+        )
         reader = NeatReader.create(io)
         self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
         return IssueList()
