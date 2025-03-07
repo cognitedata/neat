@@ -7,7 +7,7 @@ from typing import Any, Literal, cast, overload
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat._alpha import AlphaFlags
+from cognite.neat._alpha import ExperimentalFlags
 from cognite.neat._client._api_client import NeatClient
 from cognite.neat._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
@@ -52,7 +52,7 @@ class ToAPI:
             ```
         """
         warnings.filterwarnings("default")
-        AlphaFlags.to_ontology.warn()
+        ExperimentalFlags.to_ontology.warn()
 
         filepath = Path(io)
         if filepath.suffix != ".ttl":
@@ -145,7 +145,7 @@ class ToAPI:
 
         if include_properties == "same-space":
             warnings.filterwarnings("default")
-            AlphaFlags.same_space_properties_only_export.warn()
+            ExperimentalFlags.same_space_properties_only_export.warn()
 
         exporter = exporters.ExcelExporter(
             styling="maximal",
