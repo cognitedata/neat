@@ -63,5 +63,5 @@ class NeatInstancesAPI:
                 break
             body["cursor"] = next_cursor
             if last_limit_change is not None and (time.perf_counter() - last_limit_change) > 30.0:
-                body["limit"] = max(int(body["limit"] * 1.5), 1_000)
+                body["limit"] = min(int(body["limit"] * 1.5), 1_000)
                 last_limit_change = time.perf_counter()
