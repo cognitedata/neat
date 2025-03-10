@@ -43,6 +43,7 @@ class DMSExtractor(BaseExtractor):
         unpack_json: bool = False,
         empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
         str_to_ideal_type: bool = False,
+        ignore_node_type: bool = True,
     ) -> None:
         self.total_instances_pair_by_view = total_instances_pair_by_view
         self.limit = limit
@@ -50,6 +51,7 @@ class DMSExtractor(BaseExtractor):
         self.unpack_json = unpack_json
         self.empty_values = empty_values
         self.str_to_ideal_type = str_to_ideal_type
+        self.ignore_node_type = ignore_node_type
 
     @classmethod
     def from_data_model(
@@ -168,7 +170,7 @@ class DMSExtractor(BaseExtractor):
 
         elif isinstance(instance, dm.Node):
             id_ = self._as_uri_ref(instance)
-            if instance.type:
+            if instance.type and not self.ignore_node_type:
                 type_ = self._as_uri_ref(cast(dm.DirectRelationReference, instance.type))
             elif len(instance.properties) == 1:
                 view_id = next(iter(instance.properties.keys()))
