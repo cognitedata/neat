@@ -54,10 +54,10 @@ class NeatInstancesAPI:
                     continue
                 raise e
             response_body = response.json()
-            if instance_type == "node":
-                yield from (Node.load(node) for node in response_body["items"])
-            else:
-                yield from (Edge.load(edge) for edge in response_body["items"])
+            yield from (
+                Node.load(item) if item.get("instanceType") == "node" else Edge.load(item)
+                for item in response_body["items"]
+            )
             next_cursor = response_body.get("nextCursor")
             if next_cursor is None:
                 break
