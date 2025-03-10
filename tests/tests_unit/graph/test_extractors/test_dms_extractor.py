@@ -2,9 +2,12 @@ from collections import defaultdict
 from collections.abc import Iterable
 from typing import cast
 
+import rdflib
 from cognite.client import data_modeling as dm
-from cognite.client.data_classes.data_modeling.instances import Instance
+from cognite.client.data_classes.aggregations import AggregatedNumberedValue
+from cognite.client.data_classes.data_modeling.instances import Instance, Properties
 
+from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._graph.extractors import DMSExtractor
 from tests.data import car
 
@@ -31,6 +34,51 @@ class TestDMSExtractor:
         assert len(missing_triples) == 0
         extra_triples = triples - expected_triples
         assert len(extra_triples) == 0
+
+    def test_extract_instances_enforce_type(self) -> None:
+        view = dm.View(
+            space="cdf_cdm",
+            external_id="CogniteTimeSeries",
+            version="v1",
+            properties={},
+            filter=None,
+            implements=None,
+            writable=True,
+            used_for="node",
+            is_global=True,
+            last_updated_time=1,
+            created_time=1,
+            description=None,
+            name=None,
+        )
+        node_a = dm.Node(
+            space="my_space",
+            external_id="node1",
+            version=1,
+            type=dm.DirectRelationReference("other_space", "typeA"),
+            properties=Properties({view.as_id(): {"isStep": False, "type": "numeric"}}),
+            created_time=1,
+            last_updated_time=1,
+            deleted_time=None,
+        )
+        node_b = dm.Node(
+            space="my_space",
+            external_id="node2",
+            version=1,
+            type=dm.DirectRelationReference("other_space", "typeB"),
+            properties=Properties({view.as_id(): {"isStep": False, "type": "numeric"}}),
+            last_updated_time=1,
+            created_time=1,
+            deleted_time=1,
+        )
+        with monkeypatch_neat_client() as client:
+            client.data_modeling.instances.return_value = [node_a, node_b]
+            client.data_modeling.instances.aggregate.return_value = AggregatedNumberedValue("externalId", 2)
+            extractor = DMSExtractor.from_views(client, [view])
+
+            triples = set(extractor.extract())
+        type_count = len({triple[2] for triple in triples if triple[1] == rdflib.RDF.type})
+        assert type_count == 1
 
 
 def instance_apply_to_read(instances: Iterable[dm.NodeApply | dm.EdgeApply]) -> Iterable[Instance]:
