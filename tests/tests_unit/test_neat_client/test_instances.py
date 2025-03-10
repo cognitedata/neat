@@ -52,4 +52,5 @@ class TestNeatInstanceAPI:
         with monkeypatch_neat_client() as client:
             client.post.side_effect = post_responses
             with unittest.mock.patch("time.perf_counter", clock.perf_counter):
-                _ = list(client.instances.iterate("node"))
+                result = list(client.instances.iterate("node"))
+        assert not result
