@@ -1,6 +1,6 @@
 import warnings
 
-from cognite.neat._alpha import AlphaFlags
+from cognite.neat._alpha import ExperimentalFlags
 from cognite.neat._issues._base import IssueList
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.transformers import SubsetDMSRules, SubsetInformationRules
@@ -47,7 +47,7 @@ class SubsetAPI:
             raise NeatSessionError("No rules to set the data model ID.")
 
         warnings.filterwarnings("default")
-        AlphaFlags.data_model_subsetting.warn()
+        ExperimentalFlags.data_model_subsetting.warn()
 
         dms = self._state.rule_store.provenance[-1].target_entity.dms
         information = self._state.rule_store.provenance[-1].target_entity.information

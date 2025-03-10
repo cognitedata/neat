@@ -261,21 +261,31 @@ function highlightFilter(filter) {
                             >
                                 <option selected>Select a Node by ID</option>
                                 
-                                    <option value="CogniteAsset">CogniteAsset</option>
+                                    <option value="UNKNOWN">UNKNOWN</option>
                                 
-                                    <option value="CogniteVisualizable">CogniteVisualizable</option>
+                                    <option value="DMSImporter">DMSImporter</option>
                                 
-                                    <option value="CogniteDescribable">CogniteDescribable</option>
+                                    <option value="NEAT(verified,physical,cdf_cdm,CogniteCore,v1)">NEAT(verified,physical,cdf_cdm,CogniteCore,v1)</option>
                                 
-                                    <option value="CogniteSourceable">CogniteSourceable</option>
+                                    <option value="ToEnterpriseModel">ToEnterpriseModel</option>
                                 
-                                    <option value="CogniteEquipment">CogniteEquipment</option>
+                                    <option value="NEAT(verified,physical,my_space,MyCDMSubset,v1)">NEAT(verified,physical,my_space,MyCDMSubset,v1)</option>
                                 
-                                    <option value="CogniteTimeSeries">CogniteTimeSeries</option>
+                                    <option value="_SubsetEditableCDMRules">_SubsetEditableCDMRules</option>
                                 
-                                    <option value="CogniteActivity">CogniteActivity</option>
+                                    <option value="NEAT(verified,physical,my_space,MyCDMSubset,v1,Iteration_2)">NEAT(verified,physical,my_space,MyCDMSubset,v1,Iteration_2)</option>
                                 
-                                    <option value="CogniteSchedulable">CogniteSchedulable</option>
+                                    <option value="SetIDDMSModel">SetIDDMSModel</option>
+                                
+                                    <option value="NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1)">NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1)</option>
+                                
+                                    <option value="external-agent">external-agent</option>
+                                
+                                    <option value="wind-farm-data-model.xlsx">wind-farm-data-model.xlsx</option>
+                                
+                                    <option value="NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1,Iteration_2)">NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1,Iteration_2)</option>
+                                
+                                    <option value="upload-result">upload-result</option>
                                 
                             </select>
                         </div>
@@ -329,8 +339,8 @@ function highlightFilter(filter) {
                   
 
                   // parsing and collecting nodes and edges from the python
-                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": "CogniteAsset", "label": "CogniteAsset", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteVisualizable", "label": "CogniteVisualizable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteDescribable", "label": "CogniteDescribable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSourceable", "label": "CogniteSourceable", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteEquipment", "label": "CogniteEquipment", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteTimeSeries", "label": "CogniteTimeSeries", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteActivity", "label": "CogniteActivity", "shape": "dot", "size": 10}, {"color": "#97c2fc", "id": "CogniteSchedulable", "label": "CogniteSchedulable", "shape": "dot", "size": 10}]);
-                  edges = new vis.DataSet([{"arrows": "to", "dashes": true, "from": "CogniteAsset", "label": "implements", "to": "CogniteVisualizable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteAsset", "label": "implements", "to": "CogniteDescribable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteAsset", "label": "implements", "to": "CogniteSourceable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteEquipment", "label": "implements", "to": "CogniteDescribable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteEquipment", "label": "implements", "to": "CogniteSourceable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteTimeSeries", "label": "implements", "to": "CogniteDescribable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteTimeSeries", "label": "implements", "to": "CogniteSourceable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteActivity", "label": "implements", "to": "CogniteDescribable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteActivity", "label": "implements", "to": "CogniteSourceable", "width": 1}, {"arrows": "to", "dashes": true, "from": "CogniteActivity", "label": "implements", "to": "CogniteSchedulable", "width": 1}]);
+                  nodes = new vis.DataSet([{"color": "#b92886", "id": "UNKNOWN", "label": "UNKNOWN", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "DMSImporter", "label": "DMSImporter", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#b92886", "id": "NEAT(verified,physical,cdf_cdm,CogniteCore,v1)", "label": "NEAT(verified,physical,cdf_cdm,CogniteCore,v1)", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "ToEnterpriseModel", "label": "ToEnterpriseModel", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#b92886", "id": "NEAT(verified,physical,my_space,MyCDMSubset,v1)", "label": "NEAT(verified,physical,my_space,MyCDMSubset,v1)", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "_SubsetEditableCDMRules", "label": "_SubsetEditableCDMRules", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#b92886", "id": "NEAT(verified,physical,my_space,MyCDMSubset,v1,Iteration_2)", "label": "NEAT(verified,physical,my_space,MyCDMSubset,v1,Iteration_2)", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "SetIDDMSModel", "label": "SetIDDMSModel", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#b92886", "id": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1)", "label": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1)", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#01cdb4", "id": "external-agent", "label": "external-agent", "shape": "dot", "size": 10, "title": "Agent", "type": "Agent"}, {"color": "#75d03c", "id": "wind-farm-data-model.xlsx", "label": "wind-farm-data-model.xlsx", "shape": "dot", "size": 10, "title": "Export", "type": "Export"}, {"color": "#b92886", "id": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1,Iteration_2)", "label": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1,Iteration_2)", "shape": "dot", "size": 10, "title": "Entity", "type": "Entity"}, {"color": "#75d03c", "id": "upload-result", "label": "upload-result", "shape": "dot", "size": 10, "title": "Export", "type": "Export"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "color": "grey", "from": "UNKNOWN", "label": "used", "to": "DMSImporter", "width": 1}, {"arrows": "to", "color": "grey", "from": "NEAT(verified,physical,cdf_cdm,CogniteCore,v1)", "label": "used", "to": "ToEnterpriseModel", "width": 1}, {"arrows": "to", "color": "grey", "from": "DMSImporter", "label": "generated", "to": "NEAT(verified,physical,cdf_cdm,CogniteCore,v1)", "width": 1}, {"arrows": "to", "color": "grey", "from": "NEAT(verified,physical,my_space,MyCDMSubset,v1)", "label": "used", "to": "_SubsetEditableCDMRules", "width": 1}, {"arrows": "to", "color": "grey", "from": "ToEnterpriseModel", "label": "generated", "to": "NEAT(verified,physical,my_space,MyCDMSubset,v1)", "width": 1}, {"arrows": "to", "color": "grey", "from": "NEAT(verified,physical,my_space,MyCDMSubset,v1,Iteration_2)", "label": "used", "to": "SetIDDMSModel", "width": 1}, {"arrows": "to", "color": "grey", "from": "_SubsetEditableCDMRules", "label": "generated", "to": "NEAT(verified,physical,my_space,MyCDMSubset,v1,Iteration_2)", "width": 1}, {"arrows": "to", "color": "grey", "from": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1)", "label": "used", "to": "external-agent", "width": 1}, {"arrows": "to", "color": "grey", "from": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1)", "label": "exported", "to": "wind-farm-data-model.xlsx", "width": 1}, {"arrows": "to", "color": "grey", "from": "SetIDDMSModel", "label": "generated", "to": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1)", "width": 1}, {"arrows": "to", "color": "grey", "from": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1,Iteration_2)", "label": "exported", "to": "upload-result", "width": 1}, {"arrows": "to", "color": "grey", "from": "external-agent", "label": "generated", "to": "NEAT(verified,physical,wind_energy_space,TinyWindFarmModel,v1,Iteration_2)", "width": 1}]);
 
                   nodeColors = {};
                   allNodes = nodes.get({ returnType: "Object" });
