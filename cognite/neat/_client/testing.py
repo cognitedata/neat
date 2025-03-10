@@ -7,6 +7,7 @@ from cognite.client.testing import CogniteClientMock
 from cognite.neat._client._api_client import NeatClient
 
 from ._api.data_modeling_loaders import DataModelLoaderAPI
+from ._api.neat_instances import NeatInstancesAPI
 from ._api.schema import SchemaAPI
 
 
@@ -23,6 +24,7 @@ class NeatClientMock(CogniteClientMock):
         super().__init__(*args, **kwargs)
         self.schema = SchemaAPI(self)
         self.loaders = DataModelLoaderAPI(self)
+        self.instances = NeatInstancesAPI(self)
 
 
 @contextmanager
