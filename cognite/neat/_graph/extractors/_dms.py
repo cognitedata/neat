@@ -215,23 +215,23 @@ class _ViewInstanceIterator(Iterable[Instance]):
     def count(self) -> int:
         node_count = edge_count = 0
         if self.view.used_for in ("node", "all"):
-            node_count = int(
-                self.client.data_modeling.instances.aggregate(
-                    view=self.view.as_id(),
-                    aggregates=dm.aggregations.Count("externalId"),
-                    instance_type="node",
-                    space=self.instance_space,
-                ).value
-            )
+            node_result = self.client.data_modeling.instances.aggregate(
+                view=self.view.as_id(),
+                aggregates=dm.aggregations.Count("externalId"),
+                instance_type="node",
+                space=self.instance_space,
+            ).value
+            if node_result:
+                node_count = int(node_result)
         if self.view.used_for in ("edge", "all"):
-            edge_count = int(
-                self.client.data_modeling.instances.aggregate(
-                    view=self.view.as_id(),
-                    aggregates=dm.aggregations.Count("externalId"),
-                    instance_type="edge",
-                    space=self.instance_space,
-                ).value
-            )
+            edge_result = self.client.data_modeling.instances.aggregate(
+                view=self.view.as_id(),
+                aggregates=dm.aggregations.Count("externalId"),
+                instance_type="edge",
+                space=self.instance_space,
+            ).value
+            if edge_result:
+                edge_count = int(edge_result)
         return node_count + edge_count
 
     def __iter__(self) -> Iterator[Instance]:
