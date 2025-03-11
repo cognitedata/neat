@@ -43,7 +43,7 @@ class NeatInstancesAPI:
             body["filter"] = filter_.dump() if isinstance(filter_, Filter) else filter_
         if source:
             body["sources"] = [{"source": source.dump(include_type=True, camel_case=True)}]
-        last_limit_change: float | None = None
+        last_limit_change: float = 0.0
         while True:
             try:
                 response = self._client.post(url=url, json=body)
@@ -62,6 +62,10 @@ class NeatInstancesAPI:
             if next_cursor is None:
                 break
             body["cursor"] = next_cursor
-            if last_limit_change is not None and (time.perf_counter() - last_limit_change) > 30.0:
+            # Increase the limit every 30 seconds to avoid fetching reduced
+            # instances for a long time after a 408. This limit is somewhat arbitrary,
+            # but it should be large enough to avoid many requests, but small enough
+            # to avoid fetching very slowly for a long time after a 408.
+            if (time.perf_counter() - last_limit_change) > 30.0 and body["limit"] < 1_000:
                 body["limit"] = min(int(body["limit"] * 1.5), 1_000)
                 last_limit_change = time.perf_counter()
