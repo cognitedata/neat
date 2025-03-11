@@ -33,9 +33,9 @@ class DMSExtractor(BaseExtractor):
             considered as an empty value and skipped.
         str_to_ideal_type: If unpack_json is True, when unpacking JSON objects, if the value is a string, the extractor
             will try to convert it to the ideal type.
-        node_type: The prioritized order of the node type to use. The options are "view" and "type". "view_id"
+        node_type: The prioritized order of the node type to use. The options are "view" and "type". "view"
             means the externalId of the view used as type, while type is the node.type.
-        edge_type: The prioritized order of the edge type to use. The options are "view" and "type". "view_id"
+        edge_type: The prioritized order of the edge type to use. The options are "view" and "type". "view"
             means the externalId of the view used as type, while type is the edge.type.
     """
 
