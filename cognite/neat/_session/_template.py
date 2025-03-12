@@ -17,7 +17,7 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 
 @session_class_wrapper
-class CreateAPI:
+class TemplateAPI:
     """
     Create new data model based on the given data.
     """

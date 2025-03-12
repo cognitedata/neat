@@ -53,7 +53,7 @@ class TestExtractToLoadFlow:
 
         rules_str = neat.to.yaml(format="neat")
 
-        neat.create.data_product_model(("sp_data_product", "DataProduct", "v1"))
+        neat.template.data_product_model(("sp_data_product", "DataProduct", "v1"))
 
         data_product_dict = yaml.safe_load(neat.to.yaml(format="neat"))
 
