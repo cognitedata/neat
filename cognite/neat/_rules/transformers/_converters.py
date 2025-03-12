@@ -2015,3 +2015,19 @@ class SubsetInformationRules(VerifiedRulesTransformer[InformationRules, Informat
             return InformationRules.model_validate(subsetted_rules)
         except ValidationError as e:
             raise NeatValueError(f"Cannot subset rules: {e}") from e
+
+
+class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
+    """This transformer looks at the implements of the classes and adds all properties
+    from the parent (and ancestors) classes that are not already included in the data model.
+
+    Args:
+        client: The client is used to lookup the properties of the parent classes.
+
+    """
+
+    def __init__(self, client: NeatClient) -> None:
+        self._client = client
+
+    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+        raise NotImplementedError()
