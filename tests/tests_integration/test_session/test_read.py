@@ -84,6 +84,6 @@ class TestRead:
     def test_read_classic_graph(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
 
-        issues = neat.read.cdf.classic.graph(root_asset_external_id="dad2a40917a")
+        issues = neat.read.cdf.classic.graph(root_asset_external_id="Utsira")
 
         assert len(issues) == 0
