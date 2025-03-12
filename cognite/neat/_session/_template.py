@@ -220,5 +220,5 @@ class TemplateAPI:
                     info = modified.rules.as_verified_rules()
 
                     ExcelExporter().export_to_file(info, output_path)
-
+        issues.action = "Created extension template"
         return issues
