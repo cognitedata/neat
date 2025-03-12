@@ -11,7 +11,7 @@ class TestCreateAPI:
         neat = NeatSession(cognite_client)
         neat.read.examples.pump_example()
 
-        neat.create.enterprise_model(("my_space", "MySpace", "v1"))
+        neat.template.enterprise_model(("my_space", "MySpace", "v1"))
 
         result_path = tmp_path / "result.xlsx"
         neat.to.excel(result_path, include_reference=True, include_properties="same-space")

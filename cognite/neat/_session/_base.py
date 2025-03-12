@@ -23,7 +23,6 @@ from cognite.neat._store._rules_store import RulesEntity
 from cognite.neat._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
-from ._create import CreateAPI
 from ._drop import DropAPI
 from ._explore import ExploreAPI
 from ._fix import FixAPI
@@ -35,6 +34,7 @@ from ._set import SetAPI
 from ._show import ShowAPI
 from ._state import SessionState
 from ._subset import SubsetAPI
+from ._template import TemplateAPI
 from ._to import ToAPI
 from .engine import load_neat_engine
 from .exceptions import session_class_wrapper
@@ -104,7 +104,7 @@ class NeatSession:
         self.mapping = MappingAPI(self._state)
         self.drop = DropAPI(self._state)
         self.subset = SubsetAPI(self._state)
-        self.create = CreateAPI(self._state)
+        self.template = TemplateAPI(self._state)
         self._explore = ExploreAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
