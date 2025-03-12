@@ -1,16 +1,24 @@
-from typing import Literal
+from pathlib import Path
+from typing import Any, Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat._issues import IssueList
+from cognite.neat._alpha import ExperimentalFlags
+from cognite.neat._issues import IssueList, catch_issues
+from cognite.neat._rules._shared import ReadRules
+from cognite.neat._rules.exporters import ExcelExporter
+from cognite.neat._rules.importers import ExcelImporter
+from cognite.neat._rules.models import InformationInputRules
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
+    AddCogniteProperties,
     IncludeReferenced,
     ToDataProductModel,
     ToEnterpriseModel,
     ToSolutionModel,
     VerifiedRulesTransformer,
 )
+from cognite.neat._utils.reader import NeatReader, PathReader
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -164,4 +172,53 @@ class TemplateAPI:
         issues = self._state.rule_transform(*transformers)
         if last_rules and not issues.has_errors:
             self._state.last_reference = last_rules
+        return issues
+
+    def extension(self, io: Any, output: str | Path | None = None) -> IssueList:
+        """Creates a template for an extension of a Cognite model.
+
+        The input is a spreadsheet of a conceptual model in which the concepts are defined
+        and marked with the Cognite concept they are extending. For example, if you have a pump
+        in the Classes sheet you will see
+        ```
+        Class: Pump
+        Implements: cdf_cdm:CogniteAsset(version=v1)
+        ```
+        The output will be a spreadsheet in which all the properties from the Cognite concept model
+        is added to the spreadsheet. In the example above, the pump concept will have all
+        the properties it inherits from the CogniteAsset concept added to the Properties spreadsheet.
+
+
+        Args:
+            io: The input spreadsheet.
+            output: The output spreadsheet. If None, the output will be the same
+                as the input with `_extension` added to the name.
+        """
+        ExperimentalFlags.extension.warn()
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+        if output is None:
+            if isinstance(reader, PathReader):
+                output_path = path.with_name(f"{path.stem}_extension{path.suffix}")
+            else:
+                # The source is not a file, for example, a URL or a stream.
+                output_path = Path.cwd() / f"{path.stem}_extension{path.suffix}"
+        else:
+            output_path = Path(output)
+
+        with catch_issues() as issues:
+            read: ReadRules[InformationInputRules] = ExcelImporter(path).to_rules()
+            if read.rules is not None:
+                # If rules are None there will be issues that are already caught.
+                if not isinstance(read.rules, InformationInputRules):
+                    raise NeatSessionError(f"The input {reader.name} must contain an InformationInputRules object. ")
+                if self._state.client is None:
+                    raise NeatSessionError("Client must be set in the session to run the extension.")
+                modified = AddCogniteProperties(self._state.client).transform(read)
+                if modified.rules is not None:
+                    # If rules are None there will be issues that are already caught.
+                    info = modified.rules.as_verified_rules()
+
+                    ExcelExporter().export_to_file(info, output_path)
+
         return issues
