@@ -2039,6 +2039,11 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
     def __init__(self, client: NeatClient) -> None:
         self._client = client
 
+    @property
+    def description(self) -> str:
+        """Get the description of the transformer."""
+        return "Add Cognite properties for all concepts that implements a Cognite concept."
+
     def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
         input_ = rules.rules
         if input_ is None:
