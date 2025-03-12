@@ -389,7 +389,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             for chunk in self._chunk(
                 list(self._asset_parent_uri_by_id.keys()), description="Extracting asset parent data sets"
             ):
-                assets = self._client.assets.retrieve_multiple(id=list(chunk), ignore_unknown_ids=True)
+                assets = self._client.assets.retrieve_multiple(ids=list(chunk), ignore_unknown_ids=True)
                 for asset in assets:
                     if asset.data_set_id is None:
                         continue
