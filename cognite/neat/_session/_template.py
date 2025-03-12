@@ -219,6 +219,6 @@ class TemplateAPI:
                     # If rules are None there will be issues that are already caught.
                     info = modified.rules.as_verified_rules()
 
-                    ExcelExporter().export_to_file(info, output_path)
+                    ExcelExporter(styling="maximal").export_to_file(info, output_path)
         issues.action = "Created extension template"
         return issues
