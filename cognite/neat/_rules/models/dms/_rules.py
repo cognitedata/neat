@@ -196,6 +196,11 @@ class DMSProperty(SheetRow):
         cls, value: EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
     ) -> DataType | EdgeEntity | ViewEntity | DMSUnknownEntity:
         if (connection := info.data.get("connection")) is None:
+            if isinstance(value, ViewEntity | DMSUnknownEntity):
+                raise ValueError(
+                    f"Missing connection type for property '{info.data.get('view_property', 'unknown')}'. This "
+                    f"is required with value type {value!s}."
+                )
             return value
         if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
