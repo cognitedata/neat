@@ -1,11 +1,11 @@
+import typing
 import urllib.parse
-from collections.abc import Iterable, Iterator, Set
+from collections.abc import Callable, Iterable, Iterator, Set
 from functools import cached_property
-from typing import cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
-from cognite.client.data_classes.data_modeling.instances import Instance
+from cognite.client.data_classes.data_modeling.instances import Edge, Instance, Node
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, Literal, Namespace, URIRef
 
@@ -33,6 +33,10 @@ class DMSExtractor(BaseExtractor):
             considered as an empty value and skipped.
         str_to_ideal_type: If unpack_json is True, when unpacking JSON objects, if the value is a string, the extractor
             will try to convert it to the ideal type.
+        node_type: The prioritized order of the node type to use. The options are "view" and "type". "view"
+            means the externalId of the view used as type, while type is the node.type.
+        edge_type: The prioritized order of the edge type to use. The options are "view" and "type". "view"
+            means the externalId of the view used as type, while type is the edge.type.
     """
 
     def __init__(
@@ -43,6 +47,8 @@ class DMSExtractor(BaseExtractor):
         unpack_json: bool = False,
         empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
         str_to_ideal_type: bool = False,
+        node_type: tuple[typing.Literal["view", "type"], ...] = ("view",),
+        edge_type: tuple[typing.Literal["view", "type"], ...] = ("view", "type"),
     ) -> None:
         self.total_instances_pair_by_view = total_instances_pair_by_view
         self.limit = limit
@@ -50,6 +56,8 @@ class DMSExtractor(BaseExtractor):
         self.unpack_json = unpack_json
         self.empty_values = empty_values
         self.str_to_ideal_type = str_to_ideal_type
+        self.node_type = node_type
+        self.edge_type = edge_type
 
     @classmethod
     def from_data_model(
@@ -154,7 +162,10 @@ class DMSExtractor(BaseExtractor):
             else:
                 # If the edge has properties, we create a node for the edge and connect it to the start and end nodes.
                 id_ = self._as_uri_ref(instance)
-                yield id_, RDF.type, self._as_uri_ref(instance.type)
+                type_ = self._create_type(
+                    instance, fallback=self._get_namespace(instance.space).Edge, type_priority=self.edge_type
+                )
+                yield id_, RDF.type, type_
                 yield (
                     id_,
                     self._as_uri_ref(dm.DirectRelationReference(instance.space, "startNode")),
@@ -168,14 +179,9 @@ class DMSExtractor(BaseExtractor):
 
         elif isinstance(instance, dm.Node):
             id_ = self._as_uri_ref(instance)
-            if instance.type:
-                type_ = self._as_uri_ref(cast(dm.DirectRelationReference, instance.type))
-            elif len(instance.properties) == 1:
-                view_id = next(iter(instance.properties.keys()))
-                type_ = self._get_namespace(view_id.space)[urllib.parse.quote(view_id.external_id)]
-            else:
-                type_ = self._get_namespace(instance.space).Node
-
+            type_ = self._create_type(
+                instance, fallback=self._get_namespace(instance.space).Node, type_priority=self.node_type
+            )
             yield id_, RDF.type, type_
         else:
             raise NotImplementedError(f"Unknown instance type {type(instance)}")
@@ -195,6 +201,31 @@ class DMSExtractor(BaseExtractor):
                 self.str_to_ideal_type,
                 self.unpack_json,
             ).extract()
+
+    def _create_type(
+        self, instance: Node | Edge, fallback: URIRef, type_priority: tuple[typing.Literal["view", "type"], ...]
+    ) -> URIRef:
+        method_by_name: dict[str, Callable[[Node | Edge], URIRef | None]] = {
+            "view": self._view_to_rdf_type,
+            "type": self._instance_type_to_rdf,
+        }
+        for method_name in type_priority:
+            type_ = method_by_name[method_name](instance)
+            if type_:
+                return type_
+        else:
+            return fallback
+
+    def _instance_type_to_rdf(self, instance: Node | Edge) -> URIRef | None:
+        if instance.type:
+            return self._as_uri_ref(instance.type)
+        return None
+
+    def _view_to_rdf_type(self, instance: Node | Edge) -> URIRef | None:
+        view_id = next(iter((instance.properties or {}).keys()), None)
+        if view_id:
+            return self._get_namespace(view_id.space)[urllib.parse.quote(view_id.external_id)]
+        return None
 
     def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
         return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
