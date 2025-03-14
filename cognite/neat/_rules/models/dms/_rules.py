@@ -199,7 +199,7 @@ class DMSProperty(SheetRow):
             if isinstance(value, ViewEntity | DMSUnknownEntity):
                 raise ValueError(
                     f"Missing connection type for property '{info.data.get('view_property', 'unknown')}'. This "
-                    f"is required with value type {value!s}."
+                    f"is required with value type pointing to another view."
                 )
             return value
         if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):

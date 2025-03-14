@@ -1826,7 +1826,7 @@ class TestDMSProperty:
                     connection=None,
                 ),
                 "Value error, Missing connection type for property 'enterprise'. "
-                "This is required with value type sp:OtherView(version=v1).",
+                "This is required with value type pointing to another view.",
                 id="Missing connection specification",
             )
         ],
