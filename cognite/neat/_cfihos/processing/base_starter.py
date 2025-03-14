@@ -21,6 +21,7 @@ from cognite.neat._cfihos.processing.cfihos.cfihos import CfihosProcessor
 from cognite.neat._cfihos.common.reader import read_yaml, read_csv
 from cognite.neat._cfihos.processing.processor import Processor
 from cognite.neat._cfihos.common.utils import generate_neat_rules_sheet
+from cognite.neat._rules.models.dms._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 
 logging = log_init(f"{__name__}", "i")
 

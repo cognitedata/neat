@@ -286,8 +286,9 @@ def build_views_from_containers(
                 {
                     "View": container["Container"],
                     "View Property": key,
-                    "description": data.description.strip() if data.description else "",
-                    "Connetcion": "direct" if type(data.type) == data_types.DirectRelation else "edge" if data.type._type == PropertyStructure.Direct_Relation else "",
+                    "Name": "",
+                    "Description": data.description.strip() if data.description else "",
+                    "Connection": "direct" if type(data.type) == data_types.DirectRelation else "edge" if data.type._type == PropertyStructure.Direct_Relation else "",
                     "Value Type": map_property_type[str(data.type)] if type(data.type) != data_types.DirectRelation else relation_target,
                     "Nullable": data.nullable,
                     "Immutable": False,
@@ -334,8 +335,9 @@ def build_views_from_containers(
             {
                 "View": container["Container"],
                 "View Property": "entityType",
+                "Name": "",
                 "description": "",
-                "Connetcion": "",
+                "Connection": "",
                 "Value Type": "text",
                 "Nullable": False,
                 "Immutable": False,
