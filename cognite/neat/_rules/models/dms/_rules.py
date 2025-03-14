@@ -196,7 +196,7 @@ class DMSProperty(SheetRow):
         cls, value: EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
     ) -> DataType | EdgeEntity | ViewEntity | DMSUnknownEntity:
         if (connection := info.data.get("connection")) is None:
-            if isinstance(value, ViewEntity | DMSUnknownEntity):
+            if isinstance(value, ViewEntity):
                 raise ValueError(
                     f"Missing connection type for property '{info.data.get('view_property', 'unknown')}'. This "
                     f"is required with value type pointing to another view."
