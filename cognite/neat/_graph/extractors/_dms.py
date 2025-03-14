@@ -3,13 +3,13 @@ import urllib.parse
 from collections.abc import Callable, Iterable, Iterator, Set
 from functools import cached_property
 
-from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
-from cognite.client.data_classes.data_modeling.instances import Edge, Instance, InstanceSort, Node
+from cognite.client.data_classes.data_modeling.instances import Edge, Instance, Node
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, Literal, Namespace, URIRef
 
+from cognite.neat._client import NeatClient
 from cognite.neat._config import GLOBAL_CONFIG
 from cognite.neat._constants import DEFAULT_SPACE_URI, is_readonly_property
 from cognite.neat._issues.errors import ResourceRetrievalError
@@ -62,7 +62,7 @@ class DMSExtractor(BaseExtractor):
     @classmethod
     def from_data_model(
         cls,
-        client: CogniteClient,
+        client: NeatClient,
         data_model: DataModelIdentifier,
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
@@ -96,7 +96,7 @@ class DMSExtractor(BaseExtractor):
     @classmethod
     def from_views(
         cls,
-        client: CogniteClient,
+        client: NeatClient,
         views: Iterable[dm.View],
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
@@ -237,7 +237,7 @@ class DMSExtractor(BaseExtractor):
 
 
 class _ViewInstanceIterator(Iterable[Instance]):
-    def __init__(self, client: CogniteClient, view: dm.View, instance_space: str | SequenceNotStr[str] | None = None):
+    def __init__(self, client: NeatClient, view: dm.View, instance_space: str | SequenceNotStr[str] | None = None):
         self.client = client
         self.view = view
         self.instance_space = instance_space
@@ -275,28 +275,20 @@ class _ViewInstanceIterator(Iterable[Instance]):
         }
         # All nodes and edges with properties
         if self.view.used_for in ("node", "all"):
-            # Without a sort, the sort is implicitly by the internal id, as cursoring needs a stable sort.
-            # By making the sort be on external_id, Postgres should pick the index
-            # that's on (project_id, space, external_id)
-            # WHERE deleted_at IS NULL. In other words, avoiding soft deleted instances.
-            node_iterable: Iterable[Instance] = self.client.data_modeling.instances(
-                chunk_size=None,
+            node_iterable: Iterable[Instance] = self.client.instances.iterate(
                 instance_type="node",
-                sources=[view_id],
+                source=view_id,
                 space=self.instance_space,
-                sort=InstanceSort(["node", "externalId"]),
             )
             if read_only_properties:
                 node_iterable = self._remove_read_only_properties(node_iterable, read_only_properties, view_id)
             yield from node_iterable
 
         if self.view.used_for in ("edge", "all"):
-            yield from self.client.data_modeling.instances(
-                chunk_size=None,
+            yield from self.client.instances.iterate(
                 instance_type="edge",
-                sources=[view_id],
+                source=view_id,
                 space=self.instance_space,
-                sort=InstanceSort(["edge", "externalId"]),
             )
 
         for prop in self.view.properties.values():
@@ -304,14 +296,12 @@ class _ViewInstanceIterator(Iterable[Instance]):
                 if prop.edge_source:
                     # All edges with properties are extracted from the edge source
                     continue
-                yield from self.client.data_modeling.instances(
-                    chunk_size=None,
+                yield from self.client.instances.iterate(
                     instance_type="edge",
-                    filter=dm.filters.Equals(
+                    filter_=dm.filters.Equals(
                         ["edge", "type"], {"space": prop.type.space, "externalId": prop.type.external_id}
                     ),
                     space=self.instance_space,
-                    sort=InstanceSort(["edge", "externalId"]),
                 )
 
     @staticmethod
