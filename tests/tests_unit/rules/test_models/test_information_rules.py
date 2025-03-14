@@ -507,7 +507,7 @@ class TestInformationClass:
     @pytest.mark.parametrize(
         "raw, class_, implements",
         [
-            pytest.param(
+            (
                 InformationInputClass(
                     class_="WindTurbine",
                     description="Power generating unite",
