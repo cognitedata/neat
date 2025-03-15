@@ -42,7 +42,7 @@ class TestRead:
 
         issues = neat.read.excel(hello_world_pump)
 
-        assert not issues.has_errors
+        assert len(issues) == 0
 
     def test_store_read_neat_session(self, tmp_path: Path) -> None:
         neat = NeatSession()
