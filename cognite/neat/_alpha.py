@@ -22,3 +22,4 @@ class ExperimentalFlags:
     aml_read = ExperimentalFeatureWarning("aml_read")
     csv_read = ExperimentalFeatureWarning("csv_read")
     to_ontology = ExperimentalFeatureWarning("to_ontology")
+    extension = ExperimentalFeatureWarning("extension")
