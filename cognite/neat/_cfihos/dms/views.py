@@ -7,6 +7,7 @@ from cognite.neat._cfihos.common.constants import (
 from cognite.client.data_classes.data_modeling import data_types
 from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.common.utils import get_relation_target_if_eligible
+from cognite.neat._rules.models.dms._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 
 logging = log_init(f"{__name__}", "i")
 
@@ -270,6 +271,7 @@ def build_views_from_containers(
     lst_properties = []
     lst_views = []
     views_dict = {}
+    lst_dms_properties = [DMSView]
     for container in containers:
         lst_views.append({"View":container["Container"], "Name": entities[container["Container"].replace("_", "-")]["entityName"]
             if container["Container"].replace("_", "-") in entities.keys()
@@ -282,6 +284,25 @@ def build_views_from_containers(
             relation_target = get_relation_target_if_eligible(
                 key, container["Container"].replace("_", "-"), entities, data.type
             )
+            # lst_dms_properties.append(DMSView(View=container["Container"],
+            #         view: key,
+            #         Name: "",
+            #         "Description": data.description.strip() if data.description else "",
+            #         "Connection": "direct" if type(data.type) == data_types.DirectRelation else "edge" if data.type._type == PropertyStructure.Direct_Relation else "",
+            #         "Value Type": map_property_type[str(data.type)] if type(data.type) != data_types.DirectRelation else relation_target,
+            #         "Nullable": data.nullable,
+            #         "Immutable": False,
+            #         "Is List": data.type.is_list,
+            #         "Default": "",
+            #         "Reference": "",
+            #         "Container": container["Container"],
+            #         "Container Property": key,
+            #         "Index": "",
+            #         "Constraint": "",
+            #         "Class (linage)": container["Container"],
+            #         "Property (linage)": key,                
+            # )
+                                            #   ))
             lst_properties.append(
                 {
                     "View": container["Container"],
