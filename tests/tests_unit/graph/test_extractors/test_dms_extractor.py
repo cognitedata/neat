@@ -1,11 +1,13 @@
 from collections import defaultdict
 from collections.abc import Iterable
 from typing import cast
+from unittest.mock import MagicMock
 
 import rdflib
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.aggregations import AggregatedNumberedValue
 from cognite.client.data_classes.data_modeling.instances import Instance, Properties
+from requests import Response
 
 from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._graph.extractors import DMSExtractor
@@ -72,7 +74,12 @@ class TestDMSExtractor:
             deleted_time=1,
         )
         with monkeypatch_neat_client() as client:
-            client.data_modeling.instances.return_value = [node_a, node_b]
+            response = MagicMock(spec=Response)
+            response.json.return_value = {
+                "items": [item.dump() for item in [node_a, node_b]],
+                "nextCursor": None,
+            }
+            client.post.return_value = response
             client.data_modeling.instances.aggregate.return_value = AggregatedNumberedValue("externalId", 2)
             extractor = DMSExtractor.from_views(client, [view])
 
