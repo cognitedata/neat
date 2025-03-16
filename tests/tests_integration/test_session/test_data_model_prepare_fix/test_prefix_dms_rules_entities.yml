@@ -72,7 +72,6 @@ rules:
     view: NeatINCFacility
     view_property: desc
   - connection: reverse(property=livesIn)
-    max_count: .inf
     name: hasPumps
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Facility/hasPumps
     value_type: NeatINCPump
@@ -89,7 +88,6 @@ rules:
     view: NeatINCFacility
     view_property: name
   - connection: reverse(property=relatedPumps)
-    max_count: .inf
     name: documentation
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/documentation
     value_type: NeatINCDocumentation

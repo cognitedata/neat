@@ -40,6 +40,11 @@ TEST_CASES = [
         ClassEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
     ),
     (
+        ClassEntity,
+        "cdf_cdm:CogniteAsset(version=v1)",
+        ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+    ),
+    (
         ViewEntity,
         "subject:person(version=1.0)",
         ViewEntity(space="subject", externalId="person", version="1.0"),
