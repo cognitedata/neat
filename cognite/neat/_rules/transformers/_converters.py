@@ -522,13 +522,17 @@ class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
     def __init__(
-        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
+        self,
+        ignore_undefined_value_types: bool = False,
+        reserved_properties: Literal["error", "warning"] = "error",
+        client: NeatClient | None = None,
     ):
         self.ignore_undefined_value_types = ignore_undefined_value_types
         self.reserved_properties = reserved_properties
+        self.client = client
 
     def transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(
+        return _InformationRulesConverter(rules, self.client).as_dms_rules(
             self.ignore_undefined_value_types, self.reserved_properties
         )
 
@@ -1347,9 +1351,10 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
 class _InformationRulesConverter:
     _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
-    def __init__(self, information: InformationRules):
+    def __init__(self, information: InformationRules, client: NeatClient | None = None):
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
+        self.client = client
 
     def as_dms_rules(
         self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
