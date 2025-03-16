@@ -1,4 +1,5 @@
 import datetime
+from collections import defaultdict
 from typing import Any
 
 import pytest
@@ -13,6 +14,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._rules.models.entities import ContainerEntity
 from tests.config import DATA_FOLDER
 
 RESERVED_PROPERTIES = frozenset(
@@ -124,6 +126,43 @@ class TestExtractToLoadFlow:
         instance_result = neat.to.cdf._instances(use_source_space=True)
         errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not errors, errors
+
+    def test_convert_info_with_cdm_ref(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.excel(DATA_FOLDER / "info_with_cdm_ref.xlsx")
+        issues = neat.convert()
+        assert not issues.has_errors
+
+        dms = neat._state.rule_store.last_verified_dms_rules
+
+        expected_containers = {
+            ContainerEntity(space="cdf_cdm", externalId="CogniteAsset"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteDescribable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteSourceable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteVisualizable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteSchedulable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteActivity"),
+        }
+        actual_containers = {c.container for c in dms.containers or []}
+        assert expected_containers <= actual_containers, (
+            f"Expected {expected_containers} to be a subset of {actual_containers}"
+        )
+        properties_by_external_id = defaultdict(set)
+        value_type_by_property: dict[tuple[str, str], str] = {}
+        description_by_property: dict[tuple[str, str], str] = {}
+        for prop in dms.properties:
+            properties_by_external_id[prop.view.external_id].add(prop.view_property)
+            value_type_by_property[(prop.view.external_id, prop.view_property)] = str(prop.value_type)
+            description_by_property[(prop.view.external_id, prop.view_property)] = prop.description
+
+        assert "WindTurbine" in properties_by_external_id
+        assert "WorkOrder" in properties_by_external_id
+
+        assert "maxCapacity" in properties_by_external_id["WindTurbine"], "Missing custom property 'maxCapacity'"
+        updated_description = description_by_property.get(("WindTurbine", "name"))
+        assert updated_description == "This is an updated description of name."
+        assert value_type_by_property.get(("WindTurbine", "activities")) == "my_space:WorkOrder(version=v1)"
+        assert value_type_by_property.get(("WorkOrder", "assets")) == "my_space:WindTurbine(version=v1)"
 
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
