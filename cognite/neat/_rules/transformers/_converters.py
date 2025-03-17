@@ -1814,9 +1814,9 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     """
 
     def __init__(self, views: set[ViewEntity]):
-        if not_in_cognite_core := {view.external_id for view in views} - COGNITE_CORE_CONCEPTS.union(
-            COGNITE_CORE_FEATURES
-        ):
+        if not_in_cognite_core := {view.external_id for view in views} - set(
+            COGNITE_CORE_CONCEPTS
+        ).union(set(COGNITE_CORE_FEATURES)):
             raise NeatValueError(
                 f"Concept(s) {', '.join(not_in_cognite_core)} is/are not part of the Cognite Core Data Model. Aborting."
             )

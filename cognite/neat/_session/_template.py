@@ -25,6 +25,36 @@ class TemplateAPI:
     def __init__(self, state: SessionState):
         self._state = state
 
+    def empty_conceptual_model(
+        self,
+        file_path: str,
+        concept_source: Literal["CogniteCore", "IDM"] = "CogniteCore",
+        max_dropdown_concepts: int = 5,
+    ) -> None:
+        """Creates a spreadsheet template for conceptual data modeling based on Cognite system data models
+
+        Args:
+            file_path: The file path to save the spreadsheet template of the conceptual model.
+            concept_source: The source of the concepts to include in the drop-down of the implement column.
+                            Can be either "CogniteCore" or "IDM".
+            max_dropdown_concepts: The maximum number of concepts to include in the drop-down of the implement column.
+
+
+        !!! note "Drop-down Concepts Selection"
+            The drop-down of the implement column will include the concepts from the selected source.
+            The maximum number of concepts to include in the drop-down is set by the max_dropdown_concepts parameter.
+            We prioritize the concepts that are most relevant to the current data model, for example if the CogniteCore
+            is selected as the source, and max dropdown concepts is set to 5, the following concepts will be included:
+                - CogniteAsset
+                - CogniteEquipment
+                - CogniteActivity
+                - CogniteFile
+                - CogniteTimeSeries
+
+        """
+
+        ...
+
     def enterprise_model(
         self,
         data_model_id: DataModelIdentifier,
