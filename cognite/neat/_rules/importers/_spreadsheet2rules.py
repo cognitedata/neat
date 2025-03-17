@@ -37,16 +37,19 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
         "Properties",
         "Properties",
         {
-            RoleTypes.information: ["Class", "Property"],
+            RoleTypes.information: ["Property"],
             RoleTypes.dms: ["View", "View Property"],
         },
     ),
     ("Classes", "Classes", ["Class"]),
+    ("Concepts", "Classes", ["Concept"]),
     ("Containers", "Containers", ["Container"]),
     ("Views", "Views", ["View"]),
     ("Enum", "Enum", ["Collection"]),
     ("Nodes", "Nodes", ["Node"]),
 ]
+
+RENAME_INFORMATION_COLUMNS = {"Concept": "Class"}
 
 
 MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
@@ -211,13 +214,17 @@ class SpreadsheetReader:
         expected_sheet_names = self.sheet_names(read_role)
 
         if missing_sheets := expected_sheet_names.difference(set(excel_file.sheet_names)):
-            if self.required:
+            if self.required and not (
+                read_role == RoleTypes.information
+                and "Classes" in missing_sheets
+                and "Concepts" in excel_file.sheet_names
+            ):
                 self.issue_list.append(
                     FileMissingRequiredFieldError(
                         cast(Path, excel_file.io), "sheets", humanize_collection(missing_sheets)
                     )
                 )
-            return None, read_info_by_sheet
+                return None, read_info_by_sheet
 
         for source_sheet_name, target_sheet_name, headers_input in SOURCE_SHEET__TARGET_FIELD__HEADERS:
             source_sheet_name = f"{self._sheet_prefix}{source_sheet_name}"
@@ -235,6 +242,7 @@ class SpreadsheetReader:
                     source_sheet_name,
                     return_read_info=True,
                     expected_headers=headers,
+                    rename_columns_config=(RENAME_INFORMATION_COLUMNS if read_role == RoleTypes.information else None),
                 )
             except Exception as e:
                 self.issue_list.append(FileReadError(cast(Path, excel_file.io), str(e)))
