@@ -8,13 +8,14 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Generic, Self, TypeVar, cast
+from typing import Any, Generic, TypeVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import WriteableCogniteResource
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor

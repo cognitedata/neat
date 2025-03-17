@@ -3,11 +3,12 @@ import uuid
 import xml.etree.ElementTree as ET
 from functools import cached_property
 from pathlib import Path
-from typing import ClassVar, Self
+from typing import ClassVar
 from typing import Literal as LiteralType
 from xml.etree.ElementTree import Element
 
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor

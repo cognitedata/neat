@@ -1,10 +1,11 @@
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Self, cast, get_args
+from typing import cast, get_args
 
 from rdflib import URIRef
 from rdflib.util import guess_format
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_BASE_URI
 from cognite.neat._graph._shared import RDFTypes

@@ -3,11 +3,12 @@ import json
 import typing
 from collections.abc import Iterable, Set
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Sequence, SequenceFilter
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._client.data_classes.neat_sequence import NeatSequence, NeatSequenceList
 from cognite.neat._shared import Triple
