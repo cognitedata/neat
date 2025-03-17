@@ -40,6 +40,30 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
+    def test_snapshot_workflow_ids_to_python(
+        self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        issues = neat.read.cdf.classic.graph("Utsira", identifier="id")
+        assert not issues.has_errors
+        issues = neat.convert()
+        assert not issues.has_errors
+        issues = neat.mapping.data_model.classic_to_core("Classic")
+        assert not issues.has_errors
+        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
+        instances, issues = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
+        assert not issues.has_errors
+        rules_str = neat.to.yaml(format="neat")
+        rules_dict = yaml.safe_load(rules_str)
+        data_regression.check(
+            {
+                "rules": rules_dict,
+                "instances": sorted(
+                    [self._standardize_instance(node) for node in instances], key=lambda x: x["externalId"]
+                ),
+            }
+        )
+
     def test_snapshot_workflow_to_python(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:

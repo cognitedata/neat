@@ -7,7 +7,7 @@ from typing import ClassVar, NamedTuple, cast
 
 from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteAPIError
-from rdflib import Literal, Namespace, URIRef
+from rdflib import Namespace, URIRef
 
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
 from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
@@ -389,15 +389,16 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             for chunk in self._chunk(
                 list(self._asset_parent_uri_by_id.keys()), description="Extracting asset parent data sets"
             ):
-                assets = self._client.assets.retrieve_multiple(id=list(chunk), ignore_unknown_ids=True)
+                assets = self._client.assets.retrieve_multiple(ids=list(chunk), ignore_unknown_ids=True)
                 for asset in assets:
                     if asset.data_set_id is None:
                         continue
-                    object_ = (
-                        Literal(self._lookup_dataset(asset.data_set_id))
+                    data_set_id = (
+                        self._lookup_dataset(asset.data_set_id)
                         if self._identifier == "externalId"
-                        else Literal(asset.data_set_id)
+                        else asset.data_set_id
                     )
+                    object_ = self._namespace[f"{InstanceIdPrefix.data_set}{data_set_id}"]
                     yield self._asset_parent_uri_by_id[asset.id], self._namespace.dataSetId, object_
         if self._asset_parent_uri_by_external_id:
             for chunk in self._chunk(
@@ -407,11 +408,12 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
                 for asset in assets:
                     if asset.data_set_id is None:
                         continue
-                    object_ = (
-                        Literal(self._lookup_dataset(asset.data_set_id))
+                    data_set_id = (
+                        self._lookup_dataset(asset.data_set_id)
                         if self._identifier == "externalId"
-                        else Literal(asset.data_set_id)
+                        else asset.data_set_id
                     )
+                    object_ = self._namespace[f"{InstanceIdPrefix.data_set}{data_set_id}"]
                     yield self._asset_parent_uri_by_external_id[asset.external_id], self._namespace.dataSetId, object_
 
     def _extract_with_logging_label_dataset(
