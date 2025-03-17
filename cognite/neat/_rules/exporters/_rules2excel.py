@@ -63,6 +63,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
         "Properties": "Definition of Properties",
         "Classes": "Definition of Classes",
+        "Concepts": "Definition of Concepts",
         "Views": "Definition of Views",
         "Containers": "Definition of Containers",
         "Nodes": "Definition of Nodes",
@@ -124,6 +125,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         if isinstance(rules, InformationRules) and rules.prefixes:
             self._write_prefixes_sheet(workbook, rules.prefixes)
+            self._conceptual_data_model_terminology_sync(workbook)
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
@@ -143,6 +145,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._add_drop_downs(workbook)
 
         return workbook
+
+    def _conceptual_data_model_terminology_sync(self, workbook: Workbook) -> None:
+        # rename Classes sheet to Concepts
+
+        # rename Class to Concept column in Concepts and Properties sheet
+
+        ...
 
     def _add_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry.
@@ -246,7 +255,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
                 continue
-            sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
+            sheet = workbook.create_sheet(f"{sheet_prefix}{'Concepts' if sheet_name == 'Classes' else sheet_name}")
 
             main_header = self._main_header_by_sheet_name[sheet_name]
             sheet.append([main_header] + [""] * (len(headers) - 1))
@@ -254,6 +263,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             if headers[0] == "Neat ID":
                 # Move the Neat ID to the end of the columns
                 headers = headers[1:] + ["Neat ID"]
+
+            if isinstance(rules, InformationRules):
+                headers = [header if header != "Class" else "Concept" for header in headers]
 
             sheet.append(headers)
 

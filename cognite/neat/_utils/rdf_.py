@@ -67,7 +67,7 @@ def remove_namespace_from_uri(
         # Assume that all elements in the tuple are of the same type following type hint
         uris = URI
     else:
-        raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
+        raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}: {URI}")
 
     output = []
     for u in uris:

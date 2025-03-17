@@ -1,4 +1,6 @@
 import datetime
+from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -13,6 +15,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._rules.models.entities import ContainerEntity
 from tests.config import DATA_FOLDER
 
 RESERVED_PROPERTIES = frozenset(
@@ -37,6 +40,30 @@ RESERVED_PROPERTIES = frozenset(
 
 
 class TestExtractToLoadFlow:
+    def test_snapshot_workflow_ids_to_python(
+        self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        issues = neat.read.cdf.classic.graph("Utsira", identifier="id")
+        assert not issues.has_errors
+        issues = neat.convert()
+        assert not issues.has_errors
+        issues = neat.mapping.data_model.classic_to_core("Classic")
+        assert not issues.has_errors
+        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
+        instances, issues = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
+        assert not issues.has_errors
+        rules_str = neat.to.yaml(format="neat")
+        rules_dict = yaml.safe_load(rules_str)
+        data_regression.check(
+            {
+                "rules": rules_dict,
+                "instances": sorted(
+                    [self._standardize_instance(node) for node in instances], key=lambda x: x["externalId"]
+                ),
+            }
+        )
+
     def test_snapshot_workflow_to_python(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
@@ -125,6 +152,43 @@ class TestExtractToLoadFlow:
         errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not errors, errors
 
+    def test_convert_info_with_cdm_ref(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.excel(DATA_FOLDER / "info_with_cdm_ref.xlsx")
+        issues = neat.convert()
+        assert not issues.has_errors
+
+        dms = neat._state.rule_store.last_verified_dms_rules
+
+        expected_containers = {
+            ContainerEntity(space="cdf_cdm", externalId="CogniteAsset"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteDescribable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteSourceable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteVisualizable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteSchedulable"),
+            ContainerEntity(space="cdf_cdm", externalId="CogniteActivity"),
+        }
+        actual_containers = {c.container for c in dms.containers or []}
+        assert expected_containers <= actual_containers, (
+            f"Expected {expected_containers} to be a subset of {actual_containers}"
+        )
+        properties_by_external_id = defaultdict(set)
+        value_type_by_property: dict[tuple[str, str], str] = {}
+        description_by_property: dict[tuple[str, str], str] = {}
+        for prop in dms.properties:
+            properties_by_external_id[prop.view.external_id].add(prop.view_property)
+            value_type_by_property[(prop.view.external_id, prop.view_property)] = str(prop.value_type)
+            description_by_property[(prop.view.external_id, prop.view_property)] = prop.description
+
+        assert "WindTurbine" in properties_by_external_id
+        assert "WorkOrder" in properties_by_external_id
+
+        assert "maxCapacity" in properties_by_external_id["WindTurbine"], "Missing custom property 'maxCapacity'"
+        updated_description = description_by_property.get(("WindTurbine", "name"))
+        assert updated_description == "This is an updated description of name."
+        assert value_type_by_property.get(("WindTurbine", "activities")) == "my_space:WorkOrder(version=v1)"
+        assert value_type_by_property.get(("WorkOrder", "assets")) == "my_space:WindTurbine(version=v1)"
+
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.dexpi(DATA_FOLDER / "depxi_example.xml")
@@ -206,6 +270,21 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 973
         assert len(edges) == 972
         assert len(instances) == 1945
+
+    def test_create_extension_template(
+        self, cognite_client: CogniteClient, tmp_path: Path, data_regression: DataRegressionFixture
+    ) -> None:
+        neat = NeatSession(cognite_client)
+        output_path = tmp_path / "extension_template.xlsx"
+        neat.template.extension(DATA_FOLDER / "only_concepts.xlsx", output_path)
+        assert output_path.exists()
+        neat.read.excel(output_path)
+
+        model_str = neat.to.yaml(format="neat")
+
+        model_dict = yaml.safe_load(model_str)
+
+        data_regression.check(model_dict)
 
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:

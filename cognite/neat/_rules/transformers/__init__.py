@@ -1,6 +1,7 @@
 from ._base import RulesTransformer, VerifiedRulesTransformer
 from ._converters import (
     AddClassImplements,
+    AddCogniteProperties,
     ChangeViewPrefix,
     ClassicPrepareCore,
     ConversionTransformer,
@@ -29,6 +30,7 @@ from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRule
 
 __all__ = [
     "AddClassImplements",
+    "AddCogniteProperties",
     "AsParentPropertyId",
     "ChangeViewPrefix",
     "ClassicPrepareCore",

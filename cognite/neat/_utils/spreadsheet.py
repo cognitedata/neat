@@ -50,6 +50,7 @@ def read_individual_sheet(
     sheet_name: str,
     return_read_info: Literal[True],
     expected_headers: list[str] | None = None,
+    rename_columns_config: dict[str, str] | None = None,
 ) -> tuple[list[dict], SpreadsheetRead]: ...
 
 
@@ -59,6 +60,7 @@ def read_individual_sheet(
     sheet_name: str,
     return_read_info: Literal[False] = False,
     expected_headers: list[str] | None = None,
+    rename_columns_config: dict[str, str] | None = None,
 ) -> list[dict]: ...
 
 
@@ -67,6 +69,7 @@ def read_individual_sheet(
     sheet_name: str,
     return_read_info: bool = False,
     expected_headers: list[str] | None = None,
+    rename_columns_config: dict[str, str] | None = None,
 ) -> tuple[list[dict], SpreadsheetRead] | list[dict]:
     if expected_headers:
         with catch_warnings():
@@ -91,6 +94,9 @@ def read_individual_sheet(
 
     if skip_rows:
         raw = raw.drop(skip_rows)
+
+    if rename_columns_config:
+        raw.rename(columns=rename_columns_config, inplace=True, errors="ignore")
 
     raw.dropna(axis=0, how="all", inplace=True)
 
