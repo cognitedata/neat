@@ -25,7 +25,7 @@ from cognite.neat._constants import (
     DMS_RESERVED_PROPERTIES,
     get_default_prefixes_and_namespaces,
 )
-from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._issues.errors import NeatValueError, CDFMissingClientError
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
@@ -62,7 +62,7 @@ from cognite.neat._rules.models.entities import (
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
 from cognite.neat._utils.rdf_ import get_inheritance_path
-from cognite.neat._utils.text import NamingStandardization, title, to_camel_case, to_words
+from cognite.neat._utils.text import NamingStandardization, title, to_camel_case, to_words, humanize_collection
 
 from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -1393,9 +1393,18 @@ class _InformationRulesConverter:
             and (prop.property_ == "endNode" or prop.property_ == "end_node")
             and isinstance(prop.value_type, ClassEntity)
         }
+        cognite_rules = self._get_cognite_concets()
+        cognite_properties: dict[tuple[ClassEntity, str], DMSProperty] = {}
+        if cognite_rules:
+            if self.client is None:
+                raise CDFMissingClientError(f"Cannot convert {self.rules.metadata.as_data_model_id()}. Missing Cognite Client."
+                                            f"This is required as the data model is referencing cognite concepts in the implements"
+                                            f"{humanize_collection(cognite_rules)}")
+            cognite_properties = self._get_cognite_properties(self.client)
 
         properties_by_class: dict[ClassEntity, list[DMSProperty]] = defaultdict(list)
         referenced_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
+        cognite_containers: dict[ContainerEntity, DMSContainer] = {}
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
                 continue
@@ -1407,18 +1416,28 @@ class _InformationRulesConverter:
                     raise NeatValueError(msg)
                 warnings.warn(NeatValueWarning(f"{msg} Skipping..."), stacklevel=2)
                 continue
+            if (prop.class_, prop.property_) in cognite_properties:
+                dms_property = self._ac_cognite_property(
+                    prop,
+                    cognite_properties[(prop.class_, prop.property_)],
+                )
+                if dms_property.container:
+                    if dms_property.container not in cognite_containers:
+                        dms_property[dms_property.container] = cognite_rules.cotainers
+            else:
+                dms_property = self._as_dms_property(
+                    prop,
+                    default_space,
+                    default_version,
+                    edge_classes,
+                    edge_value_types_by_class_property_pair,
+                    end_node_by_edge,
+                )
+                if dms_property.container:
+                    referenced_containers[dms_property.container][prop.class_] += 1
 
-            dms_property = self._as_dms_property(
-                prop,
-                default_space,
-                default_version,
-                edge_classes,
-                edge_value_types_by_class_property_pair,
-                end_node_by_edge,
-            )
             properties_by_class[prop.class_].append(dms_property)
-            if dms_property.container:
-                referenced_containers[dms_property.container][prop.class_] += 1
+
 
         views: list[DMSView] = []
 
@@ -1462,6 +1481,8 @@ class _InformationRulesConverter:
                 used_for=used_for,
             )
             containers.append(container)
+
+        containers.extend(cognite_containers.containers)
 
         dms_rules = DMSRules(
             metadata=dms_metadata,
