@@ -2,10 +2,10 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Self
 from xml.etree.ElementTree import Element
 
 from rdflib import RDF, RDFS, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor

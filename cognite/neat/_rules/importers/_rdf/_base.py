@@ -1,9 +1,10 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 from cognite.client import data_modeling as dm
 from rdflib import Graph, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import get_default_prefixes_and_namespaces
 from cognite.neat._issues import IssueList, MultiValueError
