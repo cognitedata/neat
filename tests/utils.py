@@ -9,7 +9,7 @@ from typing import Any, Literal, TypeVar, Union, get_args, get_origin
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, ViewId
-from cognite.client.data_classes.data_modeling.instances import Instance
+from cognite.client.data_classes.data_modeling.instances import Instance, Properties
 from rdflib import Namespace
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
@@ -137,7 +137,9 @@ def as_read_instance(instance: dm.NodeApply | dm.EdgeApply) -> Instance:
         created_time=0,
         version=instance.existing_version,
         deleted_time=None,
-        properties={source.source: source.properties for source in instance.sources or []},
+        properties=Properties(
+            {source.source: source.properties for source in instance.sources or []},
+        ),
     )
     if isinstance(instance, dm.NodeApply):
         return dm.Node(**args)

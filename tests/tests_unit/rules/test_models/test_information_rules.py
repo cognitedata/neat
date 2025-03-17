@@ -482,3 +482,50 @@ class TestInformationProperty:
         prop = InformationProperty.model_validate(raw.dump(default_prefix="power"))
 
         assert isinstance(prop, InformationProperty)
+
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            pytest.param(
+                InformationInputProperty(
+                    "cdf_cdm:CogniteAsset(version=v1)",
+                    "name",
+                    "text",
+                ),
+                ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+                id="CogniteAsset name",
+            )
+        ],
+    )
+    def test_validate_class_entity(self, raw: InformationInputProperty, expected: ClassEntity) -> None:
+        prop = InformationProperty.model_validate(raw.dump(default_prefix="my_space"))
+
+        assert prop.class_ == expected
+
+
+class TestInformationClass:
+    @pytest.mark.parametrize(
+        "raw, class_, implements",
+        [
+            (
+                InformationInputClass(
+                    class_="WindTurbine",
+                    description="Power generating unite",
+                    implements="cdf_cdm:CogniteAsset(version=v1)",
+                ),
+                ClassEntity(prefix="my_space", suffix="WindTurbine"),
+                ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+            )
+        ],
+    )
+    def test_validate_class_entity(
+        self,
+        raw: InformationInputClass,
+        class_: ClassEntity,
+        implements: ClassEntity,
+    ) -> None:
+        info_class = InformationClass.model_validate(raw.dump(default_prefix="my_space"))
+
+        assert info_class.class_ == class_
+        assert isinstance(info_class.implements, list)
+        assert info_class.implements[0] == implements
