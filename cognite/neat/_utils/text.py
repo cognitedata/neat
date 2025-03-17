@@ -192,7 +192,7 @@ def replace_non_alphanumeric_with_underscore(text: str) -> str:
     return re.sub(r"\W+", "_", text)
 
 
-def humanize_collection(collection: Collection[Any], /, *, sort: bool = True) -> str:
+def humanize_collection(collection: Collection[Any], /, *, sort: bool = True, bind_word: str = "and") -> str:
     if not collection:
         return ""
     elif len(collection) == 1:
@@ -204,7 +204,7 @@ def humanize_collection(collection: Collection[Any], /, *, sort: bool = True) ->
     else:
         sequence = list(strings)
 
-    return f"{', '.join(sequence[:-1])} and {sequence[-1]}"
+    return f"{', '.join(sequence[:-1])} {bind_word} {sequence[-1]}"
 
 
 class NamingStandardization:
