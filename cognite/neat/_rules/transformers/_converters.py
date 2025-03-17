@@ -6,11 +6,12 @@ from collections import Counter, defaultdict
 from collections.abc import Collection, Mapping
 from datetime import date, datetime
 from functools import cached_property
+from graphlib import CycleError, TopologicalSorter
 from typing import Any, ClassVar, Literal, TypeVar, cast, overload
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import data_modeling as dms
-from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, View, ViewId
 from cognite.client.utils.useful_types import SequenceNotStr
 from pydantic import ValidationError
 from rdflib import Namespace
@@ -26,6 +27,8 @@ from cognite.neat._constants import (
     DMS_RESERVED_PROPERTIES,
     get_default_prefixes_and_namespaces,
 )
+from cognite.neat._issues import IssueList
+from cognite.neat._issues._factory import from_pydantic_errors
 from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError
 from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
 from cognite.neat._issues.warnings._models import (
@@ -61,8 +64,15 @@ from cognite.neat._rules.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
-from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
+from cognite.neat._rules.models.information import (
+    InformationClass,
+    InformationInputClass,
+    InformationInputProperty,
+    InformationMetadata,
+    InformationProperty,
+)
 from cognite.neat._utils.rdf_ import get_inheritance_path
+from cognite.neat._utils.spreadsheet import SpreadsheetRead
 from cognite.neat._utils.text import NamingStandardization, humanize_collection, title, to_camel_case, to_words
 
 from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
@@ -2150,3 +2160,130 @@ class SubsetInformationRules(VerifiedRulesTransformer[InformationRules, Informat
             return InformationRules.model_validate(subsetted_rules)
         except ValidationError as e:
             raise NeatValueError(f"Cannot subset rules: {e}") from e
+
+
+class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
+    """This transformer looks at the implements of the classes and adds all properties
+    from the parent (and ancestors) classes that are not already included in the data model.
+
+    Args:
+        client: The client is used to look up the properties of the parent classes.
+
+    """
+
+    def __init__(self, client: NeatClient) -> None:
+        self._client = client
+
+    @property
+    def description(self) -> str:
+        """Get the description of the transformer."""
+        return "Add Cognite properties for all concepts that implements a Cognite concept."
+
+    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+        input_ = rules.rules
+        if input_ is None:
+            raise NeatValueError("Rule read failed. Cannot add cognite properties to None rules.")
+
+        default_space = input_.metadata.space
+        default_version = input_.metadata.version
+
+        dependencies_by_class = self._get_dependencies_by_class(input_.classes, rules.read_context, default_space)
+        properties_by_class = self._get_properties_by_class(input_.properties, rules.read_context, default_space)
+        cognite_implements_concepts = self._get_cognite_concepts(dependencies_by_class)
+        views_by_class_entity = self._lookup_views(cognite_implements_concepts, default_space, default_version)
+
+        for class_entity, view in views_by_class_entity.items():
+            for prop_id, view_prop in view.properties.items():
+                if prop_id in properties_by_class[class_entity]:
+                    continue
+                properties_by_class[class_entity][prop_id] = DMSImporter.as_information_property(
+                    class_entity, prop_id, view_prop
+                )
+
+        try:
+            topological_order = TopologicalSorter(dependencies_by_class).static_order()
+        except CycleError as e:
+            raise NeatValueError(f"Cycle detected in the class hierarchy: {e}") from e
+
+        new_properties: list[InformationInputProperty] = input_.properties.copy()
+        for class_entity in topological_order:
+            if class_entity not in dependencies_by_class:
+                continue
+            for parent in dependencies_by_class[class_entity]:
+                for prop in properties_by_class[parent].values():
+                    if prop.property_ not in properties_by_class[class_entity]:
+                        new_prop = prop.copy(update={"Class": class_entity}, default_prefix=default_space)
+                        new_properties.append(new_prop)
+                        properties_by_class[class_entity][prop.property_] = new_prop
+
+        new_classes: list[InformationInputClass] = input_.classes.copy()
+        existing_classes = {cls.class_ for cls in input_.classes}
+        for class_entity, view in views_by_class_entity.items():
+            if class_entity not in existing_classes:
+                new_classes.append(DMSImporter.as_information_class(view))
+                existing_classes.add(class_entity)
+
+        return ReadRules(
+            rules=InformationInputRules(
+                metadata=input_.metadata,
+                properties=new_properties,
+                classes=new_classes,
+                prefixes=input_.prefixes,
+            ),
+            read_context={},
+        )
+
+    @staticmethod
+    def _get_properties_by_class(
+        properties: list[InformationInputProperty], read_context: dict[str, SpreadsheetRead], default_space: str
+    ):
+        issues = IssueList()
+        properties_by_class: dict[ClassEntity, dict[str, InformationInputProperty]] = defaultdict(dict)
+        for prop in properties:
+            try:
+                dumped = prop.dump(default_prefix=default_space)
+            except ValidationError as e:
+                issues.extend(from_pydantic_errors(e.errors(), read_context))
+                continue
+            class_entity = cast(ClassEntity, dumped["Class"])
+            properties_by_class[class_entity][prop.property_] = prop
+        if issues.has_errors:
+            raise issues.as_errors(operation="Reading properties")
+        return properties_by_class
+
+    @staticmethod
+    def _get_dependencies_by_class(
+        classes: list[InformationInputClass], read_context: dict[str, SpreadsheetRead], default_space: str
+    ) -> dict[ClassEntity, set[ClassEntity]]:
+        dependencies_by_class: dict[ClassEntity, set[ClassEntity]] = {}
+        issues = IssueList()
+        for raw in classes:
+            try:
+                dumped = raw.dump(default_prefix=default_space)
+            except ValidationError as e:
+                issues.extend(from_pydantic_errors(e.errors(), read_context))
+                continue
+            class_entity = cast(ClassEntity, dumped["Class"])
+            implements = cast(list[ClassEntity] | None, dumped["Implements"])
+            dependencies_by_class[class_entity] = set(implements or [])
+        if issues.has_errors:
+            raise issues.as_errors(operation="Reading classes")
+        return dependencies_by_class
+
+    def _get_cognite_concepts(self, dependencies_by_class):
+        cognite_implements_concepts = {
+            dependency
+            for dependencies in dependencies_by_class.values()
+            for dependency in dependencies
+            if dependency.prefix in COGNITE_SPACES
+        }
+        if not cognite_implements_concepts:
+            raise NeatValueError("None of the classes implement Cognite Core concepts.")
+        return cognite_implements_concepts
+
+    def _lookup_views(
+        self, classes: set[ClassEntity], default_space: str, default_version: str
+    ) -> dict[ClassEntity, View]:
+        view_ids = [class_.as_view_entity(default_space, default_version).as_id() for class_ in classes]
+        views = self._client.loaders.views.retrieve(view_ids, include_ancestor=True, include_connected=True)
+        return {ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version): view for view in views}

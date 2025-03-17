@@ -1,5 +1,11 @@
-import pytest
+from collections import defaultdict
+from collections.abc import Sequence
 
+import pytest
+from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, ViewList
+
+from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSInputRules, InformationRules
@@ -13,6 +19,7 @@ from cognite.neat._rules.models.information import (
     InformationInputRules,
 )
 from cognite.neat._rules.transformers import (
+    AddCogniteProperties,
     StandardizeNaming,
     SubsetDMSRules,
     SubsetInformationRules,
@@ -115,3 +122,58 @@ class TestRulesSubsetting:
 
         with pytest.raises(NeatValueError):
             _ = SubsetDMSRules({view}).transform(alice_rules)
+
+
+class TestAddCogniteProperties:
+    def test_add_cognite_properties(self, cognite_core_schema: DMSSchema) -> None:
+        input_rules = InformationInputRules(
+            metadata=InformationInputMetadata("my_space", "MyModel", "v1", "doctrino"),
+            properties=[],
+            classes=[
+                InformationInputClass("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
+                InformationInputClass("WindTurbine", implements="PowerGeneratingUnit"),
+            ],
+        )
+        read_model = cognite_core_schema.as_read_model()
+        views_by_id = {view.as_id(): view for view in read_model.views}
+
+        def cognite_core(ids: ViewIdentifier | Sequence[ViewIdentifier], **kwargs) -> ViewList:
+            ids = [ids] if isinstance(ids, ViewId | tuple) else ids
+            view_ids = [ViewId.load(id_) for id_ in ids]
+
+            return ViewList([views_by_id[id_] for id_ in view_ids])
+
+        with monkeypatch_neat_client() as client:
+            client.data_modeling.views.retrieve.side_effect = cognite_core
+
+            result = AddCogniteProperties(client).transform(ReadRules(input_rules, {}))
+        assert result.rules is not None
+        actual_classes = {str(c.class_) for c in result.rules.classes}
+        expected_classes = (
+            {"PowerGeneratingUnit", "WindTurbine"}
+            | {
+                f"{view_id.space}:{view_id.external_id}(version={view_id.version})"
+                for view_id in cognite_core_schema.views.keys()
+            }
+            # These classes are not reachable from the CogniteAsset
+        ) - {
+            "cdf_cdm:CogniteDiagramAnnotation(version=v1)",
+            "cdf_cdm:CognitePointCloudModel(version=v1)",
+            "cdf_cdm:CognitePointCloudRevision(version=v1)",
+        }
+        assert actual_classes == expected_classes
+        cognite_asset = cognite_core_schema.views[ViewId("cdf_cdm", "CogniteAsset", "v1")]
+        expected_properties = set(cognite_asset.properties.keys())
+        expected_properties |= {
+            prop_id
+            for parent in cognite_asset.implements
+            for prop_id in cognite_core_schema.views[parent].properties.keys()
+        }
+
+        properties_by_class = defaultdict(set)
+        for prop in result.rules.properties:
+            properties_by_class[prop.class_.dump(prefix="my_space")].add(prop.property_)
+
+        assert set(properties_by_class.keys()) == {"PowerGeneratingUnit", "WindTurbine"}
+        assert properties_by_class["PowerGeneratingUnit"] == expected_properties
+        assert properties_by_class["WindTurbine"] == expected_properties
