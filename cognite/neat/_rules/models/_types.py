@@ -110,7 +110,7 @@ VersionType = Annotated[
 ]
 
 
-def _external_id_validation_factory(entity_type: EntityTypes, location: str):
+def _external_id_validation_factory(entity_type: EntityTypes, location: str) -> Callable:
     def _external_id_validation(value: str) -> str:
         compiled_regex = PATTERNS.entity_pattern(entity_type)
         if not compiled_regex.match(value):

@@ -374,7 +374,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
                 field_definitions[prop_id] = (python_type, default_value)
 
-        def parse_list(cls, value: Any, info: ValidationInfo) -> list[str]:
+        def parse_list(cls: Any, value: Any, info: ValidationInfo) -> list[str]:
             if isinstance(value, list) and list.__name__ not in _get_field_value_types(cls, info):
                 if len(value) > 1:
                     warnings.warn(
@@ -388,7 +388,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
             return value
 
-        def parse_json_string(cls, value: Any, info: ValidationInfo) -> dict | list:
+        def parse_json_string(cls: Any, value: Any, info: ValidationInfo) -> dict | list:
             if isinstance(value, dict):
                 return value
             elif isinstance(value, list):
@@ -411,7 +411,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         if direct_relation_by_property:
 
-            def parse_direct_relation(cls, value: list, info: ValidationInfo) -> dict | list[dict]:
+            def parse_direct_relation(cls: Any, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
                     ids = (self._create_instance_id(v, "node", stop_on_exception=True) for v in value)
@@ -443,7 +443,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         if unit_properties:
 
-            def parse_direct_relation_to_unit(cls, value: Any, info: ValidationInfo) -> dict | list[dict]:
+            def parse_direct_relation_to_unit(cls: Any, value: Any, info: ValidationInfo) -> dict | list[dict]:
                 if value:
                     external_id = remove_namespace_from_uri(value[0])
                     if self._unquote_external_ids:
@@ -457,7 +457,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
         if text_fields:
 
-            def parse_text(cls, value: Any, info: ValidationInfo) -> str | list[str]:
+            def parse_text(cls: Any, value: Any, info: ValidationInfo) -> str | list[str]:
                 if isinstance(value, list):
                     return [remove_namespace_from_uri(v) if isinstance(v, URIRef) else str(v) for v in value]
                 return remove_namespace_from_uri(value) if isinstance(value, URIRef) else str(value)
@@ -701,5 +701,5 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield result
 
 
-def _get_field_value_types(cls, info):
+def _get_field_value_types(cls: Any, info: ValidationInfo) -> Any:
     return [type_.__name__ for type_ in get_args(cls.model_fields[info.field_name].annotation)]

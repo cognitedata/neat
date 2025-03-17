@@ -43,7 +43,7 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     def _get_verified_cls(cls) -> type[InformationMetadata]:
         return InformationMetadata
 
-    def dump(self, **kwargs) -> dict[str, Any]:
+    def dump(self, **kwargs: Any) -> dict[str, Any]:
         output = super().dump()
         if self.created is None:
             output["created"] = datetime.now()
@@ -97,7 +97,7 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     def _get_verified_cls(cls) -> type[InformationProperty]:
         return InformationProperty
 
-    def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
+    def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
         output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
         output["Value Type"] = load_value_type(self.value_type, default_prefix)
@@ -124,7 +124,7 @@ class InformationInputClass(InputComponent[InformationClass]):
     def class_str(self) -> str:
         return str(self.class_)
 
-    def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore[override]
+    def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
         parent: list[ClassEntity] | None = None
         if isinstance(self.implements, str):
@@ -163,7 +163,7 @@ class InformationInputRules(InputRules[InformationRules]):
         return "UnverifiedInformationModel"
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         return uri_display_name(self.metadata.identifier)
 
     def _repr_html_(self) -> str:

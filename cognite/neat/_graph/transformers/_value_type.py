@@ -4,7 +4,7 @@ from typing import Any, cast
 from urllib.parse import quote
 
 import rdflib
-from rdflib import RDF, RDFS, Literal, Namespace, URIRef
+from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat._constants import NEAT
@@ -68,9 +68,10 @@ class SplitMultiValueProperty(BaseTransformerStandardised):
 
         return query.format(unknownType=self.unknown_type, subject_uri=type_, property_uri=property_)
 
-    def _iterator(self, graph) -> Iterator:
-        for type_, property_, _ in graph.query(self._iterate_query()):
-            yield from graph.query(self._sub_iterate_query(type_, property_))
+    def _iterator(self, graph: Graph) -> Iterator:
+        # this method is doing some funky stuff, we should review this.
+        for type_, property_, _ in graph.query(self._iterate_query()):  # type: ignore
+            yield from graph.query(self._sub_iterate_query(type_, property_))  # type: ignore
 
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()

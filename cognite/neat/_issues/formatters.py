@@ -37,7 +37,7 @@ class Formatter(ABC):
 class BasicHTML(Formatter):
     file_suffix = ".html"
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._doc = ET.Element("html")
         self._body = ET.SubElement(self._doc, "body")
 

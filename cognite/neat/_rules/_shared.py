@@ -28,7 +28,7 @@ class ReadRules(Generic[T_InputRules]):
         return "UnverifiedModel"
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         if self.rules is None:
             return "FailedRead"
         return self.rules.display_name

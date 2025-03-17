@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Sequence, Set
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Generic, TypeVar, cast
+from typing import Any, Generic, Self, TypeVar, cast
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import WriteableCogniteResource
@@ -321,7 +321,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
-    ):
+    ) -> Self:
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(
             items,
@@ -356,7 +356,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
-    ):
+    ) -> BaseExtractor:
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
         return cls(
             items,
@@ -390,7 +390,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
-    ):
+    ) -> BaseExtractor:
         total, items = cls._from_file(file_path)
         return cls(
             items,

@@ -3,7 +3,7 @@ import json
 import typing
 from collections.abc import Iterable, Set
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Sequence, SequenceFilter
@@ -83,7 +83,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
         skip_rows: bool = False,
-    ):
+    ) -> Self:
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id, skip_rows))
         return cls(
             items,
@@ -114,7 +114,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
         skip_rows: bool = False,
-    ):
+    ) -> ClassicCDFBaseExtractor:
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id, skip_rows))
         return cls(
             items,
@@ -143,7 +143,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
-    ):
+    ) -> ClassicCDFBaseExtractor:
         total, items = cls._from_file(file_path)
         return cls(
             items,

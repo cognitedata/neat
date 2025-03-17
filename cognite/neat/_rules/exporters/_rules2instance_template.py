@@ -49,7 +49,7 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
     def export(
         self,
         rules: InformationRules,
-    ):
+    ) -> Workbook:
         workbook = Workbook()
 
         # Remove default sheet named "Sheet"
@@ -93,13 +93,13 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
         return None
 
 
-def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int):
+def _add_index_identifiers(workbook: Workbook, sheet: str, no_rows: int) -> None:
     """Adds index-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
         workbook[sheet][f"A{i + 2}"] = f'=IF(ISBLANK(B{i + 2}), "","{sheet}-{i + 1}")'
 
 
-def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int):
+def _add_uuid_identifiers(workbook: Workbook, sheet: str, no_rows: int) -> None:
     """Adds UUID-based auto identifier to a sheet identifier column"""
     for i in range(no_rows):
         workbook[sheet][f"A{i + 2}"] = f'=IF(ISBLANK(B{i + 2}), "","{sheet}-{uuid.uuid4()}")'
@@ -112,7 +112,7 @@ def _add_drop_down_list(
     no_rows: int,
     value_sheet: str,
     value_column: str,
-):
+) -> None:
     """Adds a drop down list to a column"""
     drop_down_list = DataValidation(
         type="list",
@@ -125,7 +125,7 @@ def _add_drop_down_list(
         drop_down_list.add(workbook[sheet][f"{column}{i + 2}"])
 
 
-def _adjust_column_width(workbook: Workbook):
+def _adjust_column_width(workbook: Workbook) -> None:
     """Adjusts the column width based on the content"""
     for sheet in workbook.sheetnames:
         for cell_tuple in workbook[sheet].columns:
@@ -136,7 +136,7 @@ def _adjust_column_width(workbook: Workbook):
                 workbook[sheet].column_dimensions[cell.column_letter].width = adjusted_width
 
 
-def _set_header_style(workbook: Workbook):
+def _set_header_style(workbook: Workbook) -> None:
     """Sets the header style for all sheets in the workbook"""
     style = NamedStyle(name="header style")
     style.font = Font(bold=True, size=16)

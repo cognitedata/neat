@@ -1,7 +1,7 @@
 import zipfile
 from collections.abc import Iterable
 from pathlib import Path
-from typing import cast, get_args
+from typing import Self, cast, get_args
 
 from rdflib import URIRef
 from rdflib.util import guess_format
@@ -57,7 +57,7 @@ class RdfFileExtractor(BaseExtractor):
         filename: str = "neat-session/instances/instances.trig",
         base_uri: URIRef = DEFAULT_BASE_URI,
         issue_list: IssueList | None = None,
-    ):
+    ) -> Self:
         if not filepath.exists():
             raise FileNotFoundNeatError(filepath)
         if filepath.suffix not in {".zip"}:
