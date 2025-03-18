@@ -279,7 +279,9 @@ class DMSSchema:
         return cls(**loaded)
 
     @classmethod
-    def _load_individual_resources(cls, items: list, attr: Field, trigger_error: str, resource_context) -> list[Any]:
+    def _load_individual_resources(
+        cls: Any, items: list, attr: Field, trigger_error: str, resource_context: list[Path]
+    ) -> list[Any]:
         type_ = cast(type, attr.type)
         resources = type_([])
         if not hasattr(type_, "_RESOURCE"):

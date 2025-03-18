@@ -117,7 +117,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     min_count: int | None = None
     max_count: int | float | None = None
     immutable: bool | None = None
-    default: str | int | dict | None = None
+    default: str | int | float | bool | dict | None = None
     container: str | None = None
     container_property: str | None = None
     index: str | list[str] | None = None
@@ -253,7 +253,7 @@ class DMSInputView(InputComponent[DMSView]):
     neatId: str | URIRef | None = None
     logical: str | URIRef | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.in_model is None:
             self.in_model = True
 
@@ -316,7 +316,7 @@ class DMSInputNode(InputComponent[DMSNode]):
     def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNode":
         return cls(node=f"{node_type.space}:{node_type.external_id}", usage="type")
 
-    def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore[override]
+    def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore
         output = super().dump()
         output["Node"] = DMSNodeEntity.load(self.node, space=default_space)
         return output
@@ -366,7 +366,7 @@ class DMSInputRules(InputRules[DMSRules]):
         return "UnverifiedDMSModel"
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         return uri_display_name(self.metadata.identifier)
 
     def _repr_html_(self) -> str:

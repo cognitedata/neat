@@ -8,17 +8,7 @@ import types
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Hashable, Iterator, MutableSequence, Sequence
 from datetime import datetime
-from typing import (
-    Annotated,
-    Any,
-    ClassVar,
-    Literal,
-    SupportsIndex,
-    TypeVar,
-    get_args,
-    get_origin,
-    overload,
-)
+from typing import Annotated, Any, ClassVar, Literal, SupportsIndex, TypeVar, get_args, get_origin, overload
 
 import pandas as pd
 from cognite.client import data_modeling as dm
@@ -128,7 +118,7 @@ class SchemaModel(BaseModel):
     )
 
     @classmethod
-    def mandatory_fields(cls, use_alias=False) -> set[str]:
+    def mandatory_fields(cls: Any, use_alias: bool = False) -> set[str]:
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
@@ -193,7 +183,7 @@ class BaseMetadata(SchemaModel):
         return value
 
     @field_validator("description", mode="before")
-    def nan_as_none(cls, value):
+    def nan_as_none(cls: Any, value: Any) -> Any:
         if isinstance(value, float) and math.isnan(value):
             return None
         return value
@@ -207,7 +197,7 @@ class BaseMetadata(SchemaModel):
         return self.to_pandas().to_frame("value")._repr_html_()  # type: ignore[operator]
 
     @classmethod
-    def mandatory_fields(cls, use_alias=False) -> set[str]:
+    def mandatory_fields(cls: Any, use_alias: bool = False) -> set[str]:
         """Returns a set of mandatory fields for the model."""
         return _get_required_fields(cls, use_alias)
 
@@ -293,7 +283,7 @@ class BaseRules(SchemaModel, ABC):
         return headers_by_sheet
 
     @property
-    def display_name(self):
+    def display_name(self) -> str:
         return uri_display_name(self.metadata.identifier)
 
     def dump(

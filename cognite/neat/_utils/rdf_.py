@@ -67,7 +67,7 @@ def remove_namespace_from_uri(
         # Assume that all elements in the tuple are of the same type following type hint
         uris = URI
     else:
-        raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}")
+        raise TypeError(f"URI must be of type URIRef or str, got {type(URI)}: {URI}")
 
     output = []
     for u in uris:
@@ -218,7 +218,7 @@ def add_triples_in_batch(graph: Graph, triples: Iterable[Triple], batch_size: in
     commit_counter = 0
     number_of_written_triples = 0
 
-    def check_commit(force_commit: bool = False):
+    def check_commit(force_commit: bool = False) -> None:
         """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
         nonlocal commit_counter
         nonlocal number_of_written_triples
@@ -248,7 +248,7 @@ def remove_triples_in_batch(graph: Graph, triples: Iterable[Triple], batch_size:
     """
     batch_count = 0
 
-    def check_commit(force_commit: bool = False):
+    def check_commit(force_commit: bool = False) -> None:
         """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
         nonlocal batch_count
         batch_count += 1
@@ -274,7 +274,7 @@ def remove_instance_ids_in_batch(graph: Graph, instance_ids: Iterable[URIRef], b
     """
     batch_count = 0
 
-    def check_commit(force_commit: bool = False):
+    def check_commit(force_commit: bool = False) -> None:
         """Commit nodes to the graph if batch counter is reached or if force_commit is True"""
         nonlocal batch_count
         batch_count += 1

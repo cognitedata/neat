@@ -264,24 +264,24 @@ class InferenceImporter(BaseRDFImporter):
                 property_["value_type"] = next(iter(property_["value_type"]))
 
         return {
-            "metadata": self._default_metadata().model_dump(),
+            "metadata": self._default_metadata(),
             "classes": list(classes.values()),
             "properties": list(properties.values()),
             "prefixes": prefixes,
         }
 
-    def _default_metadata(self):
+    def _default_metadata(self) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
         return InformationMetadata(
             space=self.data_model_id.space,
             external_id=self.data_model_id.external_id,
-            version=self.data_model_id.version,
+            version=cast(str, self.data_model_id.version),
             name="Inferred Model",
-            creator="NEAT",
+            creator=["NEAT"],
             created=now,
             updated=now,
             description="Inferred model from knowledge graph",
-        )
+        ).model_dump()
 
     @property
     def source_uri(self) -> URIRef:

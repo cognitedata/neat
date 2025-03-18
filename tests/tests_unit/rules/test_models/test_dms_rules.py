@@ -6,6 +6,7 @@ from typing import Any
 import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
+from pydantic import ValidationError
 
 from cognite.neat._client.data_classes.data_modeling import (
     ContainerApplyDict,
@@ -1811,3 +1812,48 @@ class TestDMSValidation:
 
         assert actual_views == expected_views
         assert actual_containers == expected_containers
+
+
+class TestDMSProperty:
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            pytest.param(
+                DMSInputProperty(
+                    "sp:MyView(version=v1)",
+                    "isOn",
+                    "boolean",
+                    default=1.0,
+                ),
+                id="Boolean with default 1.0 (reading from excel with pandas can lead TRUE to be read as 1.0)",
+            )
+        ],
+    )
+    def test_model_validate(self, raw: DMSInputProperty):
+        prop = DMSProperty.model_validate(raw.dump("sp", "v1"))
+        assert prop.model_dump(exclude_unset=True)
+
+    @pytest.mark.parametrize(
+        "raw, expected_msg",
+        [
+            pytest.param(
+                DMSInputProperty(
+                    "sp:MyView(version=v1)",
+                    "enterprise",
+                    value_type="sp:OtherView(version=v1)",
+                    connection=None,
+                ),
+                "Value error, Missing connection type for property 'enterprise'. "
+                "This is required with value type pointing to another view.",
+                id="Missing connection specification",
+            )
+        ],
+    )
+    def test_model_validate_invalid(self, raw: DMSInputProperty, expected_msg: str):
+        with pytest.raises(ValidationError) as e:
+            _ = DMSProperty.model_validate(raw.dump("sp", "v1"))
+
+        errors = e.value.errors()
+        assert len(errors) == 1
+        error = errors[0]
+        assert error["msg"] == expected_msg

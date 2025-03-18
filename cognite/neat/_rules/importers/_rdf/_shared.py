@@ -151,7 +151,7 @@ def handle_meta(
     res: dict,
     feature: str,
     issue_list: IssueList,
-):
+) -> None:
     if not resources[resource_id][feature] and res[feature]:
         resources[resource_id][feature] = res[feature]
 

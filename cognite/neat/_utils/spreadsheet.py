@@ -1,5 +1,7 @@
+import warnings
 from dataclasses import dataclass, field
 from typing import Any, Literal, cast, overload
+from warnings import catch_warnings
 
 import pandas as pd
 from openpyxl import load_workbook
@@ -22,7 +24,7 @@ class SpreadsheetRead:
     skipped_rows: list[int] = field(default_factory=list)
     is_one_indexed: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.empty_rows = sorted(self.empty_rows)
 
     def adjusted_row_number(self, row_no: int) -> int:
@@ -67,12 +69,22 @@ def read_individual_sheet(
     expected_headers: list[str] | None = None,
 ) -> tuple[list[dict], SpreadsheetRead] | list[dict]:
     if expected_headers:
-        target_row = _get_row_number(cast(Worksheet, load_workbook(excel_file)[sheet_name]), expected_headers)
+        with catch_warnings():
+            # When reading spreadsheets produced by neat, they contain dropdowns. These
+            # are not supported by openpyxl and will raise a warning as openpyxl cannot validate these.
+            # We ignore these warnings as Neat will do the same checks.
+            warnings.simplefilter("ignore")
+            target_row = _get_row_number(cast(Worksheet, load_workbook(excel_file)[sheet_name]), expected_headers)
         skiprows = target_row - 1 if target_row is not None else 0
     else:
         skiprows = 0
 
-    raw = pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
+    with catch_warnings():
+        # When reading spreadsheets produced by neat, they contain dropdowns. These
+        # are not supported by openpyxl and will raise a warning as openpyxl cannot validate these.
+        # We ignore these warnings as Neat will do the same checks.
+        warnings.simplefilter("ignore")
+        raw = pd.read_excel(excel_file, sheet_name, skiprows=skiprows)
     is_na = raw.isnull().all(axis=1)
     skip_rows = _find_rows_to_skip(raw)
     empty_rows = is_na[is_na].index.tolist()

@@ -8,6 +8,7 @@ from typing import Any
 from cognite.client import CogniteClient
 from cognite.client.data_classes import Sequence, SequenceFilter
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._client.data_classes.neat_sequence import NeatSequence, NeatSequenceList
 from cognite.neat._shared import Triple
@@ -83,7 +84,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
         skip_rows: bool = False,
-    ):
+    ) -> Self:
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id, skip_rows))
         return cls(
             items,
@@ -114,7 +115,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
         skip_rows: bool = False,
-    ):
+    ) -> ClassicCDFBaseExtractor:
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id, skip_rows))
         return cls(
             items,
@@ -143,7 +144,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
-    ):
+    ) -> ClassicCDFBaseExtractor:
         total, items = cls._from_file(file_path)
         return cls(
             items,
