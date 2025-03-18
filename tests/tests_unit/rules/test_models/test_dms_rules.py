@@ -1811,3 +1811,23 @@ class TestDMSValidation:
 
         assert actual_views == expected_views
         assert actual_containers == expected_containers
+
+
+class TestDMSProperty:
+    @pytest.mark.parametrize(
+        "raw",
+        [
+            pytest.param(
+                DMSInputProperty(
+                    "sp:MyView(version=v1)",
+                    "isOn",
+                    "boolean",
+                    default=1.0,
+                ),
+                id="Boolean with default 1.0 (reading from excel with pandas can lead TRUE to be read as 1.0)",
+            )
+        ],
+    )
+    def test_model_validate(self, raw: DMSInputProperty):
+        prop = DMSProperty.model_validate(raw.dump("sp", "v1"))
+        assert prop.model_dump(exclude_unset=True)

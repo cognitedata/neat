@@ -132,10 +132,12 @@ class DataType(BaseModel):
 
     @classmethod
     def convert_value(cls, value: Any) -> Any:
-        if cls != Boolean:
+        if not issubclass(cls, Boolean):
             return cls.python(value)
-        else:
+        elif isinstance(value, str):
             return value.strip().lower() in {"true", "1", "yes"}
+        else:
+            return bool(value)
 
 
 class Boolean(DataType):

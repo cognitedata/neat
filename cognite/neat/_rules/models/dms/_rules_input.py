@@ -117,7 +117,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
     min_count: int | None = None
     max_count: int | float | None = None
     immutable: bool | None = None
-    default: str | int | dict | None = None
+    default: str | int | float | bool | dict | None = None
     container: str | None = None
     container_property: str | None = None
     index: str | list[str] | None = None
