@@ -1,5 +1,4 @@
 import json
-import os
 import pathlib
 import re
 
@@ -10,13 +9,11 @@ from cognite.neat._cfihos.common.constants import MODEL_VERSION_LENGTH
 from cognite.neat._cfihos.common.generic_classes import (
     DataSource,
     EntityStructure,
-    GitHubAttributes,
     PropertyStructure,
     ScopeConfig,
 )
 from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.processing.cfihos import constants
-# from cognite.neat._cfihos.common import github_integration as gh
 
 logging = log_init(f"{__name__}", "i")
 
@@ -57,10 +54,7 @@ def read_input_sheet(
         case DataSource.CSV.value:
             return pd.read_csv(fpath, **kwargs)
         case DataSource.GITHUB.value:
-            return pd.read_csv(fpath, **kwargs)
-            # if os.getenv(GitHubAttributes.CFIHOS_EPC_GIT_BRANCH) is None:
-            #     raise ValueError(f"{GitHubAttributes.CFIHOS_EPC_GIT_BRANCH} environment varibale is not defined!")
-            # return gh.read_csv(fpath, ref=os.getenv(GitHubAttributes.CFIHOS_EPC_GIT_BRANCH), **kwargs)
+            return pd.read_csv(fpath, **kwargs)  # TODO: add the original github integration code
         case _:
             raise ValueError(f"Unknown data source {source}")
 
@@ -117,7 +111,6 @@ def generate_dms_friendly_property_name(name: str, max_length: int):
 
     if len(new_name) > max_length + MODEL_VERSION_LENGTH:
         raise ValueError(f"prop: New-name: {new_name} old name {name}")
-    # print(f"[WARNING] - dms property name: {name} was shorten to {new_name}")
     return new_name
 
 
@@ -222,7 +215,7 @@ def get_entity_relation_target(Property_id, entity_id, entities) -> str | None:
         ):
             return property[PropertyStructure.TARGET_TYPE]
 
-    return None
+    return "#N/A"  # None
 
 
 # TODO: add data types to the parameters in the below function
@@ -237,15 +230,22 @@ def get_relation_target_if_eligible(key, container_external_id, entities, proper
         and property_type == data_modeling.DirectRelation()
     ):
         return get_entity_relation_target(key, container_external_id, entities)
-    return None
+    return "#N/A"  # None
 
-def generate_neat_rules_sheet(output_file,df_metadata: pd.DataFrame, df_properties: pd.DataFrame, df_views: pd.DataFrame, df_containers: pd.DataFrame):
 
-    with pd.ExcelWriter(output_file, mode='w') as writer:
-        df_metadata.to_excel(writer, sheet_name='Metadata',  header=False, index=False)
-        df_properties.to_excel(writer, sheet_name='Properties', index=False)
-        df_views.to_excel(writer, sheet_name='Views', index=False)
-        df_containers.to_excel(writer, sheet_name='Containers', index=False)
-    
-    logging.info(f"Rules sheet for {df_metadata.loc[df_metadata["Key"] == "name", "Value"].item()} has been generated successfully")
+def generate_neat_rules_sheet(
+    output_file,
+    df_metadata: pd.DataFrame,
+    df_properties: pd.DataFrame,
+    df_views: pd.DataFrame,
+    df_containers: pd.DataFrame,
+):
+    with pd.ExcelWriter(output_file, mode="w") as writer:
+        df_metadata.to_excel(writer, sheet_name="Metadata", header=False, index=False)
+        df_properties.to_excel(writer, sheet_name="Properties", index=False)
+        df_views.to_excel(writer, sheet_name="Views", index=False)
+        df_containers.to_excel(writer, sheet_name="Containers", index=False)
 
+    logging.info(
+        f"Rules sheet for {df_metadata.loc[df_metadata['Key'] == 'name', 'Value'].item()} has been generated successfully"
+    )

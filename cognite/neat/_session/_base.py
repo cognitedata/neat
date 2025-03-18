@@ -95,7 +95,6 @@ class NeatSession:
             client=NeatClient(client) if client else None,
         )
         self.read = ReadAPI(self._state, verbose)
-        self.test = "test"
         self.to = ToAPI(self._state, verbose)
         self.fix = FixAPI(self._state, verbose)
         self.prepare = PrepareAPI(self._state, verbose)

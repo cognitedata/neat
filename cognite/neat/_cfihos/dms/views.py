@@ -1,13 +1,15 @@
-from typing import Tuple
 from cognite.client.data_classes import data_modeling
+from cognite.client.data_classes.data_modeling import data_types
+
 from cognite.neat._cfihos.common.constants import (
     EntityStructure,
     PropertyStructure,
 )
-from cognite.client.data_classes.data_modeling import data_types
 from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.common.utils import get_relation_target_if_eligible
-from cognite.neat._rules.models.dms._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+from cognite.neat._rules.models.dms._rules import (
+    DMSView,
+)
 
 logging = log_init(f"{__name__}", "i")
 
@@ -223,7 +225,7 @@ def create_views_from_containers(
 
         # TODO: Quick fix to add entityType to every view
         if (
-            not container.external_id.replace("_", "-") in entities.keys()
+            container.external_id.replace("_", "-") not in entities.keys()
             or not entities[container.external_id.replace("_", "-")][EntityStructure.FIRSTCLASSCITIZEN]
         ):
             v.properties["entityType"] = data_modeling.MappedPropertyApply(
@@ -244,9 +246,8 @@ def create_views_from_containers(
     # logging.info(f"Upserted {len(container_views)} container views to space {space}")
     return container_views
 
-def build_views_from_containers(
-    version: str, containers: list[data_modeling.ContainerApply], entities: dict
-) -> any:
+
+def build_views_from_containers(version: str, containers: list[data_modeling.ContainerApply], entities: dict) -> any:
     """
     Creates a set of views that are one-to-one with the given containers. This function constructs views based on the
     properties of each container and the associated entity information.
@@ -260,12 +261,12 @@ def build_views_from_containers(
         list of created ViewApply objects.
     """
     map_property_type = {
-    str(data_types.Text()): "text",
-    str(data_types.Int32()): "int32",
-    str(data_types.Float32()): "float32",
-    str(data_types.Float64()): "float64",
-    str(data_types.Boolean()): "boolean",
-    str(data_types.Timestamp()): "timestamp",
+        str(data_types.Text()): "text",
+        str(data_types.Int32()): "int32",
+        str(data_types.Float32()): "float32",
+        str(data_types.Float64()): "float64",
+        str(data_types.Boolean()): "boolean",
+        str(data_types.Timestamp()): "timestamp",
     }
     container_views = []
     lst_properties = []
@@ -273,12 +274,21 @@ def build_views_from_containers(
     views_dict = {}
     lst_dms_properties = [DMSView]
     for container in containers:
-        lst_views.append({"View":container["Container"], "Name": entities[container["Container"].replace("_", "-")]["entityName"]
-            if container["Container"].replace("_", "-") in entities.keys()
-            else "","Description":entities[container["Container"].replace("_", "-")]["description"]
-            if container["Container"].replace("_", "-") in entities.keys()
-            else "", "Implements":"", "Filter":"", "In Model":True, "Class (linage)":container["Container"]})
-        
+        lst_views.append(
+            {
+                "View": container["Container"],
+                "Name": entities[container["Container"].replace("_", "-")]["entityName"]
+                if container["Container"].replace("_", "-") in entities.keys()
+                else "",
+                "Description": entities[container["Container"].replace("_", "-")]["description"]
+                if container["Container"].replace("_", "-") in entities.keys()
+                else "",
+                "Implements": None,
+                "Filter": None,
+                "In Model": True,
+                "Class (linage)": container["Container"],
+            }
+        )
 
         for key, data in container["Properties"].items():
             relation_target = get_relation_target_if_eligible(
@@ -300,26 +310,32 @@ def build_views_from_containers(
             #         "Index": "",
             #         "Constraint": "",
             #         "Class (linage)": container["Container"],
-            #         "Property (linage)": key,                
+            #         "Property (linage)": key,
             # )
-                                            #   ))
+            #   ))
             lst_properties.append(
                 {
                     "View": container["Container"],
                     "View Property": key,
                     "Name": "",
                     "Description": data.description.strip() if data.description else "",
-                    "Connection": "direct" if type(data.type) == data_types.DirectRelation else "edge" if data.type._type == PropertyStructure.Direct_Relation else "",
-                    "Value Type": map_property_type[str(data.type)] if type(data.type) != data_types.DirectRelation else relation_target,
+                    "Connection": "direct"
+                    if type(data.type) == data_types.DirectRelation
+                    else "edge"
+                    if data.type._type == PropertyStructure.Direct_Relation
+                    else None,
+                    "Value Type": map_property_type[str(data.type)]
+                    if type(data.type) != data_types.DirectRelation
+                    else relation_target,
                     "Nullable": data.nullable,
                     "Immutable": False,
                     "Is List": data.type.is_list,
-                    "Default": "",
-                    "Reference": "",
+                    "Default": None,
+                    "Reference": None,
                     "Container": container["Container"],
                     "Container Property": key,
-                    "Index": "",
-                    "Constraint": "",
+                    "Index": None,
+                    "Constraint": None,
                     "Class (linage)": container["Container"],
                     "Property (linage)": key,
                 }
@@ -348,30 +364,29 @@ def build_views_from_containers(
 
         # TODO: Quick fix to add entityType to every view
         if (
-            (not container["Container"].replace("_", "-") in entities.keys()
-            or not entities[container["Container"].replace("_", "-")][EntityStructure.FIRSTCLASSCITIZEN])
-            and container["Container"] != "EntityTypeGroup"
-        ):
+            container["Container"].replace("_", "-") not in entities.keys()
+            or not entities[container["Container"].replace("_", "-")][EntityStructure.FIRSTCLASSCITIZEN]
+        ) and container["Container"] != "EntityTypeGroup":
             lst_properties.append(
-            {
-                "View": container["Container"],
-                "View Property": "entityType",
-                "Name": "",
-                "description": "",
-                "Connection": "",
-                "Value Type": "text",
-                "Nullable": False,
-                "Immutable": False,
-                "Is List" : False,
-                "Default":"",
-                "Reference":"",
-                "Container": "EntityTypeGroup",
-                "Container Property": "entityType",
-                "Index": "",
-                "Constraint": "",
-                "Class (linage)": container["Container"],
-                "Property (linage)": "entityType"
-            }
+                {
+                    "View": container["Container"],
+                    "View Property": "entityType",
+                    "Name": "",
+                    "description": "",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Nullable": False,
+                    "Immutable": False,
+                    "Is List": False,
+                    "Default": None,
+                    "Reference": None,
+                    "Container": "EntityTypeGroup",
+                    "Container Property": "entityType",
+                    "Index": None,
+                    "Constraint": None,
+                    "Class (linage)": container["Container"],
+                    "Property (linage)": "entityType",
+                }
             )
 
     # TODO: implement Dry run
@@ -382,8 +397,8 @@ def build_views_from_containers(
 
 
 def build_views_from_entities(
-views_space: str, containers_space: str, version: str, entities: dict
-) -> Tuple[list[data_modeling.ViewApply], list[str]]:
+    views_space: str, containers_space: str, version: str, entities: dict
+) -> tuple[list[data_modeling.ViewApply], list[str]]:
     """
     Builds a list of data model views from the provided entities. This function creates views that represent the
     entities, incorporating their properties and inheritance structures.

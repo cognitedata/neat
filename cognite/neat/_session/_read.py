@@ -30,7 +30,6 @@ from cognite.neat._rules import catalog, importers
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.transformers import ClassicPrepareCore
 from cognite.neat._utils.reader import NeatReader
-from cognite.neat._cfihos.processing.base_starter import base_starter_class
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, XMLFileType, object_wizard, rdf_dm_wizard, xml_format_wizard
@@ -77,33 +76,47 @@ class BaseReadAPI:
         self._state = state
         self._verbose = verbose
 
+
 @session_class_wrapper
 class CFIHOSReadAPI(BaseReadAPI):
-    """Reads a csv that contains a column to use as primary key which will be the unique identifier for the type of
-    data you want to read in. Ex. a csv can hold information about assets, and their identifiers are specified in
-    a "ASSET_TAG" column.
+    """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
+    or a DMS Architect.
 
     Args:
-        io: file path or url to the csv
-        type: string that specifies what type of data the csv contains. For instance "Asset" or "Equipment"
-        primary_key: string name of the column that should be used as the unique identifier for each row of data
+        io: file path to the Excel sheet
 
     Example:
         ```python
-        type_described_in_table = "Turbine"
-        column_with_identifier = "UNIQUE_TAG_NAME"
-        neat.read.csv("url_or_path_to_csv_file", type=type_described_in_table, primary_key=column_with_identifier)
+        neat.read.excel("information_or_dms_rules_sheet.xlsx")
         ```
     """
 
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        super().__init__(state, verbose)
 
-    def from_config_definitions(self, io: Any)  :
-        print("from_config_definitions")
-        filePath = NeatReader.create(io).materialize_path()
-        print("filePath",filePath)
-        CFIHOS_Handler =  base_starter_class(filePath)
-        CFIHOS_Handler.process_model()
+    def __call__(self, io: Any) -> IssueList:
+        """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
+        or a DMS Architect.
 
+        Args:
+            io: file path to the Excel sheet
+            enable_manual_edit: If True, the user will be able to re-import rules which where edit outside NeatSession
+
+        !!! note "Manual Edit Warning"
+            This is an alpha feature and is subject to change without notice.
+            It is expected to have some limitations and may not work as expected in all cases.
+        """
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+
+        return self._state.rule_import(importers.CFIHOSImporter(path))
+
+    # def from_config_definitions(self, io: Any)  :
+    #     print("from_config_definitions")
+    #     filePath = NeatReader.create(io).materialize_path()
+    #     print("filePath",filePath)
+    #     CFIHOS_Handler =  base_starter_class(filePath)
+    #     CFIHOS_Handler.process_model()
 
 
 @session_class_wrapper
