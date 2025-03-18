@@ -13,5 +13,5 @@ def epoch_now_ms() -> int:
     return int((datetime.now(UTC) - datetime(1970, 1, 1, tzinfo=UTC)).total_seconds() * 1000)
 
 
-def datetime_utc_now():
+def datetime_utc_now() -> datetime:
     return datetime.now(UTC)

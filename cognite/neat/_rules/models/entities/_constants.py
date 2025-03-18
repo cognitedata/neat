@@ -8,7 +8,7 @@ class _UnknownType(BaseModel):
     def __str__(self) -> str:
         return "#N/A"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(str(self))
 
 

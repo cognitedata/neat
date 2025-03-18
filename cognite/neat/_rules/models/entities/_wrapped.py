@@ -57,7 +57,7 @@ class WrappedEntity(BaseModel, ABC):
     def as_str(self) -> str:
         return str(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.id
 
     @property
@@ -206,5 +206,5 @@ class RawFilter(DMSFilter):
     def __repr__(self) -> str:
         return self.filter
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name}({self.filter})"

@@ -2,7 +2,7 @@ import sys
 import warnings
 from abc import ABC
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespace, URIRef
@@ -355,7 +355,7 @@ class OWLProperty(OntologyModel):
         return owl_property
 
     @field_validator("type_")
-    def is_multi_type(cls, v, info: ValidationInfo):
+    def is_multi_type(cls, v: Any, info: ValidationInfo) -> Any:
         if len(v) > 1:
             warnings.warn(
                 PropertyDefinitionDuplicatedWarning(
@@ -373,7 +373,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("range_")
-    def is_multi_range(cls, v, info: ValidationInfo):
+    def is_multi_range(cls, v: Any, info: ValidationInfo) -> Any:
         if len(v) > 1:
             warnings.warn(
                 PropertyDefinitionDuplicatedWarning(
@@ -390,7 +390,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("domain")
-    def is_multi_domain(cls, v, info: ValidationInfo):
+    def is_multi_domain(cls, v: Any, info: ValidationInfo) -> Any:
         if len(v) > 1:
             warnings.warn(
                 PropertyDefinitionDuplicatedWarning(
@@ -408,7 +408,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("label")
-    def has_multi_name(cls, v, info: ValidationInfo):
+    def has_multi_name(cls, v: Any, info: ValidationInfo) -> Any:
         if len(v) > 1:
             warnings.warn(
                 PropertyDefinitionDuplicatedWarning(
@@ -423,7 +423,7 @@ class OWLProperty(OntologyModel):
         return v
 
     @field_validator("comment")
-    def has_multi_comment(cls, v, info: ValidationInfo):
+    def has_multi_comment(cls, v: Any, info: ValidationInfo) -> Any:
         if len(v) > 1:
             warnings.warn(
                 PropertyDefinitionDuplicatedWarning(

@@ -8,6 +8,7 @@ from typing import Literal as LiteralType
 from xml.etree.ElementTree import Element
 
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
@@ -90,7 +91,7 @@ class IODDExtractor(BaseExtractor):
         return mapping
 
     @classmethod
-    def from_file(cls, filepath: Path, namespace: Namespace | None = None, device_id: str | None = None):
+    def from_file(cls, filepath: Path, namespace: Namespace | None = None, device_id: str | None = None) -> Self:
         if filepath.suffix != ".xml":
             raise FileReadError(filepath, "File is not XML.")
         return cls(ET.parse(filepath).getroot(), namespace, device_id)
@@ -273,7 +274,7 @@ class IODDExtractor(BaseExtractor):
         return triples
 
     @classmethod
-    def _process_data_in_records2triples(cls, pc_in_root: Element, process_data_in_id: URIRef):
+    def _process_data_in_records2triples(cls, pc_in_root: Element, process_data_in_id: URIRef) -> list[Triple]:
         """
         Extract RecordItems related to a ProcessDataIn element. Each record item is indexed. Will use this index
         as the identifier for the time series in CDF.
@@ -355,7 +356,7 @@ class IODDExtractor(BaseExtractor):
 
         return record_dict
 
-    def _extract_enhanced_ts_information(self, json_file_path: Path):
+    def _extract_enhanced_ts_information(self, json_file_path: Path) -> None:
         """
         Extract additional information like name, description and data type for Variables and ProcessDataIn
         record elements in the IODD. The purpose is for the result gile to be used for enhancing time series with more

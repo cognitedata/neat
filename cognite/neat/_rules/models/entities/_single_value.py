@@ -59,16 +59,16 @@ class Entity(BaseModel, extra="ignore"):
 
     @classmethod
     @overload
-    def load(cls: "type[T_Entity]", data: Any, strict: Literal[True], **defaults) -> "T_Entity": ...
+    def load(cls: "type[T_Entity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_Entity": ...
 
     @classmethod
     @overload
     def load(
-        cls: "type[T_Entity]", data: Any, strict: Literal[False] = False, **defaults
+        cls: "type[T_Entity]", data: Any, strict: Literal[False] = False, **defaults: Any
     ) -> "T_Entity | UnknownEntity": ...
 
     @classmethod
-    def load(cls: "type[T_Entity]", data: Any, strict: bool = False, **defaults) -> "T_Entity | UnknownEntity":
+    def load(cls: "type[T_Entity]", data: Any, strict: bool = False, **defaults: Any) -> "T_Entity | UnknownEntity":
         if isinstance(data, cls):
             return data
         elif isinstance(data, str) and data == str(Unknown):
@@ -270,7 +270,7 @@ class ClassEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
     version: str | None = None
 
-    def as_view_entity(self, default_space: str, default_version) -> "ViewEntity":
+    def as_view_entity(self, default_space: str, default_version: str) -> "ViewEntity":
         if self.version is None:
             version = default_version
         else:
@@ -339,16 +339,18 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults) -> "T_DMSEntity": ...
+    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
 
     @classmethod
     @overload
     def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: Literal[False] = False, **defaults
+        cls: "type[T_DMSEntity]", data: Any, strict: Literal[False] = False, **defaults: Any
     ) -> "T_DMSEntity | DMSUnknownEntity": ...
 
     @classmethod
-    def load(cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore[override]
+    def load(
+        cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults: Any
+    ) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore
         if isinstance(data, str) and data == str(Unknown):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")

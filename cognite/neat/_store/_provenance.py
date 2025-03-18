@@ -20,7 +20,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from rdflib import PROV, RDF, Literal, URIRef
 
@@ -178,10 +178,10 @@ class Provenance(NeatList[Change[T_Entity]]):
     def activity_took_place(self, activity: str) -> bool:
         return any(change.activity.used == activity for change in self)
 
-    def __delitem__(self, *args, **kwargs):
+    def __delitem__(self, *args: Any, **kwargs: Any) -> None:
         raise TypeError("Cannot delete change from provenance")
 
-    def __setitem__(self, *args, **kwargs):
+    def __setitem__(self, *args: Any, **kwargs: Any) -> None:
         raise TypeError("Cannot modify change from provenance")
 
     def _repr_html_(self) -> str:

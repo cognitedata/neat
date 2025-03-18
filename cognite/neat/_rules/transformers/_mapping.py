@@ -346,7 +346,8 @@ class AsParentPropertyId(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
     @staticmethod
     def _get_parent_view_property_by_container_property(
-        path_by_view, view_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]]
+        path_by_view: dict[ViewEntity, list[ViewEntity]],
+        view_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]],
     ) -> dict[tuple[ContainerEntity, str], str]:
         parent_name_by_container_property: dict[tuple[ContainerEntity, str], str] = {}
         for (container, container_property), view_properties in view_by_container_properties.items():

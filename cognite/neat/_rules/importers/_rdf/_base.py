@@ -1,8 +1,10 @@
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from cognite.client import data_modeling as dm
 from rdflib import Graph, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import get_default_prefixes_and_namespaces
 from cognite.neat._issues import IssueList, MultiValueError
@@ -69,7 +71,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
-    ):
+    ) -> Self:
         return cls(
             IssueList(title=f"{cls.__name__} issues"),
             store.dataset,
@@ -88,7 +90,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
         source_name: str = "Unknown",
-    ):
+    ) -> Self:
         issue_list = IssueList(title=f"{cls.__name__} issues")
 
         graph = Graph()
@@ -132,7 +134,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
         raise NotImplementedError()
 
     @classmethod
-    def _add_uri_namespace_to_prefixes(cls, URI: URIRef, prefixes: dict[str, Namespace]):
+    def _add_uri_namespace_to_prefixes(cls: Any, URI: URIRef, prefixes: dict[str, Namespace]) -> None:
         """Add URI to prefixes dict if not already present
 
         Args:

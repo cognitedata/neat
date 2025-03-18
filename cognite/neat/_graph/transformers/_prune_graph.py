@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
@@ -101,8 +101,8 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
         self.convert_literal_to_uri = convert_literal_to_uri
         self.namespace = namespace or DEFAULT_NAMESPACE
 
-    def transform(self, graph) -> None:
-        nodes_to_delete: list[tuple] = []
+    def transform(self, graph: Graph) -> None:
+        nodes_to_delete: list[Any] = []
 
         if self.target_property_holding_new_property is not None:
             query = self._query_template_use_case_b.format(
@@ -116,7 +116,7 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
                 target_property=self.target_property,
             )
 
-        for (
+        for (  # type: ignore
             source_node,
             old_predicate,
             target_node,
@@ -128,7 +128,8 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
                 new_predicate_value_string = sentence_or_string_to_camel(str(new_predicate_value))
                 predicate = as_neat_compliant_uri(self.namespace[new_predicate_value_string])
             else:
-                predicate = old_predicate
+                # this assign seems dangerous
+                predicate = old_predicate  # type: ignore
             # Create new connection from source node to value
             graph.add(
                 (
@@ -142,12 +143,13 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
 
             nodes_to_delete.append(target_node)
 
+        # this seems a bit funky. Need to check further.
         if self.delete_target_node:
             for target_node in nodes_to_delete:
                 # Remove triples with edges to target_node
-                graph.remove((None, None, target_node))
+                graph.remove((None, None, target_node))  # type: ignore
                 # Remove target node triple and its properties
-                graph.remove((target_node, None, None))
+                graph.remove((target_node, None, None))  # type: ignore
 
 
 # TODO: Remove or adapt IODD

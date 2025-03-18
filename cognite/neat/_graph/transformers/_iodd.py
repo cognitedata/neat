@@ -14,7 +14,7 @@ class IODDAttachPropertyFromTargetToSource(AttachPropertyFromTargetToSource):
         }
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             target_node_type=IODD.TextObject,
             target_property=IODD.value,
@@ -26,5 +26,5 @@ class IODDAttachPropertyFromTargetToSource(AttachPropertyFromTargetToSource):
 class IODDPruneDanglingNodes(PruneDanglingNodes):
     _need_changes = frozenset({str(IODDExtractor.__name__), str(IODDAttachPropertyFromTargetToSource.__name__)})
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(node_prune_types=[IODD.TextObject])

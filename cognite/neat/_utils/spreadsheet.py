@@ -24,7 +24,7 @@ class SpreadsheetRead:
     skipped_rows: list[int] = field(default_factory=list)
     is_one_indexed: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.empty_rows = sorted(self.empty_rows)
 
     def adjusted_row_number(self, row_no: int) -> int:
