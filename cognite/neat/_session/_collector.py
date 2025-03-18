@@ -49,7 +49,7 @@ class Collector:
             return "notebook"
         return "python"
 
-    def track_session_command(self, command: str, *args, **kwargs) -> None:
+    def track_session_command(self, command: str, *args: Any, **kwargs: Any) -> None:
         event_information = {
             "neatVersion": __version__,
             "$os": platform.system(),

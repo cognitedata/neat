@@ -5,6 +5,7 @@ from pathlib import Path
 from xml.etree.ElementTree import Element
 
 from rdflib import RDF, RDFS, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
@@ -35,11 +36,11 @@ class DexpiExtractor(BaseExtractor):
         self.namespace = namespace or DEFAULT_NAMESPACE
 
     @classmethod
-    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None):
+    def from_file(cls, filepath: str | Path, namespace: Namespace | None = None) -> Self:
         return cls(ET.parse(filepath).getroot(), namespace)
 
     @classmethod
-    def from_url(cls, url: str, namespace: Namespace | None = None):
+    def from_url(cls, url: str, namespace: Namespace | None = None) -> Self:
         from io import BytesIO
 
         import requests
@@ -119,7 +120,7 @@ class DexpiExtractor(BaseExtractor):
         return triples
 
     @classmethod
-    def _to_uri_friendly_association_type(cls, association: Element):
+    def _to_uri_friendly_association_type(cls, association: Element) -> str:
         association_type = "".join(
             [word.capitalize() if i != 0 else word for i, word in enumerate(association.attrib["Type"].split(" "))]
         )

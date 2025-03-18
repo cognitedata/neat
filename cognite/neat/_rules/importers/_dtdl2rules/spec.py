@@ -317,7 +317,7 @@ class Interface(DTDLBase):
         return value
 
     @field_validator("contents", "schemas", mode="before")
-    def select_content_type(cls, value: Any, info) -> Any:
+    def select_content_type(cls, value: Any, info: Any) -> Any:
         if not isinstance(value, list):
             return value
         context = info.data.get("@context", cls.default_context)

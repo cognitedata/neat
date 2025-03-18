@@ -63,7 +63,7 @@ def to_camel_case(string: str) -> str:
     return _to_camel_case(string, is_all_upper, is_first_upper)
 
 
-def _to_camel_case(string, is_all_upper: bool, is_first_upper: bool):
+def _to_camel_case(string: str, is_all_upper: bool, is_first_upper: bool) -> str:
     if "_" in string:
         pascal_splits = [
             _to_pascal_case(part, is_all_upper, is_first_upper and no == 0)

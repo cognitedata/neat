@@ -15,6 +15,7 @@ from cognite.client.data_classes._base import WriteableCogniteResource
 from cognite.client.exceptions import CogniteAPIError
 from pydantic import AnyHttpUrl, ValidationError
 from rdflib import RDF, XSD, Literal, Namespace, URIRef
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
@@ -321,7 +322,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
-    ):
+    ) -> Self:
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(
             items,
@@ -356,7 +357,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
-    ):
+    ) -> BaseExtractor:
         total, items = cls._handle_no_access(lambda: cls._from_hierarchy(client, root_asset_external_id))
         return cls(
             items,
@@ -390,7 +391,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
-    ):
+    ) -> BaseExtractor:
         total, items = cls._from_file(file_path)
         return cls(
             items,

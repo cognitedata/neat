@@ -616,7 +616,7 @@ class XMLReadAPI(BaseReadAPI):
         for transformer in transformers:
             self._state.instances.store.transform(cast(Transformers, transformer))
 
-    def aml(self, io: Any):
+    def aml(self, io: Any) -> None:
         """Reads an AML file into NeatSession and executes a set of predefined transformations.
 
         Args:

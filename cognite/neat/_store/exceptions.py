@@ -13,7 +13,7 @@ from ._provenance import Activity
 class NeatStoreError(Exception):
     """Base class for all exceptions in the store module"""
 
-    def __str__(self):
+    def __str__(self) -> str:
         return type(self).__name__
 
 
@@ -30,7 +30,7 @@ class ActivityFailed(NeatStoreError):
         self.issue_list = issue_list
         self.tool = tool
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.tool.description
 
 
@@ -49,7 +49,7 @@ class InvalidActivityOutput(NeatStoreError):
         self.activity = activity
         self.output = output
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{super().__str__()}: {self.activity.id_} -> {self.output}"
 
 

@@ -98,7 +98,7 @@ class PathReader(NeatReader):
         self._io = file
         return file
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(self) -> None:
         if self._io:
             self._io.close()
 

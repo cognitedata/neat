@@ -62,7 +62,7 @@ class MultiValueTypeInfo(BaseModel):
                 ]
             }
 
-    def set_default_prefix(self, prefix: str):
+    def set_default_prefix(self, prefix: str) -> None:
         for type_ in self.types:
             if isinstance(type_, ClassEntity) and type_.prefix is Undefined:
                 type_.prefix = prefix

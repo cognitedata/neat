@@ -140,7 +140,7 @@ class _DTDLConverter:
         )
         self.properties.append(prop)
 
-    def _missing_parent_warning(self, item: DTDLBaseWithName):
+    def _missing_parent_warning(self, item: DTDLBaseWithName) -> None:
         self.issues.append(
             ResourceNotFoundError(
                 "UNKNOWN",

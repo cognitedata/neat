@@ -206,7 +206,7 @@ def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
     return hierarchy
 
 
-def _prettify_generation_order(generation_order: dict, depth: dict | None = None, start=-1) -> dict:
+def _prettify_generation_order(generation_order: dict, depth: dict | None = None, start: int = -1) -> dict:
     """Prettifies generation order dictionary for easier consumption."""
     depth = depth or {}
     for key, value in generation_order.items():
