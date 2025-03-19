@@ -2101,7 +2101,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
     @staticmethod
     def _get_properties_by_class(
         properties: list[InformationInputProperty], read_context: dict[str, SpreadsheetRead], default_space: str
-    ):
+    ) -> dict[ClassEntity, dict[str, InformationInputProperty]]:
         issues = IssueList()
         properties_by_class: dict[ClassEntity, dict[str, InformationInputProperty]] = defaultdict(dict)
         for prop in properties:
@@ -2135,7 +2135,8 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
             raise issues.as_errors(operation="Reading classes")
         return dependencies_by_class
 
-    def _get_cognite_concepts(self, dependencies_by_class):
+    @staticmethod
+    def _get_cognite_concepts(dependencies_by_class: dict[ClassEntity, set[ClassEntity]]) -> set[ClassEntity]:
         cognite_implements_concepts = {
             dependency
             for dependencies in dependencies_by_class.values()
