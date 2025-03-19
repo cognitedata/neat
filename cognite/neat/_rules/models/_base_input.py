@@ -170,7 +170,7 @@ class InputComponent(ABC, Generic[T_RuleModel]):
                 args[field_name] = data[field_.alias]
         return cls(**args)
 
-    def dump(self, **kwargs) -> dict[str, Any]:
+    def dump(self, **kwargs: Any) -> dict[str, Any]:
         return {
             field_.alias or name: getattr(self, name)
             for name, field_ in self._get_verified_cls().model_fields.items()

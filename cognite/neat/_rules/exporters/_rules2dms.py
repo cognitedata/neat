@@ -142,7 +142,7 @@ class DMSExporter(CDFExporter[DMSRules, DMSSchema]):
         exclude = self._create_exclude_set()
         schema.to_zip(filepath, exclude=exclude)
 
-    def _create_exclude_set(self):
+    def _create_exclude_set(self) -> set:
         if self.export_components is None:
             exclude = set()
         else:

@@ -5,6 +5,7 @@ from typing import cast, get_args
 
 from rdflib import URIRef
 from rdflib.util import guess_format
+from typing_extensions import Self
 
 from cognite.neat._constants import DEFAULT_BASE_URI
 from cognite.neat._graph._shared import RDFTypes
@@ -57,7 +58,7 @@ class RdfFileExtractor(BaseExtractor):
         filename: str = "neat-session/instances/instances.trig",
         base_uri: URIRef = DEFAULT_BASE_URI,
         issue_list: IssueList | None = None,
-    ):
+    ) -> Self:
         if not filepath.exists():
             raise FileNotFoundNeatError(filepath)
         if filepath.suffix not in {".zip"}:

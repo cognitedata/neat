@@ -242,7 +242,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         dumped_rules: dict[str, Any],
         rules: VerifiedRules,
         sheet_prefix: str = "",
-    ):
+    ) -> None:
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
                 continue

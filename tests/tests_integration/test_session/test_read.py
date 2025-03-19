@@ -42,7 +42,7 @@ class TestRead:
 
         issues = neat.read.excel(hello_world_pump)
 
-        assert not issues.has_errors
+        assert len(issues) == 0
 
     def test_store_read_neat_session(self, tmp_path: Path) -> None:
         neat = NeatSession()
@@ -78,5 +78,12 @@ class TestRead:
         neat = NeatSession(client=cognite_client)
 
         issues = neat.read.examples.core_data_model()
+
+        assert len(issues) == 0
+
+    def test_read_classic_graph(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(client=cognite_client)
+
+        issues = neat.read.cdf.classic.graph(root_asset_external_id="Utsira")
 
         assert len(issues) == 0

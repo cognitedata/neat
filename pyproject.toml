@@ -37,9 +37,16 @@ fix = true
 
 
 [tool.mypy]
+pretty = true
+check_untyped_defs = true
+ignore_missing_imports = false
 explicit_package_bases = true
+disallow_untyped_defs = true
 allow_redefinition = true
+namespace_packages = true
+show_error_codes = true
 plugins = ["pydantic.mypy"]
+exclude = ["tests/*"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true

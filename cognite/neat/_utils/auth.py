@@ -106,7 +106,7 @@ class EnvironmentVariables:
     CDF_TIMEOUT: int | None = None
     CDF_REDIRECT_PORT: int = 53_000
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.LOGIN_FLOW.lower() not in _VALID_LOGIN_FLOWS:
             raise ValueError(f"LOGIN_FLOW must be one of {_VALID_LOGIN_FLOWS}")
         if self.IDP_TOKEN_URL and not self.IDP_TENANT_ID:

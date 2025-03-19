@@ -7,6 +7,7 @@ from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
 from types import ModuleType
+from typing import Any
 
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 
@@ -42,10 +43,10 @@ def class_html_doc(cls: type, include_factory_methods: bool = True) -> str:
     return f"<h3>{cls.__name__}</h3><p>{docstring}</p>"
 
 
-def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
-    def decorator(func):
+def retry_decorator(max_retries: int = 2, retry_delay: int = 3, component_name: str = "") -> Any:
+    def decorator(func: Callable) -> Any:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             previous_exception = None
             for attempt in range(max_retries + 1):
                 try:
@@ -89,7 +90,8 @@ def retry_decorator(max_retries=2, retry_delay=3, component_name=""):
                         raise e
 
                 except Exception as e:
-                    previous_exception = e
+                    # Deliberately ignoring here, this should be refactored.
+                    previous_exception = e  # type: ignore
                     if attempt < max_retries:
                         logging.error(
                             f"Retry attempt {attempt + 1} failed for {component_name}. "

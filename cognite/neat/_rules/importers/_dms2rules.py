@@ -465,7 +465,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 return str(default)
         return None
 
-    def _get_index(self, prop: ViewPropertyApply, prop_id) -> list[str] | None:
+    def _get_index(self, prop: ViewPropertyApply, prop_id: str) -> list[str] | None:
         if not isinstance(prop, dm.MappedPropertyApply):
             return None
         container = self._all_containers_by_id[prop.container]
