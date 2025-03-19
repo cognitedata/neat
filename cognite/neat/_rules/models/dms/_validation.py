@@ -127,7 +127,7 @@ class DMSValidation:
             }
 
             if missing_views or missing_containers:
-                raise CDFMissingResourcesError(resources=f"{missing_views.union(missing_containers)}")
+                raise CDFMissingResourcesError(containers=tuple(missing_containers), views=tuple(missing_views))
 
         # Setup data structures for validation
         dms_schema = self._rules.as_schema()
