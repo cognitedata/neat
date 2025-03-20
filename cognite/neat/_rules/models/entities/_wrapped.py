@@ -42,7 +42,7 @@ class WrappedEntity(BaseModel, ABC):
         # raw filter case:
         if cls.__name__ == "RawFilter":
             if data.startswith("rawFilter(") and data.endswith(")"):
-                return {"filter": data.removeprefix("rawFilter(").removesuffix(")"), "inner": None}
+                return {"filter": data[10:-1], "inner": None}
             else:
                 raise ValueError(f"Cannot parse {cls.name} from {data}. Ill formatted raw filter.")
 
