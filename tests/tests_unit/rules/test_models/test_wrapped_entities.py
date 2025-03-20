@@ -27,6 +27,10 @@ RAW_FILTER_EXAMPLE = """{"and": [
   ]}"""
 
 RAW_FILTER_CELL_EXAMPLE = f"""rawFilter({RAW_FILTER_EXAMPLE})"""
+RAW_FILTER_WITH_AMPERSAND = (
+    'rawFilter({"equals": {"property": ["ne-013-i4-neat-g-m-spc", "Tag/1", '
+    '"TagCategoryDescription"], "value": "FIRE & GAS FIELD EQUIPMENT"}})'
+)
 
 
 class TestWrappedEntities:
@@ -70,6 +74,7 @@ class TestWrappedEntities:
                 RAW_FILTER_CELL_EXAMPLE,
                 RawFilter(filter=RAW_FILTER_EXAMPLE),
             ),
+            (RawFilter, RAW_FILTER_WITH_AMPERSAND, RawFilter(filter=RAW_FILTER_WITH_AMPERSAND)),
         ],
     )
     def test_load(self, cls_: type[WrappedEntity], raw: Any, expected: WrappedEntity) -> None:
