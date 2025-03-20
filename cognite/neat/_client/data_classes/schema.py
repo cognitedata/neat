@@ -318,6 +318,7 @@ class DMSSchema:
             model (dm.DataModel): The read model to load the schema from.
         """
         write_model = model.as_write()
+        write_model.views = [view.as_id() for view in model.views or []]
         views = ViewApplyDict([view.as_write() for view in model.views])
         containers = ContainerApplyDict()
         for view in model.views:
