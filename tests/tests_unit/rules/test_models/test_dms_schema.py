@@ -365,3 +365,120 @@ class TestDMSSchema:
             _ = DMSSchema.load(raw_str, context)
         actual_warnings = [warning.message for warning in warning_logger]
         assert sorted(actual_warnings) == sorted(expected_issues)
+
+    def test_load_from_read_model(self) -> None:
+        default_model_args = dict(
+            last_updated_time=1,
+            created_time=1,
+            description=None,
+            name=None,
+            is_global=False,
+        )
+        default_view_args = dict(
+            filter=None,
+            implements=None,
+            writable=True,
+            used_for="node",
+            **default_model_args,
+        )
+        default_prop_args = dict(
+            nullable=True,
+            immutable=False,
+            name=None,
+            description=None,
+            source=None,
+            auto_increment=False,
+            default_value=None,
+        )
+        read_model = dm.DataModel(
+            space="my_space",
+            external_id="my_data_model",
+            version="1",
+            views=[
+                dm.View(
+                    space="my_space",
+                    external_id="my_view1",
+                    version="1",
+                    properties={
+                        "name": dm.MappedProperty(
+                            dm.ContainerId("my_space", "my_container"), "name", dm.Text(), **default_prop_args
+                        ),
+                    },
+                    **default_view_args,
+                ),
+                dm.View(
+                    space="my_space",
+                    external_id="my_view2",
+                    version="1",
+                    properties={
+                        "value": dm.MappedProperty(
+                            dm.ContainerId("my_space", "my_container"), "value", dm.Float64(), **default_prop_args
+                        ),
+                    },
+                    **default_view_args,
+                ),
+            ],
+            **default_model_args,
+        )
+        schema = DMSSchema.from_read_model(read_model)
+        assert schema.dump() == {
+            "containers": [
+                {
+                    "constraints": {},
+                    "externalId": "my_container",
+                    "indexes": {},
+                    "properties": {
+                        "name": {
+                            "autoIncrement": False,
+                            "immutable": False,
+                            "nullable": True,
+                            "type": {"collation": "ucs_basic", "list": False, "type": "text"},
+                        },
+                        "value": {
+                            "autoIncrement": False,
+                            "immutable": False,
+                            "nullable": True,
+                            "type": {"list": False, "type": "float64"},
+                        },
+                    },
+                    "space": "my_space",
+                    "usedFor": "node",
+                }
+            ],
+            "dataModel": {
+                "externalId": "my_data_model",
+                "space": "my_space",
+                "version": "1",
+                "views": [
+                    {"externalId": "my_view1", "space": "my_space", "type": "view", "version": "1"},
+                    {"externalId": "my_view2", "space": "my_space", "type": "view", "version": "1"},
+                ],
+            },
+            "spaces": [{"space": "my_space"}],
+            "views": [
+                {
+                    "externalId": "my_view1",
+                    "implements": [],
+                    "properties": {
+                        "name": {
+                            "container": {"externalId": "my_container", "space": "my_space", "type": "container"},
+                            "containerPropertyIdentifier": "name",
+                        }
+                    },
+                    "space": "my_space",
+                    "version": "1",
+                },
+                {
+                    "externalId": "my_view2",
+                    "implements": [],
+                    "properties": {
+                        "value": {
+                            "container": {"externalId": "my_container", "space": "my_space", "type": "container"},
+                            "containerPropertyIdentifier": "value",
+                        }
+                    },
+                    "space": "my_space",
+                    "version": "1",
+                },
+            ],
+        }
