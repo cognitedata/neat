@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
+from cognite.client import data_modeling as dm
 from yaml import YAMLError
 
 from cognite.neat._issues import NeatError
@@ -84,6 +85,7 @@ class CDFMissingClientError(NeatError, RuntimeError):
 
 @dataclass(unsafe_hash=True)
 class CDFMissingResourcesError(NeatError, RuntimeError):
-    """Following CDF resources are missing: {resources}"""
+    """Following containers {containers} and views {views} are missing in the CDF project."""
 
-    resources: str
+    containers: tuple[dm.ContainerId, ...]
+    views: tuple[dm.ViewId, ...]
