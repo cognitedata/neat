@@ -342,7 +342,9 @@ def _prompt_cluster_and_project() -> EnvironmentVariables:
 def _repo_root() -> Path | None:
     # Redirecting stderr to suppress the error message if the command fails
     with suppress(Exception), redirect_stderr(StringIO()), redirect_stdout(StringIO()):
-        result = subprocess.run("git rev-parse --show-toplevel".split(), stdout=subprocess.PIPE)
+        result = subprocess.run(
+            "git rev-parse --show-toplevel".split(), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+        )
         if (output := result.stdout.decode().strip()) != "":
             return Path(output)
     return None
