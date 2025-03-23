@@ -123,8 +123,8 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
             raise MultiValueError(self.issue_list.errors)
 
         rules_dict = self._to_rules_components()
-
         rules = InformationInputRules.load(rules_dict)
+
         self.issue_list.trigger_warnings()
         return ReadRules(rules, {})
 
@@ -145,12 +145,13 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
     @property
     def _metadata(self) -> dict:
         return {
+            "schema": "partial",
             "role": RoleTypes.information,
             "space": self.data_model_id.space,
             "external_id": self.data_model_id.external_id,
             "version": self.data_model_id.version,
-            "created": datetime.now().replace(microsecond=0),
-            "updated": datetime.now().replace(microsecond=0),
+            "created": self._get_current_time(),
+            "updated": self._get_current_time(),
             "name": None,
             "description": f"Data model imported using {type(self).__name__}",
             "creator": "Neat",

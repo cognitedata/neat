@@ -1,67 +1,60 @@
 """This module performs importing of various formats to one of serializations for which
 there are loaders to TransformationRules pydantic class."""
+import re
+import copy
+from uuid import UUID
+from pathlib import Path
+
+from cognite.client import data_modeling as dm
 
 from cognite.neat._rules.importers._rdf._base import BaseRDFImporter
+from cognite.neat._rules.models.entities import UnknownEntity
 from cognite.neat._rules.importers._rdf._shared import parse_classes, parse_properties
 
-CLASSES_QUERY = """
-    SELECT ?class_ ?name ?description ?implements
-    WHERE {{
-        VALUES ?type {{ imf:BlockType imf:TerminalType imf:AttributeType }}
-        ?class_ a ?type .
+IMF_DATA_MODEL_ID = ("imf_instances", "RDFDataModel", "1")
 
-        OPTIONAL {{?class_ rdfs:subClassOf ?parent }}.
+CLASSES_QUERY = """
+    SELECT ?class_ ?name ?description ?implements ?instance_source
+    WHERE {{
+        VALUES ?implements {{ imf:Block imf:Terminal }}
+        ?class_ rdfs:subClassOf ?implements .
+
         OPTIONAL {{?class_ rdfs:label|skos:prefLabel ?name }}.
         OPTIONAL {{?class_ rdfs:comment|skos:definition ?description}}.
 
-
-        # Add imf:Attribute as parent class when no parent is found
-        BIND(IF(!bound(?parent) && ?type = imf:AttributeType, imf:Attribute, ?parent) AS ?implements)
+        BIND(?class_ AS ?instance_source)
 
         # FILTERS
         FILTER (!isBlank(?class_))
-        FILTER (!bound(?implements) || !isBlank(?implements))
-
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "{language}"))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "{language}"))
     }}
     """
 
 PROPERTIES_QUERY = """
-    SELECT ?class_ ?property_ ?name ?description ?value_type ?min_count ?max_count ?default
+    SELECT ?class_ ?property_ ?name ?description ?value_type ?instance_source ?min_count ?max_count ?default
     WHERE
     {{
-        # CASE 1: Handling Blocks and Terminals
-        {{
-            VALUES ?type {{ imf:BlockType imf:TerminalType }}
-            ?class_ a ?type ;
-                sh:property ?propertyShape .
-                ?propertyShape sh:path ?property_ .
+        VALUES ?subClass {{ imf:Block imf:Terminal }}
+        ?class_ rdfs:subClassOf ?subClass ;
+            sh:property ?propertyShape .
+            ?propertyShape sh:path ?property_ .
 
-            OPTIONAL {{ ?property_ skos:prefLabel ?name . }}
-            OPTIONAL {{ ?property_ skos:definition ?description . }}
-            OPTIONAL {{ ?property_ rdfs:range ?range . }}
+        OPTIONAL {{ ?property_ skos:prefLabel ?name . }}
+        OPTIONAL {{ ?property_ skos:definition ?description . }}
+        OPTIONAL {{ ?property_ rdfs:range ?range . }}
 
-            OPTIONAL {{ ?propertyShape sh:minCount ?min_count . }}
-            OPTIONAL {{ ?propertyShape sh:maxCount ?max_count . }}
-            OPTIONAL {{ ?propertyShape sh:hasValue ?default . }}
-            OPTIONAL {{ ?propertyShape sh:class | sh:qualifiedValueShape/sh:class ?valueShape . }}
-        }}
+        OPTIONAL {{ ?propertyShape sh:minCount ?min_count . }}
+        OPTIONAL {{ ?propertyShape sh:maxCount ?max_count . }}
+        OPTIONAL {{ ?propertyShape sh:nodeKind ?nodeKind . }}
+        OPTIONAL {{ ?propertyShape sh:hasValue ?default . }}
 
-        UNION
+        BIND(?property_ AS ?instance_source)
+        BIND(IF(BOUND(?range), ?range, xsd:string) AS ?value_type)
+        BIND(IF(BOUND(?default) && !BOUND(?min_count), 1, 0) AS ?min_count)
+        BIND(IF(BOUND(?default) && !BOUND(?max_count), 1, ?undefined) AS ?max_count)
 
-        # CASE 2: Handling Attributes
-        {{
-            ?class_ a imf:AttributeType .
-            BIND(xsd:anyURI AS ?valueShape)
-            BIND(imf:predicate AS ?property_)
-            ?class_  ?property_ ?defaultURI .
-            BIND(STR(?defaultURI) AS ?default)
-
-        }}
-
-        # Set the value type for the property based on sh:class, sh:qualifiedValueType or rdfs:range
-        BIND(IF(BOUND(?valueShape), ?valueShape, IF(BOUND(?range) , ?range , ?valueShape)) AS ?value_type)
+        FILTER(?property_ != imf:hasTerminal && ?property_ != imf:hasPart)
 
         FILTER (!isBlank(?property_))
         FILTER (!bound(?class_) || !isBlank(?class_))
@@ -69,7 +62,7 @@ PROPERTIES_QUERY = """
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "{language}"))
     }}
     """
-
+DEFAULT_IMF_DATA_MODEL_ID = ("imf_instances", "imf_types_instance_data", "v1")
 
 class IMFImporter(BaseRDFImporter):
     """Convert IMF Types provided as SHACL shapes to Input Rules."""
@@ -82,14 +75,68 @@ class IMFImporter(BaseRDFImporter):
         self,
     ) -> dict:
         classes, issue_list = parse_classes(self.graph, CLASSES_QUERY, self.language, self.issue_list)
+        mapped_classes = self._map_to_base_model(classes)
+        compliant_classes = self._make_compliant(mapped_classes, ["class_"])
+
         self.issue_list = issue_list
+
         properties, issue_list = parse_properties(self.graph, PROPERTIES_QUERY, self.language, self.issue_list)
+        compliant_properties = self._make_compliant(properties, ["class_", "property_"])
         self.issue_list = issue_list
 
         components = {
             "Metadata": self._metadata,
-            "Classes": list(classes.values()) if classes else [],
-            "Properties": list(properties.values()) if properties else [],
+            "Classes": compliant_classes if classes else [],
+            "Properties": compliant_properties if properties else [],
         }
 
         return components
+
+    @classmethod
+    def from_file(cls, *args, **kwargs):
+        if "data_model_id" not in kwargs:
+            kwargs["data_model_id"] = DEFAULT_IMF_DATA_MODEL_ID
+        return super().from_file(*args, **kwargs)
+
+    @classmethod
+    def _map_to_base_model(cls, classes: dict[str, dict]) -> dict[str, dict]:
+        mapped_classes = copy.deepcopy(classes)
+        for (key, value) in classes.items():
+            if (value["implements"] == "Block"):
+                mapped_classes[key]["implements"] = "imf_base:Block(version=v1)"
+            elif (value["implements"] == "Terminal"):
+                mapped_classes[key]["implements"] = "imf_base:Terminal(version=v1)"
+
+        return mapped_classes
+
+    @classmethod
+    def _make_compliant(cls, entities: dict[str, dict], fields_to_update: list) -> list:
+        updated_entities: list = []
+
+        for (key, value) in entities.items():
+            updated_entity = {**value}
+
+            for (field) in fields_to_update:
+                updated_entity[field] = cls._fix_entity(value[field], "IMF")
+
+            updated_entities.append(updated_entity)
+
+        return updated_entities
+
+    @classmethod
+    def _fix_entity(cls, entity: str, prefix :str = "prefix") -> str:
+        if cls._is_valid_uuid(entity):
+            entity = prefix + "_" + entity
+
+        entity = re.sub(r"[^_a-zA-Z0-9]+", "_", entity)
+
+        # removing any double underscores that could occur
+        return re.sub(r"[^a-zA-Z0-9]+", "_", entity)
+
+    @classmethod
+    def _is_valid_uuid(cls, uuid_to_test : str, version=4) -> bool:
+        try:
+            uuid_obj = UUID(uuid_to_test, version=version)
+            return str(uuid_obj) == uuid_to_test
+        except ValueError:
+            return False

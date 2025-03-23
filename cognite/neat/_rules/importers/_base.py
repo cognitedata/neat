@@ -24,27 +24,32 @@ class BaseImporter(ABC, Generic[T_InputRules]):
         raise NotImplementedError()
 
     def _default_metadata(self) -> dict[str, Any]:
-        creator = "UNKNOWN"
-        with suppress(KeyError, ImportError):
-            import getpass
-
-            creator = getpass.getuser()
-
         return {
             "schema": "partial",
             "space": "neat",
             "external_id": "NeatImportedDataModel",
             "version": "0.1.0",
             "name": "Neat Imported Data Model",
-            "created": datetime.now().replace(microsecond=0).isoformat(),
-            "updated": datetime.now().replace(microsecond=0).isoformat(),
-            "creator": creator,
+            "created": self._get_current_time(),
+            "updated": self._get_current_time(),
+            "creator": self._get_username(),
             "description": f"Imported using {type(self).__name__}",
         }
 
     @classmethod
     def _repr_html_(cls) -> str:
         return class_html_doc(cls)
+
+    @classmethod
+    def _get_username(cls) -> str:
+        with suppress(KeyError, ImportError):
+            import getpass
+            return getpass.getuser()
+        return "UNKNOWN"
+
+    @classmethod
+    def _get_current_time(cls) -> str:
+        return datetime.now().replace(microsecond=0).isoformat()
 
     @property
     def agent(self) -> "ProvenanceAgent":
