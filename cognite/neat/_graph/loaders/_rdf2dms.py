@@ -414,23 +414,27 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls: Any, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    ids = (self._create_instance_id(v, "node", stop_on_exception=True) for v in value)
-                    result = [id_.dump(camel_case=True, include_instance_type=False) for id_ in ids]
-                    # Todo: Account for max_list_limit
-                    if len(result) <= DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT:
-                        return result
-                    warnings.warn(
-                        PropertyDirectRelationLimitWarning(
-                            identifier="unknown",
-                            resource_type="view property",
-                            property_name=cast(str, cls.model_fields[info.field_name].alias or info.field_name),
-                            limit=DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
-                        ),
-                        stacklevel=2,
+                    # To get deterministic results
+                    value.sort()
+                    limit = (
+                        # We know that info.field_name will always be set due to *direct_relation_by_property.keys()
+                        direct_relation_by_property[cast(str, info.field_name)].max_list_size
+                        or DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
                     )
-                    # To get deterministic results, we sort by space and externalId
-                    result.sort(key=lambda x: (x["space"], x["externalId"]))
-                    return result[:DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT]
+                    if len(value) > limit:
+                        warnings.warn(
+                            PropertyDirectRelationLimitWarning(
+                                identifier="unknown",
+                                resource_type="view property",
+                                property_name=cast(str, cls.model_fields[info.field_name].alias or info.field_name),
+                                limit=limit,
+                            ),
+                            stacklevel=2,
+                        )
+                        value = value[:limit]
+
+                    ids = (self._create_instance_id(v, "node", stop_on_exception=True) for v in value)
+                    return [id_.dump(camel_case=True, include_instance_type=False) for id_ in ids]
                 elif value:
                     return self._create_instance_id(value[0], "node", stop_on_exception=True).dump(
                         camel_case=True, include_instance_type=False
