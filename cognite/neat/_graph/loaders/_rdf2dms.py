@@ -205,6 +205,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 for missing_view in missing:
                     issues.append(ResourceNotFoundError(missing_view, "view", more="The view is not found in CDF."))
                 return [], issues
+            self._lookup_max_limits_size(self._client, views)
         else:
             views = dm.ViewList([])
             with catch_issues() as issues:
@@ -230,6 +231,29 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             view_iteration.view = views_by_id.get(view_id)
             view_iterations.append(view_iteration)
         return view_iterations, issues
+
+    @staticmethod
+    def _lookup_max_limits_size(client: NeatClient, views: dm.ViewList) -> None:
+        """For listable container properties (mapped properties), the read version of the view does not
+        contain the max_list_size. This method will lookup the max_list_size from the containers definitions."""
+        containers = client.data_modeling.containers.retrieve(list(views.referenced_containers()))
+        properties_by_container_and_prop_id = {
+            (container.as_id(), prop_id): prop
+            for container in containers
+            for prop_id, prop in container.properties.items()
+        }
+
+        for view in views:
+            for prop in view.properties.values():
+                if not isinstance(prop, dm.MappedProperty):
+                    continue
+                if not isinstance(prop.type, ListablePropertyType):
+                    continue
+                prop_definition = properties_by_container_and_prop_id.get(
+                    (prop.container, prop.container_property_identifier)
+                )
+                if prop_definition and isinstance(prop_definition.type, ListablePropertyType):
+                    prop.type.max_list_size = prop_definition.type.max_list_size
 
     def _select_views_with_instances(self, view_query_by_id: ViewQueryDict) -> dict[dm.ViewId, _ViewIterator]:
         """Selects the views with data."""
