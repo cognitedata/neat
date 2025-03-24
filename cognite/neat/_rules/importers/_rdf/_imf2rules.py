@@ -3,6 +3,7 @@ there are loaders to TransformationRules pydantic class."""
 
 import copy
 import re
+from typing import Self
 from uuid import UUID
 
 from cognite.neat._rules.importers._rdf._base import BaseRDFImporter
@@ -91,7 +92,7 @@ class IMFImporter(BaseRDFImporter):
         return components
 
     @classmethod
-    def from_file(cls, *args, **kwargs):
+    def from_file(cls, *args, **kwargs) -> Self:
         if "data_model_id" not in kwargs:
             kwargs["data_model_id"] = DEFAULT_IMF_DATA_MODEL_ID
         return super().from_file(*args, **kwargs)
@@ -132,7 +133,7 @@ class IMFImporter(BaseRDFImporter):
         return re.sub(r"[^a-zA-Z0-9]+", "_", entity)
 
     @classmethod
-    def _is_valid_uuid(cls, uuid_to_test: str, version=4) -> bool:
+    def _is_valid_uuid(cls, uuid_to_test: str, version: int = 4) -> bool:
         try:
             uuid_obj = UUID(uuid_to_test, version=version)
             return str(uuid_obj) == uuid_to_test
