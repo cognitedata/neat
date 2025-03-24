@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 
 from cognite.client import data_modeling as dm

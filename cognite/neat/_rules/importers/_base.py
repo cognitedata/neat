@@ -44,6 +44,7 @@ class BaseImporter(ABC, Generic[T_InputRules]):
     def _get_username(cls) -> str:
         with suppress(KeyError, ImportError):
             import getpass
+
             return getpass.getuser()
         return "UNKNOWN"
 

@@ -1,14 +1,11 @@
 """This module performs importing of various formats to one of serializations for which
 there are loaders to TransformationRules pydantic class."""
-import re
-import copy
-from uuid import UUID
-from pathlib import Path
 
-from cognite.client import data_modeling as dm
+import copy
+import re
+from uuid import UUID
 
 from cognite.neat._rules.importers._rdf._base import BaseRDFImporter
-from cognite.neat._rules.models.entities import UnknownEntity
 from cognite.neat._rules.importers._rdf._shared import parse_classes, parse_properties
 
 IMF_DATA_MODEL_ID = ("imf_instances", "RDFDataModel", "1")
@@ -64,6 +61,7 @@ PROPERTIES_QUERY = """
     """
 DEFAULT_IMF_DATA_MODEL_ID = ("imf_instances", "imf_types_instance_data", "v1")
 
+
 class IMFImporter(BaseRDFImporter):
     """Convert IMF Types provided as SHACL shapes to Input Rules."""
 
@@ -101,10 +99,10 @@ class IMFImporter(BaseRDFImporter):
     @classmethod
     def _map_to_base_model(cls, classes: dict[str, dict]) -> dict[str, dict]:
         mapped_classes = copy.deepcopy(classes)
-        for (key, value) in classes.items():
-            if (value["implements"] == "Block"):
+        for key, value in classes.items():
+            if value["implements"] == "Block":
                 mapped_classes[key]["implements"] = "imf_base:Block(version=v1)"
-            elif (value["implements"] == "Terminal"):
+            elif value["implements"] == "Terminal":
                 mapped_classes[key]["implements"] = "imf_base:Terminal(version=v1)"
 
         return mapped_classes
@@ -113,10 +111,10 @@ class IMFImporter(BaseRDFImporter):
     def _make_compliant(cls, entities: dict[str, dict], fields_to_update: list) -> list:
         updated_entities: list = []
 
-        for (key, value) in entities.items():
+        for _, value in entities.items():
             updated_entity = {**value}
 
-            for (field) in fields_to_update:
+            for field in fields_to_update:
                 updated_entity[field] = cls._fix_entity(value[field], "IMF")
 
             updated_entities.append(updated_entity)
@@ -124,7 +122,7 @@ class IMFImporter(BaseRDFImporter):
         return updated_entities
 
     @classmethod
-    def _fix_entity(cls, entity: str, prefix :str = "prefix") -> str:
+    def _fix_entity(cls, entity: str, prefix: str = "prefix") -> str:
         if cls._is_valid_uuid(entity):
             entity = prefix + "_" + entity
 
@@ -134,7 +132,7 @@ class IMFImporter(BaseRDFImporter):
         return re.sub(r"[^a-zA-Z0-9]+", "_", entity)
 
     @classmethod
-    def _is_valid_uuid(cls, uuid_to_test : str, version=4) -> bool:
+    def _is_valid_uuid(cls, uuid_to_test: str, version=4) -> bool:
         try:
             uuid_obj = UUID(uuid_to_test, version=version)
             return str(uuid_obj) == uuid_to_test
