@@ -3,11 +3,17 @@ there are loaders to TransformationRules pydantic class."""
 
 import copy
 import re
-from typing import Self
+from pathlib import Path
 from uuid import UUID
+
+from cognite.client import data_modeling as dm
 
 from cognite.neat._rules.importers._rdf._base import BaseRDFImporter
 from cognite.neat._rules.importers._rdf._shared import parse_classes, parse_properties
+from cognite.neat._rules.models.data_types import AnyURI
+from cognite.neat._rules.models.entities import UnknownEntity
+
+DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 
 IMF_DATA_MODEL_ID = ("imf_instances", "RDFDataModel", "1")
 
@@ -92,10 +98,18 @@ class IMFImporter(BaseRDFImporter):
         return components
 
     @classmethod
-    def from_file(cls, *args, **kwargs) -> Self:
-        if "data_model_id" not in kwargs:
-            kwargs["data_model_id"] = DEFAULT_IMF_DATA_MODEL_ID
-        return super().from_file(*args, **kwargs)
+    def from_file(
+        cls,
+        filepath: Path,
+        data_model_id: dm.DataModelId | tuple[str, str, str] = DEFAULT_IMF_DATA_MODEL_ID,
+        max_number_of_instance: int = -1,
+        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+        language: str = "en",
+        source_name: str = "Unknown",
+    ):
+        return super().from_file(
+            filepath, data_model_id, max_number_of_instance, non_existing_node_type, language, source_name
+        )
 
     @classmethod
     def _map_to_base_model(cls, classes: dict[str, dict]) -> dict[str, dict]:

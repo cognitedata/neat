@@ -18,7 +18,6 @@ from cognite.neat._utils.rdf_ import get_namespace
 
 DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 
-
 DEFAULT_RDF_DATA_MODEL_ID = ("neat_space", "RDFDataModel", "rdf")
 
 
