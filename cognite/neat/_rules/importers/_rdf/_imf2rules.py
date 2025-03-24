@@ -4,6 +4,7 @@ there are loaders to TransformationRules pydantic class."""
 import copy
 import re
 from pathlib import Path
+from typing import Self
 from uuid import UUID
 
 from cognite.client import data_modeling as dm
@@ -106,7 +107,7 @@ class IMFImporter(BaseRDFImporter):
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
         source_name: str = "Unknown",
-    ):
+    ) -> Self:
         return super().from_file(
             filepath, data_model_id, max_number_of_instance, non_existing_node_type, language, source_name
         )
