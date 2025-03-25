@@ -1,17 +1,27 @@
 import pytest
 from cognite.client.data_classes import Asset, FileMetadata
 from cognite.client.data_classes.data_modeling import InstanceApply
+from rdflib import RDF, Literal
 
 from cognite.neat import NeatSession
 from cognite.neat._client.testing import monkeypatch_neat_client
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
 from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, NeatIssue
+from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning
 from cognite.neat._rules.catalog import imf_attributes
 from cognite.neat._rules.importers import ExcelImporter, SubclassInferenceImporter
+from cognite.neat._rules.models.dms import (
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputRules,
+    DMSInputView,
+)
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ContainerEntity, ViewEntity
-from cognite.neat._rules.transformers import InformationToDMS
+from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS
+from cognite.neat._shared import Triple
 from cognite.neat._store import NeatGraphStore
 from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
 
@@ -113,3 +123,102 @@ def test_extract_above_direct_relation_limit() -> None:
     file_node = client.data_modeling.instances.apply.call_args_list[2].args[0][0]
     assert file_node.sources[0].source.external_id == "ClassicFile"
     assert len(file_node.sources[0].properties["assetIds"]) == DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+
+
+def test_dms_load_respect_container_cardinality() -> None:
+    dms = DMSInputRules(
+        metadata=DMSInputMetadata(
+            space="sp_schema_space",
+            external_id="MyModel",
+            creator="doctrino",
+            version="v1",
+        ),
+        properties=[
+            # Adding two connections to ensure the correct limit is used for each of them.
+            DMSInputProperty(
+                "MyView",
+                "toOther2",
+                "MyOtherView",
+                connection="direct",
+                max_count=2,
+                container="MyContainer",
+                container_property="toOther2",
+            ),
+            DMSInputProperty(
+                "MyView",
+                "toOther3",
+                "MyOtherView",
+                connection="direct",
+                max_count=3,
+                container="MyContainer",
+                container_property="toOther3",
+            ),
+            DMSInputProperty(
+                "MyOtherView", "name", "text", max_count=1, container="MyOtherContainer", container_property="name"
+            ),
+        ],
+        views=[
+            DMSInputView("MyView"),
+            DMSInputView("MyOtherView"),
+        ],
+        containers=[
+            DMSInputContainer("MyContainer"),
+            DMSInputContainer("MyOtherContainer"),
+        ],
+    ).as_verified_rules()
+    info = DMSToInformation().transform(dms)
+    info.metadata.physical = dms.metadata.identifier
+    dms.sync_with_info_rules(info)
+
+    store = NeatGraphStore.from_memory_store()
+    namespace = DEFAULT_NAMESPACE
+    my_type = namespace["MyView"]
+    my_other_type = namespace["MyOtherView"]
+    to_other_prop2 = namespace["toOther2"]
+    to_other_prop3 = namespace["toOther3"]
+    name_prop = namespace["name"]
+    my_instance_external_id = "MyInstance"
+    my_instance_uri = namespace[my_instance_external_id]
+    triples: list[Triple] = [(my_instance_uri, RDF.type, my_type)]
+    other_count = 4
+    for i in range(other_count):
+        id_ = namespace[f"OtherInstance{i}"]
+        triples.append((id_, RDF.type, my_other_type))
+        triples.append((id_, name_prop, Literal(f"Name{i}")))
+        # Connections, these should be limited by the max_count
+        triples.append((my_instance_uri, to_other_prop2, id_))
+        triples.append((my_instance_uri, to_other_prop3, id_))
+
+    for triple in triples:
+        store.dataset.add(triple)
+
+    # Link the schema to the triples
+    info.classes[0].instance_source = my_type
+    info.classes[1].instance_source = my_other_type
+    info.properties[0].instance_source = [to_other_prop2]
+    info.properties[1].instance_source = [to_other_prop3]
+    info.properties[2].instance_source = [name_prop]
+
+    loader = DMSLoader(
+        dms,
+        info,
+        store,
+        instance_space="sp_instance_space",
+    )
+    results = list(loader.load(stop_on_exception=True))
+
+    assert len(results) == other_count + 1 + 2
+
+    node_by_external_id = {node.external_id: node for node in results if isinstance(node, InstanceApply)}
+    assert set(node_by_external_id) == {f"OtherInstance{i}" for i in range(other_count)} | {my_instance_external_id}
+    my_instance = node_by_external_id[my_instance_external_id]
+    assert len(my_instance.sources) == 1
+    source = my_instance.sources[0]
+    assert set(source.properties.keys()) == {"toOther2", "toOther3"}
+    assert len(source.properties["toOther2"]) == 2
+    assert len(source.properties["toOther3"]) == 3
+
+    issues = [issue for issue in results if isinstance(issue, NeatIssue)]
+    assert len(issues) == 2
+    unexpected_issues = [issue for issue in issues if not isinstance(issue, PropertyDirectRelationLimitWarning)]
+    assert not unexpected_issues

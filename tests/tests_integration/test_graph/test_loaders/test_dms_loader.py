@@ -1,8 +1,12 @@
 import pytest
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
+from rdflib import RDF
 
+from cognite.neat import NeatSession
 from cognite.neat._client import NeatClient
+from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._store import NeatGraphStore
@@ -45,3 +49,51 @@ class TestDMSLoader:
         assert len(result) == 4
 
         assert sum(item.success for item in result) == len(car.INSTANCES)
+
+    def test_trigger_api_read_view_max_list_size_issue(self, neat_client: NeatClient) -> None:
+        expected_limits = {
+            "CogniteFile.assets": 1200,
+            "CogniteAsset.path": 100,
+            "CogniteTimeSeries.assets": 1200,
+            "CogniteActivity.assets": 1200,
+        }
+        neat = NeatSession(neat_client)
+        neat.read.examples.core_data_model()
+        dms_rules = neat._state.rule_store.last_verified_dms_rules
+        info_rules = neat._state.rule_store.last_verified_information_rules
+        info_rules.metadata.physical = dms_rules.metadata.identifier
+        dms_rules.sync_with_info_rules(info_rules)
+
+        # Adding some triples to
+        namespace = DEFAULT_NAMESPACE
+        triples = [
+            (namespace[f"My{view.view.external_id}"], RDF.type, namespace[view.view.external_id])
+            for view in dms_rules.views
+        ]
+        for triple in triples:
+            neat._state.instances.store.dataset.add(triple)
+        # Link triples to schema.
+        for cls_ in info_rules.classes:
+            cls_.instance_source = namespace[cls_.class_.suffix]
+
+        loader = DMSLoader(
+            dms_rules,
+            info_rules,
+            neat._state.instances.store,
+            "sp_instance_space",
+            client=neat_client,
+        )
+        iterations, _ = loader._create_view_iterations()
+
+        actual_limits: dict[str, int] = {}
+        for iteration in iterations:
+            if iteration.view is None:
+                continue
+            for prop_id, prop in iteration.view.properties.items():
+                if not isinstance(prop, dm.MappedProperty):
+                    continue
+                if not isinstance(prop.type, ListablePropertyType):
+                    continue
+                if prop.type.max_list_size:
+                    actual_limits[f"{iteration.view.external_id}.{prop_id}"] = prop.type.max_list_size
+        assert actual_limits == expected_limits
