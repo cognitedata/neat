@@ -272,7 +272,7 @@ class OWLClass(OntologyModel):
 
         return cls(
             id_=namespace[str(definition.class_.suffix)],
-            label=definition.name or str(definition.class_.suffix),
+            label=definition.name if definition.name else None,
             comment=definition.description,
             sub_class_of=sub_class_of,
             namespace=namespace,
@@ -348,7 +348,8 @@ class OWLProperty(OntologyModel):
             else:
                 raise ValueError(f"Value type {definition.value_type.type_} is not supported")
             owl_property.domain.add(namespace[str(definition.class_.suffix)])
-            owl_property.label.add(definition.name or definition.property_)
+            if definition.name:
+                owl_property.label.add(definition.name)
             if definition.description:
                 owl_property.comment.add(definition.description)
 
@@ -477,8 +478,10 @@ class OWLProperty(OntologyModel):
 
     @property
     def label_triples(self) -> list[tuple]:
-        label = list(filter(None, self.label))
-        return [(self.id_, RDFS.label, Literal(label[0] if label else self.id_))]
+        if label := list(filter(None, self.label)):
+            return [(self.id_, RDFS.label, Literal(label[0]))]
+        else:
+            return []
 
     @property
     def comment_triples(self) -> list[tuple]:
