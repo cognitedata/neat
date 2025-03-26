@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from rdflib import RDF, Graph, Namespace
+from rdflib import DCTERMS, RDF, RDFS, Graph, Literal, Namespace
 
 from cognite.neat._rules.exporters._rules2ontology import SemanticDataModelExporter
 from cognite.neat._rules.models import InformationRules
@@ -17,3 +17,12 @@ class TestOntologyExporter:
 
         semantic_dm = Graph().parse(ttl_path, format="ttl")
         assert 26 == len(list(semantic_dm.subjects(RDF.type, SHACL.NodeShape)))
+
+        titles = list(semantic_dm.objects(None, DCTERMS.title))
+        labels = list(semantic_dm.objects(None, RDFS.label))
+
+        assert 9 == len(labels)
+        assert Literal("Generating Unit") in labels
+
+        assert 9 == len(titles)
+        assert Literal("GeneratingUnit - Generating Unit") in titles
