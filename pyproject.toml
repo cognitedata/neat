@@ -6,7 +6,7 @@ description = "Knowledge graph transformation"
 authors = [
     "Nikola Vasiljevic <nikola.vasiljevic@cognite.com>",
     "Anders Albert <anders.albert@cognite.com>",
-    "Aleksandrs Livincovs <aleksandrs.livincovs@cognite.com>",
+    "Rogerio Júnior <rogerio.junior@cognite.com>",
 ]
 license = "Apache-2.0"
 documentation = "https://cognite-neat.readthedocs-hosted.com/"
