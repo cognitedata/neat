@@ -9,7 +9,6 @@ authors = [
     {name="Rogerio Júnior", email="rogerio.junior@cognite.com"},
 ]
 license = "Apache-2.0"
-readme = "README.md"
 requires-python = ">=3.10"
 
 [project.urls]
