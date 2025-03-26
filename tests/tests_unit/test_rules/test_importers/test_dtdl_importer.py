@@ -7,7 +7,7 @@ from cognite.neat._rules.importers import DTDLImporter
 from cognite.neat._rules.importers._dtdl2rules.spec import DTMI, Interface
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.transformers import VerifyInformationRules
-from tests.tests_unit.rules.test_importers.constants import DTDL_IMPORTER_DATA
+from tests.tests_unit.test_rules.test_importers.constants import DTDL_IMPORTER_DATA
 
 
 class TestDTDLImporter:
