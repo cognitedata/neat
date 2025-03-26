@@ -21,7 +21,7 @@ from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import VerifyAnyRules, VerifyDMSRules
 from tests.config import CAR_DMS_RULES_DEPRECATED, DATA_FOLDER, DOC_RULES
-from tests.tests_unit.rules.test_importers.constants import EXCEL_IMPORTER_DATA
+from tests.tests_unit.test_rules.test_importers.constants import EXCEL_IMPORTER_DATA
 
 
 def invalid_rules_filepaths():
