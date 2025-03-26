@@ -290,6 +290,19 @@ class OWLClass(OntologyModel):
             return []
 
     @property
+    def title_triples(self) -> list[tuple]:
+        if self.label:
+            return [
+                (
+                    self.id_,
+                    DCTERMS.title,
+                    Literal(f"{remove_namespace_from_uri(self.id_)} - {self.label}"),
+                )
+            ]
+        else:
+            return []
+
+    @property
     def comment_triples(self) -> list[tuple]:
         if self.comment:
             return [(self.id_, RDFS.comment, Literal(self.comment))]
@@ -305,7 +318,9 @@ class OWLClass(OntologyModel):
 
     @property
     def triples(self) -> list[tuple]:
-        return self.type_triples + self.label_triples + self.comment_triples + self.subclass_triples
+        return (
+            self.type_triples + self.label_triples + self.title_triples + self.comment_triples + self.subclass_triples
+        )
 
 
 class OWLProperty(OntologyModel):
@@ -484,12 +499,32 @@ class OWLProperty(OntologyModel):
             return []
 
     @property
+    def title_triples(self) -> list[tuple]:
+        if label := list(filter(None, self.label)):
+            return [
+                (
+                    self.id_,
+                    DCTERMS.title,
+                    Literal(f"{remove_namespace_from_uri(self.id_)} - {label[0]}"),
+                )
+            ]
+        else:
+            return []
+
+    @property
     def comment_triples(self) -> list[tuple]:
         return [(self.id_, RDFS.comment, Literal("\n".join(filter(None, self.comment))))]
 
     @property
     def triples(self) -> list[tuple]:
-        return self.type_triples + self.label_triples + self.comment_triples + self.domain_triples + self.range_triples
+        return (
+            self.type_triples
+            + self.label_triples
+            + self.title_triples
+            + self.comment_triples
+            + self.domain_triples
+            + self.range_triples
+        )
 
 
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
