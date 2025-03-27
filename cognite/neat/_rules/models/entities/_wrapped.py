@@ -1,5 +1,4 @@
 import json
-import re
 from abc import ABC, abstractmethod
 from collections.abc import Collection
 from functools import total_ordering
@@ -42,8 +41,8 @@ class WrappedEntity(BaseModel, ABC):
 
         # raw filter case:
         if cls.__name__ == "RawFilter":
-            if match := re.search(r"rawFilter\(([\s\S]*?)\)", data):
-                return {"filter": match.group(1), "inner": None}
+            if data.startswith("rawFilter(") and data.endswith(")"):
+                return {"filter": data[10:-1], "inner": None}
             else:
                 raise ValueError(f"Cannot parse {cls.name} from {data}. Ill formatted raw filter.")
 
@@ -193,7 +192,7 @@ class RawFilter(DMSFilter):
     filter: str
     inner: None = None  # type: ignore[assignment]
 
-    def as_dms_filter(self) -> dm.Filter:  # type: ignore[override]
+    def as_dms_filter(self, default: Any | None = None) -> dm.Filter:
         try:
             return dm.Filter.load(json.loads(self.filter))
         except json.JSONDecodeError as e:
