@@ -10,7 +10,7 @@ from cognite.neat._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
 )
 from cognite.neat._rules.catalog import hello_world_pump
-from tests import data
+from tests.data import SchemaData
 
 
 class TestRead:
@@ -23,7 +23,7 @@ class TestRead:
         # The data product should lookup the describable properties and include them.
         view = cognite_client.data_modeling.views.retrieve(("cdf_cdm", "CogniteDescribable", "v1"))[0]
 
-        issues = neat.read.yaml(data.REFERENCING_CORE, format="toolkit")
+        issues = neat.read.yaml(SchemaData.NonNeatFormats.referencing_core_yamls, format="toolkit")
         assert not issues.has_errors, issues
 
         neat.template.data_product_model(("sp_my_space", "MyProduct", "v1"))
@@ -62,12 +62,12 @@ class TestRead:
 
     def test_read_pump_with_duplicates(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
-        neat.read.excel(data.DATA_DIR / "pump_example_duplicated_resources.xlsx")
+        neat.read.excel(SchemaData.Physical.pump_example_duplicated_resources_xlsx)
         assert len(neat._state.rule_store.last_issues) == 4
 
     def test_data_model_views_not_in_same_space(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
-        neat.read.excel(data.DATA_DIR / "dm_view_space_different.xlsx")
+        neat.read.excel(SchemaData.Physical.dm_view_space_different_xlsx)
         assert len(neat._state.rule_store.last_issues) == 1
         assert isinstance(
             neat._state.rule_store.last_issues[0],
