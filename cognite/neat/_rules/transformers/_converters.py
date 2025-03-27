@@ -1534,8 +1534,10 @@ class _InformationRulesConverter:
                     f"{humanize_collection(cognite_concepts)}"
                 )
             cognite_rules = self._get_cognite_dms_rules(cognite_concepts, self.client)
-            for dms_prop in cognite_rules.properties:
-                cognite_properties[(dms_prop.view.as_class(), dms_prop.view_property)] = dms_prop
+
+            cognite_properties = {
+                (dms_prop.view.as_class(), dms_prop.view_property): dms_prop for dms_prop in cognite_rules.properties
+            }
             cognite_containers = {container.container: container for container in cognite_rules.containers or []}
             cognite_views = RulesAnalysis(dms=cognite_rules).implements_by_view(
                 include_ancestors=True, include_different_space=True

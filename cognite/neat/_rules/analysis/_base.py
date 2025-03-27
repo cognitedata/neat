@@ -154,8 +154,12 @@ class RulesAnalysis:
     def _include_ancestors(parents_by_class: dict[T_Hashable, set[T_Hashable]]) -> None:
         # Topological sort to ensure that classes include all ancestors
         for class_entity in list(TopologicalSorter(parents_by_class).static_order()):
+            if class_entity not in parents_by_class:
+                continue
             parents_by_class[class_entity] |= {
-                grand_parent for parent in parents_by_class[class_entity] for grand_parent in parents_by_class[parent]
+                grand_parent
+                for parent in parents_by_class[class_entity]
+                for grand_parent in parents_by_class.get(parent, set())
             }
 
     def properties_by_class(
