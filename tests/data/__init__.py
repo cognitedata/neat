@@ -23,7 +23,6 @@ class GraphData:
 
 
 class InstanceData:
-    power_grip_example_json = _data_dir
     classic_windfarm = _classic_windfarm
 
     class AssetCentricCDF:
@@ -45,12 +44,8 @@ _dtdl = _non_neat / "dtdl"
 class SchemaData:
     class Conceptual:
         _conceptual = _schema_dir / "conceptual"
-        asset_architect_test_xlsx = _conceptual / "asset_architect_test.xlsx"
         info_arch_car_rules_xlsx = _conceptual / "info-arch-car-rules.xlsx"
         information_unknown_value_type_xlsx = _conceptual / "information-unknown-value-type.xlsx"
-        nordic44_inferred_xlsx = _conceptual / "nordic44_inferred.xlsx"
-        sheet2cdf_transformation_rules_xlsx = _conceptual / "sheet2cdf_transformation_rules.xlsx"
-        sheet2cdf_transformation_rule_date_xlsx = _conceptual / "sheet2cdf_transformation_rule_date.xlsx"
 
     class NonNeatFormats:
         class DTDL:
@@ -73,7 +68,6 @@ class SchemaData:
         isa_plus_cdm_xlsx = _physical / "isa_plus_cdm.xlsx"
         missing_in_model_value_xlsx = _physical / "missing-in-model-value.xlsx"
         mixed_up_version_xlsx = _physical / "mixed-up-version.xlsx"
-        pump_example_xlsx = _physical / "pump_example.xlsx"
         pump_example_duplicated_resources_xlsx = _physical / "pump_example_duplicated_resources.xlsx"
         pump_example_with_missing_cells_xlsx = _physical / "pump_example_with_missing_cells.xlsx"
         pump_example_with_missing_cells_raise_issues = _physical / "pump_example_with_missing_cells_raise_issues.xlsx"
