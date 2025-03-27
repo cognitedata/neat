@@ -57,18 +57,6 @@ def asset_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture(scope="session")
-def jimbo_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_RULES / "asset-architect-jimbo.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
-        "Prefixes": read_individual_sheet(excel_file, "Prefixes", expected_headers=["Prefix"]),
-    }
-
-
-@pytest.fixture(scope="session")
 def jon_spreadsheet() -> dict[str, dict[str, Any]]:
     filepath = DOC_RULES / "expert-wind-energy-jon.xlsx"
     excel_file = pd.ExcelFile(filepath)
