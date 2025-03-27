@@ -15,11 +15,11 @@ class GraphData:
     aml_example_aml = _graph_dir / "aml_example.aml"
     dexpi_example_xml = _graph_dir / "dexpi_example.xml"
     dexpi_raw_graph_ttl = _graph_dir / "dexpi_raw_graph.ttl"
-    low_quality_graph_ttl = _graph_dir / "low_quality_graph.ttl"
+    low_quality_graph_ttl = _graph_dir / "low-quality-graph.ttl"
     imf_temp_transmitter_complete_ttl = _graph_dir / "IMF_TempTransmitterComplete.ttl"
     car = _car
     car_py = _graph_dir / "car.py"
-    iodd_Piab_piCOMPACT10X_20230509_IODD1_1_xml = "iodd_Piab-piCOMPACT10X-20230509-IODD1.1.xml"
+    iodd_Piab_piCOMPACT10X_20230509_IODD1_1_xml = _graph_dir / "iodd_Piab-piCOMPACT10X-20230509-IODD1.1.xml"
 
 
 class InstanceData:
@@ -47,7 +47,7 @@ class SchemaData:
         _conceptual = _schema_dir / "conceptual"
         asset_architect_test_xlsx = _conceptual / "asset_architect_test.xlsx"
         info_arch_car_rules_xlsx = _conceptual / "info-arch-car-rules.xlsx"
-        information_unknown_value_types_xlsx = _conceptual / "information_unknown_value_types.xlsx"
+        information_unknown_value_type_xlsx = _conceptual / "information-unknown-value-type.xlsx"
         nordic44_inferred_xlsx = _conceptual / "nordic44_inferred.xlsx"
         sheet2cdf_transformation_rules_xlsx = _conceptual / "sheet2cdf_transformation_rules.xlsx"
         sheet2cdf_transformation_rule_date_xlsx = _conceptual / "sheet2cdf_transformation_rule_date.xlsx"
@@ -71,7 +71,7 @@ class SchemaData:
         dm_view_space_different_xlsx = _physical / "dm_view_space_different.xlsx"
         dms_unknown_value_type_xlsx = _physical / "dms-unknown-value-type.xlsx"
         isa_plus_cdm_xlsx = _physical / "isa_plus_cdm.xlsx"
-        missing_in_model_value_xlsx = _physical / "missing_in_model_value.xlsx"
+        missing_in_model_value_xlsx = _physical / "missing-in-model-value.xlsx"
         mixed_up_version_xlsx = _physical / "mixed-up-version.xlsx"
         pump_example_xlsx = _physical / "pump_example.xlsx"
         pump_example_duplicated_resources_xlsx = _physical / "pump_example_duplicated_resources.xlsx"
@@ -84,4 +84,4 @@ class SchemaData:
         invalid_metadata_xlsx = _physical_invalid / "invalid_metadata.xlsx"
         invalid_property_dms_rules_xlsx = _physical_invalid / "invalid_property_dms_rules.xlsx"
         missing_view_container_dms_rules_xlsx = _physical_invalid / "missing_view_container_dms_rules.xlsx"
-        too_many_container_per_view_xlsx = _physical_invalid / "too_many_container_per_view.xlsx"
+        too_many_container_per_view_xlsx = _physical_invalid / "too_many_containers_per_view.xlsx"

@@ -60,7 +60,7 @@ class TestImportExportDMS:
         "filepath",
         [
             pytest.param(SchemaData.Physical.dms_unknown_value_type_xlsx, id="DMS source"),
-            pytest.param(SchemaData.Conceptual.information_unknown_value_types_xlsx, id="Information source"),
+            pytest.param(SchemaData.Conceptual.information_unknown_value_type_xlsx, id="Information source"),
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:

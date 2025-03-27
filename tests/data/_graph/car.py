@@ -1,5 +1,4 @@
 from functools import lru_cache
-from pathlib import Path
 
 from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace
@@ -69,7 +68,10 @@ CONTAINERS = dm.ContainerApplyList(
 
 @lru_cache(maxsize=1)
 def get_care_rules() -> InformationRules:
-    read_rules = importers.ExcelImporter(Path(__file__).resolve().parent / "info-arch-car-rules.xlsx").to_rules()
+    # To avoid circular import
+    from tests.data import SchemaData
+
+    read_rules = importers.ExcelImporter(SchemaData.Conceptual.info_arch_car_rules_xlsx).to_rules()
     return VerifyInformationRules().transform(read_rules)
 
 
