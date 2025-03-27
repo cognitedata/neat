@@ -11,7 +11,7 @@ from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema
 from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
 from tests.config import DOC_RULES
-from tests.data import windturbine
+from tests.data import SchemaData
 
 
 class TestDMSImporter:
@@ -69,6 +69,7 @@ class TestDMSImporter:
         assert dumped == dms_rules.dump(**args)
 
     def test_import_rules_properties_with_edge_properties_units_and_enum(self) -> None:
+        windturbine = SchemaData.NonNeatFormats.windturbine
         exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)
 
         result = exporter.to_rules()

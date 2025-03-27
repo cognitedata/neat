@@ -8,8 +8,8 @@ from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationInputRules, InformationRules
 from cognite.neat._rules.models.dms import DMSInputRules
 from cognite.neat._utils.spreadsheet import read_individual_sheet
-from tests.config import DATA_FOLDER, DOC_RULES
-from tests.data import COGNITE_CORE_ZIP
+from tests.config import DOC_RULES
+from tests.data import SchemaData
 
 
 @pytest.fixture(scope="session")
@@ -43,17 +43,6 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 @pytest.fixture(scope="session")
 def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRules:
     return InformationRules.model_validate(InformationInputRules.load(david_spreadsheet).dump())
-
-
-@pytest.fixture(scope="session")
-def asset_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DATA_FOLDER / "asset-architect-test.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
-    }
 
 
 @pytest.fixture(scope="session")
@@ -104,4 +93,4 @@ def olav_rebuild_dms_rules() -> DMSRules:
 
 @pytest.fixture(scope="session")
 def cognite_core_schema() -> DMSSchema:
-    return DMSSchema.from_zip(COGNITE_CORE_ZIP)
+    return DMSSchema.from_zip(SchemaData.NonNeatFormats.cognite_core_v1_zip)

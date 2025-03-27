@@ -10,11 +10,12 @@ from cognite.neat import NeatSession
 from cognite.neat._client import NeatClient
 from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules import importers
-from tests.data import DATA_DIR, car
+from tests.data import GraphData, SchemaData
 
 
 def create_new_car_model(neat_client: NeatClient, schema_space: str, instance_space: str) -> dm.DataModelId:
     # Creating a copy of the model to avoid modifying the original
+    car = GraphData.car
     original_space = car.CAR_MODEL.space
     raw_yaml = car.CONTAINERS.dump_yaml().replace(original_space, schema_space)
     container_copy = dm.ContainerApplyList.load(raw_yaml)
@@ -115,7 +116,7 @@ class TestRulesStoreProvenanceSyncing:
 
         with pytest.raises(NeatValueError) as e:
             neat._state.rule_import(
-                importers.ExcelImporter(DATA_DIR / "dms-unknown-value-type.xlsx"),
+                importers.ExcelImporter(SchemaData.Physical.dms_unknown_value_type_xlsx),
                 enable_manual_edit=True,
             )
 
@@ -154,7 +155,7 @@ class TestRulesStoreProvenanceSyncing:
 
     def test_raw_filter(self, neat_client: NeatClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(neat_client)
-        neat.read.excel(DATA_DIR / "dm_raw_filter.xlsx")
+        neat.read.excel(SchemaData.Physical.dm_raw_filter_xlsx)
 
         rules = neat._state.rule_store.last_verified_dms_rules
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")

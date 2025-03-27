@@ -3,12 +3,12 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat._graph.extractors import FilesExtractor
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_timeseries_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        client_mock.files.return_value = FileMetadataList.load((CLASSIC_CDF_EXTRACTOR_DATA / "files.yaml").read_text())
+        client_mock.files.return_value = FileMetadataList.load(InstanceData.AssetCentricCDF.files_yaml.read_text())
 
     g = Graph()
 

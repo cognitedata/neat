@@ -12,7 +12,7 @@ from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.dms import DMSRules
 from cognite.neat._rules.transformers import InformationToDMS, VerifyAnyRules
-from tests.data import DMS_UNKNOWN_VALUE_TYPE, INFORMATION_UNKNOWN_VALUE_TYPE
+from tests.data import SchemaData
 
 
 class TestDMSExporter:
@@ -59,8 +59,8 @@ class TestImportExportDMS:
     @pytest.mark.parametrize(
         "filepath",
         [
-            pytest.param(DMS_UNKNOWN_VALUE_TYPE, id="DMS source"),
-            pytest.param(INFORMATION_UNKNOWN_VALUE_TYPE, id="Information source"),
+            pytest.param(SchemaData.Physical.dms_unknown_value_type_xlsx, id="DMS source"),
+            pytest.param(SchemaData.Conceptual.information_unknown_value_types_xlsx, id="Information source"),
         ],
     )
     def test_import_excel_export_dms(self, filepath: Path) -> None:

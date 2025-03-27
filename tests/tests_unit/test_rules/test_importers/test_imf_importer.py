@@ -2,12 +2,12 @@ from cognite.neat._issues import catch_issues
 from cognite.neat._issues.warnings._resources import ResourceRegexViolationWarning
 from cognite.neat._rules import importers
 from cognite.neat._rules.transformers import VerifyAnyRules
-from tests.config import IMF_EXAMPLE
+from tests.data import GraphData
 
 
 def test_imf_importer():
     with catch_issues() as issues:
-        read_rules = importers.IMFImporter.from_file(IMF_EXAMPLE).to_rules()
+        read_rules = importers.IMFImporter.from_file(GraphData.imf_temp_transmitter_complete_ttl).to_rules()
         rules = VerifyAnyRules().transform(read_rules)
 
     regex_violations = [issue for issue in issues if isinstance(issue, ResourceRegexViolationWarning)]

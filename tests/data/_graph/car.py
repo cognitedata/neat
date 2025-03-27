@@ -17,7 +17,6 @@ from cognite.neat._rules.models.dms import (
     DMSInputView,
 )
 from cognite.neat._rules.transformers import VerifyInformationRules
-from tests.data import DATA_DIR
 
 INSTANCE_SPACE = "sp_cars"
 MODEL_SPACE = "sp_example_car"
@@ -271,4 +270,7 @@ INSTANCES = [
 
 @lru_cache(maxsize=1)
 def get_car_dms_rules() -> DMSRules:
-    return ExcelImporter(DATA_DIR / "car_dms_rules.xlsx").to_rules().rules.as_verified_rules()
+    # Local import to avoid circular import
+    from tests.data import SchemaData
+
+    return ExcelImporter(SchemaData.Physical.car_dms_rules_xlsx).to_rules().rules.as_verified_rules()

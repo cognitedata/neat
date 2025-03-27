@@ -10,11 +10,12 @@ from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.importers import InferenceImporter
 from cognite.neat._store import NeatGraphStore
-from tests.data import car
+from tests.data import GraphData
 
 
 @pytest.fixture()
 def deployed_car_model(cognite_client: CogniteClient) -> dm.DataModelId:
+    car = GraphData.car
     cognite_client.data_modeling.spaces.apply([dm.SpaceApply(s) for s in [car.MODEL_SPACE, car.INSTANCE_SPACE]])
     cognite_client.data_modeling.instances.apply(car.NODE_TYPES)
     cognite_client.data_modeling.containers.apply(car.CONTAINERS)
@@ -25,6 +26,7 @@ def deployed_car_model(cognite_client: CogniteClient) -> dm.DataModelId:
 
 @pytest.fixture()
 def car_store() -> NeatGraphStore:
+    car = GraphData.car
     store = NeatGraphStore.from_memory_store()
     store.add_rules(car.get_care_rules())
 
@@ -42,13 +44,13 @@ class TestDMSLoader:
     def test_load_car_example(
         self, neat_client: NeatClient, deployed_car_model: dm.DataModelId, car_store: NeatGraphStore
     ) -> None:
-        loader = DMSLoader.from_data_model_id(neat_client, deployed_car_model, car_store, car.INSTANCE_SPACE)
+        loader = DMSLoader.from_data_model_id(neat_client, deployed_car_model, car_store, GraphData.car.INSTANCE_SPACE)
 
         result = loader.load_into_cdf(neat_client, dry_run=False)
 
         assert len(result) == 4
 
-        assert sum(item.success for item in result) == len(car.INSTANCES)
+        assert sum(item.success for item in result) == len(GraphData.car.INSTANCES)
 
     def test_trigger_api_read_view_max_list_size_issue(self, neat_client: NeatClient) -> None:
         expected_limits = {

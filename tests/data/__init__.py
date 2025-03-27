@@ -1,24 +1,28 @@
 from pathlib import Path
 
+from ._graph import car as _car
 from ._instances import classic_windfarm as _classic_windfarm
 from ._schema.non_neat import windturbine as _windturbine
 
 _data_dir = Path(__file__).resolve(strict=True).parent
-_graph_dir = _data_dir / "graph"
-_schema_dir = _data_dir / "schema"
-_instances_dir = _data_dir / "instances"
+_graph_dir = _data_dir / "_graph"
+_schema_dir = _data_dir / "_schema"
+_instances_dir = _data_dir / "_instances"
 
 
-class Graph:
+class GraphData:
     aml_raw_graph_ttl = _graph_dir / "aml_raw_graph.ttl"
     aml_example_aml = _graph_dir / "aml_example.aml"
     dexpi_example_xml = _graph_dir / "dexpi_example.xml"
     dexpi_raw_graph_ttl = _graph_dir / "dexpi_raw_graph.ttl"
     low_quality_graph_ttl = _graph_dir / "low_quality_graph.ttl"
-    temp_transmitter_complete_ttl = _graph_dir / "temp_transmitter_complete.ttl"
+    imf_temp_transmitter_complete_ttl = _graph_dir / "IMF_TempTransmitterComplete.ttl"
+    car = _car
+    car_py = _graph_dir / "car.py"
+    iodd_Piab_piCOMPACT10X_20230509_IODD1_1_xml = "iodd_Piab-piCOMPACT10X-20230509-IODD1.1.xml"
 
 
-class Instances:
+class InstanceData:
     power_grip_example_json = _data_dir
     classic_windfarm = _classic_windfarm
 
@@ -34,11 +38,11 @@ class Instances:
         timeseries_yaml = _asset_centric_cdf / "timeseries.yaml"
 
 
-_non_neat = _schema_dir / "non-neat"
+_non_neat = _schema_dir / "non_neat"
 _dtdl = _non_neat / "dtdl"
 
 
-class Schema:
+class SchemaData:
     class Conceptual:
         _conceptual = _schema_dir / "conceptual"
         asset_architect_test_xlsx = _conceptual / "asset_architect_test.xlsx"
@@ -48,7 +52,7 @@ class Schema:
         sheet2cdf_transformation_rules_xlsx = _conceptual / "sheet2cdf_transformation_rules.xlsx"
         sheet2cdf_transformation_rule_date_xlsx = _conceptual / "sheet2cdf_transformation_rule_date.xlsx"
 
-    class NonNeat:
+    class NonNeatFormats:
         class DTDL:
             energy_grid = _dtdl / "energy-grid"
             temperature_controller = _dtdl / "TemperatureController.zip"
@@ -65,10 +69,10 @@ class Schema:
         car_dms_rules_deprecated_xlsx = _physical / "car_dms_rules_deprecated.xlsx"
         dm_raw_filter_xlsx = _physical / "dm_raw_filter.xlsx"
         dm_view_space_different_xlsx = _physical / "dm_view_space_different.xlsx"
-        dms_unknown_value_type_xlsx = _physical / "dms_unknown_value_type.xlsx"
+        dms_unknown_value_type_xlsx = _physical / "dms-unknown-value-type.xlsx"
         isa_plus_cdm_xlsx = _physical / "isa_plus_cdm.xlsx"
         missing_in_model_value_xlsx = _physical / "missing_in_model_value.xlsx"
-        mixed_up_version_xlsx = _physical / "mixed_up_version.xlsx"
+        mixed_up_version_xlsx = _physical / "mixed-up-version.xlsx"
         pump_example_xlsx = _physical / "pump_example.xlsx"
         pump_example_duplicated_resources_xlsx = _physical / "pump_example_duplicated_resources.xlsx"
         pump_example_with_missing_cells_xlsx = _physical / "pump_example_with_missing_cells.xlsx"

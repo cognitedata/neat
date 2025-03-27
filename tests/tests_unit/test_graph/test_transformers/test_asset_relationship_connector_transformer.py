@@ -3,19 +3,17 @@ import pytest
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors, transformers
 from cognite.neat._store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_asset_relationship_connector_transformer():
     store = NeatGraphStore.from_memory_store()
     # Extract assets
-    store.write(
-        extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", identifier="externalId")
-    )
+    store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml, identifier="externalId"))
     # Extract time series
     store.write(
         extractors.RelationshipsExtractor.from_file(
-            CLASSIC_CDF_EXTRACTOR_DATA / "relationships.yaml", identifier="externalId"
+            InstanceData.AssetCentricCDF.relationships_yaml, identifier="externalId"
         )
     )
 
@@ -52,10 +50,10 @@ def test_asset_relationship_connector_transformer_warning():
         store.transform(transformers.AssetRelationshipConnector())
 
     # Extract assets
-    store.write(extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml"))
+    store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
 
     # Extract time series
-    store.write(extractors.RelationshipsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "relationships.yaml"))
+    store.write(extractors.RelationshipsExtractor.from_file(InstanceData.AssetCentricCDF.relationships_yaml))
 
     # Connect assets and time series
     store.transform(transformers.AssetRelationshipConnector())

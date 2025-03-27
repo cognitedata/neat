@@ -3,7 +3,7 @@ import yaml
 from cognite.neat import NeatSession
 from cognite.neat._graph.extractors import AssetsExtractor
 from cognite.neat._rules.catalog import classic_model
-from tests.data import classic_windfarm
+from tests.data import InstanceData
 
 
 class TestSubInferenceImporter:
@@ -11,7 +11,7 @@ class TestSubInferenceImporter:
         neat = NeatSession()
         neat._state.instances.store.write(
             AssetsExtractor(
-                classic_windfarm.ASSETS,
+                InstanceData.classic_windfarm.ASSETS,
                 unpack_metadata=True,
                 as_write=True,
                 prefix="Classic",

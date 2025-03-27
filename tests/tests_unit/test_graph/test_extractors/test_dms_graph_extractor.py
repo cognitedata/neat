@@ -9,7 +9,7 @@ from requests import Response
 
 from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._graph.extractors import DMSGraphExtractor
-from tests.data import car
+from tests.data import GraphData
 from tests.utils import as_read_containers, as_read_instance, as_read_space
 
 
@@ -28,7 +28,7 @@ def create_car_instance(max_run: int = 1) -> Callable:
         nonlocal run_count
         if run_count >= max_run:
             return
-        for instance in car.INSTANCES:
+        for instance in GraphData.car.INSTANCES:
             yield as_read_instance(instance)
         run_count += 1
 
@@ -37,6 +37,7 @@ def create_car_instance(max_run: int = 1) -> Callable:
 
 class TestDMSGraphExtractor:
     def test_extract_car_example(self) -> None:
+        car = GraphData.car
         with monkeypatch_neat_client() as client:
             response = MagicMock(spec=Response)
             response.json.return_value = {
