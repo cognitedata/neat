@@ -20,7 +20,7 @@ def catch_warnings() -> Iterator[IssueList]:
             yield issues
         finally:
             if warning_logger:
-                issues.extend([from_warning(warning) for warning in warning_logger])
+                issues.extend([from_warning(warning) for warning in warning_logger if warning is not None])
 
 
 @contextmanager

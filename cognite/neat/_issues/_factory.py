@@ -1,6 +1,7 @@
 from typing import cast
 from warnings import WarningMessage
 
+from pydantic.warnings import PydanticDeprecationWarning
 from pydantic_core import ErrorDetails
 
 from cognite.neat._issues._base import NeatError, NeatWarning
@@ -23,12 +24,18 @@ def from_pydantic_errors(
     ]
 
 
-def from_warning(warning: WarningMessage) -> NeatWarning:
+def from_warning(warning: WarningMessage) -> NeatWarning | None:
+    message = None
     if isinstance(warning.message, NeatWarning):
         return warning.message
+
+    if isinstance(warning.message, PydanticDeprecationWarning):
+        return message
     message = f"{warning.category.__name__}: {warning.message!s}"
+
     if warning.source:
         message += f" Source: {warning.source}"
+
     return NeatValueWarning(message)
 
 
