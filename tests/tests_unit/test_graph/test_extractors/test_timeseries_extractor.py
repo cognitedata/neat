@@ -3,12 +3,12 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat._graph.extractors import TimeSeriesExtractor
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_timeseries_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        timeseries = TimeSeriesList.load((CLASSIC_CDF_EXTRACTOR_DATA / "timeseries.yaml").read_text())
+        timeseries = TimeSeriesList.load(InstanceData.AssetCentricCDF.timeseries_yaml.read_text())
         client_mock.time_series.return_value = timeseries
         client_mock.time_series.aggregate_count.return_value = len(timeseries)
 

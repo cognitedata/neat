@@ -9,19 +9,19 @@ from cognite.neat._graph.extractors import SequencesExtractor
 from cognite.neat._issues import catch_warnings
 from cognite.neat._issues.warnings import CDFAuthWarning
 from cognite.neat._utils.rdf_ import Triple, remove_namespace_from_uri
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 @pytest.fixture
 def client_mock() -> CogniteClient:
-    row_list = SequenceRowsList.load((CLASSIC_CDF_EXTRACTOR_DATA / "sequence_rows.yaml").read_text())
+    row_list = SequenceRowsList.load(InstanceData.AssetCentricCDF.sequence_rows_yaml.read_text())
     rows_by_id = {row.id: row for row in row_list}
 
     def mock_row_retrieve(id: list[int]) -> SequenceRowsList:
         return SequenceRowsList([rows_by_id[i] for i in id])
 
     with monkeypatch_cognite_client() as client_mock:
-        sequences = SequenceList.load((CLASSIC_CDF_EXTRACTOR_DATA / "sequences.yaml").read_text())
+        sequences = SequenceList.load(InstanceData.AssetCentricCDF.sequences_yaml.read_text())
         client_mock.config.max_workers = 10
         client_mock.sequences.return_value = sequences
         client_mock.sequences.aggregate_count.return_value = len(sequences)

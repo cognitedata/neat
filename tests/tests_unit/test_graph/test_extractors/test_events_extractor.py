@@ -3,12 +3,12 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat._graph.extractors import EventsExtractor
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_events_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        events = EventList.load((CLASSIC_CDF_EXTRACTOR_DATA / "events.yaml").read_text())
+        events = EventList.load(InstanceData.AssetCentricCDF.events_yaml.read_text())
         client_mock.events.return_value = events
         client_mock.events.aggregate_count.return_value = len(events)
 

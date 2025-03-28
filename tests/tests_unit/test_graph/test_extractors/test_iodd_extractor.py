@@ -2,7 +2,7 @@ from rdflib import Namespace
 
 from cognite.neat._graph.extractors import IODDExtractor
 from cognite.neat._store import NeatGraphStore
-from tests.config import IODD_EXAMPLE
+from tests.data import GraphData
 
 IODD = Namespace("http://www.io-link.com/IODD/2010/10/")
 
@@ -11,7 +11,7 @@ def test_num_triples():
     """Test that the dexpi extractor works."""
 
     store = NeatGraphStore.from_memory_store()
-    store.write(IODDExtractor.from_file(IODD_EXAMPLE))
+    store.write(IODDExtractor.from_file(GraphData.iodd_Piab_piCOMPACT10X_20230509_IODD1_1_xml))
 
     # Asset total length
     assert len(store.dataset) == 392

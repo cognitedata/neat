@@ -1,5 +1,4 @@
 from functools import lru_cache
-from pathlib import Path
 
 from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace
@@ -17,7 +16,6 @@ from cognite.neat._rules.models.dms import (
     DMSInputView,
 )
 from cognite.neat._rules.transformers import VerifyInformationRules
-from tests.data import DATA_DIR
 
 INSTANCE_SPACE = "sp_cars"
 MODEL_SPACE = "sp_example_car"
@@ -70,7 +68,10 @@ CONTAINERS = dm.ContainerApplyList(
 
 @lru_cache(maxsize=1)
 def get_care_rules() -> InformationRules:
-    read_rules = importers.ExcelImporter(Path(__file__).resolve().parent / "info-arch-car-rules.xlsx").to_rules()
+    # To avoid circular import
+    from tests.data import SchemaData
+
+    read_rules = importers.ExcelImporter(SchemaData.Conceptual.info_arch_car_rules_xlsx).to_rules()
     return VerifyInformationRules().transform(read_rules)
 
 
@@ -271,4 +272,7 @@ INSTANCES = [
 
 @lru_cache(maxsize=1)
 def get_car_dms_rules() -> DMSRules:
-    return ExcelImporter(DATA_DIR / "car_dms_rules.xlsx").to_rules().rules.as_verified_rules()
+    # Local import to avoid circular import
+    from tests.data import SchemaData
+
+    return ExcelImporter(SchemaData.Physical.car_dms_rules_xlsx).to_rules().rules.as_verified_rules()

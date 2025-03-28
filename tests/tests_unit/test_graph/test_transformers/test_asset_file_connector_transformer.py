@@ -3,17 +3,17 @@ import pytest
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors, transformers
 from cognite.neat._store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_asset_file_connector_transformer():
     store = NeatGraphStore.from_memory_store()
 
     # Extract assets
-    store.write(extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml"))
+    store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
 
     # Extract time series
-    store.write(extractors.FilesExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "files.yaml"))
+    store.write(extractors.FilesExtractor.from_file(InstanceData.AssetCentricCDF.files_yaml))
 
     # Connect assets and time series
     store.transform(transformers.AssetFileConnector())
@@ -42,10 +42,10 @@ def test_asset_file_connector_transformer_warning():
         store.transform(transformers.AssetFileConnector())
 
     # Extract assets
-    store.write(extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml"))
+    store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
 
     # Extract time series
-    store.write(extractors.FilesExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "files.yaml"))
+    store.write(extractors.FilesExtractor.from_file(InstanceData.AssetCentricCDF.files_yaml))
 
     # Connect assets and time series
     store.transform(transformers.AssetFileConnector())

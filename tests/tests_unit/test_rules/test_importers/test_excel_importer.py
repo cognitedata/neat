@@ -20,8 +20,8 @@ from cognite.neat._issues.warnings import (
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.transformers import VerifyAnyRules, VerifyDMSRules
-from tests.config import CAR_DMS_RULES_DEPRECATED, DATA_FOLDER, DOC_RULES
-from tests.tests_unit.test_rules.test_importers.constants import EXCEL_IMPORTER_DATA
+from tests.config import DOC_RULES
+from tests.data import SchemaData
 
 
 def invalid_rules_filepaths():
@@ -32,7 +32,7 @@ def invalid_rules_filepaths():
     )
 
     yield pytest.param(
-        EXCEL_IMPORTER_DATA / "invalid_metadata.xlsx",
+        SchemaData.PhysicalInvalid.invalid_metadata_xlsx,
         IssueList(
             [
                 MetadataValueError(
@@ -45,7 +45,7 @@ def invalid_rules_filepaths():
     )
 
     yield pytest.param(
-        EXCEL_IMPORTER_DATA / "invalid_property_dms_rules.xlsx",
+        SchemaData.PhysicalInvalid.invalid_property_dms_rules_xlsx,
         IssueList(
             [
                 PropertyValueError(
@@ -64,7 +64,7 @@ def invalid_rules_filepaths():
     )
 
     yield pytest.param(
-        EXCEL_IMPORTER_DATA / "inconsistent_container_dms_rules.xlsx",
+        SchemaData.PhysicalInvalid.inconsistent_container_dms_rules_xlsx,
         IssueList(
             [
                 PropertyDefinitionDuplicatedError(
@@ -80,7 +80,7 @@ def invalid_rules_filepaths():
         id="Inconsistent container",
     )
     yield pytest.param(
-        EXCEL_IMPORTER_DATA / "missing_view_container_dms_rules.xlsx",
+        SchemaData.PhysicalInvalid.missing_view_container_dms_rules_xlsx,
         IssueList(
             [
                 CDFMissingClientError(
@@ -95,7 +95,7 @@ def invalid_rules_filepaths():
         id="Missing container and view definition",
     )
     yield pytest.param(
-        EXCEL_IMPORTER_DATA / "too_many_containers_per_view.xlsx",
+        SchemaData.PhysicalInvalid.too_many_container_per_view_xlsx,
         IssueList(
             [
                 NotSupportedViewContainerLimitWarning(
@@ -147,7 +147,7 @@ class TestExcelImporter:
                 id="Svein Harald Enterprise Extension DMS",
             ),
             pytest.param(
-                DATA_FOLDER / "pump_example_with_missing_cells.xlsx",
+                SchemaData.Physical.pump_example_with_missing_cells_xlsx,
                 DMSRules,
                 id="Missing expected cell entire row drop",
             ),
@@ -180,14 +180,14 @@ class TestExcelImporter:
         assert issues == expected_issues
 
     def test_import_dms_rules_missing_in_model(self):
-        importer = ExcelImporter(DATA_FOLDER / "missing-in-model-value.xlsx")
+        importer = ExcelImporter(SchemaData.Physical.missing_in_model_value_xlsx)
         rules = VerifyAnyRules(validate=False).transform(importer.to_rules())
 
         for views in rules.views:
             assert views.in_model
 
     def test_import_dms_rules_with_skipped_rows_error_at_correct_loc(self):
-        importer = ExcelImporter(DATA_FOLDER / "pump_example_with_missing_cells_raise_issues.xlsx")
+        importer = ExcelImporter(SchemaData.Physical.pump_example_with_missing_cells_raise_issues)
 
         with catch_issues() as issues:
             read_rules = importer.to_rules()
@@ -199,7 +199,7 @@ class TestExcelImporter:
     def test_load_deprecated_rules(self) -> None:
         """Tests that DMS Rules with nullable and Is List columns are
         correctly translated into min and max count properties"""
-        importer = ExcelImporter(DATA_FOLDER / CAR_DMS_RULES_DEPRECATED)
+        importer = ExcelImporter(SchemaData.Physical.car_dms_rules_deprecated_xlsx)
         with catch_issues() as issues:
             read_rules = importer.to_rules()
             dms_rules = VerifyDMSRules(validate=False).transform(read_rules)

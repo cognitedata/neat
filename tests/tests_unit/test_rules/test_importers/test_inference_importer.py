@@ -16,8 +16,7 @@ from cognite.neat._rules.models.entities import MultiValueTypeInfo
 from cognite.neat._rules.models.entities._single_value import UnknownEntity
 from cognite.neat._rules.transformers import VerifyAnyRules
 from cognite.neat._store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, DATA_FOLDER
-from tests.data import car
+from tests.data import GraphData, InstanceData
 
 
 def test_rdf_inference():
@@ -81,7 +80,7 @@ def test_rdf_inference_with_removal_of_unknown_type():
 
 def test_rdf_inference_with_none_existing_node():
     store = NeatGraphStore.from_oxi_local_store()
-    extractor = RdfFileExtractor(DATA_FOLDER / "low-quality-graph.ttl")
+    extractor = RdfFileExtractor(GraphData.low_quality_graph_ttl)
     store.write(extractor)
 
     with catch_issues():
@@ -99,7 +98,7 @@ def test_rdf_inference_with_none_existing_node():
 def test_json_value_type_inference():
     store = NeatGraphStore.from_memory_store()
 
-    extractor = AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False)
+    extractor = AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml, unpack_metadata=False)
 
     store.write(extractor)
 
@@ -117,7 +116,7 @@ def test_json_value_type_inference():
 
 def test_integer_as_long():
     store = NeatGraphStore.from_memory_store()
-    for triple in car.TRIPLES:
+    for triple in GraphData.car.TRIPLES:
         store.dataset.add(triple)
 
     with catch_issues():

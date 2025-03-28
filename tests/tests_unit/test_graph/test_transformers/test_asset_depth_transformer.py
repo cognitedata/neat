@@ -3,12 +3,12 @@ import pytest
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors, transformers
 from cognite.neat._store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_asset_depth_transformer_without_typing():
     store = NeatGraphStore.from_memory_store()
-    store.write(extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml"))
+    store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
 
     transformer = transformers.AddAssetDepth()
 
@@ -25,7 +25,7 @@ def test_asset_depth_transformer_without_typing():
 
 def test_asset_depth_transformer_with_typing():
     store = NeatGraphStore.from_memory_store()
-    extractor = extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml")
+    extractor = extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml)
     store.write(extractor)
 
     transformer = transformers.AddAssetDepth(
@@ -57,7 +57,7 @@ def test_asset_depth_transformer_warning():
     ):
         store.transform(transformer)
 
-    extractor = extractors.AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml")
+    extractor = extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml)
     store.write(extractor)
     store.transform(transformer)
 
