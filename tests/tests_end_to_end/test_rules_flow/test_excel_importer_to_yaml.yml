@@ -9,10 +9,12 @@ containers:
   container: DistributionSubstation
   used_for: node
 - container: EnergyArea
+  name: Energy Area
   used_for: node
 - container: EnergyConsumer
   used_for: node
 - container: GeneratingUnit
+  name: Generating Unit
   used_for: node
 - container: GeoLocation
   used_for: node
@@ -36,9 +38,11 @@ containers:
   used_for: node
 - constraint: EnergyArea
   container: WindFarm
+  name: Wind Farm
   used_for: node
 - constraint: GeneratingUnit
   container: WindTurbine
+  name: Wind Turbine
   used_for: node
 metadata:
   created: '2024-02-09T00:00:00'
@@ -167,6 +171,7 @@ properties:
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/activePower
   max_count: 1
   min_count: 1
+  name: active power
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/activePower
   value_type: timeseries
   view: GeneratingUnit
@@ -177,6 +182,7 @@ properties:
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/geoLocation
   max_count: 1
   min_count: 0
+  name: geo location
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/geoLocation
   value_type: Point
   view: GeneratingUnit
@@ -186,6 +192,7 @@ properties:
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/name
   max_count: 1
   min_count: 1
+  name: name
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/name
   value_type: text
   view: GeneratingUnit
@@ -195,6 +202,7 @@ properties:
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit/type
   max_count: 1
   min_count: 1
+  name: type
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit/type
   value_type: text
   view: GeneratingUnit
@@ -577,6 +585,7 @@ views:
   view: ElectricCarCharger
 - implements: ''
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/EnergyArea
+  name: Energy Area
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/EnergyArea
   view: EnergyArea
 - implements: ''
@@ -589,6 +598,7 @@ views:
   view: ExportCable
 - implements: ''
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/GeneratingUnit
+  name: Generating Unit
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/GeneratingUnit
   view: GeneratingUnit
 - implements: ''
@@ -645,9 +655,11 @@ views:
   view: VoltageTransformer
 - implements: EnergyArea
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindFarm
+  name: Wind Farm
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindFarm
   view: WindFarm
 - implements: GeneratingUnit
   logical: http://purl.org/cognite/neat/data-model/verified/logical/power/power2consumer/0.1.0/WindTurbine
+  name: Wind Turbine
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/power/power2consumer/0.1.0/WindTurbine
   view: WindTurbine

@@ -272,7 +272,7 @@ class OWLClass(OntologyModel):
 
         return cls(
             id_=namespace[str(definition.class_.suffix)],
-            label=definition.name or str(definition.class_.suffix),
+            label=definition.name if definition.name else None,
             comment=definition.description,
             sub_class_of=sub_class_of,
             namespace=namespace,
@@ -287,6 +287,19 @@ class OWLClass(OntologyModel):
         if self.label:
             return [(self.id_, RDFS.label, Literal(self.label))]
         else:  # If comment is None, return empty list
+            return []
+
+    @property
+    def title_triples(self) -> list[tuple]:
+        if self.label:
+            return [
+                (
+                    self.id_,
+                    DCTERMS.title,
+                    Literal(f"{remove_namespace_from_uri(self.id_)} - {self.label}"),
+                )
+            ]
+        else:
             return []
 
     @property
@@ -305,7 +318,9 @@ class OWLClass(OntologyModel):
 
     @property
     def triples(self) -> list[tuple]:
-        return self.type_triples + self.label_triples + self.comment_triples + self.subclass_triples
+        return (
+            self.type_triples + self.label_triples + self.title_triples + self.comment_triples + self.subclass_triples
+        )
 
 
 class OWLProperty(OntologyModel):
@@ -348,7 +363,8 @@ class OWLProperty(OntologyModel):
             else:
                 raise ValueError(f"Value type {definition.value_type.type_} is not supported")
             owl_property.domain.add(namespace[str(definition.class_.suffix)])
-            owl_property.label.add(definition.name or definition.property_)
+            if definition.name:
+                owl_property.label.add(definition.name)
             if definition.description:
                 owl_property.comment.add(definition.description)
 
@@ -477,8 +493,23 @@ class OWLProperty(OntologyModel):
 
     @property
     def label_triples(self) -> list[tuple]:
-        label = list(filter(None, self.label))
-        return [(self.id_, RDFS.label, Literal(label[0] if label else self.id_))]
+        if label := list(filter(None, self.label)):
+            return [(self.id_, RDFS.label, Literal(label[0]))]
+        else:
+            return []
+
+    @property
+    def title_triples(self) -> list[tuple]:
+        if label := list(filter(None, self.label)):
+            return [
+                (
+                    self.id_,
+                    DCTERMS.title,
+                    Literal(f"{remove_namespace_from_uri(self.id_)} - {label[0]}"),
+                )
+            ]
+        else:
+            return []
 
     @property
     def comment_triples(self) -> list[tuple]:
@@ -486,7 +517,14 @@ class OWLProperty(OntologyModel):
 
     @property
     def triples(self) -> list[tuple]:
-        return self.type_triples + self.label_triples + self.comment_triples + self.domain_triples + self.range_triples
+        return (
+            self.type_triples
+            + self.label_triples
+            + self.title_triples
+            + self.comment_triples
+            + self.domain_triples
+            + self.range_triples
+        )
 
 
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
