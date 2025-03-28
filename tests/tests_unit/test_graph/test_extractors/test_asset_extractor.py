@@ -4,12 +4,12 @@ from cognite.client.testing import monkeypatch_cognite_client
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors import AssetsExtractor
 from cognite.neat._store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_asset_extractor_with_lambda_unpacked_metadata():
     with monkeypatch_cognite_client() as client_mock:
-        assets = AssetList.load((CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml").read_text())
+        assets = AssetList.load(InstanceData.AssetCentricCDF.assets_yaml.read_text())
         client_mock.assets.aggregate_count.return_value = len(assets)
         client_mock.assets.return_value = assets
 
@@ -32,7 +32,7 @@ def test_asset_extractor_with_lambda_unpacked_metadata():
 
 def test_asset_extractor_with_packed_metadata():
     with monkeypatch_cognite_client() as client_mock:
-        assets = AssetList.load((CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml").read_text())
+        assets = AssetList.load(InstanceData.AssetCentricCDF.assets_yaml.read_text())
         client_mock.assets.aggregate_count.return_value = len(assets)
         client_mock.assets.return_value = assets
 

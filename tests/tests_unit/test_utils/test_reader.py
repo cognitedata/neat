@@ -1,16 +1,16 @@
 import pytest
 
 from cognite.neat._utils.reader import GitHubReader, HttpFileReader, NeatReader, PathReader
-from tests.data import DATA_DIR
+from tests.data import GraphData
 
 
 class TestNeatReader:
     def test_create_path(self) -> None:
-        reader = NeatReader.create(DATA_DIR / "car.py")
+        reader = NeatReader.create(GraphData.car_py)
         assert isinstance(reader, PathReader)
 
     def test_create_str(self) -> None:
-        reader = NeatReader.create(str(DATA_DIR / "car.py"))
+        reader = NeatReader.create(str(GraphData.car_py))
         assert isinstance(reader, PathReader)
 
     def test_create_github_url(self) -> None:

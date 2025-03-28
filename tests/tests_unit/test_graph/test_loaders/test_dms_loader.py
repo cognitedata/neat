@@ -23,13 +23,13 @@ from cognite.neat._rules.models.entities._single_value import ClassEntity, Conta
 from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS
 from cognite.neat._shared import Triple
 from cognite.neat._store import NeatGraphStore
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA, IMF_EXAMPLE
+from tests.data import GraphData, InstanceData
 
 
 def test_metadata_as_json_filed():
     store = NeatGraphStore.from_memory_store()
     store.write(
-        AssetsExtractor.from_file(CLASSIC_CDF_EXTRACTOR_DATA / "assets.yaml", unpack_metadata=False, as_write=True)
+        AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml, unpack_metadata=False, as_write=True)
     )
 
     importer = SubclassInferenceImporter(IssueList(), store.dataset, data_model_id=("neat_space", "MyAsset", "1"))
@@ -79,7 +79,7 @@ def test_imf_attribute_nodes():
     dms_rules = InformationToDMS().transform(info_rules)
 
     store = NeatGraphStore.from_oxi_local_store()
-    store.write(RdfFileExtractor(IMF_EXAMPLE))
+    store.write(RdfFileExtractor(GraphData.imf_temp_transmitter_complete_ttl))
 
     loader = DMSLoader(dms_rules, info_rules, store, instance_space="knowledge")
     knowledge_nodes = list(loader.load())

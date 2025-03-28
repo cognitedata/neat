@@ -7,7 +7,7 @@ from cognite.neat._rules.importers import DTDLImporter
 from cognite.neat._rules.importers._dtdl2rules.spec import DTMI, Interface
 from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.transformers import VerifyInformationRules
-from tests.tests_unit.test_rules.test_importers.constants import DTDL_IMPORTER_DATA
+from tests.data import SchemaData
 
 
 class TestDTDLImporter:
@@ -16,7 +16,7 @@ class TestDTDLImporter:
         expected_issues = IssueList([ResourceMissingIdentifierError("Object")])
 
         with catch_issues() as issues:
-            read_rules = DTDLImporter.from_directory(DTDL_IMPORTER_DATA / "energy-grid").to_rules()
+            read_rules = DTDLImporter.from_directory(SchemaData.NonNeatFormats.DTDL.energy_grid).to_rules()
             _ = VerifyInformationRules().transform(read_rules)
 
         assert issues == expected_issues
@@ -34,7 +34,7 @@ class TestDTDLImporter:
             ]
         )
         with catch_issues() as issues:
-            read_rules = DTDLImporter.from_zip(DTDL_IMPORTER_DATA / "TemperatureController.zip").to_rules()
+            read_rules = DTDLImporter.from_zip(SchemaData.NonNeatFormats.DTDL.temperature_controller).to_rules()
             rules = VerifyInformationRules().transform(read_rules)
 
         assert issues == expected_issues

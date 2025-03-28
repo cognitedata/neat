@@ -44,7 +44,7 @@ from cognite.neat._rules.transformers import (
     MapOneToOne,
     VerifyDMSRules,
 )
-from tests.data import car
+from tests.data import GraphData
 from tests.utils import normalize_neat_id_in_rules
 
 
@@ -1416,18 +1416,22 @@ class TestDMSRules:
         assert actual_dump == expected_dump
 
     def test_create_reference(self) -> None:
-        info_rules = car.get_care_rules()
+        info_rules = GraphData.car.get_care_rules()
         dms_rules = InformationToDMS().transform(info_rules)
-        dms_rules = MapOneToOne(car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}).transform(dms_rules)
+        dms_rules = MapOneToOne(GraphData.car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}).transform(
+            dms_rules
+        )
 
         schema = dms_rules.as_schema()
         view_by_external_id = {view.external_id: view for view in schema.views.values()}
         # The Manufacturer and Color view only has one property, name, and this is
         # now expected to point to the Entity container in the base model.
         manufacturer_view = view_by_external_id["Manufacturer"]
-        assert manufacturer_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
+        assert manufacturer_view.referenced_containers() == {
+            dm.ContainerId(GraphData.car.BASE_MODEL.metadata.space, "Entity")
+        }
         color_view = view_by_external_id["Color"]
-        assert color_view.referenced_containers() == {dm.ContainerId(car.BASE_MODEL.metadata.space, "Entity")}
+        assert color_view.referenced_containers() == {dm.ContainerId(GraphData.car.BASE_MODEL.metadata.space, "Entity")}
 
     def test_metadata_int_version(self) -> None:
         raw_metadata = dict(

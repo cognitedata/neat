@@ -11,13 +11,13 @@ from requests import Response
 
 from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._graph.extractors import DMSExtractor
-from tests.data import car
+from tests.data import GraphData
 
 
 class TestDMSExtractor:
     def test_extract_instances(self) -> None:
         total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, list[Instance]]] = defaultdict(lambda: (0, []))
-        for instance in instance_apply_to_read(car.INSTANCES):
+        for instance in instance_apply_to_read(GraphData.car.INSTANCES):
             if isinstance(instance, dm.Node):
                 view_id = next(iter(instance.properties.keys()))
             else:
@@ -28,7 +28,7 @@ class TestDMSExtractor:
             total_instances_pair_by_view[view_id] = total_instances + 1, instances
 
         extractor = DMSExtractor(total_instances_pair_by_view)
-        expected_triples = set(car.TRIPLES)
+        expected_triples = set(GraphData.car.TRIPLES)
 
         triples = set(extractor.extract())
 

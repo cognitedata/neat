@@ -3,14 +3,12 @@ from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
 from cognite.neat._graph.extractors import LabelsExtractor
-from tests.config import CLASSIC_CDF_EXTRACTOR_DATA
+from tests.data import InstanceData
 
 
 def test_labels_extractor():
     with monkeypatch_cognite_client() as client_mock:
-        client_mock.labels.return_value = LabelDefinitionList.load(
-            (CLASSIC_CDF_EXTRACTOR_DATA / "labels.yaml").read_text()
-        )
+        client_mock.labels.return_value = LabelDefinitionList.load(InstanceData.AssetCentricCDF.labels_yaml.read_text())
 
     g = Graph()
 

@@ -4,12 +4,12 @@ from cognite.neat import NeatSession
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.importers import BaseImporter
 from cognite.neat._rules.models import DMSInputRules
-from tests.data.windturbine import INPUT_RULES
+from tests.data import SchemaData
 
 
 class RuleImporter(BaseImporter):
     def to_rules(self) -> ReadRules[DMSInputRules]:
-        return ReadRules(INPUT_RULES, {})
+        return ReadRules(SchemaData.NonNeatFormats.windturbine.INPUT_RULES, {})
 
 
 class TestToYaml:
