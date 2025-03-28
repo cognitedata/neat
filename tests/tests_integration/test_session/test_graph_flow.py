@@ -17,7 +17,6 @@ from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.models.entities import ContainerEntity
 from tests.data import GraphData
 
-
 RESERVED_PROPERTIES = frozenset(
     {
         "created_time",
