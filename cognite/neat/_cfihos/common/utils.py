@@ -215,7 +215,7 @@ def get_entity_relation_target(Property_id, entity_id, entities) -> str | None:
         ):
             return property[PropertyStructure.TARGET_TYPE]
 
-    return "#N/A"  # None
+    return "undefined"  # None
 
 
 # TODO: add data types to the parameters in the below function
@@ -230,7 +230,7 @@ def get_relation_target_if_eligible(key, container_external_id, entities, proper
         and property_type == data_modeling.DirectRelation()
     ):
         return get_entity_relation_target(key, container_external_id, entities)
-    return "#N/A"  # None
+    return "undefined"  # None
 
 
 def generate_neat_rules_sheet(
