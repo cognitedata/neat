@@ -20,6 +20,7 @@ from cognite.neat._rules.models import (
     SchemaCompleteness,
     SheetRow,
 )
+from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._rules.models.dms._rules import DMSRules
@@ -106,6 +107,16 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         finally:
             data.close()
         return None
+
+    def template(self, role: RoleTypes) -> Workbook:
+        """This method will create an spreadsheet template for data modeling depending on the role.
+
+        Args:
+            role: The role for which the template is created. Can be either "dms" or "information".
+
+
+        """
+        ...
 
     def export(self, rules: VerifiedRules) -> Workbook:
         workbook = Workbook()
