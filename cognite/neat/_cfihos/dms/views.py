@@ -433,6 +433,9 @@ def build_views_from_entities(
             for parent_id in parent_ids
         ]
         view_filter = _create_view_filter(containers_space, entity_id, inheritance_tree.get(entity_id, []))
+        
+        lst_views = []
+        lst_properties = []
 
         prop_data_dict = {}
         for prop_data in entity_data[EntityStructure.PROPERTIES]:
@@ -453,6 +456,50 @@ def build_views_from_entities(
                     ),
                 )
 
+                lst_properties.append(
+                    {
+                        "View": entity_data[EntityStructure.ID],
+                        "View Property": prop_data[PropertyStructure.ID],
+                        "Name": prop_data[PropertyStructure.NAME],
+                        "Description": prop_data[PropertyStructure.DESCRIPTION],
+                        "Connection": "direct",
+                        "Value Type": prop_data[PropertyStructure.TARGET_TYPE],
+                        "Nullable": True,
+                        "Immutable": False,
+                        "Is List": False,
+                        "Default": None,
+                        "Reference": None,
+                        "Container": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Container Property": prop_data[PropertyStructure.ID],
+                        "Container Space": containers_space,
+                        "Index": None,
+                        "Constraint": None,
+                        "Class (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Property (linage)": prop_data[PropertyStructure.ID]
+                    })
+                
+                lst_properties.append(
+                    {
+                        "View": entity_data[EntityStructure.ID],
+                        "View Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                        "Name": prop_data[PropertyStructure.NAME],
+                        "Description": prop_data[PropertyStructure.DESCRIPTION],
+                        "Connection": None,
+                        "Value Type": "text",
+                        "Nullable": True,
+                        "Immutable": False,
+                        "Is List": False,
+                        "Default": None,
+                        "Reference": None,
+                        "Container": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                        "Container Space": containers_space,
+                        "Index": None,
+                        "Constraint": None,
+                        "Class (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Property (linage)": prop_data[PropertyStructure.ID].replace("_rel", "")
+                    })
+
                 prop_data_dict[prop_data[PropertyStructure.ID].replace("_rel", "")] = data_modeling.MappedPropertyApply(
                     name=prop_data[PropertyStructure.NAME],
                     description=prop_data[PropertyStructure.DESCRIPTION],
@@ -462,22 +509,22 @@ def build_views_from_entities(
                     container_property_identifier=prop_data[PropertyStructure.ID].replace("_rel", ""),
                 )
 
-            # Edge support for query views
-            elif prop_data[PropertyStructure.PROPERTY_TYPE] == PropertyStructure.ENTITY_EDGE:
-                prop_data_dict[prop_data[PropertyStructure.ID]] = data_modeling.MultiEdgeConnectionApply(
-                    name=prop_data[PropertyStructure.NAME],
-                    description=prop_data[PropertyStructure.DESCRIPTION],
-                    direction=prop_data[PropertyStructure.EDGE_DIRECTION],
-                    type=data_modeling.DirectRelationReference(
-                        space=views_space,
-                        external_id=prop_data[PropertyStructure.EDGE_EXTERNAL_ID],
-                    ),
-                    source=data_modeling.ViewId(
-                        space=views_space,
-                        external_id=prop_data[PropertyStructure.EDGE_TARGET],
-                        version=version,
-                    ),
-                )
+            # # Edge support for query views
+            # elif prop_data[PropertyStructure.PROPERTY_TYPE] == PropertyStructure.ENTITY_EDGE:
+            #     prop_data_dict[prop_data[PropertyStructure.ID]] = data_modeling.MultiEdgeConnectionApply(
+            #         name=prop_data[PropertyStructure.NAME],
+            #         description=prop_data[PropertyStructure.DESCRIPTION],
+            #         direction=prop_data[PropertyStructure.EDGE_DIRECTION],
+            #         type=data_modeling.DirectRelationReference(
+            #             space=views_space,
+            #             external_id=prop_data[PropertyStructure.EDGE_EXTERNAL_ID],
+            #         ),
+            #         source=data_modeling.ViewId(
+            #             space=views_space,
+            #             external_id=prop_data[PropertyStructure.EDGE_TARGET],
+            #             version=version,
+            #         ),
+            #     )
 
             else:
                 # to fix
@@ -490,6 +537,29 @@ def build_views_from_entities(
                     ),
                     container_property_identifier=prop_data[PropertyStructure.ID].replace("_rel", ""),
                 )
+
+                lst_properties.append(
+                    {
+                        "View": entity_data[EntityStructure.ID],
+                        "View Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                        "Name": prop_data[PropertyStructure.NAME],
+                        "Description": prop_data[PropertyStructure.DESCRIPTION],
+                        "Connection": None,
+                        "Value Type": "text",
+                        "Nullable": True,
+                        "Immutable": False,
+                        "Is List": False,
+                        "Default": None,
+                        "Reference": None,
+                        "Container": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                        "Container Space": containers_space,
+                        "Index": None,
+                        "Constraint": None,
+                        "Class (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Property (linage)": prop_data[PropertyStructure.ID].replace("_rel", "")
+                    })
+
             # add entityType property in case the entity is not FCC
             if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]:
                 prop_data_dict["entityType"] = data_modeling.MappedPropertyApply(
@@ -503,6 +573,18 @@ def build_views_from_entities(
 
         # Avoid creating views for types without properties - e.g: empty abstract classes
         if len(entity_data[EntityStructure.PROPERTIES]) > 0:
+            lst_views.append(
+                {
+                    "View": entity_data[EntityStructure.ID],
+                    "Name": entity_data[EntityStructure.NAME],
+                    "Description": entity_data[EntityStructure.DESCRIPTION],
+                    "Implements": [parent_id for parent_id in parents_ext_ids] if parents_ext_ids else None,
+                    "Filter": view_filter if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN] else None,
+                    "In Model": True,
+                    "Class (linage)": entity_data[EntityStructure.ID],
+                }
+            )
+
             dm_view = data_modeling.ViewApply(
                 space=views_space,
                 external_id=entity_data[EntityStructure.ID],

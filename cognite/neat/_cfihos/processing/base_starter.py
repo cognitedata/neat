@@ -6,7 +6,8 @@ import pandas as pd
 from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.common.reader import read_yaml
 from cognite.neat._cfihos.dms.container import create_container_from_property_struct_dict
-from cognite.neat._cfihos.dms.views import build_views_from_containers
+from cognite.neat._cfihos.dms.views import build_views_from_containers, build_views_from_entities
+from cognite.neat._cfihos.common.utils import collect_model_subset
 from cognite.neat._cfihos.processing.processor import Processor
 
 logging = log_init(f"{__name__}", "i")
@@ -108,7 +109,30 @@ class base_starter_class:
             entities=model_processor.model_entities,
         )
 
-        logging.info("STEP 4: exporting NEAT rules sheet ...")
+        # Find scope
+        lst_scoped_models = []
+        scopes = self.domain_model_config["scopes"]
+        if scopes is None:
+            raise ValueError("Scope not found in the configuration file")
+        for scope in self.domain_model_config["scopes"]:
+            scoped_model = collect_model_subset(
+                full_model=model_processor.model_entities,
+                scope_config=self.domain_model_config["scope_config"],
+                scope=scope["scope_subset"],
+                map_dms_id_to_model_id=model_processor.map_dms_id_to_entity_id,
+            )
+            lst_scoped_models.append(scoped_model)
+            logging.info(f"STEP 4: Started building {len(scoped_model)} scoped entity views")
+
+        # entity_views = build_views_from_entities(
+        #     containers_space=containers_dm_space,
+        #     views_space=views_dm_space,
+        #     version=views_model_Version,
+        #     entities=scoped_model,
+        #     # cdf_extended_search_properties = cdf_extended_search_properties
+        # )        
+
+        logging.info("STEP 4: generating NEAT rules ...")
 
         return {
             "Properties": lst_properties,
