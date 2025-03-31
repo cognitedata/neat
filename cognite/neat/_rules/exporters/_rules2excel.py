@@ -116,7 +116,19 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
 
         """
-        ...
+        workbook = Workbook()
+        # Remove default sheet named "Sheet"
+        workbook.remove(workbook["Sheet"])
+
+        # writing out default metadata
+        if role == RoleTypes.information:
+            self._write_metadata_sheet(workbook, InformationMetadata.default().model_dump())
+        elif role == RoleTypes.dms:
+            self._write_metadata_sheet(workbook, DMSMetadata.default().model_dump())
+        else:
+            raise ValueError(f"Invalid role: {role}. Valid options are ({RoleTypes.information}, {RoleTypes.dms})")
+
+        return workbook
 
     def export(self, rules: VerifiedRules) -> Workbook:
         workbook = Workbook()
