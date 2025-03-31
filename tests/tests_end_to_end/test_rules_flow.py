@@ -14,8 +14,8 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat import NeatSession
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._client.testing import monkeypatch_neat_client
-from tests.config import DATA_FOLDER, DOC_RULES
-from tests.data import COGNITE_CORE_ZIP
+from tests.config import DOC_RULES
+from tests.data import SchemaData
 
 
 class TestImportersToYAMLExporter:
@@ -54,7 +54,7 @@ class TestImportersToYAMLExporter:
     def test_cdm_extension_verification(self, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(verbose=False)
 
-        neat.read.excel(DATA_FOLDER / "isa_plus_cdm.xlsx")
+        neat.read.excel(SchemaData.Physical.isa_plus_cdm_xlsx)
 
         neat.verify()
         exported_yaml_str = neat.to.yaml()
@@ -88,7 +88,7 @@ class TestImportersToYAMLExporter:
 
             neat = NeatSession(client, verbose=False)
 
-            neat.read.yaml(COGNITE_CORE_ZIP, format="toolkit")
+            neat.read.yaml(SchemaData.NonNeatFormats.cognite_core_v1_zip, format="toolkit")
 
             neat.verify()
 

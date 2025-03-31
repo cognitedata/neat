@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from cognite.client import data_modeling as dm
@@ -102,6 +102,9 @@ class InformationInputProperty(InputComponent[InformationProperty]):
         output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
         output["Value Type"] = load_value_type(self.value_type, default_prefix)
         return output
+
+    def copy(self, update: dict[str, Any], default_prefix: str) -> "InformationInputProperty":
+        return cast(InformationInputProperty, type(self)._load({**self.dump(default_prefix), **update}))
 
 
 @dataclass

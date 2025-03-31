@@ -7,7 +7,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat import NeatSession
 from cognite.neat._rules.catalog import classic_model
 from cognite.neat._rules.models.entities._single_value import ViewEntity
-from tests.data import DATA_DIR
+from tests.data import SchemaData
 
 
 class TestDataModelPrepare:
@@ -57,7 +57,7 @@ class TestDataModelPrepare:
     ) -> None:
         neat = NeatSession(cognite_client)
 
-        neat.read.excel(DATA_DIR / "mixed-up-version.xlsx")
+        neat.read.excel(SchemaData.Physical.mixed_up_version_xlsx)
 
         neat.prepare.data_model.standardize_space_and_version()
 
