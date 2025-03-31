@@ -2055,13 +2055,13 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
         dependencies_by_class = self._get_dependencies_by_class(input_.classes, rules.read_context, default_space)
         properties_by_class = self._get_properties_by_class(input_.properties, rules.read_context, default_space)
         cognite_implements_concepts = self._get_cognite_concepts(dependencies_by_class)
-        views_by_class_entity = self._lookup_views(cognite_implements_concepts, default_space, default_version)
+        views_by_class_entity = self._get_views_by_class(cognite_implements_concepts, default_space, default_version)
 
         for class_entity, view in views_by_class_entity.items():
             for prop_id, view_prop in view.properties.items():
                 if prop_id in properties_by_class[class_entity]:
                     continue
-                properties_by_class[class_entity][prop_id] = DMSImporter.as_information_property(
+                properties_by_class[class_entity][prop_id] = DMSImporter.as_information_input_property(
                     class_entity, prop_id, view_prop
                 )
 
@@ -2085,7 +2085,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
         existing_classes = {cls.class_ for cls in input_.classes}
         for class_entity, view in views_by_class_entity.items():
             if class_entity not in existing_classes:
-                new_classes.append(DMSImporter.as_information_class(view))
+                new_classes.append(DMSImporter.as_information_input_class(view))
                 existing_classes.add(class_entity)
 
         return ReadRules(
@@ -2147,7 +2147,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
             raise NeatValueError("None of the classes implement Cognite Core concepts.")
         return cognite_implements_concepts
 
-    def _lookup_views(
+    def _get_views_by_class(
         self, classes: set[ClassEntity], default_space: str, default_version: str
     ) -> dict[ClassEntity, View]:
         view_ids = [class_.as_view_entity(default_space, default_version).as_id() for class_ in classes]
