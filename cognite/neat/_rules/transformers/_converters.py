@@ -1738,6 +1738,7 @@ class _DMSRulesConverter:
                 # we do not want a version in class as we use URI for the class
                 class_=ClassEntity(prefix=view.view.prefix, suffix=view.view.suffix),
                 description=view.description,
+                name=view.name,
                 implements=[
                     # we do not want a version in class as we use URI for the class
                     implemented_view.as_class(skip_version=True)
@@ -1776,6 +1777,7 @@ class _DMSRulesConverter:
                 # Removing version
                 class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
                 property_=property_.view_property,
+                name=property_.name,
                 value_type=value_type,
                 description=property_.description,
                 min_count=property_.min_count,
