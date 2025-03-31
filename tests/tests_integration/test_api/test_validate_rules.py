@@ -25,6 +25,7 @@ class TestValidate:
             _ = VerifyDMSRules(validate=True, client=neat_client).transform(rules)
 
         if expected_issues is None:
+            # If there are no issues, then this model should read without any errors or warnings.
             assert not issues.has_errors
             assert not issues.has_warnings
         else:
