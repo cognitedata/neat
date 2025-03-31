@@ -46,16 +46,6 @@ def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRule
 
 
 @pytest.fixture(scope="session")
-def olav_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
-
-
-@pytest.fixture(scope="session")
-def olav_dms_rules() -> DMSRules:
-    return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
-
-
-@pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> DMSRules:
     return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
 
