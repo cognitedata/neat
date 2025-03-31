@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import itertools
-import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from types import GenericAlias
 from typing import Any, ClassVar, Literal, cast, get_args
@@ -16,15 +15,11 @@ from rdflib import Namespace
 from cognite.neat._rules._constants import get_internal_properties
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
-    ExtensionCategory,
-    SchemaCompleteness,
     SheetRow,
 )
 from cognite.neat._rules.models._base_rules import BaseMetadata, RoleTypes
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._utils.spreadsheet import (
     find_column_with_value,
@@ -434,57 +429,3 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                     max(current, max_length + 0.5), MAX_COLUMN_WIDTH
                 )
         return None
-
-
-class _MetadataCreator:
-    creator_name = "<YOUR NAME>"
-
-    def __init__(
-        self,
-        action: Literal["create", "update"],
-        new_model_id: tuple[str, str] | None = None,
-    ):
-        self.action = action
-        self.new_model_id = new_model_id or ("YOUR_SPACE", "YOUR_EXTERNAL_ID")
-
-    def create(self, metadata: InformationMetadata | DMSMetadata) -> dict[str, Any]:
-        now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
-        if self.action == "update":
-            output = json.loads(metadata.model_dump_json(by_alias=True))
-            # This is the same for Information and DMS
-            output["updated"] = now.isoformat()
-            output["schema"] = SchemaCompleteness.extended.value
-            output["extension"] = ExtensionCategory.addition.value
-            if value := output.get("creator"):
-                output["creator"] = f"{value}, {self.creator_name}"
-            else:
-                output["creator"] = self.creator_name
-            return output
-
-        new_metadata = self._create_new_info(now)
-        if isinstance(metadata, DMSMetadata):
-            from cognite.neat._rules.transformers._converters import _InformationRulesConverter
-
-            output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
-                new_metadata
-            )
-        elif isinstance(metadata, InformationMetadata):
-            output_metadata = new_metadata
-        else:
-            raise ValueError(f"Bug in Neat: Unknown metadata type: {type(metadata)}")
-
-        created = json.loads(output_metadata.model_dump_json(by_alias=True))
-        created.pop("extension", None)
-        return created
-
-    def _create_new_info(self, now: datetime) -> InformationMetadata:
-        return InformationMetadata(
-            space=self.new_model_id[0],
-            external_id=self.new_model_id[1],
-            description=None,
-            version="1",
-            created=now,
-            updated=now,
-            creator=[self.creator_name],
-            name=self.new_model_id[1],
-        )
