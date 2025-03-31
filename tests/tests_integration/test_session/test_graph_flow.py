@@ -15,7 +15,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._rules.models.entities import ContainerEntity
-from tests.data import GraphData
+from tests.data import GraphData, SchemaData
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -153,7 +153,7 @@ class TestExtractToLoadFlow:
 
     def test_convert_info_with_cdm_ref(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
-        neat.read.excel(DATA_FOLDER / "info_with_cdm_ref.xlsx")
+        neat.read.excel(SchemaData.Conceptual.info_with_cdm_ref_xlsx)
         issues = neat.convert()
         assert not issues.has_errors
 
