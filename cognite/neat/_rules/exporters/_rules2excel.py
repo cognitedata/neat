@@ -20,7 +20,7 @@ from cognite.neat._rules.models import (
     SchemaCompleteness,
     SheetRow,
 )
-from cognite.neat._rules.models._base_rules import RoleTypes
+from cognite.neat._rules.models._base_rules import BaseMetadata, RoleTypes
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
 from cognite.neat._rules.models.dms import DMSMetadata
 from cognite.neat._rules.models.dms._rules import DMSRules
@@ -120,14 +120,24 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        # writing out default metadata
-        if role == RoleTypes.information:
-            self._write_metadata_sheet(workbook, InformationMetadata.default().model_dump())
-        elif role == RoleTypes.dms:
-            self._write_metadata_sheet(workbook, DMSMetadata.default().model_dump())
-        else:
-            raise ValueError(f"Invalid role: {role}. Valid options are ({RoleTypes.information}, {RoleTypes.dms})")
+        rules_model = DMSRules if role == RoleTypes.dms else InformationRules
 
+        headers_by_sheet = rules_model.headers_by_sheet(by_alias=True)
+        headers_by_sheet.pop("Metadata")
+
+        self._write_metadata_sheet(
+            workbook,
+            cast(BaseMetadata, rules_model.model_fields["metadata"].annotation).default().model_dump(),
+        )
+
+        for sheet_name, headers in headers_by_sheet.items():
+            if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
+                continue
+            sheet = self._create_sheet_with_header(workbook, headers, sheet_name)
+            self._style_sheet_header(sheet, headers)
+
+        self._adjust_column_widths(workbook)
+        self._hide_internal_columns(workbook)
         return workbook
 
     def export(self, rules: VerifiedRules) -> Workbook:
@@ -152,20 +162,29 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._adjust_column_widths(workbook)
 
         if self.hide_internal_columns:
-            for sheet in workbook.sheetnames:
-                if sheet.lower() == "metadata":
-                    continue
-                ws = workbook[sheet]
-                for col in get_internal_properties():
-                    column_letter = find_column_with_value(ws, col)
-                    if column_letter:
-                        ws.column_dimensions[column_letter].hidden = True
+            self._hide_internal_columns(workbook)
 
         # Only add drop downs if the rules are DMSRules
         if self.add_drop_downs and isinstance(rules, DMSRules):
             self._add_drop_downs(workbook)
 
         return workbook
+
+    def _hide_internal_columns(self, workbook: Workbook) -> None:
+        """Hides internal columns in workbook sheets.
+
+        Args:
+            workbook: Workbook representation of the Excel file.
+
+        """
+        for sheet in workbook.sheetnames:
+            if sheet.lower() == "metadata":
+                continue
+            ws = workbook[sheet]
+            for col in get_internal_properties():
+                column_letter = find_column_with_value(ws, col)
+                if column_letter:
+                    ws.column_dimensions[column_letter].hidden = True
 
     def _add_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry.
