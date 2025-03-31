@@ -157,7 +157,7 @@ class NeatGraphStore:
         return cls(
             dataset=Dataset(
                 store=SPARQLUpdateStore(
-                    query_endpoint=f"{remote_url}/query", update_endpoint=f"{remote_url}/query", autocommit=autocommit
+                    query_endpoint=f"{remote_url}/query", update_endpoint=f"{remote_url}/update", autocommit=autocommit
                 ),
                 default_union=True,
             )

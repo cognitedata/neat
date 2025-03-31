@@ -205,6 +205,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 for missing_view in missing:
                     issues.append(ResourceNotFoundError(missing_view, "view", more="The view is not found in CDF."))
                 return [], issues
+            self._lookup_max_limits_size(self._client, views)
         else:
             views = dm.ViewList([])
             with catch_issues() as issues:
@@ -230,6 +231,29 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             view_iteration.view = views_by_id.get(view_id)
             view_iterations.append(view_iteration)
         return view_iterations, issues
+
+    @staticmethod
+    def _lookup_max_limits_size(client: NeatClient, views: dm.ViewList) -> None:
+        """For listable container properties (mapped properties), the read version of the view does not
+        contain the max_list_size. This method will lookup the max_list_size from the containers definitions."""
+        containers = client.data_modeling.containers.retrieve(list(views.referenced_containers()))
+        properties_by_container_and_prop_id = {
+            (container.as_id(), prop_id): prop
+            for container in containers
+            for prop_id, prop in container.properties.items()
+        }
+
+        for view in views:
+            for prop in view.properties.values():
+                if not isinstance(prop, dm.MappedProperty):
+                    continue
+                if not isinstance(prop.type, ListablePropertyType):
+                    continue
+                prop_definition = properties_by_container_and_prop_id.get(
+                    (prop.container, prop.container_property_identifier)
+                )
+                if prop_definition and isinstance(prop_definition.type, ListablePropertyType):
+                    prop.type.max_list_size = prop_definition.type.max_list_size
 
     def _select_views_with_instances(self, view_query_by_id: ViewQueryDict) -> dict[dm.ViewId, _ViewIterator]:
         """Selects the views with data."""
@@ -414,23 +438,27 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             def parse_direct_relation(cls: Any, value: list, info: ValidationInfo) -> dict | list[dict]:
                 # We validate above that we only get one value for single direct relations.
                 if list.__name__ in _get_field_value_types(cls, info):
-                    ids = (self._create_instance_id(v, "node", stop_on_exception=True) for v in value)
-                    result = [id_.dump(camel_case=True, include_instance_type=False) for id_ in ids]
-                    # Todo: Account for max_list_limit
-                    if len(result) <= DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT:
-                        return result
-                    warnings.warn(
-                        PropertyDirectRelationLimitWarning(
-                            identifier="unknown",
-                            resource_type="view property",
-                            property_name=cast(str, cls.model_fields[info.field_name].alias or info.field_name),
-                            limit=DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
-                        ),
-                        stacklevel=2,
+                    # To get deterministic results
+                    value.sort()
+                    limit = (
+                        # We know that info.field_name will always be set due to *direct_relation_by_property.keys()
+                        direct_relation_by_property[cast(str, info.field_name)].max_list_size
+                        or DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
                     )
-                    # To get deterministic results, we sort by space and externalId
-                    result.sort(key=lambda x: (x["space"], x["externalId"]))
-                    return result[:DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT]
+                    if len(value) > limit:
+                        warnings.warn(
+                            PropertyDirectRelationLimitWarning(
+                                identifier="unknown",
+                                resource_type="view property",
+                                property_name=cast(str, cls.model_fields[info.field_name].alias or info.field_name),
+                                limit=limit,
+                            ),
+                            stacklevel=2,
+                        )
+                        value = value[:limit]
+
+                    ids = (self._create_instance_id(v, "node", stop_on_exception=True) for v in value)
+                    return [id_.dump(camel_case=True, include_instance_type=False) for id_ in ids]
                 elif value:
                     return self._create_instance_id(value[0], "node", stop_on_exception=True).dump(
                         camel_case=True, include_instance_type=False

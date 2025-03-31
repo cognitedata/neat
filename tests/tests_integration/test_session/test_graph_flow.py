@@ -14,7 +14,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
-from tests.config import DATA_FOLDER
+from tests.data import GraphData
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -152,7 +152,7 @@ class TestExtractToLoadFlow:
 
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
-        neat.read.xml.dexpi(DATA_FOLDER / "depxi_example.xml")
+        neat.read.xml.dexpi(GraphData.dexpi_example_xml)
         neat.infer()
 
         # Hack to ensure deterministic output
@@ -190,7 +190,7 @@ class TestExtractToLoadFlow:
 
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
-        neat.read.xml.aml(DATA_FOLDER / "aml_example.aml")
+        neat.read.xml.aml(GraphData.aml_example_aml)
         neat.infer()
 
         # Hack to ensure deterministic output
