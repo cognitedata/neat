@@ -14,7 +14,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat._graph.loaders import DMSLoader
-from tests.data import GraphData
+from tests.data import GraphData, SchemaData
 
 RESERVED_PROPERTIES = frozenset(
     {
@@ -237,7 +237,7 @@ class TestExtractToLoadFlow:
     ) -> None:
         neat = NeatSession(cognite_client)
         output_path = tmp_path / "extension_template.xlsx"
-        neat.template.extension(DATA_FOLDER / "only_concepts.xlsx", output_path)
+        neat.template.extension(SchemaData.Conceptual.only_concepts_xlsx, output_path)
         assert output_path.exists()
         neat.read.excel(output_path)
 
