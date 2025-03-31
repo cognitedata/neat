@@ -259,6 +259,56 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         workbook[self._helper_sheet_name].sheet_state = "hidden"
 
+    def _create_sheet_with_header(
+        self,
+        workbook: Workbook,
+        headers: list[str],
+        sheet_name: str,
+        sheet_prefix: str = "",
+    ) -> Worksheet:
+        """Creates an empty sheet with the given headers.
+
+        Args:
+            workbook: The workbook to add the sheet to.
+            headers: The headers to add to the sheet.
+            sheet_name: The name of the sheet.
+            sheet_prefix: The prefix to add to the sheet name, if any.
+        """
+
+        sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
+        main_header = self._main_header_by_sheet_name[sheet_name]
+        sheet.append([main_header] + [""] * (len(headers) - 1))
+
+        if headers[0] == "Neat ID":
+            # Move the Neat ID to the end of the columns
+            headers = headers[1:] + ["Neat ID"]
+
+        # Append the headers to the sheet
+        sheet.append(headers)
+
+        return sheet
+
+    def _style_sheet_header(self, sheet: Worksheet, headers: list[str]) -> None:
+        """Styles the sheet with the given headers.
+
+        Args:
+            sheet: The sheet to style.
+            headers: The headers to style.
+        """
+        if self._styling_level > 0:
+            # This freezes all rows above the given row
+            sheet.freeze_panes = sheet["A3"]
+
+            sheet["A1"].alignment = Alignment(horizontal="left")
+
+        if self._styling_level > 1:
+            # Make the header row bold, larger, and colored
+            for cell, *_ in sheet.iter_cols(min_row=1, max_row=1, min_col=1, max_col=len(headers)):
+                cell.font = Font(bold=True, size=20)
+                cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
+            for cell in sheet["2"]:
+                cell.font = Font(bold=True, size=14)
+
     def _write_sheets(
         self,
         workbook: Workbook,
@@ -269,16 +319,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
                 continue
-            sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
 
-            main_header = self._main_header_by_sheet_name[sheet_name]
-            sheet.append([main_header] + [""] * (len(headers) - 1))
-
-            if headers[0] == "Neat ID":
-                # Move the Neat ID to the end of the columns
-                headers = headers[1:] + ["Neat ID"]
-
-            sheet.append(headers)
+            sheet = self._create_sheet_with_header(workbook, headers, sheet_name, sheet_prefix)
 
             fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
             fill_color = next(fill_colors)
@@ -315,19 +357,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                         cell.border = Border(left=side, right=side, top=side, bottom=side)
                 last_class = class_
 
-            if self._styling_level > 0:
-                # This freezes all rows above the given row
-                sheet.freeze_panes = sheet["A3"]
-
-                sheet["A1"].alignment = Alignment(horizontal="left")
-
-            if self._styling_level > 1:
-                # Make the header row bold, larger, and colored
-                for cell, *_ in sheet.iter_cols(min_row=1, max_row=1, min_col=1, max_col=len(headers)):
-                    cell.font = Font(bold=True, size=20)
-                    cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
-                for cell in sheet["2"]:
-                    cell.font = Font(bold=True, size=14)
+            self._style_sheet_header(sheet, headers)
 
     def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], sheet_prefix: str = "") -> None:
         # Excel does not support timezone in datetime strings
