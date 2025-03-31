@@ -9,6 +9,7 @@ from functools import cached_property
 from graphlib import CycleError, TopologicalSorter
 from typing import Any, ClassVar, Literal, TypeVar, cast, overload
 
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, View, ViewId
 from cognite.client.utils.useful_types import SequenceNotStr
@@ -28,8 +29,8 @@ from cognite.neat._constants import (
 )
 from cognite.neat._issues import IssueList
 from cognite.neat._issues._factory import from_pydantic_errors
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import NeatValueWarning
+from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError
+from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
 from cognite.neat._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
@@ -72,7 +73,7 @@ from cognite.neat._rules.models.information import (
 )
 from cognite.neat._utils.rdf_ import get_inheritance_path
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
-from cognite.neat._utils.text import NamingStandardization, title, to_camel_case, to_words
+from cognite.neat._utils.text import NamingStandardization, humanize_collection, title, to_camel_case, to_words
 
 from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -532,13 +533,17 @@ class InformationToDMS(ConversionTransformer[InformationRules, DMSRules]):
     """Converts InformationRules to DMSRules."""
 
     def __init__(
-        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
+        self,
+        ignore_undefined_value_types: bool = False,
+        reserved_properties: Literal["error", "warning"] = "error",
+        client: NeatClient | None = None,
     ):
         self.ignore_undefined_value_types = ignore_undefined_value_types
         self.reserved_properties = reserved_properties
+        self.client = client
 
     def transform(self, rules: InformationRules) -> DMSRules:
-        return _InformationRulesConverter(rules).as_dms_rules(
+        return _InformationRulesConverter(rules, self.client).as_dms_rules(
             self.ignore_undefined_value_types, self.reserved_properties
         )
 
@@ -1357,9 +1362,10 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
 class _InformationRulesConverter:
     _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
-    def __init__(self, information: InformationRules):
+    def __init__(self, information: InformationRules, client: NeatClient | None = None):
         self.rules = information
         self.property_count_by_container: dict[ContainerEntity, int] = defaultdict(int)
+        self.client = client
 
     def as_dms_rules(
         self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
@@ -1398,9 +1404,29 @@ class _InformationRulesConverter:
             and (prop.property_ == "endNode" or prop.property_ == "end_node")
             and isinstance(prop.value_type, ClassEntity)
         }
+        ancestors_by_view: dict[ViewEntity, set[ViewEntity]] = {}
+        parents_by_class = RulesAnalysis(self.rules).parents_by_class(
+            include_ancestors=True, include_different_space=True
+        )
+        for cls_, parents in parents_by_class.items():
+            view_type = cls_.as_view_entity(default_space, default_version)
+            parent_views = {parent.as_view_entity(default_space, default_version) for parent in parents}
+            if view_type in ancestors_by_view:
+                ancestors_by_view[view_type].update(parent_views)
+            else:
+                ancestors_by_view[view_type] = parent_views
+
+        cognite_properties, cognite_containers, cognite_views = self._get_cognite_components()
+        for view in cognite_views:
+            if view in ancestors_by_view:
+                ancestors_by_view[view].update(cognite_views[view])
+            else:
+                ancestors_by_view[view] = cognite_views[view]
 
         properties_by_class: dict[ClassEntity, list[DMSProperty]] = defaultdict(list)
-        referenced_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
+        used_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
+        used_cognite_containers: dict[ContainerEntity, DMSContainer] = {}
+
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
                 continue
@@ -1413,17 +1439,34 @@ class _InformationRulesConverter:
                 warnings.warn(NeatValueWarning(f"{msg} Skipping..."), stacklevel=2)
                 continue
 
-            dms_property = self._as_dms_property(
-                prop,
-                default_space,
-                default_version,
-                edge_classes,
-                edge_value_types_by_class_property_pair,
-                end_node_by_edge,
-            )
+            if cognite_property := self._find_cognite_property(
+                prop.property_, parents_by_class[prop.class_], cognite_properties
+            ):
+                dms_property = self._customize_cognite_property(
+                    prop,
+                    cognite_property,
+                    prop.class_,
+                    default_space,
+                    default_version,
+                    ancestors_by_view,
+                )
+                if dms_property.container:
+                    if dms_property.container not in used_cognite_containers:
+                        used_cognite_containers[dms_property.container] = cognite_containers[dms_property.container]
+            else:
+                # Not matching any parent.
+                dms_property = self._as_dms_property(
+                    prop,
+                    default_space,
+                    default_version,
+                    edge_classes,
+                    edge_value_types_by_class_property_pair,
+                    end_node_by_edge,
+                )
+                if dms_property.container:
+                    used_containers[dms_property.container][prop.class_] += 1
+
             properties_by_class[prop.class_].append(dms_property)
-            if dms_property.container:
-                referenced_containers[dms_property.container][prop.class_] += 1
 
         views: list[DMSView] = []
 
@@ -1443,11 +1486,11 @@ class _InformationRulesConverter:
         existing_containers: set[ContainerEntity] = set()
 
         containers: list[DMSContainer] = []
-        for container_entity, class_entities in referenced_containers.items():
+        for container_entity, class_entities in used_containers.items():
             if container_entity in existing_containers:
                 continue
             constrains = self._create_container_constraint(
-                class_entities, default_space, class_by_entity, referenced_containers
+                class_entities, default_space, class_by_entity, used_containers
             )
             most_used_class_entity = class_entities.most_common(1)[0][0]
             class_ = class_by_entity[most_used_class_entity]
@@ -1468,6 +1511,9 @@ class _InformationRulesConverter:
             )
             containers.append(container)
 
+        if used_cognite_containers:
+            containers.extend(used_cognite_containers.values())
+
         dms_rules = DMSRules(
             metadata=dms_metadata,
             properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
@@ -1478,6 +1524,35 @@ class _InformationRulesConverter:
         self.rules.sync_with_dms_rules(dms_rules)
 
         return dms_rules
+
+    def _get_cognite_components(
+        self,
+    ) -> tuple[
+        dict[tuple[ClassEntity, str], DMSProperty],
+        dict[ContainerEntity, DMSContainer],
+        dict[ViewEntity, set[ViewEntity]],
+    ]:
+        cognite_concepts = self._get_cognite_concepts()
+        cognite_properties: dict[tuple[ClassEntity, str], DMSProperty] = {}
+        cognite_containers: dict[ContainerEntity, DMSContainer] = {}
+        cognite_views: dict[ViewEntity, set[ViewEntity]] = {}
+        if cognite_concepts:
+            if self.client is None:
+                raise CDFMissingClientError(
+                    f"Cannot convert {self.rules.metadata.as_data_model_id()}. Missing Cognite Client."
+                    f"This is required as the data model is referencing cognite concepts in the implements"
+                    f"{humanize_collection(cognite_concepts)}"
+                )
+            cognite_rules = self._get_cognite_dms_rules(cognite_concepts, self.client)
+
+            cognite_properties = {
+                (dms_prop.view.as_class(), dms_prop.view_property): dms_prop for dms_prop in cognite_rules.properties
+            }
+            cognite_containers = {container.container: container for container in cognite_rules.containers or []}
+            cognite_views = RulesAnalysis(dms=cognite_rules).implements_by_view(
+                include_ancestors=True, include_different_space=True
+            )
+        return cognite_properties, cognite_containers, cognite_views
 
     @staticmethod
     def _create_container_constraint(
@@ -1572,6 +1647,74 @@ class _InformationRulesConverter:
         dms_property.logical = info_property.neatId
 
         return dms_property
+
+    @staticmethod
+    def _customize_cognite_property(
+        prop: InformationProperty,
+        cognite_prop: DMSProperty,
+        class_: ClassEntity,
+        default_space: str,
+        default_version: str,
+        ancestors_by_view: dict[ViewEntity, set[ViewEntity]],
+    ) -> DMSProperty:
+        """Customize the cognite property to match the information property.
+        This means updating the name and description of the cognite property with the information property.
+        In addition, the value type can be updated given that the value type is matches the cognite property value
+        type or in the case of a View Value type a derivative of the cognite property value type.
+
+        Args:
+            prop: Information property
+            cognite_prop: Cognite property
+            class_: Class entity
+            default_space: The default space
+            default_version: The default version
+            ancestors_by_view: Ancestors by view
+
+        Returns:
+            DMSProperty: The customized cognite property
+
+        """
+        value_type: DataType | ViewEntity | DMSUnknownEntity = cognite_prop.value_type
+        if isinstance(prop.value_type, DataType) and prop.value_type != value_type:
+            warnings.warn(
+                PropertyOverwritingWarning(prop.property_, "property", "value type", (str(prop.value_type),)),
+                stacklevel=2,
+            )
+        elif isinstance(prop.value_type, DataType):
+            # User set the same value type as core concept.
+            pass
+        elif isinstance(prop.value_type, ClassEntity) and isinstance(cognite_prop.value_type, ViewEntity):
+            view_type = prop.value_type.as_view_entity(default_space, default_version)
+            ancestors = ancestors_by_view.get(view_type, set())
+            if view_type == cognite_prop.value_type or cognite_prop.value_type in ancestors:
+                value_type = view_type
+            else:
+                warnings.warn(
+                    NeatValueWarning(
+                        f"Invalid Value Type. The view {view_type} must implement "
+                        f"{humanize_collection(ancestors, bind_word='or')} "
+                        f"to be used as the Value Type in the {prop.class_!s}.{prop.property_}. "
+                        f"Skipping..."
+                    ),
+                    stacklevel=2,
+                )
+        else:
+            warnings.warn(
+                NeatValueWarning(
+                    f"Invalid Value Type. The {prop.value_type} is not supported as {prop.class_} implements"
+                    f"a cognite concepts. Will skip this, and use the {cognite_prop.value_type} instead."
+                ),
+                stacklevel=2,
+            )
+
+        return cognite_prop.model_copy(
+            update={
+                "view": class_.as_view_entity(default_space, default_version),
+                "name": prop.name or cognite_prop.name,
+                "description": prop.description or cognite_prop.description,
+                "value_type": value_type,
+            }
+        )
 
     @staticmethod
     def _get_connection(
@@ -1712,6 +1855,48 @@ class _InformationRulesConverter:
             return data_types.DateTime()
 
         return data_types.String()
+
+    def _get_cognite_concepts(self) -> set[ClassEntity]:
+        return {cls_.class_ for cls_ in self.rules.classes if str(cls_.class_.prefix) in COGNITE_SPACES} | {
+            parent
+            for cls_ in self.rules.classes
+            for parent in cls_.implements or []
+            if str(parent.prefix) in COGNITE_SPACES
+        }
+
+    @staticmethod
+    def _get_cognite_dms_rules(concepts: set[ClassEntity], client: NeatClient) -> DMSRules:
+        view_ids = [dm.ViewId(str(cls_.prefix), cls_.suffix, cls_.version) for cls_ in concepts]
+        views = client.loaders.views.retrieve(view_ids, format="read", include_connected=True, include_ancestor=True)
+        spaces = Counter(view.space for view in views)
+        space = spaces.most_common(1)[0][0]
+        model: dm.DataModel[dm.View] = dm.DataModel(
+            space=space,
+            external_id="CognitePlaceholderModel",
+            version="v1",
+            is_global=False,
+            last_updated_time=1,
+            created_time=1,
+            name=None,
+            description="This model is constructed to hold all properties/views/containers that are referenced"
+            "by the data model being converted to DMS. This model is not meant to be used for any other"
+            "purpose.",
+            views=list(views),
+        )
+        unverified = DMSImporter.from_data_model(client, model).to_rules()
+        if unverified.rules is None:
+            raise NeatValueError("Failed to create CogniteConcepts")
+        return unverified.rules.as_verified_rules()
+
+    @staticmethod
+    def _find_cognite_property(
+        property_: str, parents: set[ClassEntity], cognite_properties: dict[tuple[ClassEntity, str], DMSProperty]
+    ) -> DMSProperty | None:
+        """Find the parent class that has the property in the cognite properties"""
+        for parent in parents:
+            if (parent, property_) in cognite_properties:
+                return cognite_properties[(parent, property_)]
+        return None
 
 
 class _DMSRulesConverter:
