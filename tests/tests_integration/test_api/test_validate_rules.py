@@ -1,4 +1,6 @@
+from collections.abc import Iterable
 from pathlib import Path
+from typing import Any
 
 import pytest
 import yaml
@@ -26,6 +28,14 @@ class TestValidate:
             assert not issues.has_errors
             assert not issues.has_warnings
         else:
-            actual = [issue.dump() for issue in sorted(issues)]
+            actual = list(self._clean_issues(issue.dump() for issue in sorted(issues)))
+
             expected = yaml.safe_load(expected_issues.read_text())
-            assert actual == expected, f"Expected issues: {expected}, but got: {actual}"
+            assert actual == expected, f"Expected issues: {expected}, but got:\n{yaml.safe_dump(actual)}"
+
+    @staticmethod
+    def _clean_issues(issues: Iterable[dict[str, Any]]) -> Iterable[dict[str, Any]]:
+        for issue in issues:
+            # Filepaths are absolute and will differ between runs
+            issue.pop("filepath", None)
+            yield issue
