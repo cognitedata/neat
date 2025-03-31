@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Any
 
 import pytest
-from cognite.client import data_modeling as dm
 
 from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import NeatError
@@ -10,7 +9,7 @@ from cognite.neat._issues._base import MultiValueError
 from cognite.neat._issues.errors import ResourceNotDefinedError
 from cognite.neat._issues.errors._resources import ResourceDuplicatedError
 from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.models import DMSRules, SheetList, data_types
+from cognite.neat._rules.models import DMSRules, data_types
 from cognite.neat._rules.models.data_types import DataType, String
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat._rules.models.information import (
@@ -254,53 +253,6 @@ class TestInformationRules:
 
         for info_id in info_props.keys():
             assert dms_props[info_props[info_id].physical].logical == info_id
-
-    @pytest.mark.skip("Not sure purpose of this test, so skipping for now")
-    def test_olav_as_dms(self, olav_rules: InformationRules) -> None:
-        olav_rules_copy = olav_rules.model_copy(deep=True)
-        # Todo: Remove this line when Olav's Information .xlsx file is available
-        new_classes = SheetList[InformationClass]([])
-        for cls_ in olav_rules_copy.classes:
-            if cls_.class_.versioned_id == "power_analytics:GeoLocation":
-                continue
-            elif cls_.class_.versioned_id in ("power_analytics:Point", "power_analytics:Polygon"):
-                cls_.implements = None
-            new_classes.append(cls_)
-        olav_rules_copy.classes = new_classes
-
-        ## End of temporary code
-        dms_rules = InformationToDMS().transform(olav_rules_copy).rules
-
-        assert isinstance(dms_rules, DMSRules)
-        schema = dms_rules.as_schema()
-
-        wind_turbine = next((view for view in schema.views.values() if view.external_id == "WindTurbine"), None)
-        assert wind_turbine is not None
-        expected_containers = {
-            dm.ContainerId("power", "GeneratingUnit"),
-            dm.ContainerId("power", "WindTurbine"),
-            dm.ContainerId("power_analytics", "WindTurbine"),
-        }
-        missing = expected_containers - wind_turbine.referenced_containers()
-        assert not missing, f"Missing containers: {missing}"
-        extra = wind_turbine.referenced_containers() - expected_containers
-        assert not extra, f"Extra containers: {extra}"
-
-        wind_farm = next((view for view in schema.views.values() if view.external_id == "WindFarm"), None)
-        assert wind_farm is not None
-        expected_containers = {dm.ContainerId("power", "EnergyArea"), dm.ContainerId("power_analytics", "WindFarm")}
-        missing = expected_containers - wind_farm.referenced_containers()
-        assert not missing, f"Missing containers: {missing}"
-        extra = wind_farm.referenced_containers() - expected_containers
-        assert not extra, f"Extra containers: {extra}"
-
-        point = next((view for view in schema.views.values() if view.external_id == "Point"), None)
-        assert point is not None
-        assert point.implements == [dm.ViewId("power", "Point", "0.1.0")]
-
-        polygon = next((view for view in schema.views.values() if view.external_id == "Polygon"), None)
-        assert polygon is not None
-        assert polygon.implements == [dm.ViewId("power", "Polygon", "0.1.0")]
 
 
 class TestInformationRulesConverter:
