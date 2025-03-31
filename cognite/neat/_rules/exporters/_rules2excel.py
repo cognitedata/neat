@@ -161,7 +161,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         # Only add drop downs if the rules are DMSRules
         if self.add_drop_downs and isinstance(rules, DMSRules):
-            self._add_drop_downs(workbook)
+            self._add_dms_drop_downs(workbook)
 
         return workbook
 
@@ -181,8 +181,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 if column_letter:
                     ws.column_dimensions[column_letter].hidden = True
 
-    def _add_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
-        """Adds drop down menus to specific columns for fast and accurate data entry.
+    def _add_dms_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
+        """Adds drop down menus to specific columns for fast and accurate data entry
+        in the DMS rules.
 
         Args:
             workbook: Workbook representation of the Excel file.
