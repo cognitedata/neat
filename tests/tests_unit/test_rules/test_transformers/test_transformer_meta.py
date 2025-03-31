@@ -8,6 +8,7 @@ from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSInputRules, DMSRules, InformationInputRules, InformationRules
 from cognite.neat._rules.transformers import (
     AddClassImplements,
+    AddCogniteProperties,
     ClassicPrepareCore,
     DropModelViews,
     IncludeReferenced,
@@ -33,7 +34,7 @@ def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
             yield transformation_cls("3D")
         elif issubclass(transformation_cls, AddClassImplements):
             yield transformation_cls("Edge", "Edge")
-        elif issubclass(transformation_cls, RuleMapper | IncludeReferenced):
+        elif issubclass(transformation_cls, RuleMapper | IncludeReferenced | AddCogniteProperties):
             # Manually checked as these require NeatClient or DMSRules in the setup
             continue
         elif issubclass(transformation_cls, ClassicPrepareCore):

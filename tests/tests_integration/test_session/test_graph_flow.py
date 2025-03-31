@@ -1,5 +1,6 @@
 import datetime
 from collections import defaultdict
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -269,6 +270,21 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 973
         assert len(edges) == 972
         assert len(instances) == 1945
+
+    def test_create_extension_template(
+        self, cognite_client: CogniteClient, tmp_path: Path, data_regression: DataRegressionFixture
+    ) -> None:
+        neat = NeatSession(cognite_client)
+        output_path = tmp_path / "extension_template.xlsx"
+        neat.template.extension(SchemaData.Conceptual.only_concepts_xlsx, output_path)
+        assert output_path.exists()
+        neat.read.excel(output_path)
+
+        model_str = neat.to.yaml(format="neat")
+
+        model_dict = yaml.safe_load(model_str)
+
+        data_regression.check(model_dict)
 
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
