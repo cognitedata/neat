@@ -3,7 +3,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from pydantic import ValidationError
-from pydantic.warnings import PydanticDeprecationWarning
 
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
 
@@ -21,13 +20,8 @@ def catch_warnings() -> Iterator[IssueList]:
             yield issues
         finally:
             if warning_logger:
-                # Skip logging PydanticDeprecationWarnings to the end users.
                 issues.extend(
-                    [
-                        from_warning(warning)
-                        for warning in warning_logger
-                        if not isinstance(warning.message, PydanticDeprecationWarning)
-                    ]
+                    [from_warning(warning) for warning in warning_logger if from_warning(warning) is not None]
                 )
 
 
