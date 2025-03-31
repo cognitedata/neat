@@ -46,27 +46,6 @@ def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRule
 
 
 @pytest.fixture(scope="session")
-def jon_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_RULES / "expert-wind-energy-jon.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
-    }
-
-
-@pytest.fixture(scope="session")
-def emma_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_RULES / "expert-grid-emma.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
-    }
-
-
-@pytest.fixture(scope="session")
 def olav_rules() -> InformationRules:
     return ExcelImporter(DOC_RULES / "information-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
 
@@ -74,11 +53,6 @@ def olav_rules() -> InformationRules:
 @pytest.fixture(scope="session")
 def olav_dms_rules() -> DMSRules:
     return ExcelImporter(DOC_RULES / "dms-analytics-olav.xlsx").to_rules().rules.as_verified_rules()
-
-
-@pytest.fixture(scope="session")
-def svein_harald_information_rules() -> InformationRules:
-    return ExcelImporter(DOC_RULES / "information-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
