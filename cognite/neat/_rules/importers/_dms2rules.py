@@ -420,7 +420,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         elif isinstance(prop, dm.MappedPropertyApply | dm.MappedProperty):
             if isinstance(prop, dm.MappedPropertyApply):
                 if container_property is None:
-                    raise ValueError("container propery must be provided when prop is a MappedProperty")
+                    raise ValueError("container property must be provided when prop is a MappedProperty")
                 prop_type = container_property.type
             else:
                 prop_type = prop.type
