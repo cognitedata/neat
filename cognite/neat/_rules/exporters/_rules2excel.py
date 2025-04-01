@@ -106,12 +106,12 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             data.close()
         return None
 
-    def template(self, role: RoleTypes) -> Workbook:
+    def template(self, role: RoleTypes, filepath: Path) -> None:
         """This method will create an spreadsheet template for data modeling depending on the role.
 
         Args:
             role: The role for which the template is created. Can be either "dms" or "information".
-
+            filepath: The path to the file where the template will be saved.
 
         """
         workbook = Workbook()
@@ -142,7 +142,11 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         else:
             self._add_info_drop_downs(workbook)
 
-        return workbook
+        try:
+            workbook.save(filepath)
+        finally:
+            workbook.close()
+        return None
 
     def export(self, rules: VerifiedRules) -> Workbook:
         workbook = Workbook()
@@ -207,7 +211,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             as and Excel file. Probably, the validation is not copied to the new column,
             but instead reference to the data validation object is added.
         """
-        print("here 2")
         self._make_helper_info_sheet(workbook, no_rows)
 
         # We need create individual data validation and cannot re-use the same one due

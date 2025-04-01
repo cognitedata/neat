@@ -1,8 +1,10 @@
-from typing import Literal
+from typing import Any, Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._issues import IssueList
+from cognite.neat._rules.exporters._rules2excel import ExcelExporter
+from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     IncludeReferenced,
@@ -11,6 +13,7 @@ from cognite.neat._rules.transformers import (
     ToSolutionModel,
     VerifiedRulesTransformer,
 )
+from cognite.neat._utils.reader._base import NeatReader
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -165,3 +168,15 @@ class TemplateAPI:
         if last_rules and not issues.has_errors:
             self._state.last_reference = last_rules
         return issues
+
+    def conceptual_model(self, io: Any) -> None:
+        """This method will create a template for a conceptual data modeling
+
+        Args:
+            io: file path to the Excel sheet
+
+        """
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+
+        return ExcelExporter().template(RoleTypes.information, path)
