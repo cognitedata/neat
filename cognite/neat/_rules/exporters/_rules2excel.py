@@ -175,6 +175,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         # Only add drop downs if the rules are DMSRules
         if self.add_drop_downs and isinstance(rules, DMSRules):
             self._add_dms_drop_downs(workbook)
+        elif self.add_drop_downs and isinstance(rules, InformationRules):
+            self._add_info_drop_downs(workbook)
 
         return workbook
 
