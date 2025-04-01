@@ -1,4 +1,4 @@
-from ._base import BaseTransformerStandardised
+from ._base import BaseTransformer, BaseTransformerStandardised
 from ._classic_cdf import (
     AddAssetDepth,
     AssetEventConnector,
@@ -27,6 +27,7 @@ __all__ = [
     "AssetSequenceConnector",
     "AssetTimeSeriesConnector",
     "AttachPropertyFromTargetToSource",
+    "BaseTransformer",
     "ConnectionToLiteral",
     "ConvertLiteral",
     "LiteralToEntity",
