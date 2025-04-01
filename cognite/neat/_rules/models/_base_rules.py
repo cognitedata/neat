@@ -236,6 +236,7 @@ class BaseMetadata(SchemaModel):
     @classmethod
     def default(cls) -> "BaseMetadata":
         """Returns a default instance of the metadata model."""
+        now = datetime.now()
         return cls(
             space="pleaseUpdateMe",
             external_id="PleaseUpdateMe",
@@ -243,8 +244,8 @@ class BaseMetadata(SchemaModel):
             name="Please Update Me",
             description="Please Update Me",
             creator=["NEAT"],
-            created=datetime.now(),
-            updated=datetime.now(),
+            created=now,
+            updated=now,
         )
 
 
