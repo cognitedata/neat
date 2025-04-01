@@ -45,14 +45,14 @@ class DropAPI:
         # Temporary solution until we agree on the form of specifying named graphs
         # it will default to the default named graph
         named_graph = self._state.instances.store.default_named_graph
-        uri_type_type = dict((v, k) for k, v in self._state.instances.store.queries.types(named_graph).items())
+        uri_type_type = dict((v, k) for k, v in self._state.instances.store.queries.read.types(named_graph).items())
         selected_uri_by_type: dict[URIRef, str] = {}
         for type_item in type_list:
             if type_item not in uri_type_type:
                 print(f"Type {type_item} not found.")
             selected_uri_by_type[uri_type_type[type_item]] = type_item
 
-        result = self._state.instances.store.queries.drop_types(list(selected_uri_by_type.keys()))
+        result = self._state.instances.store.queries.write.drop_types(list(selected_uri_by_type.keys()))
 
         for type_uri, count in result.items():
             print(f"Dropped {count} instances of type {selected_uri_by_type[type_uri]}")

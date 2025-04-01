@@ -26,7 +26,7 @@ def test_asset_extractor_with_lambda_unpacked_metadata():
     assert len(store.dataset) == 73
     assert len(list(store.dataset.query(f"Select ?s Where {{ ?s <{DEFAULT_NAMESPACE['labels']}> <{label_id}>}}"))) == 1
     expected_types = {"Asset"}
-    actual_type = set(store.queries.list_types(remove_namespace=True))
+    actual_type = set(store.queries.read.list_types(remove_namespace=True))
     assert expected_types == actual_type
 
 

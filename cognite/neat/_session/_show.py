@@ -247,7 +247,7 @@ class ShowInstanceAPI(ShowBaseAPI):
 
         di_graph = nx.DiGraph()
 
-        types = [type_ for type_, _ in self._state.instances.store.queries.summarize_instances()]
+        types = [type_ for type_, _ in self._state.instances.store.queries.read.summarize_instances()]
         hex_colored_types = _generate_hex_color_per_type(types)
 
         for (  # type: ignore

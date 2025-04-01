@@ -117,8 +117,8 @@ class InstancePrepareAPI:
         self._state.instances.store.transform(transformer)
 
     def _get_type_and_property_uris(self, type_: str, property_: str) -> tuple[URIRef, URIRef]:
-        type_uri = self._state.instances.store.queries.type_uri(type_)
-        property_uri = self._state.instances.store.queries.property_uri(property_)
+        type_uri = self._state.instances.store.queries.read.type_uri(type_)
+        property_uri = self._state.instances.store.queries.read.property_uri(property_)
 
         if not type_uri:
             raise NeatValueError(f"Type {type_} does not exist in the graph.")
@@ -132,7 +132,7 @@ class InstancePrepareAPI:
                 f"{property_} has multiple ids found in the graph: {humanize_collection(property_uri)}."
             )
 
-        if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
+        if not self._state.instances.store.queries.read.type_with_property(type_uri[0], property_uri[0]):
             raise NeatValueError(f"Property {property_} is not defined for type {type_}.")
         return type_uri[0], property_uri[0]
 
@@ -210,7 +210,7 @@ class InstancePrepareAPI:
             except NeatValueError as e:
                 raise NeatSessionError(f"Cannot convert to type: {e}") from None
         else:
-            subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
+            subject_predicate = self._state.instances.store.queries.read.property_uri(source[1])[0]
 
         transformer = LiteralToEntity(subject_type, subject_predicate, type, new_property)
         self._state.instances.store.transform(transformer)
@@ -241,7 +241,7 @@ class InstancePrepareAPI:
             except NeatValueError as e:
                 raise NeatSessionError(f"Cannot convert to data type: {e}") from None
         else:
-            subject_predicate = self._state.instances.store.queries.property_uri(source[1])[0]
+            subject_predicate = self._state.instances.store.queries.read.property_uri(source[1])[0]
         transformer = ConnectionToLiteral(subject_type, subject_predicate)
         self._state.instances.store.transform(transformer)
 
