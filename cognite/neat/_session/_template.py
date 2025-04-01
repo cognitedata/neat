@@ -175,7 +175,8 @@ class TemplateAPI:
             self._state.last_reference = last_rules
         return issues
 
-    def conceptual_model(self, io: Any) -> None:
+    @staticmethod
+    def conceptual_model(io: Any) -> None:
         """This method will create a template for a conceptual data modeling
 
         Args:
