@@ -19,7 +19,9 @@ from cognite.neat._rules.models import (
     SheetRow,
 )
 from cognite.neat._rules.models._base_rules import BaseMetadata, RoleTypes
-from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
+from cognite.neat._rules.models.data_types import (
+    _DATA_TYPE_BY_DMS_TYPE,
+)
 from cognite.neat._rules.models.dms._rules import DMSRules
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._utils.spreadsheet import (
@@ -137,6 +139,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         if role == RoleTypes.dms:
             self._add_dms_drop_downs(workbook)
+        else:
+            self._add_info_drop_downs(workbook)
 
         return workbook
 
@@ -185,6 +189,88 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_letter = find_column_with_value(ws, col)
                 if column_letter:
                     ws.column_dimensions[column_letter].hidden = True
+
+    def _add_info_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
+        """Adds drop down menus to specific columns for fast and accurate data entry
+        in the Information rules.
+
+        Args:
+            workbook: Workbook representation of the Excel file.
+            no_rows: number of rows to add drop down menus. Defaults to 100*100.
+
+        !!! note "Why no_rows=100?"
+            Maximum number of views per data model is 100, thus this value is set accordingly
+
+        !!! note "Why defining individual data validation per desired column?
+            This is due to the internal working of openpyxl. Adding same validation to
+            different column leads to unexpected behavior when the openpyxl workbook is exported
+            as and Excel file. Probably, the validation is not copied to the new column,
+            but instead reference to the data validation object is added.
+        """
+        print("here 2")
+        self._make_helper_info_sheet(workbook, no_rows)
+
+        # We need create individual data validation and cannot re-use the same one due
+        # the internals of openpyxl
+        dv_classes = generate_data_validation(self._helper_sheet_name, "A", no_header_rows=0, no_rows=no_rows)
+        dv_value_types = generate_data_validation(self._helper_sheet_name, "B", no_header_rows=0, no_rows=no_rows)
+        dv_implements = generate_data_validation(
+            self._helper_sheet_name,
+            "C",
+            no_header_rows=0,
+            no_rows=no_rows + len(COGNITE_CONCEPTS),
+        )
+
+        workbook["Properties"].add_data_validation(dv_classes)
+        workbook["Properties"].add_data_validation(dv_value_types)
+        workbook["Classes"].add_data_validation(dv_implements)
+
+        # we multiply no_rows with 100 since a view can have max 100 properties per view
+        if column := find_column_with_value(workbook["Properties"], "Class"):
+            dv_classes.add(f"{column}{3}:{column}{no_rows * 100}")
+
+        if column := find_column_with_value(workbook["Properties"], "Value Type"):
+            dv_value_types.add(f"{column}{3}:{column}{no_rows * 100}")
+
+        if column := find_column_with_value(workbook["Classes"], "Implements"):
+            dv_implements.add(f"{column}{3}:{column}{no_rows}")
+
+    def _make_helper_info_sheet(self, workbook: Workbook, no_rows: int) -> None:
+        """This helper Information sheet is used as source of data for drop down menus creation"""
+        workbook.create_sheet(title=self._helper_sheet_name)
+
+        for dtype_counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE.values()):
+            # skip types which require special handling or are surpassed by CDM
+            if dtype.xsd in ["enum", "timeseries", "sequence", "file", "json"]:
+                continue
+            workbook[self._helper_sheet_name].cell(row=dtype_counter + 1, column=2, value=dtype.xsd)
+
+        # Add Cognite Core Data Views:
+        for concept_counter, concept in enumerate(COGNITE_CONCEPTS):
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + 1,
+                column=3,
+                value=f"cdf_cdm:{concept}(version=v1)",
+            )
+
+        for i in range(no_rows):
+            workbook[self._helper_sheet_name].cell(
+                row=i + 1,
+                column=1,
+                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+            )
+            workbook[self._helper_sheet_name].cell(
+                row=dtype_counter + i + 2,
+                column=2,
+                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+            )
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + i + 2,
+                column=3,
+                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+            )
+
+        workbook[self._helper_sheet_name].sheet_state = "hidden"
 
     def _add_dms_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry
@@ -257,6 +343,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         workbook.create_sheet(title=self._helper_sheet_name)
 
         for dtype_counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
+            if dtype in ["enum", "timeseries", "sequence", "file", "json"]:
+                continue
             workbook[self._helper_sheet_name].cell(row=dtype_counter + 1, column=3, value=dtype)
 
         # Add Cognite Core Data Views:
