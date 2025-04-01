@@ -12,6 +12,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
+from cognite.neat._constants import COGNITE_CONCEPTS
 from cognite.neat._rules._constants import get_internal_properties
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
@@ -133,6 +134,10 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         self._adjust_column_widths(workbook)
         self._hide_internal_columns(workbook)
+
+        if role == RoleTypes.dms:
+            self._add_dms_drop_downs(workbook)
+
         return workbook
 
     def export(self, rules: VerifiedRules) -> Workbook:
@@ -199,13 +204,19 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             but instead reference to the data validation object is added.
         """
 
-        self._make_helper_sheet(workbook)
+        self._make_helper_dms_sheet(workbook, no_rows)
 
         # We need create individual data validation and cannot re-use the same one due
         # the internals of openpyxl
         dv_views = generate_data_validation(self._helper_sheet_name, "A", no_header_rows=0, no_rows=no_rows)
-        dv_containers = generate_data_validation(self._helper_sheet_name, "b", no_header_rows=0, no_rows=no_rows)
+        dv_containers = generate_data_validation(self._helper_sheet_name, "B", no_header_rows=0, no_rows=no_rows)
         dv_value_types = generate_data_validation(self._helper_sheet_name, "C", no_header_rows=0, no_rows=no_rows)
+        dv_implements = generate_data_validation(
+            self._helper_sheet_name,
+            "F",
+            no_header_rows=0,
+            no_rows=no_rows + len(COGNITE_CONCEPTS),
+        )
 
         dv_immutable = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
         dv_in_model = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
@@ -216,6 +227,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         workbook["Properties"].add_data_validation(dv_value_types)
         workbook["Properties"].add_data_validation(dv_immutable)
         workbook["Views"].add_data_validation(dv_in_model)
+        workbook["Views"].add_data_validation(dv_implements)
         workbook["Containers"].add_data_validation(dv_used_for)
 
         # we multiply no_rows with 100 since a view can have max 100 properties per view
@@ -234,22 +246,28 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         if column := find_column_with_value(workbook["Views"], "In Model"):
             dv_in_model.add(f"{column}{3}:{column}{no_rows}")
 
+        if column := find_column_with_value(workbook["Views"], "Implements"):
+            dv_implements.add(f"{column}{3}:{column}{no_rows}")
+
         if column := find_column_with_value(workbook["Containers"], "Used For"):
             dv_used_for.add(f"{column}{3}:{column}{no_rows}")
 
-    def _make_helper_sheet(self, workbook: Workbook) -> None:
-        """This helper sheet is used as source of data for drop down menus creation
-
-        !!! note "Why 100 rows?"
-            The number of rows is set to 100 since this is the maximum number of views
-            per data model.
-        """
+    def _make_helper_dms_sheet(self, workbook: Workbook, no_rows: int) -> None:
+        """This helper DMS sheet is used as source of data for drop down menus creation"""
         workbook.create_sheet(title=self._helper_sheet_name)
 
-        for counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
-            workbook[self._helper_sheet_name].cell(row=counter + 1, column=3, value=dtype)
+        for dtype_counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
+            workbook[self._helper_sheet_name].cell(row=dtype_counter + 1, column=3, value=dtype)
 
-        for i in range(100):
+        # Add Cognite Core Data Views:
+        for concept_counter, concept in enumerate(COGNITE_CONCEPTS):
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + 1,
+                column=6,
+                value=f"cdf_cdm:{concept}(version=v1)",
+            )
+
+        for i in range(no_rows):
             workbook[self._helper_sheet_name].cell(
                 row=i + 1,
                 column=1,
@@ -261,8 +279,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 value=f'=IF(ISBLANK(Containers!A{i + 3}), "", Containers!A{i + 3})',
             )
             workbook[self._helper_sheet_name].cell(
-                row=counter + i + 2,
+                row=dtype_counter + i + 2,
                 column=3,
+                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
+            )
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + i + 2,
+                column=6,
                 value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
             )
 
