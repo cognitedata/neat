@@ -168,7 +168,7 @@ class NeatSession:
         self._state._raise_exception_if_condition_not_met(
             "Convert to physical", has_dms_rules=False, has_information_rules=True
         )
-        converter = InformationToDMS(reserved_properties=reserved_properties)
+        converter = InformationToDMS(reserved_properties=reserved_properties, client=self._state.client)
 
         issues = self._state.rule_transform(converter)
 

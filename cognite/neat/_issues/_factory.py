@@ -7,7 +7,6 @@ from cognite.neat._issues._base import NeatError, NeatWarning
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
 
 from .errors import NeatValueError, SpreadsheetError
-from .warnings import NeatValueWarning
 
 
 def from_pydantic_errors(
@@ -23,13 +22,11 @@ def from_pydantic_errors(
     ]
 
 
-def from_warning(warning: WarningMessage) -> NeatWarning:
+def from_warning(warning: WarningMessage) -> NeatWarning | None:
     if isinstance(warning.message, NeatWarning):
         return warning.message
-    message = f"{warning.category.__name__}: {warning.message!s}"
-    if warning.source:
-        message += f" Source: {warning.source}"
-    return NeatValueWarning(message)
+
+    return None
 
 
 def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead]) -> NeatError:

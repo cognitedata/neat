@@ -1,8 +1,9 @@
+import warnings
 from collections import defaultdict
 from collections.abc import Collection, Iterable, Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Literal, cast
+from typing import Literal
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
@@ -16,8 +17,13 @@ from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
 from cognite.client.data_classes.data_modeling.views import (
     MultiEdgeConnectionApply,
     MultiReverseDirectRelationApply,
+    ReverseDirectRelation,
+    SingleEdgeConnection,
     SingleEdgeConnectionApply,
+    SingleReverseDirectRelation,
     SingleReverseDirectRelationApply,
+    View,
+    ViewProperty,
     ViewPropertyApply,
 )
 from cognite.client.utils import ms_to_datetime
@@ -28,11 +34,13 @@ from cognite.neat._issues import IssueList, MultiValueError, NeatIssue, catch_is
 from cognite.neat._issues.errors import (
     FileTypeUnexpectedError,
     NeatValueError,
+    PropertyTypeNotSupportedError,
     ResourceMissingIdentifierError,
     ResourceRetrievalError,
 )
 from cognite.neat._issues.warnings import (
     MissingCogniteClientWarning,
+    NeatValueWarning,
     PropertyNotFoundWarning,
     PropertyTypeNotSupportedWarning,
     ResourceNotFoundWarning,
@@ -45,7 +53,7 @@ from cognite.neat._rules.models import (
     DMSInputRules,
     DMSSchema,
 )
-from cognite.neat._rules.models.data_types import DataType, Enum
+from cognite.neat._rules.models.data_types import DataType, Enum, String
 from cognite.neat._rules.models.dms import (
     DMSInputContainer,
     DMSInputEnum,
@@ -62,6 +70,10 @@ from cognite.neat._rules.models.entities import (
     EdgeEntity,
     ReverseConnectionEntity,
     ViewEntity,
+)
+from cognite.neat._rules.models.information import (
+    InformationInputClass,
+    InformationInputProperty,
 )
 
 
@@ -332,19 +344,27 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             )
             return None
 
-        value_type = self._get_value_type(prop, view_entity, prop_id, enum_collection_by_container_property)
+        container_property = (
+            self._get_container_property_definition(prop) if isinstance(prop, dm.MappedPropertyApply) else None
+        )
+        value_type = self._get_value_type(prop, container_property, enum_collection_by_container_property)
         if value_type is None:
+            self.issue_list.append(
+                PropertyTypeNotSupportedWarning(view_entity.as_id(), "view", prop_id, type(prop).__name__)
+            )
             return None
+        if isinstance(value_type, ViewEntity) and value_type.as_id() not in self._all_views_by_id:
+            self.issue_list.append(ResourceUnknownWarning(prop.source, "view", view_entity.as_id(), "view"))
 
         return DMSInputProperty(
             description=prop.description,
             name=prop.name,
             connection=self._get_connection_type(prop),
             value_type=str(value_type),
-            min_count=self._get_min_count(prop),
-            max_count=self._get_max_count(prop),
+            min_count=self._get_min_count(prop, container_property),
+            max_count=self._get_max_count(prop, container_property),
             immutable=self._get_immutable(prop),
-            default=self._get_default(prop),
+            default=self._get_default(prop, container_property),
             container=(
                 str(ContainerEntity.from_id(prop.container)) if isinstance(prop, dm.MappedPropertyApply) else None
             ),
@@ -357,7 +377,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             constraint=self._get_constraint(prop, prop_id),
         )
 
-    def _container_prop_unsafe(self, prop: dm.MappedPropertyApply) -> dm.ContainerProperty:
+    def _get_container_property_definition(self, prop: dm.MappedPropertyApply) -> dm.ContainerProperty:
         """This method assumes you have already checked that the container with property exists."""
         return self._all_containers_by_id[prop.container].properties[prop.container_property_identifier]
 
@@ -372,40 +392,48 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         elif isinstance(prop, SingleReverseDirectRelationApply | MultiReverseDirectRelationApply):
             return ReverseConnectionEntity(property=prop.through.property)
         elif isinstance(prop, dm.MappedPropertyApply) and isinstance(
-            self._container_prop_unsafe(prop).type, dm.DirectRelation
+            self._get_container_property_definition(prop).type, dm.DirectRelation
         ):
             return "direct"
         else:
             return None
 
+    @classmethod
     def _get_value_type(
-        self,
-        prop: ViewPropertyApply,
-        view_entity: ViewEntity,
-        prop_id: str,
-        enum_collection_by_container_property: dict[tuple[dm.ContainerId, str], str],
+        cls,
+        prop: ViewPropertyApply | ViewProperty,
+        container_property: dm.ContainerProperty | None = None,
+        enum_collection_by_container_property: dict[tuple[dm.ContainerId, str], str] | None = None,
     ) -> DataType | ViewEntity | DMSUnknownEntity | None:
         if isinstance(
             prop,
             SingleEdgeConnectionApply
             | MultiEdgeConnectionApply
             | SingleReverseDirectRelationApply
-            | MultiReverseDirectRelationApply,
+            | MultiReverseDirectRelationApply
+            | SingleEdgeConnection
+            | dm.MultiEdgeConnection
+            | SingleReverseDirectRelation
+            | dm.MultiReverseDirectRelation,
         ):
             return ViewEntity.from_id(prop.source)
-        elif isinstance(prop, dm.MappedPropertyApply):
-            container_prop = self._container_prop_unsafe(cast(dm.MappedPropertyApply, prop))
-            if isinstance(container_prop.type, dm.DirectRelation):
+        elif isinstance(prop, dm.MappedPropertyApply | dm.MappedProperty):
+            if isinstance(prop, dm.MappedPropertyApply):
+                if container_property is None:
+                    raise ValueError("container property must be provided when prop is a MappedProperty")
+                prop_type = container_property.type
+            else:
+                prop_type = prop.type
+            if isinstance(prop_type, dm.DirectRelation):
                 if prop.source is None:
                     return DMSUnknownEntity()
-                elif prop.source not in self._all_views_by_id:
-                    self.issue_list.append(ResourceUnknownWarning(prop.source, "view", view_entity.as_id(), "view"))
-                    return ViewEntity.from_id(prop.source)
                 else:
                     return ViewEntity.from_id(prop.source)
-            elif isinstance(container_prop.type, PropertyTypeWithUnit) and container_prop.type.unit:
-                return DataType.load(f"{container_prop.type._type}(unit={container_prop.type.unit.external_id})")
-            elif isinstance(container_prop.type, DMSEnum):
+            elif isinstance(prop_type, PropertyTypeWithUnit) and prop_type.unit:
+                return DataType.load(f"{prop_type._type}(unit={prop_type.unit.external_id})")
+            elif isinstance(prop_type, DMSEnum):
+                if enum_collection_by_container_property is None:
+                    return String()
                 collection = enum_collection_by_container_property.get(
                     (prop.container, prop.container_property_identifier)
                 )
@@ -415,30 +443,46 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                         f"BUG in Neat: Enum for {prop.container}.{prop.container_property_identifier} not found."
                     )
 
-                return Enum(collection=ClassEntity(suffix=collection), unknownValue=container_prop.type.unknown_value)
+                return Enum(collection=ClassEntity(suffix=collection), unknownValue=prop_type.unknown_value)
             else:
-                return DataType.load(container_prop.type._type)
+                return DataType.load(prop_type._type)
         else:
-            self.issue_list.append(
-                PropertyTypeNotSupportedWarning[dm.ViewId](view_entity.as_id(), "view", prop_id, type(prop).__name__)
-            )
             return None
 
-    def _get_min_count(self, prop: ViewPropertyApply) -> int | None:
+    @classmethod
+    def _get_min_count(
+        cls,
+        prop: ViewPropertyApply | ViewProperty,
+        container_property: dm.ContainerProperty | None = None,
+    ) -> int | None:
         if isinstance(prop, dm.MappedPropertyApply):
-            return int(not self._container_prop_unsafe(prop).nullable)
+            if container_property is None:
+                raise ValueError("container_property must be provided when prop is a MappedPropertyApply")
+            return int(not container_property.nullable)
+        elif isinstance(prop, dm.MappedProperty):
+            return int(not prop.nullable)
         else:
             return None
 
     def _get_immutable(self, prop: ViewPropertyApply) -> bool | None:
         if isinstance(prop, dm.MappedPropertyApply):
-            return self._container_prop_unsafe(prop).immutable
+            return self._get_container_property_definition(prop).immutable
         else:
             return None
 
-    def _get_max_count(self, prop: ViewPropertyApply) -> int | float | None:
-        if isinstance(prop, dm.MappedPropertyApply):
-            prop_type = self._container_prop_unsafe(prop).type
+    @classmethod
+    def _get_max_count(
+        cls,
+        prop: ViewPropertyApply | ViewProperty,
+        container_property: dm.ContainerProperty | None = None,
+    ) -> int | float | None:
+        if isinstance(prop, dm.MappedPropertyApply | dm.MappedProperty):
+            if isinstance(prop, dm.MappedPropertyApply):
+                if container_property is None:
+                    raise ValueError("get_container must be provided when prop is a MappedPropertyApply")
+                prop_type = container_property.type
+            else:
+                prop_type = prop.type
             if isinstance(prop_type, ListablePropertyType):
                 if prop_type.is_list is False:
                     return 1
@@ -450,17 +494,41 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     return DMS_PRIMITIVE_LIST_DEFAULT_LIMIT
             else:
                 return 1
-        elif isinstance(prop, MultiEdgeConnectionApply | MultiReverseDirectRelationApply):
+        elif isinstance(
+            prop,
+            MultiEdgeConnectionApply
+            | MultiReverseDirectRelationApply
+            | dm.MultiEdgeConnection
+            | dm.MultiReverseDirectRelation,
+        ):
             return float("inf")
-        elif isinstance(prop, SingleEdgeConnectionApply | SingleReverseDirectRelationApply):
+        elif isinstance(
+            prop,
+            SingleEdgeConnectionApply
+            | SingleReverseDirectRelationApply
+            | SingleEdgeConnection
+            | SingleReverseDirectRelation,
+        ):
             return 1
         else:
-            # Unknown type.
+            warnings.warn(
+                NeatValueWarning(f"Unknown property type {type(prop)}. Assuming max count is inf"), stacklevel=2
+            )
             return None
 
-    def _get_default(self, prop: ViewPropertyApply) -> str | None:
-        if isinstance(prop, dm.MappedPropertyApply):
-            default = self._container_prop_unsafe(prop).default_value
+    @classmethod
+    def _get_default(
+        cls,
+        prop: ViewPropertyApply | ViewProperty,
+        container_property: dm.ContainerProperty | None = None,
+    ) -> str | None:
+        if isinstance(prop, dm.MappedPropertyApply | dm.MappedProperty):
+            if isinstance(prop, dm.MappedPropertyApply):
+                if container_property is None:
+                    raise ValueError("container_property must be provided when prop is a MappedPropertyApply")
+                default = container_property.default_value
+            else:
+                default = prop.default_value
             if default is not None:
                 return str(default)
         return None
@@ -559,3 +627,43 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                         )
                     )
         return enum_by_container_property
+
+    @classmethod
+    def as_information_input_property(
+        cls, entity: ClassEntity, prop_id: str, view_property: ViewProperty
+    ) -> InformationInputProperty:
+        if not isinstance(view_property, dm.MappedProperty | dm.EdgeConnection | ReverseDirectRelation):
+            raise PropertyTypeNotSupportedError(
+                dm.ViewId(str(entity.prefix), str(entity.suffix), entity.version),
+                "view",
+                prop_id,
+                type(view_property).__name__,
+            )
+
+        value_type = cls._get_value_type(view_property)
+        if value_type is None:
+            raise NeatValueError(f"Failed to get value type for {entity} property {prop_id}")
+
+        return InformationInputProperty(
+            class_=entity,
+            property_=prop_id,
+            value_type=str(value_type),
+            name=view_property.name,
+            description=view_property.description,
+            min_count=cls._get_min_count(view_property),
+            max_count=cls._get_max_count(view_property),
+            default=cls._get_default(view_property),
+        )
+
+    @classmethod
+    def as_information_input_class(cls, view: View) -> InformationInputClass:
+        return InformationInputClass(
+            class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
+            name=view.name,
+            description=view.description,
+            implements=[
+                ClassEntity(prefix=parent.space, suffix=parent.external_id, version=parent.version)
+                for parent in view.implements or []
+            ]
+            or None,
+        )
