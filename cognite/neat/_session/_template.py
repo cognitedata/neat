@@ -187,7 +187,12 @@ class TemplateAPI:
 
         return ExcelExporter().template(RoleTypes.information, path)
 
-    def extension(self, io: Any, output: str | Path | None = None) -> IssueList:
+    def extension(
+        self,
+        io: Any,
+        output: str | Path | None = None,
+        dummy_property: str = "GUID",
+    ) -> IssueList:
         """Creates a template for an extension of a Cognite model.
 
         The input is a spreadsheet of a conceptual model in which the concepts are defined
@@ -206,6 +211,8 @@ class TemplateAPI:
             io: The input spreadsheet.
             output: The output spreadsheet. If None, the output will be the same
                 as the input with `_extension` added to the name.
+            dummy_property: The dummy property to use as placeholder for user-defined properties
+                            for each user-defined concept.
         """
         ExperimentalFlags.extension.warn()
         reader = NeatReader.create(io)
@@ -227,7 +234,7 @@ class TemplateAPI:
                     raise NeatSessionError(f"The input {reader.name} must contain an InformationInputRules object. ")
                 if self._state.client is None:
                     raise NeatSessionError("Client must be set in the session to run the extension.")
-                modified = AddCogniteProperties(self._state.client).transform(read)
+                modified = AddCogniteProperties(self._state.client, dummy_property).transform(read)
                 if modified.rules is not None:
                     # If rules are None there will be issues that are already caught.
                     info = modified.rules.as_verified_rules()
