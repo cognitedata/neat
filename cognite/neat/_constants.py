@@ -11,7 +11,7 @@ from rdflib.namespace import DefinedNamespace
 from cognite import neat
 
 if TYPE_CHECKING:
-    from cognite.neat._rules.models.dms import DMSProperty
+    pass
 
 
 def _is_in_notebook() -> bool:
@@ -227,13 +227,6 @@ _ASSET_PATH_PROPERTY = {
     "view": "cdf_cdm:CogniteAsset(version=v1)",
     "view_property": "path",
 }
-
-
-def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
-    """Gets the asset read-only properties with connection, i.e. Root and Path."""
-    from cognite.neat._rules.models.dms import DMSProperty
-
-    return [DMSProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
 
 
 READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {

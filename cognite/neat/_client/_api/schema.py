@@ -53,13 +53,6 @@ class SchemaAPI:
             containers=ContainerApplyDict(containers.as_write()),
         )
 
-    def retrieve_data_model_id(self, data_model_id: dm.DataModelIdentifier) -> DMSSchema:
-        data_models = self._client.data_modeling.data_models.retrieve(data_model_id, inline_views=True)
-        if len(data_models) == 0:
-            raise NeatValueError(f"Data model {data_model_id} not found")
-        data_model = data_models.latest_version()
-        return self.retrieve_data_model(data_model)
-
     def retrieve_data_model(
         self,
         data_model: dm.DataModel[dm.View],

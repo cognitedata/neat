@@ -172,10 +172,6 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             self._information_rules, self._dms_rules = self._create_rules()
         return self._dms_rules
 
-    def get_issues(self) -> IssueList:
-        """Returns the issues that occurred during the extraction."""
-        return self._issues
-
     def _create_rules(self) -> tuple[InformationRules, DMSRules]:
         # The DMS and Information rules must be created together to link them property.
         importer = DMSImporter.from_data_model(self._client, self._data_model)

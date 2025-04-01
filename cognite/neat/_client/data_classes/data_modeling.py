@@ -15,8 +15,6 @@ from cognite.client.data_classes._base import T_CogniteResource
 from cognite.client.data_classes.data_modeling import (
     ContainerApply,
     ContainerId,
-    DataModelApply,
-    DataModelId,
     NodeApply,
     NodeId,
     SpaceApply,
@@ -172,18 +170,6 @@ class ContainerApplyDict(CogniteResourceDict[ContainerId, ContainerApply]):
     @classmethod
     def from_iterable(cls, iterable: Iterable[ContainerApply]) -> "ContainerApplyDict":
         return cls({container.as_id(): container for container in iterable})
-
-
-class DataModelApplyDict(CogniteResourceDict[DataModelId, DataModelApply]):
-    _RESOURCE = DataModelApply
-
-    @classmethod
-    def _as_id(cls, resource: DataModelApply) -> DataModelId:
-        return resource.as_id()
-
-    @classmethod
-    def from_iterable(cls, iterable: Iterable[DataModelApply]) -> "DataModelApplyDict":
-        return cls({data_model.as_id(): data_model for data_model in iterable})
 
 
 class NodeApplyDict(CogniteResourceDict[NodeId, NodeApply]):

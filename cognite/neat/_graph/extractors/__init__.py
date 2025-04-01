@@ -10,7 +10,6 @@ from ._classic_cdf._labels import LabelsExtractor
 from ._classic_cdf._relationships import RelationshipsExtractor
 from ._classic_cdf._sequences import SequencesExtractor
 from ._classic_cdf._timeseries import TimeSeriesExtractor
-from ._dexpi import DexpiExtractor
 from ._dict import DictExtractor
 from ._dms import DMSExtractor
 from ._dms_graph import DMSGraphExtractor
@@ -26,7 +25,6 @@ __all__ = [
     "DMSExtractor",
     "DMSGraphExtractor",
     "DataSetExtractor",
-    "DexpiExtractor",
     "DictExtractor",
     "EventsExtractor",
     "FilesExtractor",
@@ -52,7 +50,6 @@ TripleExtractors = (
     | FilesExtractor
     | LabelsExtractor
     | RdfFileExtractor
-    | DexpiExtractor
     | IODDExtractor
     | DMSExtractor
     | ClassicGraphExtractor

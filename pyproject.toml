@@ -160,6 +160,7 @@ memray = [
 httpx = "*"
 marko = "^2.1.2"
 mypy = "^1.4"
+vulture = "^2.14"
 pandas-stubs = "^2"
 types-PyYAML = "^6"
 types-openpyxl = "^3"
