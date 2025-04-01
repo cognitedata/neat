@@ -39,7 +39,7 @@ def test_asset_depth_transformer_with_typing():
 
     store.transform(transformer)
 
-    assert set(store.queries.read.summarize_instances()) == {
+    assert set(store.queries.select.summarize_instances()) == {
         ("GeographicalRegion", 1),
         ("RootCimNode", 1),
         ("SubGeographicalRegion", 1),

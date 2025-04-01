@@ -243,10 +243,10 @@ class NeatGraphStore:
     ) -> Iterable[tuple[URIRef, dict[str | InstanceType, list[Any]]]]:
         named_graph = named_graph or self.default_named_graph
 
-        instance_ids = self.queries.read.list_instances_ids(class_uri, named_graph=named_graph)
+        instance_ids = self.queries.select.list_instances_ids(class_uri, named_graph=named_graph)
 
         for instance_id in instance_ids:
-            if res := self.queries.read.describe(
+            if res := self.queries.select.describe(
                 instance_id=instance_id,
                 instance_type=class_uri,
                 property_renaming_config=property_renaming_config,
@@ -363,7 +363,7 @@ class NeatGraphStore:
     def summary(self) -> dict[URIRef, pd.DataFrame]:
         return {
             named_graph: pd.DataFrame(
-                self.queries.read.summarize_instances(named_graph),
+                self.queries.select.summarize_instances(named_graph),
                 columns=["Type", "Occurrence"],
             )
             for named_graph in self.named_graphs
@@ -371,7 +371,7 @@ class NeatGraphStore:
 
     @property
     def multi_type_instances(self) -> dict[URIRef, dict[str, list[str]]]:
-        return {named_graph: self.queries.read.multi_type_instances(named_graph) for named_graph in self.named_graphs}
+        return {named_graph: self.queries.select.multi_type_instances(named_graph) for named_graph in self.named_graphs}
 
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
@@ -448,4 +448,4 @@ class NeatGraphStore:
     @property
     def empty(self) -> bool:
         """Cheap way to check if the graph store is empty."""
-        return not self.queries.read.has_data()
+        return not self.queries.select.has_data()

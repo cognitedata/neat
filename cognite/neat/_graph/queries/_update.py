@@ -3,11 +3,15 @@ from rdflib import Dataset, URIRef
 from cognite.neat._utils.rdf_ import remove_instance_ids_in_batch
 
 from ._base import BaseQuery
-from ._read import ReadQueries
+from ._select import SelectQueries
 
 
-class WriteQueries(BaseQuery):
-    def __init__(self, read: ReadQueries, dataset: Dataset, default_named_graph: URIRef | None = None) -> None:
+class UpdateQueries(BaseQuery):
+    """This class holds a set of SPARQL queries which are updating triples in the knowledge graph.
+    The update queries are executed against update endpoint, and typically start with UPDATE statement
+    """
+
+    def __init__(self, read: SelectQueries, dataset: Dataset, default_named_graph: URIRef | None = None) -> None:
         super().__init__(dataset, default_named_graph)
         self._read = read
 

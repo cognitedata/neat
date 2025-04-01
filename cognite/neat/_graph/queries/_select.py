@@ -14,7 +14,11 @@ from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from ._base import BaseQuery
 
 
-class ReadQueries(BaseQuery):
+class SelectQueries(BaseQuery):
+    """This class holds a set of SPARQL queries which are reading triples from the knowledge graph.
+    The read queries are executed against query endpoint, and typically start with SELECT statement.
+    """
+
     def summarize_instances(self, named_graph: URIRef | None = None) -> list[tuple[str, int]]:
         """Summarize instances in the graph store by class and count"""
         query_statement = """ SELECT ?class (COUNT(?instance) AS ?instanceCount)
