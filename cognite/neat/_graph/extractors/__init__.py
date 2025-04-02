@@ -14,7 +14,6 @@ from ._dexpi import DexpiExtractor
 from ._dict import DictExtractor
 from ._dms import DMSExtractor
 from ._dms_graph import DMSGraphExtractor
-from ._iodd import IODDExtractor
 from ._mock_graph_generator import MockGraphGenerator
 from ._raw import RAWExtractor
 from ._rdf_file import RdfFileExtractor
@@ -30,7 +29,6 @@ __all__ = [
     "DictExtractor",
     "EventsExtractor",
     "FilesExtractor",
-    "IODDExtractor",
     "KnowledgeGraphExtractor",
     "LabelsExtractor",
     "MockGraphGenerator",
@@ -53,7 +51,6 @@ TripleExtractors = (
     | LabelsExtractor
     | RdfFileExtractor
     | DexpiExtractor
-    | IODDExtractor
     | DMSExtractor
     | ClassicGraphExtractor
     | DataSetExtractor
