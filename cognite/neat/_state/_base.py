@@ -26,9 +26,9 @@ class NeatState:
     """
 
     def __init__(self) -> None:
-        self._state: State = EmptyState()
         self._rule_store = NeatRulesStore()
         self._graph_store = NeatGraphStore.from_memory_store()
+        self._state: State = EmptyState(self._rule_store, self._graph_store)
 
     @property
     def status(self) -> str:
