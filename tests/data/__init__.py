@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from pathlib import Path
 
 from ._graph import car as _car
@@ -81,3 +82,17 @@ class SchemaData:
         invalid_property_dms_rules_xlsx = _physical_invalid / "invalid_property_dms_rules.xlsx"
         missing_view_container_dms_rules_xlsx = _physical_invalid / "missing_view_container_dms_rules.xlsx"
         too_many_container_per_view_xlsx = _physical_invalid / "too_many_containers_per_view.xlsx"
+
+    class PhysicalYamls:
+        _physical_yaml = _schema_dir / "physical_yamls"
+
+        @classmethod
+        def iterate(cls) -> Iterable[tuple[Path, Path | None]]:
+            path: Path
+            for path in cls._physical_yaml.glob("*.yaml"):
+                if path.is_dir():
+                    continue
+                if path.stem.endswith(".expected_issues"):
+                    continue
+                issues = path.with_stem(f"{path.stem}.expected_issues")
+                yield path, issues if issues.exists() else None
