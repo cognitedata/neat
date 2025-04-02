@@ -212,7 +212,8 @@ class TemplateAPI:
             output: The output spreadsheet. If None, the output will be the same
                 as the input with `_extension` added to the name.
             dummy_property: The dummy property to use as placeholder for user-defined properties
-                            for each user-defined concept.
+                            for each user-defined concept. When converting a data model, it is recommended to have at least
+                            one property for each concept. This ensures that you follow that recommendation.
         """
         ExperimentalFlags.extension.warn()
         reader = NeatReader.create(io)
