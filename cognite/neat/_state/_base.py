@@ -32,9 +32,26 @@ class NeatState:
 
     @property
     def status(self) -> str:
+        """Returns the display name of the current state."""
         return self._state.display_name
 
     def change(self, action: Action) -> IssueList:
+        """Perform an action on the current state.
+
+        This methods checks if the action is valid for the current state, performs the action, and if successful,
+        transitions to the next state. If the action is not valid, it raises an InvalidStateTransition error.
+
+        Args:
+            action (Action): The action to perform.
+
+        Raises:
+            InvalidStateTransition: If the action is not valid for the current state.
+            TypeError: If the action is of an unknown type.
+
+        Returns:
+            IssueList: The issues encountered during the action.
+
+        """
         if not self._state.is_valid_transition(action):
             raise InvalidStateTransition(
                 f"Cannot perform {type(action).__name__} action in state {self._state.display_name}"
@@ -55,13 +72,17 @@ class NeatState:
         return issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:  # type: ignore[type-arg, type-var]
+        """Export the rules to the specified format."""
         raise NotImplementedError
 
     def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
+        """Export the rules to a file."""
         raise NotImplementedError
 
     def export_to_cdf(self, exporter: CDFExporter, client: NeatClient, dry_run: bool) -> UploadResultList:
+        """Export the rules to CDF."""
         raise NotImplementedError
 
     def load(self, loader: BaseLoader) -> UploadResultList:
+        """Load the instances into CDF."""
         raise NotImplementedError
