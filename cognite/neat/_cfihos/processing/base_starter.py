@@ -29,6 +29,7 @@ class base_starter_class:
     _model_entities: dict = field(default_factory=dict)
     _model_properties: dict = field(default_factory=dict)
     _model_property_groups: dict = field(default_factory=dict)
+    _map_dms_id_to_entity_id: dict = field(default_factory=dict)
     domain_model_config: dict = field(default_factory=dict)
     processor_config: dict = field(default_factory=dict)
     containers_indexes: dict = field(default_factory=dict)
@@ -45,6 +46,14 @@ class base_starter_class:
     @property
     def model_properties(self):
         return self._model_properties
+    
+    @property
+    def map_dms_id_to_entity_id(self):
+        return self._map_dms_id_to_entity_id 
+    
+    @property
+    def scopes(self):
+        return self.domain_model_config["scopes"]
 
     def get_domain_model_config(self, path_to_config: str) -> dict:
         """Returns the configuration information related to a domain model"""
@@ -59,16 +68,46 @@ class base_starter_class:
 
         return read_yaml(config_fpath)
 
-    def process_model(self) -> cfihosReadResult:
+    def process_model(self) -> None:
         """
         Processes the CFIHOS model according to the provided configuration.
         """
-        containers_dm_space = "xom_draft_domain_model_containers"
-        views_dm_space = "xom_draft_domain_model_views"
-        containers_model_Version = "1"
-        views_model_Version = "1"
 
         print("Excuting the processor")
+
+        # Setup model processor
+        model_processor = Processor(**self.processor_config)
+
+        # Process and combine models into one
+        model_processor.process_and_collect_models()
+
+        # Setup Model Containers
+        self._model_properties = model_processor.model_properties
+
+        self._map_dms_id_to_entity_id = model_processor.map_dms_id_to_entity_id
+        self._model_entities = model_processor.model_entities
+
+    def build_containers_model(self) -> cfihosReadResult:
+        containers_dm_space = "xom_draft_domain_model_containers"
+        containers_model_Version = "1"
+        # Setup containers from models
+        logging.info(f"STEP 2: Started upserting {len(self._model_properties)} container properties ...")
+        containers = create_container_from_property_struct_dict(
+            space=containers_dm_space,
+            property_data=self._model_properties,
+            containers_indexes=self.containers_indexes["containers_indexes"],
+        )
+
+        # Setup population views on-top of containers
+        logging.info(f"STEP 3: Started upserting {len(containers)} population views on-top of containers ...")
+
+        lst_views, lst_properties = build_views_from_containers(
+            version=containers_model_Version,
+            containers=containers,
+            entities=self.model_entities,
+        )
+
+        logging.info("STEP 4: generating NEAT rules ...")
 
         container_model_dict = {
             "role": "DMS Architect",
@@ -81,58 +120,6 @@ class base_starter_class:
             "version": self.domain_model_config["model_version"],
             "creator": self.domain_model_config["model_creator"],
         }
-        df_container_model_metadata = pd.DataFrame(list(container_model_dict.items()), columns=["Key", "Value"])
-
-        # Setup model processor
-        model_processor = Processor(**self.processor_config)
-
-        # Process and combine models into one
-        model_processor.process_and_collect_models()
-
-        # Setup Model Containers
-        model_properties = model_processor.model_properties
-
-        # Setup containers from models
-        logging.info(f"STEP 2: Started upserting {len(model_properties)} container properties ...")
-        containers = create_container_from_property_struct_dict(
-            space=containers_dm_space,
-            property_data=model_properties,
-            containers_indexes=self.containers_indexes["containers_indexes"],
-        )
-
-        # Setup population views on-top of containers
-        logging.info(f"STEP 3: Started upserting {len(containers)} population views on-top of containers ...")
-
-        lst_views, lst_properties = build_views_from_containers(
-            version=containers_model_Version,
-            containers=containers,
-            entities=model_processor.model_entities,
-        )
-
-        # Find scope
-        lst_scoped_models = []
-        scopes = self.domain_model_config["scopes"]
-        if scopes is None:
-            raise ValueError("Scope not found in the configuration file")
-        for scope in self.domain_model_config["scopes"]:
-            scoped_model = collect_model_subset(
-                full_model=model_processor.model_entities,
-                scope_config=self.domain_model_config["scope_config"],
-                scope=scope["scope_subset"],
-                map_dms_id_to_model_id=model_processor.map_dms_id_to_entity_id,
-            )
-            lst_scoped_models.append(scoped_model)
-            logging.info(f"STEP 4: Started building {len(scoped_model)} scoped entity views")
-
-        # entity_views = build_views_from_entities(
-        #     containers_space=containers_dm_space,
-        #     views_space=views_dm_space,
-        #     version=views_model_Version,
-        #     entities=scoped_model,
-        #     # cdf_extended_search_properties = cdf_extended_search_properties
-        # )        
-
-        logging.info("STEP 4: generating NEAT rules ...")
 
         return {
             "Properties": lst_properties,
@@ -140,3 +127,42 @@ class base_starter_class:
             "Views": lst_views,
             "Metadata": container_model_dict,
         }
+
+    def build_scoped_views_models(self, scope) -> cfihosReadResult:
+        containers_dm_space = "xom_draft_domain_model_containers"
+        views_dm_space = "xom_draft_domain_model_views"
+        views_model_Version = "1"
+
+        
+        scoped_model = collect_model_subset(
+            full_model=self.model_entities,
+            scope_config=self.domain_model_config["scope_config"],
+            scope=scope["scope_subset"],
+            map_dms_id_to_model_id=self.map_dms_id_to_entity_id,
+        )
+        lst_entity_views, lst_entity_properties = build_views_from_entities(
+            containers_space=containers_dm_space,
+            views_space=views_dm_space,
+            version=views_model_Version,
+            entities=scoped_model,
+        ) 
+
+        logging.info(f"STEP 4: Started building {len(scoped_model)} scoped entity views")
+
+ 
+
+        return {
+                    "Properties": lst_entity_properties,
+                    "Containers": [],
+                    "Views": lst_entity_views,
+                    "Metadata":  {
+                        "role": "DMS Architect",
+                        "dataModelType": "enterprise",
+                        "schema": "complete",
+                        "space": views_dm_space,
+                        "name": "cfihos_" + scope["scope_name"],
+                        "description": scope["scope_description"],
+                        "external_id": "cfihos_" + scope["scope_name"],
+                        "version": self.domain_model_config["model_version"],
+                        "creator": self.domain_model_config["model_creator"],
+                    },}

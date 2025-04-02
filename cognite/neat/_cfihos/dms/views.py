@@ -425,6 +425,8 @@ def build_views_from_entities(
     inheritance_graph = _build_inheritance_graph(entities)
     sorted_keys = _topological_sort(inheritance_graph)
     sorted_hierarchy_entities = {k: entities[k] for k in sorted_keys if k in entities}
+    lst_views = []
+    lst_properties = []
     for _, entity_data in sorted_hierarchy_entities.items():
         entity_id = entity_data[EntityStructure.ID]
         parents_ext_ids = [
@@ -433,9 +435,8 @@ def build_views_from_entities(
             for parent_id in parent_ids
         ]
         view_filter = _create_view_filter(containers_space, entity_id, inheritance_tree.get(entity_id, []))
-        
-        lst_views = []
-        lst_properties = []
+
+
 
         prop_data_dict = {}
         for prop_data in entity_data[EntityStructure.PROPERTIES]:
@@ -469,15 +470,15 @@ def build_views_from_entities(
                         "Is List": False,
                         "Default": None,
                         "Reference": None,
-                        "Container": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
                         "Container Property": prop_data[PropertyStructure.ID],
-                        "Container Space": containers_space,
                         "Index": None,
                         "Constraint": None,
-                        "Class (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Property (linage)": prop_data[PropertyStructure.ID]
-                    })
-                
+                        "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Property (linage)": prop_data[PropertyStructure.ID],
+                    }
+                )
+
                 lst_properties.append(
                     {
                         "View": entity_data[EntityStructure.ID],
@@ -491,14 +492,14 @@ def build_views_from_entities(
                         "Is List": False,
                         "Default": None,
                         "Reference": None,
-                        "Container": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
                         "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
-                        "Container Space": containers_space,
                         "Index": None,
                         "Constraint": None,
-                        "Class (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Property (linage)": prop_data[PropertyStructure.ID].replace("_rel", "")
-                    })
+                        "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Property (linage)": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                    }
+                )
 
                 prop_data_dict[prop_data[PropertyStructure.ID].replace("_rel", "")] = data_modeling.MappedPropertyApply(
                     name=prop_data[PropertyStructure.NAME],
@@ -551,17 +552,38 @@ def build_views_from_entities(
                         "Is List": False,
                         "Default": None,
                         "Reference": None,
-                        "Container": prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
-                        "Container Space": containers_space,
+                        "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),      
                         "Index": None,
                         "Constraint": None,
-                        "Class (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Property (linage)": prop_data[PropertyStructure.ID].replace("_rel", "")
-                    })
+                        "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                        "Property (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
+                    }
+                )
 
             # add entityType property in case the entity is not FCC
             if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]:
+                lst_properties.append(
+                    {
+                        "View": entity_data[EntityStructure.ID],
+                        "View Property": "entityType",
+                        "Name": "Entity Type",
+                        "Description": "",
+                        "Connection": None,
+                        "Value Type": "text",
+                        "Nullable": False,
+                        "Immutable": False,
+                        "Is List": False,
+                        "Default": None,
+                        "Reference": None,
+                        "Container": containers_space + ":EntityTypeGroup",
+                        "Container Property": "entityType",      
+                        "Index": None,
+                        "Constraint": None,
+                        "Class (linage)": containers_space + ":EntityTypeGroup",
+                        "Property (linage)": "entityType",
+                    }
+                )
                 prop_data_dict["entityType"] = data_modeling.MappedPropertyApply(
                     name="Entity Type",
                     container=data_modeling.ContainerId(
@@ -579,7 +601,9 @@ def build_views_from_entities(
                     "Name": entity_data[EntityStructure.NAME],
                     "Description": entity_data[EntityStructure.DESCRIPTION],
                     "Implements": [parent_id for parent_id in parents_ext_ids] if parents_ext_ids else None,
-                    "Filter": view_filter if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN] else None,
+                    "Filter": view_filter
+                    if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]
+                    else None,
                     "In Model": True,
                     "Class (linage)": entity_data[EntityStructure.ID],
                 }
@@ -617,4 +641,4 @@ def build_views_from_entities(
     # for i in range(0, len(dm_views), 100):
     #     cdf_client.data_modeling.views.apply(dm_views[i:i+100])
     # TODO: implement Dry run
-    return dm_views
+    return lst_views, lst_properties
