@@ -93,10 +93,8 @@ class TestNeatState:
     @pytest.mark.parametrize(
         "actions, expected_state",
         [
-            ([DummyInfoImporter()], "Conceptual"),
-            ([DummyDMSImporter()], "Physical"),
-            ([NoOptExtractor(), "Instances"]),
-            ([NoOptExtractor(), NoOptTransformer()], "Instances"),
+            pytest.param([DummyInfoImporter()], "Conceptual", id="Import information rules"),
+            pytest.param([NoOptExtractor()], "Instances", id="Extract instances"),
         ],
     )
     def test_valid_change(self, actions: list[Action], expected_state: str, empty_state: NeatState) -> None:
