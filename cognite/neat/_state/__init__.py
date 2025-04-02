@@ -1,3 +1,4 @@
-from ._base import Action, NeatState
+from ._base import NeatState
+from ._types import Action
 
 __all__ = ["Action", "NeatState"]

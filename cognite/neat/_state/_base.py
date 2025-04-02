@@ -1,18 +1,20 @@
 from pathlib import Path
-from typing import TypeAlias
 
 from cognite.neat._client import NeatClient
 from cognite.neat._graph.extractors import BaseExtractor
 from cognite.neat._graph.loaders import BaseLoader
-from cognite.neat._graph.transformers import BaseTransformer, BaseTransformerStandardised
+from cognite.neat._graph.transformers import BaseTransformer
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.exporters import BaseExporter, CDFExporter
 from cognite.neat._rules.exporters._base import T_Export, T_VerifiedRules
 from cognite.neat._rules.importers import BaseImporter
-from cognite.neat._rules.transformers import RulesTransformer
+from cognite.neat._rules.transformers import VerifiedRulesTransformer
+from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._utils.upload import UploadResultList
 
-Action: TypeAlias = BaseImporter | BaseExtractor | RulesTransformer | BaseTransformerStandardised | BaseTransformer
+from ._state import EmptyState, State
+from ._types import Action
+from .exception import InvalidStateTransition
 
 
 class NeatState:
@@ -23,12 +25,34 @@ class NeatState:
     - Physical rules: The schema for physical rules.
     """
 
+    def __init__(self) -> None:
+        self._state: State = EmptyState()
+        self._rule_store = NeatRulesStore()
+        self._graph_store = NeatGraphStore.from_memory_store()
+
     @property
     def status(self) -> str:
-        raise NotImplementedError()
+        return self._state.display_name
 
     def change(self, action: Action) -> IssueList:
-        raise NotImplementedError
+        if not self._state.is_valid_transition(action):
+            raise InvalidStateTransition(
+                f"Cannot perform {type(action).__name__} action in state {self._state.display_name}"
+            )
+        if isinstance(action, BaseImporter):
+            issues = self._rule_store.import_rules(action)
+        elif isinstance(action, BaseExtractor):
+            issues = self._graph_store.write(action)
+        elif isinstance(action, VerifiedRulesTransformer):
+            issues = self._rule_store.transform(action)
+        elif isinstance(action, BaseTransformer):
+            # The self._graph_store.transform(action) does not return IssueList
+            raise NotImplementedError()
+        else:
+            raise TypeError(f"Unknown action type: {type(action).__name__}")
+        if not issues.has_errors:
+            self._state = self._state.next_state(action)
+        return issues
 
     def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:  # type: ignore[type-arg, type-var]
         raise NotImplementedError
