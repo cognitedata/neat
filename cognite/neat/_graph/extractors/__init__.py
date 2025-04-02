@@ -25,7 +25,6 @@ __all__ = [
     "DMSExtractor",
     "DMSGraphExtractor",
     "DataSetExtractor",
-    "DexpiExtractor",
     "DictExtractor",
     "EventsExtractor",
     "FilesExtractor",
