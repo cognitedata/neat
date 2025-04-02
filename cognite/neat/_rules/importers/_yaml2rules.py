@@ -8,6 +8,7 @@ from cognite.neat._issues.errors import (
     FileMissingRequiredFieldError,
     FileNotAFileError,
     FileNotFoundNeatError,
+    FileReadError,
     FileTypeUnexpectedError,
 )
 from cognite.neat._issues.warnings import NeatValueWarning
@@ -55,7 +56,12 @@ class YAMLImporter(BaseImporter[T_InputRules]):
             return cls({}, [FileNotAFileError(filepath)])
         elif filepath.suffix not in [".yaml", ".yml"]:
             return cls({}, [FileTypeUnexpectedError(filepath, frozenset([".yaml", ".yml"]))])
-        return cls(yaml.safe_load(filepath.read_text()), filepaths=[filepath], source_name=source_name)
+        try:
+            data = yaml.safe_load(filepath.read_text())
+        except yaml.YAMLError as exc:
+            return cls({}, [FileReadError(filepath, f"Invalid YAML: {exc!s}")])
+
+        return cls(data, filepaths=[filepath], source_name=source_name)
 
     def to_rules(self) -> ReadRules[T_InputRules]:
         if self._read_issues.has_errors or not self.raw_data:
