@@ -17,6 +17,8 @@ from ._types import Action
 from .exception import InvalidStateTransition
 
 
+# Todo: This class is in progress and not currently used. Through a series of PRs, it will replace the
+#  SessionState class as well as move the logic from the _session into this _state module.
 class NeatState:
     """The neat state contains three main components:
 
