@@ -1,7 +1,7 @@
 import re
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.ids import DataModelId
@@ -198,6 +198,23 @@ def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
     from cognite.neat._rules.models.dms import DMSProperty
 
     return [DMSProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
+
+
+def get_base_concepts(
+    base_model: Literal["CogniteCore"] = "CogniteCore",
+    no_concepts: int | None = None,
+) -> list[str]:
+    """Gets the base concepts for a given base model represented in the short form.
+    Args:
+        base_model: The base model to get the concepts for.
+        no_concepts: The number of concepts to get. If None, all concepts are returned.
+    """
+    if base_model == "CogniteCore":
+        concepts = [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS]
+    else:
+        concepts = []
+
+    return concepts[:no_concepts]
 
 
 READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {

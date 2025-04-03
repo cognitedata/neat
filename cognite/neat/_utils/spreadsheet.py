@@ -148,10 +148,10 @@ def find_column_with_value(sheet: Worksheet, value: Any) -> str | None:
     return None
 
 
-def generate_data_validation(sheet: str, column: str, no_header_rows: int, no_rows: int) -> DataValidation:
+def generate_data_validation(sheet: str, column: str, no_header_rows: int, no_validation_values: int) -> DataValidation:
     "Creates openpyxl data validation object for a cell in a sheet"
 
     return DataValidation(
         type="list",
-        formula1=f"={sheet}!{column}${no_header_rows + 1}:{column}${no_rows}",
+        formula1=f"={sheet}!{column}${no_header_rows + 1}:{column}${no_validation_values}",
     )
