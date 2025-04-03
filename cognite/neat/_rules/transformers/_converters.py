@@ -75,7 +75,14 @@ from cognite.neat._utils.rdf_ import get_inheritance_path
 from cognite.neat._utils.spreadsheet import SpreadsheetRead
 from cognite.neat._utils.text import NamingStandardization, humanize_collection, title, to_camel_case, to_words
 
-from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
+from ._base import (
+    ConceptualRulesTransformer,
+    PhysicalRulesTransformer,
+    RulesTransformer,
+    T_VerifiedIn,
+    T_VerifiedOut,
+    VerifiedRulesTransformer,
+)
 from ._verification import VerifyDMSRules
 
 T_InputInRules = TypeVar("T_InputInRules", bound=ReadInputRules)
@@ -185,7 +192,7 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
         return property_
 
 
-class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]):  # type: ignore[misc]
+class StandardizeSpaceAndVersion(PhysicalRulesTransformer):  # type: ignore[misc]
     """This transformer standardizes the space and version of the DMSRules.
 
     typically used to ensure all the views are moved to the same version as the data model.
@@ -244,7 +251,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
         return properties
 
 
-class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, InformationRules]):  # type: ignore[misc]
+class ToCompliantEntities(ConceptualRulesTransformer):  # type: ignore[misc]
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
 
@@ -577,7 +584,7 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
 _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 
 
-class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class SetIDDMSModel(PhysicalRulesTransformer):
     def __init__(self, new_id: DataModelId | tuple[str, str, str], name: str | None = None):
         self.new_id = DataModelId.load(new_id)
         self.name = name
@@ -602,7 +609,7 @@ class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return title(to_words(self.new_id.external_id))
 
 
-class ToExtensionModel(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
+class ToExtensionModel(PhysicalRulesTransformer, ABC):
     type_: ClassVar[str]
 
     def __init__(self, new_model_id: DataModelIdentifier) -> None:
@@ -1023,7 +1030,7 @@ class ToDataProductModel(ToSolutionModel):
         return self._to_solution(rules)
 
 
-class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class DropModelViews(PhysicalRulesTransformer):
     _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
     _VIEW_BY_COLLECTION: Mapping[Literal["3D", "Annotation", "BaseViews"], frozenset[ViewId]] = {
         "3D": frozenset(
@@ -1128,7 +1135,7 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return f"Removed {len(self.drop_external_ids) + len(self.drop_collection)} views from data model"
 
 
-class IncludeReferenced(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class IncludeReferenced(PhysicalRulesTransformer):
     def __init__(self, client: NeatClient, include_properties: bool = False) -> None:
         self._client = client
         self.include_properties = include_properties
@@ -1179,7 +1186,7 @@ class IncludeReferenced(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return "Included referenced views and containers in the data model."
 
 
-class AddClassImplements(VerifiedRulesTransformer[InformationRules, InformationRules]):
+class AddClassImplements(ConceptualRulesTransformer):
     def __init__(self, implements: str, suffix: str):
         self.implements = implements
         self.suffix = suffix
@@ -1197,7 +1204,7 @@ class AddClassImplements(VerifiedRulesTransformer[InformationRules, InformationR
         return f"Added implements property to classes with suffix {self.suffix}"
 
 
-class ClassicPrepareCore(VerifiedRulesTransformer[InformationRules, InformationRules]):
+class ClassicPrepareCore(ConceptualRulesTransformer):
     """Update the classic data model with the following:
 
     This is a special purpose transformer that is only intended to be used with when reading
@@ -1272,7 +1279,7 @@ class ClassicPrepareCore(VerifiedRulesTransformer[InformationRules, InformationR
         return output
 
 
-class ChangeViewPrefix(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class ChangeViewPrefix(PhysicalRulesTransformer):
     def __init__(self, old: str, new: str) -> None:
         self.old = old
         self.new = new
@@ -1297,7 +1304,7 @@ class ChangeViewPrefix(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return output
 
 
-class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class MergeDMSRules(PhysicalRulesTransformer):
     def __init__(self, extra: DMSRules) -> None:
         self.extra = extra
 
@@ -1339,7 +1346,7 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return f"Merged with {self.extra.metadata.as_data_model_id()}"
 
 
-class MergeInformationRules(VerifiedRulesTransformer[InformationRules, InformationRules]):
+class MergeInformationRules(ConceptualRulesTransformer):
     def __init__(self, extra: InformationRules) -> None:
         self.extra = extra
 
@@ -2001,7 +2008,7 @@ class _DMSRulesConverter:
         )
 
 
-class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class _SubsetEditableCDMRules(PhysicalRulesTransformer):
     """Subsets editable CDM rules to only include desired set of CDM concepts.
 
     !!! note "Platypus UI limitations"
@@ -2071,7 +2078,7 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         }
 
 
-class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class SubsetDMSRules(PhysicalRulesTransformer):
     """Subsets DMSRules to only include the specified views."""
 
     def __init__(self, views: set[ViewEntity]):
@@ -2143,7 +2150,7 @@ class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
             raise NeatValueError(f"Cannot subset rules: {e}") from e
 
 
-class SubsetInformationRules(VerifiedRulesTransformer[InformationRules, InformationRules]):
+class SubsetInformationRules(ConceptualRulesTransformer):
     """Subsets InformationRules to only include the specified classes."""
 
     def __init__(self, classes: set[ClassEntity]):

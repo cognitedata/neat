@@ -5,12 +5,12 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._rules import catalog, exporters, importers, transformers
 from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import VerifiedRulesTransformer
+from cognite.neat._rules.transformers import PhysicalRulesTransformer
 from cognite.neat._store import NeatRulesStore
 from cognite.neat._store.exceptions import InvalidActivityInput
 
 
-class FailingTransformer(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class FailingTransformer(PhysicalRulesTransformer):
     def transform(self, rules: DMSRules) -> DMSRules:
         raise NeatValueError("This transformer always fails")
 
