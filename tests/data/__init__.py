@@ -75,6 +75,25 @@ class SchemaData:
         pump_example_with_missing_cells_xlsx = _physical / "pump_example_with_missing_cells.xlsx"
         pump_example_with_missing_cells_raise_issues = _physical / "pump_example_with_missing_cells_raise_issues.xlsx"
 
+    class Conversion:
+        conversion = _schema_dir / "conversion"
+
+        @classmethod
+        def iterate(cls) -> Iterable[tuple[Path, Path]]:
+            conceptual: Path
+            for conceptual in cls.conversion.glob("*.yaml"):
+                if conceptual.is_dir():
+                    continue
+                if not conceptual.stem.endswith(".conceptual"):
+                    continue
+                stem = conceptual.stem.removesuffix(".conceptual")
+                physical = conceptual.with_stem(f"{stem}.physical")
+                if not physical.exists():
+                    raise ValueError(
+                        f"Missing physical file for {conceptual}. This is required to test the conversion."
+                    )
+                yield conceptual, physical
+
     class PhysicalInvalid:
         _physical_invalid = _schema_dir / "physical_invalid"
         inconsistent_container_dms_rules_xlsx = _physical_invalid / "inconsistent_container_dms_rules.xlsx"
