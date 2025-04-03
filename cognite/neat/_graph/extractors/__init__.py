@@ -13,7 +13,6 @@ from ._classic_cdf._timeseries import TimeSeriesExtractor
 from ._dict import DictExtractor
 from ._dms import DMSExtractor
 from ._dms_graph import DMSGraphExtractor
-from ._iodd import IODDExtractor
 from ._mock_graph_generator import MockGraphGenerator
 from ._raw import RAWExtractor
 from ._rdf_file import RdfFileExtractor
@@ -28,7 +27,6 @@ __all__ = [
     "DictExtractor",
     "EventsExtractor",
     "FilesExtractor",
-    "IODDExtractor",
     "KnowledgeGraphExtractor",
     "LabelsExtractor",
     "MockGraphGenerator",
@@ -50,7 +48,6 @@ TripleExtractors = (
     | FilesExtractor
     | LabelsExtractor
     | RdfFileExtractor
-    | IODDExtractor
     | DMSExtractor
     | ClassicGraphExtractor
     | DataSetExtractor
