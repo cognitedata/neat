@@ -340,7 +340,7 @@ class NeatGraphStore:
             issue_list.append(
                 NeatValueError(
                     f"Cannot transform graph store with {type(transformer).__name__}, "
-                    f"missing one or more required changes [{humanize_collection(missing_changes)}]",
+                    f"missing one or more required changes {humanize_collection(missing_changes)}",
                 )
             )
             return issue_list
