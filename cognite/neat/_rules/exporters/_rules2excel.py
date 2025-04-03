@@ -9,10 +9,12 @@ from typing import Any, ClassVar, Literal, cast, get_args
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
-from cognite.neat._constants import COGNITE_CONCEPTS
+from cognite.neat._constants import get_base_concepts
 from cognite.neat._rules._constants import get_internal_properties
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
@@ -67,6 +69,16 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         "Nodes": "Definition of Nodes",
         "Enum": "Definition of Enum Collections",
     }
+    _helper_sheet_column_indexes_by_names: ClassVar[dict[str, int]] = {
+        "Class": 1,
+        "View": 1,
+        "Implements": 2,
+        "Value Type": 3,
+        "Container": 4,
+        "In Model": 5,
+        "Immutable": 5,
+        "Used For": 6,
+    }
     style_options = get_args(Style)
     dump_options = get_args(DumpOptions)
 
@@ -106,7 +118,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             data.close()
         return None
 
-    def template(self, role: RoleTypes, filepath: Path) -> None:
+    def template(
+        self,
+        role: RoleTypes,
+        filepath: Path,
+        base_model: Literal["CogniteCore"] = "CogniteCore",
+        no_concepts: int | None = None,
+    ) -> None:
         """This method will create an spreadsheet template for data modeling depending on the role.
 
         Args:
@@ -137,10 +155,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self._adjust_column_widths(workbook)
         self._hide_internal_columns(workbook)
 
-        if role == RoleTypes.dms:
-            self._add_dms_drop_downs(workbook)
-        else:
-            self._add_info_drop_downs(workbook)
+        self._add_drop_downs(role, workbook, base_model, no_concepts)
 
         try:
             workbook.save(filepath)
@@ -173,10 +188,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._hide_internal_columns(workbook)
 
         # Only add drop downs if the rules are DMSRules
-        if self.add_drop_downs and isinstance(rules, DMSRules):
-            self._add_dms_drop_downs(workbook)
-        elif self.add_drop_downs and isinstance(rules, InformationRules):
-            self._add_info_drop_downs(workbook)
+        if self.add_drop_downs:
+            self._add_drop_downs(rules.metadata.role, workbook)
 
         return workbook
 
@@ -196,199 +209,247 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 if column_letter:
                     ws.column_dimensions[column_letter].hidden = True
 
-    def _add_info_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
+    def _add_drop_downs(
+        self,
+        role: RoleTypes,
+        workbook: Workbook,
+        base_model: Literal["CogniteCore"] = "CogniteCore",
+        no_concepts: int | None = None,
+    ) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry
-        in the Information rules.
+        for both DMS and Information rules.
 
         Args:
+            role: The role for which the drop downs are created. Can be either "dms" or "information".
             workbook: Workbook representation of the Excel file.
-            no_rows: number of rows to add drop down menus. Defaults to 100*100.
-
-        !!! note "Why no_rows=100?"
-            Maximum number of views per data model is 100, thus this value is set accordingly
+            base_model: The base model to get existing concepts from.
+            no_concepts: The number of concepts to consider. If None, all concepts will be considered.
 
         !!! note "Why defining individual data validation per desired column?
             This is due to the internal working of openpyxl. Adding same validation to
             different column leads to unexpected behavior when the openpyxl workbook is exported
             as and Excel file. Probably, the validation is not copied to the new column,
             but instead reference to the data validation object is added.
+
+        !!! note "Why 100*100 rows?"
+            This is due to the fact that we need to add drop down menus for all properties
+            in the sheet. The maximum number of properties per view/class is 100. So considering
+            maximum number of views/classes is 100, we need to add 100*100 rows.
         """
-        self._make_helper_info_sheet(workbook, no_rows)
+
+        self._make_helper_sheet(role, workbook, 100, base_model, no_concepts)
+
+        data_validators: dict[str, DataValidation] = {}
 
         # We need create individual data validation and cannot re-use the same one due
         # the internals of openpyxl
-        dv_classes = generate_data_validation(self._helper_sheet_name, "A", no_header_rows=0, no_rows=no_rows)
-        dv_value_types = generate_data_validation(self._helper_sheet_name, "B", no_header_rows=0, no_rows=no_rows)
-        dv_implements = generate_data_validation(
-            self._helper_sheet_name,
-            "C",
-            no_header_rows=0,
-            no_rows=no_rows + len(COGNITE_CONCEPTS),
+
+        self._add_data_validation(
+            workbook,
+            sheet_name="Views" if role == RoleTypes.dms else "Classes",
+            column_name="Implements",
+            data_validator_name="implements",
+            data_validators=data_validators,
+            no_validation_values=100,
+            no_rows=100,
         )
 
-        workbook["Properties"].add_data_validation(dv_classes)
-        workbook["Properties"].add_data_validation(dv_value_types)
-        workbook["Classes"].add_data_validation(dv_implements)
+        self._add_data_validation(
+            workbook,
+            sheet_name="Properties",
+            column_name="Value Type",
+            data_validator_name="value_type",
+            data_validators=data_validators,
+            no_validation_values=100,
+            no_rows=100 * 100,  # 100 views/classes * 100 properties (max properties per view/class)
+        )
 
-        # we multiply no_rows with 100 since a view can have max 100 properties per view
-        if column := find_column_with_value(workbook["Properties"], "Class"):
-            dv_classes.add(f"{column}{3}:{column}{no_rows * 100}")
+        self._add_data_validation(
+            workbook,
+            sheet_name="Properties",
+            column_name="View" if role == RoleTypes.dms else "Class",
+            data_validator_name="views_or_classes",
+            data_validators=data_validators,
+            no_validation_values=100 * 100,
+            no_rows=100,
+        )
 
-        if column := find_column_with_value(workbook["Properties"], "Value Type"):
-            dv_value_types.add(f"{column}{3}:{column}{no_rows * 100}")
+        if role == RoleTypes.dms:
+            self._add_data_validation(
+                workbook,
+                sheet_name="Properties",
+                column_name="Container",
+                data_validator_name="container",
+                data_validators=data_validators,
+                no_validation_values=100,
+                no_rows=100 * 100,
+            )
 
-        if column := find_column_with_value(workbook["Classes"], "Implements"):
-            dv_implements.add(f"{column}{3}:{column}{no_rows}")
+            self._add_data_validation(
+                workbook,
+                sheet_name="Properties",
+                column_name="Immutable",
+                data_validator_name="immutable",
+                data_validators=data_validators,
+                no_validation_values=2,
+                no_rows=100 * 100,
+            )
 
-    def _make_helper_info_sheet(self, workbook: Workbook, no_rows: int) -> None:
-        """This helper Information sheet is used as source of data for drop down menus creation"""
+            self._add_data_validation(
+                workbook,
+                sheet_name="Views",
+                column_name="In Model",
+                data_validator_name="in_model",
+                data_validators=data_validators,
+                no_validation_values=2,
+                no_rows=100,  # 100 views
+            )
+
+            self._add_data_validation(
+                workbook,
+                sheet_name="Containers",
+                column_name="Used For",
+                data_validator_name="used_for",
+                data_validators=data_validators,
+                no_validation_values=3,
+                no_rows=100,  # 100 views
+            )
+
+    def _make_helper_sheet(
+        self,
+        role: RoleTypes,
+        workbook: Workbook,
+        no_rows: int,
+        base_model: Literal["CogniteCore"],
+        no_concepts: int | None = None,
+    ) -> None:
+        """This helper sheet is used as source of data for drop down menus creation
+
+        Args:
+            role: The role for which the helper sheet is created. Can be either "dms" or "information".
+            workbook: Workbook representation of the Excel file.
+            no_rows: number of rows to add data too that will form base for drop down menus.
+            base_model: The base model to get existing concepts from.
+            no_concepts: The number of concepts to consider. If None, all concepts will be considered.
+
+        """
+
         workbook.create_sheet(title=self._helper_sheet_name)
 
-        for dtype_counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE.values()):
+        for value_type_counter, value_type in enumerate(_DATA_TYPE_BY_DMS_TYPE.values()):
+            value_type_as_str = value_type.dms._type.casefold() if role == RoleTypes.dms else value_type.xsd
             # skip types which require special handling or are surpassed by CDM
-            if dtype.xsd in ["enum", "timeseries", "sequence", "file", "json"]:
+            if value_type_as_str in ["enum", "timeseries", "sequence", "file", "json"]:
                 continue
-            workbook[self._helper_sheet_name].cell(row=dtype_counter + 1, column=2, value=dtype.xsd)
-
-        # Add Cognite Core Data Views:
-        for concept_counter, concept in enumerate(COGNITE_CONCEPTS):
             workbook[self._helper_sheet_name].cell(
-                row=concept_counter + 1,
-                column=3,
-                value=f"cdf_cdm:{concept}(version=v1)",
+                row=value_type_counter + 1,
+                column=self._helper_sheet_column_indexes_by_names["Value Type"],
+                value=value_type_as_str,
             )
+
+        value_type_counter += 1
+
+        if concepts := get_base_concepts(base_model, no_concepts):
+            for concept_counter, concept in enumerate(concepts):
+                workbook[self._helper_sheet_name].cell(
+                    row=concept_counter + 1,
+                    column=self._helper_sheet_column_indexes_by_names["Implements"],
+                    value=concept,
+                )
+            concept_counter += 1
+        else:
+            concept_counter = 0
+
+        views_or_classes_sheet = "Views" if role == RoleTypes.dms else "Classes"
+        view_or_class_column = "View" if role == RoleTypes.dms else "Class"
 
         for i in range(no_rows):
             workbook[self._helper_sheet_name].cell(
                 row=i + 1,
-                column=1,
-                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+                column=self._helper_sheet_column_indexes_by_names[view_or_class_column],
+                value=f'=IF(ISBLANK({views_or_classes_sheet}!A{i + 3}), "", {views_or_classes_sheet}!A{i + 3})',
             )
+
             workbook[self._helper_sheet_name].cell(
-                row=dtype_counter + i + 2,
-                column=2,
-                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+                row=concept_counter + i + 1,
+                column=self._helper_sheet_column_indexes_by_names["Implements"],
+                value=f'=IF(ISBLANK({views_or_classes_sheet}!A{i + 3}), "", {views_or_classes_sheet}!A{i + 3})',
             )
+
             workbook[self._helper_sheet_name].cell(
-                row=concept_counter + i + 2,
-                column=3,
-                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+                row=value_type_counter + i + 1,
+                column=self._helper_sheet_column_indexes_by_names["Value Type"],
+                value=f'=IF(ISBLANK({views_or_classes_sheet}!A{i + 3}), "", {views_or_classes_sheet}!A{i + 3})',
             )
+
+            if role == RoleTypes.dms:
+                workbook[self._helper_sheet_name].cell(
+                    row=i + 1,
+                    column=self._helper_sheet_column_indexes_by_names["Container"],
+                    value=f'=IF(ISBLANK(Containers!A{i + 3}), "", Containers!A{i + 3})',
+                )
+
+        if role == RoleTypes.dms:
+            for i, value in enumerate([True, False, ""]):
+                workbook[self._helper_sheet_name].cell(
+                    row=i + 1,
+                    column=self._helper_sheet_column_indexes_by_names["In Model"],
+                    value=cast(bool | str, value),
+                )
+
+            for i, value in enumerate(["node", "edge", "all"]):
+                workbook[self._helper_sheet_name].cell(
+                    row=i + 1,
+                    column=self._helper_sheet_column_indexes_by_names["Used For"],
+                    value=value,
+                )
 
         workbook[self._helper_sheet_name].sheet_state = "hidden"
 
-    def _add_dms_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
-        """Adds drop down menus to specific columns for fast and accurate data entry
-        in the DMS rules.
+    def _add_data_validation(
+        self,
+        workbook: Workbook,
+        sheet_name: str,
+        column_name: str,
+        data_validator_name: str,
+        data_validators: dict,
+        no_validation_values: int,
+        no_rows: int,
+    ) -> None:
+        """Adds data validation to a column in a sheet.
 
         Args:
             workbook: Workbook representation of the Excel file.
-            no_rows: number of rows to add drop down menus. Defaults to 100*100.
+            sheet_name: The name of the sheet to add the data validation to.
+            column_name: The name of the column to add the data validation to.
+            data_validator_name: The name of the data validation to add.
+            data_validators: A dictionary to store the data validators.
+            no_validation_values: The number of validation values to add.
+            no_rows: The number of rows to add the data validation to.
 
-        !!! note "Why no_rows=100?"
-            Maximum number of views per data model is 100, thus this value is set accordingly
-
-        !!! note "Why defining individual data validation per desired column?
+        !!! note "Why defining individual data validation per desired column?"
             This is due to the internal working of openpyxl. Adding same validation to
             different column leads to unexpected behavior when the openpyxl workbook is exported
-            as and Excel file. Probably, the validation is not copied to the new column,
-            but instead reference to the data validation object is added.
+            as and Excel file.
+
+        !!! note "Why starting at row 3?"
+            This is due to the header rows in the sheet. The first two rows are reserved for the header.
         """
 
-        self._make_helper_dms_sheet(workbook, no_rows)
-
-        # We need create individual data validation and cannot re-use the same one due
-        # the internals of openpyxl
-        dv_views = generate_data_validation(self._helper_sheet_name, "A", no_header_rows=0, no_rows=no_rows)
-        dv_containers = generate_data_validation(self._helper_sheet_name, "B", no_header_rows=0, no_rows=no_rows)
-        dv_value_types = generate_data_validation(self._helper_sheet_name, "C", no_header_rows=0, no_rows=no_rows)
-        dv_implements = generate_data_validation(
+        # CREATE VALIDATOR
+        data_validators[data_validator_name] = generate_data_validation(
             self._helper_sheet_name,
-            "F",
+            get_column_letter(self._helper_sheet_column_indexes_by_names[column_name]),
             no_header_rows=0,
-            no_rows=no_rows + len(COGNITE_CONCEPTS),
+            no_validation_values=no_validation_values,
         )
 
-        dv_immutable = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
-        dv_in_model = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
-        dv_used_for = generate_data_validation(self._helper_sheet_name, "E", no_header_rows=0, no_rows=3)
+        # REGISTER VALIDATOR TO SPECIFIC WORKBOOK SHEET
+        workbook[sheet_name].add_data_validation(data_validators[data_validator_name])
 
-        workbook["Properties"].add_data_validation(dv_views)
-        workbook["Properties"].add_data_validation(dv_containers)
-        workbook["Properties"].add_data_validation(dv_value_types)
-        workbook["Properties"].add_data_validation(dv_immutable)
-        workbook["Views"].add_data_validation(dv_in_model)
-        workbook["Views"].add_data_validation(dv_implements)
-        workbook["Containers"].add_data_validation(dv_used_for)
-
-        # we multiply no_rows with 100 since a view can have max 100 properties per view
-        if column := find_column_with_value(workbook["Properties"], "View"):
-            dv_views.add(f"{column}{3}:{column}{no_rows * 100}")
-
-        if column := find_column_with_value(workbook["Properties"], "Container"):
-            dv_containers.add(f"{column}{3}:{column}{no_rows * 100}")
-
-        if column := find_column_with_value(workbook["Properties"], "Value Type"):
-            dv_value_types.add(f"{column}{3}:{column}{no_rows * 100}")
-
-        if column := find_column_with_value(workbook["Properties"], "Immutable"):
-            dv_immutable.add(f"{column}{3}:{column}{no_rows * 100}")
-
-        if column := find_column_with_value(workbook["Views"], "In Model"):
-            dv_in_model.add(f"{column}{3}:{column}{no_rows}")
-
-        if column := find_column_with_value(workbook["Views"], "Implements"):
-            dv_implements.add(f"{column}{3}:{column}{no_rows}")
-
-        if column := find_column_with_value(workbook["Containers"], "Used For"):
-            dv_used_for.add(f"{column}{3}:{column}{no_rows}")
-
-    def _make_helper_dms_sheet(self, workbook: Workbook, no_rows: int) -> None:
-        """This helper DMS sheet is used as source of data for drop down menus creation"""
-        workbook.create_sheet(title=self._helper_sheet_name)
-
-        for dtype_counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
-            if dtype in ["enum", "timeseries", "sequence", "file", "json"]:
-                continue
-            workbook[self._helper_sheet_name].cell(row=dtype_counter + 1, column=3, value=dtype)
-
-        # Add Cognite Core Data Views:
-        for concept_counter, concept in enumerate(COGNITE_CONCEPTS):
-            workbook[self._helper_sheet_name].cell(
-                row=concept_counter + 1,
-                column=6,
-                value=f"cdf_cdm:{concept}(version=v1)",
-            )
-
-        for i in range(no_rows):
-            workbook[self._helper_sheet_name].cell(
-                row=i + 1,
-                column=1,
-                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
-            )
-            workbook[self._helper_sheet_name].cell(
-                row=i + 1,
-                column=2,
-                value=f'=IF(ISBLANK(Containers!A{i + 3}), "", Containers!A{i + 3})',
-            )
-            workbook[self._helper_sheet_name].cell(
-                row=dtype_counter + i + 2,
-                column=3,
-                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
-            )
-            workbook[self._helper_sheet_name].cell(
-                row=concept_counter + i + 2,
-                column=6,
-                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
-            )
-
-        for i, value in enumerate([True, False, ""]):
-            workbook[self._helper_sheet_name].cell(row=i + 1, column=4, value=cast(bool | str, value))
-
-        for i, value in enumerate(["node", "edge", "all"]):
-            workbook[self._helper_sheet_name].cell(row=i + 1, column=5, value=value)
-
-        workbook[self._helper_sheet_name].sheet_state = "hidden"
+        # APPLY VALIDATOR TO SPECIFIC COLUMN
+        if column_letter := find_column_with_value(workbook[sheet_name], column_name):
+            data_validators[data_validator_name].add(f"{column_letter}{3}:{column_letter}{3 + no_rows}")
 
     def _create_sheet_with_header(
         self,
