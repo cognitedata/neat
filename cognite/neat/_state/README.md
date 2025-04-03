@@ -17,7 +17,7 @@ stateDiagram-v2
         Conceptual --> Conceptual: conceptual transformer
         Physical --> Physical: physical transformer
         EmptyState --> excel_importer: Excel/YAML importer
-        state joni_state <<join>>
+        state excel_importer <<join>>
             excel_importer --> Conceptual
             excel_importer --> Physical
 ```
