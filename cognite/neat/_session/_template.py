@@ -194,7 +194,7 @@ class TemplateAPI:
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
-        return ExcelExporter().template(RoleTypes.information, path, base_model, no_concepts)
+        return ExcelExporter(base_model=base_model, no_concepts=no_concepts).template(RoleTypes.information, path)
 
     def extension(
         self,

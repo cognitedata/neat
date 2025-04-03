@@ -92,6 +92,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         hide_internal_columns: bool = True,
         include_properties: Literal["same-space", "all"] = "all",
         add_drop_downs: bool = True,
+        base_model: Literal["CogniteCore"] | None = None,
+        no_concepts: int | None = None,
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -104,6 +106,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self.hide_internal_columns = hide_internal_columns
         self.include_properties = include_properties
         self.add_drop_downs = add_drop_downs
+        self.base_model = base_model
+        self.no_concepts = no_concepts
 
     @property
     def description(self) -> str:
@@ -122,8 +126,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self,
         role: RoleTypes,
         filepath: Path,
-        base_model: Literal["CogniteCore"] = "CogniteCore",
-        no_concepts: int | None = None,
     ) -> None:
         """This method will create an spreadsheet template for data modeling depending on the role.
 
@@ -155,7 +157,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self._adjust_column_widths(workbook)
         self._hide_internal_columns(workbook)
 
-        self._add_drop_downs(role, workbook, base_model, no_concepts)
+        self._add_drop_downs(role, workbook)
 
         try:
             workbook.save(filepath)
@@ -213,8 +215,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self,
         role: RoleTypes,
         workbook: Workbook,
-        base_model: Literal["CogniteCore"] = "CogniteCore",
-        no_concepts: int | None = None,
     ) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry
         for both DMS and Information rules.
@@ -222,8 +222,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         Args:
             role: The role for which the drop downs are created. Can be either "dms" or "information".
             workbook: Workbook representation of the Excel file.
-            base_model: The base model to get existing concepts from.
-            no_concepts: The number of concepts to consider. If None, all concepts will be considered.
 
         !!! note "Why defining individual data validation per desired column?
             This is due to the internal working of openpyxl. Adding same validation to
@@ -237,7 +235,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             maximum number of views/classes is 100, we need to add 100*100 rows.
         """
 
-        self._make_helper_sheet(role, workbook, 100, base_model, no_concepts)
+        self._make_helper_sheet(role, workbook, 100)
 
         data_validators: dict[str, DataValidation] = {}
 
@@ -320,8 +318,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         role: RoleTypes,
         workbook: Workbook,
         no_rows: int,
-        base_model: Literal["CogniteCore"],
-        no_concepts: int | None = None,
     ) -> None:
         """This helper sheet is used as source of data for drop down menus creation
 
@@ -329,9 +325,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             role: The role for which the helper sheet is created. Can be either "dms" or "information".
             workbook: Workbook representation of the Excel file.
             no_rows: number of rows to add data too that will form base for drop down menus.
-            base_model: The base model to get existing concepts from.
-            no_concepts: The number of concepts to consider. If None, all concepts will be considered.
-
         """
 
         workbook.create_sheet(title=self._helper_sheet_name)
@@ -349,7 +342,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         value_type_counter += 1
 
-        if concepts := get_base_concepts(base_model, no_concepts):
+        if self.base_model and (concepts := get_base_concepts(self.base_model, self.no_concepts)):
             for concept_counter, concept in enumerate(concepts):
                 workbook[self._helper_sheet_name].cell(
                     row=concept_counter + 1,
