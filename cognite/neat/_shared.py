@@ -1,5 +1,5 @@
 import sys
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Hashable, Iterator, Sequence
 from dataclasses import dataclass
 from typing import Any, SupportsIndex, TypeAlias, TypeVar, overload
@@ -75,3 +75,15 @@ class NeatList(list, Sequence[T_NeatObject]):
 
 Triple: TypeAlias = tuple[URIRef, URIRef, Literal | URIRef]
 InstanceType: TypeAlias = URIRef
+
+
+class Action(ABC):
+    """This is a base class for all actions in NEAT.
+
+    An action is an import/extraction/rule transformation/graph transformation that modifies the NeatState.
+    """
+
+    @property
+    @abstractmethod
+    def description(self) -> str:
+        raise NotImplementedError

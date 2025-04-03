@@ -16,7 +16,7 @@ from ._base import BaseTransformerStandardised, RowTransformationOutput
 
 
 class SplitMultiValueProperty(BaseTransformerStandardised):
-    description: str = (
+    _description: str = (
         "SplitMultiValueProperty is a transformer that splits a "
         "multi-value property into multiple single-value properties."
     )
@@ -88,7 +88,7 @@ class SplitMultiValueProperty(BaseTransformerStandardised):
 
 
 class ConvertLiteral(BaseTransformerStandardised):
-    description: str = "ConvertLiteral is a transformer that improve data typing of a literal value."
+    _description: str = "ConvertLiteral is a transformer that improve data typing of a literal value."
     _use_only_once: bool = False
     _need_changes = frozenset({})
 
@@ -152,7 +152,7 @@ class ConvertLiteral(BaseTransformerStandardised):
 
 
 class LiteralToEntity(BaseTransformerStandardised):
-    description = "Converts a literal value to new entity"
+    _description = "Converts a literal value to new entity"
 
     def __init__(
         self, subject_type: URIRef | None, subject_predicate: URIRef, entity_type: str, new_property: str | None = None
@@ -237,7 +237,7 @@ class LiteralToEntity(BaseTransformerStandardised):
 
 
 class ConnectionToLiteral(BaseTransformerStandardised):
-    description = "Converts an entity connection to a literal value"
+    _description = "Converts an entity connection to a literal value"
 
     def __init__(self, subject_type: URIRef | None, subject_predicate: URIRef) -> None:
         self.subject_type = subject_type
@@ -309,7 +309,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
 
 
 class SetType(BaseTransformerStandardised):
-    description = "Set the type of an instance based on a property"
+    _description = "Set the type of an instance based on a property"
 
     def __init__(
         self,

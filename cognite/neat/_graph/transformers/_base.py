@@ -1,6 +1,6 @@
 import dataclasses
 import warnings
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from collections.abc import Iterator
 from typing import ClassVar, TypeAlias, cast
 
@@ -8,7 +8,7 @@ from rdflib import Graph
 from rdflib.query import ResultRow
 
 from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._shared import Triple
+from cognite.neat._shared import Action, Triple
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
 
@@ -25,8 +25,8 @@ class RowTransformationOutput:
     instances_modified_count: int = 0
 
 
-class BaseTransformer(ABC):
-    description: str
+class BaseTransformer(Action):
+    _description: str
     _use_only_once: bool = False
     _need_changes: ClassVar[frozenset[str]] = frozenset()
 
@@ -34,15 +34,23 @@ class BaseTransformer(ABC):
     def transform(self, graph: Graph) -> None:
         raise NotImplementedError()
 
+    @property
+    def description(self) -> str:
+        return self._description
 
-class BaseTransformerStandardised(ABC):
+
+class BaseTransformerStandardised(Action):
     """Standardised base transformer to use in case a transformer is adding or removing triples from a graph. If you
     are doing more specialised operations, please overwrite the .transform() method.
     """
 
-    description: str
+    _description: str
     _use_only_once: bool = False
     _need_changes: ClassVar[frozenset[str]] = frozenset()
+
+    @property
+    def description(self) -> str:
+        return self._description
 
     @abstractmethod
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:

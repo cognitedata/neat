@@ -6,14 +6,14 @@ from rdflib import URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models import InformationRules
-from cognite.neat._shared import Triple
+from cognite.neat._shared import Action, Triple
 from cognite.neat._utils.auxiliary import class_html_doc
 
 if TYPE_CHECKING:
     from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 
-class BaseExtractor:
+class BaseExtractor(Action):
     """This is the base class for all extractors. It defines the interface that
     extractors must implement.
     """
@@ -32,6 +32,10 @@ class BaseExtractor:
     @classmethod
     def _repr_html_(cls) -> str:
         return class_html_doc(cls)
+
+    @property
+    def description(self) -> str:
+        return "MISSING DESCRIPTION"
 
 
 class KnowledgeGraphExtractor(BaseExtractor):

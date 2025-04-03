@@ -25,7 +25,7 @@ from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformati
 
 
 class AddAssetDepth(BaseTransformerStandardised):
-    description: str = "Adds depth of asset in the asset hierarchy and optionally types asset based on depth"
+    _description: str = "Adds depth of asset in the asset hierarchy and optionally types asset based on depth"
     _use_only_once: bool = True
     _need_changes = frozenset({str(extractors.AssetsExtractor.__name__)})
 
@@ -75,7 +75,7 @@ class AddAssetDepth(BaseTransformerStandardised):
 
 
 class BaseAssetConnector(BaseTransformerStandardised, ABC):
-    description: str = "Connects assets to other cognite resources, thus forming bi-directional connection"
+    _description: str = "Connects assets to other cognite resources, thus forming bi-directional connection"
     _use_only_once: bool = True
 
     def _count_query(self) -> str:
@@ -232,7 +232,7 @@ class AssetEventConnector(BaseAssetConnector):
 
 
 class AssetRelationshipConnector(BaseTransformerStandardised):
-    description: str = "Connects assets via relationships"
+    _description: str = "Connects assets via relationships"
     _use_only_once: bool = True
     _need_changes = frozenset(
         {
@@ -333,7 +333,7 @@ class RelationshipAsEdgeTransformer(BaseTransformer):
         {"sourceExternalId", "targetExternalId", "externalId", "sourceType", "targetType"}
     )
     _RELATIONSHIP_NODE_TYPES: tuple[str, ...] = tuple(["Asset", "Event", "File", "Sequence", "TimeSeries"])
-    description = "Converts relationships to edge"
+    _description = "Converts relationships to edge"
     _use_only_once: bool = True
     _need_changes = frozenset({extractors.RelationshipsExtractor.__name__})
 
@@ -508,7 +508,7 @@ class LookupRelationshipSourceTarget(BaseTransformerStandardised):
     lookup the externalID of the source and target and replaces the literals with the URIRef of the entity.
     """
 
-    description = "Lookup relationships source and target externalId"
+    _description = "Lookup relationships source and target externalId"
     _use_only_once: bool = True
     _need_changes = frozenset({extractors.RelationshipsExtractor.__name__})
 
