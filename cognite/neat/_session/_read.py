@@ -512,7 +512,7 @@ class CSVReadAPI(BaseReadAPI):
         neat.read.csv("url_or_path_to_csv_file", type=type_described_in_table, primary_key=column_with_identifier)
         ```
 
-    !!! note "read.csv method requires NEATEngine plug-in"
+    !!! note "Method read.csv requires NEATEngine plug-in"
     """
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
