@@ -12,7 +12,7 @@ from cognite.neat._rules.transformers import VerifiedRulesTransformer
 from cognite.neat._store import NeatGraphStore, NeatRulesStore
 from cognite.neat._utils.upload import UploadResultList
 
-from ._state import EmptyState, State
+from ._state import EmptyState, InternalState
 from ._types import Action
 from .exception import InvalidStateTransition
 
@@ -30,7 +30,7 @@ class NeatState:
     def __init__(self) -> None:
         self._rule_store = NeatRulesStore()
         self._graph_store = NeatGraphStore.from_memory_store()
-        self._state: State = EmptyState(self._rule_store, self._graph_store)
+        self._state: InternalState = EmptyState(self._rule_store, self._graph_store)
 
     @property
     def status(self) -> str:
