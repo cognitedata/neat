@@ -5,11 +5,19 @@ to ensure valid state transitions. The diagram below shows the state machine:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> EmptyState
-    EmptyState --> Instances: extractor
-    EmptyState --> Conceptual: importer
-    EmptyState --> Physical: DMSImporter
-    Instances --> Conceptual: infer
-    Conceptual --> Physical: convert
+    state excel_importer <<fork>>
+        [*] --> EmptyState
+        EmptyState --> Instances: extractor
+        Instances --> Instances: graph transformer
+        EmptyState --> Conceptual: importer
+        EmptyState --> Physical: DMS importer
+        Instances --> Conceptual: infer
+        Instances --> Conceptual: importer
+        Conceptual --> Physical: convert
+        Conceptual --> Conceptual: conceptual transformer
+        Physical --> Physical: physical transformer
+        EmptyState --> excel_importer: Excel/YAML importer
+        state joni_state <<join>>
+            excel_importer --> Conceptual
+            excel_importer --> Physical
 ```
-
