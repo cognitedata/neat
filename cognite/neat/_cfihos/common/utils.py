@@ -230,7 +230,7 @@ def get_relation_target_if_eligible(key, container_external_id, entities, proper
         and property_type == data_modeling.DirectRelation()
     ):
         return get_entity_relation_target(key, container_external_id, entities)
-    return "undefined"  # None
+    return "#N/A"  # None
 
 
 def generate_neat_rules_sheet(
