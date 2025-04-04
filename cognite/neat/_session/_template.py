@@ -9,6 +9,7 @@ from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.exporters import ExcelExporter
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import InformationInputRules
+from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     AddCogniteProperties,
@@ -173,6 +174,20 @@ class TemplateAPI:
         if last_rules and not issues.has_errors:
             self._state.last_reference = last_rules
         return issues
+
+    def conceptual_model(self, io: Any) -> None:
+        """This method will create a template for a conceptual data modeling
+
+        Args:
+            io: file path to the Excel sheet
+
+        """
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+
+        ExcelExporter().template(RoleTypes.information, path)
+
+        return None
 
     def extension(self, io: Any, output: str | Path | None = None) -> IssueList:
         """Creates a template for an extension of a Cognite model.
