@@ -1,0 +1,3 @@
+"CFIHOS unique id","CFIHOS name","CFIHOS description","created date","modified date","terminated date","change request number","status","CFIHOS definition file"
+"CFIHOS-00000001","site","A geographical surface that can be identified on a map","2021-10-06T17:17:05.556Z","2021-10-06T17:17:05.556Z",,"FR3","STANDARD","entities"
+"CFIHOS-00000002","process unit","A decomposition of the high level Facility function into more granular sub-functions","2021-10-06T17:17:05.556Z","2021-10-06T17:17:05.556Z",,"FR3","STANDARD","entities"

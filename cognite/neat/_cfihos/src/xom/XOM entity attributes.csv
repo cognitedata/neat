@@ -1,0 +1,3 @@
+"CFIHOS unique id","name","definition","note / comment","example","format","change request number","status","created date","modified date","terminated date"
+"CFIHOS-10000001","area code","A code that uniquely identifies the area within the plant",,,"Text, max 10 characters","FR3","STANDARD","2021-10-06T16:45:08.844Z","2021-10-06T16:45:08.844Z",
+"CFIHOS-10000002","area name","A name describing the location of an area within the plant",,,"Text, max 100 characters","FR3","STANDARD","2021-10-06T16:45:08.844Z","2021-10-06T16:45:08.844Z",
