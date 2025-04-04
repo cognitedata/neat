@@ -185,7 +185,9 @@ class TemplateAPI:
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
-        return ExcelExporter().template(RoleTypes.information, path)
+        ExcelExporter().template(RoleTypes.information, path)
+
+        return None
 
     def extension(self, io: Any, output: str | Path | None = None) -> IssueList:
         """Creates a template for an extension of a Cognite model.
