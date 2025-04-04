@@ -1,13 +1,11 @@
 import pathlib
 from dataclasses import dataclass, field
 
-import pandas as pd
-
 from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.common.reader import read_yaml
+from cognite.neat._cfihos.common.utils import collect_model_subset
 from cognite.neat._cfihos.dms.container import create_container_from_property_struct_dict
 from cognite.neat._cfihos.dms.views import build_views_from_containers, build_views_from_entities
-from cognite.neat._cfihos.common.utils import collect_model_subset
 from cognite.neat._cfihos.processing.processor import Processor
 
 logging = log_init(f"{__name__}", "i")
@@ -38,6 +36,13 @@ class base_starter_class:
         self.domain_model_config = self.get_domain_model_config(self.model_processors_config_path)
         self.processor_config = {k: v for k, v in self.domain_model_config.items() if k == "model_processors_config"}
         self.containers_indexes = {k: v for k, v in self.domain_model_config.items() if k == "containers_indexes"}
+        self.container_space = self.domain_model_config["container_data_model_space"]
+        self.views_space = self.domain_model_config["views_data_model_space"]
+        self.model_version = self.domain_model_config["model_version"]
+        self.model_creator = self.domain_model_config["model_creator"]
+        self.model_name = self.domain_model_config["data_model_name"]
+        self.model_description = self.domain_model_config["data_model_description"]
+        self.model_external_id = self.domain_model_config["data_model_external_id"]
 
     @property
     def model_entities(self):
@@ -46,11 +51,23 @@ class base_starter_class:
     @property
     def model_properties(self):
         return self._model_properties
-    
+
     @property
     def map_dms_id_to_entity_id(self):
-        return self._map_dms_id_to_entity_id 
-    
+        return self._map_dms_id_to_entity_id
+
+    @property
+    def scopes(self):
+        return self.domain_model_config["scopes"]
+
+    @property
+    def scopes(self):
+        return self.domain_model_config["scopes"]
+
+    @property
+    def scopes(self):
+        return self.domain_model_config["scopes"]
+
     @property
     def scopes(self):
         return self.domain_model_config["scopes"]
@@ -88,12 +105,10 @@ class base_starter_class:
         self._model_entities = model_processor.model_entities
 
     def build_containers_model(self) -> cfihosReadResult:
-        containers_dm_space = "xom_draft_domain_model_containers"
-        containers_model_Version = "1"
         # Setup containers from models
         logging.info(f"STEP 2: Started upserting {len(self._model_properties)} container properties ...")
         containers = create_container_from_property_struct_dict(
-            space=containers_dm_space,
+            space=self.container_space,
             property_data=self._model_properties,
             containers_indexes=self.containers_indexes["containers_indexes"],
         )
@@ -102,7 +117,7 @@ class base_starter_class:
         logging.info(f"STEP 3: Started upserting {len(containers)} population views on-top of containers ...")
 
         lst_views, lst_properties = build_views_from_containers(
-            version=containers_model_Version,
+            version=self.model_version,
             containers=containers,
             entities=self.model_entities,
         )
@@ -113,12 +128,12 @@ class base_starter_class:
             "role": "DMS Architect",
             "dataModelType": "enterprise",
             "schema": "complete",
-            "space": self.domain_model_config["container_data_model_space"],
-            "name": self.domain_model_config["data_model_name"],
-            "description": self.domain_model_config["data_model_description"],
-            "external_id": self.domain_model_config["data_model_external_id"],
-            "version": self.domain_model_config["model_version"],
-            "creator": self.domain_model_config["model_creator"],
+            "space": self.container_space,
+            "name": self.model_name,
+            "description": self.model_description,
+            "external_id": self.model_external_id,
+            "version": self.model_version,
+            "creator": self.model_creator,
         }
 
         return {
@@ -129,40 +144,40 @@ class base_starter_class:
         }
 
     def build_scoped_views_models(self, scope) -> cfihosReadResult:
-        containers_dm_space = "xom_draft_domain_model_containers"
-        views_dm_space = "xom_draft_domain_model_views"
-        views_model_Version = "1"
+        views_scope = ""
+        for sub_scope in self.domain_model_config["scopes"]:
+            if sub_scope["scope_name"] == scope:
+                views_scope = sub_scope
+                break
 
-        
         scoped_model = collect_model_subset(
             full_model=self.model_entities,
             scope_config=self.domain_model_config["scope_config"],
-            scope=scope["scope_subset"],
+            scope=views_scope["scope_subset"],
             map_dms_id_to_model_id=self.map_dms_id_to_entity_id,
         )
         lst_entity_views, lst_entity_properties = build_views_from_entities(
-            containers_space=containers_dm_space,
-            views_space=views_dm_space,
-            version=views_model_Version,
+            containers_space=self.container_space,
+            views_space=self.views_space,
+            version=self.model_version,
             entities=scoped_model,
-        ) 
+        )
 
         logging.info(f"STEP 4: Started building {len(scoped_model)} scoped entity views")
 
- 
-
         return {
-                    "Properties": lst_entity_properties,
-                    "Containers": [],
-                    "Views": lst_entity_views,
-                    "Metadata":  {
-                        "role": "DMS Architect",
-                        "dataModelType": "enterprise",
-                        "schema": "complete",
-                        "space": views_dm_space,
-                        "name": "cfihos_" + scope["scope_name"],
-                        "description": scope["scope_description"],
-                        "external_id": "cfihos_" + scope["scope_name"],
-                        "version": self.domain_model_config["model_version"],
-                        "creator": self.domain_model_config["model_creator"],
-                    },}
+            "Properties": lst_entity_properties,
+            "Containers": [],
+            "Views": lst_entity_views,
+            "Metadata": {
+                "role": "DMS Architect",
+                "dataModelType": "enterprise",
+                "schema": "complete",
+                "space": self.views_space,
+                "name": "cfihos_" + str.replace(views_scope["scope_name"], " ", "_"),
+                "description": views_scope["scope_description"],
+                "external_id": "cfihos_" + views_scope["scope_name"],
+                "version": self.model_version,
+                "creator": self.model_creator,
+            },
+        }

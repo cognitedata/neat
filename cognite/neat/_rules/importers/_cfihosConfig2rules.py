@@ -78,7 +78,6 @@ class CFIHOSReader:
         self._sheet_prefix = sheet_prefix
         self._seen_files: set[Path] = set()
         self._seen_sheets: set[str] = set()
-        self.scopes = []
 
     @property
     def metadata_sheet_name(self) -> str:
@@ -94,31 +93,33 @@ class CFIHOSReader:
             raise ValueError("No files have been read yet.")
         return self._seen_sheets
 
-    def read_container_model(self, filepath: Path) -> None | ReadResult:  # TODO: the return should be an objetct lke ReadReslut
+    def read_container_model(
+        self, filepath: Path
+    ) -> None | ReadResult:  # TODO: the return should be an objetct lke ReadReslut
         self._seen_files.add(filepath)
 
         filePath = str(filepath)  # TODO: this is a temp solution. path should be a path object and pass to processor
         cfihos_starter = base_starter_class(filePath)
         cfihos_starter.process_model()
         cfihos_rules = cfihos_starter.build_containers_model()
-        self.scopes = cfihos_starter.scopes
 
         # cfihosResult = ReadResult(Properties=sheets["Properties"], Containers=sheets["Containers"], Views=sheets["Views"], Metadata=sheets["Metadata"])
 
         return cfihos_rules
-    
-    def read_views_model(self, filepath: Path,scope = "") -> None | ReadResult:  # TODO: the return should be an objetct lke ReadReslut
+
+    def read_views_model(
+        self, filepath: Path, scope=""
+    ) -> None | ReadResult:  # TODO: the return should be an objetct lke ReadReslut
         self._seen_files.add(filepath)
 
         filePath = str(filepath)  # TODO: this is a temp solution. path should be a path object and pass to processor
         cfihos_starter = base_starter_class(filePath)
         cfihos_starter.process_model()
         cfihos_rules = cfihos_starter.build_scoped_views_models(scope)
-        self.scopes = cfihos_starter.scopes
 
         # cfihosResult = ReadResult(Properties=sheets["Properties"], Containers=sheets["Containers"], Views=sheets["Views"], Metadata=sheets["Metadata"])
 
-        return cfihos_rules    
+        return cfihos_rules
 
 
 class CFIHOSImporter(BaseImporter[T_InputRules]):
@@ -128,10 +129,9 @@ class CFIHOSImporter(BaseImporter[T_InputRules]):
         filepath (Path): The path to the Excel file.
     """
 
-    def __init__(self, filepath: Path, model_type = "containers", scope = "") -> None:
+    def __init__(self, filepath: Path, model_type="containers", scope="") -> None:
         self.filepath = filepath
         self.scope = scope
-        self.scopes= []
         self.model_type = model_type
 
     def to_rules(self) -> ReadRules[T_InputRules]:
@@ -142,7 +142,6 @@ class CFIHOSImporter(BaseImporter[T_InputRules]):
         user_reader = CFIHOSReader()
         if self.model_type == "containers":
             cfihos_read = user_reader.read_container_model(self.filepath)
-            self.scopes = user_reader.scopes
         elif self.model_type == "views":
             cfihos_read = user_reader.read_views_model(self.filepath, self.scope)
 

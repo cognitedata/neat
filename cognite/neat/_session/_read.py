@@ -93,7 +93,6 @@ class CFIHOSReadAPI(BaseReadAPI):
 
     def __init__(self, state: SessionState, verbose: bool) -> None:
         super().__init__(state, verbose)
-        self.scopes = []
 
     def __call__(self, io: Any) -> IssueList:
         """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
@@ -107,23 +106,30 @@ class CFIHOSReadAPI(BaseReadAPI):
             This is an alpha feature and is subject to change without notice.
             It is expected to have some limitations and may not work as expected in all cases.
         """
+        # reader = NeatReader.create(io)
+        # path = reader.materialize_path()
+
+        # my_importer = importers.CFIHOSImporter(path)
+        # end_result = self._state.rule_import(my_importer)
+        # self.scopes = my_importer.scopes
+
+        return None
+
+    def read_container_model(self, io: Any) -> IssueList:
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
         my_importer = importers.CFIHOSImporter(path)
-        end_result = self._state.rule_import(my_importer)
-        self.scopes = my_importer.scopes
 
-        return end_result
-    
+        return self._state.rule_import(my_importer)
+
     def read_scoped_model(self, io: Any, scope) -> IssueList:
-
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
-        my_importer = importers.CFIHOSImporter(path,model_type="views", scope=scope)
+        my_importer = importers.CFIHOSImporter(path, model_type="views", scope=scope)
 
-        return self._state.rule_import(my_importer)    
+        return self._state.rule_import(my_importer)
 
 
 @session_class_wrapper

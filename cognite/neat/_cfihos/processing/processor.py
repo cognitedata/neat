@@ -1,9 +1,7 @@
 import copy
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List
 
-import numpy as np
 import pandas as pd
 
 from cognite.neat._cfihos.common.constants import CONTAINER_PROPERTY_LIMIT
@@ -29,9 +27,9 @@ class Processor:
     """
 
     # List of available processor
-    model_processors_config: List[dict]
+    model_processors_config: list[dict]
 
-    model_processors: List[CfihosProcessor] = field(
+    model_processors: list[CfihosProcessor] = field(
         default_factory=list, init=False
     )  # Will become a List[Union[]] when/if new processor types are created
 
@@ -43,13 +41,13 @@ class Processor:
     _df_properties_metadata: pd.DataFrame = field(default=None, init=False)
 
     # Model entities
-    _model_entities = {}
-    _model_properties = {}
-    _model_property_groups = {}
+    _model_entities: dict = field(default_factory=dict)
+    _model_properties: dict = field(default_factory=dict)
+    _model_property_groups: dict = field(default_factory=dict)
 
     _id_prefix_replace_filters = {"CFIHOS-": "_", "EPC-": "_"}
 
-    _property_groupings = []
+    _property_groupings: list = field(default_factory=list)
 
     # Available processors
     map_model_processor_type_to_processor_class = {"CFIHOS": CfihosProcessor}
@@ -57,11 +55,11 @@ class Processor:
     # Source of input data (CSVs, Github, CDF)
     source: DataSource = field(default=DataSource.default(), init=False)
 
-    _map_entity_name_to_dms_name: Dict = field(default_factory=dict, init=False)
-    _map_entity_id_to_dms_id: Dict = field(default_factory=dict, init=False)
-    _map_entity_name_to_entity_id: Dict = field(default_factory=dict, init=False)
-    _map_dms_id_to_entity_id: Dict = field(default_factory=dict, init=False)
-    _map_entity_id_to_dms_name: Dict = field(default_factory=dict, init=False)
+    _map_entity_name_to_dms_name: dict = field(default_factory=dict, init=False)
+    _map_entity_id_to_dms_id: dict = field(default_factory=dict, init=False)
+    _map_entity_name_to_entity_id: dict = field(default_factory=dict, init=False)
+    _map_dms_id_to_entity_id: dict = field(default_factory=dict, init=False)
+    _map_entity_id_to_dms_name: dict = field(default_factory=dict, init=False)
 
     @property
     def model_entities(self):
@@ -552,7 +550,6 @@ class Processor:
                 self._model_property_groups.setdefault(property_group, []).append(property_row)
                 entities[unique_entity_id][EntityStructure.PROPERTIES].append(property_row)
 
-
         self._add_inherited_properties(entities)
         self._model_entities = entities
 
@@ -599,9 +596,9 @@ class Processor:
             for prop_id in df_property_group[PropertyStructure.ID]:
                 id_number = int(self._get_property_id_number(prop_id))
                 if id_number % container_property_limit == 0:
-                    property_group_suffix = f"{id_number-(id_number-1)%container_property_limit}_{id_number-(id_number-1)%container_property_limit+container_property_limit}"
+                    property_group_suffix = f"{id_number - (id_number - 1) % container_property_limit}_{id_number - (id_number - 1) % container_property_limit + container_property_limit}"
                 else:
-                    property_group_suffix = f"{id_number-id_number%container_property_limit+1}_{id_number-id_number%container_property_limit + container_property_limit + 1}"
+                    property_group_suffix = f"{id_number - id_number % container_property_limit + 1}_{id_number - id_number % container_property_limit + container_property_limit + 1}"
 
                 property_group_suffix += (
                     "_ext" if any(prop_id.lower().endswith(ext) for ext in property_extention_suffix_list) else ""
@@ -631,9 +628,9 @@ class Processor:
             .groups
         )
         property_groups = {
-            f"{key}_{i//container_property_limit+ 1}"
-            if i > 1
-            else key: sorted(x for x in list(properties))[i : i + container_property_limit]
+            f"{key}_{i // container_property_limit + 1}" if i > 1 else key: sorted(x for x in list(properties))[
+                i : i + container_property_limit
+            ]
             for key, properties in property_groups.items()
             for i in range(0, len(properties), container_property_limit)
         }

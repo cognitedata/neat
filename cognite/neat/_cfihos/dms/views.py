@@ -1,3 +1,5 @@
+import json
+
 from cognite.client.data_classes import data_modeling
 from cognite.client.data_classes.data_modeling import data_types
 
@@ -113,6 +115,47 @@ def _topological_sort(graph: dict):
     return stack
 
 
+# def _create_view_filter(space: str, entity_id: str, inherited_entities: list[str]) -> dict:
+#     """
+#     Creates a view filter for an entity in a given space, incorporating inherited entities. The filter is used to
+#     determine which entities should be included based on their IDs and type groups.
+
+#     Args:
+#         space (str): The space identifier where the entities reside.
+#         entity_id (str): The unique identifier of the entity.
+#         inherited_entities (list[str]): A list of inherited entity IDs.
+
+#     Returns:
+#         dict: A dictionary representing the view filter in the form of a nested dictionary structure.
+
+#     """
+
+#     return {
+#         "and": [
+#             {
+#                 "in": {
+#                     "property": [space, "EntityTypeGroup", "entityType"],
+#                     "values": list(
+#                         set(
+#                             list(
+#                                 [
+#                                     id[1:] if id.startswith("ECFIHOS") or id.startswith("TCFIHOS") else id
+#                                     for id in inherited_entities
+#                                     if id
+#                                 ]
+#                                 + [
+#                                     id[1:] if id.startswith("ECFIHOS") or id.startswith("TCFIHOS") else id
+#                                     for id in list([entity_id])
+#                                 ]
+#                             )
+#                         )
+#                     ),
+#                 }
+#             }
+#         ]
+#     }
+
+
 def _create_view_filter(space: str, entity_id: str, inherited_entities: list[str]) -> dict:
     """
     Creates a view filter for an entity in a given space, incorporating inherited entities. The filter is used to
@@ -127,30 +170,62 @@ def _create_view_filter(space: str, entity_id: str, inherited_entities: list[str
         dict: A dictionary representing the view filter in the form of a nested dictionary structure.
 
     """
-    return {
-        "and": [
+
+    return (
+        "rawFilter("
+        + json.dumps(
             {
-                "in": {
-                    "property": [space, "EntityTypeGroup", "entityType"],
-                    "values": list(
-                        set(
-                            list(
-                                [
-                                    id[1:] if id.startswith("ECFIHOS") or id.startswith("TCFIHOS") else id
-                                    for id in inherited_entities
-                                    if id
-                                ]
-                                + [
-                                    id[1:] if id.startswith("ECFIHOS") or id.startswith("TCFIHOS") else id
-                                    for id in list([entity_id])
-                                ]
-                            )
-                        )
-                    ),
-                }
+                "and": [
+                    {
+                        "in": {
+                            "property": [space, "EntityTypeGroup", "entityType"],
+                            "values": list(
+                                set(
+                                    [
+                                        id[1:] if id.startswith("ECFIHOS") or id.startswith("TCFIHOS") else id
+                                        for id in inherited_entities
+                                        if id
+                                    ]
+                                    + [
+                                        entity_id[1:]
+                                        if entity_id.startswith("ECFIHOS") or entity_id.startswith("TCFIHOS")
+                                        else entity_id
+                                    ]
+                                )
+                            ),
+                        }
+                    }
+                ]
             }
-        ]
-    }
+        )
+        + ")"
+    )
+
+
+def create_has_data_filter(container_space: str, container_external_id: str) -> dict:
+    """
+    Creates a filter for a specific container in a given space. The filter is used to determine which entities should
+    be included based on their presence in the specified container.
+    Args:
+        container_space (str): The space identifier where the container resides.
+        container_external_id (str): The unique identifier of the container.
+    Returns:
+        dict: A dictionary representing the filter in the form of a nested dictionary structure.
+    """
+    # return {
+    #     "and": [
+    #         {
+    #             "hasData": [
+    #                 {
+    #                     "type": "container",
+    #                     "space": container_space,
+    #                     "externalId": container_external_id,
+    #                 }
+    #             ]
+    #         }
+    #     ]
+    # }
+    return None
 
 
 def create_views_from_containers(
@@ -434,9 +509,12 @@ def build_views_from_entities(
             for parent_ids in entity_data[EntityStructure.FULL_INHERITANCE].values()
             for parent_id in parent_ids
         ]
-        view_filter = _create_view_filter(containers_space, entity_id, inheritance_tree.get(entity_id, []))
 
-
+        view_filter = (
+            create_has_data_filter(containers_space, entity_id)
+            if entity_data[EntityStructure.FIRSTCLASSCITIZEN]
+            else _create_view_filter(containers_space, entity_id, inheritance_tree.get(entity_id, []))
+        )
 
         prop_data_dict = {}
         for prop_data in entity_data[EntityStructure.PROPERTIES]:
@@ -479,27 +557,27 @@ def build_views_from_entities(
                     }
                 )
 
-                lst_properties.append(
-                    {
-                        "View": entity_data[EntityStructure.ID],
-                        "View Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
-                        "Name": prop_data[PropertyStructure.NAME],
-                        "Description": prop_data[PropertyStructure.DESCRIPTION],
-                        "Connection": None,
-                        "Value Type": "text",
-                        "Nullable": True,
-                        "Immutable": False,
-                        "Is List": False,
-                        "Default": None,
-                        "Reference": None,
-                        "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
-                        "Index": None,
-                        "Constraint": None,
-                        "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Property (linage)": prop_data[PropertyStructure.ID].replace("_rel", ""),
-                    }
-                )
+                # lst_properties.append(
+                #     {
+                #         "View": entity_data[EntityStructure.ID],
+                #         "View Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                #         "Name": prop_data[PropertyStructure.NAME],
+                #         "Description": prop_data[PropertyStructure.DESCRIPTION],
+                #         "Connection": None,
+                #         "Value Type": "text",
+                #         "Nullable": True,
+                #         "Immutable": False,
+                #         "Is List": False,
+                #         "Default": None,
+                #         "Reference": None,
+                #         "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                #         "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                #         "Index": None,
+                #         "Constraint": None,
+                #         "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                #         "Property (linage)": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                #     }
+                # )
 
                 prop_data_dict[prop_data[PropertyStructure.ID].replace("_rel", "")] = data_modeling.MappedPropertyApply(
                     name=prop_data[PropertyStructure.NAME],
@@ -553,7 +631,7 @@ def build_views_from_entities(
                         "Default": None,
                         "Reference": None,
                         "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),      
+                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
                         "Index": None,
                         "Constraint": None,
                         "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
@@ -561,37 +639,37 @@ def build_views_from_entities(
                     }
                 )
 
-            # add entityType property in case the entity is not FCC
-            if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]:
-                lst_properties.append(
-                    {
-                        "View": entity_data[EntityStructure.ID],
-                        "View Property": "entityType",
-                        "Name": "Entity Type",
-                        "Description": "",
-                        "Connection": None,
-                        "Value Type": "text",
-                        "Nullable": False,
-                        "Immutable": False,
-                        "Is List": False,
-                        "Default": None,
-                        "Reference": None,
-                        "Container": containers_space + ":EntityTypeGroup",
-                        "Container Property": "entityType",      
-                        "Index": None,
-                        "Constraint": None,
-                        "Class (linage)": containers_space + ":EntityTypeGroup",
-                        "Property (linage)": "entityType",
-                    }
-                )
-                prop_data_dict["entityType"] = data_modeling.MappedPropertyApply(
-                    name="Entity Type",
-                    container=data_modeling.ContainerId(
-                        space=containers_space,
-                        external_id="EntityTypeGroup",
-                    ),
-                    container_property_identifier="entityType",
-                )
+        # add entityType property in case the entity is not FCC
+        if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]:
+            lst_properties.append(
+                {
+                    "View": entity_data[EntityStructure.ID],
+                    "View Property": "entityType",
+                    "Name": "Entity Type",
+                    "Description": "",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Nullable": False,
+                    "Immutable": False,
+                    "Is List": False,
+                    "Default": None,
+                    "Reference": None,
+                    "Container": containers_space + ":EntityTypeGroup",
+                    "Container Property": "entityType",
+                    "Index": None,
+                    "Constraint": None,
+                    "Class (linage)": containers_space + ":EntityTypeGroup",
+                    "Property (linage)": "entityType",
+                }
+            )
+            prop_data_dict["entityType"] = data_modeling.MappedPropertyApply(
+                name="Entity Type",
+                container=data_modeling.ContainerId(
+                    space=containers_space,
+                    external_id="EntityTypeGroup",
+                ),
+                container_property_identifier="entityType",
+            )
 
         # Avoid creating views for types without properties - e.g: empty abstract classes
         if len(entity_data[EntityStructure.PROPERTIES]) > 0:
@@ -600,33 +678,31 @@ def build_views_from_entities(
                     "View": entity_data[EntityStructure.ID],
                     "Name": entity_data[EntityStructure.NAME],
                     "Description": entity_data[EntityStructure.DESCRIPTION],
-                    "Implements": [parent_id for parent_id in parents_ext_ids] if parents_ext_ids else None,
-                    "Filter": view_filter
-                    if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]
-                    else None,
+                    "Implements": ",".join(parents_ext_ids) if parents_ext_ids else None,
+                    "Filter": view_filter if view_filter else None,
                     "In Model": True,
                     "Class (linage)": entity_data[EntityStructure.ID],
                 }
             )
 
-            dm_view = data_modeling.ViewApply(
-                space=views_space,
-                external_id=entity_data[EntityStructure.ID],
-                version=version,
-                name=entity_data[EntityStructure.NAME],
-                description=entity_data[EntityStructure.DESCRIPTION],
-                filter=data_modeling.Filter.load(view_filter)
-                if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]
-                else None,
-                implements=[
-                    data_modeling.ViewId(space=views_space, external_id=parent_id, version=version)
-                    for parent_id in parents_ext_ids
-                ]
-                if parents_ext_ids
-                else None,
-                properties=prop_data_dict,
-            )
-            dm_views.append(dm_view)
+            # dm_view = data_modeling.ViewApply(
+            #     space=views_space,
+            #     external_id=entity_data[EntityStructure.ID],
+            #     version=version,
+            #     name=entity_data[EntityStructure.NAME],
+            #     description=entity_data[EntityStructure.DESCRIPTION],
+            #     filter=data_modeling.Filter.load(view_filter)
+            #     if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]
+            #     else None,
+            #     implements=[
+            #         data_modeling.ViewId(space=views_space, external_id=parent_id, version=version)
+            #         for parent_id in parents_ext_ids
+            #     ]
+            #     if parents_ext_ids
+            #     else None,
+            #     properties=prop_data_dict,
+            # )
+            # dm_views.append(dm_view)
         else:
             logging.warning(
                 f"no properties assinged to {entity_data[EntityStructure.ID]}. The view will not be created"
