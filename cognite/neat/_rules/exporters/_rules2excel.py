@@ -106,7 +106,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             data.close()
         return None
 
-    def template(self, role: RoleTypes, filepath: Path) -> None:
+    def template(self, role: RoleTypes, filepath: Path | None = None) -> None | Workbook:
         """This method will create an spreadsheet template for data modeling depending on the role.
 
         Args:
@@ -142,11 +142,14 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         else:
             self._add_info_drop_downs(workbook)
 
-        try:
-            workbook.save(filepath)
-        finally:
-            workbook.close()
-        return None
+        if filepath:
+            try:
+                workbook.save(filepath)
+            finally:
+                workbook.close()
+            return None
+
+        return workbook
 
     def export(self, rules: VerifiedRules) -> Workbook:
         workbook = Workbook()
