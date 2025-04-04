@@ -20,16 +20,16 @@ NEAT is a domain expert centric and developer friendly solution for rapid:
 NEAT is using open and globally recognized standards maintained by the [World Wide Web Consortium (W3C)](https://www.w3.org/RDF/).
 NEAT represents an essential tool for creation of standardized, machine-actionable, linked and semantic (meta)data.
 
-> NEAT is a funny acronym derived from k**N**owl**Ed**ge gr**A**ph **T**ransformer produced by [ACRONIMIFY](https://acronymify.com/NEAT/?q=knowledge+graph+transformer).
+> NEAT is a funny acronym derived from k**N**owl**Ed**ge gr**A**ph **T**ransformer produced using [ACRONIMIFY](https://acronymify.com/NEAT/?q=knowledge+graph+transformer).
 
 
 ## History
 
 NEAT emerged from years of experience in semantic tooling and knowledge graph development. The foundation was laid in 2020 with [sheet2rdf](https://github.com/nikokaoja/sheet2rdf), an Excel-based tool that trained data stewards to build domain-specific knowledge graphs and supported CI/CD processes in the Dutch Covid program and european wind energy community.
 
-By mid of 2022, sheet2rdf was used in several POC in Cognite. As Cognite's Data Modeling Service (DMS)) development progressed, the need for simplified data modeling experience led to demonstration of proto-NEAT, known as [sheet2fdm](https://github.com/cognitedata/sheet2fdm), an extension of sheet2rdf, enabling semantic data model definitions in OWL, SHACL, Python and GraphQL (see e.g., [wind energy data model](https://cognitedata.github.io/wind-energy-data-model/)).
+By mid of 2022, sheet2rdf was used in several POCs in Cognite. As Cognite's Data Modeling Service (DMS) development progressed, the need for simplified data modeling experience led to demonstration of proto-NEAT, known as [sheet2fdm](https://github.com/cognitedata/sheet2fdm), an extension of sheet2rdf, enabling semantic data model definitions in OWL, SHACL, Python and GraphQL (see e.g., [wind energy data model](https://cognitedata.github.io/wind-energy-data-model/)) using a simplified version of sheet2rdf Excel template.
 
-Presented in various forums in 2022, this approach paved the way for NEAT’s formal development in November 2022 to enable cost-saving and empowerment of Cognite customers to self-sufficiently maintain and onboard knowledge graphs  to Cognite Data Fusion.
+Presented in various forums in 2022, this approach paved the way for NEAT’s formal development in November 2022 to enable cost-saving and empowerment of Cognite customers to self-sufficiently maintain and onboard knowledge graphs to Cognite Data Fusion.
 
 
 ## Authorship
