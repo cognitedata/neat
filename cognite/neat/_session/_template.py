@@ -9,6 +9,7 @@ from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.exporters import ExcelExporter
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import InformationInputRules
+from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     AddCogniteProperties,
@@ -184,9 +185,11 @@ class TemplateAPI:
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
+        ExcelExporter().template(RoleTypes.information, path)
+
         return None
 
-    def extension(self, io: Any, output: str | Path | None = None) -> IssueList:
+    def extension(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
         """Creates a template for an extension of a Cognite model.
 
         The input is a spreadsheet of a conceptual model in which the concepts are defined
@@ -206,8 +209,9 @@ class TemplateAPI:
             output: The output spreadsheet. If None, the output will be the same
                 as the input with `_extension` added to the name.
             dummy_property: The dummy property to use as placeholder for user-defined properties
-                            for each user-defined concept. When converting a data model, it is recommended to have at least
-                            one property for each concept. This ensures that you follow that recommendation.
+                for each user-defined concept, and to alleviate need for usage of filters in
+                physical data model. When converting a data model, it is recommended to have at least
+                one property for each concept. This ensures that you follow that recommendation.
         """
         ExperimentalFlags.extension.warn()
         reader = NeatReader.create(io)

@@ -264,6 +264,12 @@ properties:
   property_: pathLastUpdatedTime
   value_type: dateTime
 - class_: PowerGeneratingUnit
+  max_count: 1.0
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/powerGeneratingUnitGUID
+  property_: powerGeneratingUnitGUID
+  value_type: string
+- class_: PowerGeneratingUnit
   description: An automatically updated reference to the top-level asset of the hierarchy.
   max_count: 1.0
   min_count: 0
@@ -516,3 +522,9 @@ properties:
   neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/type
   property_: type
   value_type: cdf_cdm:CogniteAssetType(version=v1)
+- class_: WindTurbine
+  max_count: 1.0
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/windTurbineGUID
+  property_: windTurbineGUID
+  value_type: string
