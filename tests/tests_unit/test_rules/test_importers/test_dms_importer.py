@@ -6,6 +6,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._issues import catch_issues
+from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
 from cognite.neat._rules.exporters import DMSExporter
 from cognite.neat._rules.importers import DMSImporter, ExcelImporter
 from cognite.neat._rules.models import DMSRules, DMSSchema
@@ -134,6 +135,19 @@ class TestDMSImporter:
 
         assert len(issues) == 0
 
+    def test_import_schema_with_multi_value_hack(self) -> None:
+        importer = DMSImporter(SCHEMA_WITH_MULTI_VALUE_HACK)
+
+        dms_rules: DMSRules | None = None
+        with catch_issues() as issues:
+            input_rules = importer.to_rules()
+            dms_rules = VerifyDMSRules(validate=True, client=None).transform(input_rules)
+
+        assert sorted(issues) == [
+            DirectRelationMissingSourceWarning(dm.ViewId("neat", "DirectRelationView", "1"), "direct")
+        ]
+        assert isinstance(dms_rules, DMSRules)
+
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(
     data_model=dm.DataModelApply(
@@ -258,6 +272,74 @@ SCHEMA_WITH_REFERENCED_ENUM = DMSSchema(
                         container=dm.ContainerId("cdf_cdm", "CogniteTimeSeries"),
                         container_property_identifier="type",
                     )
+                },
+            )
+        ]
+    ),
+)
+
+
+# We have users that sets direct relations property.source to None, and have
+# reverse direct relation through this direct relation to get a multi-value behavior in Search.
+SCHEMA_WITH_MULTI_VALUE_HACK = DMSSchema(
+    data_model=dm.DataModelApply(
+        space="neat",
+        external_id="data_model",
+        version="1",
+        views=[
+            dm.ViewId("neat", "DirectRelationView", "1"),
+            dm.ViewId("neat", "ReverseView1", "1"),
+            dm.ViewId("neat", "ReverseView2", "1"),
+        ],
+    ),
+    spaces=SpaceApplyDict([dm.SpaceApply(space="neat")]),
+    views=ViewApplyDict(
+        [
+            dm.ViewApply(
+                space="neat",
+                external_id="DirectRelationView",
+                version="1",
+                properties={
+                    "direct": dm.MappedPropertyApply(
+                        container=dm.ContainerId("neat", "container"),
+                        container_property_identifier="direct",
+                        source=None,
+                        name="direct",
+                        description="Direction Relation",
+                    )
+                },
+            ),
+            dm.ViewApply(
+                space="neat",
+                external_id="ReverseView1",
+                version="1",
+                properties={
+                    "reverse1": dm.MultiReverseDirectRelationApply(
+                        source=dm.ViewId("neat", "DirectRelationView", "1"),
+                        through=dm.PropertyId(dm.ViewId("neat", "DirectRelationView", "1"), "direct"),
+                    ),
+                },
+            ),
+            dm.ViewApply(
+                space="neat",
+                external_id="ReverseView2",
+                version="1",
+                properties={
+                    "reverse2": dm.MultiReverseDirectRelationApply(
+                        source=dm.ViewId("neat", "DirectRelationView", "1"),
+                        through=dm.PropertyId(dm.ViewId("neat", "DirectRelationView", "1"), "direct"),
+                    ),
+                },
+            ),
+        ]
+    ),
+    containers=ContainerApplyDict(
+        [
+            dm.ContainerApply(
+                space="neat",
+                external_id="container",
+                properties={
+                    "direct": dm.ContainerProperty(type=dm.DirectRelation()),
                 },
             )
         ]
