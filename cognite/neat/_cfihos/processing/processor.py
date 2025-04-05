@@ -45,7 +45,7 @@ class Processor:
     _model_properties: dict = field(default_factory=dict)
     _model_property_groups: dict = field(default_factory=dict)
 
-    _id_prefix_replace_filters = {"CFIHOS-": "_", "EPC-": "_"}
+    _id_prefix_replace_filters = {"CFIHOS-": "_", "XOM-": "_"}
 
     _property_groupings: list = field(default_factory=list)
 
@@ -101,7 +101,7 @@ class Processor:
     def _setup_property_groups(self):
         # TODO: Hardcoded
         self._property_groupings = [f"CFIHOS_{idx}" for idx in range(0, 10)]
-        self._property_groupings.append("EPC_")
+        self._property_groupings.append("XOM_")
 
     def _sync_processor_mapping_tables(self):
         """Synchronizes mapping tables across the processor to ensure global mapping between models.
@@ -607,7 +607,7 @@ class Processor:
                     self._df_properties[PropertyStructure.ID] == prop_id, PropertyStructure.PROPERTY_GROUP
                 ] = (
                     f"{property_group_prefix}{property_group_suffix}"
-                    if property_group_prefix == "EPC_"
+                    if property_group_prefix == "XOM_"
                     else f"{property_group_prefix}_{property_group_suffix}"
                 )
 
