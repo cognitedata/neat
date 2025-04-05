@@ -1,3 +1,5 @@
 "parent entity name","parent CFIHOS unique ID","CFIHOS unique ID","section","name","definition","note / comment","data source","change request number","status","created date","modified date","terminated date","is first class citizen"
-,,"CFIHOS-00000001","A.2.01","site","A geographical surface that can be identified on a map",,"Owner/Operator","FR3","STANDARD","2021-10-06T17:17:05.556Z","2021-10-06T17:17:05.556Z",,True
-,,"CFIHOS-00000002","A.2.03","process unit","A decomposition of the high level Facility function into more granular sub-functions","This facility breakdown structure is decided by the process engineer.","Owner/Operator","FR3","STANDARD","2021-10-06T17:17:05.556Z","2021-10-06T17:17:05.556Z",,True
+,,"XOM-00000001",,"custom site entity","custom description",,"Owner/Operator","FR3","STANDARD","2025-04-06T17:17:05.556Z","2025-04-06T17:17:05.556Z",,True
+,,"XOM-00000002",,"custom process unit entity","custom description",,"Owner/Operator","FR3","STANDARD","2025-04-06T17:17:05.556Z","2025-04-06T17:17:05.556Z",,True
+,,"XOM-00000003",,"custom entity 3","custom description",,"Owner/Operator","FR3","STANDARD","2025-04-06T17:17:05.556Z","2025-04-06T17:17:05.556Z",,False
+,,"XOM-00000004",,"custom entity 4","custom description",,"Owner/Operator","FR3","STANDARD","2025-04-06T17:17:05.556Z","2025-04-06T17:17:05.556Z",,False

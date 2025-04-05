@@ -1,3 +1,11 @@
 "property name","property definition","property data type","property data type length","unit of measure dimension code","picklist name","CFIHOS unique id","reason for having property","synonym","created date","modified date","terminated date","change request number","status"
-"tag status","Identify in which engineering phase the Tag is.","Text",40,,"engineering status","CFIHOS-10000025",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030","TERMINATED"
-"production critical item","Identifies if the loss of the Tag function would immediately have a cost impact (e.g., loss of production).","Boolean",3,,,"CFIHOS-10000027",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030;FR74","TERMINATED"
+"custom property 1","custom definition 1","Text",40,,,"XOM-10000001",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 2","custom definition 2","Text",40,,,"XOM-10000002",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 3","custom definition 3","Text",40,,,"XOM-10000003",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 4","custom definition 4","Text",40,,,"XOM-10000004",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 5","custom definition 5","Text",40,,,"XOM-10000005",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 6","custom definition 6","Text",40,,,"XOM-10000006",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 7","custom definition 7","Text",40,,,"XOM-10000007",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 8","custom definition 8","Text",40,,,"XOM-10000008",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 9","custom definition 9","Text",40,,,"XOM-10000009",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,
+"custom property 10","custom definition 10","Text",40,,,"XOM-10000010",,,"2017-02-15T19:47:29.464Z","2021-10-12T13:20:46.735Z","2021-10-12T13:20:46.735Z","CR0030",,

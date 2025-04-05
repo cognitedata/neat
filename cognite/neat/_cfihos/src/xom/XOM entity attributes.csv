@@ -1,3 +1,11 @@
 "CFIHOS unique id","name","definition","note / comment","example","format","change request number","status","created date","modified date","terminated date"
-"CFIHOS-10000001","area code","A code that uniquely identifies the area within the plant",,,"Text, max 10 characters","FR3","STANDARD","2021-10-06T16:45:08.844Z","2021-10-06T16:45:08.844Z",
-"CFIHOS-10000002","area name","A name describing the location of an area within the plant",,,"Text, max 100 characters","FR3","STANDARD","2021-10-06T16:45:08.844Z","2021-10-06T16:45:08.844Z",
+"XOM-10000001","custom property 1","custom definition 1",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000002","custom property 2","custom definition 2",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000003","custom property 3","custom definition 3",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000004","custom property 4","custom definition 4",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000005","custom property 5","custom definition 5",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000006","custom property 6","custom definition 6",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000007","custom property 7","custom definition 7",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000008","custom property 8","custom definition 8",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000009","custom property 9","custom definition 9",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
+"XOM-10000010","custom property 10","custom definition 10",,,"Text","FR3","STANDARD","2025-04-06T16:45:08.844Z","2025-04-06T16:45:08.844Z",
