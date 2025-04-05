@@ -1,7 +1,6 @@
-import pytest
-
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors, transformers
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._store import NeatGraphStore
 from tests.data import InstanceData
 
@@ -35,11 +34,12 @@ def test_asset_sequence_connector_transformer():
 def test_asset_sequence_connector_transformer_warning():
     store = NeatGraphStore.from_memory_store()
 
-    with pytest.warns(
-        UserWarning,
-        match="Cannot transform graph store with AssetSequenceConnector, missing one or more required change",
-    ):
-        store.transform(transformers.AssetSequenceConnector())
+    issues1 = store.transform(transformers.AssetSequenceConnector())
+    assert len(issues1) == 1
+    assert issues1[0] == NeatValueError(
+        "Cannot transform graph store with AssetSequenceConnector, missing one or more required changes "
+        "AssetsExtractor and SequencesExtractor"
+    )
 
     # Extract assets
     store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
@@ -50,5 +50,6 @@ def test_asset_sequence_connector_transformer_warning():
     # Connect assets and time series
     store.transform(transformers.AssetSequenceConnector())
 
-    with pytest.warns(UserWarning, match="Cannot transform graph store with AssetSequenceConnector, already applied"):
-        store.transform(transformers.AssetSequenceConnector())
+    issues2 = store.transform(transformers.AssetSequenceConnector())
+    assert len(issues2) == 1
+    assert issues2[0] == NeatValueError("Cannot transform graph store with AssetSequenceConnector, already applied")

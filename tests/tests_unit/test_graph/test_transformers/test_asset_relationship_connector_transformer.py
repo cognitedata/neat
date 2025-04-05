@@ -1,7 +1,6 @@
-import pytest
-
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors, transformers
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._store import NeatGraphStore
 from tests.data import InstanceData
 
@@ -43,11 +42,12 @@ def test_asset_relationship_connector_transformer():
 def test_asset_relationship_connector_transformer_warning():
     store = NeatGraphStore.from_memory_store()
 
-    with pytest.warns(
-        UserWarning,
-        match="Cannot transform graph store with AssetRelationshipConnector, missing one or more required change",
-    ):
-        store.transform(transformers.AssetRelationshipConnector())
+    issues1 = store.transform(transformers.AssetRelationshipConnector())
+    assert len(issues1) == 1
+    assert issues1[0] == NeatValueError(
+        "Cannot transform graph store with AssetRelationshipConnector, missing one or more required changes "
+        "AssetsExtractor and RelationshipsExtractor"
+    )
 
     # Extract assets
     store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
@@ -58,5 +58,6 @@ def test_asset_relationship_connector_transformer_warning():
     # Connect assets and time series
     store.transform(transformers.AssetRelationshipConnector())
 
-    with pytest.warns(UserWarning, match="Cannot transform graph store with AssetRelationshipConnector"):
-        store.transform(transformers.AssetRelationshipConnector())
+    issues2 = store.transform(transformers.AssetRelationshipConnector())
+    assert len(issues2) == 1
+    assert issues2[0] == NeatValueError("Cannot transform graph store with AssetRelationshipConnector, already applied")
