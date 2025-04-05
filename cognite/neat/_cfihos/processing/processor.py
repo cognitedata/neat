@@ -453,6 +453,8 @@ class Processor:
         entities = {}
 
         for _, row in self._df_entities.iterrows():
+            if row[EntityStructure.ID]== "XOM-00000001":
+                print("XOM-00000001")
             unique_entity_id = row[EntityStructure.ID]
             # Check for duplicates
             if unique_entity_id in entities:

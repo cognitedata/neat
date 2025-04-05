@@ -755,18 +755,18 @@ class CfihosProcessor(BaseModelInterpreter):
             lambda row: self._get_property_field_type(row)
         )
         df_prop[PropertyStructure.PROPERTY_TYPE] = df_prop["temp_prop_type_dict"].apply(lambda x: x["type"])
-        df_prop[PropertyStructure.TARGET_TYPE] = df_prop.apply(
-            lambda row: self._get_property_field_target_type(row, temp_prop_type_dic_col_name="temp_prop_type_dict"),
-            axis=1,
-        )
+        if len(df_prop) > 0:
+            df_prop[PropertyStructure.TARGET_TYPE] = df_prop.apply(
+                lambda row: self._get_property_field_target_type(row, temp_prop_type_dic_col_name="temp_prop_type_dict"),
+                axis=1,
+            )        
+            df_prop[PropertyStructure.IS_REQUIRED] = df_prop[PropertyStructure.IS_REQUIRED].map(
+                lambda s: self._get_property_field_is_required(s)
+            )
+            df_prop[PropertyStructure.IS_UNIQUE] = df_prop[PropertyStructure.IS_REQUIRED].map(
+                lambda s: self._get_property_field_is_unique(s)
+            )  # TODO: base using is_req to determine both this and above
         df_prop = df_prop.drop(columns=["temp_prop_type_dict"])
-        df_prop[PropertyStructure.IS_REQUIRED] = df_prop[PropertyStructure.IS_REQUIRED].map(
-            lambda s: self._get_property_field_is_required(s)
-        )
-        df_prop[PropertyStructure.IS_UNIQUE] = df_prop[PropertyStructure.IS_REQUIRED].map(
-            lambda s: self._get_property_field_is_unique(s)
-        )  # TODO: base using is_req to determine both this and above
-
         return df_prop
 
     def _get_property_field_is_required(self, s: str) -> bool:
