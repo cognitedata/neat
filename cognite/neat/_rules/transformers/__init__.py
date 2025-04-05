@@ -24,7 +24,7 @@ from ._converters import (
     ToExtensionModel,
     ToSolutionModel,
 )
-from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
+from ._mapping import AsParentPropertyId, IMFRuleMapper, MapOneToOne, RuleMapper
 from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 
 __all__ = [
@@ -36,6 +36,7 @@ __all__ = [
     "ConvertToRules",
     "DMSToInformation",
     "DropModelViews",
+    "IMFRuleMapper",
     "IncludeReferenced",
     "InformationToDMS",
     "MapOneToOne",

@@ -1,11 +1,8 @@
 """This module performs importing of various formats to one of serializations for which
 there are loaders to TransformationRules pydantic class."""
 
-import copy
-import re
 from pathlib import Path
 from typing import Self
-from uuid import UUID
 
 from cognite.client import data_modeling as dm
 
@@ -81,19 +78,15 @@ class IMFImporter(BaseRDFImporter):
         self,
     ) -> dict:
         classes, issue_list = parse_classes(self.graph, CLASSES_QUERY, self.language, self.issue_list)
-        mapped_classes = self._map_to_base_model(classes)
-        compliant_classes = self._make_compliant(mapped_classes, ["class_"])
-
         self.issue_list = issue_list
 
         properties, issue_list = parse_properties(self.graph, PROPERTIES_QUERY, self.language, self.issue_list)
-        compliant_properties = self._make_compliant(properties, ["class_", "property_"])
         self.issue_list = issue_list
 
         components = {
             "Metadata": self._metadata,
-            "Classes": compliant_classes if classes else [],
-            "Properties": compliant_properties if properties else [],
+            "Classes": list(classes.values()) if classes else [],
+            "Properties": list(properties.values()) if properties else [],
         }
 
         return components
@@ -111,46 +104,3 @@ class IMFImporter(BaseRDFImporter):
         return super().from_file(
             filepath, data_model_id, max_number_of_instance, non_existing_node_type, language, source_name
         )
-
-    @classmethod
-    def _map_to_base_model(cls, classes: dict[str, dict]) -> dict[str, dict]:
-        mapped_classes = copy.deepcopy(classes)
-        for key, value in classes.items():
-            if value["implements"] == "Block":
-                mapped_classes[key]["implements"] = "imf_base:Block(version=v1)"
-            elif value["implements"] == "Terminal":
-                mapped_classes[key]["implements"] = "imf_base:Terminal(version=v1)"
-
-        return mapped_classes
-
-    @classmethod
-    def _make_compliant(cls, entities: dict[str, dict], fields_to_update: list) -> list:
-        updated_entities: list = []
-
-        for _, value in entities.items():
-            updated_entity = {**value}
-
-            for field in fields_to_update:
-                updated_entity[field] = cls._fix_entity(value[field], "IMF")
-
-            updated_entities.append(updated_entity)
-
-        return updated_entities
-
-    @classmethod
-    def _fix_entity(cls, entity: str, prefix: str = "prefix") -> str:
-        if cls._is_valid_uuid(entity):
-            entity = prefix + "_" + entity
-
-        entity = re.sub(r"[^_a-zA-Z0-9]+", "_", entity)
-
-        # removing any double underscores that could occur
-        return re.sub(r"[^a-zA-Z0-9]+", "_", entity)
-
-    @classmethod
-    def _is_valid_uuid(cls, uuid_to_test: str, version: int = 4) -> bool:
-        try:
-            uuid_obj = UUID(uuid_to_test, version=version)
-            return str(uuid_obj) == uuid_to_test
-        except ValueError:
-            return False

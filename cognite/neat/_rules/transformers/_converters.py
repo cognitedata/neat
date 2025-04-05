@@ -1,5 +1,6 @@
 import re
 import urllib.parse
+import uuid
 import warnings
 from abc import ABC
 from collections import Counter, defaultdict
@@ -59,6 +60,7 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
 )
 from cognite.neat._rules.models.information import InformationClass, InformationMetadata, InformationProperty
+from cognite.neat._utils.affix import Affix
 from cognite.neat._utils.rdf_ import get_inheritance_path
 from cognite.neat._utils.text import NamingStandardization, to_camel_case
 
@@ -235,6 +237,10 @@ class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, Information
     """Converts input rules to rules with compliant entity IDs that match regex patters used
     by DMS schema components."""
 
+    def __init__(self, affix: Affix):
+        super().__init__()
+        self.affix = affix
+
     @property
     def description(self) -> str:
         return "Ensures externalIDs are compliant with CDF"
@@ -245,45 +251,42 @@ class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, Information
         copy.properties = self._fix_properties(copy.properties)
         return copy
 
-    @classmethod
-    def _fix_entity(cls, entity: str) -> str:
-        entity = re.sub(r"[^_a-zA-Z0-9]+", "_", entity)
-
+    def _fix_entity(self, entity: str) -> str:
         # entity id must start with a letter
-        if not entity[0].isalpha():
-            entity = "prefix_" + entity
+        # and if the entity ids are UUID they are all prefixed
+        if (self._is_valid_uuid(entity)) or (not entity[0].isalpha()):
+            entity = self.affix.applyPrefix(entity)
         # and end with a letter or number
         if not entity[-1].isalnum():
-            entity = entity + "_suffix"
+            entity = self.affix.applySuffix(entity)
 
+        entity = re.sub(r"[^_a-zA-Z0-9]+", "_", entity)
         # removing any double underscores that could occur
         return re.sub(r"[^a-zA-Z0-9]+", "_", entity)
 
-    @classmethod
-    def _fix_class(cls, class_: ClassEntity) -> ClassEntity:
+    def _fix_class(self, class_: ClassEntity) -> ClassEntity:
         if isinstance(class_, ClassEntity) and type(class_.prefix) is str:
             class_ = ClassEntity(
-                prefix=cls._fix_entity(class_.prefix),
-                suffix=cls._fix_entity(class_.suffix),
+                prefix=self._fix_entity(class_.prefix),
+                suffix=self._fix_entity(class_.suffix),
             )
 
         return class_
 
-    @classmethod
     def _fix_value_type(
-        cls, value_type: DataType | ClassEntity | MultiValueTypeInfo
+        self, value_type: DataType | ClassEntity | MultiValueTypeInfo
     ) -> DataType | ClassEntity | MultiValueTypeInfo:
         fixed_value_type: DataType | ClassEntity | MultiValueTypeInfo
 
         # value type specified as MultiValueTypeInfo
         if isinstance(value_type, MultiValueTypeInfo):
             fixed_value_type = MultiValueTypeInfo(
-                types=[cast(DataType | ClassEntity, cls._fix_value_type(type_)) for type_ in value_type.types],
+                types=[cast(DataType | ClassEntity, self._fix_value_type(type_)) for type_ in value_type.types],
             )
 
         # value type specified as ClassEntity instance
         elif isinstance(value_type, ClassEntity):
-            fixed_value_type = cls._fix_class(value_type)
+            fixed_value_type = self._fix_class(value_type)
 
         # this is a DataType instance but also we should default to original value
         else:
@@ -291,23 +294,28 @@ class ToCompliantEntities(VerifiedRulesTransformer[InformationRules, Information
 
         return fixed_value_type
 
-    @classmethod
-    def _fix_classes(cls, definitions: SheetList[InformationClass]) -> SheetList[InformationClass]:
+    def _fix_classes(self, definitions: SheetList[InformationClass]) -> SheetList[InformationClass]:
         fixed_definitions = SheetList[InformationClass]()
         for definition in definitions:
-            definition.class_ = cls._fix_class(definition.class_)
+            definition.class_ = self._fix_class(definition.class_)
             fixed_definitions.append(definition)
         return fixed_definitions
 
-    @classmethod
-    def _fix_properties(cls, definitions: SheetList[InformationProperty]) -> SheetList[InformationProperty]:
+    def _fix_properties(self, definitions: SheetList[InformationProperty]) -> SheetList[InformationProperty]:
         fixed_definitions = SheetList[InformationProperty]()
         for definition in definitions:
-            definition.class_ = cls._fix_class(definition.class_)
-            definition.property_ = cls._fix_entity(definition.property_)
-            definition.value_type = cls._fix_value_type(definition.value_type)
+            definition.class_ = self._fix_class(definition.class_)
+            definition.property_ = self._fix_entity(definition.property_)
+            definition.value_type = self._fix_value_type(definition.value_type)
             fixed_definitions.append(definition)
         return fixed_definitions
+
+    def _is_valid_uuid(self, uuid_to_test: str, version: int = 4) -> bool:
+        try:
+            uuid_obj = uuid.UUID(uuid_to_test, version=version)
+            return str(uuid_obj) == uuid_to_test
+        except ValueError:
+            return False
 
 
 class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]

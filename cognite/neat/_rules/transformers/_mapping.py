@@ -1,3 +1,4 @@
+import copy
 import warnings
 from abc import ABC
 from collections import defaultdict
@@ -11,9 +12,18 @@ from cognite.neat._issues.warnings import PropertyOverwritingWarning
 from cognite.neat._rules.models import DMSRules, SheetList
 from cognite.neat._rules.models.data_types import Enum
 from cognite.neat._rules.models.dms import DMSContainer, DMSEnum, DMSProperty
-from cognite.neat._rules.models.entities import ClassEntity, ContainerEntity, ViewEntity
+from cognite.neat._rules.models.entities import ClassEntity, ContainerEntity, ViewEntity, ViewEntityList
 
 from ._base import VerifiedRulesTransformer
+
+IMF_IMPLEMENTS_REPLACEMENTS = {
+    ViewEntity(space="imf_instances", externalId="Block", version="v1"): ViewEntity(
+        space="imf_base", externalId="Block", version="v1"
+    ),
+    ViewEntity(space="imf_instances", externalId="Terminal", version="v1"): ViewEntity(
+        space="imf_base", externalId="Terminal", version="v1"
+    ),
+}
 
 
 class MapOntoTransformers(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
@@ -230,6 +240,30 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
     @property
     def description(self) -> str:
         return f"Mapping to {self.mapping.metadata.as_data_model_id()!r}."
+
+
+class IMFRuleMapper(RuleMapper):
+    def __init__(self):
+        super().__init__(ViewEntityList())
+        self._initialized = False
+
+    def transform(self, rules: DMSRules):
+        if not self._initialized:
+            self.mapping = self._create_imf_mapping_from_rules(rules)
+            self._initialized = True
+
+        return super().transform(rules)
+
+    def _create_imf_mapping_from_rules(self, rules: DMSRules):
+        _mapping = copy.deepcopy(rules)
+
+        for view in _mapping.views:
+            if view.implements is not None:
+                for i, implements in enumerate(view.implements):
+                    if implements in IMF_IMPLEMENTS_REPLACEMENTS:
+                        view.implements[i] = IMF_IMPLEMENTS_REPLACEMENTS[implements]
+
+        return _mapping
 
 
 class AsParentPropertyId(VerifiedRulesTransformer[DMSRules, DMSRules]):

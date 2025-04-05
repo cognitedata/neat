@@ -9,6 +9,7 @@ from cognite.neat._rules.transformers._converters import (
     ToCompliantEntities,
 )
 from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.affix import Affix
 from tests.data import car
 
 
@@ -24,7 +25,7 @@ def car_case() -> tuple[DMSRules, InformationRules, NeatGraphStore]:
         .rules
     )
 
-    info_rules = ToCompliantEntities().transform(info_rules.as_verified_rules())
+    info_rules = ToCompliantEntities(Affix()).transform(info_rules.as_verified_rules())
 
     dms_rules = car.get_car_dms_rules()
 

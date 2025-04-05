@@ -24,14 +24,15 @@ class BaseImporter(ABC, Generic[T_InputRules]):
         raise NotImplementedError()
 
     def _default_metadata(self) -> dict[str, Any]:
+        created_time = self._get_current_time()
         return {
             "schema": "partial",
             "space": "neat",
             "external_id": "NeatImportedDataModel",
             "version": "0.1.0",
             "name": "Neat Imported Data Model",
-            "created": self._get_current_time(),
-            "updated": self._get_current_time(),
+            "created": created_time,
+            "updated": created_time,
             "creator": self._get_username(),
             "description": f"Imported using {type(self).__name__}",
         }

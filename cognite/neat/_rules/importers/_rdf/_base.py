@@ -142,14 +142,15 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
 
     @property
     def _metadata(self) -> dict:
+        created_time = self._get_current_time()
         return {
             "schema": "partial",
             "role": RoleTypes.information,
             "space": self.data_model_id.space,
             "external_id": self.data_model_id.external_id,
             "version": self.data_model_id.version,
-            "created": self._get_current_time(),
-            "updated": self._get_current_time(),
+            "created": created_time,
+            "updated": created_time,
             "name": None,
             "description": f"Data model imported using {type(self).__name__}",
             "creator": "Neat",

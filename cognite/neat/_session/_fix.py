@@ -1,7 +1,6 @@
 from cognite.neat._issues._base import IssueList
-from cognite.neat._rules.transformers import (
-    ToCompliantEntities,
-)
+from cognite.neat._rules.transformers import IMFRuleMapper, ToCompliantEntities
+from cognite.neat._utils.affix import Affix
 
 from ._state import SessionState
 from .exceptions import session_class_wrapper
@@ -23,6 +22,10 @@ class DataModelFixAPI:
         self._state = state
         self._verbose = verbose
 
-    def cdf_compliant_external_ids(self) -> IssueList:
+    def cdf_compliant_external_ids(self, _prefix: str = "prefix", _suffix: str = "suffix") -> IssueList:
         """Convert (information/logical) data model component external ids to CDF compliant entities."""
-        return self._state.rule_transform(ToCompliantEntities())
+
+        return self._state.rule_transform(ToCompliantEntities(Affix(prefix=_prefix, suffix=_suffix)))
+
+    def map_imf_rules(self) -> IssueList:
+        return self._state.rule_transform(IMFRuleMapper())
