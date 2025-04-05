@@ -259,7 +259,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         """Selects the views with data."""
         view_iterations: dict[dm.ViewId, _ViewIterator] = {}
         for view_id, query in view_query_by_id.items():
-            count = self.graph_store.queries.count_of_type(query.rdf_type)
+            count = self.graph_store.queries.select.count_of_type(query.rdf_type)
             if count > 0:
                 view_iterations[view_id] = _ViewIterator(view_id, count, query)
         return view_iterations
@@ -269,7 +269,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if self._space_property is None:
             return issues
         total = sum(it.instance_count for it in view_iterations)
-        properties_by_uriref = self.graph_store.queries.properties()
+        properties_by_uriref = self.graph_store.queries.select.properties()
         space_property_uri = next((k for k, v in properties_by_uriref.items() if v == self._space_property), None)
         if space_property_uri is None:
             error: ResourceNotFoundError[str, str] = ResourceNotFoundError(
@@ -282,7 +282,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             issues.append(error)
             return issues
 
-        instance_iterable = self.graph_store.queries.list_instances_ids_by_space(space_property_uri)
+        instance_iterable = self.graph_store.queries.select.list_instances_ids_by_space(space_property_uri)
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, total, f"Looking up spaces for {total} instances..."
         )
@@ -308,8 +308,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if not self.neat_prefix_by_type_uri:
             return
 
-        count = sum(count for _, count in self.graph_store.queries.summarize_instances())
-        instance_iterable = self.graph_store.queries.list_instances_ids()
+        count = sum(count for _, count in self.graph_store.queries.select.summarize_instances())
+        instance_iterable = self.graph_store.queries.select.list_instances_ids()
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, count, f"Looking up identifiers for {count} instances..."
         )
