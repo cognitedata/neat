@@ -6,7 +6,8 @@ from typing import Generic, TypeVar, Union, get_args, get_origin
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules._shared import ReadRules, Rules, VerifiedRules
-from cognite.neat._rules.models import DMSInputRules, InformationInputRules
+from cognite.neat._rules.models import DMSInputRules, DMSRules, InformationInputRules, InformationRules
+from cognite.neat._shared import Action
 from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
@@ -15,7 +16,7 @@ T_VerifiedIn = TypeVar("T_VerifiedIn", bound=VerifiedRules)
 T_VerifiedOut = TypeVar("T_VerifiedOut", bound=VerifiedRules)
 
 
-class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
+class RulesTransformer(Action, Generic[T_RulesIn, T_RulesOut]):
     """This is the base class for all rule transformers."""
 
     @abstractmethod
@@ -67,3 +68,21 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
 
 
 class VerifiedRulesTransformer(RulesTransformer[T_VerifiedIn, T_VerifiedOut], ABC): ...
+
+
+class ConceptualRulesTransformer(VerifiedRulesTransformer[InformationRules, InformationRules], ABC):
+    """This is the base class for all rule transformers that modify conceptual rules.
+
+    It is intended to be used by the NeatState to signal no state changes.
+    """
+
+    ...
+
+
+class PhysicalRulesTransformer(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
+    """This is the base class for all rule transformers that modify physical rules.
+
+    It is intended to be used by the NeatState to signal no state changes.
+    """
+
+    ...
