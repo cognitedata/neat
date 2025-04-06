@@ -233,6 +233,21 @@ class BaseMetadata(SchemaModel):
     def as_identifier(self) -> str:
         return repr(self.as_data_model_id())
 
+    @classmethod
+    def default(cls) -> "BaseMetadata":
+        """Returns a default instance of the metadata model."""
+        now = datetime.now()
+        return cls(
+            space="pleaseUpdateMe",
+            external_id="PleaseUpdateMe",
+            version="v1",
+            name="Please Update Me",
+            description="Please Update Me",
+            creator=["NEAT"],
+            created=now,
+            updated=now,
+        )
+
 
 class BaseRules(SchemaModel, ABC):
     """
@@ -263,7 +278,7 @@ class BaseRules(SchemaModel, ABC):
                 annotation = annotation.__args__[0]
 
             try:
-                if isinstance(annotation, types.GenericAlias) and get_origin(annotation) is SheetList:
+                if isinstance(annotation, types.GenericAlias) and get_origin(annotation).__name__ == SheetList.__name__:
                     # We know that this is a SheetList, so we can safely access the annotation
                     # which is the concrete type of the SheetEntity.
                     model_fields = get_args(annotation)[0].model_fields  # type: ignore[union-attr]
