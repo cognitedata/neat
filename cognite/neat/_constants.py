@@ -65,76 +65,40 @@ COGNITE_SPACES = frozenset(
     }
 )
 
-COGNITE_CORE_CONCEPTS = frozenset(
-    {
-        "CogniteFile",
-        "CogniteCubeMap",
-        "CogniteCADRevision",
-        "CognitePointCloudVolume",
-        "Cognite360ImageAnnotation",
-        "CogniteAnnotation",
-        "CogniteUnit",
-        "CogniteAsset",
-        "Cognite3DObject",
-        "Cognite3DRevision",
-        "Cognite360Image",
-        "CogniteDiagramAnnotation",
-        "Cognite360ImageCollection",
-        "Cognite360ImageStation",
-        "CognitePointCloudModel",
-        "CogniteTimeSeries",
-        "Cognite3DTransformation",
-        "CogniteEquipment",
-        "Cognite360ImageModel",
-        "CogniteAssetClass",
-        "CogniteAssetType",
-        "CogniteEquipmentType",
-        "Cognite3DModel",
-        "CogniteCADModel",
-        "CognitePointCloudRevision",
-        "CogniteCADNode",
-        "CogniteFileCategory",
-        "CogniteActivity",
-    }
-)
-
-
-COGNITE_CORE_FEATURES = frozenset(
-    {
-        "CogniteDescribable",
-        "CogniteSourceable",
-        "CogniteSourceSystem",
-        "CogniteSchedulable",
-        "CogniteVisualizable",
-    }
-)
-
-COGNITE_3D_CONCEPTS = frozenset(
-    {
-        "Cognite3DModel",
-        "Cognite3DObject",
-        "Cognite3DRevision",
-        "Cognite3DTransformation",
-        "Cognite360Image",
-        "Cognite360ImageAnnotation",
-        "Cognite360ImageCollection",
-        "Cognite360ImageModel",
-        "Cognite360ImageStation",
-        "CogniteCADModel",
-        "CogniteCADNode",
-        "CogniteCADRevision",
-        "CogniteCubeMap",
-        "CognitePointCloudModel",
-        "CognitePointCloudRevision",
-        "CognitePointCloudVolume",
-    }
-)
-
-COGNITE_ANNOTATION = frozenset(
-    {
-        "CogniteAnnotation",
-        "CogniteDiagramAnnotation",
-    }
+COGNITE_CONCEPTS = (
+    "CogniteAsset",
+    "CogniteEquipment",
+    "CogniteActivity",
+    "CogniteTimeSeries",
+    "CogniteFile",
+    "CogniteUnit",
+    "CogniteAssetClass",
+    "CogniteAssetType",
+    "CogniteEquipmentType",
+    "CogniteFileCategory",
+    "CogniteDescribable",
+    "CogniteSourceable",
+    "CogniteSourceSystem",
+    "CogniteSchedulable",
+    "CogniteVisualizable",
+    "CogniteAnnotation",
+    "CogniteDiagramAnnotation",
+    "CogniteCubeMap",
+    "CogniteCADRevision",
+    "CognitePointCloudVolume",
+    "Cognite360ImageAnnotation",
+    "Cognite3DObject",
+    "Cognite3DRevision",
+    "Cognite360Image",
+    "Cognite360ImageCollection",
+    "Cognite360ImageStation",
+    "CognitePointCloudModel",
+    "Cognite3DTransformation",
+    "Cognite360ImageModel",
+    "Cognite3DModel",
+    "CogniteCADModel",
+    "CognitePointCloudRevision",
+    "CogniteCADNode",
 )
 
 DMS_LISTABLE_PROPERTY_LIMIT = 1000
