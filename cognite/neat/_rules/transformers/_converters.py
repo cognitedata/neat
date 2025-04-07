@@ -19,8 +19,7 @@ from rdflib import Namespace
 from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._constants import (
-    COGNITE_CORE_CONCEPTS,
-    COGNITE_CORE_FEATURES,
+    COGNITE_CONCEPTS,
     COGNITE_MODELS,
     COGNITE_SPACES,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
@@ -2011,9 +2010,7 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     """
 
     def __init__(self, views: set[ViewEntity]):
-        if not_in_cognite_core := {view.external_id for view in views} - COGNITE_CORE_CONCEPTS.union(
-            COGNITE_CORE_FEATURES
-        ):
+        if not_in_cognite_core := {view.external_id for view in views} - set(COGNITE_CONCEPTS):
             raise NeatValueError(
                 f"Concept(s) {', '.join(not_in_cognite_core)} is/are not part of the Cognite Core Data Model. Aborting."
             )

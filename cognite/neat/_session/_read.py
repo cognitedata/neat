@@ -511,6 +511,8 @@ class CSVReadAPI(BaseReadAPI):
         column_with_identifier = "UNIQUE_TAG_NAME"
         neat.read.csv("url_or_path_to_csv_file", type=type_described_in_table, primary_key=column_with_identifier)
         ```
+
+    !!! note "Method read.csv requires NEATEngine plug-in"
     """
 
     def __call__(self, io: Any, type: str, primary_key: str) -> None:
@@ -564,6 +566,8 @@ class XMLReadAPI(BaseReadAPI):
             ```python
             neat.read.xml.dexpi("url_or_path_to_dexpi_file")
             ```
+
+        !!! note "Method read.xml.dexpi requires NEATEngine plug-in"
 
         !!! note "This method bundles several graph transformers which"
             - attach values of generic attributes to nodes
@@ -626,6 +630,8 @@ class XMLReadAPI(BaseReadAPI):
             ```python
             neat.read.xml.aml("url_or_path_to_aml_file")
             ```
+
+        !!! note "Method read.xml.aml requires NEATEngine plug-in"
 
         !!! note "This method bundles several graph transformers which"
             - attach values of attributes to nodes

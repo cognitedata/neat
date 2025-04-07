@@ -56,7 +56,7 @@ nav:
   - NeatSession:
       - Session: reference/NeatSession/base.md
       - Read: reference/NeatSession/read.md
-      - Create: reference/NeatSession/create.md
+      - Template: reference/NeatSession/template.md
       - Prepare: reference/NeatSession/prepare.md
       - Fix: reference/NeatSession/fix.md
       - Mapping: reference/NeatSession/mapping.md
