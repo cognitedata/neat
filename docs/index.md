@@ -37,7 +37,7 @@ Presented in various forums in 2022, this approach paved the way for NEAT’s fo
 ### Authors
 The plot below shows the NEAT authorship from the start until present day.
 
-![NEAT authorship](./docs/artifacts/figs/authorship.png)
+![NEAT authorship](./artifacts/figs/authorship.png)
 
 #### Current authors
 - [Nikola Vasiljević](www.linkedin.com/in/thisisnikola)
