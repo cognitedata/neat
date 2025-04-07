@@ -29,7 +29,6 @@ from ._fix import FixAPI
 from ._inspect import InspectAPI
 from ._mapping import MappingAPI
 from ._prepare import PrepareAPI
-from ._read import ReadAPI
 from ._set import SetAPI
 from ._show import ShowAPI
 from ._state import SessionState
@@ -94,7 +93,7 @@ class NeatSession:
             storage_path=Path(storage_path) if storage_path else None,
             client=NeatClient(client) if client else None,
         )
-        self.read = ReadAPI(self._state, verbose)
+
         self.to = ToAPI(self._state, verbose)
         self.fix = FixAPI(self._state, verbose)
         self.prepare = PrepareAPI(self._state, verbose)
