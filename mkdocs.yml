@@ -22,7 +22,7 @@ nav:
           - Introduction: tutorials/introduction/introduction.ipynb
       - Data Modeling:
         - My First Data Model: tutorials/data-modeling/cold_start.ipynb
-        - Extending Core Data Model: tutorials/data-modeling/from-conceptual-to-physical-via-CDM.ipynb
+        - From Conceptual to Physical Data Modeling: tutorials/data-modeling/from-conceptual-to-physical-via-CDM.ipynb
   - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
       - Logical Data Model:
