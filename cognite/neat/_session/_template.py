@@ -189,8 +189,8 @@ class TemplateAPI:
 
         return None
 
-    def extension(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
-        """Creates a template for an extension of a Cognite model.
+    def expand(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
+        """Creates a template for an extension of a Cognite model by expanding properties from CDM.
 
         The input is a spreadsheet of a conceptual model in which the concepts are defined
         and marked with the Cognite concept they are extending. For example, if you have a pump
@@ -218,10 +218,10 @@ class TemplateAPI:
         path = reader.materialize_path()
         if output is None:
             if isinstance(reader, PathReader):
-                output_path = path.with_name(f"{path.stem}_extension{path.suffix}")
+                output_path = path.with_name(f"{path.stem}_expand{path.suffix}")
             else:
                 # The source is not a file, for example, a URL or a stream.
-                output_path = Path.cwd() / f"{path.stem}_extension{path.suffix}"
+                output_path = Path.cwd() / f"{path.stem}_expand{path.suffix}"
         else:
             output_path = Path(output)
 

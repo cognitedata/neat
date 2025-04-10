@@ -276,7 +276,7 @@ class TestExtractToLoadFlow:
     ) -> None:
         neat = NeatSession(cognite_client)
         output_path = tmp_path / "extension_template.xlsx"
-        neat.template.extension(SchemaData.Conceptual.only_concepts_xlsx, output_path)
+        neat.template.expand(SchemaData.Conceptual.only_concepts_xlsx, output_path)
         assert output_path.exists()
         neat.read.excel(output_path)
 
