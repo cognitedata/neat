@@ -144,7 +144,8 @@ class TestExtractToLoadFlow:
             unpack_json=True,
             str_to_ideal_type=True,
         )
-        neat.infer()
+        issues = neat.infer()
+        assert not issues.has_errors
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
         result = neat.to.cdf.data_model(existing="force")
         assert not any(res.error_messages for res in result)
