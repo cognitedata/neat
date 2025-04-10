@@ -240,4 +240,8 @@ class TemplateAPI:
 
                     ExcelExporter(styling="maximal").export_to_file(info, output_path)
         issues.action = "Created extension template"
+
+        # Adding issues to the state in the rule store
+        if issues:
+            self._state.rule_store._last_issues = issues
         return issues
