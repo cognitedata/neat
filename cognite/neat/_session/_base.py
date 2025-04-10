@@ -253,7 +253,7 @@ class NeatSession:
             if not last_entity.dms:
                 return merged_info, None
 
-            extra_dms = InformationToDMS(reserved_properties="warning").transform(extra_info)
+            extra_dms = InformationToDMS(reserved_properties="warning", client=self._state.client).transform(extra_info)
 
             merged_dms = MergeDMSRules(extra_dms).transform(last_entity.dms)
             return merged_info, merged_dms
