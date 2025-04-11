@@ -287,6 +287,23 @@ class TestExtractToLoadFlow:
 
         data_regression.check(model_dict)
 
+    def test_create_extension_template_broken(
+        self, cognite_client: CogniteClient, tmp_path: Path, data_regression: DataRegressionFixture
+    ) -> None:
+        """
+        Test to validate the behavior when field is invalid in the Excel sheet. # noqa
+        The broken_concepts.xlsx example has only one property, which is invalid.
+        Neat should inform the end user what/where is the  when using neat.inspect
+        """
+
+        neat = NeatSession(cognite_client)
+        output_path = tmp_path / "extension_template_broken.xlsx"
+        neat.template.expand(SchemaData.Conceptual.broken_concepts_xlsx, output_path)
+
+        error = neat.inspect.issues()
+
+        assert error["NeatIssue"][0] == "PropertyValueError"
+
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:
         if not isinstance(instance, InstanceApply):
