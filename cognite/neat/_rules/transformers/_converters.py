@@ -19,8 +19,7 @@ from rdflib import Namespace
 from cognite.neat._client import NeatClient
 from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
 from cognite.neat._constants import (
-    COGNITE_CORE_CONCEPTS,
-    COGNITE_CORE_FEATURES,
+    COGNITE_CONCEPTS,
     COGNITE_MODELS,
     COGNITE_SPACES,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
@@ -2011,9 +2010,7 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     """
 
     def __init__(self, views: set[ViewEntity]):
-        if not_in_cognite_core := {view.external_id for view in views} - COGNITE_CORE_CONCEPTS.union(
-            COGNITE_CORE_FEATURES
-        ):
+        if not_in_cognite_core := {view.external_id for view in views} - set(COGNITE_CONCEPTS):
             raise NeatValueError(
                 f"Concept(s) {', '.join(not_in_cognite_core)} is/are not part of the Cognite Core Data Model. Aborting."
             )
@@ -2220,11 +2217,13 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
 
     Args:
         client: The client is used to look up the properties of the parent classes.
+        dummy_property: A dummy property is added to the user defined concepts
 
     """
 
-    def __init__(self, client: NeatClient) -> None:
+    def __init__(self, client: NeatClient, dummy_property: str | None = None) -> None:
         self._client = client
+        self._dummy_property = dummy_property
 
     @property
     def description(self) -> str:
@@ -2267,6 +2266,17 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
                         new_prop = prop.copy(update={"Class": class_entity}, default_prefix=default_space)
                         new_properties.append(new_prop)
                         properties_by_class[class_entity][prop.property_] = new_prop
+
+            if self._dummy_property:
+                new_properties.append(
+                    InformationInputProperty(
+                        class_=class_entity,
+                        property_=f"{to_camel_case(class_entity.suffix)}{self._dummy_property}",
+                        value_type=String(),
+                        min_count=0,
+                        max_count=1,
+                    )
+                )
 
         new_classes: list[InformationInputClass] = input_.classes.copy()
         existing_classes = {cls.class_ for cls in input_.classes}

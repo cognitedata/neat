@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import itertools
-import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from types import GenericAlias
 from typing import Any, ClassVar, Literal, cast, get_args
@@ -13,17 +12,17 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
+from cognite.neat._constants import COGNITE_CONCEPTS
 from cognite.neat._rules._constants import get_internal_properties
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
-    ExtensionCategory,
-    SchemaCompleteness,
     SheetRow,
 )
-from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE
-from cognite.neat._rules.models.dms import DMSMetadata
+from cognite.neat._rules.models._base_rules import BaseMetadata, RoleTypes
+from cognite.neat._rules.models.data_types import (
+    _DATA_TYPE_BY_DMS_TYPE,
+)
 from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.information import InformationMetadata
 from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._utils.spreadsheet import (
     find_column_with_value,
@@ -107,6 +106,51 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             data.close()
         return None
 
+    def template(self, role: RoleTypes, filepath: Path | None = None) -> None | Workbook:
+        """This method will create an spreadsheet template for data modeling depending on the role.
+
+        Args:
+            role: The role for which the template is created. Can be either "dms" or "information".
+            filepath: The path to the file where the template will be saved.
+
+        """
+        workbook = Workbook()
+        # Remove default sheet named "Sheet"
+        workbook.remove(workbook["Sheet"])
+
+        rules_model = DMSRules if role == RoleTypes.dms else InformationRules
+
+        headers_by_sheet = rules_model.headers_by_sheet(by_alias=True)
+        headers_by_sheet.pop("Metadata")
+
+        self._write_metadata_sheet(
+            workbook,
+            cast(BaseMetadata, rules_model.model_fields["metadata"].annotation).default().model_dump(),
+        )
+
+        for sheet_name, headers in headers_by_sheet.items():
+            if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
+                continue
+            sheet = self._create_sheet_with_header(workbook, headers, sheet_name)
+            self._style_sheet_header(sheet, headers)
+
+        self._adjust_column_widths(workbook)
+        self._hide_internal_columns(workbook)
+
+        if role == RoleTypes.dms:
+            self._add_dms_drop_downs(workbook)
+        else:
+            self._add_info_drop_downs(workbook)
+
+        if filepath:
+            try:
+                workbook.save(filepath)
+            finally:
+                workbook.close()
+            return None
+
+        return workbook
+
     def export(self, rules: VerifiedRules) -> Workbook:
         workbook = Workbook()
         # Remove default sheet named "Sheet"
@@ -129,23 +173,116 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._adjust_column_widths(workbook)
 
         if self.hide_internal_columns:
-            for sheet in workbook.sheetnames:
-                if sheet.lower() == "metadata":
-                    continue
-                ws = workbook[sheet]
-                for col in get_internal_properties():
-                    column_letter = find_column_with_value(ws, col)
-                    if column_letter:
-                        ws.column_dimensions[column_letter].hidden = True
+            self._hide_internal_columns(workbook)
 
         # Only add drop downs if the rules are DMSRules
         if self.add_drop_downs and isinstance(rules, DMSRules):
-            self._add_drop_downs(workbook)
+            self._add_dms_drop_downs(workbook)
+        elif self.add_drop_downs and isinstance(rules, InformationRules):
+            self._add_info_drop_downs(workbook)
 
         return workbook
 
-    def _add_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
-        """Adds drop down menus to specific columns for fast and accurate data entry.
+    def _hide_internal_columns(self, workbook: Workbook) -> None:
+        """Hides internal columns in workbook sheets.
+
+        Args:
+            workbook: Workbook representation of the Excel file.
+
+        """
+        for sheet in workbook.sheetnames:
+            if sheet.lower() == "metadata":
+                continue
+            ws = workbook[sheet]
+            for col in get_internal_properties():
+                column_letter = find_column_with_value(ws, col)
+                if column_letter:
+                    ws.column_dimensions[column_letter].hidden = True
+
+    def _add_info_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
+        """Adds drop down menus to specific columns for fast and accurate data entry
+        in the Information rules.
+
+        Args:
+            workbook: Workbook representation of the Excel file.
+            no_rows: number of rows to add drop down menus. Defaults to 100*100.
+
+        !!! note "Why no_rows=100?"
+            Maximum number of views per data model is 100, thus this value is set accordingly
+
+        !!! note "Why defining individual data validation per desired column?
+            This is due to the internal working of openpyxl. Adding same validation to
+            different column leads to unexpected behavior when the openpyxl workbook is exported
+            as and Excel file. Probably, the validation is not copied to the new column,
+            but instead reference to the data validation object is added.
+        """
+        self._make_helper_info_sheet(workbook, no_rows)
+
+        # We need create individual data validation and cannot re-use the same one due
+        # the internals of openpyxl
+        dv_classes = generate_data_validation(self._helper_sheet_name, "A", no_header_rows=0, no_rows=no_rows)
+        dv_value_types = generate_data_validation(self._helper_sheet_name, "B", no_header_rows=0, no_rows=no_rows)
+        dv_implements = generate_data_validation(
+            self._helper_sheet_name,
+            "C",
+            no_header_rows=0,
+            no_rows=no_rows + len(COGNITE_CONCEPTS),
+        )
+
+        workbook["Properties"].add_data_validation(dv_classes)
+        workbook["Properties"].add_data_validation(dv_value_types)
+        workbook["Classes"].add_data_validation(dv_implements)
+
+        # we multiply no_rows with 100 since a view can have max 100 properties per view
+        if column := find_column_with_value(workbook["Properties"], "Class"):
+            dv_classes.add(f"{column}{3}:{column}{no_rows * 100}")
+
+        if column := find_column_with_value(workbook["Properties"], "Value Type"):
+            dv_value_types.add(f"{column}{3}:{column}{no_rows * 100}")
+
+        if column := find_column_with_value(workbook["Classes"], "Implements"):
+            dv_implements.add(f"{column}{3}:{column}{no_rows}")
+
+    def _make_helper_info_sheet(self, workbook: Workbook, no_rows: int) -> None:
+        """This helper Information sheet is used as source of data for drop down menus creation"""
+        workbook.create_sheet(title=self._helper_sheet_name)
+
+        for dtype_counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE.values()):
+            # skip types which require special handling or are surpassed by CDM
+            if dtype.xsd in ["enum", "timeseries", "sequence", "file", "json"]:
+                continue
+            workbook[self._helper_sheet_name].cell(row=dtype_counter + 1, column=2, value=dtype.xsd)
+
+        # Add Cognite Core Data Views:
+        for concept_counter, concept in enumerate(COGNITE_CONCEPTS):
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + 1,
+                column=3,
+                value=f"cdf_cdm:{concept}(version=v1)",
+            )
+
+        for i in range(no_rows):
+            workbook[self._helper_sheet_name].cell(
+                row=i + 1,
+                column=1,
+                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+            )
+            workbook[self._helper_sheet_name].cell(
+                row=dtype_counter + i + 2,
+                column=2,
+                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+            )
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + i + 2,
+                column=3,
+                value=f'=IF(ISBLANK(Classes!A{i + 3}), "", Classes!A{i + 3})',
+            )
+
+        workbook[self._helper_sheet_name].sheet_state = "hidden"
+
+    def _add_dms_drop_downs(self, workbook: Workbook, no_rows: int = 100) -> None:
+        """Adds drop down menus to specific columns for fast and accurate data entry
+        in the DMS rules.
 
         Args:
             workbook: Workbook representation of the Excel file.
@@ -161,13 +298,19 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             but instead reference to the data validation object is added.
         """
 
-        self._make_helper_sheet(workbook)
+        self._make_helper_dms_sheet(workbook, no_rows)
 
         # We need create individual data validation and cannot re-use the same one due
         # the internals of openpyxl
         dv_views = generate_data_validation(self._helper_sheet_name, "A", no_header_rows=0, no_rows=no_rows)
-        dv_containers = generate_data_validation(self._helper_sheet_name, "b", no_header_rows=0, no_rows=no_rows)
+        dv_containers = generate_data_validation(self._helper_sheet_name, "B", no_header_rows=0, no_rows=no_rows)
         dv_value_types = generate_data_validation(self._helper_sheet_name, "C", no_header_rows=0, no_rows=no_rows)
+        dv_implements = generate_data_validation(
+            self._helper_sheet_name,
+            "F",
+            no_header_rows=0,
+            no_rows=no_rows + len(COGNITE_CONCEPTS),
+        )
 
         dv_immutable = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
         dv_in_model = generate_data_validation(self._helper_sheet_name, "D", no_header_rows=0, no_rows=3)
@@ -178,6 +321,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         workbook["Properties"].add_data_validation(dv_value_types)
         workbook["Properties"].add_data_validation(dv_immutable)
         workbook["Views"].add_data_validation(dv_in_model)
+        workbook["Views"].add_data_validation(dv_implements)
         workbook["Containers"].add_data_validation(dv_used_for)
 
         # we multiply no_rows with 100 since a view can have max 100 properties per view
@@ -196,22 +340,30 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         if column := find_column_with_value(workbook["Views"], "In Model"):
             dv_in_model.add(f"{column}{3}:{column}{no_rows}")
 
+        if column := find_column_with_value(workbook["Views"], "Implements"):
+            dv_implements.add(f"{column}{3}:{column}{no_rows}")
+
         if column := find_column_with_value(workbook["Containers"], "Used For"):
             dv_used_for.add(f"{column}{3}:{column}{no_rows}")
 
-    def _make_helper_sheet(self, workbook: Workbook) -> None:
-        """This helper sheet is used as source of data for drop down menus creation
-
-        !!! note "Why 100 rows?"
-            The number of rows is set to 100 since this is the maximum number of views
-            per data model.
-        """
+    def _make_helper_dms_sheet(self, workbook: Workbook, no_rows: int) -> None:
+        """This helper DMS sheet is used as source of data for drop down menus creation"""
         workbook.create_sheet(title=self._helper_sheet_name)
 
-        for counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
-            workbook[self._helper_sheet_name].cell(row=counter + 1, column=3, value=dtype)
+        for dtype_counter, dtype in enumerate(_DATA_TYPE_BY_DMS_TYPE):
+            if dtype in ["enum", "timeseries", "sequence", "file", "json"]:
+                continue
+            workbook[self._helper_sheet_name].cell(row=dtype_counter + 1, column=3, value=dtype)
 
-        for i in range(100):
+        # Add Cognite Core Data Views:
+        for concept_counter, concept in enumerate(COGNITE_CONCEPTS):
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + 1,
+                column=6,
+                value=f"cdf_cdm:{concept}(version=v1)",
+            )
+
+        for i in range(no_rows):
             workbook[self._helper_sheet_name].cell(
                 row=i + 1,
                 column=1,
@@ -223,8 +375,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 value=f'=IF(ISBLANK(Containers!A{i + 3}), "", Containers!A{i + 3})',
             )
             workbook[self._helper_sheet_name].cell(
-                row=counter + i + 2,
+                row=dtype_counter + i + 2,
                 column=3,
+                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
+            )
+            workbook[self._helper_sheet_name].cell(
+                row=concept_counter + i + 2,
+                column=6,
                 value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
             )
 
@@ -236,6 +393,56 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         workbook[self._helper_sheet_name].sheet_state = "hidden"
 
+    def _create_sheet_with_header(
+        self,
+        workbook: Workbook,
+        headers: list[str],
+        sheet_name: str,
+        sheet_prefix: str = "",
+    ) -> Worksheet:
+        """Creates an empty sheet with the given headers.
+
+        Args:
+            workbook: The workbook to add the sheet to.
+            headers: The headers to add to the sheet.
+            sheet_name: The name of the sheet.
+            sheet_prefix: The prefix to add to the sheet name, if any.
+        """
+
+        sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
+        main_header = self._main_header_by_sheet_name[sheet_name]
+        sheet.append([main_header] + [""] * (len(headers) - 1))
+
+        if headers[0] == "Neat ID":
+            # Move the Neat ID to the end of the columns
+            headers = headers[1:] + ["Neat ID"]
+
+        # Append the headers to the sheet
+        sheet.append(headers)
+
+        return sheet
+
+    def _style_sheet_header(self, sheet: Worksheet, headers: list[str]) -> None:
+        """Styles the sheet with the given headers.
+
+        Args:
+            sheet: The sheet to style.
+            headers: The headers to style.
+        """
+        if self._styling_level > 0:
+            # This freezes all rows above the given row
+            sheet.freeze_panes = sheet["A3"]
+
+            sheet["A1"].alignment = Alignment(horizontal="left")
+
+        if self._styling_level > 1:
+            # Make the header row bold, larger, and colored
+            for cell, *_ in sheet.iter_cols(min_row=1, max_row=1, min_col=1, max_col=len(headers)):
+                cell.font = Font(bold=True, size=20)
+                cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
+            for cell in sheet["2"]:
+                cell.font = Font(bold=True, size=14)
+
     def _write_sheets(
         self,
         workbook: Workbook,
@@ -246,16 +453,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
                 continue
-            sheet = workbook.create_sheet(f"{sheet_prefix}{sheet_name}")
 
-            main_header = self._main_header_by_sheet_name[sheet_name]
-            sheet.append([main_header] + [""] * (len(headers) - 1))
-
-            if headers[0] == "Neat ID":
-                # Move the Neat ID to the end of the columns
-                headers = headers[1:] + ["Neat ID"]
-
-            sheet.append(headers)
+            sheet = self._create_sheet_with_header(workbook, headers, sheet_name, sheet_prefix)
 
             fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
             fill_color = next(fill_colors)
@@ -292,19 +491,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                         cell.border = Border(left=side, right=side, top=side, bottom=side)
                 last_class = class_
 
-            if self._styling_level > 0:
-                # This freezes all rows above the given row
-                sheet.freeze_panes = sheet["A3"]
-
-                sheet["A1"].alignment = Alignment(horizontal="left")
-
-            if self._styling_level > 1:
-                # Make the header row bold, larger, and colored
-                for cell, *_ in sheet.iter_cols(min_row=1, max_row=1, min_col=1, max_col=len(headers)):
-                    cell.font = Font(bold=True, size=20)
-                    cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
-                for cell in sheet["2"]:
-                    cell.font = Font(bold=True, size=14)
+            self._style_sheet_header(sheet, headers)
 
     def _write_metadata_sheet(self, workbook: Workbook, metadata: dict[str, Any], sheet_prefix: str = "") -> None:
         # Excel does not support timezone in datetime strings
@@ -362,57 +549,3 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                     max(current, max_length + 0.5), MAX_COLUMN_WIDTH
                 )
         return None
-
-
-class _MetadataCreator:
-    creator_name = "<YOUR NAME>"
-
-    def __init__(
-        self,
-        action: Literal["create", "update"],
-        new_model_id: tuple[str, str] | None = None,
-    ):
-        self.action = action
-        self.new_model_id = new_model_id or ("YOUR_SPACE", "YOUR_EXTERNAL_ID")
-
-    def create(self, metadata: InformationMetadata | DMSMetadata) -> dict[str, Any]:
-        now = datetime.now(timezone.utc).replace(microsecond=0, tzinfo=None)
-        if self.action == "update":
-            output = json.loads(metadata.model_dump_json(by_alias=True))
-            # This is the same for Information and DMS
-            output["updated"] = now.isoformat()
-            output["schema"] = SchemaCompleteness.extended.value
-            output["extension"] = ExtensionCategory.addition.value
-            if value := output.get("creator"):
-                output["creator"] = f"{value}, {self.creator_name}"
-            else:
-                output["creator"] = self.creator_name
-            return output
-
-        new_metadata = self._create_new_info(now)
-        if isinstance(metadata, DMSMetadata):
-            from cognite.neat._rules.transformers._converters import _InformationRulesConverter
-
-            output_metadata: DMSMetadata | InformationMetadata = _InformationRulesConverter._convert_metadata_to_dms(
-                new_metadata
-            )
-        elif isinstance(metadata, InformationMetadata):
-            output_metadata = new_metadata
-        else:
-            raise ValueError(f"Bug in Neat: Unknown metadata type: {type(metadata)}")
-
-        created = json.loads(output_metadata.model_dump_json(by_alias=True))
-        created.pop("extension", None)
-        return created
-
-    def _create_new_info(self, now: datetime) -> InformationMetadata:
-        return InformationMetadata(
-            space=self.new_model_id[0],
-            external_id=self.new_model_id[1],
-            description=None,
-            version="1",
-            created=now,
-            updated=now,
-            creator=[self.creator_name],
-            name=self.new_model_id[1],
-        )

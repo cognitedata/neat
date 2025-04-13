@@ -9,6 +9,7 @@ from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.exporters import ExcelExporter
 from cognite.neat._rules.importers import ExcelImporter
 from cognite.neat._rules.models import InformationInputRules
+from cognite.neat._rules.models._base_rules import RoleTypes
 from cognite.neat._rules.models.dms import DMSValidation
 from cognite.neat._rules.transformers import (
     AddCogniteProperties,
@@ -174,8 +175,22 @@ class TemplateAPI:
             self._state.last_reference = last_rules
         return issues
 
-    def extension(self, io: Any, output: str | Path | None = None) -> IssueList:
-        """Creates a template for an extension of a Cognite model.
+    def conceptual_model(self, io: Any) -> None:
+        """This method will create a template for a conceptual data modeling
+
+        Args:
+            io: file path to the Excel sheet
+
+        """
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+
+        ExcelExporter().template(RoleTypes.information, path)
+
+        return None
+
+    def expand(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
+        """Creates a template for an extension of a Cognite model by expanding properties from CDM.
 
         The input is a spreadsheet of a conceptual model in which the concepts are defined
         and marked with the Cognite concept they are extending. For example, if you have a pump
@@ -193,16 +208,20 @@ class TemplateAPI:
             io: The input spreadsheet.
             output: The output spreadsheet. If None, the output will be the same
                 as the input with `_extension` added to the name.
+            dummy_property: The dummy property to use as placeholder for user-defined properties
+                for each user-defined concept, and to alleviate need for usage of filters in
+                physical data model. When converting a data model, it is recommended to have at least
+                one property for each concept. This ensures that you follow that recommendation.
         """
         ExperimentalFlags.extension.warn()
         reader = NeatReader.create(io)
         path = reader.materialize_path()
         if output is None:
             if isinstance(reader, PathReader):
-                output_path = path.with_name(f"{path.stem}_extension{path.suffix}")
+                output_path = path.with_name(f"{path.stem}_expand{path.suffix}")
             else:
                 # The source is not a file, for example, a URL or a stream.
-                output_path = Path.cwd() / f"{path.stem}_extension{path.suffix}"
+                output_path = Path.cwd() / f"{path.stem}_expand{path.suffix}"
         else:
             output_path = Path(output)
 
@@ -214,11 +233,15 @@ class TemplateAPI:
                     raise NeatSessionError(f"The input {reader.name} must contain an InformationInputRules object. ")
                 if self._state.client is None:
                     raise NeatSessionError("Client must be set in the session to run the extension.")
-                modified = AddCogniteProperties(self._state.client).transform(read)
+                modified = AddCogniteProperties(self._state.client, dummy_property).transform(read)
                 if modified.rules is not None:
                     # If rules are None there will be issues that are already caught.
                     info = modified.rules.as_verified_rules()
 
                     ExcelExporter(styling="maximal").export_to_file(info, output_path)
         issues.action = "Created extension template"
+
+        # Adding issues to the state in the rule store
+        if issues:
+            self._state.rule_store._last_issues = issues
         return issues
