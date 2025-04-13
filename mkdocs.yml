@@ -20,26 +20,9 @@ nav:
   - Tutorials:
       - Introduction:
           - Introduction: tutorials/introduction/introduction.ipynb
-#      - Data Modeling Lifecycle:
-#          - Overview: tutorials/data-modeling-lifecycle/overview.md
-#          - Knowledge Acquisition: tutorials/data-modeling-lifecycle/part-1-knowledge-acquisition.md
-#          - Analytic Solution Model: tutorials/data-modeling-lifecycle/part-2-analytic-solution.md
-#          - Extending Enterprise Model: tutorials/data-modeling-lifecycle/part-3-extending-enterprise-model.md
-#          - Extending Solution Model: tutorials/data-modeling-lifecycle/part-4-extending-solution-model.md
-#          - Business Solution Model: tutorials/data-modeling-lifecycle/part-5-business-solution-model.md
-#          - User Personas: tutorials/data-modeling-lifecycle/user-personas.md
-      - Data Onboarding:
-      #   - CSV Onboarding: tutorials/data-onboarding/csv_onboarding.ipynb
-      #   - Multi CSVs Onboarding: tutorials/data-onboarding/multi_csv_onboarding.ipynb
-        - CDF Asset Hierarchy Onboarding: tutorials/data-onboarding/asset_hierarchy_migration.ipynb
-        - CDF Classic Knowledge Graph Onboarding: tutorials/data-onboarding/classic_knowledge_graph.ipynb
-      #   - RDF Onboarding : tutorials/data-onboarding/nordic44_onboarding.ipynb
-      #   - DEXPI Onboarding: tutorials/data-onboarding/dexpi/dexpi_onboarding.ipynb
-      #   - AML Onboarding: tutorials/data-onboarding/aml/aml_onboarding.ipynb
       - Data Modeling:
         - My First Data Model: tutorials/data-modeling/cold_start.ipynb
-        - Extending Core Data Model: tutorials/data-modeling/core_extension_via_subset.ipynb
-        # - Extending Data Model (Alternative Approach): tutorials/data-modeling/core_extension.ipynb
+        - From Conceptual to Physical Data Modeling: tutorials/data-modeling/from-conceptual-to-physical-via-CDM.ipynb
   - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
       - Logical Data Model:
@@ -56,7 +39,7 @@ nav:
   - NeatSession:
       - Session: reference/NeatSession/base.md
       - Read: reference/NeatSession/read.md
-      - Create: reference/NeatSession/create.md
+      - Template: reference/NeatSession/template.md
       - Prepare: reference/NeatSession/prepare.md
       - Fix: reference/NeatSession/fix.md
       - Mapping: reference/NeatSession/mapping.md

@@ -17,10 +17,11 @@ from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._issues import IssueList, catch_issues
-from cognite.neat._issues.errors import OxigraphStorageLockedError
+from cognite.neat._issues.errors import NeatValueError, OxigraphStorageLockedError
 from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
 from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
+from cognite.neat._utils.text import humanize_collection
 
 from ._provenance import Change, Entity, Provenance
 
@@ -319,45 +320,43 @@ class NeatGraphStore:
         """
         add_triples_in_batch(self.graph(named_graph), triples, batch_size)
 
-    def transform(self, transformer: Transformers, named_graph: URIRef | None = None) -> None:
+    def transform(self, transformer: Transformers, named_graph: URIRef | None = None) -> IssueList:
         """Transforms the graph store using a transformer."""
-
         named_graph = named_graph or self.default_named_graph
-        if named_graph in self.named_graphs:
-            missing_changes = [
-                change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
-            ]
-            if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
-                warnings.warn(
+        issue_list = IssueList()
+        if named_graph not in self.named_graphs:
+            issue_list.append(NeatValueError(f"Named graph {named_graph} not found in graph store, cannot transform"))
+            return issue_list
+        if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
+            issue_list.append(
+                NeatValueError(
                     f"Cannot transform graph store with {type(transformer).__name__}, already applied",
-                    stacklevel=2,
                 )
-            elif missing_changes:
-                warnings.warn(
-                    (
-                        f"Cannot transform graph store with {type(transformer).__name__}, "
-                        f"missing one or more required changes [{', '.join(missing_changes)}]"
-                    ),
-                    stacklevel=2,
-                )
-
-            else:
-                _start = datetime.now(timezone.utc)
-                transformer.transform(self.graph(named_graph))
-                self.provenance.append(
-                    Change.record(
-                        activity=f"{type(transformer).__name__}",
-                        start=_start,
-                        end=datetime.now(timezone.utc),
-                        description=transformer.description,
-                    )
-                )
-
-        else:
-            warnings.warn(
-                f"Named graph {named_graph} not found in graph store, cannot transform",
-                stacklevel=2,
             )
+            return issue_list
+        if missing_changes := [
+            change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
+        ]:
+            issue_list.append(
+                NeatValueError(
+                    f"Cannot transform graph store with {type(transformer).__name__}, "
+                    f"missing one or more required changes {humanize_collection(missing_changes)}",
+                )
+            )
+            return issue_list
+        _start = datetime.now(timezone.utc)
+        with catch_issues({}) as transform_issues:
+            transformer.transform(self.graph(named_graph))
+        issue_list.extend(transform_issues)
+        self.provenance.append(
+            Change.record(
+                activity=f"{type(transformer).__name__}",
+                start=_start,
+                end=datetime.now(timezone.utc),
+                description=transformer.description,
+            )
+        )
+        return issue_list
 
     @property
     def summary(self) -> dict[URIRef, pd.DataFrame]:
