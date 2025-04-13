@@ -13,10 +13,10 @@ from cognite.neat._rules.models.data_types import Enum
 from cognite.neat._rules.models.dms import DMSContainer, DMSEnum, DMSProperty
 from cognite.neat._rules.models.entities import ClassEntity, ContainerEntity, ViewEntity
 
-from ._base import VerifiedRulesTransformer
+from ._base import PhysicalRulesTransformer
 
 
-class MapOntoTransformers(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
+class MapOntoTransformers(PhysicalRulesTransformer, ABC):
     """Base class for transformers that map one rule onto another."""
 
     ...
@@ -100,7 +100,7 @@ class MapOneToOne(MapOntoTransformers):
         return solution
 
 
-class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class RuleMapper(PhysicalRulesTransformer):
     """Maps properties and classes using the given mapping.
 
     Args:
@@ -232,7 +232,7 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return f"Mapping to {self.mapping.metadata.as_data_model_id()!r}."
 
 
-class AsParentPropertyId(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class AsParentPropertyId(PhysicalRulesTransformer):
     """Looks up all view properties that map to the same container property,
     and changes the child view property id to match the parent property id.
     """
