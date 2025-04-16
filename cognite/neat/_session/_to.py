@@ -1,6 +1,5 @@
 import warnings
 import zipfile
-from collections.abc import Collection
 from pathlib import Path
 from typing import Any, Literal, cast, overload
 
@@ -15,7 +14,6 @@ from cognite.neat._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat._rules import exporters
 from cognite.neat._rules._constants import PATTERNS
 from cognite.neat._rules._shared import VerifiedRules
-from cognite.neat._rules.exporters._rules2dms import Component
 from cognite.neat._rules.importers import DMSImporter
 from cognite.neat._rules.models import DMSRules, InformationRules
 from cognite.neat._rules.models.dms import DMSMetadata
@@ -348,7 +346,6 @@ class CDFToAPI:
         existing: Literal["fail", "skip", "update", "force", "recreate"] = "update",
         dry_run: bool = False,
         drop_data: bool = False,
-        components: Component | Collection[Component] | None = None,
     ) -> UploadResultList:
         """Export the verified DMS data model to CDF.
 
@@ -359,7 +356,6 @@ class CDFToAPI:
             drop_data: If existing is 'force' or 'recreate' and the operation will lead to data loss,
                 the component will be skipped unless drop_data is True. Defaults to False.
                 Note this only applies to spaces and containers if they contain data.
-            components: The components to export. If None, all components will be exported. Defaults to None.
 
         !!! note "Data Model creation modes"
             - "fail": If any component already exists, the export will fail.
@@ -377,7 +373,7 @@ class CDFToAPI:
             client_required=True,
         )
 
-        exporter = exporters.DMSExporter(existing=existing, export_components=components, drop_data=drop_data)
+        exporter = exporters.DMSExporter(existing=existing, drop_data=drop_data)
 
         result = self._state.rule_store.export_to_cdf(exporter, cast(NeatClient, self._state.client), dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
