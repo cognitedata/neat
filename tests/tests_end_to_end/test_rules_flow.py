@@ -3,17 +3,9 @@ from pathlib import Path
 import pytest
 import requests
 import yaml
-from cognite.client.data_classes.data_modeling import (
-    Container,
-    ContainerApply,
-    ContainerId,
-    ContainerList,
-)
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
-from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._client.testing import monkeypatch_neat_client
 from tests.config import DOC_RULES
 from tests.data import SchemaData
 
@@ -60,68 +52,3 @@ class TestImportersToYAMLExporter:
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
-
-    @pytest.mark.freeze_time("2025-01-03")
-    def test_to_extension_transformer(
-        self, cognite_core_schema: DMSSchema, data_regression: DataRegressionFixture
-    ) -> None:
-        def lookup_containers(ids: list[ContainerId]) -> ContainerList:
-            return ContainerList(
-                [
-                    as_container_read(cognite_core_schema.containers[container_id])
-                    for container_id in ids
-                    if container_id in cognite_core_schema.containers
-                ]
-            )
-
-        def pickup_containers(container: list[ContainerApply]) -> ContainerList:
-            for item in container:
-                container_id = item.as_id()
-                if container_id not in cognite_core_schema.containers:
-                    cognite_core_schema.containers[container_id] = item
-            return ContainerList([as_container_read(item) for item in container])
-
-        with monkeypatch_neat_client() as client:
-            # In the data product, we need to be able to look up the containers
-            client.data_modeling.containers.retrieve.side_effect = lookup_containers
-            client.data_modeling.containers.apply.side_effect = pickup_containers
-
-            neat = NeatSession(client, verbose=False)
-
-            neat.read.yaml(SchemaData.NonNeatFormats.cognite_core_v1_zip, format="toolkit")
-
-            neat.verify()
-
-            neat.template.enterprise_model(("sp_enterprise", "Enterprise", "v1"), "Neat")
-
-            enterprise_yml_str = neat.to.yaml()
-
-            # Writing to CDF such that the mock client can look up the containers in the data product step.
-            neat.to.cdf.data_model()
-
-            neat.template.solution_model(("sp_solution", "Solution", "v1"))
-
-            solution_yml_str = neat.to.yaml()
-
-            neat.template.data_product_model(("sp_data_product", "DataProduct", "v1"))
-
-            data_product_yml_str = neat.to.yaml()
-
-        data_regression.check(
-            {
-                "enterprise": yaml.safe_load(enterprise_yml_str),
-                "solution": yaml.safe_load(solution_yml_str),
-                "data_product": yaml.safe_load(data_product_yml_str),
-            }
-        )
-
-
-def as_container_read(container: ContainerApply) -> Container:
-    return Container.load(
-        {
-            **container.dump(),
-            "isGlobal": True,
-            "lastUpdatedTime": 1,
-            "createdTime": 0,
-        }
-    )

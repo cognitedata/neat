@@ -963,6 +963,7 @@ class ToSolutionModel(ToExtensionModel):
                         immutable=False,
                         container=container_entity,
                         container_property=self.direct_property,
+                        connection="direct",
                     )
                     new_containers.append(DMSContainer(container=container_entity))
                     container_properties.append(property_)
