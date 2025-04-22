@@ -438,8 +438,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         data_validators[data_validator_name] = generate_data_validation(
             self._helper_sheet_name,
             get_column_letter(self._helper_sheet_column_indexes_by_names[column_name]),
-            no_header_rows=0,
-            no_validation_values=no_validation_values,
+            total_header_rows=0,
+            total_validation_values=no_validation_values,
         )
 
         # REGISTER VALIDATOR TO SPECIFIC WORKBOOK SHEET
