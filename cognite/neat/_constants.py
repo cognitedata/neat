@@ -209,12 +209,11 @@ def get_base_concepts(
         base_model: The base model to get the concepts for.
         total_concepts: The number of concepts to get. If None, all concepts are returned.
     """
-    concepts: list[str] = []
 
     if base_model == "CogniteCore":
-        concepts = [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS]
-
-    return concepts[:total_concepts]
+        return [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS][:total_concepts]
+    else:
+        raise ValueError(f"Base model {base_model} is not supported")
 
 
 READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
