@@ -329,6 +329,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         workbook.create_sheet(title=self._helper_sheet_name)
 
+        value_type_counter = 0
+
         for value_type_counter, value_type in enumerate(_DATA_TYPE_BY_DMS_TYPE.values()):
             value_type_as_str = value_type.dms._type.casefold() if role == RoleTypes.dms else value_type.xsd
             # skip types which require special handling or are surpassed by CDM
@@ -342,6 +344,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         value_type_counter += 1
 
+        concept_counter = 0
         if self.base_model and (concepts := get_base_concepts(self.base_model, self.total_concepts)):
             for concept_counter, concept in enumerate(concepts):
                 workbook[self._helper_sheet_name].cell(
@@ -350,8 +353,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                     value=concept,
                 )
             concept_counter += 1
-        else:
-            concept_counter = 0
 
         views_or_classes_sheet = "Views" if role == RoleTypes.dms else "Classes"
         view_or_class_column = "View" if role == RoleTypes.dms else "Class"
