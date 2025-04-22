@@ -55,6 +55,7 @@ jobs:
           - "3.10"
           # Python 3.11 is assumed to be covered by testing 3.10 and 3.12
           - "3.12"
+          - "3.13"
     steps:
       - uses: actions/checkout@v3
 

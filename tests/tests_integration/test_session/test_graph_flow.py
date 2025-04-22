@@ -50,7 +50,7 @@ class TestExtractToLoadFlow:
         assert not issues.has_errors
         issues = neat.mapping.data_model.classic_to_core("Classic")
         assert not issues.has_errors
-        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
+        neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"), name="Nikola is NEAT janitor")
         instances, issues = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
         assert not issues.has_errors
         rules_str = neat.to.yaml(format="neat")
@@ -144,7 +144,8 @@ class TestExtractToLoadFlow:
             unpack_json=True,
             str_to_ideal_type=True,
         )
-        neat.infer()
+        issues = neat.infer()
+        assert not issues.has_errors
         neat.set.data_model_id(("sp_windfarm_enterprise", "WindFarmEnterprise", "v1"))
         result = neat.to.cdf.data_model(existing="force")
         assert not any(res.error_messages for res in result)
@@ -276,7 +277,7 @@ class TestExtractToLoadFlow:
     ) -> None:
         neat = NeatSession(cognite_client)
         output_path = tmp_path / "extension_template.xlsx"
-        neat.template.extension(SchemaData.Conceptual.only_concepts_xlsx, output_path)
+        neat.template.expand(SchemaData.Conceptual.only_concepts_xlsx, output_path)
         assert output_path.exists()
         neat.read.excel(output_path)
 
@@ -285,6 +286,23 @@ class TestExtractToLoadFlow:
         model_dict = yaml.safe_load(model_str)
 
         data_regression.check(model_dict)
+
+    def test_create_extension_template_broken(
+        self, cognite_client: CogniteClient, tmp_path: Path, data_regression: DataRegressionFixture
+    ) -> None:
+        """
+        Test to validate the behavior when field is invalid in the Excel sheet. # noqa
+        The broken_concepts.xlsx example has only one property, which is invalid.
+        Neat should inform the end user what/where is the  when using neat.inspect
+        """
+
+        neat = NeatSession(cognite_client)
+        output_path = tmp_path / "extension_template_broken.xlsx"
+        neat.template.expand(SchemaData.Conceptual.broken_concepts_xlsx, output_path)
+
+        error = neat.inspect.issues()
+
+        assert error["NeatIssue"][0] == "PropertyValueError"
 
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:

@@ -16,7 +16,6 @@ from cognite.neat._rules.transformers import (
     IncludeReferenced,
     ToDataProductModel,
     ToEnterpriseModel,
-    ToSolutionModel,
     VerifiedRulesTransformer,
 )
 from cognite.neat._utils.reader import NeatReader, PathReader
@@ -76,54 +75,6 @@ class TemplateAPI:
                 org_name=org_name,
                 dummy_property=dummy_property,
                 move_connections=True,
-            )
-        )
-        if last_rules and not issues.has_errors:
-            self._state.last_reference = last_rules
-        return issues
-
-    def solution_model(
-        self,
-        data_model_id: DataModelIdentifier,
-        direct_property: str = "enterprise",
-        view_prefix: str = "Enterprise",
-    ) -> IssueList:
-        """Creates a template for a solution model based on the current data model in the session.
-        A solution data model is for read and write of instances.
-        The basis for a solution data model should be an enterprise data model.
-
-        Args:
-            data_model_id: The solution data model id that is being created.
-            direct_property: The property to use for the direct connection between the views in the solution data model
-                and the enterprise data model.
-            view_prefix: The prefix to use for the views in the enterprise data model.
-
-        What does this function do?
-        1. It will create two new views for each view in the current data model. The first view will be read-only and
-           prefixed with the 'view_prefix'. The second view will be writable and have one property that connects to the
-           read-only view named 'direct_property'.
-        2. It will repeat all connection properties in the new views and update the ValueTypes to match the new views.
-        3. Each writable view will have a container with the single property that connects to the read-only view.
-
-        !!! note "Solution Data Model Mode"
-
-            The read-only solution model will only be able to read from the existing containers
-            from the enterprise data model, therefore the solution data model will not have
-            containers in the solution data model space. Meaning the solution data model views
-            will be read-only.
-
-            The write mode will have additional containers in the solution data model space,
-            allowing in addition to read through the solution model views, also writing to
-            the containers in the solution data model space.
-
-        """
-        last_rules = self._state.rule_store.last_verified_rules
-        issues = self._state.rule_transform(
-            ToSolutionModel(
-                new_model_id=data_model_id,
-                properties="connection",
-                direct_property=direct_property,
-                view_prefix=view_prefix,
             )
         )
         if last_rules and not issues.has_errors:
@@ -196,13 +147,8 @@ class TemplateAPI:
 
         return ExcelExporter(base_model=base_model, no_concepts=no_concepts).template(RoleTypes.information, path)
 
-    def extension(
-        self,
-        io: Any,
-        output: str | Path | None = None,
-        dummy_property: str = "GUID",
-    ) -> IssueList:
-        """Creates a template for an extension of a Cognite model.
+    def expand(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
+        """Creates a template for an extension of a Cognite model by expanding properties from CDM.
 
         The input is a spreadsheet of a conceptual model in which the concepts are defined
         and marked with the Cognite concept they are extending. For example, if you have a pump
@@ -221,17 +167,19 @@ class TemplateAPI:
             output: The output spreadsheet. If None, the output will be the same
                 as the input with `_extension` added to the name.
             dummy_property: The dummy property to use as placeholder for user-defined properties
-                            for each user-defined concept.
+                for each user-defined concept, and to alleviate need for usage of filters in
+                physical data model. When converting a data model, it is recommended to have at least
+                one property for each concept. This ensures that you follow that recommendation.
         """
         ExperimentalFlags.extension.warn()
         reader = NeatReader.create(io)
         path = reader.materialize_path()
         if output is None:
             if isinstance(reader, PathReader):
-                output_path = path.with_name(f"{path.stem}_extension{path.suffix}")
+                output_path = path.with_name(f"{path.stem}_expand{path.suffix}")
             else:
                 # The source is not a file, for example, a URL or a stream.
-                output_path = Path.cwd() / f"{path.stem}_extension{path.suffix}"
+                output_path = Path.cwd() / f"{path.stem}_expand{path.suffix}"
         else:
             output_path = Path(output)
 
@@ -250,4 +198,8 @@ class TemplateAPI:
 
                     ExcelExporter(styling="maximal").export_to_file(info, output_path)
         issues.action = "Created extension template"
+
+        # Adding issues to the state in the rule store
+        if issues:
+            self._state.rule_store._last_issues = issues
         return issues

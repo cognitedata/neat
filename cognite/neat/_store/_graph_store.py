@@ -17,10 +17,11 @@ from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._issues import IssueList, catch_issues
-from cognite.neat._issues.errors import OxigraphStorageLockedError
+from cognite.neat._issues.errors import NeatValueError, OxigraphStorageLockedError
 from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
 from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
+from cognite.neat._utils.text import humanize_collection
 
 from ._provenance import Change, Entity, Provenance
 
@@ -243,10 +244,10 @@ class NeatGraphStore:
     ) -> Iterable[tuple[URIRef, dict[str | InstanceType, list[Any]]]]:
         named_graph = named_graph or self.default_named_graph
 
-        instance_ids = self.queries.list_instances_ids(class_uri, named_graph=named_graph)
+        instance_ids = self.queries.select.list_instances_ids(class_uri, named_graph=named_graph)
 
         for instance_id in instance_ids:
-            if res := self.queries.describe(
+            if res := self.queries.select.describe(
                 instance_id=instance_id,
                 instance_type=class_uri,
                 property_renaming_config=property_renaming_config,
@@ -319,51 +320,49 @@ class NeatGraphStore:
         """
         add_triples_in_batch(self.graph(named_graph), triples, batch_size)
 
-    def transform(self, transformer: Transformers, named_graph: URIRef | None = None) -> None:
+    def transform(self, transformer: Transformers, named_graph: URIRef | None = None) -> IssueList:
         """Transforms the graph store using a transformer."""
-
         named_graph = named_graph or self.default_named_graph
-        if named_graph in self.named_graphs:
-            missing_changes = [
-                change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
-            ]
-            if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
-                warnings.warn(
+        issue_list = IssueList()
+        if named_graph not in self.named_graphs:
+            issue_list.append(NeatValueError(f"Named graph {named_graph} not found in graph store, cannot transform"))
+            return issue_list
+        if self.provenance.activity_took_place(type(transformer).__name__) and transformer._use_only_once:
+            issue_list.append(
+                NeatValueError(
                     f"Cannot transform graph store with {type(transformer).__name__}, already applied",
-                    stacklevel=2,
                 )
-            elif missing_changes:
-                warnings.warn(
-                    (
-                        f"Cannot transform graph store with {type(transformer).__name__}, "
-                        f"missing one or more required changes [{', '.join(missing_changes)}]"
-                    ),
-                    stacklevel=2,
-                )
-
-            else:
-                _start = datetime.now(timezone.utc)
-                transformer.transform(self.graph(named_graph))
-                self.provenance.append(
-                    Change.record(
-                        activity=f"{type(transformer).__name__}",
-                        start=_start,
-                        end=datetime.now(timezone.utc),
-                        description=transformer.description,
-                    )
-                )
-
-        else:
-            warnings.warn(
-                f"Named graph {named_graph} not found in graph store, cannot transform",
-                stacklevel=2,
             )
+            return issue_list
+        if missing_changes := [
+            change for change in transformer._need_changes if not self.provenance.activity_took_place(change)
+        ]:
+            issue_list.append(
+                NeatValueError(
+                    f"Cannot transform graph store with {type(transformer).__name__}, "
+                    f"missing one or more required changes {humanize_collection(missing_changes)}",
+                )
+            )
+            return issue_list
+        _start = datetime.now(timezone.utc)
+        with catch_issues({}) as transform_issues:
+            transformer.transform(self.graph(named_graph))
+        issue_list.extend(transform_issues)
+        self.provenance.append(
+            Change.record(
+                activity=f"{type(transformer).__name__}",
+                start=_start,
+                end=datetime.now(timezone.utc),
+                description=transformer.description,
+            )
+        )
+        return issue_list
 
     @property
     def summary(self) -> dict[URIRef, pd.DataFrame]:
         return {
             named_graph: pd.DataFrame(
-                self.queries.summarize_instances(named_graph),
+                self.queries.select.summarize_instances(named_graph),
                 columns=["Type", "Occurrence"],
             )
             for named_graph in self.named_graphs
@@ -371,7 +370,7 @@ class NeatGraphStore:
 
     @property
     def multi_type_instances(self) -> dict[URIRef, dict[str, list[str]]]:
-        return {named_graph: self.queries.multi_type_instances(named_graph) for named_graph in self.named_graphs}
+        return {named_graph: self.queries.select.multi_type_instances(named_graph) for named_graph in self.named_graphs}
 
     def _repr_html_(self) -> str:
         provenance = self.provenance._repr_html_()
@@ -448,4 +447,4 @@ class NeatGraphStore:
     @property
     def empty(self) -> bool:
         """Cheap way to check if the graph store is empty."""
-        return not self.queries.has_data()
+        return not self.queries.select.has_data()

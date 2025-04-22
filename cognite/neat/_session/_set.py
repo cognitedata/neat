@@ -48,7 +48,7 @@ class SetAPI:
                     "Cannot change the data model ID of a Cognite Data Model in NeatSession"
                     " due to temporarily issue with the reverse direct relation interpretation"
                 )
-        return self._state.rule_transform(SetIDDMSModel(new_model_id))
+        return self._state.rule_transform(SetIDDMSModel(new_model_id, name))
 
     def client(self, client: CogniteClient) -> None:
         """Sets the client to be used in the session."""
@@ -76,8 +76,8 @@ class SetInstances:
             neat.set.instances.replace_type("Asset", "assetCategory")
             ```
         """
-        type_uri = self._state.instances.store.queries.type_uri(current_type)
-        property_uri = self._state.instances.store.queries.property_uri(property_type)
+        type_uri = self._state.instances.store.queries.select.type_uri(current_type)
+        property_uri = self._state.instances.store.queries.select.property_uri(property_type)
 
         if not type_uri:
             raise NeatValueError(f"Type {current_type} does not exist in the graph.")
@@ -93,7 +93,7 @@ class SetInstances:
                 f"{property_type} has multiple ids found in the graph: {humanize_collection(property_uri)}."
             )
 
-        if not self._state.instances.store.queries.type_with_property(type_uri[0], property_uri[0]):
+        if not self._state.instances.store.queries.select.type_with_property(type_uri[0], property_uri[0]):
             raise NeatValueError(f"Property {property_type} is not defined for type {current_type}.")
 
         self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))

@@ -577,7 +577,16 @@ class DMSValidation:
             if not (
                 isinstance(target_property, dm.MappedPropertyApply | dm.MappedProperty)
                 # The direct relation is pointing to the view_id or one of its parents
-                and (target_property.source == view_id or target_property.source in parents_by_view[view_id])
+                and (
+                    (target_property.source == view_id or target_property.source in parents_by_view[view_id])
+                    # This is a hack that users use to create a multi value direct relations. It works by setting
+                    # the source of a direct relation to None. Then, you can have multiple reverse direct relations
+                    # through this property. In Search this will give you a multi value direct relation.
+                    # Thus, we must allow it here. Note that the missing source in the direct relation will give the
+                    # user a DirectRelationMissingSourceWarning so they know they are doing a not
+                    # recommended modeling pattern.
+                    or target_property.source is None
+                )
             ):
                 issue_list.append(
                     ReversedConnectionNotFeasibleError(

@@ -707,7 +707,7 @@ rules:
     creator: Cognite
     external_id: WindFarm
     logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1
-    name: Wind Farm
+    name: Nikola is NEAT janitor
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1
     space: sp_windfarm

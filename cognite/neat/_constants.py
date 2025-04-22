@@ -209,8 +209,8 @@ def get_base_concepts(
         base_model: The base model to get the concepts for.
         no_concepts: The number of concepts to get. If None, all concepts are returned.
     """
-    concepts: List[str] = []
-    
+    concepts: list[str] = []
+
     if base_model == "CogniteCore":
         concepts = [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS]
 
