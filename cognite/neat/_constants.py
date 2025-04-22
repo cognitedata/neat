@@ -202,19 +202,19 @@ def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
 
 def get_base_concepts(
     base_model: Literal["CogniteCore"] = "CogniteCore",
-    no_concepts: int | None = None,
+    total_concepts: int | None = None,
 ) -> list[str]:
     """Gets the base concepts for a given base model represented in the short form.
     Args:
         base_model: The base model to get the concepts for.
-        no_concepts: The number of concepts to get. If None, all concepts are returned.
+        total_concepts: The number of concepts to get. If None, all concepts are returned.
     """
     concepts: list[str] = []
 
     if base_model == "CogniteCore":
         concepts = [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS]
 
-    return concepts[:no_concepts]
+    return concepts[:total_concepts]
 
 
 READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {

@@ -93,7 +93,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         include_properties: Literal["same-space", "all"] = "all",
         add_drop_downs: bool = True,
         base_model: Literal["CogniteCore"] | None = None,
-        no_concepts: int | None = None,
+        total_concepts: int | None = None,
     ):
         self.sheet_prefix = sheet_prefix or ""
         if styling not in self.style_options:
@@ -107,7 +107,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self.include_properties = include_properties
         self.add_drop_downs = add_drop_downs
         self.base_model = base_model
-        self.no_concepts = no_concepts
+        self.total_concepts = total_concepts
 
     @property
     def description(self) -> str:
@@ -342,7 +342,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         value_type_counter += 1
 
-        if self.base_model and (concepts := get_base_concepts(self.base_model, self.no_concepts)):
+        if self.base_model and (concepts := get_base_concepts(self.base_model, self.total_concepts)):
             for concept_counter, concept in enumerate(concepts):
                 workbook[self._helper_sheet_name].cell(
                     row=concept_counter + 1,
