@@ -363,11 +363,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column=self._helper_sheet_column_indexes_by_names[view_or_class_column],
                 value=f'=IF(ISBLANK({views_or_classes_sheet}!A{i + 3}), "", {views_or_classes_sheet}!A{i + 3})',
             )
-            workbook[self._helper_sheet_name].cell(
-                row=concept_counter + i + 2,
-                column=6,
-                value=f'=IF(ISBLANK(Views!A{i + 3}), "", Views!A{i + 3})',
-            )
 
             workbook[self._helper_sheet_name].cell(
                 row=concept_counter + i + 1,
@@ -434,7 +429,6 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         !!! note "Why starting at row 3?"
             This is due to the header rows in the sheet. The first two rows are reserved for the header.
         """
-
         # CREATE VALIDATOR
         data_validators[data_validator_name] = generate_data_validation(
             self._helper_sheet_name,

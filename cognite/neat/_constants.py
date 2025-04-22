@@ -9,6 +9,7 @@ from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, 
 from rdflib.namespace import DefinedNamespace
 
 from cognite import neat
+from cognite.neat._issues.errors._general import NeatValueError
 
 if TYPE_CHECKING:
     from cognite.neat._rules.models.dms import DMSProperty
@@ -213,7 +214,7 @@ def get_base_concepts(
     if base_model == "CogniteCore":
         return [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS][:total_concepts]
     else:
-        raise ValueError(f"Base model {base_model} is not supported")
+        raise NeatValueError(f"Base model <{base_model}> is not supported")
 
 
 READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {
