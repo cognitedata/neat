@@ -1,8 +1,10 @@
 from pathlib import Path
 
+import pytest
 from lxml import etree
 from openpyxl import Workbook, load_workbook
 
+from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules.exporters import ExcelExporter
 from cognite.neat._rules.models import (
     DMSRules,
@@ -56,7 +58,7 @@ class TestExcelExporter:
         assert "Properties" in workbook.sheetnames
 
     def test_conceptual_data_model_template(self, tmp_path: Path):
-        exporter = ExcelExporter()
+        exporter = ExcelExporter(total_concepts=10, base_model="CogniteCore")
 
         expected = exporter.template(RoleTypes.information)
 
@@ -75,17 +77,43 @@ class TestExcelExporter:
         assert expected["Properties"].data_validations.count == 2
         assert resulted["Properties"].data_validations.count == 2
 
+        # Validation should be applied to 10000 rows for Class and Value Type columns
+        assert '<dataValidation sqref="E3:E10003"' in etree.tostring(
+            resulted["Properties"].data_validations.to_tree(), pretty_print=True
+        ).decode("utf-8")
+
+        assert '<dataValidation sqref="A3:A10003"' in etree.tostring(
+            resulted["Properties"].data_validations.to_tree(), pretty_print=True
+        ).decode("utf-8")
+
         assert f"<formula1>={exporter._helper_sheet_name}!A$1:A$100</formula1>" in etree.tostring(
             resulted["Properties"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
-        assert f"<formula1>={exporter._helper_sheet_name}!B$1:B$100</formula1>" in etree.tostring(
+        assert f"<formula1>={exporter._helper_sheet_name}!C$1:C$150</formula1>" in etree.tostring(
             resulted["Properties"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
         assert expected["Classes"].data_validations.count == 1
         assert resulted["Classes"].data_validations.count == 1
 
-        assert f"<formula1>={exporter._helper_sheet_name}!C$1:C$133</formula1>" in etree.tostring(
+        assert f"<formula1>={exporter._helper_sheet_name}!B$1:B$200</formula1>" in etree.tostring(
             resulted["Classes"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
+
+        assert 'dataValidation sqref="D3:D103"' in etree.tostring(
+            resulted["Classes"].data_validations.to_tree(), pretty_print=True
+        ).decode("utf-8")
+
+        # check if only 10 Cognite concepts are present in the dropdown
+        # by checking if 11th row contains a formula
+        assert expected["_helper"]["B11"].value == '=IF(ISBLANK(Classes!A3), "", Classes!A3)'
+        assert resulted["_helper"]["B11"].value == '=IF(ISBLANK(Classes!A3), "", Classes!A3)'
+
+    def test_conceptual_data_model_template_fail(self):
+        exporter = ExcelExporter(base_model="NeatModel")
+
+        with pytest.raises(NeatValueError) as e:
+            _ = exporter.template(RoleTypes.information)
+
+        assert e.value == NeatValueError(raw_message="Base model <NeatModel> is not supported")

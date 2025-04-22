@@ -4,7 +4,7 @@ import itertools
 from datetime import datetime
 from pathlib import Path
 from types import GenericAlias
-from typing import Any, ClassVar, Literal, cast, get_args
+from typing import Any, ClassVar, Literal, cast, get_args, overload
 
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
@@ -122,11 +122,13 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             data.close()
         return None
 
-    def template(
-        self,
-        role: RoleTypes,
-        filepath: Path,
-    ) -> None:
+    @overload
+    def template(self, role: RoleTypes, filepath: Path) -> None: ...
+
+    @overload
+    def template(self, role: RoleTypes, filepath: Path | None = None) -> None: ...
+
+    def template(self, role: RoleTypes, filepath: Path | None = None) -> None | Workbook:
         """This method will create an spreadsheet template for data modeling depending on the role.
 
         Args:
@@ -159,11 +161,14 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         self._add_drop_downs(role, workbook)
 
-        try:
-            workbook.save(filepath)
-        finally:
-            workbook.close()
-        return None
+        if filepath:
+            try:
+                workbook.save(filepath)
+            finally:
+                workbook.close()
+            return None
+
+        return workbook
 
     def export(self, rules: VerifiedRules) -> Workbook:
         workbook = Workbook()
@@ -248,8 +253,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name="Implements",
             data_validator_name="implements",
             data_validators=data_validators,
-            no_validation_values=100,
-            no_rows=100,
+            total_validation_values=100 + 100,  # base + user concepts (max)
+            total_rows=100,
         )
 
         self._add_data_validation(
@@ -258,8 +263,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name="Value Type",
             data_validator_name="value_type",
             data_validators=data_validators,
-            no_validation_values=100,
-            no_rows=100 * 100,  # 100 views/classes * 100 properties (max properties per view/class)
+            total_validation_values=150,  # primitive types + classes
+            total_rows=100 * 100,  # 100 views/classes * 100 properties (max properties per view/class)
         )
 
         self._add_data_validation(
@@ -268,8 +273,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name="View" if role == RoleTypes.dms else "Class",
             data_validator_name="views_or_classes",
             data_validators=data_validators,
-            no_validation_values=100 * 100,
-            no_rows=100,
+            total_validation_values=100,
+            total_rows=100 * 100,
         )
 
         if role == RoleTypes.dms:
@@ -279,8 +284,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="Container",
                 data_validator_name="container",
                 data_validators=data_validators,
-                no_validation_values=100,
-                no_rows=100 * 100,
+                total_validation_values=100,
+                total_rows=100 * 100,
             )
 
             self._add_data_validation(
@@ -289,8 +294,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="Immutable",
                 data_validator_name="immutable",
                 data_validators=data_validators,
-                no_validation_values=2,
-                no_rows=100 * 100,
+                total_validation_values=2,
+                total_rows=100 * 100,
             )
 
             self._add_data_validation(
@@ -299,8 +304,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="In Model",
                 data_validator_name="in_model",
                 data_validators=data_validators,
-                no_validation_values=2,
-                no_rows=100,  # 100 views
+                total_validation_values=2,
+                total_rows=100,  # 100 views
             )
 
             self._add_data_validation(
@@ -309,8 +314,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="Used For",
                 data_validator_name="used_for",
                 data_validators=data_validators,
-                no_validation_values=3,
-                no_rows=100,  # 100 views
+                total_validation_values=3,
+                total_rows=100,  # 100 views
             )
 
     def _make_helper_sheet(
@@ -407,8 +412,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         column_name: str,
         data_validator_name: str,
         data_validators: dict,
-        no_validation_values: int,
-        no_rows: int,
+        total_validation_values: int,
+        total_rows: int,
     ) -> None:
         """Adds data validation to a column in a sheet.
 
@@ -418,8 +423,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name: The name of the column to add the data validation to.
             data_validator_name: The name of the data validation to add.
             data_validators: A dictionary to store the data validators.
-            no_validation_values: The number of validation values to add.
-            no_rows: The number of rows to add the data validation to.
+            total_validation_values: The number of validation values to add.
+            total_rows: The number of rows to add the data validation to.
 
         !!! note "Why defining individual data validation per desired column?"
             This is due to the internal working of openpyxl. Adding same validation to
@@ -434,7 +439,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._helper_sheet_name,
             get_column_letter(self._helper_sheet_column_indexes_by_names[column_name]),
             total_header_rows=0,
-            total_validation_values=no_validation_values,
+            total_validation_values=total_validation_values,
         )
 
         # REGISTER VALIDATOR TO SPECIFIC WORKBOOK SHEET
@@ -442,7 +447,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         # APPLY VALIDATOR TO SPECIFIC COLUMN
         if column_letter := find_column_with_value(workbook[sheet_name], column_name):
-            data_validators[data_validator_name].add(f"{column_letter}{3}:{column_letter}{3 + no_rows}")
+            data_validators[data_validator_name].add(f"{column_letter}{3}:{column_letter}{3 + total_rows}")
 
     def _create_sheet_with_header(
         self,
