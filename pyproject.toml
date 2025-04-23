@@ -10,6 +10,57 @@ authors = [
 ]
 license = "Apache-2.0"
 requires-python = ">=3.10"
+dependencies = [
+    "pandas>=1.5.3, <3.0.0",
+    "cognite-sdk>=7.73.4, <8.0.0",
+    "rdflib>=6.2.0, <7.0.0",
+    "pydantic>=2.0.0, <3.0.0",
+    "PyYAML>=6.0.1, <7.0.0",
+    "requests>=2.28.1, <3.0.0",
+    "urllib3>=1.26.15, <2.0.0",
+    "openpyxl>=3.0.10, <4.0.0",
+    "networkx>=3.4.2, <4.0.0",
+    "mixpanel>=4.10.1, <5.0.0",
+    # Used for loading neat engine
+    "packaging>=22.0, <25.0",
+    # NeatEngine dependencies
+    "jsonpath-python>=1.0.6, <2.0.0",
+    "elementpath>=4.0.0, <5.0.0",
+    "pyvis>=0.3.2, <1.0.0",
+    # Notebook
+    "rich[notebook]>=13.7.1, <14.0.0",
+    # Backport from Python 3.11
+    "exceptiongroup>=1.1.3, <2.0.0; python_version < '3.11'",
+    "backports.strenum >=1.2, <2.0.0; python_version < '3.11'",
+    "typing_extensions>=4.8.0, <5.0.0; python_version < '3.11'",
+    "tomli>=2.0.1, <3.0.0; python_version < '3.11'",
+]
+[project.optional-dependencies]
+lxml = [
+    "lxml>=5.3.0, <6.0.0",
+]
+pyoxigraph = [
+    "oxrdflib[oxigraph]>=0.4.0, <0.5.0",
+    "pyoxigraph>=0.4.3, <0.5.0",
+]
+google = [
+    "gspread>=5.0.0, <6.0.0",
+    "google-api-python-client>=2.70.0, <3.0.0",
+    "google-auth-oauthlib>=1.0.0, <2.0.0",
+]
+docs = [
+    "mkdocs",
+    "mkdocs-jupyter",
+    "mkdocs-material-extensions",
+    "mkdocs-git-revision-date-localized-plugin",
+    "mkdocs-git-authors-plugin",
+    "mkdocs-gitbook",
+    "mkdocs-glightbox",
+    "pymdown-extensions",
+    "mkdocstrings",
+    "mistune",
+    "mkdocs-autorefs",
+]
 
 [project.urls]
 Documentation = "https://cognite-neat.readthedocs-hosted.com/"
@@ -17,14 +68,35 @@ Homepage = "https://cognite-neat.readthedocs-hosted.com/"
 GitHub = "https://github.com/cognitedata/neat"
 Changelog = "https://github.com/cognitedata/neat/releases"
 
-[tool.poetry]
-packages = [{ include = "cognite", from = "." }]
-exclude = [
-    "cognite/neat/app/ui/neat-app/public/**",
-    "cognite/neat/app/ui/neat-app/src/**",
-    "cognite/neat/app/ui/neat-app/node_modules/**",
-    "cognite/neat/app/ui/neat-app/*.json",
+[dependency-groups]
+dev = [
+    "twine>=6.0.0, <7.0.0",
+    "pytest>=8.0.0, <9.0.0",
+    "pytest-cov>=6.0.0, <7.0.0",
+    "pytest-notebook",
+    "pytest-freezegun>=0.4.2, <1.0.0",
+    "pytest-xdist>=3.6.1, <4.0.0",
+    "pre-commit>=4.0.0, <5.0.0",
+    "jupyter",
+    "pytest-regressions",
+    "memray>=1.7, <2; platform_system != 'Windows'",
+    "httpx",
+    "marko>=2.1, <3",
+    "mypy>=1.8, <2",
+    "pandas-stubs>=2, <3",
+    "types-PyYAML>=6, <7",
+    "types-openpyxl>=3, <4",
+    "types-requests>=2, <3",
+    "types-setuptools>=68, <69",
+    "types-tqdm>=4, <5",
+    "networkx-stubs>=0, <1",
+    "cognite-toolkit >= 0.4,< 0.5",
+    "tqdm>=4.67.1, <5",
+    "deepdiff>=8.2.0, <9.0.0",
 ]
+
+[tool.uv]
+package = true
 
 [tool.ruff.lint]
 # See https://docs.astral.sh/ruff/rules/ for an overview of ruff rules
@@ -59,118 +131,9 @@ init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
 
-[tool.poetry.scripts]
-neat = "cognite.neat._app.main:run"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-# Core dependencies
-pandas = "*"
-cognite-sdk = "^7.73.4"
-rdflib = "*"
-pydantic = "^2"
-PyYAML = "*"
-requests = "*"
-urllib3 = "^2"
-openpyxl = "*"
-networkx = "^3.4.2"
-mixpanel = "^4.10.1"
-
-# Used for loading neat engine
-packaging = ">=22.0,<25.0"
-# NeatEngine dependencies
-jsonpath-python = ">=1.0.6, <2.0.0"
-elementpath = ">=4.0.0, <5.0.0"
-lxml = {version  = "^5.3.0", optional = true}
-
-# Notebook
-rich = { version = "^13.7.1", extras = ["jupyter"]}
-
-# Backport from Python 3.11
-exceptiongroup = { version = "^1.1.3", python = "<3.11" }
-'backports.strenum' = { version = "^1.2", python = "<3.11" }
-typing_extensions = { version = "^4.8", python = "<3.11" }
-tomli = { version = "^2.0.1", python = "<3.11" }
-
-# Alternative graph for NEAT Store
-oxrdflib = { version = "^0.4.0", optional = true, extras = ["oxigraph"] }
-pyoxigraph = { version = "0.4.3", optional = true }
-
-# Only used for GoogleSheetImporter
-gspread = { version = "*", optional = true }
-google-api-python-client = { version = "*", optional = true }
-google-auth-oauthlib = { version = "*", optional = true }
-
-# Documentation dependencies
-mkdocs = { version = "*", optional = true }
-mkdocs-jupyter = { version = "*", optional = true }
-mkdocs-material-extensions = { version = "*", optional = true }
-mkdocs-git-revision-date-localized-plugin = { version = "*", optional = true }
-mkdocs-git-authors-plugin = { version = "*", optional = true }
-mkdocs-gitbook = { version = "*", optional = true }
-mkdocs-glightbox = { version = "*", optional = true }
-pymdown-extensions = { version = "*", optional = true }
-mkdocs-autorefs = { version = "^0.5.0", optional = true }
-mkdocstrings = { version = "*", optional = true, extras = ["python"] }
-# dependencies for mkdocstrings
-# 3.1.0 breaks nbconvert
-mistune= {version ="3.0.2", optional= true}
-pyvis = "^0.3.2"
-
-[tool.poetry.extras]
-docs = [
-    "mkdocs",
-    "mkdocs-jupyter",
-    "mkdocs-material-extensions",
-    "mkdocs-git-revision-date-localized-plugin",
-    "mkdocs-git-authors-plugin",
-    "mkdocs-gitbook",
-    "mkdocs-glightbox",
-    "pymdown-extensions",
-    "mkdocstrings",
-    "mkdocs-autorefs",
-    "mistune",
-]
-google = ["gspread", "google-api-python-client", "google-auth-oauthlib"]
-oxi = ["oxrdflib", "pyoxigraph"]
-
-
-all = [
-    "pyoxigraph",
-    "oxrdflib",
-    "lxml",
-]
-
-[tool.poetry.dev-dependencies]
-twine = "*"
-# Today, 4. March 2024, the latest verson of pytest 8.1 (released yesterday) is not compatible with pytest-regressions
-# This limit should be removed when pytest-regressions is updated to be compatible with pytest 8.1 and beoynd.
-pytest = { version = ">=8.0, <8.1" }
-pytest-cov = "*"
-pytest-notebook = "*"
-pytest-freezegun = "0.4.2"
-pytest-xdist = "^3.6.1"
-pre-commit = "*"
-jupyter = "*"
-pytest-regressions = "*"
-memray = [
-    { version = "^1.7", platform = "darwin" },
-    { version = "^1.7", platform = "linux" },
-]
-httpx = "*"
-marko = "^2.1.2"
-mypy = "^1.4"
-pandas-stubs = "^2"
-types-PyYAML = "^6"
-types-openpyxl = "^3"
-types-requests = "^2"
-types-setuptools = "^68"
-types-tqdm = "^4.67.0.20241221"
-networkx-stubs = "^0.0.1"
-cognite-toolkit = "^0.4.8"
-tqdm = "^4.67.1"
-deepdiff = "^8.2.0"
-
 [build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cognite/neat/"]
