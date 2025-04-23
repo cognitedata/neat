@@ -112,7 +112,16 @@ class DMSFilter(WrappedEntity):
             external_id = value.get("externalId")
             if space is not None and external_id is not None:
                 return NodeTypeFilter(inner=[DMSNodeEntity(space=space, externalId=external_id)])
-        elif (body := dumped.get(dm.filters.In._filter_name)) and (values := body.get("values")):
+        elif (
+            (body := dumped.get(dm.filters.In._filter_name))
+            and (values := body.get("values"))
+            and all(
+                [
+                    (True if isinstance(entry, dict) and "space" in entry and "externalId" in entry else False)
+                    for entry in values
+                ]
+            )
+        ):
             return NodeTypeFilter(
                 inner=[
                     DMSNodeEntity(space=entry["space"], externalId=entry["externalId"])
