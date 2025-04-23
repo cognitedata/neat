@@ -107,6 +107,8 @@ class DMSFilter(WrappedEntity):
             (body := dumped.get(dm.filters.Equals._filter_name))
             and (value := body.get("value"))
             and isinstance(value, dict)
+            and "space" in value
+            and "externalId" in value
         ):
             space = value.get("space")
             external_id = value.get("externalId")
