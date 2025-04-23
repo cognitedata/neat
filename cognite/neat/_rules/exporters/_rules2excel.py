@@ -253,7 +253,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name="Implements",
             data_validator_name="implements",
             data_validators=data_validators,
-            total_validation_values=100 + 100,  # base + user concepts (max)
+            validation_range=100 + 100,  # base + user concepts (max)
             total_rows=100,
         )
 
@@ -263,7 +263,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name="Value Type",
             data_validator_name="value_type",
             data_validators=data_validators,
-            total_validation_values=150,  # primitive types + classes
+            validation_range=150,  # primitive types + classes
             total_rows=100 * 100,  # 100 views/classes * 100 properties (max properties per view/class)
         )
 
@@ -273,7 +273,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name="View" if role == RoleTypes.dms else "Class",
             data_validator_name="views_or_classes",
             data_validators=data_validators,
-            total_validation_values=100,
+            validation_range=100,
             total_rows=100 * 100,
         )
 
@@ -284,7 +284,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="Container",
                 data_validator_name="container",
                 data_validators=data_validators,
-                total_validation_values=100,
+                validation_range=100,
                 total_rows=100 * 100,
             )
 
@@ -294,7 +294,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="Immutable",
                 data_validator_name="immutable",
                 data_validators=data_validators,
-                total_validation_values=2,
+                validation_range=2,
                 total_rows=100 * 100,
             )
 
@@ -304,7 +304,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="In Model",
                 data_validator_name="in_model",
                 data_validators=data_validators,
-                total_validation_values=2,
+                validation_range=2,
                 total_rows=100,  # 100 views
             )
 
@@ -314,7 +314,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 column_name="Used For",
                 data_validator_name="used_for",
                 data_validators=data_validators,
-                total_validation_values=3,
+                validation_range=3,
                 total_rows=100,  # 100 views
             )
 
@@ -412,7 +412,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         column_name: str,
         data_validator_name: str,
         data_validators: dict,
-        total_validation_values: int,
+        validation_range: int,
         total_rows: int,
     ) -> None:
         """Adds data validation to a column in a sheet.
@@ -423,7 +423,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             column_name: The name of the column to add the data validation to.
             data_validator_name: The name of the data validation to add.
             data_validators: A dictionary to store the data validators.
-            total_validation_values: The number of validation values to add.
+            validation_range: The total number of validation values to add.
             total_rows: The number of rows to add the data validation to.
 
         !!! note "Why defining individual data validation per desired column?"
@@ -439,7 +439,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._helper_sheet_name,
             get_column_letter(self._helper_sheet_column_indexes_by_names[column_name]),
             total_header_rows=0,
-            total_validation_values=total_validation_values,
+            validation_range=validation_range,
         )
 
         # REGISTER VALIDATOR TO SPECIFIC WORKBOOK SHEET

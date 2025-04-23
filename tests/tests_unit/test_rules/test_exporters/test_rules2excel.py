@@ -86,18 +86,18 @@ class TestExcelExporter:
             resulted["Properties"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
-        assert f"<formula1>={exporter._helper_sheet_name}!A$1:A$100</formula1>" in etree.tostring(
+        assert f"<formula1>={exporter._helper_sheet_name}!A$1:A$101</formula1>" in etree.tostring(
             resulted["Properties"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
-        assert f"<formula1>={exporter._helper_sheet_name}!C$1:C$150</formula1>" in etree.tostring(
+        assert f"<formula1>={exporter._helper_sheet_name}!C$1:C$151</formula1>" in etree.tostring(
             resulted["Properties"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
         assert expected["Classes"].data_validations.count == 1
         assert resulted["Classes"].data_validations.count == 1
 
-        assert f"<formula1>={exporter._helper_sheet_name}!B$1:B$200</formula1>" in etree.tostring(
+        assert f"<formula1>={exporter._helper_sheet_name}!B$1:B$201</formula1>" in etree.tostring(
             resulted["Classes"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
