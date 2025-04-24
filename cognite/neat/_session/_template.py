@@ -16,7 +16,6 @@ from cognite.neat._rules.transformers import (
     IncludeReferenced,
     ToDataProductModel,
     ToEnterpriseModel,
-    ToSolutionModel,
     VerifiedRulesTransformer,
 )
 from cognite.neat._utils.reader import NeatReader, PathReader
@@ -76,54 +75,6 @@ class TemplateAPI:
                 org_name=org_name,
                 dummy_property=dummy_property,
                 move_connections=True,
-            )
-        )
-        if last_rules and not issues.has_errors:
-            self._state.last_reference = last_rules
-        return issues
-
-    def solution_model(
-        self,
-        data_model_id: DataModelIdentifier,
-        direct_property: str = "enterprise",
-        view_prefix: str = "Enterprise",
-    ) -> IssueList:
-        """Creates a template for a solution model based on the current data model in the session.
-        A solution data model is for read and write of instances.
-        The basis for a solution data model should be an enterprise data model.
-
-        Args:
-            data_model_id: The solution data model id that is being created.
-            direct_property: The property to use for the direct connection between the views in the solution data model
-                and the enterprise data model.
-            view_prefix: The prefix to use for the views in the enterprise data model.
-
-        What does this function do?
-        1. It will create two new views for each view in the current data model. The first view will be read-only and
-           prefixed with the 'view_prefix'. The second view will be writable and have one property that connects to the
-           read-only view named 'direct_property'.
-        2. It will repeat all connection properties in the new views and update the ValueTypes to match the new views.
-        3. Each writable view will have a container with the single property that connects to the read-only view.
-
-        !!! note "Solution Data Model Mode"
-
-            The read-only solution model will only be able to read from the existing containers
-            from the enterprise data model, therefore the solution data model will not have
-            containers in the solution data model space. Meaning the solution data model views
-            will be read-only.
-
-            The write mode will have additional containers in the solution data model space,
-            allowing in addition to read through the solution model views, also writing to
-            the containers in the solution data model space.
-
-        """
-        last_rules = self._state.rule_store.last_verified_rules
-        issues = self._state.rule_transform(
-            ToSolutionModel(
-                new_model_id=data_model_id,
-                properties="connection",
-                direct_property=direct_property,
-                view_prefix=view_prefix,
             )
         )
         if last_rules and not issues.has_errors:
