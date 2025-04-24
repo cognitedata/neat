@@ -3,6 +3,7 @@ from cognite.client import ClientConfig, CogniteClient
 from cognite.neat._utils.auth import _CLIENT_NAME
 
 from ._api.data_modeling_loaders import DataModelLoaderAPI
+from ._api.location_filters import LocationFiltersAPI
 from ._api.neat_instances import NeatInstancesAPI
 from ._api.schema import SchemaAPI
 
@@ -17,3 +18,4 @@ class NeatClient(CogniteClient):
         self.loaders = DataModelLoaderAPI(self)
         self.schema = SchemaAPI(self)
         self.instances = NeatInstancesAPI(self)
+        self.location_filters = LocationFiltersAPI(self._config, self._API_VERSION, self)
