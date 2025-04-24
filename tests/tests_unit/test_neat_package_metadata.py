@@ -51,7 +51,38 @@ method
 - Removed `template.solution_model()` as it is not robust to be public
 method""",
         "0.119.9",
-        id="valid_changelog_entry",
+        id="Patch bump",
+    )
+
+    yield pytest.param(
+        """Enable dummy property per user defined concept (#1079)
+# Description
+
+Enable adding dummy property for every user-defined concept when
+creating extension template.
+By default dummy property is formed as `idOfConceptGUID` , and it set to
+be string, none mandatory.
+Dummy properties help in avoiding to set filters in DMS.
+
+## Bump
+
+- [ ] Patch
+- [x] Minor
+- [ ] Skip
+
+## Changelog
+### Added
+- Support for dummy properties in `template.extension()`
+
+---------
+
+Co-authored-by: Member <member@users.noreply.github.com>
+Co-authored-by: Member <member@cognite.com>""",
+        "0.119.8\n",
+        """### Added
+- Support for dummy properties in `template.extension()`""",
+        "0.120.0",
+        id="Minor bump with co-authors",
     )
 
 
