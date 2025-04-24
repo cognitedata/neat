@@ -404,6 +404,26 @@ class CDFToAPI:
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
 
+    def location_filter(
+        self,
+        data_model_id: DataModelIdentifier | None = None,
+        instance_spaces: list[str] | None = None,
+    ) -> UploadResultList:
+        """Creates a location filter for the given data model and instance spaces.
+
+        This is the configuration used for Search in the Fusion UI.
+
+        Args:
+            data_model_id: The data model to use. If None, the last physical model is used.
+            instance_spaces: The instance spaces to use. If None, the instances spaces
+                from Neat's internal store are used.
+
+        Returns:
+            UploadResultList: The result of the upload.
+
+        """
+        raise NotImplementedError()
+
     @staticmethod
     def _get_instance_space(instance_space: str | None, schema_space: str) -> str | None:
         instance_space = instance_space or f"{schema_space}_instances"
