@@ -21,7 +21,10 @@ LAST_GIT_MESSAGE_FILE = REPO_ROOT / "last_git_message.txt"
 CHANGELOG_ENTRY_FILE = REPO_ROOT / "last_changelog_entry.md"
 LAST_VERSION = REPO_ROOT / "last_version.txt"
 VERSION_PLACEHOLDER = "0.0.0"
-
+VERSION_FILES = (
+    REPO_ROOT / "pyproject.toml",
+    REPO_ROOT / "cognite" / "neat" / "_version.py",
+)
 
 dev_app = typer.Typer(
     add_completion=False,
@@ -34,10 +37,6 @@ dev_app = typer.Typer(
 
 @dev_app.command()
 def bump(verbose: bool = False) -> None:
-    version_files = [
-        REPO_ROOT / "pyproject.toml",
-        REPO_ROOT / "cognite" / "neat" / "_version.py",
-    ]
     last_version_str = LAST_VERSION.read_text().strip().removeprefix("v")
     try:
         last_version = parse(last_version_str)
@@ -60,12 +59,12 @@ def bump(verbose: bool = False) -> None:
     else:
         raise typer.BadParameter("You must specify one of major, minor, patch, alpha, or beta.")
 
-    for file in version_files:
+    for file in VERSION_FILES:
         file.write_text(file.read_text().replace(str(VERSION_PLACEHOLDER), str(new_version), 1))
         if verbose:
             typer.echo(f"Bumped version from {last_version} to {new_version} in {file}.")
 
-    typer.echo(f"Bumped version from {last_version} to {new_version} in {len(version_files)} files.")
+    typer.echo(f"Bumped version from {last_version} to {new_version} in {len(VERSION_FILES)} files.")
 
 
 @dev_app.command("changelog")
