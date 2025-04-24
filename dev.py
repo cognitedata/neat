@@ -94,6 +94,11 @@ def _read_last_commit_message() -> tuple[str, str | None]:
         return after_bump, None
 
     bump_text, changelog_text = after_bump.split("## Changelog")
+
+    if "-----" in changelog_text:
+        # Co-authors section
+        changelog_text = changelog_text.split("-----")[0].strip()
+
     return bump_text, changelog_text
 
 
