@@ -408,6 +408,8 @@ class CDFToAPI:
         self,
         data_model_id: DataModelIdentifier | None = None,
         instance_spaces: list[str] | None = None,
+        space_from_property: str | None = None,
+        use_source_space: bool = False,
     ) -> UploadResultList:
         """Creates a location filter for the given data model and instance spaces.
 
@@ -415,8 +417,9 @@ class CDFToAPI:
 
         Args:
             data_model_id: The data model to use. If None, the last physical model is used.
-            instance_spaces: The instance spaces to use. If None, the instances spaces
-                from Neat's internal store are used.
+            instance_spaces: The instance spaces to use. If None, the space_from_property is used.
+            space_from_property: Looks up spaces in the property with the given name for each instance
+            use_source_space: If True, the instance space will be set to the source space of the instance.
 
         Returns:
             UploadResultList: The result of the upload.
