@@ -1,4 +1,4 @@
-from ._base import NeatState
+from ._base import NeatStateManager
 from ._types import Action
 
-__all__ = ["Action", "NeatState"]
+__all__ = ["Action", "NeatStateManager"]

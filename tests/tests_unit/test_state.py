@@ -21,7 +21,7 @@ from cognite.neat._rules.models.information import (
 )
 from cognite.neat._rules.transformers import RulesTransformer
 from cognite.neat._shared import Triple
-from cognite.neat._state import Action, NeatState
+from cognite.neat._state import Action, NeatStateManager
 
 
 class DummyInfoImporter(BaseImporter):
@@ -84,9 +84,9 @@ class NoOptLoader(BaseLoader[str]):
 
 
 @pytest.fixture(scope="function")
-def empty_state() -> NeatState:
+def empty_state() -> NeatStateManager:
     """Fixture for creating an empty NeatState instance."""
-    return NeatState()
+    return NeatStateManager()
 
 
 class TestNeatState:
@@ -97,7 +97,7 @@ class TestNeatState:
             pytest.param([NoOptExtractor()], "Instances", id="Extract instances"),
         ],
     )
-    def test_valid_change(self, actions: list[Action], expected_state: str, empty_state: NeatState) -> None:
+    def test_valid_change(self, actions: list[Action], expected_state: str, empty_state: NeatStateManager) -> None:
         for action in actions:
             _ = empty_state.change(action)
 
