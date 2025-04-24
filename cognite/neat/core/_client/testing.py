@@ -1,12 +1,14 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
+from unittest.mock import MagicMock
 
 from cognite.client.testing import CogniteClientMock
 
 from cognite.neat.core._client._api_client import NeatClient
 
 from ._api.data_modeling_loaders import DataModelLoaderAPI
+from ._api.location_filters import LocationFiltersAPI
 from ._api.neat_instances import NeatInstancesAPI
 from ._api.schema import SchemaAPI
 
@@ -25,6 +27,7 @@ class NeatClientMock(CogniteClientMock):
         self.schema = SchemaAPI(self)
         self.loaders = DataModelLoaderAPI(self)
         self.instances = NeatInstancesAPI(self)
+        self.location_filters = MagicMock(spec_set=LocationFiltersAPI)
 
 
 @contextmanager
