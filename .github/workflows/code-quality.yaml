@@ -7,24 +7,22 @@ on:
 env:
   # Used for linting, docker images, and docs.
   MAIN_PYTHON_VERSION: 3.11
-  POETRY_VERSION: '2.1.0'
+
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ env.MAIN_PYTHON_VERSION }}
 
       # The installation is required as mypy must be run in the local system environment, not in the pre-commit environment.
       - name: Install required dependencies
         run: |
-          python3 -m pip install --upgrade pip poetry
-          poetry config virtualenvs.create false
-          poetry install -E all
+          uv sync --all-extras
 
       - name: Linting and static code checks
         continue-on-error: true
@@ -58,9 +56,8 @@ jobs:
           - "3.13"
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -68,33 +65,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('poetry.lock') }}
+          key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('uv.lock') }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-
-      - run: poetry install -E all
+      - run: uv sync --all-extras
 
       - name: Run unit tests
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_unit
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest tests/tests_unit
 
-#      - name: Run integration tests
-#        env:
-#          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
-#          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
-#          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
-#          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
-#          IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
-#        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest tests/tests_integration
-
-      # needs update of some dep due to new version of ipynb test
-      # - name: Run notebook tests
-      #   run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest ./docs/tutorial/notebooks/*.ipynb --nb-test-files
-
-      - name: Run security checks
-        run: poetry check
   build-docs:
     runs-on: ubuntu-latest
 
@@ -121,23 +98,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.12
+          python-version: ${{ env.MAIN_PYTHON_VERSION }}
 
       - name: Set up cache
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('poetry.lock') }}
+          key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('uv.lock') }}
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-
-      - run: poetry install -E all
+      - run: uv sync --all-extras
 
       - name: Create test coverage report
         env:
@@ -146,7 +118,7 @@ jobs:
           IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
           IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
           IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); poetry run pytest --cov=cognite/ --cov-config=pyproject.toml --cov-report=xml:coverage.xml tests/
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest --cov=cognite/ --cov-config=pyproject.toml --cov-report=xml:coverage.xml tests/
 
       - name: Push coverage report to PR
         uses: orgoro/coverage@v3.1
@@ -160,18 +132,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.12
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
+          python-version: ${{ env.MAIN_PYTHON_VERSION }}
+
       - name: Install core dependencies
-        run: |
-          poetry config virtualenvs.create false
-          poetry install -E all
+        run: uv sync --all-extras
       - name: Dump description to file
         uses: actions/github-script@v7
         with:
@@ -180,4 +147,4 @@ jobs:
             const description = context.payload.pull_request.body;
             fs.writeFileSync('last_git_message.txt', description);
       - name: Validate Changelog section in PR description
-        run: python dev.py changelog
+        run: uv run python dev.py changelog
