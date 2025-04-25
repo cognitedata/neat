@@ -1,7 +1,7 @@
 import re
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.ids import DataModelId
@@ -9,6 +9,7 @@ from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, 
 from rdflib.namespace import DefinedNamespace
 
 from cognite import neat
+from cognite.neat._issues.errors._general import NeatValueError
 
 if TYPE_CHECKING:
     from cognite.neat._rules.models.dms import DMSProperty
@@ -71,16 +72,16 @@ COGNITE_CONCEPTS = (
     "CogniteActivity",
     "CogniteTimeSeries",
     "CogniteFile",
+    "CogniteDescribable",
+    "CogniteSourceable",
+    "CogniteSchedulable",
+    "CogniteVisualizable",
+    "CogniteSourceSystem",
     "CogniteUnit",
     "CogniteAssetClass",
     "CogniteAssetType",
     "CogniteEquipmentType",
     "CogniteFileCategory",
-    "CogniteDescribable",
-    "CogniteSourceable",
-    "CogniteSourceSystem",
-    "CogniteSchedulable",
-    "CogniteVisualizable",
     "CogniteAnnotation",
     "CogniteDiagramAnnotation",
     "CogniteCubeMap",
@@ -198,6 +199,22 @@ def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
     from cognite.neat._rules.models.dms import DMSProperty
 
     return [DMSProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
+
+
+def get_base_concepts(
+    base_model: Literal["CogniteCore"] = "CogniteCore",
+    total_concepts: int | None = None,
+) -> list[str]:
+    """Gets the base concepts for a given base model represented in the short form.
+    Args:
+        base_model: The base model to get the concepts for.
+        total_concepts: The number of concepts to get. If None, all concepts are returned.
+    """
+
+    if base_model == "CogniteCore":
+        return [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS][:total_concepts]
+    else:
+        raise NeatValueError(f"Base model <{base_model}> is not supported")
 
 
 READONLY_PROPERTIES_BY_CONTAINER: Mapping[dm.ContainerId, frozenset[str]] = {

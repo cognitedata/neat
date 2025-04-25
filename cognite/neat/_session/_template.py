@@ -126,19 +126,26 @@ class TemplateAPI:
             self._state.last_reference = last_rules
         return issues
 
-    def conceptual_model(self, io: Any) -> None:
+    def conceptual_model(
+        self,
+        io: Any,
+        base_model: Literal["CogniteCore"] = "CogniteCore",
+        total_concepts: int | None = None,
+    ) -> None:
         """This method will create a template for a conceptual data modeling
 
         Args:
             io: file path to the Excel sheet
+            base_model: The base model to use for implements in the conceptual data model.
+                        Currently only supporting CogniteCore.
+            total_concepts: The total number of concepts to provide in implements for selection.
+                         Default is None, meaning all concepts will be provided.
 
         """
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
-        ExcelExporter().template(RoleTypes.information, path)
-
-        return None
+        return ExcelExporter(base_model=base_model, total_concepts=total_concepts).template(RoleTypes.information, path)
 
     def expand(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
         """Creates a template for an extension of a Cognite model by expanding properties from CDM.
