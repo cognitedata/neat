@@ -7,7 +7,7 @@ from cognite.neat import NeatSession
 from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
 from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
-from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._graph.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat._issues import IssueList, NeatIssue
 from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning
 from cognite.neat._rules.catalog import imf_attributes
@@ -56,7 +56,9 @@ def test_metadata_as_json_filed():
         prop.class_ = ClassEntity.load("neat_space:YourAsset")
         prop.property_ = f"your_{prop.property_}"
 
-    loader = DMSLoader(dms_rules, info_rules, store, dms_rules.metadata.space)
+    loader = DMSLoader(
+        dms_rules, info_rules, store, InstanceSpaceLoader(instance_space=dms_rules.metadata.space).space_by_instance_uri
+    )
     instances = {instance.external_id: instance for instance in loader._load() if isinstance(instance, InstanceApply)}
 
     # metadata not unpacked but kept as Json obj
@@ -81,7 +83,9 @@ def test_imf_attribute_nodes():
     store = NeatGraphStore.from_oxi_local_store()
     store.write(RdfFileExtractor(GraphData.imf_temp_transmitter_complete_ttl))
 
-    loader = DMSLoader(dms_rules, info_rules, store, instance_space="knowledge")
+    loader = DMSLoader(
+        dms_rules, info_rules, store, InstanceSpaceLoader(instance_space=dms_rules.metadata.space).space_by_instance_uri
+    )
     knowledge_nodes = list(loader.load())
 
     assert len(knowledge_nodes) == 56
@@ -203,7 +207,7 @@ def test_dms_load_respect_container_cardinality() -> None:
         dms,
         info,
         store,
-        instance_space="sp_instance_space",
+        space_by_instance_uri=InstanceSpaceLoader(instance_space=dms.metadata.space).space_by_instance_uri,
     )
     results = list(loader.load(stop_on_exception=True))
 
