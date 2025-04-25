@@ -127,7 +127,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         neat_prefix_by_predicate_uri: dict[URIRef, str] | None = None,
         neat_prefix_by_type_uri: dict[URIRef, str] | None = None,
     ):
-        super().__init__(instance_store)
+        self.instance_store = instance_store
         self.physical_data_model = physical_data_model
         self.conceptual_data_model = conceptual_data_model
         self.neat_prefix_by_predicate_uri = neat_prefix_by_predicate_uri or {}
