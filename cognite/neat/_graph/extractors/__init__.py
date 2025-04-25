@@ -1,4 +1,4 @@
-from cognite.neat._session.engine._interface import Extractor as EngineExtractor
+from cognite.neat.session.engine._interface import Extractor as EngineExtractor
 
 from ._base import BaseExtractor, KnowledgeGraphExtractor
 from ._classic_cdf._assets import AssetsExtractor
