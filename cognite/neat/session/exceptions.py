@@ -3,7 +3,7 @@ import warnings
 from collections.abc import Callable
 from typing import Any
 
-from cognite.neat._alpha import ExperimentalFeatureWarning
+from cognite.neat.session._experimental import ExperimentalFeatureWarning
 from cognite.neat._issues.errors import CDFMissingClientError, NeatImportError
 from cognite.neat._issues.errors._external import OxigraphStorageLockedError
 from cognite.neat._issues.errors._general import NeatValueError

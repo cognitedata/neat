@@ -16,7 +16,7 @@ from cognite.client.data_classes import (
 )
 
 from cognite.neat._client.data_classes.neat_sequence import NeatSequence
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph.extractors import (
     AssetsExtractor,
     DataSetExtractor,

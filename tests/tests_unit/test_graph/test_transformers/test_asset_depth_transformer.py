@@ -1,4 +1,4 @@
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph import extractors, transformers
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._store import NeatGraphStore

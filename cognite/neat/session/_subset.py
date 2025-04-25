@@ -1,6 +1,6 @@
 import warnings
 
-from cognite.neat._alpha import ExperimentalFlags
+from cognite.neat.session._experimental import ExperimentalFlags
 from cognite.neat._issues._base import IssueList
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
 from cognite.neat._rules.transformers import SubsetDMSRules, SubsetInformationRules

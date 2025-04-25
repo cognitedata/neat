@@ -5,7 +5,11 @@ from rdflib import RDF, Literal
 
 from cognite.neat import NeatSession
 from cognite.neat._client.testing import monkeypatch_neat_client
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+from cognite.neat.core._constants import (
+    CLASSIC_CDF_NAMESPACE,
+    DEFAULT_NAMESPACE,
+    DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+)
 from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader
 from cognite.neat._issues import IssueList, NeatIssue

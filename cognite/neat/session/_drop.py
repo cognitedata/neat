@@ -5,7 +5,7 @@ from typing import Literal
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import URIRef
 
-from cognite.neat._constants import COGNITE_MODELS
+from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat._issues import IssueList
 from cognite.neat._rules.transformers import DropModelViews
 

@@ -4,9 +4,9 @@ from typing import Any, Literal, cast
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from cognite.neat._alpha import ExperimentalFlags
+from cognite.neat.session._experimental import ExperimentalFlags
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import (
+from cognite.neat.core._constants import (
     CLASSIC_CDF_NAMESPACE,
     get_default_prefixes_and_namespaces,
 )

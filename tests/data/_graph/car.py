@@ -4,7 +4,7 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace
 from rdflib.term import Literal
 
-from cognite.neat._constants import DEFAULT_SPACE_URI
+from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat._rules import importers
 from cognite.neat._rules.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat._rules.models import DMSRules, InformationRules

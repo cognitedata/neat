@@ -4,7 +4,7 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat import NeatSession
-from cognite.neat._constants import DEFAULT_NAMESPACE
+from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat._graph.loaders import DMSLoader

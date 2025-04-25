@@ -6,7 +6,7 @@ import networkx as nx
 from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
 
-from cognite.neat._constants import IN_NOTEBOOK, IN_PYODIDE
+from cognite.neat.core._constants import IN_NOTEBOOK, IN_PYODIDE
 from cognite.neat._rules.analysis._base import RulesAnalysis
 from cognite.neat._utils.io_ import to_directory_compatible
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_display_name

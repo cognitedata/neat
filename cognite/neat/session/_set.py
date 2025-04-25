@@ -2,7 +2,7 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import COGNITE_MODELS
+from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat._graph.transformers import SetType
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError

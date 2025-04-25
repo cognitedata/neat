@@ -4,7 +4,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat._constants import get_default_prefixes_and_namespaces
+from cognite.neat.core._constants import get_default_prefixes_and_namespaces
 from cognite.neat._graph.transformers._prune_graph import AttachPropertyFromTargetToSource
 from cognite.neat._store import NeatGraphStore
 from cognite.neat.core._shared import Triple

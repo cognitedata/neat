@@ -6,9 +6,9 @@ from typing import Any, Literal, cast, overload
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat._alpha import ExperimentalFlags
+from cognite.neat.session._experimental import ExperimentalFlags
 from cognite.neat._client._api_client import NeatClient
-from cognite.neat._constants import COGNITE_MODELS
+from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat._graph import loaders
 from cognite.neat._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat._rules import exporters

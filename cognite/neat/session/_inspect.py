@@ -4,7 +4,7 @@ from typing import Literal, overload
 
 import pandas as pd
 
-from cognite.neat._constants import IN_NOTEBOOK
+from cognite.neat.core._constants import IN_NOTEBOOK
 from cognite.neat._issues import IssueList
 from cognite.neat._utils.upload import UploadResult, UploadResultCore, UploadResultList
 

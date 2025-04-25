@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from cognite.neat._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat._issues import NeatError
 from cognite.neat._issues._base import MultiValueError
 from cognite.neat._issues.errors import ResourceNotDefinedError
