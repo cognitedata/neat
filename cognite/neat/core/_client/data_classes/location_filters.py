@@ -12,6 +12,8 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes._base import (
     CogniteObject,
     CogniteResourceList,
+    ExternalIDTransformerMixin,
+    IdTransformerMixin,
     WriteableCogniteResource,
     WriteableCogniteResourceList,
 )
@@ -285,11 +287,11 @@ class LocationFilter(LocationFilterCore):
         )
 
 
-class LocationFilterWriteList(CogniteResourceList):
+class LocationFilterWriteList(CogniteResourceList, ExternalIDTransformerMixin):
     _RESOURCE = LocationFilterWrite
 
 
-class LocationFilterList(WriteableCogniteResourceList[LocationFilterWrite, LocationFilter]):
+class LocationFilterList(WriteableCogniteResourceList[LocationFilterWrite, LocationFilter], IdTransformerMixin):
     _RESOURCE = LocationFilter
 
     def as_write(self) -> LocationFilterWriteList:
