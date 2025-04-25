@@ -143,6 +143,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
     def _load(
         self, stop_on_exception: bool = False
     ) -> Iterable[dm.SpaceApply | NeatIssue | type[_END_OF_CLASS] | _START_OF_CLASS]:
+        yield from self._lookup_issues
         seen: set[str] = set()
         for space_str in self.space_by_instance_uri.values():
             if space_str in seen:
