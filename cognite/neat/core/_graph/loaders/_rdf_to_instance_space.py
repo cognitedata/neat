@@ -101,7 +101,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
             else:
                 unchanged.append(local_space)
         loader = client.loaders.spaces
-        results: UploadResult[str] = UploadResult(class_name or loader.resource_name)
+        results: UploadResult[str] = UploadResult("instance spaces")
         results.unchanged.update(unchanged.as_ids())
         if dry_run:
             results.created.update(to_create.as_ids())

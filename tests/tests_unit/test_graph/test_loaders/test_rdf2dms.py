@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._graph.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._rules.importers import SubclassInferenceImporter
 from cognite.neat.core._rules.models import DMSRules
@@ -36,7 +36,12 @@ class TestDMSLoader:
     def test_load_car_example(self, car_case: tuple[DMSRules, InformationRules, NeatGraphStore]) -> None:
         dms_rules, info_rules, store = car_case
 
-        loader = DMSLoader(dms_rules, info_rules, store, GraphData.car.INSTANCE_SPACE)
+        loader = DMSLoader(
+            dms_rules,
+            info_rules,
+            store,
+            InstanceSpaceLoader(instance_space=GraphData.car.INSTANCE_SPACE).space_by_instance_uri,
+        )
 
         loaded = loader.load(stop_on_exception=True)
 
