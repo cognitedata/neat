@@ -32,7 +32,8 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
     Args:
         graph_store (NeatGraphStore): The graph store to load the data from.
         instance_space (str): The instance space to load the data into.
-
+        space_property (str): The property to use to determine the space for each instance.
+        use_source_space (bool): If True, use the source space of the instances when extracted from CDF.
         neat_prefix_by_predicate_uri (dict[URIRef, str] | None): A dictionary that maps a predicate URIRef to a
             prefix that Neat added to the object upon extraction. This is used to remove the prefix from the
             object before creating the instance.
