@@ -318,27 +318,31 @@ class CDFToAPI:
         elif not PATTERNS.space_compliance.match(str(instance_space)):
             raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
-        if not client.data_modeling.spaces.retrieve(instance_space):
-            client.data_modeling.spaces.apply(dm.SpaceApply(space=instance_space))
+        instance_space_loader = loaders.InstanceSpaceLoader(
+            self._state.instances.store,
+            instance_space=instance_space,
+            space_property=space_from_property,
+            use_source_space=use_source_space,
+            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+        )
+        result = instance_space_loader.load_into_cdf(client)
 
         loader = loaders.DMSLoader(
             self._state.rule_store.last_verified_dms_rules,
             self._state.rule_store.last_verified_information_rules,
             self._state.instances.store,
-            instance_space=instance_space,
+            space_by_instance_uri=instance_space_loader.space_by_instance_uri,
             client=client,
-            space_property=space_from_property,
-            use_source_space=use_source_space,
             # In case urllib.parse.quote() was run on the extraction, we need to run
             # urllib.parse.unquote() on the load.
             unquote_external_ids=True,
-            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
             neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
 
-        result = loader.load_into_cdf(client)
-        self._state.instances.outcome.append(result)
+        instance_result = loader.load_into_cdf(client)
         print("You can inspect the details with the .inspect.outcome.instances(...) method.")
+        result.extend(instance_result)
+        self._state.instances.outcome.append(result)
         return result
 
     def data_model(

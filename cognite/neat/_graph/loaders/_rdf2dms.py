@@ -88,14 +88,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         info_rules (InformationRules): The information rules used by the data model, used to
             look+up the instances in the store.
         graph_store (NeatGraphStore): The graph store to load the data from.
-        instance_space (str): The instance space to load the data into.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         client (NeatClient | None): This is used to lookup containers such that the loader
             creates instances in accordance with required constraints. Defaults to None.
         unquote_external_ids (bool): If True, the loader will unquote external ids before creating the instances.
-        neat_prefix_by_predicate_uri (dict[URIRef, str] | None): A dictionary that maps a predicate URIRef to a
-            prefix that Neat added to the object upon extraction. This is used to remove the prefix from the
-            object before creating the instance.
     """
 
     def __init__(
@@ -103,24 +99,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         dms_rules: DMSRules,
         info_rules: InformationRules,
         graph_store: NeatGraphStore,
-        instance_space: str,
-        space_property: str | None = None,
-        use_source_space: bool = False,
+        space_by_instance_uri: dict[URIRef, str],
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
-        neat_prefix_by_predicate_uri: dict[URIRef, str] | None = None,
         neat_prefix_by_type_uri: dict[URIRef, str] | None = None,
     ):
         self.graph_store = graph_store
         self.dms_rules = dms_rules
         self.info_rules = info_rules
-        self.neat_prefix_by_predicate_uri = neat_prefix_by_predicate_uri or {}
         self.neat_prefix_by_type_uri = neat_prefix_by_type_uri or {}
-        self._instance_space = instance_space
-        self._space_property = space_property
-        self._use_source_space = use_source_space
-        self._space_by_instance_uri: dict[URIRef, str] = defaultdict(lambda: instance_space)
+        self._space_by_instance_uri = space_by_instance_uri
         self._external_id_by_uri: dict[URIRef, str] = {}
         self._issues = IssueList(create_issues or [])
         self._client = client
