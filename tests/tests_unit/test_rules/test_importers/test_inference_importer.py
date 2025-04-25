@@ -179,7 +179,9 @@ def test_infer_importer_names_different_casing() -> None:
     store = neat._state.instances.store
     instances = [
         instance
-        for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
+        for instance in DMSLoader(
+            dms_rules, info_rules, store, InstanceSpaceLoader(instance_space="sp_instance_space").space_by_instance_uri
+        ).load()
         if isinstance(instance, InstanceApply)
     ]
     actual = {node.external_id: node.sources[0].properties for node in instances}
