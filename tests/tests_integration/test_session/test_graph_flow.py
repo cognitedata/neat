@@ -14,7 +14,7 @@ from cognite.client.data_classes.data_modeling import (
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
-from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._graph.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat._rules.models.entities import ContainerEntity
 from tests.data import GraphData, SchemaData
 
@@ -208,7 +208,8 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.rule_store.last_verified_dms_rules
             info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
+            instance_loader = InstanceSpaceLoader(instance_space="sp_instance_space")
+            instances = list(DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
@@ -246,13 +247,14 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.rule_store.last_verified_dms_rules
             info_rules = neat._state.rule_store.last_verified_information_rules
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
+            instance_loader = InstanceSpaceLoader(instance_space="sp_instance_space")
+            instances = list(DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
             instances = [
                 self._standardize_instance(instance)
-                for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
+                for instance in DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load()
             ]
 
         else:

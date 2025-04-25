@@ -7,7 +7,7 @@ from cognite.neat import NeatSession
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat._graph.loaders import DMSLoader
+from cognite.neat._graph.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat._issues import catch_issues
 from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.importers import InferenceImporter
@@ -179,7 +179,9 @@ def test_infer_importer_names_different_casing() -> None:
     store = neat._state.instances.store
     instances = [
         instance
-        for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
+        for instance in DMSLoader(
+            dms_rules, info_rules, store, InstanceSpaceLoader(instance_space="sp_instance_space").space_by_instance_uri
+        ).load()
         if isinstance(instance, InstanceApply)
     ]
     actual = {node.external_id: node.sources[0].properties for node in instances}
