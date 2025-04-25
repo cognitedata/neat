@@ -430,15 +430,20 @@ class ToPythonAPI:
         elif not PATTERNS.space_compliance.match(str(instance_space)):
             raise NeatSessionError(f"Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
-        loader = loaders.DMSLoader(
-            self._state.rule_store.last_verified_dms_rules,
-            self._state.rule_store.last_verified_information_rules,
+        instance_loader = loaders.InstanceSpaceLoader(
             self._state.instances.store,
             instance_space=instance_space,
             space_property=space_from_property,
             use_source_space=use_source_space,
-            unquote_external_ids=True,
             neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+        )
+
+        loader = loaders.DMSLoader(
+            self._state.rule_store.last_verified_dms_rules,
+            self._state.rule_store.last_verified_information_rules,
+            self._state.instances.store,
+            space_by_instance_uri=instance_loader.space_by_instance_uri,
+            unquote_external_ids=True,
             neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
         issue_list = IssueList()
