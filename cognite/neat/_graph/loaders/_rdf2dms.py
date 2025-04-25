@@ -112,7 +112,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         neat_prefix_by_predicate_uri: dict[URIRef, str] | None = None,
         neat_prefix_by_type_uri: dict[URIRef, str] | None = None,
     ):
-        super().__init__(graph_store)
+        self.graph_store = graph_store
         self.dms_rules = dms_rules
         self.info_rules = info_rules
         self.neat_prefix_by_predicate_uri = neat_prefix_by_predicate_uri or {}
