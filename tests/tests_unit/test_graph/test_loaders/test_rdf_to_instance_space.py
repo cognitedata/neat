@@ -22,8 +22,8 @@ def load_instance_spaces_test_cases():
     )
 
     yield pytest.param(
-        InstanceSpaceLoader(graph_store=store, space_property="dataSetId"),
-        {"6931754270713290"},
+        InstanceSpaceLoader(graph_store=store, space_property="dataSetId", instance_space="fallback_space"),
+        {"data_set_6931754270713290"},
         id="Space from property",
     )
 
