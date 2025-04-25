@@ -9,6 +9,7 @@ class ExperimentalFeatureWarning(UserWarning):
         warnings.warn(self, stacklevel=2)
 
 
+# ExperimentalFlags to explicitly inform the user that these features are not stable!
 class ExperimentalFlags:
     manual_rules_edit = ExperimentalFeatureWarning("enable_manual_edit")
     same_space_properties_only_export = ExperimentalFeatureWarning("same-space-properties-only")
