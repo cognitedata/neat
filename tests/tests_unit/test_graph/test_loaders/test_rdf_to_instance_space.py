@@ -17,7 +17,7 @@ def load_instance_spaces_test_cases():
 
     store.write(
         extractor=AssetsExtractor(
-            AssetWriteList.load(InstanceData.AssetCentricCDF.assets_yaml.read_text()), identifier="id"
+            AssetWriteList.load(InstanceData.AssetCentricCDF.assets_yaml.read_text()), identifier="externalId"
         )
     )
 
