@@ -12,7 +12,9 @@ from rdflib import URIRef
 from cognite.neat._client import NeatClient
 from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError
 from cognite.neat._issues import IssueList, NeatIssue
+from cognite.neat._issues.errors import ResourceCreationError
 from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
 from cognite.neat._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
@@ -41,6 +43,8 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
         self.instance_space = instance_space
         self.space_property = space_property
         self.use_source_space = use_source_space
+
+        self._lookup_issues = IssueList()
 
         self._has_looked_up = False
         self._space_by_instance_uri: dict[URIRef, str] = {}
@@ -153,4 +157,34 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
             # Adding a dummy entry to ensure that the instance space is included
             self._space_by_instance_uri[URIRef(self.instance_space)] = self.instance_space
             return
+        if self.graph_store is None:
+            raise ValueError("Graph store must be provided to lookup spaces")
+        # Case 2: Use the source space, i.e., the space of the instances when extracted from CDF
+        if self.use_source_space:
+            self._lookup_instance_uris(self.graph_store)
+        # Case 3: Use a property on each instance to determine the space.
+        elif self.space_property is not None:
+            if self.instance_space is None:
+                raise ValueError(
+                    f"Missing fallback instance space. This is required when using '{self.space_property=}'"
+                )
+            self._space_by_instance_uri = defaultdict(lambda: cast(str, self.instance_space))
+            self._lookup_space_property(self.graph_store, self.space_property)
+        else:
+            raise ValueError("Either 'instance_space", "space_property', or 'use_source_space' must be provided. ")
+
+    def _lookup_instance_uris(self, graph_store: NeatGraphStore) -> None:
+        for class_uri, instance_uri in graph_store.queries.select.list_instances_ids():
+            namespace, external_id = split_uri(instance_uri)
+            space = namespace_as_space(namespace)
+            if space is None:
+                instance_type = remove_namespace_from_uri(class_uri)
+                error = ResourceCreationError(
+                    instance_uri, instance_type, f"Could not find space for {instance_uri!s}."
+                )
+                self._lookup_issues.append(error)
+            else:
+                self._space_by_instance_uri[instance_uri] = space
+
+    def _lookup_space_property(self, graph_store: NeatGraphStore, space_property: str) -> None:
         raise NotImplementedError()
