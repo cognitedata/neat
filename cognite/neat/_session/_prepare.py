@@ -4,7 +4,7 @@ from typing import Any
 
 from rdflib import URIRef
 
-from cognite.neat._alpha import ExperimentalFlags
+from cognite.neat._experimental._flags import ExperimentalFlags
 from cognite.neat._graph.transformers import (
     ConnectionToLiteral,
     ConvertLiteral,
