@@ -1,8 +1,9 @@
 from ._base import BaseLoader, CDFLoader
 from ._rdf2dms import DMSLoader
 from ._rdf_to_instance_space import InstanceSpaceLoader
+from ._to_location_filter import LocationFilterLoader
 
-__all__ = ["BaseLoader", "CDFLoader", "DMSLoader", "InstanceSpaceLoader"]
+__all__ = ["BaseLoader", "CDFLoader", "DMSLoader", "InstanceSpaceLoader", "LocationFilterLoader"]
 
 
 def _repr_html_() -> str:
