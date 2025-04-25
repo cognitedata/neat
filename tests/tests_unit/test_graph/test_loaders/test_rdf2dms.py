@@ -1,5 +1,7 @@
 import pytest
 
+from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
+from cognite.neat.core._issues import IssueList
 from cognite.neat.core._data_model.importers import SubclassInferenceImporter
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual._verified import (
@@ -8,8 +10,6 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 from cognite.neat.core._data_model.transformers._converters import (
     ToCompliantEntities,
 )
-from cognite.neat.core._instances.loaders import DMSLoader
-from cognite.neat.core._issues import IssueList
 from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData
 
@@ -42,7 +42,12 @@ class TestDMSLoader:
     def test_load_car_example(self, car_case: tuple[PhysicalDataModel, ConceptualDataModel, NeatInstanceStore]) -> None:
         dms_rules, info_rules, store = car_case
 
-        loader = DMSLoader(dms_rules, info_rules, store, GraphData.car.INSTANCE_SPACE)
+        loader = DMSLoader(
+            dms_rules,
+            info_rules,
+            store,
+            InstanceSpaceLoader(instance_space=GraphData.car.INSTANCE_SPACE).space_by_instance_uri,
+        )
 
         loaded = loader.load(stop_on_exception=True)
 
