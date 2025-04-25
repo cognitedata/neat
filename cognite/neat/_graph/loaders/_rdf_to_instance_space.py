@@ -1,10 +1,13 @@
 import json
+from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
+from typing import cast
 
 import yaml
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelsAcl
+from rdflib import URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError
@@ -40,6 +43,15 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
         self.use_source_space = use_source_space
 
         self._has_looked_up = False
+        self._space_by_instance_uri: dict[URIRef, str] = {}
+
+    @property
+    def space_by_instance_uri(self) -> dict[URIRef, str]:
+        """Returns a dictionary mapping instance URIs to their respective spaces."""
+        if not self._has_looked_up:
+            self._lookup_spaces()
+            self._has_looked_up = True
+        return self._space_by_instance_uri
 
     def _get_required_capabilities(self) -> list[Capability]:
         return [
@@ -127,8 +139,18 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
     def _load(
         self, stop_on_exception: bool = False
     ) -> Iterable[dm.SpaceApply | NeatIssue | type[_END_OF_CLASS] | _START_OF_CLASS]:
+        seen: set[str] = set()
+        for space_str in self.space_by_instance_uri.values():
+            if space_str in seen:
+                continue
+            yield dm.SpaceApply(space=space_str)
+            seen.add(space_str)
+
+    def _lookup_spaces(self) -> None:
         # Case 1: Same instance space for all instances:
-        if self.instance_space is not None and self.space_property is None:
-            yield dm.SpaceApply(space=self.instance_space)
+        if isinstance(self.instance_space, str) and self.space_property is None:
+            self._space_by_instance_uri = defaultdict(lambda: cast(str, self.instance_space))
+            # Adding a dummy entry to ensure that the instance space is included
+            self._space_by_instance_uri[URIRef(self.instance_space)] = self.instance_space
             return
         raise NotImplementedError()
