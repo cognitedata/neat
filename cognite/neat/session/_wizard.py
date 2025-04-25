@@ -3,7 +3,7 @@ from typing import Literal, TypeVar, get_args
 
 from rich.prompt import IntPrompt, Prompt
 
-from cognite.neat._rules._constants import PATTERNS
+from cognite.neat.core._rules._constants import PATTERNS
 
 RDFFileType = Literal["Ontology", "IMF Types", "Inference"]
 NeatObjectType = Literal["Data Model", "Instances"]

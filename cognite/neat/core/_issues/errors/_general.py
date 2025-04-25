@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from cognite.neat._issues import NeatError
+from cognite.neat.core._issues import NeatError
 
 
 @dataclass(unsafe_hash=True)

@@ -27,7 +27,7 @@ from pydantic_core import core_schema
 from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules.models._types import (
+from cognite.neat.core._rules.models._types import (
     ContainerEntityType,
     DataModelExternalIdType,
     DmsPropertyType,
@@ -37,9 +37,13 @@ from cognite.neat._rules.models._types import (
     VersionType,
     ViewEntityType,
 )
-from cognite.neat._rules.models.data_types import DataType
-from cognite.neat._rules.models.entities import EdgeEntity, ReverseConnectionEntity, ViewEntity
-from cognite.neat._utils.rdf_ import uri_display_name
+from cognite.neat.core._rules.models.data_types import DataType
+from cognite.neat.core._rules.models.entities import (
+    EdgeEntity,
+    ReverseConnectionEntity,
+    ViewEntity,
+)
+from cognite.neat.core._utils.rdf_ import uri_display_name
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum

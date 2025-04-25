@@ -8,9 +8,13 @@ from rdflib import RDF, RDFS, Graph, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.core._constants import NEAT
-from cognite.neat._issues.warnings import PropertyDataTypeConversionWarning
-from cognite.neat._utils.auxiliary import string_to_ideal_type
-from cognite.neat._utils.rdf_ import Triple, get_namespace, remove_namespace_from_uri
+from cognite.neat.core._issues.warnings import PropertyDataTypeConversionWarning
+from cognite.neat.core._utils.auxiliary import string_to_ideal_type
+from cognite.neat.core._utils.rdf_ import (
+    Triple,
+    get_namespace,
+    remove_namespace_from_uri,
+)
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 

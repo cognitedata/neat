@@ -1,22 +1,22 @@
 from abc import ABC
 
-from cognite.neat._client import NeatClient
-from cognite.neat._issues import MultiValueError, catch_issues
-from cognite.neat._issues.errors import NeatTypeError, NeatValueError
-from cognite.neat._rules._shared import (
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._issues import MultiValueError, catch_issues
+from cognite.neat.core._issues.errors import NeatTypeError, NeatValueError
+from cognite.neat.core._rules._shared import (
     ReadRules,
     T_ReadInputRules,
     T_VerifiedRules,
     VerifiedRules,
 )
-from cognite.neat._rules.models import (
+from cognite.neat.core._rules.models import (
     DMSInputRules,
     DMSRules,
     InformationInputRules,
     InformationRules,
 )
-from cognite.neat._rules.models.dms import DMSValidation
-from cognite.neat._rules.models.information import InformationValidation
+from cognite.neat.core._rules.models.dms import DMSValidation
+from cognite.neat.core._rules.models.information import InformationValidation
 
 from ._base import RulesTransformer
 

@@ -5,7 +5,7 @@ from typing import ClassVar
 from cognite.client.data_classes.data_modeling import DataModelId, ViewId
 
 from cognite.neat.core._constants import DMS_VIEW_CONTAINER_SIZE_LIMIT
-from cognite.neat._issues import NeatWarning
+from cognite.neat.core._issues import NeatWarning
 
 _BASE_URL = "https://cognite-neat.readthedocs-hosted.com/en/latest/data-modeling-principles.html"
 

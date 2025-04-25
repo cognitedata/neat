@@ -1,7 +1,11 @@
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 
-from cognite.neat._client._api.data_modeling_loaders import ContainerLoader, DataModelLoader, ViewLoader
+from cognite.neat.core._client._api.data_modeling_loaders import (
+    ContainerLoader,
+    DataModelLoader,
+    ViewLoader,
+)
 
 _DEFAULT_ARGS = dict(is_global=False, created_time=1, last_updated_time=1, name=None, description=None)
 

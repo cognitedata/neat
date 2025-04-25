@@ -1,4 +1,4 @@
-from cognite.neat._issues._base import NeatError, _get_subclasses
+from cognite.neat.core._issues._base import NeatError, _get_subclasses
 
 from ._external import (
     AuthorizationError,

@@ -9,17 +9,21 @@ from cognite.client import CogniteClient
 from cognite.client.exceptions import CogniteAPIError
 from rdflib import Namespace, URIRef
 
-from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE, get_default_prefixes_and_namespaces
-from cognite.neat._graph.extractors._base import KnowledgeGraphExtractor
-from cognite.neat._issues.errors import NeatValueError, ResourceNotFoundError
-from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.catalog import classic_model
-from cognite.neat._rules.models import InformationInputRules, InformationRules
-from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
-from cognite.neat._utils.text import to_snake_case
+from cognite.neat.core._constants import (
+    CLASSIC_CDF_NAMESPACE,
+    DEFAULT_NAMESPACE,
+    get_default_prefixes_and_namespaces,
+)
+from cognite.neat.core._graph.extractors._base import KnowledgeGraphExtractor
+from cognite.neat.core._issues.errors import NeatValueError, ResourceNotFoundError
+from cognite.neat.core._issues.warnings import CDFAuthWarning, NeatValueWarning
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.catalog import classic_model
+from cognite.neat.core._rules.models import InformationInputRules, InformationRules
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._utils.collection_ import chunker, iterate_progress_bar
+from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.core._utils.text import to_snake_case
 
 from ._assets import AssetsExtractor
 from ._base import ClassicCDFBaseExtractor, InstanceIdPrefix
@@ -203,7 +207,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
     def get_information_rules(self) -> InformationRules:
         # To avoid circular imports
-        from cognite.neat._rules.importers import ExcelImporter
+        from cognite.neat.core._rules.importers import ExcelImporter
 
         unverified = cast(ReadRules[InformationInputRules], ExcelImporter(classic_model).to_rules())
         if unverified.rules is None:

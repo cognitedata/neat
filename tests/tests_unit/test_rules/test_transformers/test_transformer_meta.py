@@ -4,9 +4,14 @@ from collections.abc import Iterable
 import pytest
 
 from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.models import DMSInputRules, DMSRules, InformationInputRules, InformationRules
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.models import (
+    DMSInputRules,
+    DMSRules,
+    InformationInputRules,
+    InformationRules,
+)
+from cognite.neat.core._rules.transformers import (
     AddClassImplements,
     AddCogniteProperties,
     ClassicPrepareCore,

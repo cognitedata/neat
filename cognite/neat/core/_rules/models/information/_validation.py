@@ -1,22 +1,22 @@
 import itertools
 from collections import Counter, defaultdict
 
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.errors._resources import (
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._issues.errors._resources import (
     ResourceDuplicatedError,
     ResourceNotDefinedError,
 )
-from cognite.neat._issues.warnings._models import UndefinedClassWarning
-from cognite.neat._issues.warnings._resources import (
+from cognite.neat.core._issues.warnings._models import UndefinedClassWarning
+from cognite.neat.core._issues.warnings._resources import (
     ResourceNotDefinedWarning,
     ResourceRegexViolationWarning,
 )
-from cognite.neat._rules._constants import PATTERNS, EntityTypes
-from cognite.neat._rules.models.entities import ClassEntity, UnknownEntity
-from cognite.neat._rules.models.entities._multi_value import MultiValueTypeInfo
-from cognite.neat._utils.spreadsheet import SpreadsheetRead
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._rules._constants import PATTERNS, EntityTypes
+from cognite.neat.core._rules.models.entities import ClassEntity, UnknownEntity
+from cognite.neat.core._rules.models.entities._multi_value import MultiValueTypeInfo
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.text import humanize_collection
 
 from ._rules import InformationRules
 

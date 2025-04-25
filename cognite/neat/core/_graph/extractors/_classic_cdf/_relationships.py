@@ -9,9 +9,9 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Relationship, RelationshipList
 from rdflib import Namespace, URIRef
 
-from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._utils.auxiliary import create_sha256_hash
+from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._utils.auxiliary import create_sha256_hash
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix, T_CogniteResource
 

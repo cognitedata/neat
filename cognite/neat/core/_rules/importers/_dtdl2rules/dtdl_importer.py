@@ -5,21 +5,25 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
-from cognite.neat._issues.warnings import (
+from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
+from cognite.neat.core._issues.warnings import (
     FileItemNotSupportedWarning,
     FileMissingRequiredFieldWarning,
     FileReadWarning,
     FileTypeUnexpectedWarning,
     NeatValueWarning,
 )
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.importers._base import BaseImporter
-from cognite.neat._rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
-from cognite.neat._rules.importers._dtdl2rules.spec import DTDL_CLS_BY_TYPE_BY_SPEC, DTDLBase, Interface
-from cognite.neat._rules.models import InformationInputRules
-from cognite.neat._rules.models.information import InformationInputMetadata
-from cognite.neat._utils.text import humanize_collection, to_pascal_case
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.importers._base import BaseImporter
+from cognite.neat.core._rules.importers._dtdl2rules.dtdl_converter import _DTDLConverter
+from cognite.neat.core._rules.importers._dtdl2rules.spec import (
+    DTDL_CLS_BY_TYPE_BY_SPEC,
+    DTDLBase,
+    Interface,
+)
+from cognite.neat.core._rules.models import InformationInputRules
+from cognite.neat.core._rules.models.information import InformationInputMetadata
+from cognite.neat.core._utils.text import humanize_collection, to_pascal_case
 
 
 class DTDLImporter(BaseImporter[InformationInputRules]):

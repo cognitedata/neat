@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 import requests
 
-from cognite.neat._issues.errors import NeatTypeError, NeatValueError
+from cognite.neat.core._issues.errors import NeatTypeError, NeatValueError
 
 
 class NeatReader(ABC):

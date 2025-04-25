@@ -9,12 +9,12 @@ from cognite.client.data_classes.data_modeling.instances import Edge, Instance, 
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat._client import NeatClient
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import DEFAULT_SPACE_URI, is_readonly_property
-from cognite.neat._issues.errors import ResourceRetrievalError
-from cognite.neat._utils.collection_ import iterate_progress_bar
+from cognite.neat.core._issues.errors import ResourceRetrievalError
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._utils.collection_ import iterate_progress_bar
 
 from ._base import BaseExtractor
 from ._dict import DEFAULT_EMPTY_VALUES, DMSPropertyExtractor

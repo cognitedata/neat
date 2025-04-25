@@ -1,12 +1,18 @@
 import pytest
 
-from cognite.neat._issues import IssueList, catch_issues
-from cognite.neat._issues.errors import ResourceMissingIdentifierError, ResourceNotDefinedError
-from cognite.neat._issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
-from cognite.neat._rules.importers import DTDLImporter
-from cognite.neat._rules.importers._dtdl2rules.spec import DTMI, Interface
-from cognite.neat._rules.models import InformationRules
-from cognite.neat._rules.transformers import VerifyInformationRules
+from cognite.neat.core._issues import IssueList, catch_issues
+from cognite.neat.core._issues.errors import (
+    ResourceMissingIdentifierError,
+    ResourceNotDefinedError,
+)
+from cognite.neat.core._issues.warnings import (
+    PropertyTypeNotSupportedWarning,
+    ResourceTypeNotSupportedWarning,
+)
+from cognite.neat.core._rules.importers import DTDLImporter
+from cognite.neat.core._rules.importers._dtdl2rules.spec import DTMI, Interface
+from cognite.neat.core._rules.models import InformationRules
+from cognite.neat.core._rules.transformers import VerifyInformationRules
 from tests.data import SchemaData
 
 

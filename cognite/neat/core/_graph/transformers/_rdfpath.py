@@ -4,7 +4,7 @@ from urllib.parse import quote
 from rdflib import Namespace, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._utils.rdf_ import get_namespace, remove_namespace_from_uri
+from cognite.neat.core._utils.rdf_ import get_namespace, remove_namespace_from_uri
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 

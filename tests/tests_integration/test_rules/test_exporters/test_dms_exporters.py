@@ -4,18 +4,18 @@ import pytest
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import Row
 
-from cognite.neat._client import NeatClient
-from cognite.neat._rules.exporters import DMSExporter
-from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import DMSRules, InformationRules, SheetList
-from cognite.neat._rules.models.dms import (
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._rules.exporters import DMSExporter
+from cognite.neat.core._rules.importers import ExcelImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules, SheetList
+from cognite.neat.core._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat._rules.models.information import (
+from cognite.neat.core._rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,

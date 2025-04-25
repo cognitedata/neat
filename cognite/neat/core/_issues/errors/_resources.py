@@ -1,8 +1,13 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat._issues._base import NeatError, ResourceType, T_Identifier, T_ReferenceIdentifier
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._issues._base import (
+    NeatError,
+    ResourceType,
+    T_Identifier,
+    T_ReferenceIdentifier,
+)
+from cognite.neat.core._utils.text import humanize_collection
 
 
 @dataclass(unsafe_hash=True)

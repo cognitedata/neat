@@ -10,11 +10,14 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 from rdflib import Namespace, URIRef
 
-from cognite.neat.core._constants import DEFAULT_NAMESPACE, DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
-from cognite.neat._issues.warnings import DeprecatedWarning
-from cognite.neat._rules.models._base_input import InputComponent, InputRules
-from cognite.neat._rules.models.data_types import DataType
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._constants import (
+    DEFAULT_NAMESPACE,
+    DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+)
+from cognite.neat.core._issues.warnings import DeprecatedWarning
+from cognite.neat.core._rules.models._base_input import InputComponent, InputRules
+from cognite.neat.core._rules.models.data_types import DataType
+from cognite.neat.core._rules.models.entities import (
     ContainerEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
@@ -24,8 +27,8 @@ from cognite.neat._rules.models.entities import (
     load_connection,
     load_dms_value_type,
 )
-from cognite.neat._rules.models.entities._wrapped import DMSFilter
-from cognite.neat._utils.rdf_ import uri_display_name
+from cognite.neat.core._rules.models.entities._wrapped import DMSFilter
+from cognite.neat.core._utils.rdf_ import uri_display_name
 
 from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 

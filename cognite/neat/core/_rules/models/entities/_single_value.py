@@ -22,8 +22,8 @@ from pydantic import (
     model_validator,
 )
 
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._utils.text import replace_non_alphanumeric_with_underscore
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._utils.text import replace_non_alphanumeric_with_underscore
 
 if sys.version_info >= (3, 11):
     from enum import StrEnum
@@ -32,7 +32,7 @@ else:
     from backports.strenum import StrEnum
     from typing_extensions import Self
 
-from cognite.neat._rules._constants import (
+from cognite.neat.core._rules._constants import (
     ENTITY_PATTERN,
     SPLIT_ON_COMMA_PATTERN,
     SPLIT_ON_EDGE_ENTITY_ARGS_PATTERN,

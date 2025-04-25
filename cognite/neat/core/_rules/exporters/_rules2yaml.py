@@ -5,7 +5,7 @@ from typing import Literal, get_args
 
 import yaml
 
-from cognite.neat._rules._shared import VerifiedRules
+from cognite.neat.core._rules._shared import VerifiedRules
 
 from ._base import BaseExporter
 

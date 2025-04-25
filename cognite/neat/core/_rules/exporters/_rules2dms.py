@@ -18,18 +18,24 @@ from cognite.client.data_classes.data_modeling import (
 )
 from cognite.client.exceptions import CogniteAPIError
 
-from cognite.neat._client import DataModelingLoader, NeatClient
-from cognite.neat._client._api.data_modeling_loaders import MultiCogniteAPIError, T_WritableCogniteResourceList
-from cognite.neat._client.data_classes.data_modeling import Component, ViewApplyDict
-from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.warnings import (
+from cognite.neat.core._client import DataModelingLoader, NeatClient
+from cognite.neat.core._client._api.data_modeling_loaders import (
+    MultiCogniteAPIError,
+    T_WritableCogniteResourceList,
+)
+from cognite.neat.core._client.data_classes.data_modeling import (
+    Component,
+    ViewApplyDict,
+)
+from cognite.neat.core._client.data_classes.schema import DMSSchema
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.warnings import (
     PrincipleOneModelOneSpaceWarning,
     ResourceRetrievalWarning,
 )
-from cognite.neat._rules.models.dms import DMSRules
-from cognite.neat._utils.upload import UploadResult
+from cognite.neat.core._rules.models.dms import DMSRules
 from cognite.neat.core._shared import T_ID
+from cognite.neat.core._utils.upload import UploadResult
 
 from ._base import CDFExporter
 

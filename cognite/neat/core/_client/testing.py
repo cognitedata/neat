@@ -4,7 +4,7 @@ from typing import Any
 
 from cognite.client.testing import CogniteClientMock
 
-from cognite.neat._client._api_client import NeatClient
+from cognite.neat.core._client._api_client import NeatClient
 
 from ._api.data_modeling_loaders import DataModelLoaderAPI
 from ._api.neat_instances import NeatInstancesAPI

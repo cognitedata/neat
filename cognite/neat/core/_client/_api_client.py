@@ -1,6 +1,6 @@
 from cognite.client import ClientConfig, CogniteClient
 
-from cognite.neat._utils.auth import _CLIENT_NAME
+from cognite.neat.core._utils.auth import _CLIENT_NAME
 
 from ._api.data_modeling_loaders import DataModelLoaderAPI
 from ._api.neat_instances import NeatInstancesAPI

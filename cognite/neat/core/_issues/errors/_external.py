@@ -4,7 +4,7 @@ from pathlib import Path
 from cognite.client import data_modeling as dm
 from yaml import YAMLError
 
-from cognite.neat._issues import NeatError
+from cognite.neat.core._issues import NeatError
 
 
 @dataclass(unsafe_hash=True)

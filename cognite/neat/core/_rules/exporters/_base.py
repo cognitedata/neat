@@ -5,14 +5,14 @@ from pathlib import Path
 from types import UnionType
 from typing import TYPE_CHECKING, Generic, TypeVar, Union, get_args, get_origin
 
-from cognite.neat._client import NeatClient
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules._shared import T_VerifiedRules
-from cognite.neat._utils.auxiliary import class_html_doc
-from cognite.neat._utils.upload import UploadResult, UploadResultList
+from cognite.neat.core._rules._shared import T_VerifiedRules
+from cognite.neat.core._utils.auxiliary import class_html_doc
+from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
 if TYPE_CHECKING:
-    from cognite.neat._store._provenance import Agent as ProvenanceAgent
+    from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
 T_Export = TypeVar("T_Export")
 
@@ -36,7 +36,7 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
     @property
     def agent(self) -> "ProvenanceAgent":
         """Provenance agent for the importer."""
-        from cognite.neat._store._provenance import Agent as ProvenanceAgent
+        from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
 

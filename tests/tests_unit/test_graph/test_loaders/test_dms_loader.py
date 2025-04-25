@@ -4,29 +4,37 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal
 
 from cognite.neat import NeatSession
-from cognite.neat._client.testing import monkeypatch_neat_client
+from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._constants import (
     CLASSIC_CDF_NAMESPACE,
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat._graph.extractors import AssetsExtractor, FilesExtractor, RdfFileExtractor
-from cognite.neat._graph.loaders import DMSLoader
-from cognite.neat._issues import IssueList, NeatIssue
-from cognite.neat._issues.warnings import PropertyDirectRelationLimitWarning
-from cognite.neat._rules.catalog import imf_attributes
-from cognite.neat._rules.importers import ExcelImporter, SubclassInferenceImporter
-from cognite.neat._rules.models.dms import (
+from cognite.neat.core._graph.extractors import (
+    AssetsExtractor,
+    FilesExtractor,
+    RdfFileExtractor,
+)
+from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._issues import IssueList, NeatIssue
+from cognite.neat.core._issues.warnings import PropertyDirectRelationLimitWarning
+from cognite.neat.core._rules.catalog import imf_attributes
+from cognite.neat.core._rules.importers import ExcelImporter, SubclassInferenceImporter
+from cognite.neat.core._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat._rules.models.entities._single_value import ClassEntity, ContainerEntity, ViewEntity
-from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS
-from cognite.neat._store import NeatGraphStore
+from cognite.neat.core._rules.models.entities._single_value import (
+    ClassEntity,
+    ContainerEntity,
+    ViewEntity,
+)
+from cognite.neat.core._rules.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData, InstanceData
 
 

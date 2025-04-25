@@ -3,8 +3,8 @@ from typing import cast
 import pandas as pd
 from rdflib import URIRef
 
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.core._utils.text import humanize_collection
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper

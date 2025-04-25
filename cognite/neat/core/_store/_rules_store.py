@@ -10,18 +10,25 @@ from typing import Any, cast
 import rdflib
 from rdflib import URIRef
 
-from cognite.neat._client import NeatClient
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.extractors import DMSGraphExtractor, KnowledgeGraphExtractor
-from cognite.neat._issues import IssueList, catch_issues
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import T_VerifiedRules, VerifiedRules
-from cognite.neat._rules.exporters import BaseExporter
-from cognite.neat._rules.exporters._base import CDFExporter, T_Export
-from cognite.neat._rules.importers import BaseImporter
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import DMSToInformation, VerifiedRulesTransformer, VerifyAnyRules
-from cognite.neat._utils.upload import UploadResultList
+from cognite.neat.core._graph.extractors import (
+    DMSGraphExtractor,
+    KnowledgeGraphExtractor,
+)
+from cognite.neat.core._issues import IssueList, catch_issues
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._rules._shared import T_VerifiedRules, VerifiedRules
+from cognite.neat.core._rules.exporters import BaseExporter
+from cognite.neat.core._rules.exporters._base import CDFExporter, T_Export
+from cognite.neat.core._rules.importers import BaseImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.transformers import (
+    DMSToInformation,
+    VerifiedRulesTransformer,
+    VerifyAnyRules,
+)
+from cognite.neat.core._utils.upload import UploadResultList
 
 from ._provenance import (
     EXTERNAL_AGENT,

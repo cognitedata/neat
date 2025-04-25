@@ -1,7 +1,7 @@
 import pytest
 from requests.exceptions import HTTPError
 
-from cognite.neat._utils.reader import NeatReader
+from cognite.neat.core._utils.reader import NeatReader
 
 
 @pytest.fixture(scope="session")

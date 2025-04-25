@@ -1,6 +1,6 @@
 from rdflib import Dataset, URIRef
 
-from cognite.neat._utils.rdf_ import remove_instance_ids_in_batch
+from cognite.neat.core._utils.rdf_ import remove_instance_ids_in_batch
 
 from ._base import BaseQuery
 from ._select import SelectQueries

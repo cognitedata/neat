@@ -1,4 +1,4 @@
-from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 
 from ._rules import DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 from ._rules_input import (

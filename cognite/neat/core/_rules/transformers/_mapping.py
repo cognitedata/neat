@@ -5,13 +5,21 @@ from typing import Any, ClassVar, Literal
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client import NeatClient
-from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError, ResourceNotFoundError
-from cognite.neat._issues.warnings import PropertyOverwritingWarning
-from cognite.neat._rules.models import DMSRules, SheetList
-from cognite.neat._rules.models.data_types import Enum
-from cognite.neat._rules.models.dms import DMSContainer, DMSEnum, DMSProperty
-from cognite.neat._rules.models.entities import ClassEntity, ContainerEntity, ViewEntity
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._issues.errors import (
+    CDFMissingClientError,
+    NeatValueError,
+    ResourceNotFoundError,
+)
+from cognite.neat.core._issues.warnings import PropertyOverwritingWarning
+from cognite.neat.core._rules.models import DMSRules, SheetList
+from cognite.neat.core._rules.models.data_types import Enum
+from cognite.neat.core._rules.models.dms import DMSContainer, DMSEnum, DMSProperty
+from cognite.neat.core._rules.models.entities import (
+    ClassEntity,
+    ContainerEntity,
+    ViewEntity,
+)
 
 from ._base import VerifiedRulesTransformer
 

@@ -1,14 +1,14 @@
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client import NeatClient
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS
-from cognite.neat._graph.transformers import SetType
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.transformers import SetIDDMSModel
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._graph.transformers import SetType
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._rules.models import DMSRules
+from cognite.neat.core._rules.transformers import SetIDDMSModel
+from cognite.neat.core._utils.text import humanize_collection
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper

@@ -16,7 +16,11 @@ from cognite.client.data_classes.data_modeling import (
     ViewId,
 )
 
-from cognite.neat._utils.text import humanize_collection, to_camel_case, to_snake_case
+from cognite.neat.core._utils.text import (
+    humanize_collection,
+    to_camel_case,
+    to_snake_case,
+)
 
 if sys.version_info < (3, 11):
     from exceptiongroup import ExceptionGroup
@@ -115,7 +119,7 @@ class NeatIssue:
 
     @classmethod
     def _dump_value(cls, value: Any) -> list | int | bool | float | str | dict:
-        from cognite.neat._rules.models.entities import Entity
+        from cognite.neat.core._rules.models.entities import Entity
 
         if isinstance(value, str | int | bool | float):
             return value
@@ -140,8 +144,11 @@ class NeatIssue:
     @classmethod
     def load(cls, data: dict[str, Any]) -> "NeatIssue":
         """Create an instance of the issue from a dictionary."""
-        from cognite.neat._issues.errors import _NEAT_ERRORS_BY_NAME, NeatValueError
-        from cognite.neat._issues.warnings import _NEAT_WARNINGS_BY_NAME
+        from cognite.neat.core._issues.errors import (
+            _NEAT_ERRORS_BY_NAME,
+            NeatValueError,
+        )
+        from cognite.neat.core._issues.warnings import _NEAT_WARNINGS_BY_NAME
 
         if "NeatIssue" not in data:
             raise NeatValueError("The data does not contain a NeatIssue key.")
@@ -166,7 +173,7 @@ class NeatIssue:
 
     @classmethod
     def _load_value(cls, type_: Any, value: Any) -> Any:
-        from cognite.neat._rules.models.entities import Entity
+        from cognite.neat.core._rules.models.entities import Entity
 
         if isinstance(type_, UnionType) or get_origin(type_) is UnionType:
             args = get_args(type_)

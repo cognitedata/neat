@@ -7,17 +7,17 @@ from rdflib import Graph, Namespace, URIRef
 from typing_extensions import Self
 
 from cognite.neat.core._constants import get_default_prefixes_and_namespaces
-from cognite.neat._issues import IssueList, MultiValueError
-from cognite.neat._issues.errors import FileReadError
-from cognite.neat._issues.errors._general import NeatValueError
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.importers._base import BaseImporter
-from cognite.neat._rules.models._base_rules import RoleTypes
-from cognite.neat._rules.models.data_types import AnyURI
-from cognite.neat._rules.models.entities import UnknownEntity
-from cognite.neat._rules.models.information import InformationInputRules
-from cognite.neat._store import NeatGraphStore
-from cognite.neat._utils.rdf_ import get_namespace
+from cognite.neat.core._issues import IssueList, MultiValueError
+from cognite.neat.core._issues.errors import FileReadError
+from cognite.neat.core._issues.errors._general import NeatValueError
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.importers._base import BaseImporter
+from cognite.neat.core._rules.models._base_rules import RoleTypes
+from cognite.neat.core._rules.models.data_types import AnyURI
+from cognite.neat.core._rules.models.entities import UnknownEntity
+from cognite.neat.core._rules.models.information import InformationInputRules
+from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._utils.rdf_ import get_namespace
 
 DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 

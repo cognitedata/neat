@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from cognite.neat import NeatSession
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.importers import BaseImporter
-from cognite.neat._rules.models import DMSInputRules
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.importers import BaseImporter
+from cognite.neat.core._rules.models import DMSInputRules
 from tests.data import SchemaData
 
 

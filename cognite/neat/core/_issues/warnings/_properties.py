@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Generic
 
 from cognite.neat.core._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
-from cognite.neat._issues._base import ResourceType
+from cognite.neat.core._issues._base import ResourceType
 
 from ._resources import ResourceNeatWarning, T_Identifier, T_ReferenceIdentifier
 

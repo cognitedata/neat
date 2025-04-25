@@ -5,9 +5,9 @@ from types import UnionType
 from typing import Generic, TypeVar, Union, get_args, get_origin
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules._shared import ReadRules, Rules, VerifiedRules
-from cognite.neat._rules.models import DMSInputRules, InformationInputRules
-from cognite.neat._store._provenance import Agent as ProvenanceAgent
+from cognite.neat.core._rules._shared import ReadRules, Rules, VerifiedRules
+from cognite.neat.core._rules.models import DMSInputRules, InformationInputRules
+from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
 T_RulesIn = TypeVar("T_RulesIn", bound=Rules)
 T_RulesOut = TypeVar("T_RulesOut", bound=Rules)

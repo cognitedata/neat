@@ -2,7 +2,7 @@ from cognite.client.data_classes import FileMetadataList
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat._graph.extractors import FilesExtractor
+from cognite.neat.core._graph.extractors import FilesExtractor
 from tests.data import InstanceData
 
 

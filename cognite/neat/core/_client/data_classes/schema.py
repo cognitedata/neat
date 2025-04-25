@@ -20,21 +20,21 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat._client.data_classes.data_modeling import (
+from cognite.neat.core._client.data_classes.data_modeling import (
     CogniteResourceDict,
     ContainerApplyDict,
     NodeApplyDict,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues.errors import (
+from cognite.neat.core._issues.errors import (
     NeatYamlError,
 )
-from cognite.neat._issues.warnings import (
+from cognite.neat.core._issues.warnings import (
     FileTypeUnexpectedWarning,
     ResourcesDuplicatedWarning,
 )
-from cognite.neat._utils.text import to_camel_case
+from cognite.neat.core._utils.text import to_camel_case
 
 if sys.version_info >= (3, 11):
     from typing import Self

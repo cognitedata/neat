@@ -4,37 +4,37 @@ from typing import Any, Literal, cast
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from cognite.neat.session._experimental import ExperimentalFlags
-from cognite.neat._client import NeatClient
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import (
     CLASSIC_CDF_NAMESPACE,
     get_default_prefixes_and_namespaces,
 )
-from cognite.neat._graph import examples as instances_examples
-from cognite.neat._graph import extractors
-from cognite.neat._graph.transformers import (
+from cognite.neat.core._graph import examples as instances_examples
+from cognite.neat.core._graph import extractors
+from cognite.neat.core._graph.transformers import (
     ConvertLiteral,
     LiteralToEntity,
     Transformers,
 )
-from cognite.neat._graph.transformers._prune_graph import (
+from cognite.neat.core._graph.transformers._prune_graph import (
     AttachPropertyFromTargetToSource,
     PruneDeadEndEdges,
     PruneInstancesOfUnknownType,
     PruneTypes,
 )
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import MissingCogniteClientWarning
-from cognite.neat._rules import catalog, importers
-from cognite.neat._rules.importers import BaseImporter
-from cognite.neat._rules.models.entities._single_value import ViewEntity
-from cognite.neat._rules.transformers import ClassicPrepareCore
-from cognite.neat._rules.transformers._converters import (
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._issues.warnings import MissingCogniteClientWarning
+from cognite.neat.core._rules import catalog, importers
+from cognite.neat.core._rules.importers import BaseImporter
+from cognite.neat.core._rules.models.entities._single_value import ViewEntity
+from cognite.neat.core._rules.transformers import ClassicPrepareCore
+from cognite.neat.core._rules.transformers._converters import (
     ToEnterpriseModel,
     _SubsetEditableCDMRules,
 )
-from cognite.neat._utils.reader import NeatReader
+from cognite.neat.core._utils.reader import NeatReader
+from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, XMLFileType, object_wizard, rdf_dm_wizard, xml_format_wizard

@@ -9,22 +9,22 @@ from rdflib import DCTERMS, OWL, RDF, RDFS, XSD, BNode, Graph, Literal, Namespac
 from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
-from cognite.neat._issues import MultiValueError
-from cognite.neat._issues.errors import (
+from cognite.neat.core._issues import MultiValueError
+from cognite.neat.core._issues.errors import (
     PropertyDefinitionDuplicatedError,
 )
-from cognite.neat._issues.warnings import PropertyDefinitionDuplicatedWarning
-from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.analysis import RulesAnalysis
-from cognite.neat._rules.models.data_types import DataType
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information import (
+from cognite.neat.core._issues.warnings import PropertyDefinitionDuplicatedWarning
+from cognite.neat.core._rules._constants import EntityTypes
+from cognite.neat.core._rules.analysis import RulesAnalysis
+from cognite.neat.core._rules.models.data_types import DataType
+from cognite.neat.core._rules.models.entities import ClassEntity
+from cognite.neat.core._rules.models.information import (
     InformationClass,
     InformationMetadata,
     InformationProperty,
     InformationRules,
 )
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseExporter
 from ._validation import duplicated_properties

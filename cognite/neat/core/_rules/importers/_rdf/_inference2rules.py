@@ -12,23 +12,23 @@ from rdflib import Literal as RdfLiteral
 
 from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT, get_default_prefixes_and_namespaces
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.warnings import PropertyValueTypeUndefinedWarning
-from cognite.neat._rules.analysis import RulesAnalysis
-from cognite.neat._rules.models import InformationRules, data_types
-from cognite.neat._rules.models.data_types import AnyURI
-from cognite.neat._rules.models.entities._single_value import UnknownEntity
-from cognite.neat._rules.models.information import (
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.warnings import PropertyValueTypeUndefinedWarning
+from cognite.neat.core._rules.analysis import RulesAnalysis
+from cognite.neat.core._rules.models import InformationRules, data_types
+from cognite.neat.core._rules.models.data_types import AnyURI
+from cognite.neat.core._rules.models.entities._single_value import UnknownEntity
+from cognite.neat.core._rules.models.information import (
     InformationClass,
     InformationInputClass,
     InformationInputProperty,
     InformationMetadata,
 )
-from cognite.neat._store import NeatGraphStore
-from cognite.neat._store._provenance import INSTANCES_ENTITY
-from cognite.neat._utils.collection_ import iterate_progress_bar
-from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
-from cognite.neat._utils.text import NamingStandardization
+from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store._provenance import INSTANCES_ENTITY
+from cognite.neat.core._utils.collection_ import iterate_progress_bar
+from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
+from cognite.neat.core._utils.text import NamingStandardization
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
 

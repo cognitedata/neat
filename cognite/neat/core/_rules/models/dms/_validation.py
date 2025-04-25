@@ -12,17 +12,17 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat._client import NeatClient
-from cognite.neat._client.data_classes.data_modeling import ViewApplyDict
-from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._client.data_classes.data_modeling import ViewApplyDict
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import (
     COGNITE_MODELS,
     COGNITE_SPACES,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
     DMS_VIEW_CONTAINER_SIZE_LIMIT,
 )
-from cognite.neat._issues import IssueList, NeatError
-from cognite.neat._issues.errors import (
+from cognite.neat.core._issues import IssueList, NeatError
+from cognite.neat.core._issues.errors import (
     CDFMissingClientError,
     PropertyDefinitionDuplicatedError,
     PropertyMappingDuplicatedError,
@@ -31,25 +31,25 @@ from cognite.neat._issues.errors import (
     ResourceNotFoundError,
     ReversedConnectionNotFeasibleError,
 )
-from cognite.neat._issues.errors._external import CDFMissingResourcesError
-from cognite.neat._issues.warnings import (
+from cognite.neat.core._issues.errors._external import CDFMissingResourcesError
+from cognite.neat.core._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
     UndefinedViewWarning,
     user_modeling,
 )
-from cognite.neat._issues.warnings.user_modeling import (
+from cognite.neat.core._issues.warnings.user_modeling import (
     ContainerPropertyLimitWarning,
     DirectRelationMissingSourceWarning,
     NotNeatSupportedFilterWarning,
 )
-from cognite.neat._rules.models.data_types import DataType
-from cognite.neat._rules.models.entities import ContainerEntity, RawFilter
-from cognite.neat._rules.models.entities._single_value import (
+from cognite.neat.core._rules.models.data_types import DataType
+from cognite.neat.core._rules.models.entities import ContainerEntity, RawFilter
+from cognite.neat.core._rules.models.entities._single_value import (
     ViewEntity,
 )
-from cognite.neat._utils.spreadsheet import SpreadsheetRead
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.text import humanize_collection
 
 from ._rules import DMSProperty, DMSRules
 

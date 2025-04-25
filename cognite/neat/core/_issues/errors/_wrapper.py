@@ -2,8 +2,8 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import ClassVar, cast
 
-from cognite.neat._issues import NeatError
-from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._issues import NeatError
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 
 @dataclass(unsafe_hash=True)

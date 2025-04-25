@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from cognite.neat._issues import NeatWarning
+from cognite.neat.core._issues import NeatWarning
 
 
 @dataclass(unsafe_hash=True)

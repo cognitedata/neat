@@ -5,8 +5,12 @@ from typing import Literal, overload
 import pandas as pd
 
 from cognite.neat.core._constants import IN_NOTEBOOK
-from cognite.neat._issues import IssueList
-from cognite.neat._utils.upload import UploadResult, UploadResultCore, UploadResultList
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._utils.upload import (
+    UploadResult,
+    UploadResultCore,
+    UploadResultList,
+)
 
 from ._state import SessionState
 from .exceptions import session_class_wrapper

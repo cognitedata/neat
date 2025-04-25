@@ -7,10 +7,14 @@ from typing import ClassVar, TypeAlias, cast
 from rdflib import Graph
 from rdflib.query import ResultRow
 
-from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
-from cognite.neat._utils.graph_transformations_report import GraphTransformationResult
+from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._utils.collection_ import (
+    iterate_progress_bar_if_above_config_threshold,
+)
+from cognite.neat.core._utils.graph_transformations_report import (
+    GraphTransformationResult,
+)
 
 To_Add_Triples: TypeAlias = set[Triple]
 To_Remove_Triples: TypeAlias = set[Triple]

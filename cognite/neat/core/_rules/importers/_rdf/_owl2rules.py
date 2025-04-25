@@ -1,8 +1,11 @@
 """This module performs importing of various formats to one of serializations for which
 there are loaders to TransformationRules pydantic class."""
 
-from cognite.neat._rules.importers._rdf._base import BaseRDFImporter
-from cognite.neat._rules.importers._rdf._shared import parse_classes, parse_properties
+from cognite.neat.core._rules.importers._rdf._base import BaseRDFImporter
+from cognite.neat.core._rules.importers._rdf._shared import (
+    parse_classes,
+    parse_properties,
+)
 
 CLASSES_QUERY = """SELECT ?class_ ?name ?description ?implements
         WHERE {{

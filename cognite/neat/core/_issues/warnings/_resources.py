@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat._issues._base import NeatWarning, ResourceType, T_Identifier, T_ReferenceIdentifier
+from cognite.neat.core._issues._base import (
+    NeatWarning,
+    ResourceType,
+    T_Identifier,
+    T_ReferenceIdentifier,
+)
 
 
 # Name ResourceNeatWarning to avoid conflicts with the built-in ResourceWarning

@@ -19,35 +19,48 @@ from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF, URIRef
 
-from cognite.neat._client import NeatClient
-from cognite.neat._client._api_client import SchemaAPI
-from cognite.neat.core._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT, is_readonly_property
-from cognite.neat._issues import IssueList, NeatError, NeatIssue, catch_issues
-from cognite.neat._issues.errors import (
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._client._api_client import SchemaAPI
+from cognite.neat.core._constants import (
+    DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+    is_readonly_property,
+)
+from cognite.neat.core._issues import IssueList, NeatError, NeatIssue, catch_issues
+from cognite.neat.core._issues.errors import (
     AuthorizationError,
     ResourceCreationError,
     ResourceDuplicatedError,
     ResourceNotFoundError,
 )
-from cognite.neat._issues.warnings import (
+from cognite.neat.core._issues.warnings import (
     NeatValueWarning,
     PropertyDirectRelationLimitWarning,
     PropertyMultipleValueWarning,
     PropertyTypeNotSupportedWarning,
     ResourceNeatWarning,
 )
-from cognite.neat._rules.analysis import RulesAnalysis
-from cognite.neat._rules.analysis._base import ViewQuery, ViewQueryDict
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
-from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._store import NeatGraphStore
-from cognite.neat._utils.auxiliary import create_sha256_hash
-from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
-from cognite.neat._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
-from cognite.neat._utils.text import NamingStandardization
-from cognite.neat._utils.upload import UploadResult
+from cognite.neat.core._rules.analysis import RulesAnalysis
+from cognite.neat.core._rules.analysis._base import ViewQuery, ViewQueryDict
+from cognite.neat.core._rules.models import DMSRules
+from cognite.neat.core._rules.models.data_types import (
+    _DATA_TYPE_BY_DMS_TYPE,
+    Json,
+    String,
+)
+from cognite.neat.core._rules.models.information._rules import InformationRules
 from cognite.neat.core._shared import InstanceType
+from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._utils.auxiliary import create_sha256_hash
+from cognite.neat.core._utils.collection_ import (
+    iterate_progress_bar_if_above_config_threshold,
+)
+from cognite.neat.core._utils.rdf_ import (
+    namespace_as_space,
+    remove_namespace_from_uri,
+    split_uri,
+)
+from cognite.neat.core._utils.text import NamingStandardization
+from cognite.neat.core._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
 

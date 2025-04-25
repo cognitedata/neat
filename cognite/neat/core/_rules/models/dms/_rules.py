@@ -8,11 +8,11 @@ from cognite.client import data_modeling as dm
 from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
-from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import DMS_CONTAINER_LIST_MAX_LIMIT
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings._general import NeatValueWarning
-from cognite.neat._rules.models._base_rules import (
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._issues.warnings._general import NeatValueWarning
+from cognite.neat.core._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     ContainerProperty,
@@ -23,7 +23,7 @@ from cognite.neat._rules.models._base_rules import (
     ViewProperty,
     ViewRef,
 )
-from cognite.neat._rules.models._types import (
+from cognite.neat.core._rules.models._types import (
     ClassEntityType,
     ContainerEntityType,
     DmsPropertyType,
@@ -31,8 +31,8 @@ from cognite.neat._rules.models._types import (
     URIRefType,
     ViewEntityType,
 )
-from cognite.neat._rules.models.data_types import DataType
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._rules.models.data_types import DataType
+from cognite.neat.core._rules.models.entities import (
     ContainerEntityList,
     DMSEntity,
     DMSNodeEntity,
@@ -48,7 +48,7 @@ from cognite.neat._rules.models.entities import (
 )
 
 if TYPE_CHECKING:
-    from cognite.neat._rules.models import InformationRules
+    from cognite.neat.core._rules.models import InformationRules
 
 _DEFAULT_VERSION = "1"
 

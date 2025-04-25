@@ -13,26 +13,33 @@ from cognite.client.data_classes.data_modeling.views import (
     ViewPropertyApply,
 )
 
-from cognite.neat._client.data_classes.data_modeling import (
+from cognite.neat.core._client.data_classes.data_modeling import (
     ContainerApplyDict,
     NodeApplyDict,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import (
     COGNITE_SPACES,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat._issues.errors import NeatTypeError, NeatValueError, ResourceNotFoundError
-from cognite.neat._issues.warnings import NotSupportedWarning, PropertyNotFoundWarning
-from cognite.neat._issues.warnings.user_modeling import (
+from cognite.neat.core._issues.errors import (
+    NeatTypeError,
+    NeatValueError,
+    ResourceNotFoundError,
+)
+from cognite.neat.core._issues.warnings import (
+    NotSupportedWarning,
+    PropertyNotFoundWarning,
+)
+from cognite.neat.core._issues.warnings.user_modeling import (
     EmptyContainerWarning,
     HasDataFilterOnNoPropertiesViewWarning,
 )
-from cognite.neat._rules.models.data_types import DataType, Double, Enum, Float
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._rules.models.data_types import DataType, Double, Enum, Float
+from cognite.neat.core._rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSFilter,

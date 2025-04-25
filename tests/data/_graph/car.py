@@ -5,17 +5,17 @@ from rdflib import RDF, Namespace
 from rdflib.term import Literal
 
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
-from cognite.neat._rules import importers
-from cognite.neat._rules.importers._spreadsheet2rules import ExcelImporter
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models.dms import (
+from cognite.neat.core._rules import importers
+from cognite.neat.core._rules.importers._spreadsheet2rules import ExcelImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat._rules.transformers import VerifyInformationRules
+from cognite.neat.core._rules.transformers import VerifyInformationRules
 
 INSTANCE_SPACE = "sp_cars"
 MODEL_SPACE = "sp_example_car"

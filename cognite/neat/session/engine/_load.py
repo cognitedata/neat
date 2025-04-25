@@ -12,8 +12,8 @@ from cognite.client import CogniteClient
 from packaging.version import Version
 from packaging.version import parse as parse_version
 
-from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._version import __engine__
+from cognite.neat.core._issues.errors import NeatValueError
 
 ENVIRONMENT_VARIABLE = "NEATENGINE"
 PACKAGE_NAME = "neatengine"

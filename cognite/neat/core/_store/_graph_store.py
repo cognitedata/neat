@@ -12,16 +12,19 @@ from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
-from cognite.neat._graph._shared import quad_formats, rdflib_to_oxi_type
-from cognite.neat._graph.extractors import RdfFileExtractor, TripleExtractors
-from cognite.neat._graph.queries import Queries
-from cognite.neat._graph.transformers import Transformers
-from cognite.neat._issues import IssueList, catch_issues
-from cognite.neat._issues.errors import NeatValueError, OxigraphStorageLockedError
-from cognite.neat._utils.auxiliary import local_import
-from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._graph._shared import quad_formats, rdflib_to_oxi_type
+from cognite.neat.core._graph.extractors import RdfFileExtractor, TripleExtractors
+from cognite.neat.core._graph.queries import Queries
+from cognite.neat.core._graph.transformers import Transformers
+from cognite.neat.core._issues import IssueList, catch_issues
+from cognite.neat.core._issues.errors import NeatValueError, OxigraphStorageLockedError
 from cognite.neat.core._shared import InstanceType, Triple
+from cognite.neat.core._utils.auxiliary import local_import
+from cognite.neat.core._utils.rdf_ import (
+    add_triples_in_batch,
+    remove_namespace_from_uri,
+)
+from cognite.neat.core._utils.text import humanize_collection
 
 from ._provenance import Change, Entity, Provenance
 

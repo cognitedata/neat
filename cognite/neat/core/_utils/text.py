@@ -4,7 +4,7 @@ from collections.abc import Collection, Set
 from re import Pattern
 from typing import Any
 
-from cognite.neat._rules._constants import get_reserved_words
+from cognite.neat.core._rules._constants import get_reserved_words
 
 PREPOSITIONS = frozenset(
     {

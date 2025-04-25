@@ -2,8 +2,12 @@ from datetime import datetime
 
 import pytest
 
-from cognite.neat._issues.errors import NeatValueError, PropertyDefinitionError
-from cognite.neat._rules.models.entities import AssetEntity, ClassEntity, RelationshipEntity
+from cognite.neat.core._issues.errors import NeatValueError, PropertyDefinitionError
+from cognite.neat.core._rules.models.entities import (
+    AssetEntity,
+    ClassEntity,
+    RelationshipEntity,
+)
 
 
 def case_asset_relationship():

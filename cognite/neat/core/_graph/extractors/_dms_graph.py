@@ -5,16 +5,20 @@ from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import Namespace, URIRef
 
-from cognite.neat._client import NeatClient
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_SPACES, DEFAULT_NAMESPACE
-from cognite.neat._issues import IssueList, NeatIssue, catch_warnings
-from cognite.neat._issues.warnings import CDFAuthWarning, ResourceNotFoundWarning, ResourceRetrievalWarning
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models.data_types import Json
-from cognite.neat._rules.models.entities import UnknownEntity
-from cognite.neat._rules.models.information import InformationProperty
-from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
+from cognite.neat.core._issues import IssueList, NeatIssue, catch_warnings
+from cognite.neat.core._issues.warnings import (
+    CDFAuthWarning,
+    ResourceNotFoundWarning,
+    ResourceRetrievalWarning,
+)
+from cognite.neat.core._rules.importers import DMSImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.models.data_types import Json
+from cognite.neat.core._rules.models.entities import UnknownEntity
+from cognite.neat.core._rules.models.information import InformationProperty
+from cognite.neat.core._rules.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat.core._shared import Triple
 
 from ._base import KnowledgeGraphExtractor

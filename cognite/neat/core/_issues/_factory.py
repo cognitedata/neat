@@ -3,8 +3,8 @@ from warnings import WarningMessage
 
 from pydantic_core import ErrorDetails
 
-from cognite.neat._issues._base import NeatError, NeatWarning
-from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._issues._base import NeatError, NeatWarning
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 from .errors import NeatValueError, SpreadsheetError
 

@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING, Any, Generic
 from rdflib import URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules._shared import ReadRules, T_InputRules
-from cognite.neat._utils.auxiliary import class_html_doc
+from cognite.neat.core._rules._shared import ReadRules, T_InputRules
+from cognite.neat.core._utils.auxiliary import class_html_doc
 
 if TYPE_CHECKING:
-    from cognite.neat._store._provenance import Agent as ProvenanceAgent
+    from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
 
 class BaseImporter(ABC, Generic[T_InputRules]):
@@ -49,7 +49,7 @@ class BaseImporter(ABC, Generic[T_InputRules]):
     @property
     def agent(self) -> "ProvenanceAgent":
         """Provenance agent for the importer."""
-        from cognite.neat._store._provenance import Agent as ProvenanceAgent
+        from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
 

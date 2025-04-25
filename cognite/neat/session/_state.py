@@ -3,16 +3,16 @@ from typing import Literal, cast
 
 from rdflib import URIRef
 
-from cognite.neat._client import NeatClient
-from cognite.neat._graph.extractors import KnowledgeGraphExtractor
-from cognite.neat._issues import IssueList
-from cognite.neat._rules.importers import BaseImporter, InferenceImporter
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._graph.extractors import KnowledgeGraphExtractor
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._rules.importers import BaseImporter, InferenceImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.transformers import (
     VerifiedRulesTransformer,
 )
-from cognite.neat._store import NeatGraphStore, NeatRulesStore
-from cognite.neat._utils.upload import UploadResultList
+from cognite.neat.core._store import NeatGraphStore, NeatRulesStore
+from cognite.neat.core._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError, _session_method_wrapper
 

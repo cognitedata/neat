@@ -5,13 +5,17 @@ from typing import TYPE_CHECKING
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat._client.data_classes.schema import DMSSchema
+from cognite.neat.core._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import is_hierarchy_property
-from cognite.neat._issues.errors import NeatValueError
+from cognite.neat.core._issues.errors import NeatValueError
 
 if TYPE_CHECKING:
-    from cognite.neat._client._api_client import NeatClient
+    from cognite.neat.core._client._api_client import NeatClient
 
 
 class SchemaAPI:

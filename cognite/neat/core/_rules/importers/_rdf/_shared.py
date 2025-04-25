@@ -4,13 +4,13 @@ from rdflib import BNode, Graph
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.query import ResultRow
 
-from cognite.neat._issues._base import IssueList
-from cognite.neat._issues.errors._general import NeatValueError
-from cognite.neat._issues.warnings._resources import (
+from cognite.neat.core._issues._base import IssueList
+from cognite.neat.core._issues.errors._general import NeatValueError
+from cognite.neat.core._issues.warnings._resources import (
     ResourceRedefinedWarning,
     ResourceRetrievalWarning,
 )
-from cognite.neat._utils.rdf_ import convert_rdflib_content
+from cognite.neat.core._utils.rdf_ import convert_rdflib_content
 
 
 def parse_classes(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:

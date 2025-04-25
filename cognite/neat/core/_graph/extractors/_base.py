@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 from rdflib import URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules.models import InformationRules
-from cognite.neat._utils.auxiliary import class_html_doc
+from cognite.neat.core._rules.models import InformationRules
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._utils.auxiliary import class_html_doc
 
 if TYPE_CHECKING:
-    from cognite.neat._store._provenance import Agent as ProvenanceAgent
+    from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
 
 class BaseExtractor:
@@ -53,6 +53,6 @@ class KnowledgeGraphExtractor(BaseExtractor):
     @property
     def agent(self) -> "ProvenanceAgent":
         """Provenance agent for the importer."""
-        from cognite.neat._store._provenance import Agent as ProvenanceAgent
+        from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])

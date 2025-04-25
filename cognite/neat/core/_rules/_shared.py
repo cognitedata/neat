@@ -1,13 +1,15 @@
 from dataclasses import dataclass
 from typing import Generic, TypeAlias, TypeVar
 
-from cognite.neat._rules.models import (
+from cognite.neat.core._rules.models import (
     DMSRules,
     InformationRules,
 )
-from cognite.neat._rules.models.dms._rules_input import DMSInputRules
-from cognite.neat._rules.models.information._rules_input import InformationInputRules
-from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._rules.models.dms._rules_input import DMSInputRules
+from cognite.neat.core._rules.models.information._rules_input import (
+    InformationInputRules,
+)
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 VerifiedRules: TypeAlias = InformationRules | DMSRules
 

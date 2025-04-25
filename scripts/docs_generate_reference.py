@@ -6,8 +6,8 @@ from typing import get_args, get_origin
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models._base_rules import BaseRules
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.models._base_rules import BaseRules
 
 DMS_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'physical' / 'reference.md'
 INFO_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'logical' / 'reference.md'
@@ -99,5 +99,3 @@ def get_field_cls_type(field: FieldInfo) -> type[BaseModel]:
 if __name__ == "__main__":
     generate_reference("physical", DMSRules, DMS_REFERENCE_MD)
     generate_reference("logical", InformationRules, INFO_REFERENCE_MD)
-
-

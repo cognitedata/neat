@@ -13,22 +13,22 @@ from cognite.client.utils._importing import local_import
 from pandas import ExcelFile
 from rdflib import Namespace, URIRef
 
-from cognite.neat._issues import IssueList, MultiValueError
-from cognite.neat._issues.errors import (
+from cognite.neat.core._issues import IssueList, MultiValueError
+from cognite.neat.core._issues.errors import (
     FileMissingRequiredFieldError,
     FileNotFoundNeatError,
     FileReadError,
 )
-from cognite.neat._issues.warnings import FileMissingRequiredFieldWarning
-from cognite.neat._rules._shared import ReadRules, T_InputRules
-from cognite.neat._rules.models import (
+from cognite.neat.core._issues.warnings import FileMissingRequiredFieldWarning
+from cognite.neat.core._rules._shared import ReadRules, T_InputRules
+from cognite.neat.core._rules.models import (
     INPUT_RULES_BY_ROLE,
     VERIFIED_RULES_BY_ROLE,
     RoleTypes,
     SchemaCompleteness,
 )
-from cognite.neat._utils.spreadsheet import SpreadsheetRead, read_individual_sheet
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead, read_individual_sheet
+from cognite.neat.core._utils.text import humanize_collection
 
 from ._base import BaseImporter
 

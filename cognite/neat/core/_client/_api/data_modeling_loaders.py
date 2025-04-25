@@ -52,13 +52,13 @@ from cognite.client.data_classes.data_modeling.views import (
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
-from cognite.neat._client.data_classes.data_modeling import Component
-from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._issues.warnings import CDFMaxIterationsWarning
+from cognite.neat.core._client.data_classes.data_modeling import Component
+from cognite.neat.core._client.data_classes.schema import DMSSchema
+from cognite.neat.core._issues.warnings import CDFMaxIterationsWarning
 from cognite.neat.core._shared import T_ID
 
 if TYPE_CHECKING:
-    from cognite.neat._client._api_client import NeatClient
+    from cognite.neat.core._client._api_client import NeatClient
 
 T_WritableCogniteResourceList = TypeVar("T_WritableCogniteResourceList", bound=WriteableCogniteResourceList)
 

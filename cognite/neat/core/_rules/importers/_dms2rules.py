@@ -28,17 +28,25 @@ from cognite.client.data_classes.data_modeling.views import (
 )
 from cognite.client.utils import ms_to_datetime
 
-from cognite.neat._client import NeatClient
-from cognite.neat.core._constants import DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT, DMS_PRIMITIVE_LIST_DEFAULT_LIMIT
-from cognite.neat._issues import IssueList, MultiValueError, NeatIssue, catch_issues
-from cognite.neat._issues.errors import (
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._constants import (
+    DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+    DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
+)
+from cognite.neat.core._issues import (
+    IssueList,
+    MultiValueError,
+    NeatIssue,
+    catch_issues,
+)
+from cognite.neat.core._issues.errors import (
     FileTypeUnexpectedError,
     NeatValueError,
     PropertyTypeNotSupportedError,
     ResourceMissingIdentifierError,
     ResourceRetrievalError,
 )
-from cognite.neat._issues.warnings import (
+from cognite.neat.core._issues.warnings import (
     MissingCogniteClientWarning,
     NeatValueWarning,
     PropertyNotFoundWarning,
@@ -47,14 +55,14 @@ from cognite.neat._issues.warnings import (
     ResourcesDuplicatedWarning,
     ResourceUnknownWarning,
 )
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.importers._base import BaseImporter
-from cognite.neat._rules.models import (
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.importers._base import BaseImporter
+from cognite.neat.core._rules.models import (
     DMSInputRules,
     DMSSchema,
 )
-from cognite.neat._rules.models.data_types import DataType, Enum, String
-from cognite.neat._rules.models.dms import (
+from cognite.neat.core._rules.models.data_types import DataType, Enum, String
+from cognite.neat.core._rules.models.dms import (
     DMSInputContainer,
     DMSInputEnum,
     DMSInputMetadata,
@@ -62,7 +70,7 @@ from cognite.neat._rules.models.dms import (
     DMSInputProperty,
     DMSInputView,
 )
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSNodeEntity,
@@ -71,7 +79,7 @@ from cognite.neat._rules.models.entities import (
     ReverseConnectionEntity,
     ViewEntity,
 )
-from cognite.neat._rules.models.information import (
+from cognite.neat.core._rules.models.information import (
     InformationInputClass,
     InformationInputProperty,
 )

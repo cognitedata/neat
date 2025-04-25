@@ -16,8 +16,11 @@ from cognite.client.utils.useful_types import SequenceNotStr
 from pydantic import ValidationError
 from rdflib import Namespace
 
-from cognite.neat._client import NeatClient
-from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, ViewApplyDict
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    ViewApplyDict,
+)
 from cognite.neat.core._constants import (
     COGNITE_CONCEPTS,
     COGNITE_MODELS,
@@ -26,22 +29,25 @@ from cognite.neat.core._constants import (
     DMS_RESERVED_PROPERTIES,
     get_default_prefixes_and_namespaces,
 )
-from cognite.neat._issues import IssueList
-from cognite.neat._issues._factory import from_pydantic_errors
-from cognite.neat._issues.errors import CDFMissingClientError, NeatValueError
-from cognite.neat._issues.warnings import NeatValueWarning, PropertyOverwritingWarning
-from cognite.neat._issues.warnings._models import (
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues._factory import from_pydantic_errors
+from cognite.neat.core._issues.errors import CDFMissingClientError, NeatValueError
+from cognite.neat.core._issues.warnings import (
+    NeatValueWarning,
+    PropertyOverwritingWarning,
+)
+from cognite.neat.core._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
-from cognite.neat._rules._constants import PATTERNS, get_reserved_words
-from cognite.neat._rules._shared import (
+from cognite.neat.core._rules._constants import PATTERNS, get_reserved_words
+from cognite.neat.core._rules._shared import (
     ReadInputRules,
     ReadRules,
     VerifiedRules,
 )
-from cognite.neat._rules.analysis import RulesAnalysis
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import (
+from cognite.neat.core._rules.analysis import RulesAnalysis
+from cognite.neat.core._rules.importers import DMSImporter
+from cognite.neat.core._rules.models import (
     DMSInputRules,
     DMSRules,
     InformationInputRules,
@@ -49,10 +55,22 @@ from cognite.neat._rules.models import (
     SheetList,
     data_types,
 )
-from cognite.neat._rules.models.data_types import AnyURI, DataType, Enum, File, String, Timeseries
-from cognite.neat._rules.models.dms import DMSMetadata, DMSProperty, DMSValidation, DMSView
-from cognite.neat._rules.models.dms._rules import DMSContainer, DMSEnum, DMSNode
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._rules.models.data_types import (
+    AnyURI,
+    DataType,
+    Enum,
+    File,
+    String,
+    Timeseries,
+)
+from cognite.neat.core._rules.models.dms import (
+    DMSMetadata,
+    DMSProperty,
+    DMSValidation,
+    DMSView,
+)
+from cognite.neat.core._rules.models.dms._rules import DMSContainer, DMSEnum, DMSNode
+from cognite.neat.core._rules.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSUnknownEntity,
@@ -63,16 +81,22 @@ from cognite.neat._rules.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
-from cognite.neat._rules.models.information import (
+from cognite.neat.core._rules.models.information import (
     InformationClass,
     InformationInputClass,
     InformationInputProperty,
     InformationMetadata,
     InformationProperty,
 )
-from cognite.neat._utils.rdf_ import get_inheritance_path
-from cognite.neat._utils.spreadsheet import SpreadsheetRead
-from cognite.neat._utils.text import NamingStandardization, humanize_collection, title, to_camel_case, to_words
+from cognite.neat.core._utils.rdf_ import get_inheritance_path
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.text import (
+    NamingStandardization,
+    humanize_collection,
+    title,
+    to_camel_case,
+    to_words,
+)
 
 from ._base import RulesTransformer, T_VerifiedIn, T_VerifiedOut, VerifiedRulesTransformer
 from ._verification import VerifyDMSRules
@@ -1370,7 +1394,7 @@ class _InformationRulesConverter:
     def as_dms_rules(
         self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
     ) -> "DMSRules":
-        from cognite.neat._rules.models.dms._rules import (
+        from cognite.neat.core._rules.models.dms._rules import (
             DMSContainer,
             DMSProperty,
             DMSRules,
@@ -1572,7 +1596,7 @@ class _InformationRulesConverter:
 
     @classmethod
     def _convert_metadata_to_dms(cls, metadata: InformationMetadata) -> "DMSMetadata":
-        from cognite.neat._rules.models.dms._rules import (
+        from cognite.neat.core._rules.models.dms._rules import (
             DMSMetadata,
         )
 
@@ -1598,7 +1622,7 @@ class _InformationRulesConverter:
         edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         end_node_by_edge: dict[ClassEntity, ClassEntity],
     ) -> "DMSProperty":
-        from cognite.neat._rules.models.dms._rules import DMSProperty
+        from cognite.neat.core._rules.models.dms._rules import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
         value_type = self._get_value_type(
@@ -1907,7 +1931,7 @@ class _DMSRulesConverter:
     def as_information_rules(
         self,
     ) -> "InformationRules":
-        from cognite.neat._rules.models.information._rules import (
+        from cognite.neat.core._rules.models.information._rules import (
             InformationClass,
             InformationProperty,
             InformationRules,
@@ -1987,7 +2011,9 @@ class _DMSRulesConverter:
 
     @classmethod
     def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "InformationMetadata":
-        from cognite.neat._rules.models.information._rules import InformationMetadata
+        from cognite.neat.core._rules.models.information._rules import (
+            InformationMetadata,
+        )
 
         return InformationMetadata(
             space=metadata.space,

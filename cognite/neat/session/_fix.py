@@ -1,5 +1,5 @@
-from cognite.neat._issues._base import IssueList
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._issues._base import IssueList
+from cognite.neat.core._rules.transformers import (
     ToCompliantEntities,
 )
 

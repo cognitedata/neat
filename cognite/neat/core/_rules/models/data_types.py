@@ -11,8 +11,14 @@ from pydantic.functional_validators import ModelWrapValidatorHandler
 from rdflib import URIRef
 
 from cognite.neat.core._constants import XML_SCHEMA_NAMESPACE
-from cognite.neat._rules._constants import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN
-from cognite.neat._rules.models.entities._single_value import ClassEntity, UnitEntity
+from cognite.neat.core._rules._constants import (
+    SPLIT_ON_COMMA_PATTERN,
+    SPLIT_ON_EQUAL_PATTERN,
+)
+from cognite.neat.core._rules.models.entities._single_value import (
+    ClassEntity,
+    UnitEntity,
+)
 
 if sys.version_info >= (3, 11):
     from typing import Self

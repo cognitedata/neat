@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from pydantic import ValidationError
 
-from cognite.neat._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 from ._base import IssueList, MultiValueError, NeatError
 from ._factory import from_pydantic_errors, from_warning

@@ -1,14 +1,17 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
 
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import (
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.errors import (
     PropertyTypeNotSupportedError,
     ResourceMissingIdentifierError,
     ResourceNotFoundError,
 )
-from cognite.neat._issues.warnings import PropertyTypeNotSupportedWarning, ResourceTypeNotSupportedWarning
-from cognite.neat._rules.importers._dtdl2rules.spec import (
+from cognite.neat.core._issues.warnings import (
+    PropertyTypeNotSupportedWarning,
+    ResourceTypeNotSupportedWarning,
+)
+from cognite.neat.core._rules.importers._dtdl2rules.spec import (
     DTMI,
     Command,
     CommandV2,
@@ -25,9 +28,14 @@ from cognite.neat._rules.importers._dtdl2rules.spec import (
     Telemetry,
     TelemetryV2,
 )
-from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_NAME, DataType, Json, String
-from cognite.neat._rules.models.entities import ClassEntity
-from cognite.neat._rules.models.information import (
+from cognite.neat.core._rules.models.data_types import (
+    _DATA_TYPE_BY_NAME,
+    DataType,
+    Json,
+    String,
+)
+from cognite.neat.core._rules.models.entities import ClassEntity
+from cognite.neat.core._rules.models.information import (
     InformationInputClass,
     InformationInputProperty,
 )

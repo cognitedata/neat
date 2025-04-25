@@ -3,9 +3,9 @@ from pathlib import Path
 
 import yaml
 
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.models.dms import DMSInputRules, DMSRules
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.models.dms import DMSInputRules, DMSRules
 
 _CLASSIC_TO_CORE_MAPPING = Path(__file__).resolve().parent / "_classic2core.yaml"
 
@@ -16,8 +16,8 @@ def _read_source_file() -> str:
 
 
 def load_classic_to_core_mapping(org_name: str | None, source_space: str, source_version: str) -> DMSRules:
-    from cognite.neat._rules.importers import YAMLImporter
-    from cognite.neat._rules.transformers import VerifyDMSRules
+    from cognite.neat.core._rules.importers import YAMLImporter
+    from cognite.neat.core._rules.transformers import VerifyDMSRules
 
     raw_str = _read_source_file()
     if org_name is not None:

@@ -6,18 +6,18 @@ from typing import Any, Literal, cast, overload
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat.session._experimental import ExperimentalFlags
-from cognite.neat._client._api_client import NeatClient
+from cognite.neat.core._client._api_client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS
-from cognite.neat._graph import loaders
-from cognite.neat._issues import IssueList, NeatIssue, catch_issues
-from cognite.neat._rules import exporters
-from cognite.neat._rules._constants import PATTERNS
-from cognite.neat._rules._shared import VerifiedRules
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models.dms import DMSMetadata
-from cognite.neat._utils.upload import UploadResultList
+from cognite.neat.core._graph import loaders
+from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
+from cognite.neat.core._rules import exporters
+from cognite.neat.core._rules._constants import PATTERNS
+from cognite.neat.core._rules._shared import VerifiedRules
+from cognite.neat.core._rules.importers import DMSImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.models.dms import DMSMetadata
+from cognite.neat.core._utils.upload import UploadResultList
+from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper

@@ -8,11 +8,14 @@ from rdflib.util import guess_format
 from typing_extensions import Self
 
 from cognite.neat.core._constants import DEFAULT_BASE_URI
-from cognite.neat._graph._shared import RDFTypes
-from cognite.neat._graph.extractors._base import BaseExtractor
-from cognite.neat._issues._base import IssueList
-from cognite.neat._issues.errors import FileNotFoundNeatError, FileTypeUnexpectedError
-from cognite.neat._issues.errors._general import NeatValueError
+from cognite.neat.core._graph._shared import RDFTypes
+from cognite.neat.core._graph.extractors._base import BaseExtractor
+from cognite.neat.core._issues._base import IssueList
+from cognite.neat.core._issues.errors import (
+    FileNotFoundNeatError,
+    FileTypeUnexpectedError,
+)
+from cognite.neat.core._issues.errors._general import NeatValueError
 from cognite.neat.core._shared import Triple
 
 

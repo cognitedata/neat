@@ -6,11 +6,11 @@ from typing import ClassVar, Generic, TypeVar
 from cognite.client import CogniteClient
 from cognite.client.data_classes.capabilities import Capability
 
-from cognite.neat._issues import IssueList, NeatIssue
-from cognite.neat._issues.errors import AuthorizationError
-from cognite.neat._store import NeatGraphStore
-from cognite.neat._utils.auxiliary import class_html_doc
-from cognite.neat._utils.upload import UploadResult, UploadResultList
+from cognite.neat.core._issues import IssueList, NeatIssue
+from cognite.neat.core._issues.errors import AuthorizationError
+from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._utils.auxiliary import class_html_doc
+from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
 T_Output = TypeVar("T_Output")
 

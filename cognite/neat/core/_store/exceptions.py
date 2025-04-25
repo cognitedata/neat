@@ -2,10 +2,10 @@
 
 from dataclasses import dataclass
 
-from cognite.neat._graph.extractors import KnowledgeGraphExtractor
-from cognite.neat._issues import IssueList
-from cognite.neat._rules.importers import BaseImporter
-from cognite.neat._rules.transformers import VerifiedRulesTransformer
+from cognite.neat.core._graph.extractors import KnowledgeGraphExtractor
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._rules.importers import BaseImporter
+from cognite.neat.core._rules.transformers import VerifiedRulesTransformer
 
 from ._provenance import Activity
 

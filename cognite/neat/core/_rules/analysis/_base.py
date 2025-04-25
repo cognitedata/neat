@@ -11,16 +11,23 @@ import pandas as pd
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models.dms import DMSProperty
-from cognite.neat._rules.models.dms._rules import DMSView
-from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, ViewEntity
-from cognite.neat._rules.models.entities._single_value import (
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._issues.warnings import NeatValueWarning
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.models.dms import DMSProperty
+from cognite.neat.core._rules.models.dms._rules import DMSView
+from cognite.neat.core._rules.models.entities import (
+    ClassEntity,
+    MultiValueTypeInfo,
+    ViewEntity,
+)
+from cognite.neat.core._rules.models.entities._single_value import (
     UnknownEntity,
 )
-from cognite.neat._rules.models.information import InformationClass, InformationProperty
+from cognite.neat.core._rules.models.information import (
+    InformationClass,
+    InformationProperty,
+)
 
 T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 

@@ -25,7 +25,7 @@ from typing import Any, Generic, TypeVar
 from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat.core._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
-from cognite.neat._issues import IssueList
+from cognite.neat.core._issues import IssueList
 from cognite.neat.core._shared import FrozenNeatObject, NeatList, Triple
 
 

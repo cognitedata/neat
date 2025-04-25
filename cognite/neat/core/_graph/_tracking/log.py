@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from cognite.neat._issues import NeatError, NeatIssue, NeatWarning
+from cognite.neat.core._issues import NeatError, NeatIssue, NeatWarning
 
 from .base import Tracker
 

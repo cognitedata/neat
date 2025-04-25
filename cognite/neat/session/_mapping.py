@@ -1,6 +1,6 @@
-from cognite.neat._issues import IssueList
-from cognite.neat._rules.models.mapping import load_classic_to_core_mapping
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._rules.models.mapping import load_classic_to_core_mapping
+from cognite.neat.core._rules.transformers import (
     AsParentPropertyId,
     ChangeViewPrefix,
     IncludeReferenced,

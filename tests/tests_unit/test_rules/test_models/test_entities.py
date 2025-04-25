@@ -1,9 +1,9 @@
 import pytest
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules._constants import ENTITY_PATTERN
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._rules._constants import ENTITY_PATTERN
+from cognite.neat.core._rules.models.entities import (
     AssetEntity,
     ClassEntity,
     DataModelEntity,

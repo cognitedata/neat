@@ -1,4 +1,5 @@
-from ._utils.auth import get_cognite_client
+from cognite.neat.core._utils.auth import get_cognite_client
+
 from ._version import __version__
 from .session import NeatSession
 

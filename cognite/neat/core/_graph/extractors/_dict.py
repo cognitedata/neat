@@ -7,8 +7,8 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.instances import Instance
 from rdflib import XSD, Literal, Namespace, URIRef
 
-from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._utils.auxiliary import string_to_ideal_type
 
 from ._base import BaseExtractor
 

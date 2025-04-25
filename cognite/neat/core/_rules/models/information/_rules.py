@@ -8,9 +8,9 @@ from pydantic_core.core_schema import SerializationInfo
 from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import get_default_prefixes_and_namespaces
-from cognite.neat._issues.errors import PropertyDefinitionError
-from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.models._base_rules import (
+from cognite.neat.core._issues.errors import PropertyDefinitionError
+from cognite.neat.core._rules._constants import EntityTypes
+from cognite.neat.core._rules.models._base_rules import (
     BaseMetadata,
     BaseRules,
     DataModelAspect,
@@ -18,7 +18,7 @@ from cognite.neat._rules.models._base_rules import (
     SheetList,
     SheetRow,
 )
-from cognite.neat._rules.models._types import (
+from cognite.neat.core._rules.models._types import (
     ClassEntityType,
     InformationPropertyType,
     MultiValueTypeType,
@@ -26,8 +26,8 @@ from cognite.neat._rules.models._types import (
 )
 
 # NeatIdType,
-from cognite.neat._rules.models.data_types import DataType
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._rules.models.data_types import DataType
+from cognite.neat.core._rules.models.entities import (
     ClassEntity,
     ClassEntityList,
     Entity,
@@ -35,7 +35,7 @@ from cognite.neat._rules.models.entities import (
 )
 
 if TYPE_CHECKING:
-    from cognite.neat._rules.models import DMSRules
+    from cognite.neat.core._rules.models import DMSRules
 
 
 class InformationMetadata(BaseMetadata):
@@ -301,7 +301,9 @@ class InformationRules(BaseRules):
                 info_classes_by_neat_id[view.logical].physical = neat_id
 
     def as_dms_rules(self) -> "DMSRules":
-        from cognite.neat._rules.transformers._converters import _InformationRulesConverter
+        from cognite.neat.core._rules.transformers._converters import (
+            _InformationRulesConverter,
+        )
 
         return _InformationRulesConverter(self).as_dms_rules()
 

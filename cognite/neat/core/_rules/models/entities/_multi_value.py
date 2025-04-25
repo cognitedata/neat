@@ -6,8 +6,8 @@ from pydantic import (
     model_validator,
 )
 
-from cognite.neat._rules._constants import EntityTypes
-from cognite.neat._rules.models.data_types import DataType
+from cognite.neat.core._rules._constants import EntityTypes
+from cognite.neat.core._rules.models.data_types import DataType
 
 from ._constants import _PARSE, Undefined
 from ._single_value import ClassEntity, UnknownEntity

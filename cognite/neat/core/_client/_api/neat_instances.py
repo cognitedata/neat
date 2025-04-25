@@ -8,7 +8,7 @@ from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
 if TYPE_CHECKING:
-    from cognite.neat._client._api_client import NeatClient
+    from cognite.neat.core._client._api_client import NeatClient
 
 
 class NeatInstancesAPI:

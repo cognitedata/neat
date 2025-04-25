@@ -6,7 +6,7 @@ from cognite.client.data_classes import Row, RowList
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import RDF, Namespace, URIRef
 
-from cognite.neat._client import NeatClient
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_RAW_URI
 from cognite.neat.core._shared import Triple
 

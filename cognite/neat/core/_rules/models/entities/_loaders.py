@@ -1,7 +1,7 @@
 from typing import Literal
 
-from cognite.neat._issues.errors import NeatTypeError
-from cognite.neat._rules.models.data_types import DataType
+from cognite.neat.core._issues.errors import NeatTypeError
+from cognite.neat.core._rules.models.data_types import DataType
 
 from ._multi_value import MultiValueTypeInfo
 from ._single_value import (

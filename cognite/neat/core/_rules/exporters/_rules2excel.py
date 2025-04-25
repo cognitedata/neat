@@ -15,18 +15,18 @@ from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
 from cognite.neat.core._constants import get_base_concepts
-from cognite.neat._rules._constants import get_internal_properties
-from cognite.neat._rules._shared import VerifiedRules
-from cognite.neat._rules.models import (
+from cognite.neat.core._rules._constants import get_internal_properties
+from cognite.neat.core._rules._shared import VerifiedRules
+from cognite.neat.core._rules.models import (
     SheetRow,
 )
-from cognite.neat._rules.models._base_rules import BaseMetadata, RoleTypes
-from cognite.neat._rules.models.data_types import (
+from cognite.neat.core._rules.models._base_rules import BaseMetadata, RoleTypes
+from cognite.neat.core._rules.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
 )
-from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._utils.spreadsheet import (
+from cognite.neat.core._rules.models.dms._rules import DMSRules
+from cognite.neat.core._rules.models.information._rules import InformationRules
+from cognite.neat.core._utils.spreadsheet import (
     find_column_with_value,
     generate_data_validation,
 )

@@ -3,17 +3,17 @@ from typing import Any, cast
 
 import yaml
 
-from cognite.neat._issues import IssueList, MultiValueError, NeatIssue
-from cognite.neat._issues.errors import (
+from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
+from cognite.neat.core._issues.errors import (
     FileMissingRequiredFieldError,
     FileNotAFileError,
     FileNotFoundNeatError,
     FileReadError,
     FileTypeUnexpectedError,
 )
-from cognite.neat._issues.warnings import NeatValueWarning
-from cognite.neat._rules._shared import ReadRules, T_InputRules
-from cognite.neat._rules.models import INPUT_RULES_BY_ROLE, RoleTypes
+from cognite.neat.core._issues.warnings import NeatValueWarning
+from cognite.neat.core._rules._shared import ReadRules, T_InputRules
+from cognite.neat.core._rules.models import INPUT_RULES_BY_ROLE, RoleTypes
 
 from ._base import BaseImporter
 

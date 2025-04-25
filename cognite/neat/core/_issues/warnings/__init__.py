@@ -2,7 +2,7 @@
 conflicts with the built-in Python warnings module. However, it is expected to always be used in an absolute
 import, and should thus not cause a naming conflict."""
 
-from cognite.neat._issues._base import NeatWarning, _get_subclasses
+from cognite.neat.core._issues._base import NeatWarning, _get_subclasses
 
 from . import user_modeling
 from ._external import (

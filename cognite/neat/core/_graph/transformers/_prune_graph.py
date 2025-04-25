@@ -4,9 +4,9 @@ from rdflib import Graph, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._utils.rdf_ import as_neat_compliant_uri
-from cognite.neat._utils.text import sentence_or_string_to_camel
 from cognite.neat.core._shared import Triple
+from cognite.neat.core._utils.rdf_ import as_neat_compliant_uri
+from cognite.neat.core._utils.text import sentence_or_string_to_camel
 
 from ._base import BaseTransformer, BaseTransformerStandardised, RowTransformationOutput
 

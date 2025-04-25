@@ -7,15 +7,15 @@ from cognite.client import data_modeling as dm
 from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat._rules.models._base_input import InputComponent, InputRules
-from cognite.neat._rules.models.data_types import DataType
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._rules.models._base_input import InputComponent, InputRules
+from cognite.neat.core._rules.models.data_types import DataType
+from cognite.neat.core._rules.models.entities import (
     ClassEntity,
     MultiValueTypeInfo,
     UnknownEntity,
     load_value_type,
 )
-from cognite.neat._utils.rdf_ import uri_display_name
+from cognite.neat.core._utils.rdf_ import uri_display_name
 
 from ._rules import (
     InformationClass,

@@ -14,17 +14,17 @@ from pydantic import (
 )
 from pydantic.functional_serializers import PlainSerializer
 
-from cognite.neat._issues.errors import RegexViolationError
-from cognite.neat._issues.warnings import RegexViolationWarning
-from cognite.neat._rules._constants import (
+from cognite.neat.core._issues.errors import RegexViolationError
+from cognite.neat.core._issues.warnings import RegexViolationWarning
+from cognite.neat.core._rules._constants import (
     DATA_MODEL_COMPLIANCE_REGEX,
     PATTERNS,
     PREFIX_COMPLIANCE_REGEX,
     VERSION_COMPLIANCE_REGEX,
     EntityTypes,
 )
-from cognite.neat._rules.models.entities._multi_value import MultiValueTypeInfo
-from cognite.neat._rules.models.entities._single_value import (
+from cognite.neat.core._rules.models.entities._multi_value import MultiValueTypeInfo
+from cognite.neat.core._rules.models.entities._single_value import (
     ClassEntity,
     ContainerEntity,
     ViewEntity,

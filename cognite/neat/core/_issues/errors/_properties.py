@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Generic
 
-from cognite.neat._issues._base import ResourceType
+from cognite.neat.core._issues._base import ResourceType
 
 from ._resources import ResourceError, T_Identifier, T_ReferenceIdentifier
 

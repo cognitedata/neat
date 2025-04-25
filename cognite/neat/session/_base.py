@@ -5,22 +5,22 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat import _version
-from cognite.neat._client import NeatClient
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import RegexViolationError
-from cognite.neat._issues.errors._general import NeatImportError
-from cognite.neat._rules import importers
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.errors import RegexViolationError
+from cognite.neat.core._issues.errors._general import NeatImportError
+from cognite.neat.core._rules import importers
+from cognite.neat.core._rules.models import DMSRules
+from cognite.neat.core._rules.models.information._rules import InformationRules
+from cognite.neat.core._rules.transformers import (
     InformationToDMS,
     MergeDMSRules,
     MergeInformationRules,
     ToDMSCompliantEntities,
     VerifyInformationRules,
 )
-from cognite.neat._store._rules_store import RulesEntity
-from cognite.neat._utils.auxiliary import local_import
+from cognite.neat.core._store._rules_store import RulesEntity
+from cognite.neat.core._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI

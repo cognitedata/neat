@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
-from cognite.neat._issues import NeatIssue
+from cognite.neat.core._issues import NeatIssue
 
 
 class Tracker(ABC):

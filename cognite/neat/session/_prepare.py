@@ -4,19 +4,19 @@ from typing import Any
 
 from rdflib import URIRef
 
-from cognite.neat.session._experimental import ExperimentalFlags
-from cognite.neat._graph.transformers import (
+from cognite.neat.core._graph.transformers import (
     ConnectionToLiteral,
     ConvertLiteral,
     LiteralToEntity,
     RelationshipAsEdgeTransformer,
 )
-from cognite.neat._graph.transformers._rdfpath import MakeConnectionOnExactMatch
-from cognite.neat._issues import IssueList
-from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._rules.transformers import PrefixEntities, StandardizeNaming
-from cognite.neat._rules.transformers._converters import StandardizeSpaceAndVersion
-from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._graph.transformers._rdfpath import MakeConnectionOnExactMatch
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._rules.transformers import PrefixEntities, StandardizeNaming
+from cognite.neat.core._rules.transformers._converters import StandardizeSpaceAndVersion
+from cognite.neat.core._utils.text import humanize_collection
+from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper

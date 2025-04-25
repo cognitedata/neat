@@ -3,22 +3,22 @@ from typing import Any, Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat.session._experimental import ExperimentalFlags
-from cognite.neat._issues import IssueList, catch_issues
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.exporters import ExcelExporter
-from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import InformationInputRules
-from cognite.neat._rules.models._base_rules import RoleTypes
-from cognite.neat._rules.models.dms import DMSValidation
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._issues import IssueList, catch_issues
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.exporters import ExcelExporter
+from cognite.neat.core._rules.importers import ExcelImporter
+from cognite.neat.core._rules.models import InformationInputRules
+from cognite.neat.core._rules.models._base_rules import RoleTypes
+from cognite.neat.core._rules.models.dms import DMSValidation
+from cognite.neat.core._rules.transformers import (
     AddCogniteProperties,
     IncludeReferenced,
     ToDataProductModel,
     ToEnterpriseModel,
     VerifiedRulesTransformer,
 )
-from cognite.neat._utils.reader import NeatReader, PathReader
+from cognite.neat.core._utils.reader import NeatReader, PathReader
+from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
