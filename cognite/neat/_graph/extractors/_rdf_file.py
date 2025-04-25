@@ -13,7 +13,7 @@ from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues._base import IssueList
 from cognite.neat._issues.errors import FileNotFoundNeatError, FileTypeUnexpectedError
 from cognite.neat._issues.errors._general import NeatValueError
-from cognite.neat._shared import Triple
+from cognite.neat.core._shared import Triple
 
 
 class RdfFileExtractor(BaseExtractor):

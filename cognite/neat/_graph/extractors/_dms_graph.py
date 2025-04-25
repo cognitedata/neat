@@ -15,7 +15,7 @@ from cognite.neat._rules.models.data_types import Json
 from cognite.neat._rules.models.entities import UnknownEntity
 from cognite.neat._rules.models.information import InformationProperty
 from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
-from cognite.neat._shared import Triple
+from cognite.neat.core._shared import Triple
 
 from ._base import KnowledgeGraphExtractor
 from ._dms import DMSExtractor

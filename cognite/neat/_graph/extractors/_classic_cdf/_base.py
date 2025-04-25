@@ -21,9 +21,9 @@ from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._graph.extractors._base import BaseExtractor
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
-from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
+from cognite.neat.core._shared import Triple
 
 T_CogniteResource = TypeVar("T_CogniteResource", bound=WriteableCogniteResource)
 

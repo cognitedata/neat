@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Any
 
-from cognite.neat._shared import NeatList, NeatObject
+from cognite.neat.core._shared import NeatList, NeatObject
 
 
 @dataclass

@@ -8,7 +8,7 @@ from rdflib import RDF, Namespace, URIRef
 
 from cognite.neat._client import NeatClient
 from cognite.neat._constants import DEFAULT_RAW_URI
-from cognite.neat._shared import Triple
+from cognite.neat.core._shared import Triple
 
 from ._base import BaseExtractor
 from ._dict import DEFAULT_EMPTY_VALUES, DictExtractor

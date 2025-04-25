@@ -21,8 +21,8 @@ from cognite.neat._rules.models.dms import (
 )
 from cognite.neat._rules.models.entities._single_value import ClassEntity, ContainerEntity, ViewEntity
 from cognite.neat._rules.transformers import DMSToInformation, InformationToDMS
-from cognite.neat._shared import Triple
 from cognite.neat._store import NeatGraphStore
+from cognite.neat.core._shared import Triple
 from tests.data import GraphData, InstanceData
 
 

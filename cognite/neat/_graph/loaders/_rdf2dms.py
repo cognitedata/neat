@@ -41,13 +41,13 @@ from cognite.neat._rules.analysis._base import ViewQuery, ViewQueryDict
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.models.data_types import _DATA_TYPE_BY_DMS_TYPE, Json, String
 from cognite.neat._rules.models.information._rules import InformationRules
-from cognite.neat._shared import InstanceType
 from cognite.neat._store import NeatGraphStore
 from cognite.neat._utils.auxiliary import create_sha256_hash
 from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
 from cognite.neat._utils.text import NamingStandardization
 from cognite.neat._utils.upload import UploadResult
+from cognite.neat.core._shared import InstanceType
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
 

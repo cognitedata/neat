@@ -26,7 +26,7 @@ from rdflib import PROV, RDF, Literal, URIRef
 
 from cognite.neat._constants import CDF_NAMESPACE, DEFAULT_NAMESPACE
 from cognite.neat._issues import IssueList
-from cognite.neat._shared import FrozenNeatObject, NeatList, Triple
+from cognite.neat.core._shared import FrozenNeatObject, NeatList, Triple
 
 
 @dataclass(frozen=True)

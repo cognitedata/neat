@@ -55,7 +55,7 @@ from cognite.client.utils.useful_types import SequenceNotStr
 from cognite.neat._client.data_classes.data_modeling import Component
 from cognite.neat._client.data_classes.schema import DMSSchema
 from cognite.neat._issues.warnings import CDFMaxIterationsWarning
-from cognite.neat._shared import T_ID
+from cognite.neat.core._shared import T_ID
 
 if TYPE_CHECKING:
     from cognite.neat._client._api_client import NeatClient

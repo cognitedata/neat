@@ -18,10 +18,10 @@ from cognite.neat._graph.queries import Queries
 from cognite.neat._graph.transformers import Transformers
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError, OxigraphStorageLockedError
-from cognite.neat._shared import InstanceType, Triple
 from cognite.neat._utils.auxiliary import local_import
 from cognite.neat._utils.rdf_ import add_triples_in_batch, remove_namespace_from_uri
 from cognite.neat._utils.text import humanize_collection
+from cognite.neat.core._shared import InstanceType, Triple
 
 from ._provenance import Change, Entity, Provenance
 

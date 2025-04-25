@@ -6,8 +6,8 @@ from rdflib import URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules.models import InformationRules
-from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import class_html_doc
+from cognite.neat.core._shared import Triple
 
 if TYPE_CHECKING:
     from cognite.neat._store._provenance import Agent as ProvenanceAgent

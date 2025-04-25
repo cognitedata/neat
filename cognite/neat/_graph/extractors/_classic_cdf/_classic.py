@@ -16,10 +16,10 @@ from cognite.neat._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.catalog import classic_model
 from cognite.neat._rules.models import InformationInputRules, InformationRules
-from cognite.neat._shared import Triple
 from cognite.neat._utils.collection_ import chunker, iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.text import to_snake_case
+from cognite.neat.core._shared import Triple
 
 from ._assets import AssetsExtractor
 from ._base import ClassicCDFBaseExtractor, InstanceIdPrefix

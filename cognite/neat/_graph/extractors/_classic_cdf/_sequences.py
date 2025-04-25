@@ -11,7 +11,7 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 from typing_extensions import Self
 
 from cognite.neat._client.data_classes.neat_sequence import NeatSequence, NeatSequenceList
-from cognite.neat._shared import Triple
+from cognite.neat.core._shared import Triple
 
 from ._base import DEFAULT_SKIP_METADATA_VALUES, ClassicCDFBaseExtractor, InstanceIdPrefix
 

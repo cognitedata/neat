@@ -28,8 +28,8 @@ from cognite.neat._issues.warnings import (
     ResourceRetrievalWarning,
 )
 from cognite.neat._rules.models.dms import DMSRules
-from cognite.neat._shared import T_ID
 from cognite.neat._utils.upload import UploadResult
+from cognite.neat.core._shared import T_ID
 
 from ._base import CDFExporter
 

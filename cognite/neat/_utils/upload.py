@@ -5,7 +5,7 @@ from typing import Any, Generic
 
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
-from cognite.neat._shared import T_ID, NeatList, NeatObject
+from cognite.neat.core._shared import T_ID, NeatList, NeatObject
 
 
 @total_ordering
