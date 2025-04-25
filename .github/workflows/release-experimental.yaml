@@ -1,0 +1,85 @@
+---
+name: Release NEAT
+
+on:
+  push:
+    branches:
+      - experimental
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  release-to-pypi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install core dependencies
+        run: uv sync --all-extras
+
+      - name: Dump last commit message to file
+        run: git log -1 --pretty=%B > last_git_message.txt
+      - name: Dump last tag to file
+        run: git describe --tags --abbrev=0 > last_version.txt
+      - name: Bump Version
+        run: uv run python dev.py bump --verbose
+      - id: version
+        name: Read the new version
+        # Read the version from the cognite/neat/_version.py file
+        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
+      - name: Create CHANGELOG entry
+        if: env.version != '0.0.0'
+        run: uv run python dev.py changelog
+      - name: Build package
+        if: env.version != '0.0.0'
+        run: uv build
+
+      # experimental steps
+      - name: Set experimental version 
+        run: |
+          # Create the experimental version with a date suffix
+          EXPERIMENTAL_VERSION="${version}-experimental-(date +'%Y%m%d')"
+          echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
+
+      - name: Modify package name for experimental build
+        run: |
+          # Change the package name in pyproject.toml (or any config file you use)
+          sed -i 's/^name = "yourlib"/name = cognite-neat-experimental"/' pyproject.toml
+
+      - name: Validate expected package name
+        run: |
+          EXPECTED_NAME="yourlib-experimental"
+          ACTUAL_NAME=$(unzip -p dist/*.whl METADATA | grep ^Name: | awk '{print $2}')
+          echo "Expected: $EXPECTED_NAME"
+          echo "Actual:   $ACTUAL_NAME"
+          if [ "$EXPECTED_NAME" != "$ACTUAL_NAME" ]; then
+            echo "❌ Package name mismatch. Aborting upload!"
+            exit 1
+          fi
+
+      # - name: Release to PyPI
+      #   if: env.version != '0.0.0'
+      #   env:
+      #     TWINE_USERNAME: __token__
+      #     TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      #   run: uv run twine upload --skip-existing --verbose dist/*
+
+      # - name: Add entry to CHANGELOG
+      #   if: env.version != '0.0.0'
+      #   uses: ncipollo/release-action@v1
+      #   with:
+      #       token: ${{ secrets.GITHUB_TOKEN }}
+      #       prerelease: false
+      #       draft: false
+      #       tag: ${{ env.version }}
+      #       bodyFile: last_changelog_entry.md
+
+

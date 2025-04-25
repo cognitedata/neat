@@ -3,7 +3,7 @@ from typing import Any, Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
-from cognite.neat._alpha import ExperimentalFlags
+from cognite.neat._experimental._flags import ExperimentalFlags
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.exporters import ExcelExporter
