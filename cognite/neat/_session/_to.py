@@ -304,28 +304,8 @@ class CDFToAPI:
         space_from_property: str | None = None,
         use_source_space: bool = False,
     ) -> UploadResultList:
-        self._state._raise_exception_if_condition_not_met(
-            "Export DMS instances to CDF",
-            client_required=True,
-        )
-
+        instance_space_loader = self._create_instance_loader(instance_space, space_from_property, use_source_space)
         client = cast(NeatClient, self._state.client)
-        dms_rules = self._state.rule_store.last_verified_dms_rules
-        instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
-
-        if instance_space and instance_space == dms_rules.metadata.space:
-            raise NeatSessionError("Space for instances must be different from the data model space.")
-        elif not PATTERNS.space_compliance.match(str(instance_space)):
-            raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
-
-        instance_space_loader = loaders.InstanceSpaceLoader(
-            self._state.instances.store,
-            instance_space=instance_space,
-            space_property=space_from_property,
-            use_source_space=use_source_space,
-            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
-        )
-        result = instance_space_loader.load_into_cdf(client)
 
         loader = loaders.DMSLoader(
             self._state.rule_store.last_verified_dms_rules,
@@ -339,9 +319,8 @@ class CDFToAPI:
             neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
 
-        instance_result = loader.load_into_cdf(client)
+        result = loader.load_into_cdf(client)
         print("You can inspect the details with the .inspect.outcome.instances(...) method.")
-        result.extend(instance_result)
         self._state.instances.outcome.append(result)
         return result
 
@@ -382,7 +361,13 @@ class CDFToAPI:
             ```
 
         """
-        raise NotImplementedError()
+        loader = self._create_instance_loader(instance_space, space_from_property, use_source_space)
+        client = cast(NeatClient, self._state.client)
+
+        result = loader.load_into_cdf(client)
+        print("You can inspect the details with the .inspect.outcome.instances(...) method.")
+        self._state.instances.outcome.append(result)
+        return result
 
     def data_model(
         self,
@@ -410,17 +395,40 @@ class CDFToAPI:
             - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
 
         """
-
         self._state._raise_exception_if_condition_not_met(
             "Export DMS data model to CDF",
             client_required=True,
         )
-
         exporter = exporters.DMSExporter(existing=existing, drop_data=drop_data)
-
         result = self._state.rule_store.export_to_cdf(exporter, cast(NeatClient, self._state.client), dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
+
+    @staticmethod
+    def _get_instance_space(instance_space: str | None, schema_space: str) -> str | None:
+        instance_space = instance_space or f"{schema_space}_instances"
+        if instance_space and instance_space == schema_space:
+            raise NeatSessionError("Space for instances must be different from the data model space.")
+        elif not PATTERNS.space_compliance.match(str(instance_space)):
+            raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
+        return instance_space
+
+    def _create_instance_loader(
+        self, instance_space: str | None = None, space_from_property: str | None = None, use_source_space: bool = False
+    ) -> loaders.InstanceSpaceLoader:
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS instances to CDF",
+            client_required=True,
+        )
+        dms_rules = self._state.rule_store.last_verified_dms_rules
+        instance_space = self._get_instance_space(instance_space, dms_rules.metadata.space)
+        return loaders.InstanceSpaceLoader(
+            self._state.instances.store,
+            instance_space=instance_space,
+            space_property=space_from_property,
+            use_source_space=use_source_space,
+            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+        )
 
 
 @session_class_wrapper
