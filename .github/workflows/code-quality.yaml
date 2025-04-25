@@ -2,7 +2,7 @@ name: Check Quality and Test
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, neat-migration]
 
 env:
   # Used for linting, docker images, and docs.
