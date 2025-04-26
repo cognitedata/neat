@@ -1,7 +1,7 @@
 import warnings
 from typing import Any, Literal, cast
 
-from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId, ViewIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat.core._client import NeatClient
@@ -75,7 +75,6 @@ class ReadAPI:
         self._state.instances.store.write(extractors.RdfFileExtractor.from_zip(path))
 
 
-@session_class_wrapper
 class BaseReadAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
@@ -119,6 +118,55 @@ class CDFReadAPI(BaseReadAPI):
 
         importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
         return self._state.data_model_import(importer)
+
+    def view(
+        self,
+        view_id: ViewIdentifier,
+        instance_space: str | SequenceNotStr[str] | None = None,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
+        limit: int | None = None,
+    ) -> IssueList:
+        """Reads a view from CDF
+
+        Args:
+            view_id: Tuple of strings with the id of a CDF View.
+                Notation as follows (<name_of_space>, <name_of_view>, <view_version>) or ViewId.
+            instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
+            unpack_json: If True, the JSON objects will be unpacked into the graph.
+            str_to_ideal_type: If True, the string values will be converted to ideal types.
+            limit: The maximum number of instances to extract. If None, all instances are extracted.
+
+
+        Example:
+
+            Read all assets with properties in the CogniteAsset view into the knowledge graph.
+
+            ```python
+            neat.read.cdf.view(("cdf_cdm", "CogniteAsset", "v1"))
+            ```
+        """
+
+        view_id_parsed = ViewId.load(view_id)
+
+        if not view_id_parsed.version:
+            raise NeatSessionError("Data model version is required to read a data model.")
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read data model from CDF",
+            empty_rules_store_required=True,
+            client_required=True,
+        )
+
+        extractor = extractors.ViewExtractor.from_view(
+            cast(NeatClient, self._state.client),
+            view_id_parsed,
+            instance_space=instance_space,
+            unpack_json=unpack_json,
+            str_to_ideal_type=str_to_ideal_type,
+            limit=limit,
+        )
+        return self._state.instances.store.write(extractor)
 
     def core_data_model(self, concepts: str | list[str]) -> IssueList:
         """Subset the data model to the desired concepts.
