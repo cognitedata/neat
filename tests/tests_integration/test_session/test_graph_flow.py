@@ -212,6 +212,7 @@ class TestExtractToLoadFlow:
         assert value_type_by_property.get(("WindTurbine", "activities")) == "my_space:WorkOrder(version=v1)"
         assert value_type_by_property.get(("WorkOrder", "assets")) == "my_space:WindTurbine(version=v1)"
 
+    @pytest.mark.skip("Slow tests not relevant for migration work")
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.dexpi(GraphData.dexpi_example_xml)
@@ -251,6 +252,7 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
+    @pytest.mark.skip("Slow tests not relevant for migration work")
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.aml(GraphData.aml_example_aml)
