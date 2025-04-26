@@ -43,8 +43,10 @@ async def translate_property_ids(input_model: Path, output_model: Path, source_l
             class_.class_ = new_class_id
 
     # Storing all translations to avoid repeated API calls
-    translations: dict[str, str] = json.loads(translation_file.read_text())
-    assert isinstance(translations, dict)
+    translations: dict[str, str] = {}
+    if translation_file.exists():
+        translations = json.loads(translation_file.read_text())
+        assert isinstance(translations, dict)
 
     translator = Translator()
     for properties in chunker(input_rules.properties, 10):
@@ -57,6 +59,7 @@ async def translate_property_ids(input_model: Path, output_model: Path, source_l
             translated = await translator.translate(to_translate, src=source_language, dest="en")
             for response in translated:
                 translations[response.origin] = response.text
+            print(f"Translated {len(to_translate)} properties.")
         for property_ in properties:
             property_.class_ = class_renaming.get(property_.class_, property_.class_)
             if property_.name is None:
