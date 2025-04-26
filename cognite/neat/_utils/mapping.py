@@ -20,5 +20,6 @@ def create_type_mapping(
     return {namespace[cls.name]: namespace[cls.class_.suffix] for cls in classes if cls.name}
 
 
-def create_predicate_mapping(classes: Iterable[InformationProperty], namespace: Namespace) -> dict[URIRef, URIRef]:
-    raise NotImplementedError()
+def create_predicate_mapping(properties: Iterable[InformationProperty], namespace: Namespace) -> dict[URIRef, URIRef]:
+    """Creates a mapping of predicates to new predicates."""
+    return {namespace[prop.name]: namespace[prop.property_] for prop in properties if prop.name}
