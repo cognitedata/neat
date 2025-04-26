@@ -70,18 +70,19 @@ class InstancesExtractor(BaseExtractor):
             and self.total > GLOBAL_CONFIG.use_iterate_bar_threshold
         )
 
+        instances = self.instances
         if use_progress_bar and self.total is not None:
             name = self.name or "instances"
             instances = iterate_progress_bar(
-                self.instances,
+                instances,
                 self.total,
                 f"Extracting instances from {name}",
             )
 
-            for count, item in enumerate(instances, 1):
-                if self.limit and count > self.limit:
-                    break
-                yield from self._extract_instance(item)
+        for count, item in enumerate(instances, 1):
+            if self.limit and count > self.limit:
+                break
+            yield from self._extract_instance(item)
 
     def _extract_instance(self, instance: Instance) -> Iterable[Triple]:
         if isinstance(instance, dm.Edge):
