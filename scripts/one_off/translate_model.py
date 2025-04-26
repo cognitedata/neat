@@ -60,6 +60,7 @@ async def translate_property_ids(input_model: Path, output_model: Path, source_l
             for response in translated:
                 translations[response.origin] = response.text
             print(f"Translated {len(to_translate)} properties.")
+            translation_file.write_text(json.dumps(translations))
         for property_ in properties:
             property_.class_ = class_renaming.get(property_.class_, property_.class_)
             if property_.name is None:
@@ -70,8 +71,6 @@ async def translate_property_ids(input_model: Path, output_model: Path, source_l
                 print(f"[red]Warning[/red]: {property_.name} not found in translations.")
             if standardize:
                 property_.property_ = NamingStandardization.standardize_property_str(property_.property_)
-
-    translation_file.write_text(json.dumps(translations))
 
     exporter = ExcelExporter(styling="maximal")
     exporter.export_to_file(input_rules.as_verified_rules(), output_model)
