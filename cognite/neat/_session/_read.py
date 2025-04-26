@@ -124,6 +124,7 @@ class CDFReadAPI(BaseReadAPI):
         instance_space: str | SequenceNotStr[str] | None = None,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        limit: int | None = None,
     ) -> IssueList:
         """Reads a view from CDF
 
@@ -133,6 +134,7 @@ class CDFReadAPI(BaseReadAPI):
             instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
             unpack_json: If True, the JSON objects will be unpacked into the graph.
             str_to_ideal_type: If True, the string values will be converted to ideal types.
+            limit: The maximum number of instances to extract. If None, all instances are extracted.
 
 
         Example:
@@ -161,6 +163,7 @@ class CDFReadAPI(BaseReadAPI):
             instance_space=instance_space,
             unpack_json=unpack_json,
             str_to_ideal_type=str_to_ideal_type,
+            limit=limit,
         )
         return self._state.instances.store.write(extractor)
 
