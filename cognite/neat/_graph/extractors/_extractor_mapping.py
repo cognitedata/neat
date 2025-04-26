@@ -14,6 +14,9 @@ class ExtractorMapper(BaseExtractor):
     to the graph. The motivation for this is that changing triples before they are written
     is much cheaper than changing them after they are written to the graph.
 
+    The original motivating use case for this was to map a source system properties to properties
+    that are compatible with the information model property regex.
+
     Args:
         extractor: The extractor to map.
         predicate_mapping: A mapping of predicates to new predicates.
@@ -33,7 +36,7 @@ class ExtractorMapper(BaseExtractor):
     def extract(self) -> Iterable[Triple]:
         """Extracts triples from the extractor and maps them to new predicates and types."""
         for subject, predicate, obj in self.extractor.extract():
-            predicate = self.predicate_mapping.get(predicate, predicate)
             if predicate == RDF.type:
                 obj = self.type_mapping.get(obj, obj)
+            predicate = self.predicate_mapping.get(predicate, predicate)
             yield subject, predicate, obj
