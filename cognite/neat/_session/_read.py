@@ -125,6 +125,7 @@ class CDFReadAPI(BaseReadAPI):
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
         limit: int | None = None,
+        mapping: Any | None = None,
     ) -> IssueList:
         """Reads a view from CDF
 
@@ -135,7 +136,9 @@ class CDFReadAPI(BaseReadAPI):
             unpack_json: If True, the JSON objects will be unpacked into the graph.
             str_to_ideal_type: If True, the string values will be converted to ideal types.
             limit: The maximum number of instances to extract. If None, all instances are extracted.
-
+            mapping: A mapping to use for the extraction. This enables you to map all the predicates and
+                types when extracting the view. This is useful if you need to change the source to be valid
+                property field.
 
         Example:
 
