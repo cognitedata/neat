@@ -1,16 +1,18 @@
 import typing
 from collections.abc import Iterable, Set
 
-from cognite.client import data_modeling as dm
+from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier
 from cognite.client.data_classes.data_modeling.instances import Instance
 from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import Namespace
 
 from cognite.neat._client import NeatClient
+from cognite.neat._issues.errors import ResourceRetrievalError
 from cognite.neat._shared import Triple
 
 from ._base import BaseExtractor
 from ._dict import DEFAULT_EMPTY_VALUES
+from ._instances import InstancesExtractor
 
 
 class ViewExtractor(BaseExtractor):
@@ -34,7 +36,7 @@ class ViewExtractor(BaseExtractor):
 
     def __init__(
         self,
-        view_id: dm.ViewId,
+        view_id: ViewId,
         instances: Iterable[Instance],
         total: int | None = None,
         limit: int | None = None,
@@ -60,7 +62,7 @@ class ViewExtractor(BaseExtractor):
     def from_view(
         cls,
         client: NeatClient,
-        views: Iterable[dm.View],
+        view_id: ViewIdentifier,
         limit: int | None = None,
         overwrite_namespace: Namespace | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
@@ -70,7 +72,7 @@ class ViewExtractor(BaseExtractor):
         """Create an extractor for a single view
         Args:
             client: The Cognite client to use.
-            views: The views to extract.
+            view_id: The identifier of the view to extract from.
             limit: The maximum number of instances to extract.
             overwrite_namespace: If provided, this will overwrite the space of the extracted items.
             instance_space: The space to extract instances from.
@@ -78,7 +80,36 @@ class ViewExtractor(BaseExtractor):
             str_to_ideal_type: If True, when unpacking JSON objects, if the value is a string, the extractor will try to
                 convert it to the ideal type.
         """
-        raise NotImplementedError()
+        retrieved_list = client.data_modeling.views.retrieve(view_id)
+        if not retrieved_list:
+            raise ResourceRetrievalError(ViewId.load(view_id), "view", "View is missing in CDF")
+        latest_view = retrieved_list.latest_version()
+        instance_iterator = _ViewInstanceIterator(client, latest_view, instance_space)
+        total = instance_iterator.total
+        return cls(
+            latest_view.as_id(),
+            instance_iterator,
+            total=total,
+            limit=limit,
+            overwrite_namespace=overwrite_namespace,
+            unpack_json=unpack_json,
+            str_to_ideal_type=str_to_ideal_type,
+        )
 
     def extract(self) -> Iterable[Triple]:
-        raise NotImplementedError()
+        if self.total == 0:
+            return
+        view_id = self.view_id
+        instance_iterator = InstancesExtractor(
+            self.instances,
+            name=f"{view_id.space}:{view_id.external_id}(version={view_id.version})",
+            total=self.total,
+            limit=self.limit,
+            overwrite_namespace=self.overwrite_namespace,
+            unpack_json=self.unpack_json,
+            empty_values=self.empty_values,
+            str_to_ideal_type=self.str_to_ideal_type,
+            node_type=self.node_type,
+            edge_type=self.edge_type,
+        )
+        yield from instance_iterator.extract()
