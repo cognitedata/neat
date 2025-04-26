@@ -1,7 +1,7 @@
 import warnings
 from typing import Any, Literal, cast
 
-from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewIdentifier
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId, ViewIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat._alpha import ExperimentalFlags
@@ -143,7 +143,26 @@ class CDFReadAPI(BaseReadAPI):
             neat.read.cdf.view(("cdf_cdm", "CogniteAsset", "v1"))
             ```
         """
-        raise NotImplementedError()
+
+        view_id_parsed = ViewId.load(view_id)
+
+        if not view_id_parsed.version:
+            raise NeatSessionError("Data model version is required to read a data model.")
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read data model from CDF",
+            empty_rules_store_required=True,
+            client_required=True,
+        )
+
+        extractor = extractors.ViewExtractor.from_view(
+            cast(NeatClient, self._state.client),
+            view_id_parsed,
+            instance_space=instance_space,
+            unpack_json=unpack_json,
+            str_to_ideal_type=str_to_ideal_type,
+        )
+        return self._state.instances.store.write(extractor)
 
     def core_data_model(self, concepts: str | list[str]) -> IssueList:
         """Subset the data model to the desired concepts.
