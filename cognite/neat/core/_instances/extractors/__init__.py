@@ -16,6 +16,7 @@ from ._dms_graph import DMSGraphExtractor
 from ._mock_graph_generator import MockGraphGenerator
 from ._raw import RAWExtractor
 from ._rdf_file import RdfFileExtractor
+from ._views import ViewExtractor
 
 __all__ = [
     "AssetsExtractor",
@@ -35,6 +36,7 @@ __all__ = [
     "RelationshipsExtractor",
     "SequencesExtractor",
     "TimeSeriesExtractor",
+    "ViewExtractor",
 ]
 
 
@@ -53,6 +55,7 @@ TripleExtractors = (
     | DataSetExtractor
     | EngineExtractor
     | DMSGraphExtractor
+    | ViewExtractor
 )
 
 
