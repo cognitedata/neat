@@ -1,7 +1,7 @@
 import warnings
 from collections.abc import Iterable
 
-from cognite.neat._issues.warnings import NeatWarning
+from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._shared import Triple
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 from cognite.neat._utils.text import humanize_collection
@@ -40,7 +40,7 @@ class ExcludePredicateExtractor(BaseExtractor):
         not_found = self.exclude_predicates - self._found_predicates
         if not_found:
             warnings.warn(
-                NeatWarning(
+                NeatValueWarning(
                     f"The following predicates were not found in the extraction: {humanize_collection(not_found)}."
                 ),
                 stacklevel=2,
