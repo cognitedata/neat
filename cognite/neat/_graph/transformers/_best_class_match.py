@@ -72,7 +72,7 @@ class BestClassMatch(BaseTransformerStandardised):
         best_class, (min_missing_properties, matching_properties, _) = min(
             # Minimize missing properties, maximize matching properties, and minimize class size
             results.items(),
-            key=lambda x: (len(x[0][0]), -len(x[0][1]), x[0][2]),
+            key=lambda x: (len(x[1][0]), -len(x[1][1]), x[1][2]),
         )
         if len(min_missing_properties) > 0:
             warnings.warn(
