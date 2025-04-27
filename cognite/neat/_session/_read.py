@@ -23,17 +23,19 @@ from cognite.neat._graph.transformers._prune_graph import (
     PruneInstancesOfUnknownType,
     PruneTypes,
 )
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._issues.warnings import MissingCogniteClientWarning
 from cognite.neat._rules import catalog, importers
 from cognite.neat._rules.importers import BaseImporter
+from cognite.neat._rules.models import InformationRules
 from cognite.neat._rules.models.entities._single_value import ViewEntity
 from cognite.neat._rules.transformers import ClassicPrepareCore
 from cognite.neat._rules.transformers._converters import (
     ToEnterpriseModel,
     _SubsetEditableCDMRules,
 )
+from cognite.neat._utils.mapping import create_predicate_mapping, create_type_mapping
 from cognite.neat._utils.reader import NeatReader
 
 from ._state import SessionState
@@ -125,6 +127,7 @@ class CDFReadAPI(BaseReadAPI):
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
         limit: int | None = None,
+        mapping: Any | None = None,
     ) -> IssueList:
         """Reads a view from CDF
 
@@ -135,7 +138,9 @@ class CDFReadAPI(BaseReadAPI):
             unpack_json: If True, the JSON objects will be unpacked into the graph.
             str_to_ideal_type: If True, the string values will be converted to ideal types.
             limit: The maximum number of instances to extract. If None, all instances are extracted.
-
+            mapping: A mapping to use for the extraction. This enables you to map all the predicates and
+                types when extracting the view. This is useful if you need to change the source to be valid
+                property field.
 
         Example:
 
@@ -157,7 +162,7 @@ class CDFReadAPI(BaseReadAPI):
             client_required=True,
         )
 
-        extractor = extractors.ViewExtractor.from_view(
+        extractor: extractors.BaseExtractor = extractors.ViewExtractor.from_view(
             cast(NeatClient, self._state.client),
             view_id_parsed,
             instance_space=instance_space,
@@ -165,6 +170,24 @@ class CDFReadAPI(BaseReadAPI):
             str_to_ideal_type=str_to_ideal_type,
             limit=limit,
         )
+
+        if mapping:
+            reader = NeatReader.create(mapping)
+            rules: InformationRules | None = None
+            with catch_issues() as issues:
+                input_rules = importers.ExcelImporter(reader.materialize_path()).to_rules().rules
+                if input_rules:
+                    rules = input_rules.as_verified_rules()
+            if rules is None:
+                raise NeatSessionError(f"Failed to read mapping file: {reader.name}. Found {len(issues)} issues")
+            elif not isinstance(rules, InformationRules):
+                raise NeatSessionError(f"Invalid mapping. This has to be a conceptual model got {type(rules)}")
+            extractor = extractors.UnknownNamespaceExtractorMapper(
+                extractor,
+                type_mapping=create_type_mapping(rules.classes),
+                predicate_mapping=create_predicate_mapping(rules.properties),
+            )
+
         return self._state.instances.store.write(extractor)
 
     def core_data_model(self, concepts: str | list[str]) -> IssueList:
