@@ -1,6 +1,7 @@
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat._graph.transformers import BestClassMatch
+from cognite.neat._issues.warnings import PartialClassFoundWarning
 from cognite.neat._store import NeatGraphStore
 
 
@@ -27,10 +28,7 @@ class TestBestClassMatch:
         )
         issues = store.transform(transformer)
         assert len(issues) == 1
-        assert issues[0].as_message() == (
-            "NeatValueWarning: Instance 'MyInstance' has no class match with all properties. "
-            "Best class match is 'Car' with 1 missing properties: color"
-        )
+        assert issues[0] == PartialClassFoundWarning("MyInstance", "Car", 1, frozenset({"color"}))
 
         results = store.queries.select.types_with_instance_and_property_count(remove_namespace=True)
 
