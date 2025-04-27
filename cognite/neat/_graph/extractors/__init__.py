@@ -17,6 +17,7 @@ from ._extractor_mapping import ExtractorMapper
 from ._mock_graph_generator import MockGraphGenerator
 from ._raw import RAWExtractor
 from ._rdf_file import RdfFileExtractor
+from ._unknown_namespace_extractor_mapper import UnknownNamespaceExtractorMapper
 from ._views import ViewExtractor
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     "RelationshipsExtractor",
     "SequencesExtractor",
     "TimeSeriesExtractor",
+    "UnknownNamespaceExtractorMapper",
     "ViewExtractor",
 ]
 
