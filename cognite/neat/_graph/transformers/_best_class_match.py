@@ -5,9 +5,8 @@ from typing import cast
 from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._issues.warnings import NeatValueWarning
+from cognite.neat._issues.warnings import NoClassFoundWarning, PartialClassFoundWarning
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
-from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
@@ -61,7 +60,7 @@ class BestClassMatch(BaseTransformerStandardised):
                 results[class_uri] = (missing_properties, matching_properties, len(class_properties))
 
         if not results:
-            warnings.warn(NeatValueWarning(f"No class match found for instance {instance}"), stacklevel=2)
+            warnings.warn(NoClassFoundWarning(remove_namespace_from_uri(instance)), stacklevel=2)
             return row_output
 
         best_class, (min_missing_properties, matching_properties, _) = min(
@@ -71,10 +70,11 @@ class BestClassMatch(BaseTransformerStandardised):
         )
         if len(min_missing_properties) > 0:
             warnings.warn(
-                NeatValueWarning(
-                    f"Instance {remove_namespace_from_uri(instance)!r} has no class match with all properties. "
-                    f"Best class match is {remove_namespace_from_uri(best_class)!r} with "
-                    f"{len(min_missing_properties)} missing properties: {humanize_collection(min_missing_properties)}"
+                PartialClassFoundWarning(
+                    remove_namespace_from_uri(instance),
+                    remove_namespace_from_uri(best_class),
+                    len(min_missing_properties),
+                    frozenset(min_missing_properties),
                 ),
                 stacklevel=2,
             )
