@@ -19,3 +19,13 @@ class PartialClassFoundWarning(NeatWarning):
     best_class: str
     missing_count: int
     missing_properties: frozenset[str]
+
+
+@dataclass(unsafe_hash=True)
+class MultiClassFoundWarning(NeatWarning):
+    """Instance '{instance}' has multiple class matching equally well. Selected '{selected_class}', alternatives are
+    {alternatives}"""
+
+    instance: str
+    selected_class: str
+    alternatives: frozenset[str]
