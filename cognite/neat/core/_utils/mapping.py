@@ -1,13 +1,23 @@
+import urllib.parse
 from collections.abc import Iterable
+from typing import overload
 
-from rdflib import Literal, Namespace, URIRef
+from rdflib import Namespace, URIRef
 
 from cognite.neat.core._rules.models.information import InformationClass, InformationProperty
 
 
+@overload
+def create_type_mapping(classes: Iterable[InformationClass], namespace: Namespace) -> dict[URIRef, URIRef]: ...
+
+
+@overload
+def create_type_mapping(classes: Iterable[InformationClass], namespace: None = None) -> dict[str, str]: ...
+
+
 def create_type_mapping(
-    classes: Iterable[InformationClass], namespace: Namespace
-) -> dict[URIRef | Literal, URIRef | Literal]:
+    classes: Iterable[InformationClass], namespace: Namespace | None = None
+) -> dict[URIRef, URIRef] | dict[str, str]:
     """Creates a mapping of types to new types.
 
     Args:
@@ -17,9 +27,27 @@ def create_type_mapping(
     Returns:
         A mapping of types to new types.
     """
-    return {namespace[cls.name]: namespace[cls.class_.suffix] for cls in classes if cls.name}
+    if namespace is None:
+        return {urllib.parse.quote(cls.name): cls.class_.suffix for cls in classes if cls.name}
+    else:
+        return {namespace[urllib.parse.quote(cls.name)]: namespace[cls.class_.suffix] for cls in classes if cls.name}
 
 
-def create_predicate_mapping(properties: Iterable[InformationProperty], namespace: Namespace) -> dict[URIRef, URIRef]:
+@overload
+def create_predicate_mapping(
+    properties: Iterable[InformationProperty], namespace: Namespace
+) -> dict[URIRef, URIRef]: ...
+
+
+@overload
+def create_predicate_mapping(properties: Iterable[InformationProperty], namespace: None = None) -> dict[str, str]: ...
+
+
+def create_predicate_mapping(
+    properties: Iterable[InformationProperty], namespace: Namespace | None = None
+) -> dict[URIRef, URIRef] | dict[str, str]:
     """Creates a mapping of predicates to new predicates."""
-    return {namespace[prop.name]: namespace[prop.property_] for prop in properties if prop.name}
+    if namespace is None:
+        return {urllib.parse.quote(prop.name): prop.property_ for prop in properties if prop.name}
+    else:
+        return {namespace[urllib.parse.quote(prop.name)]: namespace[prop.property_] for prop in properties if prop.name}
