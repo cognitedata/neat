@@ -107,10 +107,9 @@ class SetInstances:
     def best_matching_class(self, conceptual_io: Any) -> IssueList:
         """Sets the type of all instances to best matching class in the conceptual model.
 
-        This method works by looking at all child classes of the given conceptual model and produce a set of properties
-        for each class. Then, for each instance, all properties are compared to the properties of the classes. The
-        instance type (RDF.type) is set to match the class that minimizes the number of instance properties that are
-        not matching the class properties.
+        This method works by comparing the properties of each instances with the properties of the classes and select
+        the class that minimizes the number of properties that are not overlapping. Tiebreakers are
+        resolved by selecting the class with the most properties overlapping the instance.
 
         Args:
             conceptual_io (Any): The conceptual model to use for the best matching class.
