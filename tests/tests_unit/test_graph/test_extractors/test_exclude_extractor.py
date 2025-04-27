@@ -1,3 +1,4 @@
+import urllib.parse
 from collections.abc import Iterable
 
 from rdflib import RDF, Literal, Namespace
@@ -16,14 +17,14 @@ class TestExcludeExtractorMapping:
             def extract(self) -> Iterable[Triple]:
                 yield my_instance, RDF.type, namespace["myType"]
                 yield my_instance, namespace["prop1"], Literal(1)
-                yield my_instance, namespace["prop2"], Literal(2)
+                yield my_instance, namespace[urllib.parse.quote("prop2どさじざ")], Literal(2)
                 yield my_instance, namespace["prop3"], Literal(3)
 
         extractor = MockExtractor()
 
         mapper = ExcludePredicateExtractor(
             extractor,
-            {"prop2", "prop4"},
+            {"prop2どさじざ", "prop4"},
         )
         with catch_warnings() as issues:
             triples = list(mapper.extract())
