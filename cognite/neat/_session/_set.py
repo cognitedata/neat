@@ -4,12 +4,14 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
 from cognite.neat._client import NeatClient
-from cognite.neat._constants import COGNITE_MODELS
-from cognite.neat._graph.transformers import SetType
+from cognite.neat._constants import COGNITE_MODELS, DEFAULT_NAMESPACE
+from cognite.neat._graph.transformers import BestClassMatch, SetType
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import NeatValueError
+from cognite.neat._rules.analysis import RulesAnalysis
 from cognite.neat._rules.models import DMSRules
 from cognite.neat._rules.transformers import SetIDDMSModel
+from cognite.neat._utils.read import read_conceptual_model
 from cognite.neat._utils.text import humanize_collection
 
 from ._state import SessionState
@@ -116,4 +118,20 @@ class SetInstances:
         Returns:
             IssueList: A list of issues that were found during the transformation.
         """
-        raise NotImplementedError()
+        self._state._raise_exception_if_condition_not_met(
+            "Set instance type based on best matching class",
+            instances_required=True,
+            has_dms_rules=False,
+            has_information_rules=False,
+        )
+        model = read_conceptual_model(conceptual_io)
+        analysis = RulesAnalysis(model)
+
+        classes = {
+            DEFAULT_NAMESPACE[cls_.suffix]: frozenset({prop.property_ for prop in properties})
+            for cls_, properties in analysis.properties_by_class(include_ancestors=True).items()
+        }
+
+        transformer = BestClassMatch(classes)
+        issues = self._state.instances.store.transform(transformer)
+        return issues
