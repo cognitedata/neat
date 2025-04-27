@@ -5,7 +5,7 @@ from typing import cast
 from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._issues.warnings import NoClassFoundWarning, PartialClassFoundWarning
+from cognite.neat._issues.warnings import MultiClassFoundWarning, NoClassFoundWarning, PartialClassFoundWarning
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
@@ -69,10 +69,10 @@ class BestClassMatch(BaseTransformerStandardised):
             warnings.warn(NoClassFoundWarning(remove_namespace_from_uri(instance)), stacklevel=2)
             return row_output
 
-        best_class, (min_missing_properties, matching_properties, _) = min(
+        best_class, (min_missing_properties, max_matching_properties, _) = min(
             # Minimize missing properties, maximize matching properties, and minimize class size
             results.items(),
-            key=lambda x: (len(x[0][0]), -len(x[0][1]), x[0][2]),
+            key=lambda x: (len(x[1][0]), -len(x[1][1]), x[1][2]),
         )
         if len(min_missing_properties) > 0:
             warnings.warn(
@@ -81,6 +81,23 @@ class BestClassMatch(BaseTransformerStandardised):
                     remove_namespace_from_uri(best_class),
                     len(min_missing_properties),
                     frozenset(min_missing_properties),
+                ),
+                stacklevel=2,
+            )
+        if alternatives := frozenset(
+            {
+                remove_namespace_from_uri(cls_)
+                for cls_, (missing_properties, match_properties, _) in results.items()
+                if len(missing_properties) == len(min_missing_properties)
+                and len(match_properties) == len(max_matching_properties)
+                and cls_ != best_class
+            }
+        ):
+            warnings.warn(
+                MultiClassFoundWarning(
+                    remove_namespace_from_uri(instance),
+                    remove_namespace_from_uri(best_class),
+                    alternatives,
                 ),
                 stacklevel=2,
             )
