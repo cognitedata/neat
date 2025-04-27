@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from typing import cast
 
@@ -44,7 +45,7 @@ class BestClassMatch(BaseTransformerStandardised):
 
         if predicates_literal:
             predicates_str = {
-                remove_namespace_from_uri(predicate)
+                urllib.parse.unquote(remove_namespace_from_uri(predicate))
                 for predicate in predicates_literal.split(",")
                 if URIRef(predicate) != RDF.type
             }
