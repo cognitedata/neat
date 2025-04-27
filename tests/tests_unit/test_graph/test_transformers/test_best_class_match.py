@@ -16,15 +16,17 @@ class TestBestClassMatch:
                 (id_, namespace["wheels"], Literal(4)),
                 (id_, namespace["color"], Literal("red")),
                 (id_, namespace["engine"], Literal("V8")),
-            ]
+            ],
+            named_graph=store.default_named_graph,
         )
         transformer = BestClassMatch(
             classes={
-                namespace["Car"]: frozenset({namespace["wheels"], namespace["engine"]}),
-                namespace["Bike"]: frozenset({namespace["wheels"]}),
+                namespace["Car"]: frozenset({"wheels", "engine"}),
+                namespace["Bike"]: frozenset({"wheels"}),
             }
         )
-        store.transform(transformer)
+        issues = store.transform(transformer)
+        assert len(issues) == 0
 
         results = store.queries.select.types_with_instance_and_property_count(remove_namespace=True)
 
@@ -32,6 +34,6 @@ class TestBestClassMatch:
         result = results[0]
         assert result == {
             "type": "Car",
-            "instance_count": 1,
-            "property_count": 3,
+            "instanceCount": 1,
+            "propertyCount": 3,
         }
