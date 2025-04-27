@@ -35,6 +35,7 @@ from cognite.neat._rules.transformers._converters import (
     ToEnterpriseModel,
     _SubsetEditableCDMRules,
 )
+from cognite.neat._utils.mapping import create_predicate_mapping, create_type_mapping
 from cognite.neat._utils.reader import NeatReader
 
 from ._state import SessionState
@@ -183,8 +184,8 @@ class CDFReadAPI(BaseReadAPI):
                 raise NeatSessionError(f"Invalid mapping. This has to be a conceptual model got {type(rules)}")
             extractor = extractors.UnknownNamespaceExtractorMapper(
                 extractor,
-                type_mapping={cls_.name: cls_.class_.suffix for cls_ in rules.classes if cls_.name},
-                predicate_mapping={prop.name: prop.property_ for prop in rules.properties if prop.name},
+                type_mapping=create_type_mapping(rules.classes),
+                predicate_mapping=create_predicate_mapping(rules.properties),
             )
 
         return self._state.instances.store.write(extractor)
