@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from collections.abc import Iterable
 
@@ -31,7 +32,7 @@ class ExcludePredicateExtractor(BaseExtractor):
     def extract(self) -> Iterable[Triple]:
         """Extracts triples from the extractor and maps them to new predicates and types."""
         for subject, predicate, obj in self.extractor.extract():
-            predicate_str = remove_namespace_from_uri(predicate)
+            predicate_str = urllib.parse.unquote(remove_namespace_from_uri(predicate))
             if predicate_str in self.exclude_predicates:
                 self._found_predicates.add(predicate_str)
                 continue
