@@ -7,6 +7,7 @@ from rdflib.query import ResultRow
 
 from cognite.neat._issues.warnings import NeatValueWarning
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
@@ -47,18 +48,28 @@ class BestClassMatch(BaseTransformerStandardised):
         }
         existing_types = {URIRef(type_) for type_ in types_literal.split(",")}
 
-        results: dict[URIRef, int] = {}
+        results: dict[URIRef, set[str]] = {}
         for class_uri, class_properties in self.classes.items():
             lost_properties = predicates_str - class_properties
             matching_properties = class_properties & predicates_str
             if len(matching_properties) >= 1:
-                results[class_uri] = len(lost_properties)
+                results[class_uri] = lost_properties
 
         if not results:
             warnings.warn(NeatValueWarning(f"No class match found for instance {instance}"), stacklevel=2)
             return row_output
 
-        best_class = min(results.items(), key=operator.itemgetter(1))[0]
+        best_class, min_missing_properties = min(results.items(), key=operator.itemgetter(1))
+        if len(min_missing_properties) > 0:
+            warnings.warn(
+                NeatValueWarning(
+                    f"Instance {remove_namespace_from_uri(instance)!r} has no class match with all properties. "
+                    f"Best class match is {remove_namespace_from_uri(best_class)!r} with "
+                    f"{len(min_missing_properties)} missing properties: {humanize_collection(min_missing_properties)}"
+                ),
+                stacklevel=2,
+            )
+
         for existing_type in existing_types:
             if existing_type != best_class:
                 row_output.remove_triples.add((instance, RDF.type, existing_type))
