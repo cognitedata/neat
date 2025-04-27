@@ -1,3 +1,5 @@
+import urllib.parse
+
 from rdflib import Namespace
 
 from cognite.neat._rules.models.information import InformationInputClass, InformationInputProperty
@@ -9,7 +11,7 @@ class TestCreateTypeMapping:
         namespace = Namespace("http://example.org/")
         classes = [InformationInputClass("MyType", name="my$$$Type").as_verified(default_prefix="my_space")]
         mapping = create_type_mapping(classes, namespace)
-        assert mapping == {namespace["my$$$Type"]: namespace["MyType"]}
+        assert mapping == {namespace[urllib.parse.quote("my$$$Type")]: namespace["MyType"]}
 
 
 class TestCreatePredicateMapping:
@@ -22,4 +24,4 @@ class TestCreatePredicateMapping:
         ]
 
         mapping = create_predicate_mapping(properties, namespace)
-        assert mapping == {namespace["my###Property"]: namespace["myProperty"]}
+        assert mapping == {namespace[urllib.parse.quote("my###Property")]: namespace["myProperty"]}
