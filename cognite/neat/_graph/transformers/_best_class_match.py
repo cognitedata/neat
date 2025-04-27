@@ -12,10 +12,16 @@ from ._base import BaseTransformerStandardised, RowTransformationOutput
 
 
 class BestClassMatch(BaseTransformerStandardised):
-    description = (
-        "Set the RDF.type of an instance based minimizing the missing properties "
-        "by comparing instance properties to each class properties."
-    )
+    """This transformer sets the RDF.type of an instance based on minimizing the missing properties
+    by comparing instance properties to each class properties.
+
+    Args:
+        classes (dict[URIRef, frozenset[str]]): A dictionary where the key is the class URI and the value is a set of
+            properties that belong to that class. The properties are represented as strings.
+
+    """
+
+    description = "Set the RDF.type based on best class match."
 
     def __init__(self, classes: dict[URIRef, frozenset[str]]) -> None:
         self.classes = classes
