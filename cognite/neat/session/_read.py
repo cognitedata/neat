@@ -130,6 +130,7 @@ class CDFReadAPI(BaseReadAPI):
         str_to_ideal_type: bool = False,
         limit: int | None = None,
         mapping: Any | None = None,
+        exclude_properties: SequenceNotStr[str] | None = None,
     ) -> IssueList:
         """Reads a view from CDF
 
@@ -143,6 +144,8 @@ class CDFReadAPI(BaseReadAPI):
             mapping: A mapping to use for the extraction. This enables you to map all the predicates and
                 types when extracting the view. This is useful if you need to change the source to be valid
                 property field.
+            exclude_properties: A list of properties to exclude from the extraction. This is useful if you
+                are cleaning up the data model and want to remove properties that are not used.
 
         Example:
 
@@ -179,6 +182,11 @@ class CDFReadAPI(BaseReadAPI):
                 extractor,
                 type_mapping=create_type_mapping(rules.classes),
                 predicate_mapping=create_predicate_mapping(rules.properties),
+            )
+        if exclude_properties is not None:
+            extractor = extractors.ExcludePredicateExtractor(
+                extractor,
+                exclude_predicates=set(exclude_properties),
             )
 
         return self._state.instances.store.write(extractor)
