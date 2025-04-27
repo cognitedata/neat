@@ -13,6 +13,7 @@ from ._classic_cdf._timeseries import TimeSeriesExtractor
 from ._dict import DictExtractor
 from ._dms import DMSExtractor
 from ._dms_graph import DMSGraphExtractor
+from ._exclude import ExcludePredicateExtractor
 from ._extractor_mapping import ExtractorMapper
 from ._mock_graph_generator import MockGraphGenerator
 from ._raw import RAWExtractor
@@ -29,6 +30,7 @@ __all__ = [
     "DataSetExtractor",
     "DictExtractor",
     "EventsExtractor",
+    "ExcludePredicateExtractor",
     "ExtractorMapper",
     "FilesExtractor",
     "KnowledgeGraphExtractor",
@@ -60,6 +62,7 @@ TripleExtractors = (
     | EngineExtractor
     | DMSGraphExtractor
     | ViewExtractor
+    | ExcludePredicateExtractor
 )
 
 
