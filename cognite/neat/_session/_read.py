@@ -161,7 +161,7 @@ class CDFReadAPI(BaseReadAPI):
             client_required=True,
         )
 
-        extractor = extractors.ViewExtractor.from_view(
+        extractor: extractors.BaseExtractor = extractors.ViewExtractor.from_view(
             cast(NeatClient, self._state.client),
             view_id_parsed,
             instance_space=instance_space,
@@ -181,7 +181,11 @@ class CDFReadAPI(BaseReadAPI):
                 raise NeatSessionError(f"Failed to read mapping file: {reader.name}. Found {len(issues)} issues")
             elif not isinstance(rules, InformationRules):
                 raise NeatSessionError(f"Invalid mapping. This has to be a conceptual model got {type(rules)}")
-            raise NotImplementedError()
+            extractor = extractors.UnknownNamespaceExtractorMapper(
+                extractor,
+                type_mapping={cls_.name: cls_.class_.suffix for cls_ in rules.classes if cls_.name},
+                predicate_mapping={prop.name: prop.property_ for prop in rules.properties if prop.name},
+            )
 
         return self._state.instances.store.write(extractor)
 
