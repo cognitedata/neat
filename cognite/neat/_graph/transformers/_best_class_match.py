@@ -53,19 +53,21 @@ class BestClassMatch(BaseTransformerStandardised):
         if instance is None:
             return row_output
 
-        results: dict[URIRef, tuple[set[str], set[str]]] = {}
+        results: dict[URIRef, tuple[set[str], set[str], int]] = {}
         for class_uri, class_properties in self.classes.items():
             missing_properties = predicates_str - class_properties
             matching_properties = set(class_properties & predicates_str)
             if len(matching_properties) >= 1:
-                results[class_uri] = (missing_properties, matching_properties)
+                results[class_uri] = (missing_properties, matching_properties, len(class_properties))
 
         if not results:
             warnings.warn(NeatValueWarning(f"No class match found for instance {instance}"), stacklevel=2)
             return row_output
 
-        best_class, (min_missing_properties, matching_properties) = min(
-            results.items(), key=lambda x: (len(x[0][0]), -len(x[0][1]))
+        best_class, (min_missing_properties, matching_properties, _) = min(
+            # Minimize missing properties, maximize matching properties, and minimize class size
+            results.items(),
+            key=lambda x: (len(x[0][0]), -len(x[0][1]), x[0][2]),
         )
         if len(min_missing_properties) > 0:
             warnings.warn(
