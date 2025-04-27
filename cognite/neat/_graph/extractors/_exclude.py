@@ -41,7 +41,8 @@ class ExcludePredicateExtractor(BaseExtractor):
         if not_found:
             warnings.warn(
                 NeatValueWarning(
-                    f"The following predicates were not found in the extraction: {humanize_collection(not_found)}."
+                    "The following predicates were not found in "
+                    f"the extraction: {humanize_collection(list(not_found))}."
                 ),
                 stacklevel=2,
             )
