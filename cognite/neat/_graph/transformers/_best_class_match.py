@@ -1,8 +1,8 @@
-import urllib.parse
 import warnings
+from collections.abc import Iterable, Iterator
 from typing import cast
 
-from rdflib import RDF, Literal, URIRef
+from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat._issues.warnings import NeatValueWarning
@@ -24,38 +24,34 @@ class BestClassMatch(BaseTransformerStandardised):
     def _count_query(self) -> str:
         """Count the number of instances."""
         return """SELECT (COUNT(?instance) AS ?instanceCount)
-                WHERE {
-                  ?instance a ?type .
-                }"""
+                WHERE { ?instance a ?type}"""
 
     def _iterate_query(self) -> str:
-        return """SELECT
-                    ?instance
-                    (GROUP_CONCAT(DISTINCT ?predicate; separator=",") AS ?predicates)
-                    (GROUP_CONCAT(DISTINCT ?type; separator=",") AS ?types)
-                WHERE {
-                  ?instance ?predicate ?object .
-                  OPTIONAL { ?instance a ?type . }
-                } GROUP BY ?instance"""
+        return """SELECT ?instance WHERE {?instance a ?type}"""
+
+    def _iterator(self, graph: Graph) -> Iterator:
+        """Iterate over the instances in the graph."""
+        for result in graph.query(self._iterate_query()):
+            (instance,) = cast(tuple[URIRef], result)
+            yield graph.query(f"DESCRIBE <{instance}>")
 
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()
 
-        instance, predicates_literal, types_literal = cast(tuple[URIRef, Literal, Literal], query_result_row)
+        predicates_str: set[str] = set()
+        existing_types: set[URIRef] = set()
+        instance: URIRef | None = None
+        for instance_id, predicate, object_ in cast(
+            Iterable[tuple[URIRef, URIRef, URIRef | Literal]], query_result_row
+        ):
+            if predicate == RDF.type and isinstance(object_, URIRef):
+                existing_types.add(object_)
+                continue
+            predicates_str.add(remove_namespace_from_uri(predicate))
+            instance = instance_id
 
-        if predicates_literal:
-            predicates_str = {
-                urllib.parse.unquote(remove_namespace_from_uri(predicate))
-                for predicate in predicates_literal.split(",")
-                if URIRef(predicate) != RDF.type
-            }
-        else:
-            predicates_str = set()
-
-        if types_literal:
-            existing_types = {URIRef(type_) for type_ in types_literal.split(",")}
-        else:
-            existing_types = set()
+        if instance is None:
+            return row_output
 
         results: dict[URIRef, tuple[set[str], set[str]]] = {}
         for class_uri, class_properties in self.classes.items():
