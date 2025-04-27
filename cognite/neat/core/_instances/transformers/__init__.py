@@ -1,4 +1,5 @@
 from ._base import BaseTransformerStandardised
+from ._best_class_match import BestClassMatch
 from ._classic_cdf import (
     AddAssetDepth,
     AssetEventConnector,
@@ -27,6 +28,7 @@ __all__ = [
     "AssetSequenceConnector",
     "AssetTimeSeriesConnector",
     "AttachPropertyFromTargetToSource",
+    "BestClassMatch",
     "ConnectionToLiteral",
     "ConvertLiteral",
     "LiteralToEntity",
@@ -62,4 +64,5 @@ Transformers = (
     | BaseTransformerStandardised
     | LookupRelationshipSourceTarget
     | SetType
+    | BestClassMatch
 )
