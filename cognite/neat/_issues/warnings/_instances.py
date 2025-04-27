@@ -12,7 +12,7 @@ class NoClassFoundWarning(NeatWarning):
 
 @dataclass(unsafe_hash=True)
 class PartialClassFoundWarning(NeatWarning):
-    """Instance {instance} has no class match with all properties. Best class match is {best_class}
+    """Instance '{instance}' has no class match with all properties. Best class match is '{best_class}'
     with {missing_count} missing properties: {missing_properties}"""
 
     instance: str
