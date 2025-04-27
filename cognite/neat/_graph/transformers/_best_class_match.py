@@ -1,21 +1,27 @@
 import warnings
+from collections.abc import Iterable, Iterator
 from typing import cast
 
-from rdflib import RDF, Literal, URIRef
+from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat._issues.warnings import NeatValueWarning
+from cognite.neat._issues.warnings import NoClassFoundWarning, PartialClassFoundWarning
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri
-from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
 
 class BestClassMatch(BaseTransformerStandardised):
-    description = (
-        "Set the RDF.type of an instance based minimizing the missing properties "
-        "by comparing instance properties to each class properties."
-    )
+    """This transformer sets the RDF.type of an instance based on minimizing the missing properties
+    by comparing instance properties to each class properties.
+
+    Args:
+        classes (dict[URIRef, frozenset[str]]): A dictionary where the key is the class URI and the value is a set of
+            properties that belong to that class. The properties are represented as strings.
+
+    """
+
+    description = "Set the RDF.type based on best class match."
 
     def __init__(self, classes: dict[URIRef, frozenset[str]]) -> None:
         self.classes = classes
@@ -23,51 +29,58 @@ class BestClassMatch(BaseTransformerStandardised):
     def _count_query(self) -> str:
         """Count the number of instances."""
         return """SELECT (COUNT(?instance) AS ?instanceCount)
-                WHERE {
-                  ?instance a ?type .
-                }"""
+                WHERE { ?instance a ?type}"""
 
     def _iterate_query(self) -> str:
-        return """SELECT
-                    ?instance
-                    (GROUP_CONCAT(DISTINCT ?predicate; separator=",") AS ?predicates)
-                    (GROUP_CONCAT(DISTINCT ?type; separator=",") AS ?types)
-                WHERE {
-                  ?instance ?predicate ?object .
-                  OPTIONAL { ?instance a ?type . }
-                } GROUP BY ?instance"""
+        return """SELECT ?instance WHERE {?instance a ?type}"""
+
+    def _iterator(self, graph: Graph) -> Iterator:
+        """Iterate over the instances in the graph."""
+        for result in graph.query(self._iterate_query()):
+            (instance,) = cast(tuple[URIRef], result)
+            yield graph.query(f"DESCRIBE <{instance}>")
 
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()
 
-        instance, predicates_literal, types_literal = cast(tuple[URIRef, Literal, Literal], query_result_row)
-        predicates_str = {
-            remove_namespace_from_uri(predicate)
-            for predicate in predicates_literal.split(",")
-            if URIRef(predicate) != RDF.type
-        }
-        existing_types = {URIRef(type_) for type_ in types_literal.split(",")}
+        predicates_str: set[str] = set()
+        existing_types: set[URIRef] = set()
+        instance: URIRef | None = None
+        for instance_id, predicate, object_ in cast(
+            Iterable[tuple[URIRef, URIRef, URIRef | Literal]], query_result_row
+        ):
+            if predicate == RDF.type and isinstance(object_, URIRef):
+                existing_types.add(object_)
+                continue
+            predicates_str.add(remove_namespace_from_uri(predicate))
+            instance = instance_id
 
-        results: dict[URIRef, tuple[set[str], set[str]]] = {}
+        if instance is None:
+            return row_output
+
+        results: dict[URIRef, tuple[set[str], set[str], int]] = {}
         for class_uri, class_properties in self.classes.items():
             missing_properties = predicates_str - class_properties
             matching_properties = set(class_properties & predicates_str)
             if len(matching_properties) >= 1:
-                results[class_uri] = (missing_properties, matching_properties)
+                results[class_uri] = (missing_properties, matching_properties, len(class_properties))
 
         if not results:
-            warnings.warn(NeatValueWarning(f"No class match found for instance {instance}"), stacklevel=2)
+            warnings.warn(NoClassFoundWarning(remove_namespace_from_uri(instance)), stacklevel=2)
             return row_output
 
-        best_class, (min_missing_properties, matching_properties) = min(
-            results.items(), key=lambda x: (len(x[0][0]), -len(x[0][1]))
+        best_class, (min_missing_properties, matching_properties, _) = min(
+            # Minimize missing properties, maximize matching properties, and minimize class size
+            results.items(),
+            key=lambda x: (len(x[0][0]), -len(x[0][1]), x[0][2]),
         )
         if len(min_missing_properties) > 0:
             warnings.warn(
-                NeatValueWarning(
-                    f"Instance {remove_namespace_from_uri(instance)!r} has no class match with all properties. "
-                    f"Best class match is {remove_namespace_from_uri(best_class)!r} with "
-                    f"{len(min_missing_properties)} missing properties: {humanize_collection(min_missing_properties)}"
+                PartialClassFoundWarning(
+                    remove_namespace_from_uri(instance),
+                    remove_namespace_from_uri(best_class),
+                    len(min_missing_properties),
+                    frozenset(min_missing_properties),
                 ),
                 stacklevel=2,
             )
