@@ -9,17 +9,10 @@ from cognite.neat.core._constants import (
     CLASSIC_CDF_NAMESPACE,
     get_default_prefixes_and_namespaces,
 )
-from cognite.neat.core._data_model import catalog, importers
-from cognite.neat.core._data_model.importers import BaseImporter
-from cognite.neat.core._data_model.models.entities._single_value import ViewEntity
-from cognite.neat.core._data_model.transformers import ClassicPrepareCore
-from cognite.neat.core._data_model.transformers._converters import (
-    ToEnterpriseModel,
-    _SubsetEditableCDMRules,
-)
 from cognite.neat.core._instances import examples as instances_examples
 from cognite.neat.core._instances import extractors
 from cognite.neat.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
+from cognite.neat.core._instances.extractors._dict import DEFAULT_EMPTY_VALUES
 from cognite.neat.core._instances.transformers import (
     ConvertLiteral,
     LiteralToEntity,
@@ -34,6 +27,16 @@ from cognite.neat.core._instances.transformers._prune_graph import (
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import MissingCogniteClientWarning
+from cognite.neat.core._data_model import catalog, importers
+from cognite.neat.core._data_model.importers import BaseImporter
+from cognite.neat.core._data_model.models.entities._single_value import ViewEntity
+from cognite.neat.core._data_model.transformers import ClassicPrepareCore
+from cognite.neat.core._data_model.transformers._converters import (
+    ToEnterpriseModel,
+    _SubsetEditableCDMRules,
+)
+from cognite.neat.core._utils.mapping import create_predicate_mapping, create_type_mapping
+from cognite.neat.core._utils.read import read_conceptual_model
 from cognite.neat.core._utils.reader import NeatReader
 from cognite.neat.session._experimental import ExperimentalFlags
 
@@ -171,16 +174,7 @@ class CDFReadAPI(BaseReadAPI):
         )
 
         if mapping:
-            reader = NeatReader.create(mapping)
-            rules: InformationRules | None = None
-            with catch_issues() as issues:
-                input_rules = importers.ExcelImporter(reader.materialize_path()).to_rules().rules
-                if input_rules:
-                    rules = input_rules.as_verified_rules()
-            if rules is None:
-                raise NeatSessionError(f"Failed to read mapping file: {reader.name}. Found {len(issues)} issues")
-            elif not isinstance(rules, InformationRules):
-                raise NeatSessionError(f"Invalid mapping. This has to be a conceptual model got {type(rules)}")
+            rules = read_conceptual_model(mapping)
             extractor = extractors.UnknownNamespaceExtractorMapper(
                 extractor,
                 type_mapping=create_type_mapping(rules.classes),
