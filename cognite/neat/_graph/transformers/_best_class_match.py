@@ -1,4 +1,3 @@
-import operator
 import warnings
 from typing import cast
 
@@ -14,7 +13,8 @@ from ._base import BaseTransformerStandardised, RowTransformationOutput
 
 class BestClassMatch(BaseTransformerStandardised):
     description = (
-        "Set the RDF.type of an instance based minimizing the properties lost if the instances is written to the class"
+        "Set the RDF.type of an instance based minimizing the missing properties "
+        "by comparing instance properties to each class properties."
     )
 
     def __init__(self, classes: dict[URIRef, frozenset[str]]) -> None:
@@ -48,18 +48,20 @@ class BestClassMatch(BaseTransformerStandardised):
         }
         existing_types = {URIRef(type_) for type_ in types_literal.split(",")}
 
-        results: dict[URIRef, set[str]] = {}
+        results: dict[URIRef, tuple[set[str], set[str]]] = {}
         for class_uri, class_properties in self.classes.items():
-            lost_properties = predicates_str - class_properties
-            matching_properties = class_properties & predicates_str
+            missing_properties = predicates_str - class_properties
+            matching_properties = set(class_properties & predicates_str)
             if len(matching_properties) >= 1:
-                results[class_uri] = lost_properties
+                results[class_uri] = (missing_properties, matching_properties)
 
         if not results:
             warnings.warn(NeatValueWarning(f"No class match found for instance {instance}"), stacklevel=2)
             return row_output
 
-        best_class, min_missing_properties = min(results.items(), key=operator.itemgetter(1))
+        best_class, (min_missing_properties, matching_properties) = min(
+            results.items(), key=lambda x: (len(x[0][0]), -len(x[0][1]))
+        )
         if len(min_missing_properties) > 0:
             warnings.warn(
                 NeatValueWarning(
