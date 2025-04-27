@@ -41,12 +41,20 @@ class BestClassMatch(BaseTransformerStandardised):
         row_output = RowTransformationOutput()
 
         instance, predicates_literal, types_literal = cast(tuple[URIRef, Literal, Literal], query_result_row)
-        predicates_str = {
-            remove_namespace_from_uri(predicate)
-            for predicate in predicates_literal.split(",")
-            if URIRef(predicate) != RDF.type
-        }
-        existing_types = {URIRef(type_) for type_ in types_literal.split(",")}
+
+        if predicates_literal:
+            predicates_str = {
+                remove_namespace_from_uri(predicate)
+                for predicate in predicates_literal.split(",")
+                if URIRef(predicate) != RDF.type
+            }
+        else:
+            predicates_str = set()
+
+        if types_literal:
+            existing_types = {URIRef(type_) for type_ in types_literal.split(",")}
+        else:
+            existing_types = set()
 
         results: dict[URIRef, tuple[set[str], set[str]]] = {}
         for class_uri, class_properties in self.classes.items():
