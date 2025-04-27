@@ -1,3 +1,5 @@
+from typing import Any
+
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 
@@ -99,3 +101,19 @@ class SetInstances:
         self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))
 
         return None
+
+    def best_matching_class(self, conceptual_io: Any) -> IssueList:
+        """Sets the type of all instances to best matching class in the conceptual model.
+
+        This method works by looking at all child classes of the given conceptual model and produce a set of properties
+        for each class. Then, for each instance, all properties are compared to the properties of the classes. The
+        instance type (RDF.type) is set to match the class that minimizes the number of instance properties that are
+        not matching the class properties.
+
+        Args:
+            conceptual_io (Any): The conceptual model to use for the best matching class.
+
+        Returns:
+            IssueList: A list of issues that were found during the transformation.
+        """
+        raise NotImplementedError()
