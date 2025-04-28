@@ -27,7 +27,7 @@ class TestDictExtractor:
         assert dict(properties) == {
             "myProperty": ["value"],
             **{
-                f"myEmptyProperty{no}": [value] if value not in IGNORED_BY_TRIPLE_STORE else ["EMPTY"]
+                f"myEmptyProperty{no}": ["EMPTY"] if value in IGNORED_BY_TRIPLE_STORE else [value]
                 for no, value in enumerate(sorted(DEFAULT_EMPTY_VALUES))
             },
         }
