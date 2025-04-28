@@ -141,8 +141,9 @@ class CDFReadAPI(BaseReadAPI):
             unpack_json: If True, the JSON objects will be unpacked into the graph.
             str_to_ideal_type: If True, the string values will be converted to ideal types.
             limit: The maximum number of instances to extract. If None, all instances are extracted.
-            keep_empty_values: This is used when you unpack JSON objects. If True, the empty values ("nan", "null", "",
-                "unknown") will be kept. This is useful if you are classifying the data based on the property names.
+            keep_empty_values: This is used when you unpack JSON objects. If True, the empty values
+            ("nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined") will be kept. This is useful
+                if you are classifying the data based on the property names.
             mapping: A mapping to use for the extraction. This enables you to map all the predicates and
                 types when extracting the view. This is useful if you need to change the source to be valid
                 property field.
