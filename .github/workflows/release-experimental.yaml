@@ -54,11 +54,6 @@ jobs:
           echo "name = 'cognite-neat-experimental'" >> pyproject.override.toml
           echo "version = '${EXPERIMENTAL_VERSION}'" >> pyproject.override.toml
 
-      - name: Modify package name for experimental build
-        run: |
-          # Change the package name in pyproject.toml (or any config file you use)
-          sed -i 's/^name = "cognite-neat"/name = cognite-neat-experimental"/' pyproject.toml
-
       - name: Replace pyproject.toml temporarily
         run: |
           cp pyproject.override.toml pyproject.toml
