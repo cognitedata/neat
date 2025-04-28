@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from collections.abc import Iterable, Iterator
 from typing import cast
@@ -6,7 +7,7 @@ from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.core._issues.warnings import MultiClassFoundWarning, NoClassFoundWarning, PartialClassFoundWarning
-from cognite.neat.core._utils.rdf_ import uri_instance_to_display_name
+from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_instance_to_display_name
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
@@ -52,7 +53,7 @@ class BestClassMatch(BaseTransformerStandardised):
             if predicate == RDF.type and isinstance(object_, URIRef):
                 existing_types.add(object_)
                 continue
-            predicates_str.add(uri_instance_to_display_name(predicate))
+            predicates_str.add(remove_namespace_from_uri(predicate))
             instance = instance_id
 
         if instance is None:
@@ -80,7 +81,7 @@ class BestClassMatch(BaseTransformerStandardised):
                     uri_instance_to_display_name(instance),
                     uri_instance_to_display_name(best_class),
                     len(min_missing_properties),
-                    frozenset(min_missing_properties),
+                    frozenset({urllib.parse.unquote(prop) for prop in min_missing_properties}),
                 ),
                 stacklevel=2,
             )
