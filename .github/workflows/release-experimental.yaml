@@ -36,18 +36,16 @@ jobs:
         # Read the version from the cognite/neat/_version.py file
         run: |
           echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
-          echo "$version"
+          echo "Version extracted: $version"
 
       # experimental steps
-
       - name: Generate experimental version and override pyproject.toml
         id: versioning
         run: |
           cat pyproject.toml > pyproject.base.toml
 
-          VERSION=$(python -c "exec(open('yourlib/__version__.py').read()); print(__version__)")
           DATE_SUFFIX=$(date +'%Y%m%d.%H%M%S')
-          EXPERIMENTAL_VERSION="${VERSION}.dev0.${DATE_SUFFIX}"
+          EXPERIMENTAL_VERSION="${version}-experimental-${DATE_SUFFIX}"
 
           echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
           echo "EXPERIMENTAL_TAG=v${VERSION}-experimental.${DATE_SUFFIX}" >> $GITHUB_ENV
