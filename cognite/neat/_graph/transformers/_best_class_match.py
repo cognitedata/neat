@@ -1,3 +1,4 @@
+import urllib.parse
 import warnings
 from collections.abc import Iterable, Iterator
 from typing import cast
@@ -80,7 +81,7 @@ class BestClassMatch(BaseTransformerStandardised):
                     uri_instance_to_display_name(instance),
                     uri_instance_to_display_name(best_class),
                     len(min_missing_properties),
-                    frozenset(min_missing_properties),
+                    frozenset({urllib.parse.unquote(prop) for prop in min_missing_properties}),
                 ),
                 stacklevel=2,
             )
