@@ -26,7 +26,14 @@ class TestPropertiesWithCount:
 
         result = store.queries.select.properties_with_count(remove_namespace=True)
 
-        assert result == [
+        assert sorted(result, key=lambda x: (x["type"], x["property"])) == [
+            {
+                "type": "Bike",
+                "property": "wheels",
+                "cardinality": 2,
+                "instanceCount": 2,
+                "total": 2,
+            },
             {
                 "type": "Car",
                 "property": "engine",
@@ -40,12 +47,5 @@ class TestPropertiesWithCount:
                 "cardinality": 1,
                 "instanceCount": 1,
                 "total": 1,
-            },
-            {
-                "type": "Bike",
-                "property": "wheels",
-                "cardinality": 2,
-                "instanceCount": 2,
-                "total": 2,
             },
         ]
