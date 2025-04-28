@@ -136,6 +136,7 @@ class CDFReadAPI(BaseReadAPI):
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
         limit: int | None = None,
+        keep_empty_values: bool = False,
         mapping: Any | None = None,
         exclude_properties: SequenceNotStr[str] | None = None,
     ) -> IssueList:
@@ -148,6 +149,9 @@ class CDFReadAPI(BaseReadAPI):
             unpack_json: If True, the JSON objects will be unpacked into the graph.
             str_to_ideal_type: If True, the string values will be converted to ideal types.
             limit: The maximum number of instances to extract. If None, all instances are extracted.
+            keep_empty_values: This is used when you unpack JSON objects. If True, the empty values
+            ("nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined") will be kept. This is useful
+                if you are classifying the data based on the property names.
             mapping: A mapping to use for the extraction. This enables you to map all the predicates and
                 types when extracting the view. This is useful if you need to change the source to be valid
                 property field.
@@ -179,6 +183,7 @@ class CDFReadAPI(BaseReadAPI):
             view_id_parsed,
             instance_space=instance_space,
             unpack_json=unpack_json,
+            empty_values=set() if keep_empty_values else DEFAULT_EMPTY_VALUES,
             str_to_ideal_type=str_to_ideal_type,
             limit=limit,
         )
