@@ -48,7 +48,7 @@ jobs:
           EXPERIMENTAL_VERSION="${version}-experimental-${DATE_SUFFIX}"
 
           echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
-          echo "EXPERIMENTAL_TAG=v${VERSION}-experimental.${DATE_SUFFIX}" >> $GITHUB_ENV
+          echo "EXPERIMENTAL_TAG=v${VERSION}-experimental-${DATE_SUFFIX}" >> $GITHUB_ENV
 
           echo "[project]" > pyproject.override.toml
           echo "name = 'cognite-neat-experimental'" >> pyproject.override.toml
@@ -89,7 +89,7 @@ jobs:
             token: ${{ secrets.GITHUB_TOKEN }}
             prerelease: false
             draft: false
-            tag: ${{ EXPERIMENTAL_TAG }}
+            tag: ${{ env.EXPERIMENTAL_TAG }}
             bodyFile: last_changelog_entry.md
 
 
