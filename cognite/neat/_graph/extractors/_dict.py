@@ -18,7 +18,7 @@ DEFAULT_EMPTY_VALUES = frozenset({"nan", "null", "none", "", " ", "nil", "n/a", 
 
 # The following values are ignored if you add them to the graph, for example, graph.add((my_id, my_property, ""))
 # will have no effect.
-IGNORED_BY_TRIPLE_STORE = frozenset({"", "nan", "null"})
+IGNORED_BY_TRIPLE_STORE = frozenset({"", "nan", "null", "none"})
 
 
 class DictExtractor(BaseExtractor):
@@ -59,7 +59,12 @@ class DictExtractor(BaseExtractor):
         if key in self.uri_ref_keys and not isinstance(value, dict | list):
             yield key, URIRef(self.namespace[urllib.parse.quote(value)])
         if isinstance(value, str | float | bool | int):
-            yield key, Literal(value)
+            if isinstance(value, str) and value.casefold() in self.empty_values:
+                ...
+            elif isinstance(value, str) and value.casefold() in IGNORED_BY_TRIPLE_STORE:
+                yield key, Literal(self.empty_placeholder)
+            else:
+                yield key, Literal(value)
         elif isinstance(value, dict) and unpack_json:
             yield from self._unpack_json(value)
         elif isinstance(value, dict):
