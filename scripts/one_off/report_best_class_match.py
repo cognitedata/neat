@@ -28,18 +28,24 @@ def create_report(issue_csv_file: Path, output_excel_file: Path) -> None:
     for multi_issue in multi_issues:
         multi_issue_by_alternatives[frozenset(multi_issue.alternatives | {multi_issue.selected_class})].append(multi_issue.instance)
 
-    instancees_by_class_missing_pair = defaultdict(list)
+    instances_by_class_missing_pair = defaultdict(list)
     for partial_issue in partial_issues:
-        instancees_by_class_missing_pair[(partial_issue.best_class, partial_issue.missing_properties)].append(partial_issue.instance)
+        instances_by_class_missing_pair[(partial_issue.best_class, partial_issue.missing_properties)].append(partial_issue.instance)
 
     df = pd.DataFrame()
+    counter = 0
     for no, (alternatives, instances) in enumerate(multi_issue_by_alternatives.items(), 1):
         df[f"Alternatives_{no}"] = pd.Series(sorted(alternatives))
-        df[f"Instances_{no}"] = pd.Series(instances)
+        if len(instances) > len(df):
+            df = df.reindex(range(len(instances)))
+        df[f"Instances_{no}({len(instances)})"] = pd.Series(instances)
+        counter = no
 
-    for no, ((class_name, missing_properties), instances) in enumerate(instancees_by_class_missing_pair.items(), 1):
-        df[f"Case_{no}_class_{class_name}_missing"] = pd.Series(sorted(missing_properties))
-        df[f"Instances_{no}"] = pd.Series(instances)
+    for no, ((class_name, missing_properties), instances) in enumerate(instances_by_class_missing_pair.items(), counter+1):
+        df[f"Case_{no}_{class_name}"] = pd.Series(sorted(missing_properties))
+        if len(instances) > len(df):
+            df = df.reindex(range(len(instances)))
+        df[f"Instances_{no}({len(instances)})"] = pd.Series(instances)
 
     df.to_excel(output_excel_file, index=False)
     print(f"Report created: {output_excel_file.as_posix()!r}")
