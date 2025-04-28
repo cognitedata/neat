@@ -52,7 +52,7 @@ jobs:
       - name: Modify package name for experimental build
         run: |
           # Change the package name in pyproject.toml (or any config file you use)
-          sed -i 's/^name = "yourlib"/name = cognite-neat-experimental"/' pyproject.toml
+          sed -i 's/^name = "cognite-neat"/name = cognite-neat-experimental"/' pyproject.toml
 
       - name: Validate expected package name
         run: |
