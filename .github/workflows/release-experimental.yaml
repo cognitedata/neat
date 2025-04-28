@@ -34,36 +34,46 @@ jobs:
       - id: version
         name: Read the new version
         # Read the version from the cognite/neat/_version.py file
-        run: echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
+        run: |
+          echo "version=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' cognite/neat/_version.py)" >> $GITHUB_ENV
+          echo "Version extracted: $version"
+
+      # experimental steps
+      - name: Generate experimental version and override pyproject.toml
+        id: versioning
+        run: |
+          cat pyproject.toml > pyproject.base.toml
+
+          DATE_SUFFIX=$(date +'%Y%m%d.%H%M%S')
+          EXPERIMENTAL_VERSION="${version}-experimental-${DATE_SUFFIX}"
+
+          echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
+          echo "EXPERIMENTAL_TAG=v${VERSION}-experimental.${DATE_SUFFIX}" >> $GITHUB_ENV
+
+          echo "[project]" > pyproject.override.toml
+          echo "name = 'cognite-neat-experimental'" >> pyproject.override.toml
+          echo "version = '${EXPERIMENTAL_VERSION}'" >> pyproject.override.toml
+
+      - name: Replace pyproject.toml temporarily
+        run: |
+          cp pyproject.override.toml pyproject.toml
+
       - name: Create CHANGELOG entry
         if: env.version != '0.0.0'
         run: uv run python dev.py changelog
+
       - name: Build package
         if: env.version != '0.0.0'
         run: uv build
 
-      # experimental steps
-      - name: Set experimental version 
+      - name: Restore original pyproject.toml
         run: |
-          # Create the experimental version with a date suffix
-          EXPERIMENTAL_VERSION="${version}-experimental-$(date +'%Y%m%d.%H%M%S')"
-          echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
+          mv pyproject.base.toml pyproject.toml
 
-      - name: Modify package name for experimental build
+      - name: Check built package metadata
         run: |
-          # Change the package name in pyproject.toml (or any config file you use)
-          sed -i 's/^name = "cognite-neat"/name = cognite-neat-experimental"/' pyproject.toml
-
-      - name: Validate expected package name
-        run: |
-          EXPECTED_NAME="yourlib-experimental"
-          ACTUAL_NAME=$(unzip -p dist/*.whl METADATA | grep ^Name: | awk '{print $2}')
-          echo "Expected: $EXPECTED_NAME"
-          echo "Actual:   $ACTUAL_NAME"
-          if [ "$EXPECTED_NAME" != "$ACTUAL_NAME" ]; then
-            echo "❌ Package name mismatch. Aborting upload!"
-            exit 1
-          fi
+          twine check dist/*
+          unzip -p dist/*.whl METADATA | grep -E '^(Name|Version):'
 
       # - name: Release to PyPI
       #   if: env.version != '0.0.0'
@@ -79,7 +89,7 @@ jobs:
       #       token: ${{ secrets.GITHUB_TOKEN }}
       #       prerelease: false
       #       draft: false
-      #       tag: ${{ env.version }}
+      #       tag: ${{ EXPERIMENTAL_TAG }}
       #       bodyFile: last_changelog_entry.md
 
 
