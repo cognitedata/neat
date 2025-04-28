@@ -75,21 +75,21 @@ jobs:
           twine check dist/*
           unzip -p dist/*.whl METADATA | grep -E '^(Name|Version):'
 
-      # - name: Release to PyPI
-      #   if: env.version != '0.0.0'
-      #   env:
-      #     TWINE_USERNAME: __token__
-      #     TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      #   run: uv run twine upload --skip-existing --verbose dist/*
+      - name: Release to PyPI
+        if: env.version != '0.0.0'
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: uv run twine upload --skip-existing --verbose dist/*
 
-      # - name: Add entry to CHANGELOG
-      #   if: env.version != '0.0.0'
-      #   uses: ncipollo/release-action@v1
-      #   with:
-      #       token: ${{ secrets.GITHUB_TOKEN }}
-      #       prerelease: false
-      #       draft: false
-      #       tag: ${{ EXPERIMENTAL_TAG }}
-      #       bodyFile: last_changelog_entry.md
+      - name: Add entry to CHANGELOG
+        if: env.version != '0.0.0'
+        uses: ncipollo/release-action@v1
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            prerelease: false
+            draft: false
+            tag: ${{ EXPERIMENTAL_TAG }}
+            bodyFile: last_changelog_entry.md
 
 
