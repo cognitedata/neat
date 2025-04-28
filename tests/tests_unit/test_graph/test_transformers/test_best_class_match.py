@@ -61,8 +61,8 @@ class TestBestClassMatch:
 
         transformer = BestClassMatch(
             classes={
-                schema_ns["SportsCar"]: frozenset({"wheels", "engine"}),
-                schema_ns["Truck"]: frozenset({"wheels", "engine"}),
+                schema_ns["SportsCarッ"]: frozenset({"wheels", "engine"}),
+                schema_ns["Truckッ"]: frozenset({"wheels", "engine"}),
             }
         )
 
@@ -71,5 +71,7 @@ class TestBestClassMatch:
         assert len(issues) == 1
 
         assert issues[0] == MultiClassFoundWarning(
-            instance="sp_instance_space:MyInstanceッ差", selected_class="SportsCar", alternatives=frozenset({"Truck"})
+            instance="sp_instance_space:MyInstanceッ差",
+            selected_class="SportsCarッ",
+            alternatives=frozenset({"Truckッ"}),
         )
