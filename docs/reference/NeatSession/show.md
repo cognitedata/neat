@@ -1,1 +1,1 @@
-::: cognite.neat._session._show.ShowAPI
+::: cognite.neat.session._show.ShowAPI
