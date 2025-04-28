@@ -3,19 +3,13 @@ from typing import Any
 
 from cognite.neat.core._rules._shared import ReadRules
 from cognite.neat.core._rules.importers._spreadsheet2rules import ExcelImporter
+from cognite.neat.core.plugins.conceptual_data_model.extractors._base import (
+    ConceptualDataModelExtractor,
+)
 
+__all__ = ["ExcelExtractor"]
 
-class ConceptualDataModelExtractor:
-    __slots__ = ()
-
-    def __init__(self):
-        pass
-
-    def extract(self, source: Any, *args, **kwargs) -> None:
-        pass
-
-
-class Excel(ConceptualDataModelExtractor):
+class ExcelExtractor(ConceptualDataModelExtractor):
     def extract(self, source: str, *, validate: bool = False) -> ReadRules:
         """
         Extracts the rules from the Excel file.

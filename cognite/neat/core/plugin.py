@@ -10,7 +10,9 @@ from typing import (
 )
 
 from cognite.neat.core._issues._base import NeatError
-from cognite.neat.core.plugins.conceptual_data_model.extractors import ConceptualDataModelExtractor
+from cognite.neat.core.plugins.conceptual_data_model.extractors._base import (
+    ConceptualDataModelExtractor,
+)
 
 __all__ = [
     "PKGPlugin",
@@ -116,8 +118,8 @@ def plugins(name: str | None = None, kind: type[PluginT] | None = None) -> Itera
 register(
     "excel",
     ConceptualDataModelExtractor,
-    "cognite.neat.core.plugins.conceptual_data_model.extractors",
-    "Excel",
+    "cognite.neat.core.plugins.conceptual_data_model.extractors.excel",
+    "ExcelExtractor",
 )
 
 
