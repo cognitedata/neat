@@ -439,8 +439,9 @@ class CDFClassicAPI(BaseReadAPI):
         extractor = extractors.TimeSeriesExtractor.from_dataset(
             cast(NeatClient, self._state.client),
             data_set_external_id=data_set_external_id,
-            namespace=CLASSIC_CDF_NAMESPACE,
+            namespace=namespace,
             identifier=identifier,
+            prefix="Classic",
         )
         self._state.instances.neat_prefix_by_predicate_uri.update(
             {
@@ -449,9 +450,10 @@ class CDFClassicAPI(BaseReadAPI):
             }
         )
         self._state.instances.neat_prefix_by_type_uri.update(
-            {namespace[extractor._default_rdf_type]: InstanceIdPrefix.time_series}
+            {namespace[f"Classic{extractor._default_rdf_type}"]: InstanceIdPrefix.time_series}
         )
         extract_issues = self._state.instances.store.write(extractor)
+
         if identifier == "externalId":
             self._state.quoted_source_identifiers = True
 
@@ -462,11 +464,6 @@ class CDFClassicAPI(BaseReadAPI):
                 lambda is_string: "string" if is_string else "numeric",
             )
         )
-        self._state.instances.store.transform(
-            LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
-        )
-        # The above transformations creates a new type, so we need to update
-        self._state.instances.neat_prefix_by_type_uri.update({namespace["ClassicSourceSystem"]: "ClassicSourceSystem_"})
 
         return extract_issues
 
