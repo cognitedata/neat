@@ -24,3 +24,9 @@ class TestReadClassicTimeSeries:
             [CLASSIC_CDF_NAMESPACE[f"{InstanceIdPrefix.time_series}{ts.external_id}"] for ts in timeseries]
         )
         assert instances_ids == expected
+
+        for instance_id in instances_ids:
+            _, properties = neat._state.instances.store.queries.select.describe(instance_id)
+            assert "isString" in properties
+            value = properties["isString"][0]
+            assert isinstance(value, str), f"The {instance_id} has not converted the isSting from bool to enum"
