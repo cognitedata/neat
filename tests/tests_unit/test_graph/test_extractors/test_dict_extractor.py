@@ -1,6 +1,8 @@
 from rdflib import Literal, Namespace
 
 from cognite.neat._graph.extractors import DictExtractor
+from cognite.neat._graph.extractors._dict import DEFAULT_EMPTY_VALUES, IGNORED_BY_TRIPLE_STORE
+from cognite.neat._store import NeatGraphStore
 
 
 class TestDictExtractor:
@@ -11,14 +13,21 @@ class TestDictExtractor:
             id_=id_,
             data={
                 "myProperty": "value",
-                "myEmptyProperty": "",
+                **{f"myEmptyProperty{no}": Literal(value) for no, value in enumerate(sorted(DEFAULT_EMPTY_VALUES))},
             },
             namespace=namespace,
             empty_values=set(),
         )
 
-        triples = list(extractor.extract())
+        store = NeatGraphStore.from_oxi_local_store()
+        store.write(extractor)
 
-        assert len(triples) == 2
-        assert triples[0] == (id_, namespace["myProperty"], Literal("value"))
-        assert triples[1] == (id_, namespace["myEmptyProperty"], Literal(""))
+        _, properties = store.queries.select.describe(id_)
+
+        assert dict(properties) == {
+            "myProperty": ["value"],
+            **{
+                f"myEmptyProperty{no}": [value] if value not in IGNORED_BY_TRIPLE_STORE else ["EMPTY"]
+                for no, value in enumerate(sorted(DEFAULT_EMPTY_VALUES))
+            },
+        }
