@@ -106,13 +106,38 @@ class TestWrappedEntities:
             (
                 dm.filters.In(
                     ["node", "type"],
-                    [{"space": "space", "externalId": "node1"}, {"space": "space", "externalId": "node2"}],
+                    [
+                        {"space": "space", "externalId": "node1"},
+                        {"space": "space", "externalId": "node2"},
+                    ],
                 ),
                 NodeTypeFilter(
                     inner=[
                         DMSNodeEntity(space="space", externalId="node1"),
                         DMSNodeEntity(space="space", externalId="node2"),
                     ]
+                ),
+            ),
+            (
+                dm.filters.In(
+                    property=["cdf_cdm", "CogniteFile", "mimeType"],
+                    values=[
+                        "application/pdf",
+                        "application/msword",
+                        "image/jpeg",
+                        "image/tiff",
+                        "image/png",
+                        "application/vnd.ms-excel",
+                        "application/vnd.ms-excel.sheet.macroEnabled.12",
+                    ],
+                ),
+                RawFilter(
+                    filter=(
+                        'rawFilter({"in": {"property": ["cdf_cdm", "CogniteFile", "mimeType"], '
+                        '"values": ["application/pdf", "application/msword", "image/jpeg", '
+                        '"image/tiff", "image/png", "application/vnd.ms-excel", '
+                        '"application/vnd.ms-excel.sheet.macroEnabled.12"]}})'
+                    )
                 ),
             ),
             pytest.param(
