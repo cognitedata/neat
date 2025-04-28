@@ -46,7 +46,7 @@ jobs:
       - name: Set experimental version 
         run: |
           # Create the experimental version with a date suffix
-          EXPERIMENTAL_VERSION="${version}-experimental-(date +'%Y%m%d')"
+          EXPERIMENTAL_VERSION="${version}-experimental-$(date +'%Y%m%d.%H%M%S')"
           echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
 
       - name: Modify package name for experimental build
