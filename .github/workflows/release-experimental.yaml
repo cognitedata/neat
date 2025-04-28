@@ -46,13 +46,13 @@ jobs:
       - name: Set experimental version 
         run: |
           # Create the experimental version with a date suffix
-          EXPERIMENTAL_VERSION="${version}-experimental-(date +'%Y%m%d')"
+          EXPERIMENTAL_VERSION="${version}-experimental-$(date +'%Y%m%d.%H%M%S')"
           echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
 
       - name: Modify package name for experimental build
         run: |
           # Change the package name in pyproject.toml (or any config file you use)
-          sed -i 's/^name = "yourlib"/name = cognite-neat-experimental"/' pyproject.toml
+          sed -i 's/^name = "cognite-neat"/name = cognite-neat-experimental"/' pyproject.toml
 
       - name: Validate expected package name
         run: |
