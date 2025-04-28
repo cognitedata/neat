@@ -5,8 +5,8 @@ from typing import cast
 from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.query import ResultRow
 
-from cognite.neat.core._issues.warnings import NoClassFoundWarning, PartialClassFoundWarning
-from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
+from cognite.neat.core._issues.warnings import MultiClassFoundWarning, NoClassFoundWarning, PartialClassFoundWarning
+from cognite.neat.core._utils.rdf_ import uri_instance_to_display_name
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
@@ -52,7 +52,7 @@ class BestClassMatch(BaseTransformerStandardised):
             if predicate == RDF.type and isinstance(object_, URIRef):
                 existing_types.add(object_)
                 continue
-            predicates_str.add(remove_namespace_from_uri(predicate))
+            predicates_str.add(uri_instance_to_display_name(predicate))
             instance = instance_id
 
         if instance is None:
@@ -66,7 +66,7 @@ class BestClassMatch(BaseTransformerStandardised):
                 results[class_uri] = (missing_properties, matching_properties, len(class_properties))
 
         if not results:
-            warnings.warn(NoClassFoundWarning(remove_namespace_from_uri(instance)), stacklevel=2)
+            warnings.warn(NoClassFoundWarning(uri_instance_to_display_name(instance)), stacklevel=2)
             return row_output
 
         best_class, (min_missing_properties, max_matching_properties, _) = min(
@@ -77,8 +77,8 @@ class BestClassMatch(BaseTransformerStandardised):
         if len(min_missing_properties) > 0:
             warnings.warn(
                 PartialClassFoundWarning(
-                    remove_namespace_from_uri(instance),
-                    remove_namespace_from_uri(best_class),
+                    uri_instance_to_display_name(instance),
+                    uri_instance_to_display_name(best_class),
                     len(min_missing_properties),
                     frozenset(min_missing_properties),
                 ),
@@ -86,7 +86,7 @@ class BestClassMatch(BaseTransformerStandardised):
             )
         if alternatives := frozenset(
             {
-                remove_namespace_from_uri(cls_)
+                uri_instance_to_display_name(cls_)
                 for cls_, (missing_properties, match_properties, _) in results.items()
                 if len(missing_properties) == len(min_missing_properties)
                 and len(match_properties) == len(max_matching_properties)
@@ -95,8 +95,8 @@ class BestClassMatch(BaseTransformerStandardised):
         ):
             warnings.warn(
                 MultiClassFoundWarning(
-                    remove_namespace_from_uri(instance),
-                    remove_namespace_from_uri(best_class),
+                    uri_instance_to_display_name(instance),
+                    uri_instance_to_display_name(best_class),
                     alternatives,
                 ),
                 stacklevel=2,
