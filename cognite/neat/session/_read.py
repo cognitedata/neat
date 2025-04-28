@@ -11,6 +11,7 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._graph import examples as instances_examples
 from cognite.neat.core._graph import extractors
+from cognite.neat.core._graph.extractors._classic_cdf._base import InstanceIdPrefix
 from cognite.neat.core._graph.transformers import (
     ConvertLiteral,
     LiteralToEntity,
@@ -410,6 +411,64 @@ class CDFClassicAPI(BaseReadAPI):
             print("Use the .inspect.issues() for more details")
 
         return all_issues
+
+    def time_series(self, data_set_external_id: str, identifier: Literal["id", "externalId"] = "id") -> IssueList:
+        """Read the time series from CDF into NEAT.
+
+        Args:
+            data_set_external_id: The external id of the data set
+            identifier: The identifier to use for the time series. Note selecting "id" can cause issues if the external
+                ID of the time series is missing. Default is "id".
+
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        Example:
+            ```python
+            neat.read.cdf.time_series("data_set_external_id")
+            ```
+
+        """
+        namespace = CLASSIC_CDF_NAMESPACE
+        self._state._raise_exception_if_condition_not_met(
+            "Read time series",
+            empty_rules_store_required=True,
+            empty_instances_store_required=True,
+            client_required=True,
+        )
+        extractor = extractors.TimeSeriesExtractor.from_dataset(
+            cast(NeatClient, self._state.client),
+            data_set_external_id=data_set_external_id,
+            namespace=CLASSIC_CDF_NAMESPACE,
+            identifier=identifier,
+        )
+        self._state.instances.neat_prefix_by_predicate_uri.update(
+            {
+                namespace["dataSetId"]: InstanceIdPrefix.data_set,
+                namespace["assetId"]: InstanceIdPrefix.asset,
+            }
+        )
+        self._state.instances.neat_prefix_by_type_uri.update(
+            {namespace[extractor._default_rdf_type]: InstanceIdPrefix.time_series}
+        )
+        extract_issues = self._state.instances.store.write(extractor)
+        if identifier == "externalId":
+            self._state.quoted_source_identifiers = True
+
+        self._state.instances.store.transform(
+            ConvertLiteral(
+                namespace["ClassicTimeSeries"],
+                namespace["isString"],
+                lambda is_string: "string" if is_string else "numeric",
+            )
+        )
+        self._state.instances.store.transform(
+            LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
+        )
+        # The above transformations creates a new type, so we need to update
+        self._state.instances.neat_prefix_by_type_uri.update({namespace["ClassicSourceSystem"]: "ClassicSourceSystem_"})
+
+        return extract_issues
 
 
 @session_class_wrapper
