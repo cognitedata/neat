@@ -99,6 +99,11 @@ dev = [
 [tool.uv]
 package = true
 
+[tool.uv.workspace]
+members = [
+    "playground/plugins/neat-owl-importer",
+]
+
 [tool.ruff.lint]
 # See https://docs.astral.sh/ruff/rules/ for an overview of ruff rules
 select = ["E", "W", "F", "I", "RUF", "TID", "UP", "B", "FLY", "PTH", "ERA"]
