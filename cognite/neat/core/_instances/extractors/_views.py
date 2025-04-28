@@ -70,6 +70,7 @@ class ViewExtractor(BaseExtractor):
         overwrite_namespace: Namespace | None = None,
         instance_space: str | SequenceNotStr[str] | None = None,
         unpack_json: bool = False,
+        empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
         str_to_ideal_type: bool = False,
     ) -> "ViewExtractor":
         """Create an extractor for a single view
@@ -80,6 +81,8 @@ class ViewExtractor(BaseExtractor):
             overwrite_namespace: If provided, this will overwrite the space of the extracted items.
             instance_space: The space to extract instances from.
             unpack_json: If True, JSON objects will be unpacked into RDF literals.
+            empty_values: If unpack_json is True, when unpacking JSON objects, if a key has a value in this set,
+                it will be considered as an empty value and skipped.
             str_to_ideal_type: If True, when unpacking JSON objects, if the value is a string, the extractor will try to
                 convert it to the ideal type.
         """
@@ -96,6 +99,7 @@ class ViewExtractor(BaseExtractor):
             limit=limit,
             overwrite_namespace=overwrite_namespace,
             unpack_json=unpack_json,
+            empty_values=empty_values,
             str_to_ideal_type=str_to_ideal_type,
         )
 
