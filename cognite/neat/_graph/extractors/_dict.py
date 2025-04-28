@@ -7,12 +7,18 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.instances import Instance
 from rdflib import XSD, Literal, Namespace, URIRef
 
+from cognite.neat._issues.errors import NeatValueError
 from cognite.neat._shared import Triple
 from cognite.neat._utils.auxiliary import string_to_ideal_type
+from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseExtractor
 
 DEFAULT_EMPTY_VALUES = frozenset({"nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined"})
+
+# The following values are ignored if you add them to the graph, for example, graph.add((my_id, my_property, ""))
+# will have no effect.
+IGNORED_BY_TRIPLE_STORE = frozenset({"", "nan", "null"})
 
 
 class DictExtractor(BaseExtractor):
@@ -25,6 +31,7 @@ class DictExtractor(BaseExtractor):
         empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
         str_to_ideal_type: bool = False,
         unpack_json: bool = False,
+        empty_placeholder: str = "EMPTY",
     ) -> None:
         self.id_ = id_
         self.namespace = namespace
@@ -33,6 +40,13 @@ class DictExtractor(BaseExtractor):
         self.empty_values = empty_values
         self.str_to_ideal_type = str_to_ideal_type
         self.unpack_json = unpack_json
+        if empty_placeholder in IGNORED_BY_TRIPLE_STORE:
+            raise NeatValueError(
+                f"The empty placeholder '{empty_placeholder}' is not allowed. "
+                f"It cannot be one of {humanize_collection(IGNORED_BY_TRIPLE_STORE)} "
+                f"as these will be ignored by the triple store."
+            )
+        self.empty_placeholder = empty_placeholder
 
     def extract(self) -> Iterable[Triple]:
         for key, value in self.data.items():
@@ -61,7 +75,9 @@ class DictExtractor(BaseExtractor):
             if isinstance(sub_value, str):
                 if sub_value.casefold() in self.empty_values:
                     continue
-                if self.str_to_ideal_type:
+                if sub_value.casefold() in IGNORED_BY_TRIPLE_STORE:
+                    yield key, Literal(self.empty_placeholder)
+                elif self.str_to_ideal_type:
                     yield key, Literal(string_to_ideal_type(sub_value))
                 else:
                     yield key, Literal(sub_value)
