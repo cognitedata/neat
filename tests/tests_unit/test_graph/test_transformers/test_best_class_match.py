@@ -1,8 +1,10 @@
+import urllib.parse
+
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._graph.transformers import BestClassMatch
-from cognite.neat.core._issues.warnings import PartialClassFoundWarning
+from cognite.neat.core._issues.warnings import MultiClassFoundWarning, PartialClassFoundWarning
 from cognite.neat.core._store import NeatGraphStore
 
 
