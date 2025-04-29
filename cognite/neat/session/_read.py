@@ -468,6 +468,28 @@ class CDFClassicAPI(BaseReadAPI):
 
         return extract_issues
 
+    def file_metadata(self, data_set_external_id: str, identifier: Literal["id", "externalId"] = "id") -> IssueList:
+        """Read the file metadata from CDF into NEAT.
+
+        Note all files that have InstanceId set will be silently skipped. This method is for extracting
+        non-contextualized file medata only. If you want to include the potential connection from file metadata
+        to assets, use the `neat.read.cdf.graph()` method instead and select the asset hierarchy connected to this file.
+
+        Args:
+            data_set_external_id: The external id of the data set
+            identifier: The identifier to use for the file metadata. Note selecting "id" can cause issues
+                if the external ID of the file metadata is missing. Default is "id".
+
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        Example:
+            ```python
+            neat.read.cdf.time_series("data_set_external_id")
+            ```
+        """
+        raise NotImplementedError()
+
 
 @session_class_wrapper
 class ExcelReadAPI(BaseReadAPI):
