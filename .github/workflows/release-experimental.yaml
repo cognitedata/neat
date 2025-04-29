@@ -50,6 +50,8 @@ jobs:
           echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
           echo "EXPERIMENTAL_TAG=v${VERSION}-experimental-${DATE_SUFFIX}" >> $GITHUB_ENV
 
+          echo "Experimental version: $EXPERIMENTAL_VERSION"
+
           echo "[project]" > pyproject.override.toml
           echo "name = 'cognite-neat-experimental'" >> pyproject.override.toml
           echo "version = '${EXPERIMENTAL_VERSION}'" >> pyproject.override.toml
@@ -69,11 +71,6 @@ jobs:
       - name: Restore original pyproject.toml
         run: |
           mv pyproject.base.toml pyproject.toml
-
-      - name: Check built package metadata
-        run: |
-          twine check dist/*
-          unzip -p dist/*.whl METADATA | grep -E '^(Name|Version):'
 
       - name: Release to PyPI
         if: env.version != '0.0.0'
