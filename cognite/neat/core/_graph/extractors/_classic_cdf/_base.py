@@ -78,6 +78,10 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write (bool, optional): Whether to use the write/request format of the items. Defaults to False.
         prefix (str, optional): A prefix to add to the rdf type. Defaults to None.
         identifier (Literal["id", "externalId"], optional): The identifier to use. Defaults to "id".
+        skip_connections (bool, optional): Whether to skip connections. Defaults to False. This is used
+            when you extract other resources types than Assets. For example, if you extract TimeSeries and Files,
+            we skip the connections to Assets. This is to clearly separate contextualized and non-contextualized
+            extractions.
     """
 
     _default_rdf_type: str
@@ -96,6 +100,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
+        skip_connections: bool = False,
     ):
         self.namespace = namespace or DEFAULT_NAMESPACE
         self.items = items
@@ -107,6 +112,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         self.as_write = as_write
         self.prefix = prefix
         self.identifier = identifier
+        self.skip_connections = skip_connections
         # If identifier=externalId, we need to keep track of the external ids
         # and use them in linking of Files, Sequences, TimeSeries, and Events.
         self.asset_external_ids_by_id: dict[int, str] = {}
@@ -272,6 +278,12 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
                 # Skip it
                 return None
         elif key in {"assetId", "asset_id", "assetIds", "asset_ids", "rootId", "root_id"}:
+            if self.skip_connections:
+                warnings.warn(
+                    NeatValueWarning(f"Skipping connection to asset {raw} in {self._default_rdf_type}"), stacklevel=2
+                )
+                return None
+
             if self.identifier == "id":
                 return self.namespace[f"{InstanceIdPrefix.asset}{raw}"]
             else:
@@ -324,6 +336,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
+        skip_connections: bool = False,
     ) -> Self:
         total, items = cls._handle_no_access(lambda: cls._from_dataset(client, data_set_external_id))
         return cls(
@@ -337,6 +350,7 @@ class ClassicCDFBaseExtractor(BaseExtractor, ABC, Generic[T_CogniteResource]):
             as_write,
             prefix,
             identifier,
+            skip_connections,
         )
 
     @classmethod

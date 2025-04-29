@@ -4,6 +4,7 @@ from cognite.neat import NeatSession
 from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat._graph.extractors._classic_cdf._base import InstanceIdPrefix
+from cognite.neat._issues.warnings import NeatValueWarning
 from tests.data import InstanceData
 
 
@@ -16,7 +17,14 @@ class TestReadClassicTimeSeries:
 
             neat: NeatSession = NeatSession(client)
 
-        neat.read.cdf.classic.time_series("my_data_set", identifier="externalId")
+        issues = neat.read.cdf.classic.time_series("my_data_set", identifier="externalId")
+        assert len(issues) == 2
+        unexpected_type = [
+            issue
+            for issue in issues
+            if not (isinstance(issue, NeatValueWarning) and issue.value.startswith("Skipping connection"))
+        ]
+        assert not unexpected_type
 
         instances_ids = sorted((id_ for id_, _ in neat._state.instances.store.queries.select.list_instances_ids()))
 

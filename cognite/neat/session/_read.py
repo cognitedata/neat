@@ -442,6 +442,7 @@ class CDFClassicAPI(BaseReadAPI):
             namespace=namespace,
             identifier=identifier,
             prefix="Classic",
+            skip_connections=True,
         )
         self._state.instances.neat_prefix_by_predicate_uri.update(
             {
