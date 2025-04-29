@@ -1,4 +1,5 @@
 from cognite.client.data_classes import TimeSeriesList
+from cognite.client.data_classes.data_modeling import NodeId
 
 from cognite.neat import NeatSession
 from cognite.neat._client.testing import monkeypatch_neat_client
@@ -12,13 +13,15 @@ class TestReadClassicTimeSeries:
     def test_read_times_series(self) -> None:
         with monkeypatch_neat_client() as client:
             timeseries = TimeSeriesList.load(InstanceData.AssetCentricCDF.timeseries_yaml.read_text(encoding="utf-8"))
+            assert len(timeseries) >= 2
+            # TimeSeries with InstanceId should be skipped
+            timeseries[0].instance_id = NodeId("already", "connected")
             client.time_series.aggregate_count.return_value = len(timeseries)
             client.time_series.return_value = timeseries
 
             neat: NeatSession = NeatSession(client)
 
         issues = neat.read.cdf.classic.time_series("my_data_set", identifier="externalId")
-        assert len(issues) == 2
         unexpected_type = [
             issue
             for issue in issues
@@ -29,7 +32,11 @@ class TestReadClassicTimeSeries:
         instances_ids = sorted((id_ for id_, _ in neat._state.instances.store.queries.select.list_instances_ids()))
 
         expected = sorted(
-            [CLASSIC_CDF_NAMESPACE[f"{InstanceIdPrefix.time_series}{ts.external_id}"] for ts in timeseries]
+            [
+                CLASSIC_CDF_NAMESPACE[f"{InstanceIdPrefix.time_series}{ts.external_id}"]
+                for ts in timeseries
+                if ts.instance_id is None
+            ]
         )
         assert instances_ids == expected
 
