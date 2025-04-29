@@ -57,6 +57,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
         unpack_columns: bool = False,
+        skip_connections: bool = False,
     ):
         super().__init__(
             items,
@@ -69,6 +70,7 @@ class SequencesExtractor(ClassicCDFBaseExtractor[NeatSequence]):
             as_write,
             prefix,
             identifier,
+            skip_connections,
         )
         self.unpack_columns = unpack_columns
 

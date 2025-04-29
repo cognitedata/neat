@@ -34,6 +34,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
         as_write: bool = False,
         prefix: str | None = None,
         identifier: typing.Literal["id", "externalId"] = "id",
+        skip_connections: bool = False,
     ):
         # This is used by the ClassicExtractor to log the target nodes, such
         # that it can extract them.
@@ -53,6 +54,7 @@ class RelationshipsExtractor(ClassicCDFBaseExtractor[Relationship]):
             as_write=as_write,
             prefix=prefix,
             identifier=identifier,
+            skip_connections=skip_connections,
         )
         self._uri_by_external_id_by_type: dict[InstanceIdPrefix, dict[str, URIRef]] = defaultdict(dict)
         self._target_triples: list[tuple[URIRef, URIRef, str, str]] = []
