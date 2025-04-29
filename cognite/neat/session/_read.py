@@ -488,7 +488,42 @@ class CDFClassicAPI(BaseReadAPI):
             neat.read.cdf.time_series("data_set_external_id")
             ```
         """
-        raise NotImplementedError()
+        namespace = CLASSIC_CDF_NAMESPACE
+        self._state._raise_exception_if_condition_not_met(
+            "Read time series",
+            empty_rules_store_required=True,
+            empty_instances_store_required=True,
+            client_required=True,
+        )
+        extractor = extractors.FilesExtractor.from_dataset(
+            cast(NeatClient, self._state.client),
+            data_set_external_id=data_set_external_id,
+            namespace=namespace,
+            identifier=identifier,
+            prefix="Classic",
+            skip_connections=True,
+        )
+        self._state.instances.neat_prefix_by_predicate_uri.update(
+            {
+                namespace["dataSetId"]: InstanceIdPrefix.data_set,
+                namespace["assetId"]: InstanceIdPrefix.asset,
+            }
+        )
+        self._state.instances.neat_prefix_by_type_uri.update(
+            {namespace[f"Classic{extractor._default_rdf_type}"]: InstanceIdPrefix.time_series}
+        )
+        extract_issues = self._state.instances.store.write(extractor)
+
+        if identifier == "externalId":
+            self._state.quoted_source_identifiers = True
+
+        self._state.instances.store.transform(
+            LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
+        )
+        # The above transformations creates a new type, so we need to update
+        self._state.instances.neat_prefix_by_type_uri.update({namespace["ClassicSourceSystem"]: "ClassicSourceSystem_"})
+
+        return extract_issues
 
 
 @session_class_wrapper
