@@ -45,10 +45,10 @@ jobs:
           cat pyproject.toml > pyproject.base.toml
 
           DATE_SUFFIX=$(date +'%Y%m%d.%H%M%S')
-          EXPERIMENTAL_VERSION="${version}-experimental-${DATE_SUFFIX}"
+          EXPERIMENTAL_VERSION="${version}-dev0"
 
           echo "EXPERIMENTAL_VERSION=$EXPERIMENTAL_VERSION" >> $GITHUB_ENV
-          echo "EXPERIMENTAL_TAG=v${VERSION}-experimental-${DATE_SUFFIX}" >> $GITHUB_ENV
+          echo "EXPERIMENTAL_TAG=v${EXPERIMENTAL_VERSION}" >> $GITHUB_ENV
 
           echo "[project]" > pyproject.override.toml
           echo "name = 'cognite-neat-experimental'" >> pyproject.override.toml
