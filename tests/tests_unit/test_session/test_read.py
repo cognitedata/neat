@@ -1,4 +1,4 @@
-from cognite.client.data_classes import TimeSeriesList
+from cognite.client.data_classes import FileMetadataList, TimeSeriesList
 from cognite.client.data_classes.data_modeling import NodeId
 
 from cognite.neat import NeatSession
@@ -51,3 +51,40 @@ class TestReadClassicTimeSeries:
             assert "isString" in properties
             value = properties["isString"][0]
             assert isinstance(value, str), f"The {instance_id} has not converted the isSting from bool to enum"
+
+    def test_read_file_metadata(self) -> None:
+        with monkeypatch_neat_client() as client:
+            file_metadata = FileMetadataList.load(InstanceData.AssetCentricCDF.files_yaml.read_text(encoding="utf-8"))
+            assert len(file_metadata) >= 2
+            # FileMetadata with InstanceId should be skipped
+            file_metadata[0].instance_id = NodeId("already", "connected")
+            client.files.return_value = file_metadata
+
+            neat: NeatSession = NeatSession(client)
+
+        issues = neat.read.cdf.classic.file_metadata("my_data_set", identifier="externalId")
+        unexpected_type = [
+            issue
+            for issue in issues
+            if not (isinstance(issue, NeatValueWarning) and issue.value.startswith("Skipping connection"))
+        ]
+        assert not unexpected_type
+
+        instances_ids = sorted((id_ for id_, _ in neat._state.instances.store.queries.select.list_instances_ids()))
+
+        expected = sorted(
+            [
+                CLASSIC_CDF_NAMESPACE[f"{InstanceIdPrefix.file}{fm.external_id}"]
+                for fm in file_metadata
+                if fm.instance_id is None
+                # Neat automatically converts the source string to a new entity
+            ]
+            + list(
+                {
+                    CLASSIC_CDF_NAMESPACE[f"ClassicSourceSystem_{fm.source}"]
+                    for fm in file_metadata
+                    if fm.instance_id is None and fm.source
+                }
+            )
+        )
+        assert instances_ids == expected
