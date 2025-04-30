@@ -20,21 +20,11 @@ from cognite.neat.core._data_model.models.entities._single_value import (
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
+    DMSInputView,
     PhysicalUnvalidatedMetadata,
     PhysicalUnvalidatedProperty,
-    DMSInputView,
 )
 from cognite.neat.core._data_model.models.physical._validated_data_model import DMSRules
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ConceptEntity,
-    ViewEntity,
-)
-from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualUnvalidatedConcept,
-    ConceptualUnvalidatedMetadata,
-    ConceptualUnvalidatedProperty,
-    ConceptualUnvalidatedDataModel,
-)
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,

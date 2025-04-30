@@ -59,7 +59,10 @@ from cognite.neat.core._data_model.models.physical import (
     DMSInputNode,
     DMSInputView,
 )
-from cognite.neat.core._data_model.models.physical._unvalidated_data_model import PhysicalUnvalidatedMetadata, PhysicalUnvalidatedProperty
+from cognite.neat.core._data_model.models.physical._unvalidated_data_model import (
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
+)
 from cognite.neat.core._issues import (
     IssueList,
     MultiValueError,
@@ -188,9 +191,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
     ) -> PhysicalUnvalidatedMetadata:
-        description, creator = PhysicalUnvalidatedMetadata._get_description_and_creator(
-            model.description
-        )
+        description, creator = PhysicalUnvalidatedMetadata._get_description_and_creator(model.description)
 
         if isinstance(model, dm.DataModel):
             created = ms_to_datetime(model.created_time)
@@ -375,14 +376,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             immutable=self._get_immutable(prop),
             default=self._get_default(prop, container_property),
             container=(
-                str(ContainerEntity.from_id(prop.container))
-                if isinstance(prop, dm.MappedPropertyApply)
-                else None
+                str(ContainerEntity.from_id(prop.container)) if isinstance(prop, dm.MappedPropertyApply) else None
             ),
             container_property=(
-                prop.container_property_identifier
-                if isinstance(prop, dm.MappedPropertyApply)
-                else None
+                prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None
             ),
             view=str(view_entity),
             view_property=prop_id,

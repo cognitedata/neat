@@ -25,15 +25,15 @@ from cognite.neat.core._data_model.models.entities._single_value import (
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    PhysicalUnvalidatedMetadata,
     DMSInputNode,
-    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
     DMSMetadata,
     DMSProperty,
     DMSSchema,
     DMSValidation,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
 )
 from cognite.neat.core._data_model.models.physical._exporter import _DMSExporter
 from cognite.neat.core._data_model.transformers import (
@@ -168,23 +168,15 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     dm.ContainerApply(
                         space="my_space",
                         external_id="Asset",
-                        properties={
-                            "name": dm.ContainerProperty(type=dm.Text(), nullable=True)
-                        },
+                        properties={"name": dm.ContainerProperty(type=dm.Text(), nullable=True)},
                     ),
                     dm.ContainerApply(
                         space="my_space",
                         external_id="GeneratingUnit",
                         properties={
-                            "ratedPower": dm.ContainerProperty(
-                                type=dm.Float64(), nullable=True
-                            ),
+                            "ratedPower": dm.ContainerProperty(type=dm.Float64(), nullable=True),
                         },
-                        constraints={
-                            "my_space_Asset": dm.RequiresConstraint(
-                                dm.ContainerId("my_space", "Asset")
-                            )
-                        },
+                        constraints={"my_space_Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
                     ),
                 ]
             ),
@@ -623,9 +615,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             )
         ],
         views=[
-            DMSInputView(
-                view="generating_unit", filter_="NodeType(sp_other:wind_turbine)"
-            ),
+            DMSInputView(view="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
         ],
         containers=[
             DMSInputContainer(container="generating_unit"),
@@ -1597,9 +1587,7 @@ class TestDMSRules:
                 )
             ],
             views=[
-                DMSInputView(
-                    view="MyView", implements="cdf_cdm:CogniteDescribable(version=v1)"
-                ),
+                DMSInputView(view="MyView", implements="cdf_cdm:CogniteDescribable(version=v1)"),
                 DMSInputView("cdf_cdm:CogniteDescribable(version=v1)"),
             ],
             containers=[DMSInputContainer("cdf_cdm:CogniteDescribable")],
@@ -1647,15 +1635,11 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
             (
                 ViewEntity(space="my_space", externalId="WindTurbine", version="v42"),
                 "windFarm",
-            ): dm.DirectRelationReference(
-                space="my_space", external_id="WindTurbine.windFarm"
-            ),
+            ): dm.DirectRelationReference(space="my_space", external_id="WindTurbine.windFarm"),
             (
                 ViewEntity(space="my_space", externalId="WindFarm", version="v42"),
                 "windTurbines",
-            ): dm.DirectRelationReference(
-                space="my_space", external_id="WindTurbine.windFarm"
-            ),
+            ): dm.DirectRelationReference(space="my_space", external_id="WindTurbine.windFarm"),
         },
         id="Indirect edge use outwards type",
     )
@@ -1692,15 +1676,11 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
             (
                 ViewEntity(space="my_space", externalId="EnergyArea", version="v42"),
                 "units",
-            ): dm.DirectRelationReference(
-                space="my_space", external_id="EnergyArea.units"
-            ),
+            ): dm.DirectRelationReference(space="my_space", external_id="EnergyArea.units"),
             (
                 ViewEntity(space="my_space", externalId="WindFarm", version="v42"),
                 "units",
-            ): dm.DirectRelationReference(
-                space="my_space", external_id="EnergyArea.units"
-            ),
+            ): dm.DirectRelationReference(space="my_space", external_id="EnergyArea.units"),
         },
         id="Child uses parent edge",
     )
@@ -1763,7 +1743,6 @@ class TestDMSExporter:
 
 
 class TestDMSValidation:
-
     @pytest.mark.parametrize(
         "input_rules, expected_views, expected_containers",
         [
@@ -1780,11 +1759,7 @@ class TestDMSValidation:
                         ),
                     ],
                     views=[DMSInputView("MyView")],
-                    containers=[
-                        DMSInputContainer(
-                            "MyContainer", constraint="cdf_cdm:CogniteDescribable"
-                        )
-                    ],
+                    containers=[DMSInputContainer("MyContainer", constraint="cdf_cdm:CogniteDescribable")],
                 ),
                 set(),
                 {ContainerEntity(space="cdf_cdm", externalId="CogniteDescribable")},
@@ -1803,7 +1778,6 @@ class TestDMSValidation:
 
 
 class TestDMSProperty:
-
     @pytest.mark.parametrize(
         "raw",
         [
@@ -1838,9 +1812,7 @@ class TestDMSProperty:
             )
         ],
     )
-    def test_model_validate_invalid(
-        self, raw: PhysicalUnvalidatedProperty, expected_msg: str
-    ):
+    def test_model_validate_invalid(self, raw: PhysicalUnvalidatedProperty, expected_msg: str):
         with pytest.raises(ValidationError) as e:
             _ = DMSProperty.model_validate(raw.dump("sp", "v1"))
 

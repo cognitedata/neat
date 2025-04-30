@@ -31,9 +31,6 @@ from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
 )
 from cognite.neat.core._data_model.models.physical._validated_data_model import DMSRules
-from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
-    ConceptualDataModel,
-)
 from cognite.neat.core._utils.spreadsheet import (
     find_column_with_value,
     generate_data_validation,

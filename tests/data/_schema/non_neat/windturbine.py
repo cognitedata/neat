@@ -16,12 +16,12 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputEnum,
-    PhysicalUnvalidatedMetadata,
     DMSInputNode,
-    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
     DMSSchema,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
 )
 
 _SPACE = "sp_windturbine"

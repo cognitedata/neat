@@ -1,10 +1,10 @@
 from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    PhysicalUnvalidatedMetadata,
-    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
 )
 from cognite.neat.core._data_model.transformers import RuleMapper
 

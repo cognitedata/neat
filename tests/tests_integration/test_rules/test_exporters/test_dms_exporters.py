@@ -19,10 +19,10 @@ from cognite.neat.core._data_model.models.conceptual import (
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    PhysicalUnvalidatedMetadata,
-    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
 )
 from tests.config import DOC_RULES
 

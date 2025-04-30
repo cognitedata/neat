@@ -10,10 +10,10 @@ from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImpo
 from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    PhysicalUnvalidatedMetadata,
-    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
 )
 from cognite.neat.core._data_model.transformers import VerifyInformationRules
 

@@ -19,10 +19,10 @@ from cognite.neat.core._data_model.models.entities._single_value import (
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    PhysicalUnvalidatedMetadata,
-    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
 )
 from cognite.neat.core._data_model.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.core._graph.extractors import (

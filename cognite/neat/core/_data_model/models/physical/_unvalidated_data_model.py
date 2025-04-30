@@ -33,7 +33,16 @@ from cognite.neat.core._data_model.models.entities._wrapped import DMSFilter
 from cognite.neat.core._issues.warnings import DeprecatedWarning
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
-from ._validated_data_model import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+from ._validated_data_model import (
+    _DEFAULT_VERSION,
+    DMSContainer,
+    DMSEnum,
+    DMSMetadata,
+    DMSNode,
+    DMSProperty,
+    DMSRules,
+    DMSView,
+)
 
 if sys.version_info >= (3, 11):
     from typing import Self
