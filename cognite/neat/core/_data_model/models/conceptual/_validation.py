@@ -15,7 +15,7 @@ from cognite.neat.core._issues.warnings._resources import (
     ResourceNotDefinedWarning,
     ResourceRegexViolationWarning,
 )
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.spreadsheet import SheetRowTracker
 from cognite.neat.core._utils.text import humanize_collection
 
 from ._validated_data_model import ConceptualDataModel
@@ -28,10 +28,10 @@ class ConceptualValidation:
     def __init__(
         self,
         data_model: ConceptualDataModel,
-        model_components_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+        sheet_row_tracker_by_sheet: dict[str, SheetRowTracker] | None = None,
     ):
         self.data_model = data_model
-        self._read_info_by_spreadsheet = model_components_by_spreadsheet or {}
+        self.sheet_row_tracker_by_sheet = sheet_row_tracker_by_sheet or {}
         self._metadata = data_model.metadata
         self._properties = data_model.properties
         self._concepts = data_model.concepts
@@ -50,13 +50,15 @@ class ConceptualValidation:
         return self.issue_list
 
     def _duplicated_resources(self) -> None:
-        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
-        classes_sheet = self._read_info_by_spreadsheet.get("Classes")
+        properties_sheet_row_tracker = self.sheet_row_tracker_by_sheet.get("Properties")
+        classes_sheet_row_tracker = self.sheet_row_tracker_by_sheet.get("Classes")
 
         visited = defaultdict(list)
         for row_no, property_ in enumerate(self._properties):
             visited[property_._identifier()].append(
-                properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1
+                properties_sheet_row_tracker.adjusted_row_number(row_no)
+                if properties_sheet_row_tracker
+                else row_no + 1
             )
 
         for identifier, rows in visited.items():
@@ -77,7 +79,9 @@ class ConceptualValidation:
         visited = defaultdict(list)
         for row_no, class_ in enumerate(self._concepts):
             visited[class_._identifier()].append(
-                classes_sheet.adjusted_row_number(row_no) if classes_sheet else row_no + 1
+                classes_sheet_row_tracker.adjusted_row_number(row_no)
+                if classes_sheet_row_tracker
+                else row_no + 1
             )
 
         for identifier, rows in visited.items():

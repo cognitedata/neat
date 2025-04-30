@@ -48,7 +48,7 @@ from cognite.neat.core._issues.warnings.user_modeling import (
     DirectRelationMissingSourceWarning,
     NotNeatSupportedFilterWarning,
 )
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.spreadsheet import SheetRowTracker
 from cognite.neat.core._utils.text import humanize_collection
 
 from ._rules import DMSProperty, DMSRules
@@ -62,7 +62,7 @@ class DMSValidation:
         self,
         rules: DMSRules,
         client: NeatClient | None = None,
-        read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+        read_info_by_spreadsheet: dict[str, SheetRowTracker] | None = None,
     ) -> None:
         self._rules = rules
         self._client = client

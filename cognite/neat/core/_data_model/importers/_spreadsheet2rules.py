@@ -27,7 +27,7 @@ from cognite.neat.core._issues.errors import (
     FileReadError,
 )
 from cognite.neat.core._issues.warnings import FileMissingRequiredFieldWarning
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead, read_individual_sheet
+from cognite.neat.core._utils.spreadsheet import SheetRowTracker, read_individual_sheet
 from cognite.neat.core._utils.text import humanize_collection
 
 from ._base import BaseImporter
@@ -97,7 +97,7 @@ class MetadataRaw(UserDict):
 @dataclass
 class ReadResult:
     sheets: dict[str, dict | list]
-    read_info_by_sheet: dict[str, SpreadsheetRead]
+    read_info_by_sheet: dict[str, SheetRowTracker]
     metadata: MetadataRaw
     prefixes: dict[str, Namespace] | None = None
 
@@ -203,8 +203,8 @@ class SpreadsheetReader:
 
     def _read_sheets(
         self, excel_file: ExcelFile, read_role: RoleTypes
-    ) -> tuple[dict[str, dict | list] | None, dict[str, SpreadsheetRead]]:
-        read_info_by_sheet: dict[str, SpreadsheetRead] = defaultdict(SpreadsheetRead)
+    ) -> tuple[dict[str, dict | list] | None, dict[str, SheetRowTracker]]:
+        read_info_by_sheet: dict[str, SheetRowTracker] = defaultdict(SheetRowTracker)
 
         sheets: dict[str, dict | list] = {}
 

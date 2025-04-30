@@ -4,13 +4,14 @@ from warnings import WarningMessage
 from pydantic_core import ErrorDetails
 
 from cognite.neat.core._issues._base import NeatError, NeatWarning
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.spreadsheet import SheetRowTracker
 
 from .errors import NeatValueError, SpreadsheetError
 
 
 def from_pydantic_errors(
-    errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+    errors: list[ErrorDetails],
+    read_info_by_sheet: dict[str, SheetRowTracker] | None = None,
 ) -> list[NeatError]:
     read_info_by_sheet = read_info_by_sheet or {}
     return [
@@ -29,7 +30,9 @@ def from_warning(warning: WarningMessage) -> NeatWarning | None:
     return None
 
 
-def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead]) -> NeatError:
+def _from_pydantic_error(
+    error: ErrorDetails, read_info_by_sheet: dict[str, SheetRowTracker]
+) -> NeatError:
     neat_error = _create_neat_value_error(error)
     location = error["loc"]
 

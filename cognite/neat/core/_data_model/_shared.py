@@ -9,7 +9,7 @@ from cognite.neat.core._data_model.models.physical._rules_input import DMSInputR
 from cognite.neat.core._data_model.models.conceptual._unvalidate_data_model import (
     ConceptualUnvalidatedDataModel,
 )
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.spreadsheet import SheetRowTracker
 
 VerifiedRules: TypeAlias = ConceptualDataModel | DMSRules
 
@@ -23,7 +23,7 @@ class ReadRules(Generic[T_InputRules]):
     """This represents a rules that has been read."""
 
     rules: T_InputRules | None
-    read_context: dict[str, SpreadsheetRead]
+    read_context: dict[str, SheetRowTracker]
 
     @classmethod
     def display_type_name(cls) -> str:

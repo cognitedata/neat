@@ -12,8 +12,8 @@ from cognite.neat.core._data_model._constants import get_internal_properties
 
 
 @dataclass
-class SpreadsheetRead:
-    """This class is used to store information about the source spreadsheet.
+class SheetRowTracker:
+    """This class is used to store information about the source sheet in spreadsheet.
 
     It is used to adjust row numbers to account for header rows and empty rows
     such that the error/warning messages are accurate.
@@ -50,7 +50,7 @@ def read_individual_sheet(
     sheet_name: str,
     return_read_info: Literal[True],
     expected_headers: list[str] | None = None,
-) -> tuple[list[dict], SpreadsheetRead]: ...
+) -> tuple[list[dict], SheetRowTracker]: ...
 
 
 @overload
@@ -67,7 +67,7 @@ def read_individual_sheet(
     sheet_name: str,
     return_read_info: bool = False,
     expected_headers: list[str] | None = None,
-) -> tuple[list[dict], SpreadsheetRead] | list[dict]:
+) -> tuple[list[dict], SheetRowTracker] | list[dict]:
     if expected_headers:
         with catch_warnings():
             # When reading spreadsheets produced by neat, they contain dropdowns. These
@@ -101,7 +101,7 @@ def read_individual_sheet(
     output = raw.replace(float("nan"), None).to_dict(orient="records")
     if return_read_info:
         # If no rows are skipped, row 1 is the header row.
-        return output, SpreadsheetRead(
+        return output, SheetRowTracker(
             header_row=skiprows + 1,
             empty_rows=empty_rows,
             is_one_indexed=True,

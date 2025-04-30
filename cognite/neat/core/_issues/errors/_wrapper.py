@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import ClassVar, cast
 
 from cognite.neat.core._issues import NeatError
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
+from cognite.neat.core._utils.spreadsheet import SheetRowTracker
 
 
 @dataclass(unsafe_hash=True)
@@ -15,7 +15,10 @@ class SpreadsheetError(NeatError, ValueError, ABC):
 
     @classmethod
     def create(
-        cls, location: tuple[int | str, ...], error: NeatError, spreadsheet: SpreadsheetRead | None = None
+        cls,
+        location: tuple[int | str, ...],
+        error: NeatError,
+        spreadsheet: SheetRowTracker | None = None,
     ) -> "SpreadsheetError":
         spreadsheet_name = cast(str, location[0])
         if spreadsheet_name not in ERROR_CLS_BY_SPREADSHEET_NAME:
