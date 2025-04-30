@@ -56,9 +56,7 @@ class ConceptualValidation:
         visited = defaultdict(list)
         for row_no, property_ in enumerate(self._properties):
             visited[property_._identifier()].append(
-                properties_sheet_row_tracker.adjusted_row_number(row_no)
-                if properties_sheet_row_tracker
-                else row_no + 1
+                properties_sheet_row_tracker.adjusted_row_number(row_no) if properties_sheet_row_tracker else row_no + 1
             )
 
         for identifier, rows in visited.items():
@@ -79,9 +77,7 @@ class ConceptualValidation:
         visited = defaultdict(list)
         for row_no, class_ in enumerate(self._concepts):
             visited[class_._identifier()].append(
-                classes_sheet_row_tracker.adjusted_row_number(row_no)
-                if classes_sheet_row_tracker
-                else row_no + 1
+                classes_sheet_row_tracker.adjusted_row_number(row_no) if classes_sheet_row_tracker else row_no + 1
             )
 
         for identifier, rows in visited.items():
@@ -100,17 +96,12 @@ class ConceptualValidation:
         referred_concepts = {property_.concept for property_ in self._properties}
         parent_concepts_by_children = self._parent_concepts_by_children()
 
-        if concepts_without_properties := defined_concepts.difference(
-            referred_concepts
-        ):
+        if concepts_without_properties := defined_concepts.difference(referred_concepts):
             for concept in concepts_without_properties:
                 # USE CASE: class has no direct properties and no parents with properties
                 # and it is a class in the prefix of data model, as long as it is in the
                 # same prefix, meaning same space
-                if (
-                    not parent_concepts_by_children[concept]
-                    and concept.prefix == self._metadata.prefix
-                ):
+                if not parent_concepts_by_children[concept] and concept.prefix == self._metadata.prefix:
                     self.issue_list.append(
                         ResourceNotDefinedWarning(
                             resource_type="concept",
@@ -137,9 +128,7 @@ class ConceptualValidation:
         """This is a validation to check if the parent concept is defined in the Concepts sheet."""
         parent_concepts_by_children = self._parent_concepts_by_children()
         concepts = set(parent_concepts_by_children.keys())
-        parents = set(
-            itertools.chain.from_iterable(parent_concepts_by_children.values())
-        )
+        parents = set(itertools.chain.from_iterable(parent_concepts_by_children.values()))
 
         if undefined_parents := parents.difference(concepts):
             for parent in undefined_parents:
@@ -157,14 +146,10 @@ class ConceptualValidation:
     def _referenced_concepts_exist(self) -> None:
         # needs to be complete for this validation to pass
         defined_concepts = {concept.concept for concept in self._concepts}
-        concepts_with_explicit_properties = {
-            property_.concept for property_ in self._properties
-        }
+        concepts_with_explicit_properties = {property_.concept for property_ in self._properties}
 
         # USE CASE: models are complete
-        if missing_concepts := concepts_with_explicit_properties.difference(
-            defined_concepts
-        ):
+        if missing_concepts := concepts_with_explicit_properties.difference(defined_concepts):
             for concept in missing_concepts:
                 self.issue_list.append(
                     ResourceNotDefinedWarning(
@@ -176,9 +161,7 @@ class ConceptualValidation:
 
     def _referenced_value_types_exist(self) -> None:
         # adding UnknownEntity to the set of defined classes to handle the case where a property references an unknown
-        defined_concepts = {concept.concept for concept in self._concepts} | {
-            UnknownEntity()
-        }
+        defined_concepts = {concept.concept for concept in self._concepts} | {UnknownEntity()}
         referred_object_types = {
             property_.value_type
             for property_ in self.data_model.properties
@@ -286,9 +269,7 @@ class ConceptualValidation:
 
     def _namespaces_reassigned(self) -> None:
         prefixes = self.data_model.prefixes.copy()
-        prefixes[self.data_model.metadata.namespace.prefix] = (
-            self.data_model.metadata.namespace
-        )
+        prefixes[self.data_model.metadata.namespace.prefix] = self.data_model.metadata.namespace
 
         if len(set(prefixes.values())) != len(prefixes):
             reused_namespaces = [value for value, count in Counter(prefixes.values()).items() if count > 1]

@@ -7,8 +7,8 @@ from typing import Generic, TypeVar, Union, get_args, get_origin
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import ReadRules, Rules, VerifiedRules
 from cognite.neat.core._data_model.models import (
-    DMSInputRules,
     ConceptualUnvalidatedDataModel,
+    DMSInputRules,
 )
 from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 

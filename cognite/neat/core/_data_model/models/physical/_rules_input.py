@@ -15,8 +15,8 @@ from cognite.neat.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
 from cognite.neat.core._data_model.models._base_unvalidated_data_model import (
-    UnvalidatedDataModelComponent,
     UnvalidatedDataModel,
+    UnvalidatedDataModelComponent,
 )
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (

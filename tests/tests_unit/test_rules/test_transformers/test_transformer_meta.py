@@ -6,10 +6,10 @@ import pytest
 from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import (
+    ConceptualDataModel,
+    ConceptualUnvalidatedDataModel,
     DMSInputRules,
     DMSRules,
-    ConceptualUnvalidatedDataModel,
-    ConceptualDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
     AddClassImplements,

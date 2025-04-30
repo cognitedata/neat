@@ -11,14 +11,14 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.core._constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models.data_types import DataType
-from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualConcept,
+    ConceptualDataModel,
     ConceptualMetadata,
     ConceptualProperty,
-    ConceptualDataModel,
 )
+from cognite.neat.core._data_model.models.data_types import DataType
+from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._issues import MultiValueError
 from cognite.neat.core._issues.errors import (
     PropertyDefinitionDuplicatedError,
@@ -125,15 +125,11 @@ class Ontology(OntologyModel):
         class_dict = analysis.class_by_suffix()
         return cls(
             properties=[
-                OWLProperty.from_list_of_properties(
-                    definition, rules.metadata.namespace
-                )
+                OWLProperty.from_list_of_properties(definition, rules.metadata.namespace)
                 for definition in analysis.property_by_id().values()
             ],
             classes=[
-                OWLClass.from_class(
-                    definition, rules.metadata.namespace, rules.prefixes
-                )
+                OWLClass.from_class(definition, rules.metadata.namespace, rules.prefixes)
                 for definition in rules.concepts
             ],
             shapes=[
@@ -263,9 +259,7 @@ class OWLClass(OntologyModel):
     namespace: Namespace
 
     @classmethod
-    def from_class(
-        cls, definition: ConceptualConcept, namespace: Namespace, prefixes: dict
-    ) -> Self:
+    def from_class(cls, definition: ConceptualConcept, namespace: Namespace, prefixes: dict) -> Self:
         if definition.implements and isinstance(definition.implements, list):
             sub_class_of = []
             for parent_class in definition.implements:
@@ -339,9 +333,7 @@ class OWLProperty(OntologyModel):
     namespace: Namespace
 
     @classmethod
-    def from_list_of_properties(
-        cls, definitions: list[ConceptualProperty], namespace: Namespace
-    ) -> "OWLProperty":
+    def from_list_of_properties(cls, definitions: list[ConceptualProperty], namespace: Namespace) -> "OWLProperty":
         """Here list of properties is a list of properties with the same id, but different definitions."""
         property_ids = {definition.property_ for definition in definitions}
         if len(property_ids) != 1:
@@ -594,10 +586,7 @@ class SHACLNodeShape(OntologyModel):
             id_=namespace[f"{class_definition.concept.suffix!s}Shape"],
             target_class=namespace[str(class_definition.concept.suffix)],
             parent=parent,
-            property_shapes=[
-                SHACLPropertyShape.from_property(prop, namespace)
-                for prop in property_definitions
-            ],
+            property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
             namespace=namespace,
         )
 
@@ -642,9 +631,7 @@ class SHACLPropertyShape(OntologyModel):
         return self.path_triples + self.node_kind_triples + self.cardinality_triples
 
     @classmethod
-    def from_property(
-        cls, definition: ConceptualProperty, namespace: Namespace
-    ) -> "SHACLPropertyShape":
+    def from_property(cls, definition: ConceptualProperty, namespace: Namespace) -> "SHACLPropertyShape":
         # TODO requires PR to fix MultiValueType and UnknownValueType
         if isinstance(definition.value_type, ConceptEntity):
             expected_value_type = namespace[f"{definition.value_type.suffix}Shape"]

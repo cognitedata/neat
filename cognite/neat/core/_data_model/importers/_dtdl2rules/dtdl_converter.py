@@ -18,6 +18,10 @@ from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
     Telemetry,
     TelemetryV2,
 )
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualUnvalidatedConcept,
+    ConceptualUnvalidatedProperty,
+)
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_NAME,
     DataType,
@@ -25,10 +29,6 @@ from cognite.neat.core._data_model.models.data_types import (
     String,
 )
 from cognite.neat.core._data_model.models.entities import ConceptEntity
-from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualUnvalidatedConcept,
-    ConceptualUnvalidatedProperty,
-)
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import (
     PropertyTypeNotSupportedError,

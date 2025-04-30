@@ -10,8 +10,8 @@ from rdflib import Namespace, URIRef
 from cognite.neat.core._constants import get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.models._base_validated_data_model import (
-    BaseMetadata,
     BaseDataModel,
+    BaseMetadata,
     DataModelAspect,
     RoleTypes,
     SheetList,
@@ -66,9 +66,7 @@ class ConceptualConcept(SheetRow):
         alias="Class",
         description="Class id being defined, use strongly advise `PascalCase` usage.",
     )
-    name: str | None = Field(
-        alias="Name", default=None, description="Human readable name of the concept."
-    )
+    name: str | None = Field(alias="Name", default=None, description="Human readable name of the concept.")
     description: str | None = Field(
         alias="Description",
         default=None,
@@ -138,12 +136,10 @@ class ConceptualProperty(SheetRow):
     )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the property.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the property.")
-    value_type: DataType | ConceptEntityType | MultiValueTypeType | UnknownEntity = (
-        Field(
-            alias="Value Type",
-            union_mode="left_to_right",
-            description="Value type that the property can hold. It takes either subset of XSD type or a class defined.",
-        )
+    value_type: DataType | ConceptEntityType | MultiValueTypeType | UnknownEntity = Field(
+        alias="Value Type",
+        union_mode="left_to_right",
+        description="Value type that the property can hold. It takes either subset of XSD type or a class defined.",
     )
     min_count: int | None = Field(
         alias="Min Count",
@@ -249,9 +245,7 @@ class ConceptualProperty(SheetRow):
 class ConceptualDataModel(BaseDataModel):
     metadata: ConceptualMetadata = Field(alias="Metadata", description="Metadata for the logical data model")
     properties: SheetList[ConceptualProperty] = Field(alias="Properties", description="List of properties")
-    concepts: SheetList[ConceptualConcept] = Field(
-        alias="Concepts", description="List of concepts"
-    )
+    concepts: SheetList[ConceptualConcept] = Field(alias="Concepts", description="List of concepts")
     prefixes: dict[str, Namespace] = Field(
         alias="Prefixes",
         default_factory=get_default_prefixes_and_namespaces,
@@ -275,9 +269,7 @@ class ConceptualDataModel(BaseDataModel):
                 concept.neatId = namespace[concept.concept.suffix]
         for property_ in self.properties:
             if not property_.neatId:
-                property_.neatId = namespace[
-                    f"{property_.concept.suffix}/{property_.property_}"
-                ]
+                property_.neatId = namespace[f"{property_.concept.suffix}/{property_.property_}"]
 
         return self
 
@@ -289,9 +281,7 @@ class ConceptualDataModel(BaseDataModel):
         for concept in self.concepts:
             concept.neatId = namespace[concept.concept.suffix]
         for property_ in self.properties:
-            property_.neatId = namespace[
-                f"{property_.concept.suffix}/{property_.property_}"
-            ]
+            property_.neatId = namespace[f"{property_.concept.suffix}/{property_.property_}"]
 
     def sync_with_physical_data_model(self, dms_rules: "DMSRules") -> None:
         # Sync at the metadata level

@@ -11,9 +11,11 @@ import pandas as pd
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
-from cognite.neat.core._data_model.models.physical import DMSProperty
-from cognite.neat.core._data_model.models.physical._rules import DMSView
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualConcept,
+    ConceptualProperty,
+)
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     MultiValueTypeInfo,
@@ -22,10 +24,8 @@ from cognite.neat.core._data_model.models.entities import (
 from cognite.neat.core._data_model.models.entities._single_value import (
     UnknownEntity,
 )
-from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualConcept,
-    ConceptualProperty,
-)
+from cognite.neat.core._data_model.models.physical import DMSProperty
+from cognite.neat.core._data_model.models.physical._rules import DMSView
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import NeatValueWarning
 
@@ -50,9 +50,7 @@ class LinkageSet(set, Set[Linkage]):
         return {link.target_class for link in self}
 
     def get_target_classes_by_source(self) -> dict[ConceptEntity, set[ConceptEntity]]:
-        target_classes_by_source: dict[ConceptEntity, set[ConceptEntity]] = defaultdict(
-            set
-        )
+        target_classes_by_source: dict[ConceptEntity, set[ConceptEntity]] = defaultdict(set)
         for link in self:
             target_classes_by_source[link.source_class].add(link.target_class)
         return target_classes_by_source
@@ -113,7 +111,6 @@ class ViewQueryDict(dict, MutableMapping[dm.ViewId, ViewQuery]):
 
 
 class RulesAnalysis:
-
     def __init__(
         self,
         information: ConceptualDataModel | None = None,
@@ -189,9 +186,7 @@ class RulesAnalysis:
             dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
 
         """
-        properties_by_classes: dict[ConceptEntity, list[ConceptualProperty]] = (
-            defaultdict(list)
-        )
+        properties_by_classes: dict[ConceptEntity, list[ConceptualProperty]] = defaultdict(list)
         for prop in self.information.properties:
             properties_by_classes[prop.concept].append(prop)
 
@@ -363,10 +358,7 @@ class RulesAnalysis:
             Set of classes that have been defined in the data model
         """
         properties_by_class = self.properties_by_class(include_ancestors)
-        return {
-            prop.concept
-            for prop in itertools.chain.from_iterable(properties_by_class.values())
-        }
+        return {prop.concept for prop in itertools.chain.from_iterable(properties_by_class.values())}
 
     def class_linkage(
         self,
@@ -431,14 +423,10 @@ class RulesAnalysis:
         return sym_pairs
 
     @overload
-    def _properties_by_neat_id(
-        self, format: Literal["info"] = "info"
-    ) -> dict[URIRef, ConceptualProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, ConceptualProperty]: ...
 
     @overload
-    def _properties_by_neat_id(
-        self, format: Literal["dms"] = "dms"
-    ) -> dict[URIRef, DMSProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
 
     def _properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
@@ -452,11 +440,7 @@ class RulesAnalysis:
 
     @property
     def classes_by_neat_id(self) -> dict[URIRef, ConceptualConcept]:
-        return {
-            class_.neatId: class_
-            for class_ in self.information.concepts
-            if class_.neatId
-        }
+        return {class_.neatId: class_ for class_ in self.information.concepts if class_.neatId}
 
     @property
     def multi_value_properties(self) -> list[ConceptualProperty]:
@@ -494,11 +478,7 @@ class RulesAnalysis:
                     # start off with renaming of properties on the information level
                     # this is to encounter for special cases of e.g. space, startNode and endNode
                     property_renaming_config=(
-                        {
-                            uri: prop_.property_
-                            for prop_ in info_properties
-                            for uri in prop_.instance_source or []
-                        }
+                        {uri: prop_.property_ for prop_ in info_properties for uri in prop_.instance_source or []}
                         if (info_properties := properties_by_class.get(class_.concept))
                         else {}
                     ),
@@ -578,9 +558,7 @@ class RulesAnalysis:
         if format == "data-model":
             # Add nodes and edges from Properties sheet
             for prop_ in rules.properties:
-                if isinstance(prop_.value_type, ConceptEntity) and not isinstance(
-                    prop_.value_type, UnknownEntity
-                ):
+                if isinstance(prop_.value_type, ConceptEntity) and not isinstance(prop_.value_type, UnknownEntity):
                     di_graph.add_node(prop_.concept.suffix, label=prop_.concept.suffix)
                     di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
 

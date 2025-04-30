@@ -6,8 +6,8 @@ from openpyxl import Workbook, load_workbook
 
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.models import (
-    DMSRules,
     ConceptualDataModel,
+    DMSRules,
 )
 from cognite.neat.core._data_model.models._base_validated_data_model import RoleTypes
 from cognite.neat.core._issues.errors._general import NeatValueError

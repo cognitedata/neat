@@ -339,9 +339,7 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any
-    ) -> "T_DMSEntity": ...
+    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
 
     @classmethod
     @overload
@@ -410,9 +408,7 @@ class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     def as_class(self, skip_version: bool = False) -> ConceptEntity:
         if skip_version:
             return ConceptEntity(prefix=self.space, suffix=self.external_id)
-        return ConceptEntity(
-            prefix=self.space, suffix=self.external_id, version=self.version
-        )
+        return ConceptEntity(prefix=self.space, suffix=self.external_id, version=self.version)
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -549,6 +545,4 @@ class ReferenceEntity(ConceptEntity):
         return DMSNodeEntity(space=self.prefix, externalId=self.suffix)
 
     def as_class_entity(self) -> ConceptEntity:
-        return ConceptEntity(
-            prefix=self.prefix, suffix=self.suffix, version=self.version
-        )
+        return ConceptEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)

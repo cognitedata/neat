@@ -36,9 +36,7 @@ class DTMI(BaseModel):
     version: str
 
     def as_class_id(self) -> ConceptEntity:
-        return ConceptEntity(
-            prefix="_".join(self.path[:-1]), suffix=self.path[-1], version=self.version
-        )
+        return ConceptEntity(prefix="_".join(self.path[:-1]), suffix=self.path[-1], version=self.version)
 
     def __hash__(self) -> int:
         return hash(self.to_string())

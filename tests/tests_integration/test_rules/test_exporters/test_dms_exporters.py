@@ -8,9 +8,14 @@ from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
-    DMSRules,
     ConceptualDataModel,
+    DMSRules,
     SheetList,
+)
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualConcept,
+    ConceptualMetadata,
+    ConceptualProperty,
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
@@ -18,11 +23,6 @@ from cognite.neat.core._data_model.models.physical import (
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
-)
-from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualConcept,
-    ConceptualMetadata,
-    ConceptualProperty,
 )
 from tests.config import DOC_RULES
 

@@ -6,9 +6,9 @@ import pytest
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
-    DMSRules,
-    ConceptualUnvalidatedDataModel,
     ConceptualDataModel,
+    ConceptualUnvalidatedDataModel,
+    DMSRules,
 )
 from cognite.neat.core._data_model.models.physical import DMSInputRules
 from cognite.neat.core._utils.spreadsheet import read_individual_sheet
@@ -46,9 +46,7 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> ConceptualDataModel:
-    return ConceptualDataModel.model_validate(
-        ConceptualUnvalidatedDataModel.load(david_spreadsheet).dump()
-    )
+    return ConceptualDataModel.model_validate(ConceptualUnvalidatedDataModel.load(david_spreadsheet).dump())
 
 
 @pytest.fixture(scope="session")

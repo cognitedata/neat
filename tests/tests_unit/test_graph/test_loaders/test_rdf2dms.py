@@ -35,10 +35,7 @@ def car_case() -> tuple[DMSRules, ConceptualDataModel, NeatGraphStore]:
 
 
 class TestDMSLoader:
-
-    def test_load_car_example(
-        self, car_case: tuple[DMSRules, ConceptualDataModel, NeatGraphStore]
-    ) -> None:
+    def test_load_car_example(self, car_case: tuple[DMSRules, ConceptualDataModel, NeatGraphStore]) -> None:
         dms_rules, info_rules, store = car_case
 
         loader = DMSLoader(dms_rules, info_rules, store, GraphData.car.INSTANCE_SPACE)

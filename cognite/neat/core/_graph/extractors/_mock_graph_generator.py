@@ -13,10 +13,10 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ConceptEntity
-from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.transformers import SubsetInformationRules
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
@@ -59,8 +59,7 @@ class MockGraphGenerator(BaseExtractor):
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
-                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value
-                for key, value in class_count.items()
+                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
             }
         elif all(isinstance(key, ConceptEntity) for key in class_count.keys()):
             self.class_count = cast(dict[ConceptEntity, int], class_count)
@@ -318,9 +317,7 @@ def _generate_mock_object_property_triples(
     # Handling symmetric property
 
     if tuple((class_, property_definition.value_type)) in sym_pairs:
-        symmetric_class_properties = class_property_pairs[
-            cast(ConceptEntity, property_definition.value_type)
-        ]
+        symmetric_class_properties = class_property_pairs[cast(ConceptEntity, property_definition.value_type)]
         candidates = list(
             filter(
                 lambda instance: instance.value_type == class_,
@@ -361,9 +358,7 @@ def _generate_mock_object_property_triples(
             ]
 
     if symmetric_property:
-        class_property_pairs[
-            cast(ConceptEntity, property_definition.value_type)
-        ].remove(symmetric_property)
+        class_property_pairs[cast(ConceptEntity, property_definition.value_type)].remove(symmetric_property)
 
     return triples
 

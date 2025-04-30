@@ -1,7 +1,7 @@
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualConcept,
-    ConceptualUnvalidatedConcept,
     ConceptualMetadata,
+    ConceptualUnvalidatedConcept,
 )
 
 

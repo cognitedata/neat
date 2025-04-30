@@ -16,8 +16,13 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.data_types import String
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ContainerEntity,
+    UnknownEntity,
+    ViewEntity,
+)
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
@@ -31,11 +36,6 @@ from cognite.neat.core._data_model.models.physical import (
     DMSValidation,
 )
 from cognite.neat.core._data_model.models.physical._exporter import _DMSExporter
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ContainerEntity,
-    UnknownEntity,
-    ViewEntity,
-)
 from cognite.neat.core._data_model.transformers import (
     DMSToInformation,
     InformationToDMS,
@@ -803,9 +803,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 DMSInputContainer(
                     container="sp_core:Asset",
                 ),
-                DMSInputContainer(
-                    container="GeneratingUnit", constraint="sp_core:Asset"
-                ),
+                DMSInputContainer(container="GeneratingUnit", constraint="sp_core:Asset"),
             ],
             views=[
                 DMSInputView(view="sp_core:Asset(version=1)"),
@@ -1369,11 +1367,7 @@ class TestDMSRules:
                 DMSInputView(view="cdf_cdm:Sourceable(version=v1)"),
                 DMSInputView(view="cdf_cdm:Describable(version=v1)"),
             ],
-            containers=[
-                DMSInputContainer(
-                    container="Asset", constraint="Sourceable,Describable"
-                )
-            ],
+            containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_verified_data_model()
 
         normalize_neat_id_in_rules(dms_rules)

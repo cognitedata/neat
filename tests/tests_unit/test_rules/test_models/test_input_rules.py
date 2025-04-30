@@ -27,9 +27,7 @@ def input_rules_cls_iterator() -> Iterable[ParameterSet]:
 
 class TestInputRules:
     @pytest.mark.parametrize("input_rules_cls", input_rules_cls_iterator())
-    def test_input_rules_match_verified_cls(
-        self, input_rules_cls: type[UnvalidatedDataModel]
-    ) -> None:
+    def test_input_rules_match_verified_cls(self, input_rules_cls: type[UnvalidatedDataModel]) -> None:
         """Test that all classes that inherit from InputRules have a matching verified class."""
         verified_cls = input_rules_cls._get_verified_cls()
         input_parameters = dataclass_to_parameters(input_rules_cls)

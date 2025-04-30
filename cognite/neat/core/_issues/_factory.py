@@ -30,9 +30,7 @@ def from_warning(warning: WarningMessage) -> NeatWarning | None:
     return None
 
 
-def _from_pydantic_error(
-    error: ErrorDetails, read_info_by_sheet: dict[str, SheetRowTracker]
-) -> NeatError:
+def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SheetRowTracker]) -> NeatError:
     neat_error = _create_neat_value_error(error)
     location = error["loc"]
 

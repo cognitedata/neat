@@ -79,9 +79,7 @@ TEST_CASES = [
         EdgeEntity,
         "edge(properties=Owns,type=ownership)",
         EdgeEntity(
-            properties=ViewEntity(
-                space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"
-            ),
+            properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
         ),
     ),
@@ -89,9 +87,7 @@ TEST_CASES = [
         EdgeEntity,
         "edge(properties=my_other_space:Owns(version=34),type=ownership)",
         EdgeEntity(
-            properties=ViewEntity(
-                space="my_other_space", version="34", externalId="Owns"
-            ),
+            properties=ViewEntity(space="my_other_space", version="34", externalId="Owns"),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
         ),
     ),
@@ -113,9 +109,7 @@ TEST_CASES = [
         EdgeEntity,
         "edge(direction=inwards,properties=StartEndTime)",
         EdgeEntity(
-            properties=ViewEntity(
-                space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="StartEndTime"
-            ),
+            properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="StartEndTime"),
             direction="inwards",
         ),
     ),

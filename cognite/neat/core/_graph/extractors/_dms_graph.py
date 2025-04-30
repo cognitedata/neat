@@ -8,10 +8,10 @@ from rdflib import Namespace, URIRef
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_SPACES, DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import Json
 from cognite.neat.core._data_model.models.entities import UnknownEntity
-from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_warnings
 from cognite.neat.core._issues.warnings import (
@@ -211,9 +211,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         verified_dms.sync_with_info_rules(information_rules)
 
         # Adding startNode and endNode to the information rules for views that are used for edges.
-        classes_by_prefix = {
-            cls_.concept.prefix: cls_ for cls_ in information_rules.concepts
-        }
+        classes_by_prefix = {cls_.concept.prefix: cls_ for cls_ in information_rules.concepts}
         for view in self._model_views:
             if view.used_for == "edge" and view.external_id in classes_by_prefix:
                 cls_ = classes_by_prefix[view.external_id]

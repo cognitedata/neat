@@ -13,9 +13,5 @@ def test_split_multi_value_property():
 
     store.transform(SplitMultiValueProperty())
 
-    rules = (
-        InferenceImporter.from_graph_store(store)
-        .to_rules()
-        .rules.as_verified_data_model()
-    )
+    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_data_model()
     assert len(RulesAnalysis(rules).multi_value_properties) == 0

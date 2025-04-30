@@ -11,8 +11,8 @@ from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import DMS_CONTAINER_LIST_MAX_LIMIT
 from cognite.neat.core._data_model.models._base_validated_data_model import (
-    BaseMetadata,
     BaseDataModel,
+    BaseMetadata,
     ContainerProperty,
     DataModelAspect,
     RoleTypes,
@@ -438,9 +438,7 @@ class DMSNode(SheetRow):
 
 
 class DMSEnum(SheetRow):
-    collection: ConceptEntityType = Field(
-        alias="Collection", description="The collection this enum belongs to."
-    )
+    collection: ConceptEntityType = Field(alias="Collection", description="The collection this enum belongs to.")
     value: str = Field(alias="Value", description="The value of the enum.")
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the enum.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the enum.")

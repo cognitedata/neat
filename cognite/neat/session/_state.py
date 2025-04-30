@@ -5,7 +5,7 @@ from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.importers import BaseImporter, InferenceImporter
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.transformers import (
     VerifiedRulesTransformer,
 )

@@ -16,7 +16,7 @@ from cognite.neat.core._data_model._shared import T_VerifiedRules, VerifiedRules
 from cognite.neat.core._data_model.exporters import BaseExporter
 from cognite.neat.core._data_model.exporters._base import CDFExporter, T_Export
 from cognite.neat.core._data_model.importers import BaseImporter
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.transformers import (
     DMSToInformation,
     VerifiedRulesTransformer,
@@ -319,9 +319,7 @@ class NeatRulesStore:
     def _do_activity(
         self,
         action: Callable[[], tuple[ConceptualDataModel, DMSRules | None]],
-    ) -> tuple[
-        tuple[ConceptualDataModel, DMSRules | None], IssueList, datetime, datetime
-    ]:
+    ) -> tuple[tuple[ConceptualDataModel, DMSRules | None], IssueList, datetime, datetime]:
         """This private method is used to execute an activity and return the result and issues."""
         start = datetime.now(timezone.utc)
         result: tuple[ConceptualDataModel, DMSRules | None] | None = None
@@ -397,18 +395,14 @@ class NeatRulesStore:
         if source_entity.dms is None:
             if transformer.is_valid_input(source_entity.information):
                 return source_entity.information
-            raise InvalidActivityInput(
-                expected=(DMSRules,), have=(ConceptualDataModel,)
-            )
+            raise InvalidActivityInput(expected=(DMSRules,), have=(ConceptualDataModel,))
         # Case 2: We have both information and dms rules and the transformer is compatible with dms rules
         elif isinstance(source_entity.dms, DMSRules) and transformer.is_valid_input(source_entity.dms):
             return source_entity.dms
         # Case 3: We have both information and dms rules and the transformer is compatible with information rules
         raise InvalidActivityInput(expected=(ConceptualDataModel,), have=(DMSRules,))
 
-    def _get_source_id(
-        self, result: tuple[ConceptualDataModel, DMSRules | None]
-    ) -> rdflib.URIRef | None:
+    def _get_source_id(self, result: tuple[ConceptualDataModel, DMSRules | None]) -> rdflib.URIRef | None:
         """Return the source of the result.
 
         !!! note
@@ -417,9 +411,7 @@ class NeatRulesStore:
         info, dms = result
         return dms.metadata.source_id if dms else info.metadata.source_id
 
-    def _create_id(
-        self, info: ConceptualDataModel, dms: DMSRules | None
-    ) -> rdflib.URIRef:
+    def _create_id(self, info: ConceptualDataModel, dms: DMSRules | None) -> rdflib.URIRef:
         if dms is None:
             identifier = info.metadata.identifier
         else:

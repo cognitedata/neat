@@ -3,7 +3,7 @@ from abc import ABC
 import pytest
 
 from cognite.neat.core._data_model.exporters import BaseExporter, CDFExporter
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 
 EXPORTER_CLS = [subclass for subclass in BaseExporter.__subclasses__() if subclass is not CDFExporter] + list(
     CDFExporter.__subclasses__()

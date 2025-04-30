@@ -9,10 +9,7 @@ SHACL = Namespace("http://www.w3.org/ns/shacl#")
 
 
 class TestOntologyExporter:
-
-    def test_export_semantic_data_model(
-        self, david_rules: ConceptualDataModel, tmp_path: Path
-    ) -> None:
+    def test_export_semantic_data_model(self, david_rules: ConceptualDataModel, tmp_path: Path) -> None:
         exporter = SemanticDataModelExporter()
         ttl_path = tmp_path / "test.ttl"
 

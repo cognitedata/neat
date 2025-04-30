@@ -184,9 +184,7 @@ class TemplateAPI:
             output_path = Path(output)
 
         with catch_issues() as issues:
-            read: ReadRules[ConceptualUnvalidatedDataModel] = ExcelImporter(
-                path
-            ).to_rules()
+            read: ReadRules[ConceptualUnvalidatedDataModel] = ExcelImporter(path).to_rules()
             if read.rules is not None:
                 # If rules are None there will be issues that are already caught.
                 if not isinstance(read.rules, ConceptualUnvalidatedDataModel):

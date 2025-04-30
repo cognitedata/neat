@@ -7,7 +7,10 @@ from cognite.client import data_modeling as dm
 from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model.models._base_unvalidated_data_model import UnvalidatedDataModelComponent, UnvalidatedDataModel
+from cognite.neat.core._data_model.models._base_unvalidated_data_model import (
+    UnvalidatedDataModel,
+    UnvalidatedDataModelComponent,
+)
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
@@ -19,9 +22,9 @@ from cognite.neat.core._utils.rdf_ import uri_display_name
 
 from ._validated_data_model import (
     ConceptualConcept,
+    ConceptualDataModel,
     ConceptualMetadata,
     ConceptualProperty,
-    ConceptualDataModel,
 )
 
 
@@ -102,9 +105,7 @@ class ConceptualUnvalidatedProperty(UnvalidatedDataModelComponent[ConceptualProp
         output["Value Type"] = load_value_type(self.value_type, default_prefix)
         return output
 
-    def copy(
-        self, update: dict[str, Any], default_prefix: str
-    ) -> "ConceptualUnvalidatedProperty":
+    def copy(self, update: dict[str, Any], default_prefix: str) -> "ConceptualUnvalidatedProperty":
         return cast(
             ConceptualUnvalidatedProperty,
             type(self)._load({**self.dump(default_prefix), **update}),
@@ -136,15 +137,9 @@ class ConceptualUnvalidatedConcept(UnvalidatedDataModelComponent[ConceptualConce
         parent: list[ConceptEntity] | None = None
         if isinstance(self.implements, str):
             self.implements = self.implements.strip()
-            parent = [
-                ConceptEntity.load(parent, prefix=default_prefix)
-                for parent in self.implements.split(",")
-            ]
+            parent = [ConceptEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
         elif isinstance(self.implements, list):
-            parent = [
-                ConceptEntity.load(parent_, prefix=default_prefix)
-                for parent_ in self.implements
-            ]
+            parent = [ConceptEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
         output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Implements"] = parent
         return output

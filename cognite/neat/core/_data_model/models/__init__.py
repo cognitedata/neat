@@ -1,9 +1,9 @@
 from cognite.neat.core._client.data_classes.schema import DMSSchema
-from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
-    ConceptualDataModel,
-)
 from cognite.neat.core._data_model.models.conceptual._unvalidate_data_model import (
     ConceptualUnvalidatedDataModel,
+)
+from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
+    ConceptualDataModel,
 )
 
 from ._base_validated_data_model import (
@@ -17,9 +17,7 @@ from ._base_validated_data_model import (
 from .physical._rules import DMSRules
 from .physical._rules_input import DMSInputRules
 
-INPUT_RULES_BY_ROLE: dict[
-    RoleTypes, type[ConceptualUnvalidatedDataModel] | type[DMSInputRules]
-] = {
+INPUT_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualUnvalidatedDataModel] | type[DMSInputRules]] = {
     RoleTypes.information: ConceptualUnvalidatedDataModel,
     RoleTypes.dms: DMSInputRules,
 }
@@ -31,13 +29,13 @@ VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[DMSRule
 
 __all__ = [
     "INPUT_RULES_BY_ROLE",
+    "ConceptualDataModel",
+    "ConceptualUnvalidatedDataModel",
     "DMSInputRules",
     "DMSRules",
     "DMSSchema",
     "DataModelType",
     "ExtensionCategory",
-    "ConceptualUnvalidatedDataModel",
-    "ConceptualDataModel",
     "RoleTypes",
     "SchemaCompleteness",
     "SheetList",

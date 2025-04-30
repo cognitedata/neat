@@ -7,7 +7,7 @@ from rdflib.term import Literal
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImporter
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,

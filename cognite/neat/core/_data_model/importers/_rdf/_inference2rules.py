@@ -14,14 +14,14 @@ from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT, get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel, data_types
-from cognite.neat.core._data_model.models.data_types import AnyURI
-from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualConcept,
+    ConceptualMetadata,
     ConceptualUnvalidatedConcept,
     ConceptualUnvalidatedProperty,
-    ConceptualMetadata,
 )
+from cognite.neat.core._data_model.models.data_types import AnyURI
+from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat.core._store import NeatGraphStore
@@ -401,15 +401,11 @@ class SubclassInferenceImporter(BaseRDFImporter):
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
     ) -> tuple[list[ConceptualUnvalidatedConcept], list[ConceptualUnvalidatedProperty]]:
         if self._rules:
-            existing_classes = {
-                class_.concept.suffix: class_ for class_ in self._rules.concepts
-            }
+            existing_classes = {class_.concept.suffix: class_ for class_ in self._rules.concepts}
         else:
             existing_classes = {}
         classes: list[ConceptualUnvalidatedConcept] = []
-        properties_by_class_suffix_by_property_id: dict[
-            str, dict[str, ConceptualUnvalidatedProperty]
-        ] = {}
+        properties_by_class_suffix_by_property_id: dict[str, dict[str, ConceptualUnvalidatedProperty]] = {}
 
         # Help for IDE
         type_uri: URIRef
@@ -435,11 +431,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 if parent_suffix not in existing_classes:
                     classes.append(ConceptualUnvalidatedConcept(concept=parent_suffix))
                 else:
-                    classes.append(
-                        ConceptualUnvalidatedConcept.load(
-                            existing_classes[parent_suffix].model_dump()
-                        )
-                    )
+                    classes.append(ConceptualUnvalidatedConcept.load(existing_classes[parent_suffix].model_dump()))
             else:
                 shared_property_uris = set()
             shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
@@ -456,11 +448,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         )
                     )
                 else:
-                    classes.append(
-                        ConceptualUnvalidatedConcept.load(
-                            existing_classes[class_suffix].model_dump()
-                        )
-                    )
+                    classes.append(ConceptualUnvalidatedConcept.load(existing_classes[class_suffix].model_dump()))
 
                 properties_by_id: dict[str, ConceptualUnvalidatedProperty] = {}
                 for property_uri, read_properties in properties_by_property_uri.items():
@@ -530,9 +518,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 ).items()
                 for prop in properties
             }
-            existing_classes = {
-                cls_.concept.suffix: cls_ for cls_ in self._rules.concepts
-            }
+            existing_classes = {cls_.concept.suffix: cls_ for cls_ in self._rules.concepts}
         else:
             existing_class_properties = {}
             existing_classes = {}

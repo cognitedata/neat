@@ -1,3 +1,4 @@
+from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
@@ -5,7 +6,6 @@ from cognite.neat.core._data_model.models.physical import (
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
 from cognite.neat.core._data_model.transformers import RuleMapper
 
 
@@ -52,9 +52,7 @@ class TestClassicToCoreMapper:
                 )
             ],
             views=[
-                DMSInputView(
-                    view="MyAsset", implements="cdf_cdm:CogniteAsset(version=v1)"
-                ),
+                DMSInputView(view="MyAsset", implements="cdf_cdm:CogniteAsset(version=v1)"),
             ],
         ).as_verified_data_model()
 

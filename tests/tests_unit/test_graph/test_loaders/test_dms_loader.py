@@ -12,17 +12,17 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.catalog import imf_attributes
 from cognite.neat.core._data_model.importers import ExcelImporter, SubclassInferenceImporter
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ConceptEntity,
+    ContainerEntity,
+    ViewEntity,
+)
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
-)
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ConceptEntity,
-    ContainerEntity,
-    ViewEntity,
 )
 from cognite.neat.core._data_model.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.core._graph.extractors import (

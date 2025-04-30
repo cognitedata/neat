@@ -73,16 +73,11 @@ class SubsetAPI:
                 after = len(self._state.rule_store.last_verified_dms_rules.views)
 
         elif information:
-            classes = {
-                ConceptEntity(prefix=information.metadata.space, suffix=concept)
-                for concept in concepts
-            }
+            classes = {ConceptEntity(prefix=information.metadata.space, suffix=concept) for concept in concepts}
 
             issues = self._state.rule_transform(SubsetInformationRules(classes=classes))
             if not issues:
-                after = len(
-                    self._state.rule_store.last_verified_information_rules.concepts
-                )
+                after = len(self._state.rule_store.last_verified_information_rules.concepts)
 
         else:
             raise NeatSessionError("Something went terrible wrong. Please contact the neat team.")

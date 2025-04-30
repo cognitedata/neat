@@ -57,11 +57,7 @@ class MultiValueTypeInfo(BaseModel):
         else:
             return {
                 "types": [
-                    (
-                        DataType.load(type_)
-                        if DataType.is_data_type(type_)
-                        else ConceptEntity.load(type_)
-                    )
+                    (DataType.load(type_) if DataType.is_data_type(type_) else ConceptEntity.load(type_))
                     for type_ in types
                 ]
             }

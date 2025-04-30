@@ -8,13 +8,13 @@ from cognite.neat.core._data_model._shared import (
     VerifiedRules,
 )
 from cognite.neat.core._data_model.models import (
+    ConceptualDataModel,
+    ConceptualUnvalidatedDataModel,
     DMSInputRules,
     DMSRules,
-    ConceptualUnvalidatedDataModel,
-    ConceptualDataModel,
 )
-from cognite.neat.core._data_model.models.physical import DMSValidation
 from cognite.neat.core._data_model.models.conceptual import ConceptualValidation
+from cognite.neat.core._data_model.models.physical import DMSValidation
 from cognite.neat.core._issues import MultiValueError, catch_issues
 from cognite.neat.core._issues.errors import NeatTypeError, NeatValueError
 
@@ -81,19 +81,13 @@ class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]
         return super().transform(rules)
 
 
-class VerifyInformationRules(
-    VerificationTransformer[
-        ReadRules[ConceptualUnvalidatedDataModel], ConceptualDataModel
-    ]
-):
+class VerifyInformationRules(VerificationTransformer[ReadRules[ConceptualUnvalidatedDataModel], ConceptualDataModel]):
     """Class to verify Information rules."""
 
     _rules_cls = ConceptualDataModel
     _validation_cls = ConceptualValidation
 
-    def transform(
-        self, rules: ReadRules[ConceptualUnvalidatedDataModel]
-    ) -> ConceptualDataModel:
+    def transform(self, rules: ReadRules[ConceptualUnvalidatedDataModel]) -> ConceptualDataModel:
         return super().transform(rules)
 
 

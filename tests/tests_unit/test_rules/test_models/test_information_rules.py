@@ -6,22 +6,22 @@ import pytest
 from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import DMSRules, data_types
-from cognite.neat.core._data_model.models.data_types import DataType, String
-from cognite.neat.core._data_model.models.entities import (
-    ConceptEntity,
-    MultiValueTypeInfo,
-)
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualConcept,
-    ConceptualUnvalidatedDataModel,
-    ConceptualProperty,
     ConceptualDataModel,
+    ConceptualProperty,
+    ConceptualUnvalidatedDataModel,
     ConceptualValidation,
 )
 from cognite.neat.core._data_model.models.conceptual._unvalidate_data_model import (
     ConceptualUnvalidatedConcept,
     ConceptualUnvalidatedMetadata,
     ConceptualUnvalidatedProperty,
+)
+from cognite.neat.core._data_model.models.data_types import DataType, String
+from cognite.neat.core._data_model.models.entities import (
+    ConceptEntity,
+    MultiValueTypeInfo,
 )
 from cognite.neat.core._data_model.transformers._converters import (
     InformationToDMS,
@@ -204,9 +204,7 @@ def incomplete_rules_case():
 class TestInformationRules:
     @pytest.mark.parametrize("duplicated_rules, expected_exception", list(duplicated_entries()))
     def test_duplicated_entries(self, duplicated_rules, expected_exception) -> None:
-        input_rules = ReadRules(
-            rules=ConceptualUnvalidatedDataModel.load(duplicated_rules), read_context={}
-        )
+        input_rules = ReadRules(rules=ConceptualUnvalidatedDataModel.load(duplicated_rules), read_context={})
         transformer = VerifyAnyRules(validate=True)
 
         with pytest.raises(MultiValueError) as e:
@@ -215,9 +213,7 @@ class TestInformationRules:
         assert set(e.value.errors) == expected_exception
 
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = ConceptualDataModel.model_validate(
-            ConceptualUnvalidatedDataModel.load(david_spreadsheet).dump()
-        )
+        valid_rules = ConceptualDataModel.model_validate(ConceptualUnvalidatedDataModel.load(david_spreadsheet).dump())
 
         assert isinstance(valid_rules, ConceptualDataModel)
 
@@ -226,17 +222,13 @@ class TestInformationRules:
             "power:Substation.secondaryPowerLine",
             "power:WindFarm.exportCable",
         }
-        missing = sample_expected_properties - {
-            f"{prop.concept}.{prop.property_}" for prop in valid_rules.properties
-        }
+        missing = sample_expected_properties - {f"{prop.concept}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
     @pytest.mark.skip("Temp skipping: enabling in new PR")
     def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
-        rules = ConceptualDataModel.model_validate(
-            ConceptualUnvalidatedDataModel.load(incomplete_rules).dump()
-        )
+        rules = ConceptualDataModel.model_validate(ConceptualUnvalidatedDataModel.load(incomplete_rules).dump())
         issues = ConceptualValidation(rules).validate()
 
         assert len(issues) == 2
@@ -244,10 +236,7 @@ class TestInformationRules:
 
     @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
-        assert (
-            ConceptualDataModel.model_validate(rules).properties[0].value_type
-            == expected_exception
-        )
+        assert ConceptualDataModel.model_validate(rules).properties[0].value_type == expected_exception
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         info_rules = ConceptualDataModel.model_validate(david_spreadsheet)
@@ -406,9 +395,7 @@ class TestInformationConverter:
         self,
         rules_dict: dict[str, dict[str, Any]],
     ) -> None:
-        input_rules = ReadRules(
-            rules=ConceptualUnvalidatedDataModel.load(rules_dict), read_context={}
-        )
+        input_rules = ReadRules(rules=ConceptualUnvalidatedDataModel.load(rules_dict), read_context={})
         transformer = VerifyAnyRules(validate=True)
         rules = transformer.transform(input_rules)
 
@@ -421,7 +408,6 @@ class TestInformationConverter:
 
 
 class TestInformationProperty:
-
     @pytest.mark.parametrize(
         "raw",
         [
@@ -466,16 +452,13 @@ class TestInformationProperty:
             )
         ],
     )
-    def test_validate_class_entity(
-        self, raw: ConceptualUnvalidatedProperty, expected: ConceptEntity
-    ) -> None:
+    def test_validate_class_entity(self, raw: ConceptualUnvalidatedProperty, expected: ConceptEntity) -> None:
         prop = ConceptualProperty.model_validate(raw.dump(default_prefix="my_space"))
 
         assert prop.concept == expected
 
 
 class TestInformationClass:
-
     @pytest.mark.parametrize(
         "raw, class_, implements",
         [
@@ -496,9 +479,7 @@ class TestInformationClass:
         class_: ConceptEntity,
         implements: ConceptEntity,
     ) -> None:
-        info_class = ConceptualConcept.model_validate(
-            raw.dump(default_prefix="my_space")
-        )
+        info_class = ConceptualConcept.model_validate(raw.dump(default_prefix="my_space"))
 
         assert info_class.concept == class_
         assert isinstance(info_class.implements, list)

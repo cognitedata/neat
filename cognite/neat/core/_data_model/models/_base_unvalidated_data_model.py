@@ -30,6 +30,7 @@ else:
 T_BaseDataModel = TypeVar("T_BaseDataModel", bound=BaseDataModel)
 T_DataModel = TypeVar("T_DataModel", bound=SchemaModel)
 
+
 @dataclass
 class UnvalidatedDataModel(Generic[T_BaseDataModel], ABC):
     """Unvalidated data model is raw data model that is not yet validated."""
@@ -41,18 +42,14 @@ class UnvalidatedDataModel(Generic[T_BaseDataModel], ABC):
 
     @classmethod
     @overload
-    def load(
-        cls: "type[T_UnvalidatedDataModel]", data: dict[str, Any]
-    ) -> "T_UnvalidatedDataModel": ...
+    def load(cls: "type[T_UnvalidatedDataModel]", data: dict[str, Any]) -> "T_UnvalidatedDataModel": ...
 
     @classmethod
     @overload
     def load(cls: "type[T_UnvalidatedDataModel]", data: None) -> None: ...
 
     @classmethod
-    def load(
-        cls: "type[T_UnvalidatedDataModel]", data: dict | None
-    ) -> "T_UnvalidatedDataModel | None":
+    def load(cls: "type[T_UnvalidatedDataModel]", data: dict | None) -> "T_UnvalidatedDataModel | None":
         if data is None:
             return None
         return cls._load(data)
@@ -129,7 +126,9 @@ class UnvalidatedDataModel(Generic[T_BaseDataModel], ABC):
                 output[field_.name] = [item.dump() for item in value]
         return output
 
+
 T_UnvalidatedDataModel = TypeVar("T_UnvalidatedDataModel", bound=UnvalidatedDataModel)
+
 
 @dataclass
 class UnvalidatedDataModelComponent(ABC, Generic[T_DataModel]):

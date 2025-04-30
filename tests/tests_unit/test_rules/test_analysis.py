@@ -2,14 +2,13 @@ from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualUnvalidatedConcept,
+    ConceptualUnvalidatedDataModel,
     ConceptualUnvalidatedMetadata,
     ConceptualUnvalidatedProperty,
-    ConceptualUnvalidatedDataModel,
 )
 
 
 class TestRulesAnalysis:
-
     def test_class_parent_pairs(self, david_rules: ConceptualDataModel) -> None:
         assert len(RulesAnalysis(david_rules).parents_by_class()) == 26
 
@@ -44,9 +43,7 @@ class TestAnalysis:
             properties=[
                 ConceptualUnvalidatedProperty("child", "childProp", "string"),
                 ConceptualUnvalidatedProperty("parent", "parentProp", "string"),
-                ConceptualUnvalidatedProperty(
-                    "grandparent", "grandparentProp", "string"
-                ),
+                ConceptualUnvalidatedProperty("grandparent", "grandparentProp", "string"),
             ],
             concepts=[
                 ConceptualUnvalidatedConcept("child", implements="parent"),

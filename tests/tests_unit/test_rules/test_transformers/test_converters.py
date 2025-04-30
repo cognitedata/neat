@@ -7,7 +7,17 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import DMSInputRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSInputRules
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualUnvalidatedConcept,
+    ConceptualUnvalidatedDataModel,
+    ConceptualUnvalidatedMetadata,
+    ConceptualUnvalidatedProperty,
+)
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ConceptEntity,
+    ViewEntity,
+)
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
@@ -15,16 +25,6 @@ from cognite.neat.core._data_model.models.physical import (
     DMSInputView,
 )
 from cognite.neat.core._data_model.models.physical._rules import DMSRules
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ConceptEntity,
-    ViewEntity,
-)
-from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualUnvalidatedConcept,
-    ConceptualUnvalidatedMetadata,
-    ConceptualUnvalidatedProperty,
-    ConceptualUnvalidatedDataModel,
-)
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
@@ -65,16 +65,12 @@ class TestStandardizeNaming:
         information = ConceptualUnvalidatedDataModel(
             metadata=ConceptualUnvalidatedMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                ConceptualUnvalidatedProperty(
-                    class_name, "TAG_NAME", "string", max_count=1
-                ),
+                ConceptualUnvalidatedProperty(class_name, "TAG_NAME", "string", max_count=1),
             ],
             concepts=[ConceptualUnvalidatedConcept(class_name)],
         )
 
-        res: ConceptualDataModel = StandardizeNaming().transform(
-            information.as_verified_data_model()
-        )
+        res: ConceptualDataModel = StandardizeNaming().transform(information.as_verified_data_model())
 
         assert res.properties[0].property_ == "tagName"
         assert res.properties[0].concept.suffix == "NotAGoodCLassNAME"
@@ -87,15 +83,9 @@ class TestToInformationCompliantEntities:
         information = ConceptualUnvalidatedDataModel(
             metadata=ConceptualUnvalidatedMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                ConceptualUnvalidatedProperty(
-                    class_name, "TAG_NAME", "string", max_count=1
-                ),
-                ConceptualUnvalidatedProperty(
-                    class_name, "State(Previous)", "string", max_count=1
-                ),
-                ConceptualUnvalidatedProperty(
-                    class_name, "P&ID", "string", max_count=1
-                ),
+                ConceptualUnvalidatedProperty(class_name, "TAG_NAME", "string", max_count=1),
+                ConceptualUnvalidatedProperty(class_name, "State(Previous)", "string", max_count=1),
+                ConceptualUnvalidatedProperty(class_name, "P&ID", "string", max_count=1),
             ],
             concepts=[ConceptualUnvalidatedConcept(class_name)],
         )
@@ -115,7 +105,6 @@ class TestToInformationCompliantEntities:
 
 
 class TestRulesSubsetting:
-
     def test_subset_information_rules(self, david_rules: ConceptualDataModel) -> None:
         class_ = ConceptEntity.load("power:GeoLocation")
         subset = SubsetInformationRules({class_}).transform(david_rules)
@@ -146,17 +135,11 @@ class TestRulesSubsetting:
 class TestAddCogniteProperties:
     def test_add_cognite_properties(self, cognite_core_schema: DMSSchema) -> None:
         input_rules = ConceptualUnvalidatedDataModel(
-            metadata=ConceptualUnvalidatedMetadata(
-                "my_space", "MyModel", "v1", "doctrino"
-            ),
+            metadata=ConceptualUnvalidatedMetadata("my_space", "MyModel", "v1", "doctrino"),
             properties=[],
             concepts=[
-                ConceptualUnvalidatedConcept(
-                    "PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"
-                ),
-                ConceptualUnvalidatedConcept(
-                    "WindTurbine", implements="PowerGeneratingUnit"
-                ),
+                ConceptualUnvalidatedConcept("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
+                ConceptualUnvalidatedConcept("WindTurbine", implements="PowerGeneratingUnit"),
             ],
         )
         read_model = cognite_core_schema.as_read_model()
@@ -197,9 +180,7 @@ class TestAddCogniteProperties:
 
         properties_by_class = defaultdict(set)
         for prop in result.rules.properties:
-            properties_by_class[prop.concept.dump(prefix="my_space")].add(
-                prop.property_
-            )
+            properties_by_class[prop.concept.dump(prefix="my_space")].add(prop.property_)
 
         assert set(properties_by_class.keys()) == {"PowerGeneratingUnit", "WindTurbine"}
         assert properties_by_class["PowerGeneratingUnit"] == expected_properties

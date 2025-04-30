@@ -14,8 +14,8 @@ from rdflib import Namespace
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import (
-    DMSRules,
     ConceptualDataModel,
+    DMSRules,
     VerifiedRules,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, String

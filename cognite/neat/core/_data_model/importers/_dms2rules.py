@@ -39,15 +39,11 @@ from cognite.neat.core._data_model.models import (
     DMSInputRules,
     DMSSchema,
 )
-from cognite.neat.core._data_model.models.data_types import DataType, Enum, String
-from cognite.neat.core._data_model.models.physical import (
-    DMSInputContainer,
-    DMSInputEnum,
-    DMSInputMetadata,
-    DMSInputNode,
-    DMSInputProperty,
-    DMSInputView,
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualUnvalidatedConcept,
+    ConceptualUnvalidatedProperty,
 )
+from cognite.neat.core._data_model.models.data_types import DataType, Enum, String
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     ContainerEntity,
@@ -57,9 +53,13 @@ from cognite.neat.core._data_model.models.entities import (
     ReverseConnectionEntity,
     ViewEntity,
 )
-from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualUnvalidatedConcept,
-    ConceptualUnvalidatedProperty,
+from cognite.neat.core._data_model.models.physical import (
+    DMSInputContainer,
+    DMSInputEnum,
+    DMSInputMetadata,
+    DMSInputNode,
+    DMSInputProperty,
+    DMSInputView,
 )
 from cognite.neat.core._issues import (
     IssueList,
@@ -669,9 +669,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     @classmethod
     def as_information_input_class(cls, view: View) -> ConceptualUnvalidatedConcept:
         return ConceptualUnvalidatedConcept(
-            concept=ConceptEntity(
-                prefix=view.space, suffix=view.external_id, version=view.version
-            ),
+            concept=ConceptEntity(prefix=view.space, suffix=view.external_id, version=view.version),
             name=view.name,
             description=view.description,
             implements=[

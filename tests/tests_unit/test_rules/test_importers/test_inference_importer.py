@@ -37,8 +37,7 @@ def test_rdf_inference():
         (
             prop
             for prop in rules.properties
-            if prop.property_ == "OperatingShare.PowerSystemResource"
-            and prop.concept.suffix == "OperatingShare"
+            if prop.property_ == "OperatingShare.PowerSystemResource" and prop.concept.suffix == "OperatingShare"
         ),
         None,
     )
