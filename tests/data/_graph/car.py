@@ -10,8 +10,8 @@ from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImpo
 from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
 )
@@ -178,7 +178,7 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
 )
 
 BASE_MODEL: DMSRules = DMSInputRules(
-    metadata=DMSInputMetadata(
+    metadata=PhysicalUnvalidatedMetadata(
         space="sp_base",
         external_id="Base",
         version="1",
@@ -187,7 +187,7 @@ BASE_MODEL: DMSRules = DMSInputRules(
     views=[DMSInputView(view="Entity")],
     containers=[DMSInputContainer(container="Entity")],
     properties=[
-        DMSInputProperty(
+        PhysicalUnvalidatedProperty(
             view="Entity",
             view_property="name",
             value_type="text",

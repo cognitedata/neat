@@ -1,8 +1,8 @@
 from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
 )
@@ -13,7 +13,7 @@ class TestClassicToCoreMapper:
     def test_map_single_property(self) -> None:
         classic = "classic"
         input_ = DMSInputRules(
-            metadata=DMSInputMetadata(
+            metadata=PhysicalUnvalidatedMetadata(
                 space=classic,
                 external_id=classic,
                 version="1.0",
@@ -21,7 +21,7 @@ class TestClassicToCoreMapper:
                 name="TheClassic",
             ),
             properties=[
-                DMSInputProperty(
+                PhysicalUnvalidatedProperty(
                     view="MyAsset",
                     view_property="name",
                     value_type="text",
@@ -36,14 +36,14 @@ class TestClassicToCoreMapper:
         input_rules = input_
 
         mapping = DMSInputRules(
-            metadata=DMSInputMetadata(
+            metadata=PhysicalUnvalidatedMetadata(
                 space="mapping",
                 external_id="mapping",
                 version="1.0",
                 creator="me",
             ),
             properties=[
-                DMSInputProperty(
+                PhysicalUnvalidatedProperty(
                     view="MyAsset",
                     view_property="name",
                     value_type="text",

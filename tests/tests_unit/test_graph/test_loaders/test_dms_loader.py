@@ -19,8 +19,8 @@ from cognite.neat.core._data_model.models.entities._single_value import (
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
     DMSInputRules,
     DMSInputView,
 )
@@ -139,7 +139,7 @@ def test_extract_above_direct_relation_limit() -> None:
 
 def test_dms_load_respect_container_cardinality() -> None:
     dms = DMSInputRules(
-        metadata=DMSInputMetadata(
+        metadata=PhysicalUnvalidatedMetadata(
             space="sp_schema_space",
             external_id="MyModel",
             creator="doctrino",
@@ -147,7 +147,7 @@ def test_dms_load_respect_container_cardinality() -> None:
         ),
         properties=[
             # Adding two connections to ensure the correct limit is used for each of them.
-            DMSInputProperty(
+            PhysicalUnvalidatedProperty(
                 "MyView",
                 "toOther2",
                 "MyOtherView",
@@ -156,7 +156,7 @@ def test_dms_load_respect_container_cardinality() -> None:
                 container="MyContainer",
                 container_property="toOther2",
             ),
-            DMSInputProperty(
+            PhysicalUnvalidatedProperty(
                 "MyView",
                 "toOther3",
                 "MyOtherView",
@@ -165,7 +165,7 @@ def test_dms_load_respect_container_cardinality() -> None:
                 container="MyContainer",
                 container_property="toOther3",
             ),
-            DMSInputProperty(
+            PhysicalUnvalidatedProperty(
                 "MyOtherView",
                 "name",
                 "text",

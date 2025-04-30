@@ -51,7 +51,7 @@ from cognite.neat.core._issues.warnings.user_modeling import (
 from cognite.neat.core._utils.spreadsheet import SheetRowTracker
 from cognite.neat.core._utils.text import humanize_collection
 
-from ._rules import DMSProperty, DMSRules
+from ._validated_data_model import DMSProperty, DMSRules
 
 
 class DMSValidation:

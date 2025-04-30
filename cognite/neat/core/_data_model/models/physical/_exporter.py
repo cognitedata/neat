@@ -53,7 +53,7 @@ from cognite.neat.core._issues.warnings.user_modeling import (
     HasDataFilterOnNoPropertiesViewWarning,
 )
 
-from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._validated_data_model import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
 
 
 class _DMSExporter:
@@ -63,8 +63,6 @@ class _DMSExporter:
     (This module cannot have a dependency on the exporter module, as it would create a circular dependency.)
 
     Args
-        include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
-            raw tables and transformations necessary to populate the data model.
         instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
         remove_cdf_spaces(bool): The
     """

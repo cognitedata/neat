@@ -5,10 +5,10 @@ from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
     DMSRules,
 )
+from cognite.neat.core._data_model.models.physical._unvalidated_data_model import DMSInputRules
 from cognite.neat.core._data_model.models.conceptual._unvalidate_data_model import (
     ConceptualUnvalidatedDataModel,
 )
-from cognite.neat.core._data_model.models.physical._rules_input import DMSInputRules
 from cognite.neat.core._utils.spreadsheet import SheetRowTracker
 
 VerifiedRules: TypeAlias = ConceptualDataModel | DMSRules

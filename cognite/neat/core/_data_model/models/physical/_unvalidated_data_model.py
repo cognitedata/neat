@@ -33,7 +33,7 @@ from cognite.neat.core._data_model.models.entities._wrapped import DMSFilter
 from cognite.neat.core._issues.warnings import DeprecatedWarning
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
-from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+from ._validated_data_model import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -42,7 +42,7 @@ else:
 
 
 @dataclass
-class DMSInputMetadata(UnvalidatedDataModelComponent[DMSMetadata]):
+class PhysicalUnvalidatedMetadata(UnvalidatedDataModelComponent[DMSMetadata]):
     space: str
     external_id: str
     creator: str
@@ -51,7 +51,7 @@ class DMSInputMetadata(UnvalidatedDataModelComponent[DMSMetadata]):
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
     source_id: str | URIRef | None = None
 
     @classmethod
@@ -67,7 +67,7 @@ class DMSInputMetadata(UnvalidatedDataModelComponent[DMSMetadata]):
         return output
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSInputMetadata":
+    def from_data_model(cls, data_model: dm.DataModelApply) -> "PhysicalUnvalidatedMetadata":
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             space=data_model.space,
@@ -113,7 +113,7 @@ class DMSInputMetadata(UnvalidatedDataModelComponent[DMSMetadata]):
 
 
 @dataclass
-class DMSInputProperty(UnvalidatedDataModelComponent[DMSProperty]):
+class PhysicalUnvalidatedProperty(UnvalidatedDataModelComponent[DMSProperty]):
     view: str
     view_property: str | None
     value_type: str | DataType | ViewEntity | DMSUnknownEntity
@@ -129,7 +129,7 @@ class DMSInputProperty(UnvalidatedDataModelComponent[DMSProperty]):
     index: str | list[str] | None = None
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     @property
     def nullable(self) -> bool | None:
@@ -168,7 +168,7 @@ class DMSInputProperty(UnvalidatedDataModelComponent[DMSProperty]):
 
     @classmethod
     def _load(cls, data: dict[str, Any]) -> Self:
-        # For backwards compatability, we need to convert nullable and Is List to min and max count
+        # For backwards compatibility, we need to convert nullable and Is List to min and max count
         for min_count_key, nullable_key in [("Min Count", "Nullable"), ("min_count", "nullable")]:
             if nullable_key in data and min_count_key not in data:
                 if isinstance(data[nullable_key], bool | float):
@@ -343,8 +343,8 @@ class DMSInputEnum(UnvalidatedDataModelComponent[DMSEnum]):
 
 @dataclass
 class DMSInputRules(UnvalidatedDataModel[DMSRules]):
-    metadata: DMSInputMetadata
-    properties: list[DMSInputProperty]
+    metadata: PhysicalUnvalidatedMetadata
+    properties: list[PhysicalUnvalidatedProperty]
     views: list[DMSInputView]
     containers: list[DMSInputContainer] | None = None
     enum: list[DMSInputEnum] | None = None

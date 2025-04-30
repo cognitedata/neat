@@ -77,7 +77,7 @@ from cognite.neat.core._data_model.models.physical import (
     DMSValidation,
     DMSView,
 )
-from cognite.neat.core._data_model.models.physical._rules import (
+from cognite.neat.core._data_model.models.physical._validated_data_model import (
     DMSContainer,
     DMSEnum,
     DMSNode,
@@ -1403,7 +1403,7 @@ class _InformationRulesConverter:
     def as_dms_rules(
         self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
     ) -> "DMSRules":
-        from cognite.neat.core._data_model.models.physical._rules import (
+        from cognite.neat.core._data_model.models.physical._validated_data_model import (
             DMSContainer,
             DMSProperty,
             DMSRules,
@@ -1605,7 +1605,7 @@ class _InformationRulesConverter:
 
     @classmethod
     def _convert_metadata_to_dms(cls, metadata: ConceptualMetadata) -> "DMSMetadata":
-        from cognite.neat.core._data_model.models.physical._rules import (
+        from cognite.neat.core._data_model.models.physical._validated_data_model import (
             DMSMetadata,
         )
 
@@ -1631,7 +1631,7 @@ class _InformationRulesConverter:
         edge_value_types_by_class_property_pair: dict[tuple[ConceptEntity, str], ConceptEntity],
         end_node_by_edge: dict[ConceptEntity, ConceptEntity],
     ) -> "DMSProperty":
-        from cognite.neat.core._data_model.models.physical._rules import DMSProperty
+        from cognite.neat.core._data_model.models.physical._validated_data_model import DMSProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
         value_type = self._get_value_type(

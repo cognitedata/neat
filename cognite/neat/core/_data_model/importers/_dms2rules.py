@@ -56,11 +56,10 @@ from cognite.neat.core._data_model.models.entities import (
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputEnum,
-    DMSInputMetadata,
     DMSInputNode,
-    DMSInputProperty,
     DMSInputView,
 )
+from cognite.neat.core._data_model.models.physical._unvalidated_data_model import PhysicalUnvalidatedMetadata, PhysicalUnvalidatedProperty
 from cognite.neat.core._issues import (
     IssueList,
     MultiValueError,
@@ -99,7 +98,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self,
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
-        metadata: DMSInputMetadata | None = None,
+        metadata: PhysicalUnvalidatedMetadata | None = None,
         referenced_containers: Iterable[dm.ContainerApply] | None = None,
     ):
         self.schema = schema
@@ -188,8 +187,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def _create_metadata_from_model(
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
-    ) -> DMSInputMetadata:
-        description, creator = DMSInputMetadata._get_description_and_creator(model.description)
+    ) -> PhysicalUnvalidatedMetadata:
+        description, creator = PhysicalUnvalidatedMetadata._get_description_and_creator(
+            model.description
+        )
 
         if isinstance(model, dm.DataModel):
             created = ms_to_datetime(model.created_time)
@@ -198,7 +199,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             now = datetime.now().replace(microsecond=0)
             created = now
             updated = now
-        return DMSInputMetadata(
+        return PhysicalUnvalidatedMetadata(
             space=model.space,
             external_id=model.external_id,
             name=model.name or model.external_id,
@@ -279,14 +280,14 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self,
         data_model: dm.DataModelApply,
         schema: DMSSchema,
-        metadata: DMSInputMetadata | None = None,
+        metadata: PhysicalUnvalidatedMetadata | None = None,
     ) -> DMSInputRules:
         enum_by_container_property = self._create_enum_collections(self._all_containers_by_id.values())
         enum_collection_by_container_property = {
             key: enum_list[0].collection for key, enum_list in enum_by_container_property.items() if enum_list
         }
 
-        properties: list[DMSInputProperty] = []
+        properties: list[PhysicalUnvalidatedProperty] = []
         for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             for prop_id, prop in (view.properties or {}).items():
@@ -300,7 +301,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSInputMetadata.from_data_model(data_model)
+        metadata = metadata or PhysicalUnvalidatedMetadata.from_data_model(data_model)
 
         return DMSInputRules(
             metadata=metadata,
@@ -320,7 +321,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         prop: ViewPropertyApply,
         view_entity: ViewEntity,
         enum_collection_by_container_property: dict[tuple[dm.ContainerId, str], str],
-    ) -> DMSInputProperty | None:
+    ) -> PhysicalUnvalidatedProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
                 ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
@@ -364,7 +365,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if isinstance(value_type, ViewEntity) and value_type.as_id() not in self._all_views_by_id:
             self.issue_list.append(ResourceUnknownWarning(prop.source, "view", view_entity.as_id(), "view"))
 
-        return DMSInputProperty(
+        return PhysicalUnvalidatedProperty(
             description=prop.description,
             name=prop.name,
             connection=self._get_connection_type(prop),
@@ -374,10 +375,14 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             immutable=self._get_immutable(prop),
             default=self._get_default(prop, container_property),
             container=(
-                str(ContainerEntity.from_id(prop.container)) if isinstance(prop, dm.MappedPropertyApply) else None
+                str(ContainerEntity.from_id(prop.container))
+                if isinstance(prop, dm.MappedPropertyApply)
+                else None
             ),
             container_property=(
-                prop.container_property_identifier if isinstance(prop, dm.MappedPropertyApply) else None
+                prop.container_property_identifier
+                if isinstance(prop, dm.MappedPropertyApply)
+                else None
             ),
             view=str(view_entity),
             view_property=prop_id,

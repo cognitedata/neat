@@ -90,10 +90,8 @@ class ConceptualUnvalidatedProperty(UnvalidatedDataModelComponent[ConceptualProp
     # Only used internally
     inherited: bool = False
     neatId: str | URIRef | None = None
-
     # linking
     physical: str | URIRef | None = None
-    conceptual: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[ConceptualProperty]:
@@ -122,7 +120,6 @@ class ConceptualUnvalidatedConcept(UnvalidatedDataModelComponent[ConceptualConce
     neatId: str | URIRef | None = None
     # linking
     physical: str | URIRef | None = None
-    conceptual: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[ConceptualConcept]:

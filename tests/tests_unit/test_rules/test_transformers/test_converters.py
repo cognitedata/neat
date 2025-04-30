@@ -20,11 +20,21 @@ from cognite.neat.core._data_model.models.entities._single_value import (
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
+    PhysicalUnvalidatedMetadata,
+    PhysicalUnvalidatedProperty,
     DMSInputView,
 )
-from cognite.neat.core._data_model.models.physical._rules import DMSRules
+from cognite.neat.core._data_model.models.physical._validated_data_model import DMSRules
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ConceptEntity,
+    ViewEntity,
+)
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualUnvalidatedConcept,
+    ConceptualUnvalidatedMetadata,
+    ConceptualUnvalidatedProperty,
+    ConceptualUnvalidatedDataModel,
+)
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
@@ -38,9 +48,9 @@ from cognite.neat.core._issues.errors._general import NeatValueError
 class TestStandardizeNaming:
     def test_transform_dms(self) -> None:
         dms = DMSInputRules(
-            metadata=DMSInputMetadata("my_spac", "MyModel", "me", "v1"),
+            metadata=PhysicalUnvalidatedMetadata("my_spac", "MyModel", "me", "v1"),
             properties=[
-                DMSInputProperty(
+                PhysicalUnvalidatedProperty(
                     "my_poorly_formatted_view",
                     "and_strangely_named_property",
                     "text",

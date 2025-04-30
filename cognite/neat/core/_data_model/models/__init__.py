@@ -14,8 +14,8 @@ from ._base_validated_data_model import (
     SheetList,
     SheetRow,
 )
-from .physical._rules import DMSRules
-from .physical._rules_input import DMSInputRules
+from .physical._validated_data_model import DMSRules
+from .physical._unvalidated_data_model import DMSInputRules
 
 INPUT_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualUnvalidatedDataModel] | type[DMSInputRules]] = {
     RoleTypes.information: ConceptualUnvalidatedDataModel,
