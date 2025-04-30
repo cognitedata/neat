@@ -9,14 +9,14 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
+from cognite.neat.core._data_model.exporters import DMSExporter
+from cognite.neat.core._data_model.importers import DMSImporter, ExcelImporter
+from cognite.neat.core._data_model.models import DMSRules, DMSSchema
+from cognite.neat.core._data_model.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat.core._issues import catch_issues
 from cognite.neat.core._issues.warnings.user_modeling import (
     DirectRelationMissingSourceWarning,
 )
-from cognite.neat.core._rules.exporters import DMSExporter
-from cognite.neat.core._rules.importers import DMSImporter, ExcelImporter
-from cognite.neat.core._rules.models import DMSRules, DMSSchema
-from cognite.neat.core._rules.transformers import DMSToInformation, VerifyDMSRules
 from tests.config import DOC_RULES
 from tests.data import SchemaData
 

@@ -6,33 +6,33 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._issues.errors._general import NeatValueError
-from cognite.neat.core._rules._shared import ReadRules
-from cognite.neat.core._rules.models import DMSInputRules, InformationRules
-from cognite.neat.core._rules.models.dms import (
+from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model.models import DMSInputRules, InformationRules
+from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputView,
 )
-from cognite.neat.core._rules.models.dms._rules import DMSRules
-from cognite.neat.core._rules.models.entities._single_value import (
+from cognite.neat.core._data_model.models.dms._rules import DMSRules
+from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ViewEntity,
 )
-from cognite.neat.core._rules.models.information import (
+from cognite.neat.core._data_model.models.information import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
     InformationInputRules,
 )
-from cognite.neat.core._rules.transformers import (
+from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
     SubsetDMSRules,
     SubsetInformationRules,
     ToDMSCompliantEntities,
 )
+from cognite.neat.core._issues.errors._general import NeatValueError
 
 
 class TestStandardizeNaming:

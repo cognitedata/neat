@@ -4,6 +4,10 @@ from typing import Any
 
 from rdflib import URIRef
 
+from cognite.neat.core._data_model.transformers import PrefixEntities, StandardizeNaming
+from cognite.neat.core._data_model.transformers._converters import (
+    StandardizeSpaceAndVersion,
+)
 from cognite.neat.core._graph.transformers import (
     ConnectionToLiteral,
     ConvertLiteral,
@@ -13,8 +17,6 @@ from cognite.neat.core._graph.transformers import (
 from cognite.neat.core._graph.transformers._rdfpath import MakeConnectionOnExactMatch
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._rules.transformers import PrefixEntities, StandardizeNaming
-from cognite.neat.core._rules.transformers._converters import StandardizeSpaceAndVersion
 from cognite.neat.core._utils.text import humanize_collection
 from cognite.neat.session._experimental import ExperimentalFlags
 
