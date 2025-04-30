@@ -12,7 +12,7 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.catalog import imf_attributes
 from cognite.neat.core._data_model.importers import ExcelImporter, SubclassInferenceImporter
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
@@ -20,7 +20,7 @@ from cognite.neat.core._data_model.models.dms import (
     DMSInputView,
 )
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     ViewEntity,
 )
@@ -46,7 +46,7 @@ def test_metadata_as_json_filed():
 
     importer = SubclassInferenceImporter(IssueList(), store.dataset, data_model_id=("neat_space", "MyAsset", "1"))
 
-    info_rules = importer.to_rules().rules.as_verified_rules()
+    info_rules = importer.to_rules().rules.as_verified_data_model()
     # Need to change externalId as it is not allowed in DMS
     for prop in info_rules.properties:
         if prop.property_ == "externalId":
@@ -63,9 +63,9 @@ def test_metadata_as_json_filed():
 
     # simulating update of the INFORMATION rules
 
-    info_rules.classes[0].class_ = ClassEntity.load("neat_space:YourAsset")
+    info_rules.concepts[0].concept = ConceptEntity.load("neat_space:YourAsset")
     for prop in info_rules.properties:
-        prop.class_ = ClassEntity.load("neat_space:YourAsset")
+        prop.concept = ConceptEntity.load("neat_space:YourAsset")
         prop.property_ = f"your_{prop.property_}"
 
     loader = DMSLoader(dms_rules, info_rules, store, dms_rules.metadata.space)
@@ -166,7 +166,12 @@ def test_dms_load_respect_container_cardinality() -> None:
                 container_property="toOther3",
             ),
             DMSInputProperty(
-                "MyOtherView", "name", "text", max_count=1, container="MyOtherContainer", container_property="name"
+                "MyOtherView",
+                "name",
+                "text",
+                max_count=1,
+                container="MyOtherContainer",
+                container_property="name",
             ),
         ],
         views=[
@@ -177,7 +182,7 @@ def test_dms_load_respect_container_cardinality() -> None:
             DMSInputContainer("MyContainer"),
             DMSInputContainer("MyOtherContainer"),
         ],
-    ).as_verified_rules()
+    ).as_verified_data_model()
     info = DMSToInformation().transform(dms)
     info.metadata.physical = dms.metadata.identifier
     dms.sync_with_info_rules(info)
@@ -205,8 +210,8 @@ def test_dms_load_respect_container_cardinality() -> None:
         store.dataset.add(triple)
 
     # Link the schema to the triples
-    info.classes[0].instance_source = my_type
-    info.classes[1].instance_source = my_other_type
+    info.concepts[0].instance_source = my_type
+    info.concepts[1].instance_source = my_other_type
     info.properties[0].instance_source = [to_other_prop2]
     info.properties[1].instance_source = [to_other_prop3]
     info.properties[2].instance_source = [name_prop]

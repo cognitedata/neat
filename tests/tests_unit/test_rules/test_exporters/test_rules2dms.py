@@ -8,8 +8,8 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.exporters import DMSExporter
-from cognite.neat.core._data_model.models import InformationRules
-from cognite.neat.core._data_model.models.dms import DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel
+from cognite.neat.core._data_model.models.physical import DMSRules
 from cognite.neat.core._data_model.transformers import InformationToDMS, VerifyAnyRules
 from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData
@@ -69,7 +69,7 @@ class TestImportExportDMS:
             rules = VerifyAnyRules().transform(importer.to_rules())
             if isinstance(rules, DMSRules):
                 dms_rules = rules
-            elif isinstance(rules, InformationRules):
+            elif isinstance(rules, ConceptualDataModel):
                 dms_rules = InformationToDMS().transform(rules)
             else:
                 raise ValueError(f"Unexpected rules type: {type(rules)}")

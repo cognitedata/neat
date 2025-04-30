@@ -7,18 +7,22 @@ from cognite.client.data_classes import Row
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules, SheetList
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models import (
+    DMSRules,
+    ConceptualDataModel,
+    SheetList,
+)
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat.core._data_model.models.information import (
-    InformationClass,
-    InformationMetadata,
-    InformationProperty,
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualConcept,
+    ConceptualMetadata,
+    ConceptualProperty,
 )
 from tests.config import DOC_RULES
 
@@ -60,9 +64,9 @@ def svein_harald_dms_rules() -> DMSRules:
 
 
 @pytest.fixture(scope="session")
-def table_example() -> InformationRules:
-    return InformationRules(
-        metadata=InformationMetadata(
+def table_example() -> ConceptualDataModel:
+    return ConceptualDataModel(
+        metadata=ConceptualMetadata(
             schema_="complete",
             prefix="sp_table_example",
             namespace="http://neat.org",
@@ -73,45 +77,45 @@ def table_example() -> InformationRules:
             updated="2024-03-16T17:40:00Z",
             creator=["Anders"],
         ),
-        properties=SheetList[InformationProperty](
+        properties=SheetList[ConceptualProperty](
             [
-                InformationProperty(
-                    class_="Table",
+                ConceptualProperty(
+                    concept="Table",
                     property_="color",
                     value_type="string",
                     min_count=0,
                     max_count=1.0,
                 ),
-                InformationProperty(
-                    class_="Table",
+                ConceptualProperty(
+                    concept="Table",
                     property_="height",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
-                InformationProperty(
-                    class_="Table",
+                ConceptualProperty(
+                    concept="Table",
                     property_="width",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
-                InformationProperty(
-                    class_="Table",
+                ConceptualProperty(
+                    concept="Table",
                     property_="on",
                     value_type="Item",
                     min_count=0,
                     max_count=float("inf"),
                 ),
-                InformationProperty(
-                    class_="Item",
+                ConceptualProperty(
+                    concept="Item",
                     property_="name",
                     value_type="string",
                     min_count=1,
                     max_count=1,
                 ),
-                InformationProperty(
-                    class_="Item",
+                ConceptualProperty(
+                    concept="Item",
                     property_="category",
                     value_type="string",
                     min_count=0,
@@ -119,10 +123,10 @@ def table_example() -> InformationRules:
                 ),
             ]
         ),
-        classes=SheetList[InformationClass](
+        concepts=SheetList[ConceptualConcept](
             [
-                InformationClass(class_="Table", name="Table"),
-                InformationClass(class_="Item", name="Item"),
+                ConceptualConcept(concept="Table", name="Table"),
+                ConceptualConcept(concept="Item", name="Item"),
             ]
         ),
     )
@@ -197,12 +201,16 @@ class TestDMSExporter:
             ),
             properties=[
                 DMSInputProperty(
-                    "NewView", "newProp", "text", container="ExistingContainer", container_property="newProp"
+                    "NewView",
+                    "newProp",
+                    "text",
+                    container="ExistingContainer",
+                    container_property="newProp",
                 ),
             ],
             views=[DMSInputView("NewView")],
             containers=[DMSInputContainer("ExistingContainer", used_for="node")],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
         try:
             uploaded = DMSExporter(existing="update").export_to_cdf(rules, neat_client, dry_run=False)

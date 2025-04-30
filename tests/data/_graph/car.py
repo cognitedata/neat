@@ -7,8 +7,8 @@ from rdflib.term import Literal
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
@@ -67,7 +67,7 @@ CONTAINERS = dm.ContainerApplyList(
 
 
 @lru_cache(maxsize=1)
-def get_care_rules() -> InformationRules:
+def get_care_rules() -> ConceptualDataModel:
     # To avoid circular import
     from tests.data import SchemaData
 
@@ -195,7 +195,7 @@ BASE_MODEL: DMSRules = DMSInputRules(
             container_property="name",
         )
     ],
-).as_verified_rules()
+).as_verified_data_model()
 
 NODE_TYPES = dm.NodeApplyList(
     [

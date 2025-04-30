@@ -6,9 +6,9 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.models import InformationInputRules
-from cognite.neat.core._data_model.models._base_rules import RoleTypes
-from cognite.neat.core._data_model.models.dms import DMSValidation
+from cognite.neat.core._data_model.models import ConceptualUnvalidatedDataModel
+from cognite.neat.core._data_model.models._base_validated_data_model import RoleTypes
+from cognite.neat.core._data_model.models.physical import DMSValidation
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     IncludeReferenced,
@@ -184,17 +184,19 @@ class TemplateAPI:
             output_path = Path(output)
 
         with catch_issues() as issues:
-            read: ReadRules[InformationInputRules] = ExcelImporter(path).to_rules()
+            read: ReadRules[ConceptualUnvalidatedDataModel] = ExcelImporter(
+                path
+            ).to_rules()
             if read.rules is not None:
                 # If rules are None there will be issues that are already caught.
-                if not isinstance(read.rules, InformationInputRules):
+                if not isinstance(read.rules, ConceptualUnvalidatedDataModel):
                     raise NeatSessionError(f"The input {reader.name} must contain an InformationInputRules object. ")
                 if self._state.client is None:
                     raise NeatSessionError("Client must be set in the session to run the extension.")
                 modified = AddCogniteProperties(self._state.client, dummy_property).transform(read)
                 if modified.rules is not None:
                     # If rules are None there will be issues that are already caught.
-                    info = modified.rules.as_verified_rules()
+                    info = modified.rules.as_verified_data_model()
 
                     ExcelExporter(styling="maximal").export_to_file(info, output_path)
         issues.action = "Created extension template"

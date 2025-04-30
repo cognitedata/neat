@@ -14,7 +14,10 @@ from cognite.neat.core._constants import (
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat.core._data_model.models._base_input import InputComponent, InputRules
+from cognite.neat.core._data_model.models._base_unvalidated_data_model import (
+    UnvalidatedDataModelComponent,
+    UnvalidatedDataModel,
+)
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ContainerEntity,
@@ -39,7 +42,7 @@ else:
 
 
 @dataclass
-class DMSInputMetadata(InputComponent[DMSMetadata]):
+class DMSInputMetadata(UnvalidatedDataModelComponent[DMSMetadata]):
     space: str
     external_id: str
     creator: str
@@ -110,7 +113,7 @@ class DMSInputMetadata(InputComponent[DMSMetadata]):
 
 
 @dataclass
-class DMSInputProperty(InputComponent[DMSProperty]):
+class DMSInputProperty(UnvalidatedDataModelComponent[DMSProperty]):
     view: str
     view_property: str | None
     value_type: str | DataType | ViewEntity | DMSUnknownEntity
@@ -203,7 +206,7 @@ class DMSInputProperty(InputComponent[DMSProperty]):
 
 
 @dataclass
-class DMSInputContainer(InputComponent[DMSContainer]):
+class DMSInputContainer(UnvalidatedDataModelComponent[DMSContainer]):
     container: str
     name: str | None = None
     description: str | None = None
@@ -246,7 +249,7 @@ class DMSInputContainer(InputComponent[DMSContainer]):
 
 
 @dataclass
-class DMSInputView(InputComponent[DMSView]):
+class DMSInputView(UnvalidatedDataModelComponent[DMSView]):
     view: str
     name: str | None = None
     description: str | None = None
@@ -304,7 +307,7 @@ class DMSInputView(InputComponent[DMSView]):
 
 
 @dataclass
-class DMSInputNode(InputComponent[DMSNode]):
+class DMSInputNode(UnvalidatedDataModelComponent[DMSNode]):
     node: str
     usage: Literal["type", "collocation"]
     name: str | None = None
@@ -326,7 +329,7 @@ class DMSInputNode(InputComponent[DMSNode]):
 
 
 @dataclass
-class DMSInputEnum(InputComponent[DMSEnum]):
+class DMSInputEnum(UnvalidatedDataModelComponent[DMSEnum]):
     collection: str
     value: str
     name: str | None = None
@@ -339,7 +342,7 @@ class DMSInputEnum(InputComponent[DMSEnum]):
 
 
 @dataclass
-class DMSInputRules(InputRules[DMSRules]):
+class DMSInputRules(UnvalidatedDataModel[DMSRules]):
     metadata: DMSInputMetadata
     properties: list[DMSInputProperty]
     views: list[DMSInputView]

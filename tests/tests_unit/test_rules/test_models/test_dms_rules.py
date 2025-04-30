@@ -16,9 +16,9 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
 from cognite.neat.core._data_model.models.data_types import String
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputNode,
@@ -30,7 +30,7 @@ from cognite.neat.core._data_model.models.dms import (
     DMSSchema,
     DMSValidation,
 )
-from cognite.neat.core._data_model.models.dms._exporter import _DMSExporter
+from cognite.neat.core._data_model.models.physical._exporter import _DMSExporter
 from cognite.neat.core._data_model.models.entities._single_value import (
     ContainerEntity,
     UnknownEntity,
@@ -803,13 +803,15 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 DMSInputContainer(
                     container="sp_core:Asset",
                 ),
-                DMSInputContainer(container="GeneratingUnit", constraint="sp_core:Asset"),
+                DMSInputContainer(
+                    container="GeneratingUnit", constraint="sp_core:Asset"
+                ),
             ],
             views=[
                 DMSInputView(view="sp_core:Asset(version=1)"),
                 DMSInputView(view="WindTurbine", implements="sp_core:Asset(version=1)"),
             ],
-        ).as_verified_rules(),
+        ).as_verified_data_model(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
@@ -902,7 +904,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 DMSInputView(view="Generator", implements="Asset"),
                 DMSInputView(view="Reservoir", implements="Asset"),
             ],
-        ).as_verified_rules(),
+        ).as_verified_data_model(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
@@ -1250,7 +1252,7 @@ def case_unknown_value_types():
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSInputRules.load(alice_spreadsheet).as_verified_rules()
+        valid_rules = DMSInputRules.load(alice_spreadsheet).as_verified_data_model()
 
         assert isinstance(valid_rules, DMSRules)
 
@@ -1266,13 +1268,13 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, no_properties", list(case_unknown_value_types()))
     def test_case_unknown_value_types(self, raw: dict[str, dict[str, Any]], no_properties: int) -> None:
-        rules = InformationRules.model_validate(raw)
+        rules = ConceptualDataModel.model_validate(raw)
         dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules)
         assert len(dms_rules.properties) == no_properties
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
-        valid_rules = raw.as_verified_rules()
+        valid_rules = raw.as_verified_data_model()
         normalize_neat_id_in_rules(valid_rules)
         normalize_neat_id_in_rules(expected_rules)
 
@@ -1286,7 +1288,7 @@ class TestDMSRules:
     def test_load_inconsistent_container_definitions(
         self, raw: DMSInputRules, expected_errors: list[NeatError]
     ) -> None:
-        rules = raw.as_verified_rules()
+        rules = raw.as_verified_data_model()
         issues = DMSValidation(rules).validate()
 
         assert len(issues.errors) == 2
@@ -1295,7 +1297,7 @@ class TestDMSRules:
 
     def test_alice_to_and_from_dms(self, alice_rules: DMSRules) -> None:
         schema = alice_rules.as_schema()
-        recreated_rules = DMSImporter(schema).to_rules().rules.as_verified_rules()
+        recreated_rules = DMSImporter(schema).to_rules().rules.as_verified_data_model()
 
         exclude = {
             # This information is lost in the conversion
@@ -1315,7 +1317,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: DMSInputRules, expected_schema: DMSSchema) -> None:
-        rules = input_rules.as_verified_rules()
+        rules = input_rules.as_verified_data_model()
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
@@ -1335,10 +1337,10 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = DMSInputRules.load(alice_spreadsheet).as_verified_rules()
+        alice_rules = DMSInputRules.load(alice_spreadsheet).as_verified_data_model()
         info_rules = DMSToInformation().transform(alice_rules)
 
-        assert isinstance(info_rules, InformationRules)
+        assert isinstance(info_rules, ConceptualDataModel)
 
     def test_dump_skip_default_space_and_version(self) -> None:
         dms_rules = DMSInputRules(
@@ -1361,13 +1363,18 @@ class TestDMSRules:
             ],
             views=[
                 DMSInputView(
-                    view="WindFarm", implements="cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)"
+                    view="WindFarm",
+                    implements="cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)",
                 ),
                 DMSInputView(view="cdf_cdm:Sourceable(version=v1)"),
                 DMSInputView(view="cdf_cdm:Describable(version=v1)"),
             ],
-            containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
-        ).as_verified_rules()
+            containers=[
+                DMSInputContainer(
+                    container="Asset", constraint="Sourceable,Describable"
+                )
+            ],
+        ).as_verified_data_model()
 
         normalize_neat_id_in_rules(dms_rules)
 
@@ -1591,7 +1598,7 @@ class TestDMSRules:
             ],
             containers=[DMSInputContainer("cdf_cdm:CogniteDescribable")],
         )
-        verified = rules.as_verified_rules()
+        verified = rules.as_verified_data_model()
 
         assert isinstance(verified, DMSRules)
 
@@ -1761,7 +1768,7 @@ class TestDMSValidation:
     def test_imported_views_and_containers_ids(
         self, input_rules: DMSInputRules, expected_views: set[ViewEntity], expected_containers: set[ContainerEntity]
     ) -> None:
-        validation = DMSValidation(input_rules.as_verified_rules())
+        validation = DMSValidation(input_rules.as_verified_data_model())
         actual_views, actual_containers = validation.imported_views_and_containers_ids()
 
         assert actual_views == expected_views

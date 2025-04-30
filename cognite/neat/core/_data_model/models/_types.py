@@ -23,14 +23,14 @@ from cognite.neat.core._data_model._constants import (
 )
 from cognite.neat.core._data_model.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     ViewEntity,
 )
 from cognite.neat.core._issues.errors import RegexViolationError
 from cognite.neat.core._issues.warnings import RegexViolationWarning
 
-Entities: TypeAlias = ClassEntity | ViewEntity | ContainerEntity
+Entities: TypeAlias = ConceptEntity | ViewEntity | ContainerEntity
 T_Entities = TypeVar("T_Entities", bound=Entities)
 
 
@@ -152,7 +152,9 @@ def _entity_validation(value: Entities, location: str) -> Entities:
     return value
 
 
-ClassEntityType = Annotated[ClassEntity, AfterValidator(lambda v: _entity_validation(v, "the Class column"))]
+ConceptEntityType = Annotated[
+    ConceptEntity, AfterValidator(lambda v: _entity_validation(v, "the Concept column"))
+]
 ViewEntityType = Annotated[ViewEntity, AfterValidator(lambda v: _entity_validation(v, "the View column"))]
 ContainerEntityType = Annotated[
     ContainerEntity, AfterValidator(lambda v: _entity_validation(v, "the Container column"))
@@ -161,7 +163,7 @@ ContainerEntityType = Annotated[
 
 def _multi_value_type_validation(value: MultiValueTypeInfo, location: str) -> MultiValueTypeInfo:
     for type_ in value.types:
-        if isinstance(type_, ClassEntity):
+        if isinstance(type_, ConceptEntity):
             _entity_validation(type_, location)
     return value
 

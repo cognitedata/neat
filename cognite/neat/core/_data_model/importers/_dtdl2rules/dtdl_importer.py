@@ -13,8 +13,10 @@ from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
     DTDLBase,
     Interface,
 )
-from cognite.neat.core._data_model.models import InformationInputRules
-from cognite.neat.core._data_model.models.information import InformationInputMetadata
+from cognite.neat.core._data_model.models import ConceptualUnvalidatedDataModel
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualUnvalidatedMetadata,
+)
 from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat.core._issues.warnings import (
     FileItemNotSupportedWarning,
@@ -26,7 +28,7 @@ from cognite.neat.core._issues.warnings import (
 from cognite.neat.core._utils.text import humanize_collection, to_pascal_case
 
 
-class DTDLImporter(BaseImporter[InformationInputRules]):
+class DTDLImporter(BaseImporter[ConceptualUnvalidatedDataModel]):
     """Importer from Azure Digital Twin - DTDL (Digital Twin Definition Language).
 
     This importer supports DTDL v2.0 and v3.0.
@@ -126,7 +128,7 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
                             items.append(item)
         return cls(items, zip_file.stem, read_issues=issues)
 
-    def to_rules(self) -> ReadRules[InformationInputRules]:
+    def to_rules(self) -> ReadRules[ConceptualUnvalidatedDataModel]:
         converter = _DTDLConverter(self._read_issues)
 
         converter.convert(self._items)
@@ -143,10 +145,10 @@ class DTDLImporter(BaseImporter[InformationInputRules]):
         else:
             metadata["space"] = most_common_prefix
 
-        rules = InformationInputRules(
-            metadata=InformationInputMetadata.load(metadata),
+        rules = ConceptualUnvalidatedDataModel(
+            metadata=ConceptualUnvalidatedMetadata.load(metadata),
             properties=converter.properties,
-            classes=converter.classes,
+            concepts=converter.classes,
         )
         converter.issues.trigger_warnings()
         if converter.issues.has_errors:

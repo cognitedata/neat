@@ -2,7 +2,9 @@ import pytest
 
 from cognite.neat.core._data_model.importers import SubclassInferenceImporter
 from cognite.neat.core._data_model.models import DMSRules
-from cognite.neat.core._data_model.models.information._rules import InformationRules
+from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
+    ConceptualDataModel,
+)
 from cognite.neat.core._data_model.transformers._converters import (
     ToCompliantEntities,
 )
@@ -13,7 +15,7 @@ from tests.data import GraphData
 
 
 @pytest.fixture()
-def car_case() -> tuple[DMSRules, InformationRules, NeatGraphStore]:
+def car_case() -> tuple[DMSRules, ConceptualDataModel, NeatGraphStore]:
     store = NeatGraphStore.from_oxi_local_store()
 
     for triple in GraphData.car.TRIPLES:
@@ -24,7 +26,7 @@ def car_case() -> tuple[DMSRules, InformationRules, NeatGraphStore]:
         .rules
     )
 
-    info_rules = ToCompliantEntities().transform(info_rules.as_verified_rules())
+    info_rules = ToCompliantEntities().transform(info_rules.as_verified_data_model())
 
     dms_rules = GraphData.car.get_car_dms_rules()
 
@@ -33,7 +35,10 @@ def car_case() -> tuple[DMSRules, InformationRules, NeatGraphStore]:
 
 
 class TestDMSLoader:
-    def test_load_car_example(self, car_case: tuple[DMSRules, InformationRules, NeatGraphStore]) -> None:
+
+    def test_load_car_example(
+        self, car_case: tuple[DMSRules, ConceptualDataModel, NeatGraphStore]
+    ) -> None:
         dms_rules, info_rules, store = car_case
 
         loader = DMSLoader(dms_rules, info_rules, store, GraphData.car.INSTANCE_SPACE)

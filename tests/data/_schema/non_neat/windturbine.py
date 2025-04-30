@@ -13,7 +13,7 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputEnum,
     DMSInputMetadata,

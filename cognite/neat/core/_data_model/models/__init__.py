@@ -1,19 +1,30 @@
 from cognite.neat.core._client.data_classes.schema import DMSSchema
-from cognite.neat.core._data_model.models.information._rules import InformationRules
-from cognite.neat.core._data_model.models.information._rules_input import (
-    InformationInputRules,
+from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
+    ConceptualDataModel,
+)
+from cognite.neat.core._data_model.models.conceptual._unvalidate_data_model import (
+    ConceptualUnvalidatedDataModel,
 )
 
-from ._base_rules import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetList, SheetRow
-from .dms._rules import DMSRules
-from .dms._rules_input import DMSInputRules
+from ._base_validated_data_model import (
+    DataModelType,
+    ExtensionCategory,
+    RoleTypes,
+    SchemaCompleteness,
+    SheetList,
+    SheetRow,
+)
+from .physical._rules import DMSRules
+from .physical._rules_input import DMSInputRules
 
-INPUT_RULES_BY_ROLE: dict[RoleTypes, type[InformationInputRules] | type[DMSInputRules]] = {
-    RoleTypes.information: InformationInputRules,
+INPUT_RULES_BY_ROLE: dict[
+    RoleTypes, type[ConceptualUnvalidatedDataModel] | type[DMSInputRules]
+] = {
+    RoleTypes.information: ConceptualUnvalidatedDataModel,
     RoleTypes.dms: DMSInputRules,
 }
-VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[InformationRules] | type[DMSRules]] = {
-    RoleTypes.information: InformationRules,
+VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[DMSRules]] = {
+    RoleTypes.information: ConceptualDataModel,
     RoleTypes.dms: DMSRules,
 }
 
@@ -25,8 +36,8 @@ __all__ = [
     "DMSSchema",
     "DataModelType",
     "ExtensionCategory",
-    "InformationInputRules",
-    "InformationRules",
+    "ConceptualUnvalidatedDataModel",
+    "ConceptualDataModel",
     "RoleTypes",
     "SchemaCompleteness",
     "SheetList",

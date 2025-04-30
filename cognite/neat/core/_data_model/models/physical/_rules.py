@@ -10,9 +10,9 @@ from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import DMS_CONTAINER_LIST_MAX_LIMIT
-from cognite.neat.core._data_model.models._base_rules import (
+from cognite.neat.core._data_model.models._base_validated_data_model import (
     BaseMetadata,
-    BaseRules,
+    BaseDataModel,
     ContainerProperty,
     DataModelAspect,
     RoleTypes,
@@ -22,7 +22,7 @@ from cognite.neat.core._data_model.models._base_rules import (
     ViewRef,
 )
 from cognite.neat.core._data_model.models._types import (
-    ClassEntityType,
+    ConceptEntityType,
     ContainerEntityType,
     DmsPropertyType,
     StrListType,
@@ -48,15 +48,15 @@ from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings._general import NeatValueWarning
 
 if TYPE_CHECKING:
-    from cognite.neat.core._data_model.models import InformationRules
+    from cognite.neat.core._data_model.models import ConceptualDataModel
 
 _DEFAULT_VERSION = "1"
 
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
-    aspect: ClassVar[DataModelAspect] = DataModelAspect.physical
-    logical: URIRefType | None = None
+    level: ClassVar[DataModelAspect] = DataModelAspect.physical
+    conceptual: URIRefType | None = None
 
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
@@ -438,7 +438,9 @@ class DMSNode(SheetRow):
 
 
 class DMSEnum(SheetRow):
-    collection: ClassEntityType = Field(alias="Collection", description="The collection this enum belongs to.")
+    collection: ConceptEntityType = Field(
+        alias="Collection", description="The collection this enum belongs to."
+    )
     value: str = Field(alias="Value", description="The value of the enum.")
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the enum.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the enum.")
@@ -453,7 +455,7 @@ class DMSEnum(SheetRow):
         return str(value)
 
 
-class DMSRules(BaseRules):
+class DMSRules(BaseDataModel):
     metadata: DMSMetadata = Field(alias="Metadata", description="Contains information about the data model.")
     properties: SheetList[DMSProperty] = Field(
         alias="Properties", description="Contains the properties of the data model."
@@ -494,7 +496,7 @@ class DMSRules(BaseRules):
         for property_ in self.properties:
             property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
 
-    def sync_with_info_rules(self, info_rules: "InformationRules") -> None:
+    def sync_with_info_rules(self, info_rules: "ConceptualDataModel") -> None:
         # Sync at the metadata level
         if info_rules.metadata.physical == self.metadata.identifier:
             self.metadata.logical = info_rules.metadata.identifier
@@ -508,7 +510,7 @@ class DMSRules(BaseRules):
             if prop.physical in dms_properties_by_neat_id:
                 dms_properties_by_neat_id[prop.physical].logical = neat_id
 
-        info_classes_by_neat_id = {cls.neatId: cls for cls in info_rules.classes}
+        info_classes_by_neat_id = {cls.neatId: cls for cls in info_rules.concepts}
         dms_views_by_neat_id = {view.neatId: view for view in self.views}
         for neat_id, class_ in info_classes_by_neat_id.items():
             if class_.physical in dms_views_by_neat_id:

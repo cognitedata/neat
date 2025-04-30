@@ -3,7 +3,7 @@ from abc import ABC
 import pytest
 
 from cognite.neat.core._data_model.exporters import BaseExporter, CDFExporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
 
 EXPORTER_CLS = [subclass for subclass in BaseExporter.__subclasses__() if subclass is not CDFExporter] + list(
     CDFExporter.__subclasses__()
@@ -23,7 +23,7 @@ class TestExporters:
         EXPORTER_CLS,
     )
     def test_valid_source_type(self, exporter_cls: type[BaseExporter]) -> None:
-        valid_sources = {DMSRules, InformationRules}
+        valid_sources = {DMSRules, ConceptualDataModel}
 
         source_types = exporter_cls.source_types()
 

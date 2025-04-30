@@ -101,7 +101,6 @@ class DataModelType(StrEnum):
 
 class DataModelAspect(StrEnum):
     conceptual = "conceptual"
-    logical = "logical"
     physical = "physical"
 
 
@@ -140,7 +139,7 @@ class BaseMetadata(SchemaModel):
     """
 
     role: ClassVar[RoleTypes] = Field(description="Role of the person creating the data model")
-    aspect: ClassVar[DataModelAspect] = Field(description="Aspect of the data model")
+    level: ClassVar[DataModelAspect] = Field(description="Data model level")
     space: SpaceType = Field(description="The space where the data model is defined")
     external_id: DataModelExternalIdType = Field(
         alias="externalId", description="External identifier for the data model"
@@ -223,7 +222,7 @@ class BaseMetadata(SchemaModel):
             Unlike namespace, the identifier does not end with "/" or "#".
 
         """
-        return DEFAULT_NAMESPACE[f"data-model/verified/{self.aspect}/{self.space}/{self.external_id}/{self.version}"]
+        return DEFAULT_NAMESPACE[f"data-model/verified/{self.level}/{self.space}/{self.external_id}/{self.version}"]
 
     @property
     def namespace(self) -> Namespace:
@@ -252,7 +251,7 @@ class BaseMetadata(SchemaModel):
         )
 
 
-class BaseRules(SchemaModel, ABC):
+class BaseDataModel(SchemaModel, ABC):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph

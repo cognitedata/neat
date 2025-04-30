@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models.dms import DMSInputRules, DMSRules
+from cognite.neat.core._data_model.models.physical import DMSInputRules, DMSRules
 from cognite.neat.core._issues.errors import NeatValueError
 
 _CLASSIC_TO_CORE_MAPPING = Path(__file__).resolve().parent / "_classic2core.yaml"

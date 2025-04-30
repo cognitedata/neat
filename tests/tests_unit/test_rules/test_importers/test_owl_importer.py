@@ -1,7 +1,7 @@
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyRules
 from cognite.neat.core._issues import catch_issues
 
@@ -19,7 +19,7 @@ def test_ill_formed_owl_importer():
     acceptable_properties = []
 
     for prop in input.rules.properties:
-        if prop.class_ != "Award":
+        if prop.concept != "Award":
             acceptable_properties.append(prop)
 
     input.rules.properties = acceptable_properties
@@ -27,13 +27,15 @@ def test_ill_formed_owl_importer():
     with catch_issues():
         rules = VerifyAnyRules().transform(input)
 
-    assert len(rules.classes) == 4
+    assert len(rules.concepts) == 4
     assert len(rules.properties) == 9
 
     # this is rdf:PlainLiteral edge case
     assert (
         RulesAnalysis(rules)
-        .properties_by_id_by_class()[ClassEntity.load("neat_space:LaureateAward")]["motivation"]
+        .properties_by_id_by_class()[ConceptEntity.load("neat_space:LaureateAward")][
+            "motivation"
+        ]
         .type_
         == EntityTypes.data_property
     )

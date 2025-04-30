@@ -8,10 +8,10 @@ from rdflib import Namespace, URIRef
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_SPACES, DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
 from cognite.neat.core._data_model.models.data_types import Json
 from cognite.neat.core._data_model.models.entities import UnknownEntity
-from cognite.neat.core._data_model.models.information import InformationProperty
+from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_warnings
 from cognite.neat.core._issues.warnings import (
@@ -47,7 +47,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._str_to_ideal_type = str_to_ideal_type
 
         self._views: list[dm.View] | None = None
-        self._information_rules: InformationRules | None = None
+        self._information_rules: ConceptualDataModel | None = None
         self._dms_rules: DMSRules | None = None
 
     @classmethod
@@ -164,7 +164,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                     self._issues.append(ResourceNotFoundWarning(dm_view, "view", data_model_id, "data model"))
         return views
 
-    def get_information_rules(self) -> InformationRules:
+    def get_information_rules(self) -> ConceptualDataModel:
         """Returns the information rules that the extractor uses."""
         if self._information_rules is None:
             self._information_rules, self._dms_rules = self._create_rules()
@@ -180,7 +180,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         """Returns the issues that occurred during the extraction."""
         return self._issues
 
-    def _create_rules(self) -> tuple[InformationRules, DMSRules]:
+    def _create_rules(self) -> tuple[ConceptualDataModel, DMSRules]:
         # The DMS and Information rules must be created together to link them property.
         importer = DMSImporter.from_data_model(self._client, self._data_model)
         unverified_dms = importer.to_rules()
@@ -211,14 +211,16 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         verified_dms.sync_with_info_rules(information_rules)
 
         # Adding startNode and endNode to the information rules for views that are used for edges.
-        classes_by_prefix = {cls_.class_.prefix: cls_ for cls_ in information_rules.classes}
+        classes_by_prefix = {
+            cls_.concept.prefix: cls_ for cls_ in information_rules.concepts
+        }
         for view in self._model_views:
             if view.used_for == "edge" and view.external_id in classes_by_prefix:
                 cls_ = classes_by_prefix[view.external_id]
                 for property_ in ("startNode", "endNode"):
                     information_rules.properties.append(
-                        InformationProperty(
-                            class_=cls_.class_,
+                        ConceptualProperty(
+                            concept=cls_.concept,
                             property_=property_,
                             value_type=UnknownEntity(),
                             min_count=0,

@@ -58,7 +58,7 @@ class TestDMSGraphExtractor:
 
         expected_info = car.get_care_rules()
         assert triples == set(car.TRIPLES)
-        assert {cls_.class_.suffix for cls_ in info_rules.classes} == {
-            cls_.class_.suffix for cls_ in expected_info.classes
+        assert {cls_.concept.suffix for cls_ in info_rules.concepts} == {
+            cls_.concept.suffix for cls_ in expected_info.concepts
         }
         assert {view.view.external_id for view in dms_rules.views} == {view.external_id for view in car.CAR_MODEL.views}

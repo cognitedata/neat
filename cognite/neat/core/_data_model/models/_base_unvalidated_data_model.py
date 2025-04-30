@@ -1,15 +1,15 @@
 """Module for base classes for the input models.
 
-The philosophy of the input models is:
+The philosophy of the unvalidated models is:
 
-* Provide an easy way to input rules. The type hints are made to be human-friendly, for example, Literal instead of
+* Provide an easy way to input data model. The type hints are made to be human-friendly, for example, Literal instead of
   Enum.
 * The .dump() method should fill out defaults and have shortcuts. For example, if the prefix is not provided for
   a class, then the prefix from the metadata is used. For views, if the class is not provided, it is assumed to
   be the same as the view.
 
 The base classes are to make it easy to create the input models with default behavior. They are also used for
-testing to ensure that input models correctly map to the verified rules models.
+testing to ensure that input models correctly map to the verified data models.
 """
 
 import sys
@@ -20,36 +20,39 @@ from typing import Any, Generic, TypeVar, Union, cast, get_args, get_origin, ove
 
 import pandas as pd
 
-from ._base_rules import BaseRules, SchemaModel
+from ._base_validated_data_model import BaseDataModel, SchemaModel
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-T_BaseRules = TypeVar("T_BaseRules", bound=BaseRules)
-T_RuleModel = TypeVar("T_RuleModel", bound=SchemaModel)
-
+T_BaseDataModel = TypeVar("T_BaseDataModel", bound=BaseDataModel)
+T_DataModel = TypeVar("T_DataModel", bound=SchemaModel)
 
 @dataclass
-class InputRules(Generic[T_BaseRules], ABC):
-    """Input rules are raw data that is not yet validated."""
+class UnvalidatedDataModel(Generic[T_BaseDataModel], ABC):
+    """Unvalidated data model is raw data model that is not yet validated."""
 
     @classmethod
     @abstractmethod
-    def _get_verified_cls(cls) -> type[T_BaseRules]:
+    def _get_verified_cls(cls) -> type[T_BaseDataModel]:
         raise NotImplementedError("This method should be implemented in the subclass.")
 
     @classmethod
     @overload
-    def load(cls: "type[T_InputRules]", data: dict[str, Any]) -> "T_InputRules": ...
+    def load(
+        cls: "type[T_UnvalidatedDataModel]", data: dict[str, Any]
+    ) -> "T_UnvalidatedDataModel": ...
 
     @classmethod
     @overload
-    def load(cls: "type[T_InputRules]", data: None) -> None: ...
+    def load(cls: "type[T_UnvalidatedDataModel]", data: None) -> None: ...
 
     @classmethod
-    def load(cls: "type[T_InputRules]", data: dict | None) -> "T_InputRules | None":
+    def load(
+        cls: "type[T_UnvalidatedDataModel]", data: dict | None
+    ) -> "T_UnvalidatedDataModel | None":
         if data is None:
             return None
         return cls._load(data)
@@ -110,7 +113,7 @@ class InputRules(Generic[T_BaseRules], ABC):
     def _dataclass_fields(self) -> list[Field]:
         return list(fields(self))
 
-    def as_verified_rules(self) -> T_BaseRules:
+    def as_verified_data_model(self) -> T_BaseDataModel:
         cls_ = self._get_verified_cls()
         return cls_.model_validate(self.dump())
 
@@ -126,15 +129,13 @@ class InputRules(Generic[T_BaseRules], ABC):
                 output[field_.name] = [item.dump() for item in value]
         return output
 
-
-T_InputRules = TypeVar("T_InputRules", bound=InputRules)
-
+T_UnvalidatedDataModel = TypeVar("T_UnvalidatedDataModel", bound=UnvalidatedDataModel)
 
 @dataclass
-class InputComponent(ABC, Generic[T_RuleModel]):
+class UnvalidatedDataModelComponent(ABC, Generic[T_DataModel]):
     @classmethod
     @abstractmethod
-    def _get_verified_cls(cls) -> type[T_RuleModel]:
+    def _get_verified_cls(cls) -> type[T_DataModel]:
         raise NotImplementedError("This method should be implemented in the subclass.")
 
     @classmethod

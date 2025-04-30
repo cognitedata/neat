@@ -10,11 +10,11 @@ from cognite.neat.core._data_model._shared import (
 from cognite.neat.core._data_model.models import (
     DMSInputRules,
     DMSRules,
-    InformationInputRules,
-    InformationRules,
+    ConceptualUnvalidatedDataModel,
+    ConceptualDataModel,
 )
-from cognite.neat.core._data_model.models.dms import DMSValidation
-from cognite.neat.core._data_model.models.information import InformationValidation
+from cognite.neat.core._data_model.models.physical import DMSValidation
+from cognite.neat.core._data_model.models.conceptual import ConceptualValidation
 from cognite.neat.core._issues import MultiValueError, catch_issues
 from cognite.neat.core._issues.errors import NeatTypeError, NeatValueError
 
@@ -46,8 +46,8 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
                 validation_cls = self._get_validation_cls(verified_rules)  # type: ignore[arg-type]
                 if issubclass(validation_cls, DMSValidation):
                     validation_issues = DMSValidation(verified_rules, self._client, rules.read_context).validate()  # type: ignore[arg-type]
-                elif issubclass(validation_cls, InformationValidation):
-                    validation_issues = InformationValidation(verified_rules, rules.read_context).validate()  # type: ignore[arg-type]
+                elif issubclass(validation_cls, ConceptualValidation):
+                    validation_issues = ConceptualValidation(verified_rules, rules.read_context).validate()  # type: ignore[arg-type]
                 else:
                     raise NeatValueError("Unsupported rule type")
                 issues.extend(validation_issues)
@@ -81,13 +81,19 @@ class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]
         return super().transform(rules)
 
 
-class VerifyInformationRules(VerificationTransformer[ReadRules[InformationInputRules], InformationRules]):
+class VerifyInformationRules(
+    VerificationTransformer[
+        ReadRules[ConceptualUnvalidatedDataModel], ConceptualDataModel
+    ]
+):
     """Class to verify Information rules."""
 
-    _rules_cls = InformationRules
-    _validation_cls = InformationValidation
+    _rules_cls = ConceptualDataModel
+    _validation_cls = ConceptualValidation
 
-    def transform(self, rules: ReadRules[InformationInputRules]) -> InformationRules:
+    def transform(
+        self, rules: ReadRules[ConceptualUnvalidatedDataModel]
+    ) -> ConceptualDataModel:
         return super().transform(rules)
 
 
@@ -95,16 +101,16 @@ class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
     """Class to verify arbitrary rules"""
 
     def _get_rules_cls(self, in_: T_ReadInputRules) -> type[VerifiedRules]:
-        if isinstance(in_.rules, InformationInputRules):
-            return InformationRules
+        if isinstance(in_.rules, ConceptualUnvalidatedDataModel):
+            return ConceptualDataModel
         elif isinstance(in_.rules, DMSInputRules):
             return DMSRules
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")
 
     def _get_validation_cls(self, rules: VerifiedRules) -> type:
-        if isinstance(rules, InformationRules):
-            return InformationValidation
+        if isinstance(rules, ConceptualDataModel):
+            return ConceptualValidation
         elif isinstance(rules, DMSRules):
             return DMSValidation
         else:

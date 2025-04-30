@@ -4,7 +4,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
 from cognite.neat.core._data_model.transformers import VerifyAnyRules, VerifyDMSRules
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._issues.errors import (
@@ -113,6 +113,7 @@ def invalid_rules_filepaths():
 
 
 class TestExcelImporter:
+
     @pytest.mark.parametrize(
         "filepath, rule_type",
         [
@@ -123,12 +124,12 @@ class TestExcelImporter:
             ),
             pytest.param(
                 DOC_RULES / "information-analytics-olav.xlsx",
-                InformationRules,
+                ConceptualDataModel,
                 id="Olav user rules",
             ),
             pytest.param(
                 DOC_RULES / "information-architect-david.xlsx",
-                InformationRules,
+                ConceptualDataModel,
                 id="information-architect-david",
             ),
             pytest.param(
@@ -138,7 +139,7 @@ class TestExcelImporter:
             ),
             pytest.param(
                 DOC_RULES / "information-addition-svein-harald.xlsx",
-                InformationRules,
+                ConceptualDataModel,
                 id="Svein Harald Enterprise Extension Information",
             ),
             pytest.param(
@@ -156,7 +157,7 @@ class TestExcelImporter:
     def test_import_valid_rules(
         self,
         filepath: Path,
-        rule_type: type[DMSRules] | type[InformationRules],
+        rule_type: type[DMSRules] | type[ConceptualDataModel],
     ):
         rules = None
         with catch_issues():

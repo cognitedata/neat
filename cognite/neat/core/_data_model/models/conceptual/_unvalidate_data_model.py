@@ -7,26 +7,26 @@ from cognite.client import data_modeling as dm
 from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model.models._base_input import InputComponent, InputRules
+from cognite.neat.core._data_model.models._base_unvalidated_data_model import UnvalidatedDataModelComponent, UnvalidatedDataModel
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     MultiValueTypeInfo,
     UnknownEntity,
     load_value_type,
 )
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
-from ._rules import (
-    InformationClass,
-    InformationMetadata,
-    InformationProperty,
-    InformationRules,
+from ._validated_data_model import (
+    ConceptualConcept,
+    ConceptualMetadata,
+    ConceptualProperty,
+    ConceptualDataModel,
 )
 
 
 @dataclass
-class InformationInputMetadata(InputComponent[InformationMetadata]):
+class ConceptualUnvalidatedMetadata(UnvalidatedDataModelComponent[ConceptualMetadata]):
     space: str
     external_id: str
     version: str
@@ -36,12 +36,11 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
     created: datetime | str | None = None
     updated: datetime | str | None = None
     physical: str | URIRef | None = None
-    conceptual: str | URIRef | None = None
     source_id: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationMetadata]:
-        return InformationMetadata
+    def _get_verified_cls(cls) -> type[ConceptualMetadata]:
+        return ConceptualMetadata
 
     def dump(self, **kwargs: Any) -> dict[str, Any]:
         output = super().dump()
@@ -75,10 +74,10 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
 
 
 @dataclass
-class InformationInputProperty(InputComponent[InformationProperty]):
-    class_: ClassEntity | str
+class ConceptualUnvalidatedProperty(UnvalidatedDataModelComponent[ConceptualProperty]):
+    concept: ConceptEntity | str
     property_: str
-    value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
+    value_type: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity | str
     name: str | None = None
     description: str | None = None
     min_count: int | None = None
@@ -94,25 +93,30 @@ class InformationInputProperty(InputComponent[InformationProperty]):
     conceptual: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationProperty]:
-        return InformationProperty
+    def _get_verified_cls(cls) -> type[ConceptualProperty]:
+        return ConceptualProperty
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Value Type"] = load_value_type(self.value_type, default_prefix)
         return output
 
-    def copy(self, update: dict[str, Any], default_prefix: str) -> "InformationInputProperty":
-        return cast(InformationInputProperty, type(self)._load({**self.dump(default_prefix), **update}))
+    def copy(
+        self, update: dict[str, Any], default_prefix: str
+    ) -> "ConceptualUnvalidatedProperty":
+        return cast(
+            ConceptualUnvalidatedProperty,
+            type(self)._load({**self.dump(default_prefix), **update}),
+        )
 
 
 @dataclass
-class InformationInputClass(InputComponent[InformationClass]):
-    class_: ClassEntity | str
+class ConceptualUnvalidatedConcept(UnvalidatedDataModelComponent[ConceptualConcept]):
+    concept: ConceptEntity | str
     name: str | None = None
     description: str | None = None
-    implements: str | list[ClassEntity] | None = None
+    implements: str | list[ConceptEntity] | None = None
     instance_source: str | None = None
     neatId: str | URIRef | None = None
     # linking
@@ -120,36 +124,42 @@ class InformationInputClass(InputComponent[InformationClass]):
     conceptual: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationClass]:
-        return InformationClass
+    def _get_verified_cls(cls) -> type[ConceptualConcept]:
+        return ConceptualConcept
 
     @property
-    def class_str(self) -> str:
-        return str(self.class_)
+    def concept_str(self) -> str:
+        return str(self.concept)
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        parent: list[ClassEntity] | None = None
+        parent: list[ConceptEntity] | None = None
         if isinstance(self.implements, str):
             self.implements = self.implements.strip()
-            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
+            parent = [
+                ConceptEntity.load(parent, prefix=default_prefix)
+                for parent in self.implements.split(",")
+            ]
         elif isinstance(self.implements, list):
-            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
-        output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
+            parent = [
+                ConceptEntity.load(parent_, prefix=default_prefix)
+                for parent_ in self.implements
+            ]
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Implements"] = parent
         return output
 
 
 @dataclass
-class InformationInputRules(InputRules[InformationRules]):
-    metadata: InformationInputMetadata
-    properties: list[InformationInputProperty] = field(default_factory=list)
-    classes: list[InformationInputClass] = field(default_factory=list)
+class ConceptualUnvalidatedDataModel(UnvalidatedDataModel[ConceptualDataModel]):
+    metadata: ConceptualUnvalidatedMetadata
+    properties: list[ConceptualUnvalidatedProperty] = field(default_factory=list)
+    concepts: list[ConceptualUnvalidatedConcept] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationRules]:
-        return InformationRules
+    def _get_verified_cls(cls) -> type[ConceptualDataModel]:
+        return ConceptualDataModel
 
     def dump(self) -> dict[str, Any]:
         default_prefix = self.metadata.prefix
@@ -157,13 +167,13 @@ class InformationInputRules(InputRules[InformationRules]):
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
-            Classes=[class_.dump(default_prefix) for class_ in self.classes],
+            Concepts=[concept.dump(default_prefix) for concept in self.concepts],
             Prefixes=self.prefixes,
         )
 
     @classmethod
     def display_type_name(cls) -> str:
-        return "UnverifiedInformationModel"
+        return "Unvalidated Conceptual Data Model"
 
     @property
     def display_name(self) -> str:
@@ -171,13 +181,12 @@ class InformationInputRules(InputRules[InformationRules]):
 
     def _repr_html_(self) -> str:
         summary = {
-            "type": "Logical Data Model",
-            "intended for": "Information Architect",
+            "type": "Unvalidated Conceptual Data Model",
             "name": self.metadata.name,
             "external_id": self.metadata.external_id,
             "space": self.metadata.space,
             "version": self.metadata.version,
-            "classes": len(self.classes),
+            "concepts": len(self.concepts),
             "properties": len(self.properties),
         }
 

@@ -10,13 +10,15 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models.entities._single_value import ClassEntity
-from cognite.neat.core._data_model.models.information._rules import InformationRules
+from cognite.neat.core._data_model.models.entities._single_value import ConceptEntity
+from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
+    ConceptualDataModel,
+)
 
 from ._base import BaseExporter
 
 
-class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
+class InstanceTemplateExporter(BaseExporter[ConceptualDataModel, Workbook]):
     """
     Converts Information Rules to a templated spreadsheet meant for capturing
     instances based on class definitions in the rules.
@@ -48,7 +50,7 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
 
     def export(
         self,
-        rules: InformationRules,
+        rules: ConceptualDataModel,
     ) -> Workbook:
         workbook = Workbook()
 
@@ -74,7 +76,7 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
                         class_.suffix,
                         get_column_letter(i + 2),
                         self.no_rows,
-                        cast(ClassEntity, property_.value_type).suffix,
+                        cast(ConceptEntity, property_.value_type).suffix,
                         "A",
                     )
 
@@ -83,7 +85,7 @@ class InstanceTemplateExporter(BaseExporter[InformationRules, Workbook]):
 
         return workbook
 
-    def export_to_file(self, rules: InformationRules, filepath: Path) -> None:
+    def export_to_file(self, rules: ConceptualDataModel, filepath: Path) -> None:
         """Exports graph capturing sheet to excel file."""
         data = self.export(rules)
         try:

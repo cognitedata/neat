@@ -4,7 +4,7 @@ from cognite.client.data_classes.data_modeling import DataModelId
 from cognite.neat.core._data_model._constants import ENTITY_PATTERN
 from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
-    ClassEntity,
+    ConceptEntity,
     DataModelEntity,
     DMSEntity,
     DMSNodeEntity,
@@ -35,14 +35,14 @@ TEST_CASES = [
         UnitEntity(prefix="length", suffix="m"),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "person",
-        ClassEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
+        ConceptEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "cdf_cdm:CogniteAsset(version=v1)",
-        ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+        ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
     ),
     (
         ViewEntity,
@@ -61,7 +61,7 @@ TEST_CASES = [
         DMSUnknownEntity.from_id(None),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "#N/A",
         UnknownEntity(),
     ),
@@ -79,7 +79,9 @@ TEST_CASES = [
         EdgeEntity,
         "edge(properties=Owns,type=ownership)",
         EdgeEntity(
-            properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"),
+            properties=ViewEntity(
+                space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="Owns"
+            ),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
         ),
     ),
@@ -87,7 +89,9 @@ TEST_CASES = [
         EdgeEntity,
         "edge(properties=my_other_space:Owns(version=34),type=ownership)",
         EdgeEntity(
-            properties=ViewEntity(space="my_other_space", version="34", externalId="Owns"),
+            properties=ViewEntity(
+                space="my_other_space", version="34", externalId="Owns"
+            ),
             type=DMSNodeEntity(space=DEFAULT_SPACE, externalId="ownership"),
         ),
     ),
@@ -109,7 +113,9 @@ TEST_CASES = [
         EdgeEntity,
         "edge(direction=inwards,properties=StartEndTime)",
         EdgeEntity(
-            properties=ViewEntity(space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="StartEndTime"),
+            properties=ViewEntity(
+                space=DEFAULT_SPACE, version=DEFAULT_VERSION, externalId="StartEndTime"
+            ),
             direction="inwards",
         ),
     ),

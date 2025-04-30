@@ -12,7 +12,7 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     ViewApplyDict,
 )
 from cognite.neat.core._data_model.models import DMSSchema
-from cognite.neat.core._data_model.models.dms import DMSValidation
+from cognite.neat.core._data_model.models.physical import DMSValidation
 from cognite.neat.core._issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.core._issues.errors import (
     PropertyNotFoundError,

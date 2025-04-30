@@ -33,7 +33,9 @@ from cognite.neat.core._data_model.models.data_types import (
     Json,
     String,
 )
-from cognite.neat.core._data_model.models.information._rules import InformationRules
+from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
+    ConceptualDataModel,
+)
 from cognite.neat.core._issues import IssueList, NeatError, NeatIssue, catch_issues
 from cognite.neat.core._issues.errors import (
     AuthorizationError,
@@ -114,7 +116,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     def __init__(
         self,
         dms_rules: DMSRules,
-        info_rules: InformationRules,
+        info_rules: ConceptualDataModel,
         graph_store: NeatGraphStore,
         instance_space: str,
         space_property: str | None = None,

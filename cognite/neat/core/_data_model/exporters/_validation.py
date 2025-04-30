@@ -1,14 +1,16 @@
 from collections import defaultdict
 from collections.abc import Iterable
 
-from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.models.information import InformationProperty
+from cognite.neat.core._data_model.models.entities import ConceptEntity
+from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 
 
 def duplicated_properties(
-    properties: Iterable[InformationProperty],
-) -> dict[tuple[ClassEntity, str], list[tuple[int, InformationProperty]]]:
-    class_properties_by_id: dict[tuple[ClassEntity, str], list[tuple[int, InformationProperty]]] = defaultdict(list)
+    properties: Iterable[ConceptualProperty],
+) -> dict[tuple[ConceptEntity, str], list[tuple[int, ConceptualProperty]]]:
+    class_properties_by_id: dict[
+        tuple[ConceptEntity, str], list[tuple[int, ConceptualProperty]]
+    ] = defaultdict(list)
     for prop_no, prop in enumerate(properties):
-        class_properties_by_id[(prop.class_, prop.property_)].append((prop_no, prop))
+        class_properties_by_id[(prop.concept, prop.property_)].append((prop_no, prop))
     return {k: v for k, v in class_properties_by_id.items() if len(v) > 1}

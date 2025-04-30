@@ -29,7 +29,7 @@ def test_rdf_inference():
         rules = VerifyAnyRules().transform(importer.to_rules())
 
     assert len(rules.properties) == 332
-    assert len(rules.classes) == 59
+    assert len(rules.concepts) == 59
 
     # checking multi-value type
 
@@ -37,7 +37,8 @@ def test_rdf_inference():
         (
             prop
             for prop in rules.properties
-            if prop.property_ == "OperatingShare.PowerSystemResource" and prop.class_.suffix == "OperatingShare"
+            if prop.property_ == "OperatingShare.PowerSystemResource"
+            and prop.concept.suffix == "OperatingShare"
         ),
         None,
     )
@@ -88,7 +89,7 @@ def test_rdf_inference_with_none_existing_node():
         rules = VerifyAnyRules().transform(importer.to_rules())
 
     assert len(rules.properties) == 14
-    assert len(rules.classes) == 6
+    assert len(rules.concepts) == 6
 
     assert {prop.property_: prop.value_type for prop in rules.properties}[
         "Location.CoordinateSystem"
@@ -109,7 +110,7 @@ def test_json_value_type_inference():
     properties = {prop.property_: prop for prop in rules.properties}
 
     assert len(rules.properties) == 9
-    assert len(rules.classes) == 1
+    assert len(rules.concepts) == 1
 
     assert isinstance(properties["metadata"].value_type, Json)
 

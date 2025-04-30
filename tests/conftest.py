@@ -7,10 +7,10 @@ from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
     DMSRules,
-    InformationInputRules,
-    InformationRules,
+    ConceptualUnvalidatedDataModel,
+    ConceptualDataModel,
 )
-from cognite.neat.core._data_model.models.dms import DMSInputRules
+from cognite.neat.core._data_model.models.physical import DMSInputRules
 from cognite.neat.core._utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 from tests.data import SchemaData
@@ -30,7 +30,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
-    return DMSInputRules.load(alice_spreadsheet).as_verified_rules()
+    return DMSInputRules.load(alice_spreadsheet).as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
@@ -45,8 +45,10 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture(scope="session")
-def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRules:
-    return InformationRules.model_validate(InformationInputRules.load(david_spreadsheet).dump())
+def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> ConceptualDataModel:
+    return ConceptualDataModel.model_validate(
+        ConceptualUnvalidatedDataModel.load(david_spreadsheet).dump()
+    )
 
 
 @pytest.fixture(scope="session")

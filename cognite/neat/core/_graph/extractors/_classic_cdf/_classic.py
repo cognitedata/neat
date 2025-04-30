@@ -16,7 +16,10 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.catalog import classic_model
-from cognite.neat.core._data_model.models import InformationInputRules, InformationRules
+from cognite.neat.core._data_model.models import (
+    ConceptualUnvalidatedDataModel,
+    ConceptualDataModel,
+)
 from cognite.neat.core._graph.extractors._base import KnowledgeGraphExtractor
 from cognite.neat.core._issues.errors import NeatValueError, ResourceNotFoundError
 from cognite.neat.core._issues.warnings import CDFAuthWarning, NeatValueWarning
@@ -205,15 +208,18 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
         yield from self._extract_asset_parent_data_sets()
 
-    def get_information_rules(self) -> InformationRules:
+    def get_information_rules(self) -> ConceptualDataModel:
         # To avoid circular imports
         from cognite.neat.core._data_model.importers import ExcelImporter
 
-        unverified = cast(ReadRules[InformationInputRules], ExcelImporter(classic_model).to_rules())
+        unverified = cast(
+            ReadRules[ConceptualUnvalidatedDataModel],
+            ExcelImporter(classic_model).to_rules(),
+        )
         if unverified.rules is None:
             raise NeatValueError(f"Could not read the classic model rules from {classic_model}.")
 
-        verified = unverified.rules.as_verified_rules()
+        verified = unverified.rules.as_verified_data_model()
         prefixes = get_default_prefixes_and_namespaces()
         instance_prefix: str | None = next((k for k, v in prefixes.items() if v == self._namespace), None)
         if instance_prefix is None:
@@ -228,8 +234,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             if is_snake_case:
                 prop_id = to_snake_case(prop_id)
             prop.instance_source = [self._namespace[prop_id]]
-        for cls_ in verified.classes:
-            cls_id = cls_.class_.suffix
+        for cls_ in verified.concepts:
+            cls_id = cls_.concept.suffix
             if is_snake_case:
                 cls_id = to_snake_case(cls_id)
             cls_.instance_source = self._namespace[cls_id]

@@ -30,7 +30,7 @@ class EntityTypes(StrEnum):
     view = "view"
     reference_entity = "reference_entity"
     container = "container"
-    datamodel = "datamodel"
+    data_model = "data_model"
     undefined = "undefined"
     multi_value_type = "multi_value_type"
     asset = "asset"
@@ -139,15 +139,15 @@ class _Patterns:
         return re.compile(VIEW_ID_COMPLIANCE_REGEX)
 
     @cached_property
-    def dms_property_id_compliance(self) -> re.Pattern[str]:
+    def physical_property_id_compliance(self) -> re.Pattern[str]:
         return re.compile(DMS_PROPERTY_ID_COMPLIANCE_REGEX)
 
     @cached_property
-    def class_id_compliance(self) -> re.Pattern[str]:
+    def concept_id_compliance(self) -> re.Pattern[str]:
         return re.compile(CLASS_ID_COMPLIANCE_REGEX)
 
     @cached_property
-    def information_property_id_compliance(self) -> re.Pattern[str]:
+    def conceptual_property_id_compliance(self) -> re.Pattern[str]:
         return re.compile(INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX)
 
     @cached_property
@@ -159,10 +159,10 @@ class _Patterns:
         entity: EntityTypes,
     ) -> re.Pattern:
         if entity == EntityTypes.class_:
-            return self.class_id_compliance
+            return self.concept_id_compliance
 
         elif entity == EntityTypes.information_property:
-            return self.information_property_id_compliance
+            return self.conceptual_property_id_compliance
 
         elif entity == EntityTypes.view:
             return self.view_id_compliance
@@ -172,7 +172,7 @@ class _Patterns:
             return self.view_id_compliance
 
         elif entity == EntityTypes.dms_property:
-            return self.dms_property_id_compliance
+            return self.physical_property_id_compliance
 
         elif entity == EntityTypes.version:
             return self.version_compliance
@@ -193,7 +193,6 @@ PATTERNS = _Patterns()
 def get_internal_properties() -> set[str]:
     return {
         "physical",
-        "logical",
         "conceptual",
         "Neat ID",
     }

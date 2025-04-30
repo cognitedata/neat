@@ -33,7 +33,11 @@ def car_store() -> NeatGraphStore:
     for triple in car.TRIPLES:
         store.dataset.add(triple)
 
-    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
+    rules = (
+        InferenceImporter.from_graph_store(store)
+        .to_rules()
+        .rules.as_verified_data_model()
+    )
     store.add_rules(rules)
 
     return store

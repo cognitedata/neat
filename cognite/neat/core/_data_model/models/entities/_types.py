@@ -6,7 +6,13 @@ from pydantic import (
     PlainSerializer,
 )
 
-from ._single_value import AssetEntity, ClassEntity, ContainerEntity, RelationshipEntity, ViewEntity
+from ._single_value import (
+    AssetEntity,
+    ConceptEntity,
+    ContainerEntity,
+    RelationshipEntity,
+    ViewEntity,
+)
 
 
 def _split_str(v: Any) -> list[str]:
@@ -15,7 +21,7 @@ def _split_str(v: Any) -> list[str]:
     return v
 
 
-def _join_str(v: list[ClassEntity]) -> str | None:
+def _join_str(v: list[ConceptEntity]) -> str | None:
     return ",".join([entry.id for entry in v]) if v else None
 
 
@@ -38,8 +44,8 @@ def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity
     return results  # type: ignore
 
 
-ClassEntityList = Annotated[
-    list[ClassEntity],
+ConceptEntityList = Annotated[
+    list[ConceptEntity],
     BeforeValidator(_split_str),
 ]
 

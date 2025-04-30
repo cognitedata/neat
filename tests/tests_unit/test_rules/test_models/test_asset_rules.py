@@ -4,7 +4,7 @@ import pytest
 
 from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
-    ClassEntity,
+    ConceptEntity,
     RelationshipEntity,
 )
 from cognite.neat.core._issues.errors import NeatValueError, PropertyDefinitionError
@@ -198,7 +198,7 @@ def parent_property_points_to_data_type():
             ],
         },
         PropertyDefinitionError(
-            ClassEntity(prefix="power", suffix="ACLineSegment"),
+            ConceptEntity(prefix="power", suffix="ACLineSegment"),
             "class",
             "line",
             "parentExternalId is only allowed to point to a Class not String",

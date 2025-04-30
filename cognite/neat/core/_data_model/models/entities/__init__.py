@@ -4,7 +4,7 @@ from ._multi_value import MultiValueTypeInfo
 from ._single_value import (
     AssetEntity,
     AssetFields,
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     DataModelEntity,
     DMSEntity,
@@ -21,15 +21,21 @@ from ._single_value import (
     UnknownEntity,
     ViewEntity,
 )
-from ._types import CdfResourceEntityList, ClassEntityList, ContainerEntityList, URLEntity, ViewEntityList
+from ._types import (
+    CdfResourceEntityList,
+    ConceptEntityList,
+    ContainerEntityList,
+    URLEntity,
+    ViewEntityList,
+)
 from ._wrapped import DMSFilter, HasDataFilter, NodeTypeFilter, RawFilter, WrappedEntity
 
 __all__ = [
     "AssetEntity",
     "AssetFields",
     "CdfResourceEntityList",
-    "ClassEntity",
-    "ClassEntityList",
+    "ConceptEntity",
+    "ConceptEntityList",
     "ContainerEntity",
     "ContainerEntityList",
     "DMSEntity",

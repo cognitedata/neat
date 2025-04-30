@@ -1,4 +1,4 @@
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
@@ -31,7 +31,7 @@ class TestClassicToCoreMapper:
             ],
             views=[DMSInputView(view="MyAsset")],
             containers=[DMSInputContainer(container="Asset")],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
         input_rules = input_
 
@@ -52,9 +52,11 @@ class TestClassicToCoreMapper:
                 )
             ],
             views=[
-                DMSInputView(view="MyAsset", implements="cdf_cdm:CogniteAsset(version=v1)"),
+                DMSInputView(
+                    view="MyAsset", implements="cdf_cdm:CogniteAsset(version=v1)"
+                ),
             ],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
         transformed = RuleMapper(mapping).transform(input_rules)
 

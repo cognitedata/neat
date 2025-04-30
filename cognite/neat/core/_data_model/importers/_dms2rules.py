@@ -40,7 +40,7 @@ from cognite.neat.core._data_model.models import (
     DMSSchema,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, Enum, String
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputEnum,
     DMSInputMetadata,
@@ -49,7 +49,7 @@ from cognite.neat.core._data_model.models.dms import (
     DMSInputView,
 )
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     DMSNodeEntity,
     DMSUnknownEntity,
@@ -57,9 +57,9 @@ from cognite.neat.core._data_model.models.entities import (
     ReverseConnectionEntity,
     ViewEntity,
 )
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputProperty,
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualUnvalidatedConcept,
+    ConceptualUnvalidatedProperty,
 )
 from cognite.neat.core._issues import (
     IssueList,
@@ -451,7 +451,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                         f"BUG in Neat: Enum for {prop.container}.{prop.container_property_identifier} not found."
                     )
 
-                return Enum(collection=ClassEntity(suffix=collection), unknownValue=prop_type.unknown_value)
+                return Enum(
+                    collection=ConceptEntity(suffix=collection),
+                    unknownValue=prop_type.unknown_value,
+                )
             else:
                 return DataType.load(prop_type._type)
         else:
@@ -638,8 +641,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
     @classmethod
     def as_information_input_property(
-        cls, entity: ClassEntity, prop_id: str, view_property: ViewProperty
-    ) -> InformationInputProperty:
+        cls, entity: ConceptEntity, prop_id: str, view_property: ViewProperty
+    ) -> ConceptualUnvalidatedProperty:
         if not isinstance(view_property, dm.MappedProperty | dm.EdgeConnection | ReverseDirectRelation):
             raise PropertyTypeNotSupportedError(
                 dm.ViewId(str(entity.prefix), str(entity.suffix), entity.version),
@@ -652,8 +655,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if value_type is None:
             raise NeatValueError(f"Failed to get value type for {entity} property {prop_id}")
 
-        return InformationInputProperty(
-            class_=entity,
+        return ConceptualUnvalidatedProperty(
+            concept=entity,
             property_=prop_id,
             value_type=str(value_type),
             name=view_property.name,
@@ -664,13 +667,19 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         )
 
     @classmethod
-    def as_information_input_class(cls, view: View) -> InformationInputClass:
-        return InformationInputClass(
-            class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
+    def as_information_input_class(cls, view: View) -> ConceptualUnvalidatedConcept:
+        return ConceptualUnvalidatedConcept(
+            concept=ConceptEntity(
+                prefix=view.space, suffix=view.external_id, version=view.version
+            ),
             name=view.name,
             description=view.description,
             implements=[
-                ClassEntity(prefix=parent.space, suffix=parent.external_id, version=parent.version)
+                ConceptEntity(
+                    prefix=parent.space,
+                    suffix=parent.external_id,
+                    version=parent.version,
+                )
                 for parent in view.implements or []
             ]
             or None,

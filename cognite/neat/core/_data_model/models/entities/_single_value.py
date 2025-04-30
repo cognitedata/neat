@@ -266,7 +266,7 @@ class Entity(BaseModel, extra="ignore"):
 T_Entity = TypeVar("T_Entity", bound=Entity)
 
 
-class ClassEntity(Entity):
+class ConceptEntity(Entity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
     version: str | None = None
 
@@ -283,7 +283,7 @@ class ClassEntity(Entity):
         return ContainerEntity(space=space, externalId=str(self.suffix))
 
 
-class UnknownEntity(ClassEntity):
+class UnknownEntity(ConceptEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: _UndefinedType = Undefined
     suffix: _UnknownType = Unknown  # type: ignore[assignment]
@@ -339,12 +339,17 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
+    def load(
+        cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any
+    ) -> "T_DMSEntity": ...
 
     @classmethod
     @overload
     def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: Literal[False] = False, **defaults: Any
+        cls: "type[T_DMSEntity]",
+        data: Any,
+        strict: Literal[False] = False,
+        **defaults: Any,
     ) -> "T_DMSEntity | DMSUnknownEntity": ...
 
     @classmethod
@@ -376,8 +381,8 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
     def from_id(cls, id: T_ID) -> Self:
         raise NotImplementedError("Method from_id must be implemented in subclasses")
 
-    def as_class(self) -> ClassEntity:
-        return ClassEntity(prefix=self.space, suffix=self.external_id)
+    def as_class(self) -> ConceptEntity:
+        return ConceptEntity(prefix=self.space, suffix=self.external_id)
 
     def as_dms_compliant_entity(self) -> "Self":
         new_entity = self.model_copy(deep=True)
@@ -402,10 +407,12 @@ class ContainerEntity(DMSEntity[ContainerId]):
 class DMSVersionedEntity(DMSEntity[T_ID], ABC):
     version: str
 
-    def as_class(self, skip_version: bool = False) -> ClassEntity:
+    def as_class(self, skip_version: bool = False) -> ConceptEntity:
         if skip_version:
-            return ClassEntity(prefix=self.space, suffix=self.external_id)
-        return ClassEntity(prefix=self.space, suffix=self.external_id, version=self.version)
+            return ConceptEntity(prefix=self.space, suffix=self.external_id)
+        return ConceptEntity(
+            prefix=self.space, suffix=self.external_id, version=self.version
+        )
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -451,7 +458,7 @@ class DMSUnknownEntity(DMSEntity[None]):
 
 
 class DataModelEntity(DMSVersionedEntity[DataModelId]):
-    type_: ClassVar[EntityTypes] = EntityTypes.datamodel
+    type_: ClassVar[EntityTypes] = EntityTypes.data_model
 
     def as_id(self) -> DataModelId:
         return DataModelId(space=self.space, external_id=self.external_id, version=self.version)
@@ -508,14 +515,14 @@ class ReverseConnectionEntity(Entity):
     property_: str = Field(alias="property")
 
 
-class ReferenceEntity(ClassEntity):
+class ReferenceEntity(ConceptEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
     prefix: str
     property_: str | None = Field(None, alias="property")
 
     @classmethod
     def from_entity(cls, entity: Entity, property_: str) -> "ReferenceEntity":
-        if isinstance(entity, ClassEntity):
+        if isinstance(entity, ConceptEntity):
             return cls(
                 prefix=str(entity.prefix),
                 suffix=entity.suffix,
@@ -541,5 +548,7 @@ class ReferenceEntity(ClassEntity):
     def as_node_entity(self) -> DMSNodeEntity:
         return DMSNodeEntity(space=self.prefix, externalId=self.suffix)
 
-    def as_class_entity(self) -> ClassEntity:
-        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
+    def as_class_entity(self) -> ConceptEntity:
+        return ConceptEntity(
+            prefix=self.prefix, suffix=self.suffix, version=self.version
+        )

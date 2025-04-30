@@ -7,9 +7,9 @@ from openpyxl import Workbook, load_workbook
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.models import (
     DMSRules,
-    InformationRules,
+    ConceptualDataModel,
 )
-from cognite.neat.core._data_model.models._base_rules import RoleTypes
+from cognite.neat.core._data_model.models._base_validated_data_model import RoleTypes
 from cognite.neat.core._issues.errors._general import NeatValueError
 
 
@@ -49,7 +49,7 @@ class TestExcelExporter:
         assert "Views" in workbook.sheetnames
         assert "Properties" in workbook.sheetnames
 
-    def test_export_information_rules(self, david_rules: InformationRules):
+    def test_export_information_rules(self, david_rules: ConceptualDataModel):
         exporter = ExcelExporter()
         workbook = exporter.export(david_rules)
 

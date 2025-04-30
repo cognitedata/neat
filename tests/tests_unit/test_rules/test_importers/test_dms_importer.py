@@ -109,7 +109,7 @@ class TestDMSImporter:
     def test_import_export_schema_with_inwards_edge_with_properties(self) -> None:
         importer = DMSImporter(SCHEMA_INWARDS_EDGE_WITH_PROPERTIES)
 
-        rules = importer.to_rules().rules.as_verified_rules()
+        rules = importer.to_rules().rules.as_verified_data_model()
 
         dms_recreated = DMSExporter().export(rules)
 

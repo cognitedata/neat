@@ -7,23 +7,23 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import DMSInputRules, InformationRules
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models import DMSInputRules, ConceptualDataModel
+from cognite.neat.core._data_model.models.physical import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputView,
 )
-from cognite.neat.core._data_model.models.dms._rules import DMSRules
+from cognite.neat.core._data_model.models.physical._rules import DMSRules
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     ViewEntity,
 )
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
-    InformationInputRules,
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualUnvalidatedConcept,
+    ConceptualUnvalidatedMetadata,
+    ConceptualUnvalidatedProperty,
+    ConceptualUnvalidatedDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
@@ -52,7 +52,7 @@ class TestStandardizeNaming:
             containers=[DMSInputContainer("my_container")],
         )
 
-        transformed = StandardizeNaming().transform(dms.as_verified_rules())
+        transformed = StandardizeNaming().transform(dms.as_verified_data_model())
 
         assert transformed.views[0].view.suffix == "MyPoorlyFormattedView"
         assert transformed.properties[0].view_property == "andStrangelyNamedProperty"
@@ -62,58 +62,69 @@ class TestStandardizeNaming:
 
     def test_transform_information(self) -> None:
         class_name = "not_a_good_cLass_NAME"
-        information = InformationInputRules(
-            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
+        information = ConceptualUnvalidatedDataModel(
+            metadata=ConceptualUnvalidatedMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
+                ConceptualUnvalidatedProperty(
+                    class_name, "TAG_NAME", "string", max_count=1
+                ),
             ],
-            classes=[InformationInputClass(class_name)],
+            concepts=[ConceptualUnvalidatedConcept(class_name)],
         )
 
-        res: InformationRules = StandardizeNaming().transform(information.as_verified_rules())
+        res: ConceptualDataModel = StandardizeNaming().transform(
+            information.as_verified_data_model()
+        )
 
         assert res.properties[0].property_ == "tagName"
-        assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
-        assert res.classes[0].class_.suffix == "NotAGoodCLassNAME"
+        assert res.properties[0].concept.suffix == "NotAGoodCLassNAME"
+        assert res.concepts[0].concept.suffix == "NotAGoodCLassNAME"
 
 
 class TestToInformationCompliantEntities:
     def test_transform_information(self) -> None:
         class_name = "not_a_good_cLass_NAME"
-        information = InformationInputRules(
-            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
+        information = ConceptualUnvalidatedDataModel(
+            metadata=ConceptualUnvalidatedMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
-                InformationInputProperty(class_name, "State(Previous)", "string", max_count=1),
-                InformationInputProperty(class_name, "P&ID", "string", max_count=1),
+                ConceptualUnvalidatedProperty(
+                    class_name, "TAG_NAME", "string", max_count=1
+                ),
+                ConceptualUnvalidatedProperty(
+                    class_name, "State(Previous)", "string", max_count=1
+                ),
+                ConceptualUnvalidatedProperty(
+                    class_name, "P&ID", "string", max_count=1
+                ),
             ],
-            classes=[InformationInputClass(class_name)],
+            concepts=[ConceptualUnvalidatedConcept(class_name)],
         )
 
-        res: InformationRules = (
+        res: ConceptualDataModel = (
             ToDMSCompliantEntities(rename_warning="raise")
             .transform(ReadRules(information, {}))
-            .rules.as_verified_rules()
+            .rules.as_verified_data_model()
         )
 
         assert res.properties[0].property_ == "TAG_NAME"
-        assert res.properties[0].class_.suffix == "not_a_good_cLass_NAME"
-        assert res.classes[0].class_.suffix == "not_a_good_cLass_NAME"
+        assert res.properties[0].concept.suffix == "not_a_good_cLass_NAME"
+        assert res.concepts[0].concept.suffix == "not_a_good_cLass_NAME"
 
         assert res.properties[1].property_ == "statePrevious"
         assert res.properties[2].property_ == "pId"
 
 
 class TestRulesSubsetting:
-    def test_subset_information_rules(self, david_rules: InformationRules) -> None:
-        class_ = ClassEntity.load("power:GeoLocation")
+
+    def test_subset_information_rules(self, david_rules: ConceptualDataModel) -> None:
+        class_ = ConceptEntity.load("power:GeoLocation")
         subset = SubsetInformationRules({class_}).transform(david_rules)
 
-        assert subset.classes[0].class_ == class_
-        assert len(subset.classes) == 1
+        assert subset.concepts[0].concept == class_
+        assert len(subset.concepts) == 1
 
     def test_subset_information_rules_fails(self, david_rules: DMSRules) -> None:
-        class_ = ClassEntity.load("power:GeoLooocation")
+        class_ = ConceptEntity.load("power:GeoLooocation")
 
         with pytest.raises(NeatValueError):
             _ = SubsetInformationRules({class_}).transform(david_rules)
@@ -134,12 +145,18 @@ class TestRulesSubsetting:
 
 class TestAddCogniteProperties:
     def test_add_cognite_properties(self, cognite_core_schema: DMSSchema) -> None:
-        input_rules = InformationInputRules(
-            metadata=InformationInputMetadata("my_space", "MyModel", "v1", "doctrino"),
+        input_rules = ConceptualUnvalidatedDataModel(
+            metadata=ConceptualUnvalidatedMetadata(
+                "my_space", "MyModel", "v1", "doctrino"
+            ),
             properties=[],
-            classes=[
-                InformationInputClass("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
-                InformationInputClass("WindTurbine", implements="PowerGeneratingUnit"),
+            concepts=[
+                ConceptualUnvalidatedConcept(
+                    "PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"
+                ),
+                ConceptualUnvalidatedConcept(
+                    "WindTurbine", implements="PowerGeneratingUnit"
+                ),
             ],
         )
         read_model = cognite_core_schema.as_read_model()
@@ -156,7 +173,7 @@ class TestAddCogniteProperties:
 
             result = AddCogniteProperties(client).transform(ReadRules(input_rules, {}))
         assert result.rules is not None
-        actual_classes = {str(c.class_) for c in result.rules.classes}
+        actual_classes = {str(c.concept) for c in result.rules.concepts}
         expected_classes = (
             {"PowerGeneratingUnit", "WindTurbine"}
             | {
@@ -180,7 +197,9 @@ class TestAddCogniteProperties:
 
         properties_by_class = defaultdict(set)
         for prop in result.rules.properties:
-            properties_by_class[prop.class_.dump(prefix="my_space")].add(prop.property_)
+            properties_by_class[prop.concept.dump(prefix="my_space")].add(
+                prop.property_
+            )
 
         assert set(properties_by_class.keys()) == {"PowerGeneratingUnit", "WindTurbine"}
         assert properties_by_class["PowerGeneratingUnit"] == expected_properties

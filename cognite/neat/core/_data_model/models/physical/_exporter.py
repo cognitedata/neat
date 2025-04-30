@@ -27,7 +27,7 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.models.data_types import DataType, Double, Enum, Float
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     DMSFilter,
     DMSNodeEntity,
@@ -287,7 +287,9 @@ class _DMSExporter:
         container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
         enum: Collection[DMSEnum] | None,
     ) -> ContainerApplyDict:
-        enum_values_by_collection: dict[ClassEntity, list[DMSEnum]] = defaultdict(list)
+        enum_values_by_collection: dict[ConceptEntity, list[DMSEnum]] = defaultdict(
+            list
+        )
         for enum_value in enum or []:
             enum_values_by_collection[enum_value.collection].append(enum_value)
 

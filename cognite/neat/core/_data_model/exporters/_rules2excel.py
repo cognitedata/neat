@@ -20,12 +20,17 @@ from cognite.neat.core._data_model._shared import VerifiedRules
 from cognite.neat.core._data_model.models import (
     SheetRow,
 )
-from cognite.neat.core._data_model.models._base_rules import BaseMetadata, RoleTypes
+from cognite.neat.core._data_model.models._base_validated_data_model import (
+    BaseMetadata,
+    RoleTypes,
+)
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
 )
-from cognite.neat.core._data_model.models.dms._rules import DMSRules
-from cognite.neat.core._data_model.models.information._rules import InformationRules
+from cognite.neat.core._data_model.models.physical._rules import DMSRules
+from cognite.neat.core._data_model.models.conceptual._validated_data_model import (
+    ConceptualDataModel,
+)
 from cognite.neat.core._utils.spreadsheet import (
     find_column_with_value,
     generate_data_validation,
@@ -140,7 +145,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        rules_model = DMSRules if role == RoleTypes.dms else InformationRules
+        rules_model = DMSRules if role == RoleTypes.dms else ConceptualDataModel
 
         headers_by_sheet = rules_model.headers_by_sheet(by_alias=True)
         headers_by_sheet.pop("Metadata")
@@ -185,7 +190,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._write_sheets(workbook, dumped_reference_rules, reference_rules, sheet_prefix=prefix)
             self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
 
-        if isinstance(rules, InformationRules) and rules.prefixes:
+        if isinstance(rules, ConceptualDataModel) and rules.prefixes:
             self._write_prefixes_sheet(workbook, rules.prefixes)
 
         if self._styling_level > 0:
