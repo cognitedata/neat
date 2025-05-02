@@ -4,6 +4,8 @@ from pathlib import Path
 import pyarrow.parquet as pq
 from rdflib import RDF, Literal, Namespace
 
+from cognite.neat._graph import extractors
+from cognite.neat._graph.examples import nordic44_knowledge_graph
 from cognite.neat._graph.loaders import DictLoader
 from cognite.neat._shared import Triple
 from cognite.neat._store import NeatGraphStore
@@ -47,3 +49,18 @@ class TestLocationFilterLoader:
             }
         ]
         assert table.to_pylist() == expected_content
+
+    def test_write_parquet_tables_nordic44(self, tmp_path: Path) -> None:
+        store = NeatGraphStore.from_oxi_local_store()
+        store.write(extractors.RdfFileExtractor(nordic44_knowledge_graph))
+
+        loader = DictLoader(store, "parquet")
+
+        parquet_folder = tmp_path / "parquet_folder"
+        parquet_folder.mkdir(parents=True, exist_ok=True)
+
+        loader.write_to_file(parquet_folder)
+
+        expected_types = set(store.queries.select.list_types(remove_namespace=True))
+        actual_types = {table.stem for table in parquet_folder.glob("*.parquet")}
+        assert expected_types == actual_types
