@@ -463,7 +463,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    property_id_standardized = NamingStandardization.standardize_property_str(property_uri)
+                    property_id_standardized = NamingStandardization.standardize_property_str(property_id)
                     if existing_prop := properties_by_id.get(property_id_standardized):
                         if not isinstance(existing_prop.instance_source, list):
                             existing_prop.instance_source = (
@@ -481,7 +481,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 for property_uri, read_properties in shared_properties.items():
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    property_id_standardized = NamingStandardization.standardize_property_str(property_uri)
+                    property_id_standardized = NamingStandardization.standardize_property_str(property_id)
                     if existing_prop := properties_by_id.get(property_id_standardized):
                         if not isinstance(existing_prop.instance_source, list):
                             existing_prop.instance_source = (
