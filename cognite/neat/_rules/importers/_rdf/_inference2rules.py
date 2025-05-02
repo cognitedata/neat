@@ -313,6 +313,10 @@ class SubclassInferenceImporter(BaseRDFImporter):
     Args:
         issue_list: Issue list to store issues
         graph: Knowledge graph
+        rules: If provided, the interference will be based on this model and extend it.
+        data_model_id: Data model id to be used for the inference
+        non_existing_node_type: Type to be used for non-existing nodes
+        standardize_properties: If True, the properties will be standardized to match the NEAT standard.
     """
 
     overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
@@ -360,6 +364,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
         rules: InformationRules | None = None,
         data_model_id: dm.DataModelId | tuple[str, str, str] | None = None,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
+        standardize_properties: bool = False,
     ) -> None:
         if sum([1 for v in [rules, data_model_id] if v is not None]) != 1:
             raise ValueError("Exactly one of rules or data_model_id must be provided.")
@@ -371,6 +376,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             raise ValueError("Exactly one of rules or data_model_id must be provided.")
         super().__init__(issue_list, graph, identifier, -1, non_existing_node_type, language="en")
         self._rules = rules
+        self._standardize_properties = standardize_properties
 
     def _to_rules_components(
         self,
