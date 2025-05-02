@@ -1,5 +1,5 @@
+import math
 import re
-import urllib.parse
 import warnings
 from abc import ABC
 from collections import Counter, defaultdict
@@ -133,10 +133,13 @@ class ToDMSCompliantEntities(
         rename_warning: How to handle renaming of entities that are not compliant with the Information Model.
             - "raise": Raises a warning and renames the entity.
             - "skip": Renames the entity without raising a warning.
+        always_standardize: If True, always standardize the names of classes and properties, even if they are
+            DMS compliant.
     """
 
-    def __init__(self, rename_warning: Literal["raise", "skip"] = "skip") -> None:
+    def __init__(self, rename_warning: Literal["raise", "skip"] = "skip", always_standardize: bool = False) -> None:
         self._renaming = rename_warning
+        self._always_standardize = always_standardize
 
     @property
     def description(self) -> str:
@@ -157,9 +160,9 @@ class ToDMSCompliantEntities(
             concept_entity = cast(ConceptEntity, concept.concept)  # Safe due to the dump above
             if not PATTERNS.view_id_compliance.match(concept_entity.suffix):
                 new_suffix = self._fix_concept_suffix(concept_entity.suffix)
-                if self._renaming == "raise":
+                if self._renaming == "raise" and not self._always_standardize:
                     warnings.warn(
-                        NeatValueWarning(f"Invalid class name {concept_entity.suffix!r}.Renaming to {new_suffix}"),
+                        NeatValueWarning(f"Invalid concept name {concept_entity.suffix!r}.Renaming to {new_suffix}"),
                         stacklevel=2,
                     )
                 concept.concept.suffix = new_suffix  # type: ignore[union-attr]
@@ -171,9 +174,9 @@ class ToDMSCompliantEntities(
                         concept.implements[i].suffix = new_by_old_concept_suffix[parent.suffix]  # type: ignore[union-attr]
 
         for prop in copy.properties:
-            if not PATTERNS.physical_property_id_compliance.match(prop.property_):
+            if self._always_standardize or not PATTERNS.physical_property_id_compliance.match(prop.property_):
                 new_property = self._fix_property(prop.property_)
-                if self._renaming == "warning":
+                if self._renaming == "raise" and not self._always_standardize:
                     warnings.warn(
                         NeatValueWarning(
                             f"Invalid property name {prop.concept.suffix}.{prop.property_!r}."
@@ -208,7 +211,6 @@ class ToDMSCompliantEntities(
     def _fix_concept_suffix(self, suffix: str) -> str:
         if suffix in self._reserved_concept_words:
             return f"My{suffix}"
-        suffix = urllib.parse.unquote(suffix)
         suffix = NamingStandardization.standardize_concept_str(suffix)
         if len(suffix) > 252:
             suffix = suffix[:252]
@@ -217,11 +219,131 @@ class ToDMSCompliantEntities(
     def _fix_property(self, property_: str) -> str:
         if property_ in self._reserved_property_words:
             return f"my{property_}"
-        property_ = urllib.parse.unquote(property_)
         property_ = NamingStandardization.standardize_property_str(property_)
         if len(property_) > 252:
             property_ = property_[:252]
         return property_
+
+
+class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
+    """Merges identical properties in the rules
+
+    This is typically used to ensure that all the properties are unique and do not have duplicates.
+    """
+
+    @property
+    def description(self) -> str:
+        return "Merges identical properties in the rules."
+
+    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+        if rules.rules is None:
+            return rules
+        # Doing dump to obtain a copy, and ensure that all entities are created. Input allows
+        # string for entities, the dump call will convert these to entities.
+        dumped = rules.rules.dump()
+        copy = InformationInputRules.load(dumped)
+        copy.properties = self._merge_identical_properties(copy.properties)
+        return ReadRules(rules=copy, read_context=rules.read_context)
+
+    def _merge_identical_properties(self, properties: list[InformationInputProperty]) -> list[InformationInputProperty]:
+        counter: dict[tuple[ClassEntity, str], list[InformationInputProperty]] = defaultdict(list)
+        for prop in properties:
+            cls_ = cast(ClassEntity, prop.class_)  # Safe due to the dump above
+            counter[(cls_, prop.property_)].append(prop)
+
+        merged_properties: list[InformationInputProperty] = []
+        for (cls_, prop_id), properties in counter.items():
+            if len(properties) > 1:
+                warnings.warn(
+                    NeatValueWarning(
+                        f"Property {cls_.suffix}.{prop_id} is defined {len(properties)} times. Merging them."
+                    ),
+                    stacklevel=2,
+                )
+                merged = self._as_one_property(properties)
+                merged_properties.append(merged)
+            else:
+                merged_properties.extend(properties)
+
+        return merged_properties
+
+    def _as_one_property(self, properties: list[InformationInputProperty]) -> InformationInputProperty:
+        first = properties[0]
+        return InformationInputProperty(
+            class_=first.class_,
+            property_=first.property_,
+            # We know that value_type cannot be str due to the dump above
+            value_type=self._merge_value_types([prop.value_type for prop in properties]),  # type: ignore[misc]
+            name=next((prop.name for prop in properties if prop.name is not None), None),
+            description=next((prop.description for prop in properties if prop.description is not None), None),
+            min_count=self._merge_min_count([prop.min_count for prop in properties]),
+            max_count=self._merge_max_count([prop.max_count for prop in properties]),
+            instance_source=self._merge_instances([prop.instance_source for prop in properties]),
+        )
+
+    @staticmethod
+    def _merge_min_count(min_counts: list[int | None]) -> int | None:
+        min_count: int | None = None
+        for item in min_counts:
+            if min_count is None:
+                min_count = item
+            elif item is not None:
+                min_count = min(min_count, item)
+        return min_count
+
+    @staticmethod
+    def _merge_max_count(max_counts: list[int | float | None]) -> int | float | None:
+        max_count: int | float | None = None
+        for item in max_counts:
+            if isinstance(item, float) and math.isinf(item):
+                return float("inf")
+            if max_count is None:
+                max_count = item
+            elif item is not None:
+                max_count = max(max_count, item)
+        return max_count
+
+    @staticmethod
+    def _merge_value_types(
+        value_types: list[DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity],
+    ) -> DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity:
+        seen: set[DataType | ClassEntity | UnknownEntity] = set()
+        new_types: list[DataType | ClassEntity | UnknownEntity] = []
+        for type_ in value_types:
+            if isinstance(type_, MultiValueTypeInfo):
+                for t in type_.types:
+                    if t not in seen:
+                        new_types.append(t)
+                        seen.add(t)
+            else:
+                if type_ not in seen:
+                    new_types.append(type_)
+                    seen.add(type_)
+        if len(new_types) == 1:
+            return new_types[0]
+        else:
+            return MultiValueTypeInfo(types=new_types)
+
+    @staticmethod
+    def _merge_instances(
+        instances: list[str | list[str] | None],
+    ) -> str | list[str] | None:
+        seen: set[str] = set()
+        new_instances: list[str] = []
+        for instance in instances:
+            if isinstance(instance, str):
+                if instance not in seen:
+                    new_instances.append(instance)
+                    seen.add(instance)
+            elif isinstance(instance, Collection):
+                for item in instance:
+                    if item not in seen:
+                        new_instances.append(item)
+                        seen.add(item)
+        if len(new_instances) == 1:
+            return new_instances[0]
+        else:
+            return new_instances or None
 
 
 class StandardizeSpaceAndVersion(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):  # type: ignore[misc]
