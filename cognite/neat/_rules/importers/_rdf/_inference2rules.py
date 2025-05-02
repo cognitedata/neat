@@ -463,8 +463,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    property_id_standardized = NamingStandardization.standardize_property_str(property_id)
-                    if existing_prop := properties_by_id.get(property_id_standardized):
+                    if self._standardize_properties:
+                        property_id = NamingStandardization.standardize_property_str(property_id)
+                    if existing_prop := properties_by_id.get(property_id):
                         if not isinstance(existing_prop.instance_source, list):
                             existing_prop.instance_source = (
                                 [existing_prop.instance_source] if existing_prop.instance_source else []
@@ -472,7 +473,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         existing_prop.instance_source.append(property_uri)
                         continue
                     else:
-                        properties_by_id[property_id_standardized] = self._create_property(
+                        properties_by_id[property_id] = self._create_property(
                             read_properties, class_suffix, property_uri, property_id, prefixes
                         )
                 properties_by_class_suffix_by_property_id[class_suffix] = properties_by_id
@@ -481,15 +482,16 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 for property_uri, read_properties in shared_properties.items():
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    property_id_standardized = NamingStandardization.standardize_property_str(property_id)
-                    if existing_prop := properties_by_id.get(property_id_standardized):
+                    if self._standardize_properties:
+                        property_id = NamingStandardization.standardize_property_str(property_id)
+                    if existing_prop := properties_by_id.get(property_id):
                         if not isinstance(existing_prop.instance_source, list):
                             existing_prop.instance_source = (
                                 [existing_prop.instance_source] if existing_prop.instance_source else []
                             )
                         existing_prop.instance_source.append(property_uri)
                     else:
-                        properties_by_id[property_id_standardized] = self._create_property(
+                        properties_by_id[property_id] = self._create_property(
                             read_properties, parent_suffix, property_uri, property_id, prefixes
                         )
         return classes, [
