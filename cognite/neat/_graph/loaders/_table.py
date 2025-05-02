@@ -33,6 +33,8 @@ class DictLoader(BaseLoader[dict[str, object]]):
     def write_to_file(self, filepath: Path) -> None:
         if self.file_format != "parquet":
             raise NeatValueError(f"Unsupported file format: {self.file_format!r}. Only 'parquet' is supported.")
+        if not filepath.exists() and filepath.suffix == "":
+            filepath.mkdir(parents=True, exist_ok=True)
         if not filepath.is_dir():
             raise NeatValueError(f"Expected a directory, but got a file: {filepath.as_posix()!r}.")
         self._write_parquet_files(filepath)
