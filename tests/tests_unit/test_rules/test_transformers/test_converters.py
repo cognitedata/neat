@@ -9,9 +9,12 @@ from cognite.neat._client.testing import monkeypatch_neat_client
 from cognite.neat._issues.errors._general import NeatValueError
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.models import DMSInputRules, InformationRules
+from cognite.neat._rules.models import data_types as dt
+from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
 from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
+from cognite.neat._rules.models.entities import MultiValueTypeInfo
+from cognite.neat._rules.models.entities._single_value import ClassEntity, UnknownEntity, ViewEntity
 from cognite.neat._rules.models.information import (
     InformationInputClass,
     InformationInputMetadata,
@@ -20,6 +23,7 @@ from cognite.neat._rules.models.information import (
 )
 from cognite.neat._rules.transformers import (
     AddCogniteProperties,
+    MergeIdenticalProperties,
     StandardizeNaming,
     SubsetDMSRules,
     SubsetInformationRules,
@@ -94,6 +98,92 @@ class TestToInformationCompliantEntities:
 
         assert res.properties[1].property_ == "statePrevious"
         assert res.properties[2].property_ == "pId"
+
+
+class TestMergeIdenticalProperties:
+    def test_transform_information(self) -> None:
+        class_name = "MyAsset"
+        information = InformationInputRules(
+            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
+            properties=[
+                InformationInputProperty(class_name, "deletedTime", "timestamp", max_count=1),
+                InformationInputProperty(class_name, "deletedTime", "timestamp", max_count=2),
+                InformationInputProperty(class_name, "P&ID", "string", max_count=1),
+            ],
+            classes=[InformationInputClass(class_name)],
+        )
+        res = MergeIdenticalProperties().transform(ReadRules(information, {}))
+
+        assert res.rules is not None
+        assert len(res.rules.properties) == 2
+        assert res.rules.properties[0].property_ == "deletedTime"
+        assert res.rules.properties[1].property_ == "P&ID"
+
+    @pytest.mark.parametrize(
+        "min_counts, expected",
+        [
+            pytest.param([None, 0], 0, id="Chose number of null"),
+            pytest.param([1, 0, None], 0, id="Choose lowest number"),
+            pytest.param([None, None, None], None, id="Keep null"),
+        ],
+    )
+    def test_merge_min_counts(self, min_counts: list[int | None], expected: int | None) -> None:
+        assert MergeIdenticalProperties._merge_min_count(min_counts) == expected
+
+    @pytest.mark.parametrize(
+        "max_counts, expected",
+        [
+            pytest.param([None, 1], 1, id="Chose number of null"),
+            pytest.param([1, 0, None], 1, id="Choose highest number"),
+            pytest.param([None, None, None], None, id="Keep null"),
+            pytest.param([None, float("inf"), 1000], float("inf"), id="Keep inf"),
+        ],
+    )
+    def test_merge_max_counts(self, max_counts: list[int | float | None], expected: int | float | None) -> None:
+        assert MergeIdenticalProperties._merge_max_count(max_counts) == expected
+
+    @pytest.mark.parametrize(
+        "value_types, expected",
+        [
+            pytest.param([dt.String(), dt.String()], dt.String(), id="Same type"),
+            pytest.param(
+                [dt.String(), dt.Integer()], MultiValueTypeInfo(types=[dt.String(), dt.Integer()]), id="Different types"
+            ),
+            pytest.param(
+                [dt.String(), dt.Integer(), dt.String()],
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
+                id="Different types with duplicates",
+            ),
+            pytest.param(
+                [ClassEntity(prefix="space", suffix="Class1"), ClassEntity(prefix="space", suffix="Class2")],
+                MultiValueTypeInfo(
+                    types=[ClassEntity(prefix="space", suffix="Class1"), ClassEntity(prefix="space", suffix="Class2")]
+                ),
+                id="Different classes",
+            ),
+            pytest.param(
+                [ClassEntity(prefix="space", suffix="Class1"), dt.String()],
+                MultiValueTypeInfo(types=[ClassEntity(prefix="space", suffix="Class1"), dt.String()]),
+                id="Class and type",
+            ),
+            pytest.param(
+                [
+                    MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
+                    MultiValueTypeInfo(types=[dt.Double(), ClassEntity(prefix="space", suffix="MyClass")]),
+                ],
+                MultiValueTypeInfo(
+                    types=[dt.String(), dt.Integer(), dt.Double(), ClassEntity(prefix="space", suffix="MyClass")]
+                ),
+                id="MultiValueTypeInfo",
+            ),
+        ],
+    )
+    def test_merge_value_types(
+        self,
+        value_types: list[DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity],
+        expected: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
+    ):
+        assert MergeIdenticalProperties._merge_value_types(value_types) == expected
 
 
 class TestRulesSubsetting:

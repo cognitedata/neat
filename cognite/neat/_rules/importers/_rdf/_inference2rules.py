@@ -1,4 +1,5 @@
 import itertools
+import urllib.parse
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -28,7 +29,6 @@ from cognite.neat._store import NeatGraphStore
 from cognite.neat._store._provenance import INSTANCES_ENTITY
 from cognite.neat._utils.collection_ import iterate_progress_bar
 from cognite.neat._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
-from cognite.neat._utils.text import NamingStandardization
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
 
@@ -436,7 +436,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 shared_property_uris = set()
             shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
             for type_uri, properties_by_property_uri in properties_by_class_by_property.items():
-                class_suffix = remove_namespace_from_uri(type_uri)
+                class_suffix = urllib.parse.unquote(remove_namespace_from_uri(type_uri))
                 self._add_uri_namespace_to_prefixes(type_uri, prefixes)
 
                 if class_suffix not in existing_classes:
@@ -457,35 +457,18 @@ class SubclassInferenceImporter(BaseRDFImporter):
                         continue
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    property_id_standardized = NamingStandardization.standardize_property_str(property_uri)
-                    if existing_prop := properties_by_id.get(property_id_standardized):
-                        if not isinstance(existing_prop.instance_source, list):
-                            existing_prop.instance_source = (
-                                [existing_prop.instance_source] if existing_prop.instance_source else []
-                            )
-                        existing_prop.instance_source.append(property_uri)
-                        continue
-                    else:
-                        properties_by_id[property_id_standardized] = self._create_property(
-                            read_properties, class_suffix, property_uri, property_id, prefixes
-                        )
+                    properties_by_id[property_id] = self._create_property(
+                        read_properties, class_suffix, property_uri, property_id, prefixes
+                    )
                 properties_by_class_suffix_by_property_id[class_suffix] = properties_by_id
             if parent_suffix:
                 properties_by_id = {}
                 for property_uri, read_properties in shared_properties.items():
                     property_id = remove_namespace_from_uri(property_uri)
                     self._add_uri_namespace_to_prefixes(property_uri, prefixes)
-                    property_id_standardized = NamingStandardization.standardize_property_str(property_uri)
-                    if existing_prop := properties_by_id.get(property_id_standardized):
-                        if not isinstance(existing_prop.instance_source, list):
-                            existing_prop.instance_source = (
-                                [existing_prop.instance_source] if existing_prop.instance_source else []
-                            )
-                        existing_prop.instance_source.append(property_uri)
-                    else:
-                        properties_by_id[property_id_standardized] = self._create_property(
-                            read_properties, parent_suffix, property_uri, property_id, prefixes
-                        )
+                    properties_by_id[property_id] = self._create_property(
+                        read_properties, parent_suffix, property_uri, property_id, prefixes
+                    )
         return classes, [
             prop for properties in properties_by_class_suffix_by_property_id.values() for prop in properties.values()
         ]
