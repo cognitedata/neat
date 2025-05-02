@@ -35,6 +35,7 @@ class ToAPI:
         self._verbose = verbose
         self.cdf = CDFToAPI(state, verbose)
         self._python = ToPythonAPI(state, verbose)
+        self.file = ToFileAPI(state, verbose)
 
     def ontology(self, io: Any) -> None:
         """Export the data model to ontology.
@@ -541,3 +542,37 @@ class ToPythonAPI:
             elif isinstance(item, NeatIssue):
                 issue_list.append(item)
         return instances, issue_list
+
+
+@session_class_wrapper
+class ToFileInstancesAPI:
+    """API used to write the contents of a NeatSession to a file."""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+
+    def parquet(self, folder: Any) -> None:
+        """Export the instances to a parquet file.
+
+        Args:
+            folder: The folder path to write the parquet file to.
+
+        Example:
+            Export instances to parquet
+            ```python
+            neat.to.instances.parquet("my_folder")
+            ```
+
+        """
+        loaders.DictLoader(self._state.instances.store, file_format="parquet").write_to_file(Path(folder))
+
+
+@session_class_wrapper
+class ToFileAPI:
+    """API used to write the contents of a NeatSession to a file."""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+        self.instances = ToFileInstancesAPI(state, verbose)
