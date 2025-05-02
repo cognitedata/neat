@@ -18,6 +18,7 @@ from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, UnknownEntity, load_value_type
 from cognite.neat._rules.models.information import InformationInputProperty
 from cognite.neat._store import NeatGraphStore
+from cognite.neat._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat._utils.io_ import to_directory_compatible
 from cognite.neat._utils.rdf_ import split_uri, uri_instance_to_display_name
 
@@ -88,7 +89,13 @@ class DictLoader(BaseLoader[dict[str, object]]):
                 yield NeatValueError(f"No properties found for class: {display_name}")
                 continue
             yield _START_OF_CLASS(display_name)
-            for instance_id, properties in self.graph_store.read(rdf_type):
+            total = self.graph_store.queries.select.count_of_type(rdf_type)
+            iterable = self.graph_store.read(rdf_type)
+            iterable = iterate_progress_bar_if_above_config_threshold(
+                iterable, total, f"Loading {display_name} instances"
+            )
+
+            for instance_id, properties in iterable:
                 identifier = uri_instance_to_display_name(instance_id)
                 cleaned = self._clean_uris(properties, properties_by_id)
                 cleaned["externalId"] = identifier
