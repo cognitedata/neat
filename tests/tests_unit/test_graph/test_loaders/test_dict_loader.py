@@ -82,16 +82,18 @@ class TestLocationFilterLoader:
         table = pq.read_table(expected_asset_file)
         expected_content = [
             {
+                "externalId": "invalid_asset",
+                "name": "Invalid Asset",
+                "createdYear": None,
+                "price": 28.0,
+                "isActive": None,
+            },
+            {
                 "name": "Doctrino Asset",
                 "createdYear": 2025,
                 "price": 1234.56,
                 "isActive": True,
-            },
-            {
-                "name": "Invalid Asset",
-                "createdYear": None,
-                "price": 28,
-                "isActive": None,
+                "externalId": "my_asset",
             },
         ]
         assert table.to_pylist() == expected_content
