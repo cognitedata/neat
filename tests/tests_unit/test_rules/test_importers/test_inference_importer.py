@@ -162,7 +162,8 @@ def test_infer_importer_names_different_casing() -> None:
         ],
         named_graph=neat._state.instances.store.default_named_graph,
     )
-    neat.infer()
+    issues = neat.infer()
+    assert len(issues) == 0
     assert neat._state.rule_store.provenance
     info = neat._state.rule_store.last_verified_information_rules
 
