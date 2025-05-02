@@ -12,6 +12,10 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
+    InformationToDMS,
+    MergeDMSRules,
+    MergeIdenticalProperties,
+    MergeInformationRules,
     ConceptualToPhysical,
     MergeConceptualDataModels,
     MergePhysicalDataModels,
@@ -250,7 +254,10 @@ class NeatSession:
 
         def action() -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
             unverified_conceptual = importer.to_data_model()
-            unverified_conceptual = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_conceptual)
+            unverified_conceptual = ToDMSCompliantEntities(rename_warning="raise", always_standardize=True).transform(
+                unverified_conceptual
+            )
+            unverified_conceptual = MergeIdenticalProperties().transform(unverified_conceptual)
 
             extra_conceptual = VerifyConceptualDataModel().transform(unverified_conceptual)
             if not last_entity:
