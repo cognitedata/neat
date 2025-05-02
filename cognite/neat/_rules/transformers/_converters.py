@@ -223,7 +223,7 @@ class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules]
                 merged = self._as_one_property(properties)
                 merged_properties.append(merged)
             else:
-                merged_properties.append(prop)
+                merged_properties.extend(properties)
 
         return merged_properties
 
