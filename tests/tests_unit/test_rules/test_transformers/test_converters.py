@@ -20,6 +20,7 @@ from cognite.neat._rules.models.information import (
 )
 from cognite.neat._rules.transformers import (
     AddCogniteProperties,
+    MergeIdenticalProperties,
     StandardizeNaming,
     SubsetDMSRules,
     SubsetInformationRules,
@@ -94,6 +95,26 @@ class TestToInformationCompliantEntities:
 
         assert res.properties[1].property_ == "statePrevious"
         assert res.properties[2].property_ == "pId"
+
+
+class TestMergeIdenticalProperties:
+    def test_transform_information(self) -> None:
+        class_name = "MyAsset"
+        information = InformationInputRules(
+            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
+            properties=[
+                InformationInputProperty(class_name, "deletedTime", "timestamp", max_count=1),
+                InformationInputProperty(class_name, "deletedTime", "timestamp", max_count=2),
+                InformationInputProperty(class_name, "P&ID", "string", max_count=1),
+            ],
+            classes=[InformationInputClass(class_name)],
+        )
+        res = MergeIdenticalProperties().transform(ReadRules(information, {}))
+
+        assert res.rules is not None
+        assert len(res.rules.properties) == 2
+        assert res.rules.properties[0].property_ == "deletedTime"
+        assert res.rules.properties[1].property_ == "P&ID"
 
 
 class TestRulesSubsetting:
