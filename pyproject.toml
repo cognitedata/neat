@@ -100,6 +100,7 @@ dev = [
     "scikit-learn>=1.6.1",
     "matplotlib>=3.10.1",
     "pyarrow>=20.0.0",
+    "pyarrow-stubs>=19.2",
 ]
 
 [tool.uv]

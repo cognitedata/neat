@@ -481,6 +481,7 @@ dev = [
     { name = "pandas-stubs" },
     { name = "pre-commit" },
     { name = "pyarrow" },
+    { name = "pyarrow-stubs" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-freezegun" },
@@ -555,6 +556,7 @@ dev = [
     { name = "pandas-stubs", specifier = ">=2,<3" },
     { name = "pre-commit", specifier = ">=4.0.0,<5.0.0" },
     { name = "pyarrow", specifier = ">=20.0.0" },
+    { name = "pyarrow-stubs", specifier = ">=19.2" },
     { name = "pytest", specifier = ">=8.0.0,<9.0.0" },
     { name = "pytest-cov", specifier = ">=6.0.0,<7.0.0" },
     { name = "pytest-freezegun", specifier = ">=0.4.2,<1.0.0" },
@@ -3373,6 +3375,18 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/eb/cb/65fa110b483339add6a9bc7b6373614166b14e20375d4daa73483755f830/pyarrow-20.0.0-cp313-cp313t-musllinux_1_2_aarch64.whl", hash = "sha256:f3b117b922af5e4c6b9a9115825726cac7d8b1421c37c2b5e24fbacc8930612c", size = 42839441 },
     { url = "https://files.pythonhosted.org/packages/98/7b/f30b1954589243207d7a0fbc9997401044bf9a033eec78f6cb50da3f304a/pyarrow-20.0.0-cp313-cp313t-musllinux_1_2_x86_64.whl", hash = "sha256:e724a3fd23ae5b9c010e7be857f4405ed5e679db5c93e66204db1a69f733936a", size = 44503279 },
     { url = "https://files.pythonhosted.org/packages/37/40/ad395740cd641869a13bcf60851296c89624662575621968dcfafabaa7f6/pyarrow-20.0.0-cp313-cp313t-win_amd64.whl", hash = "sha256:82f1ee5133bd8f49d31be1299dc07f585136679666b502540db854968576faf9", size = 25944982 },
+]
+
+[[package]]
+name = "pyarrow-stubs"
+version = "19.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyarrow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/f0/50a40613805e7a5beaf35d105d45f3e8dfaa1b9284f5d35de9127b296ecd/pyarrow_stubs-19.2.tar.gz", hash = "sha256:4c6862dec8a9d9ff9bd4a404cf3df02a1b2cbf07f9737a1441a72eee4611190d", size = 86065 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/75/21/17511736ec80c4a22f56dcc9409266b5c1f52fe9a53555dc9d3f3a8cf35d/pyarrow_stubs-19.2-py3-none-any.whl", hash = "sha256:43601f94b377edd2ed73256d029077bf5118a1db86257c5fcd6783b640d06907", size = 82601 },
 ]
 
 [[package]]
