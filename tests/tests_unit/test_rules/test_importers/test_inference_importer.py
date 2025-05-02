@@ -7,7 +7,7 @@ from cognite.neat import NeatSession
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._graph.examples import nordic44_knowledge_graph
 from cognite.neat.core._graph.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._graph.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._issues import catch_issues
 from cognite.neat.core._rules.analysis import RulesAnalysis
 from cognite.neat.core._rules.importers import InferenceImporter
@@ -162,7 +162,8 @@ def test_infer_importer_names_different_casing() -> None:
         ],
         named_graph=neat._state.instances.store.default_named_graph,
     )
-    neat.infer()
+    issues = neat.infer()
+    assert len(issues) == 1
     assert neat._state.rule_store.provenance
     info = neat._state.rule_store.last_verified_information_rules
 
@@ -186,6 +187,6 @@ def test_infer_importer_names_different_casing() -> None:
     ]
     actual = {node.external_id: node.sources[0].properties for node in instances}
     assert actual == {
-        "MyAsset": {"DeleteFlag": True},
-        "MyAsset2": {"DeleteFlag": False},
+        "MyAsset": {"deleteFlag": True},
+        "MyAsset2": {"deleteFlag": False},
     }
