@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -62,12 +63,14 @@ class TestLocationFilterLoader:
                 yield my_asset, namespace["createdYear"], Literal(2025)
                 yield my_asset, namespace["price"], Literal(1234.56)
                 yield my_asset, namespace["isActive"], Literal(True)
+                yield my_asset, namespace["installationTimestamp"], Literal(datetime.datetime(2025, 5, 2, 14, 30, 0))
                 invalid_asset = namespace["invalid_asset"]
                 yield invalid_asset, RDF.type, namespace["Asset"]
                 yield invalid_asset, namespace["name"], Literal("Invalid Asset")
                 yield invalid_asset, namespace["createdYear"], Literal("TwentyTwenty Five")
                 yield invalid_asset, namespace["price"], Literal(28)
                 yield invalid_asset, namespace["isActive"], Literal("Sant")
+                yield invalid_asset, namespace["installationTimestamp"], Literal("2025-05-02T14:30:00Z")
 
         store.write(DummyExtractor())
 
@@ -87,6 +90,7 @@ class TestLocationFilterLoader:
                 "createdYear": None,
                 "price": 28.0,
                 "isActive": None,
+                "installationTimestamp": None,
             },
             {
                 "name": "Doctrino Asset",
@@ -94,6 +98,7 @@ class TestLocationFilterLoader:
                 "price": 1234.56,
                 "isActive": True,
                 "externalId": "my_asset",
+                "installationTimestamp": datetime.datetime(2025, 5, 2, 14, 30, tzinfo=datetime.timezone.utc),
             },
         ]
         assert table.to_pylist() == expected_content
