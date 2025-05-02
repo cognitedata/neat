@@ -15,6 +15,7 @@ from cognite.neat._rules.models.information._rules import InformationRules
 from cognite.neat._rules.transformers import (
     InformationToDMS,
     MergeDMSRules,
+    MergeIdenticalProperties,
     MergeInformationRules,
     ToDMSCompliantEntities,
     VerifyInformationRules,
@@ -245,6 +246,7 @@ class NeatSession:
         def action() -> tuple[InformationRules, DMSRules | None]:
             unverified_information = importer.to_rules()
             unverified_information = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_information)
+            unverified_information = MergeIdenticalProperties().transform(unverified_information)
 
             extra_info = VerifyInformationRules().transform(unverified_information)
             if not last_entity:
