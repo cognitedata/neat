@@ -1,3 +1,4 @@
+import math
 import re
 import urllib.parse
 import warnings
@@ -219,11 +220,90 @@ class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules]
                     ),
                     stacklevel=2,
                 )
-                raise NotImplementedError()
+                merged = self._as_one_property(properties)
+                merged_properties.append(merged)
             else:
                 merged_properties.append(prop)
 
         return merged_properties
+
+    def _as_one_property(self, properties: list[InformationInputProperty]) -> InformationInputProperty:
+        first = properties[0]
+        return InformationInputProperty(
+            class_=first.class_,
+            property_=first.property_,
+            # We know that value_type cannot be str due to the dump above
+            value_type=self._merge_value_types([prop.value_type for prop in properties]),  # type: ignore[misc]
+            name=next((prop.name for prop in properties if prop.name is not None), None),
+            description=next((prop.description for prop in properties if prop.description is not None), None),
+            min_count=self._merge_min_count([prop.min_count for prop in properties]),
+            max_count=self._merge_max_count([prop.max_count for prop in properties]),
+            instance_source=self._merge_instances([prop.instance_source for prop in properties]),
+        )
+
+    @staticmethod
+    def _merge_min_count(min_counts: list[int | None]) -> int | None:
+        min_count: int | None = None
+        for item in min_counts:
+            if min_count is None:
+                min_count = item
+            elif item is not None:
+                min_count = min(min_count, item)
+        return min_count
+
+    @staticmethod
+    def _merge_max_count(max_counts: list[int | float | None]) -> int | float | None:
+        max_count: int | float | None = None
+        for item in max_counts:
+            if isinstance(item, float) and math.isinf(item):
+                return float("inf")
+            if max_count is None:
+                max_count = item
+            elif item is not None:
+                max_count = max(max_count, item)
+        return max_count
+
+    @staticmethod
+    def _merge_value_types(
+        value_types: list[DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity],
+    ) -> DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity:
+        seen: set[DataType | ClassEntity | UnknownEntity] = set()
+        new_types: list[DataType | ClassEntity | UnknownEntity] = []
+        for type_ in value_types:
+            if isinstance(type_, MultiValueTypeInfo):
+                for t in type_.types:
+                    if t not in seen:
+                        new_types.append(t)
+                        seen.add(t)
+            else:
+                if type_ not in seen:
+                    new_types.append(type_)
+                    seen.add(type_)
+        if len(new_types) == 1:
+            return new_types[0]
+        else:
+            return MultiValueTypeInfo(types=new_types)
+
+    @staticmethod
+    def _merge_instances(
+        instances: list[str | list[str] | None],
+    ) -> str | list[str] | None:
+        seen: set[str] = set()
+        new_instances: list[str] = []
+        for instance in instances:
+            if isinstance(instance, str):
+                if instance not in seen:
+                    new_instances.append(instance)
+                    seen.add(instance)
+            elif isinstance(instance, Collection):
+                for item in instance:
+                    if item not in seen:
+                        new_instances.append(item)
+                        seen.add(item)
+        if len(new_instances) == 1:
+            return new_instances[0]
+        else:
+            return new_instances or None
 
 
 class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]):  # type: ignore[misc]
