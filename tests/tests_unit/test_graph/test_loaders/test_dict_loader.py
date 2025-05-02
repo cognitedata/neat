@@ -1,14 +1,15 @@
+import datetime
 from collections.abc import Iterable
 from pathlib import Path
 
 import pyarrow.parquet as pq
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat._graph import extractors
-from cognite.neat._graph.examples import nordic44_knowledge_graph
-from cognite.neat._graph.loaders import DictLoader
-from cognite.neat._shared import Triple
-from cognite.neat._store import NeatGraphStore
+from cognite.neat.core._graph import extractors
+from cognite.neat.core._graph.examples import nordic44_knowledge_graph
+from cognite.neat.core._graph.loaders import DictLoader
+from cognite.neat.core._shared import Triple
+from cognite.neat.core._store import NeatGraphStore
 
 
 class TestLocationFilterLoader:
@@ -47,6 +48,58 @@ class TestLocationFilterLoader:
                 "isActive": True,
                 "path": "['root', 'level1', 'level2']",
             }
+        ]
+        assert table.to_pylist() == expected_content
+
+    def test_write_parquet_invalid_type(self, tmp_path: Path) -> None:
+        store = NeatGraphStore.from_oxi_local_store()
+
+        class DummyExtractor:
+            def extract(self) -> Iterable[Triple]:
+                namespace = Namespace("http://example.org/")
+                my_asset = namespace["my_asset"]
+                yield my_asset, RDF.type, namespace["Asset"]
+                yield my_asset, namespace["name"], Literal("Doctrino Asset")
+                yield my_asset, namespace["createdYear"], Literal(2025)
+                yield my_asset, namespace["price"], Literal(1234.56)
+                yield my_asset, namespace["isActive"], Literal(True)
+                yield my_asset, namespace["installationTimestamp"], Literal(datetime.datetime(2025, 5, 2, 14, 30, 0))
+                invalid_asset = namespace["invalid_asset"]
+                yield invalid_asset, RDF.type, namespace["Asset"]
+                yield invalid_asset, namespace["name"], Literal("Invalid Asset")
+                yield invalid_asset, namespace["createdYear"], Literal("TwentyTwenty Five")
+                yield invalid_asset, namespace["price"], Literal(28)
+                yield invalid_asset, namespace["isActive"], Literal("Sant")
+                yield invalid_asset, namespace["installationTimestamp"], Literal("2025-05-02T14:30:00Z")
+
+        store.write(DummyExtractor())
+
+        loader = DictLoader(store, "parquet")
+        parquet_folder = tmp_path / "parquet_folder"
+        parquet_folder.mkdir(parents=True, exist_ok=True)
+
+        loader.write_to_file(parquet_folder)
+
+        expected_asset_file = parquet_folder / "Asset.parquet"
+        assert expected_asset_file.exists()
+        table = pq.read_table(expected_asset_file)
+        expected_content = [
+            {
+                "externalId": "invalid_asset",
+                "name": "Invalid Asset",
+                "createdYear": None,
+                "price": 28.0,
+                "isActive": None,
+                "installationTimestamp": None,
+            },
+            {
+                "name": "Doctrino Asset",
+                "createdYear": 2025,
+                "price": 1234.56,
+                "isActive": True,
+                "externalId": "my_asset",
+                "installationTimestamp": datetime.datetime(2025, 5, 2, 14, 30, tzinfo=datetime.timezone.utc),
+            },
         ]
         assert table.to_pylist() == expected_content
 
