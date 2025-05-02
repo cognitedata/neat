@@ -364,7 +364,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
         rules: InformationRules | None = None,
         data_model_id: dm.DataModelId | tuple[str, str, str] | None = None,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
-        standardize_properties: bool = False,
+        standardize_properties: bool = True,
     ) -> None:
         if sum([1 for v in [rules, data_model_id] if v is not None]) != 1:
             raise ValueError("Exactly one of rules or data_model_id must be provided.")
