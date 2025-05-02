@@ -1,5 +1,6 @@
 import math
 import typing
+import urllib.parse
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
@@ -17,7 +18,8 @@ from cognite.neat._rules.models.data_types import DataType
 from cognite.neat._rules.models.entities import ClassEntity, MultiValueTypeInfo, UnknownEntity, load_value_type
 from cognite.neat._rules.models.information import InformationInputProperty
 from cognite.neat._store import NeatGraphStore
-from cognite.neat._utils.rdf_ import uri_instance_to_display_name
+from cognite.neat._utils.io_ import to_directory_compatible
+from cognite.neat._utils.rdf_ import split_uri, uri_instance_to_display_name
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, BaseLoader
 
@@ -44,12 +46,13 @@ class DictLoader(BaseLoader[dict[str, object]]):
     ) -> Iterable[dict[str, object] | NeatIssue | type[_END_OF_CLASS] | _START_OF_CLASS]:
         for result in self.graph_store.queries.select.list_types(remove_namespace=False):
             rdf_type = typing.cast(URIRef, result[0])
-            display_name = uri_instance_to_display_name(rdf_type)
+            namespace, entity_name = split_uri(rdf_type)
+            display_name = urllib.parse.unquote(entity_name)
             yield _START_OF_CLASS(display_name)
             for instance_id, properties in self.graph_store.read(rdf_type):
                 identifier = uri_instance_to_display_name(instance_id)
                 cleaned = self._clean_uris(properties)
-                cleaned["external_id"] = identifier
+                cleaned["externalId"] = identifier
                 yield cleaned
             yield _END_OF_CLASS
 
@@ -91,7 +94,8 @@ class DictLoader(BaseLoader[dict[str, object]]):
                 ):
                     properties = properties_by_class[result.class_name]
                     schema = self._create_schema(properties, info.metadata.space)
-                    writer = pq.ParquetWriter(folder_path / f"{result.class_name}.parquet", schema)
+                    file_stem = to_directory_compatible(result.class_name)
+                    writer = pq.ParquetWriter(folder_path / f"{file_stem}.parquet", schema)
                 elif result is _END_OF_CLASS:
                     self._write_rows(writer, schema, rows)
                     self._close_writer(writer)
@@ -115,7 +119,7 @@ class DictLoader(BaseLoader[dict[str, object]]):
         return properties_by_class
 
     def _create_schema(self, properties: list[InformationInputProperty], default_prefix: str) -> pa.Schema:
-        fields: list[pa.Field] = []
+        fields: list[pa.Field] = [pa.field("externalId", pa.string(), nullable=False)]
         for prop in properties:
             value_type = load_value_type(prop.value_type, default_prefix)
             pa_type = self._as_pa_type(value_type)
