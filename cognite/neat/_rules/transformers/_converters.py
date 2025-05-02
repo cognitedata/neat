@@ -1,6 +1,5 @@
 import math
 import re
-import urllib.parse
 import warnings
 from abc import ABC
 from collections import Counter, defaultdict
@@ -98,10 +97,13 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
         rename_warning: How to handle renaming of entities that are not compliant with the Information Model.
             - "raise": Raises a warning and renames the entity.
             - "skip": Renames the entity without raising a warning.
+        always_standardize: If True, always standardize the names of classes and properties, even if they are
+            DMS compliant.
     """
 
-    def __init__(self, rename_warning: Literal["raise", "skip"] = "skip") -> None:
+    def __init__(self, rename_warning: Literal["raise", "skip"] = "skip", always_standardize: bool = False) -> None:
         self._renaming = rename_warning
+        self._always_standardize = always_standardize
 
     @property
     def description(self) -> str:
@@ -118,9 +120,9 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
         new_by_old_class_suffix: dict[str, str] = {}
         for cls in copy.classes:
             cls_entity = cast(ClassEntity, cls.class_)  # Safe due to the dump above
-            if not PATTERNS.view_id_compliance.match(cls_entity.suffix):
+            if self._always_standardize or not PATTERNS.view_id_compliance.match(cls_entity.suffix):
                 new_suffix = self._fix_cls_suffix(cls_entity.suffix)
-                if self._renaming == "raise":
+                if self._renaming == "raise" and not self._always_standardize:
                     warnings.warn(
                         NeatValueWarning(f"Invalid class name {cls_entity.suffix!r}.Renaming to {new_suffix}"),
                         stacklevel=2,
@@ -134,9 +136,9 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
                         cls_.implements[i].suffix = new_by_old_class_suffix[parent.suffix]  # type: ignore[union-attr]
 
         for prop in copy.properties:
-            if not PATTERNS.dms_property_id_compliance.match(prop.property_):
+            if self._always_standardize or not PATTERNS.dms_property_id_compliance.match(prop.property_):
                 new_property = self._fix_property(prop.property_)
-                if self._renaming == "warning":
+                if self._renaming == "raise" and not self._always_standardize:
                     warnings.warn(
                         NeatValueWarning(
                             f"Invalid property name {prop.class_.suffix}.{prop.property_!r}. Renaming to {new_property}"  # type: ignore[union-attr]
@@ -169,7 +171,6 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
     def _fix_cls_suffix(self, suffix: str) -> str:
         if suffix in self._reserved_class_words:
             return f"My{suffix}"
-        suffix = urllib.parse.unquote(suffix)
         suffix = NamingStandardization.standardize_class_str(suffix)
         if len(suffix) > 252:
             suffix = suffix[:252]
@@ -178,7 +179,6 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
     def _fix_property(self, property_: str) -> str:
         if property_ in self._reserved_property_words:
             return f"my{property_}"
-        property_ = urllib.parse.unquote(property_)
         property_ = NamingStandardization.standardize_property_str(property_)
         if len(property_) > 252:
             property_ = property_[:252]
