@@ -14,7 +14,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
 from rdflib import Namespace
 
-from cognite.neat._constants import get_base_concepts
+from cognite.neat._constants import BASE_MODEL, get_base_concepts
 from cognite.neat._rules._constants import get_internal_properties
 from cognite.neat._rules._shared import VerifiedRules
 from cognite.neat._rules.models import (
@@ -92,7 +92,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         hide_internal_columns: bool = True,
         include_properties: Literal["same-space", "all"] = "all",
         add_drop_downs: bool = True,
-        base_model: Literal["CogniteCore"] | None = None,
+        base_model: BASE_MODEL | None = None,
         total_concepts: int | None = None,
     ):
         self.sheet_prefix = sheet_prefix or ""

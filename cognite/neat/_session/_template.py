@@ -4,6 +4,7 @@ from typing import Any, Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat._alpha import ExperimentalFlags
+from cognite.neat._constants import BASE_MODEL
 from cognite.neat._issues import IssueList, catch_issues
 from cognite.neat._rules._shared import ReadRules
 from cognite.neat._rules.exporters import ExcelExporter
@@ -129,7 +130,7 @@ class TemplateAPI:
     def conceptual_model(
         self,
         io: Any,
-        base_model: Literal["CogniteCore"] = "CogniteCore",
+        base_model: BASE_MODEL = "CogniteCore",
         total_concepts: int | None = None,
     ) -> None:
         """This method will create a template for a conceptual data modeling
