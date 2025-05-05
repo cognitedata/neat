@@ -193,6 +193,8 @@ _ASSET_PATH_PROPERTY = {
     "view_property": "path",
 }
 
+BASE_MODEL = Literal["CogniteCore"]
+
 
 def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
     """Gets the asset read-only properties with connection, i.e. Root and Path."""
@@ -202,7 +204,7 @@ def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
 
 
 def get_base_concepts(
-    base_model: Literal["CogniteCore"] = "CogniteCore",
+    base_model: BASE_MODEL = "CogniteCore",
     total_concepts: int | None = None,
 ) -> list[str]:
     """Gets the base concepts for a given base model represented in the short form.

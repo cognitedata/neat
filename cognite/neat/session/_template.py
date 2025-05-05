@@ -3,6 +3,7 @@ from typing import Any, Literal
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
+from cognite.neat.core._constants import BASE_MODEL
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._rules._shared import ReadRules
 from cognite.neat.core._rules.exporters import ExcelExporter
@@ -129,7 +130,7 @@ class TemplateAPI:
     def conceptual_model(
         self,
         io: Any,
-        base_model: Literal["CogniteCore"] = "CogniteCore",
+        base_model: BASE_MODEL = "CogniteCore",
         total_concepts: int | None = None,
     ) -> None:
         """This method will create a template for a conceptual data modeling
@@ -145,7 +146,7 @@ class TemplateAPI:
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
-        return ExcelExporter(base_model=base_model, total_concepts=total_concepts).template(RoleTypes.information, path)
+        ExcelExporter(base_model=base_model, total_concepts=total_concepts).template(RoleTypes.information, path)
 
     def expand(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
         """Creates a template for an extension of a Cognite model by expanding properties from CDM.
