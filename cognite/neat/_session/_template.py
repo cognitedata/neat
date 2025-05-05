@@ -146,7 +146,7 @@ class TemplateAPI:
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
-        return ExcelExporter(base_model=base_model, total_concepts=total_concepts).template(RoleTypes.information, path)
+        ExcelExporter(base_model=base_model, total_concepts=total_concepts).template(RoleTypes.information, path)
 
     def expand(self, io: Any, output: str | Path | None = None, dummy_property: str = "GUID") -> IssueList:
         """Creates a template for an extension of a Cognite model by expanding properties from CDM.
