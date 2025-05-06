@@ -8,23 +8,23 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat._client.data_classes.data_modeling import (
+from cognite.neat.core._client.data_classes.data_modeling import (
     ContainerApplyDict,
     NodeApplyDict,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._issues import NeatError, catch_issues
-from cognite.neat._issues.errors import PropertyDefinitionDuplicatedError
-from cognite.neat._issues.errors._resources import ResourceDuplicatedError
-from cognite.neat._issues.warnings.user_modeling import (
+from cognite.neat.core._issues import NeatError, catch_issues
+from cognite.neat.core._issues.errors import PropertyDefinitionDuplicatedError
+from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
+from cognite.neat.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
 )
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.models.data_types import String
-from cognite.neat._rules.models.dms import (
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.importers import DMSImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.models.data_types import String
+from cognite.neat.core._rules.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputNode,
@@ -36,9 +36,13 @@ from cognite.neat._rules.models.dms import (
     DMSSchema,
     DMSValidation,
 )
-from cognite.neat._rules.models.dms._exporter import _DMSExporter
-from cognite.neat._rules.models.entities._single_value import ContainerEntity, UnknownEntity, ViewEntity
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._rules.models.dms._exporter import _DMSExporter
+from cognite.neat.core._rules.models.entities._single_value import (
+    ContainerEntity,
+    UnknownEntity,
+    ViewEntity,
+)
+from cognite.neat.core._rules.transformers import (
     DMSToInformation,
     InformationToDMS,
     MapOneToOne,

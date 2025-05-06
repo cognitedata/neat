@@ -4,13 +4,19 @@ from typing import cast
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat._issues import catch_issues
-from cognite.neat._issues.warnings.user_modeling import DirectRelationMissingSourceWarning
-from cognite.neat._rules.exporters import DMSExporter
-from cognite.neat._rules.importers import DMSImporter, ExcelImporter
-from cognite.neat._rules.models import DMSRules, DMSSchema
-from cognite.neat._rules.transformers import DMSToInformation, VerifyDMSRules
+from cognite.neat.core._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
+from cognite.neat.core._issues import catch_issues
+from cognite.neat.core._issues.warnings.user_modeling import (
+    DirectRelationMissingSourceWarning,
+)
+from cognite.neat.core._rules.exporters import DMSExporter
+from cognite.neat.core._rules.importers import DMSImporter, ExcelImporter
+from cognite.neat.core._rules.models import DMSRules, DMSSchema
+from cognite.neat.core._rules.transformers import DMSToInformation, VerifyDMSRules
 from tests.config import DOC_RULES
 from tests.data import SchemaData
 

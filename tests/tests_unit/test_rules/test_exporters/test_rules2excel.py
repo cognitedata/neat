@@ -4,13 +4,13 @@ import pytest
 from lxml import etree
 from openpyxl import Workbook, load_workbook
 
-from cognite.neat._issues.errors._general import NeatValueError
-from cognite.neat._rules.exporters import ExcelExporter
-from cognite.neat._rules.models import (
+from cognite.neat.core._issues.errors._general import NeatValueError
+from cognite.neat.core._rules.exporters import ExcelExporter
+from cognite.neat.core._rules.models import (
     DMSRules,
     InformationRules,
 )
-from cognite.neat._rules.models._base_rules import RoleTypes
+from cognite.neat.core._rules.models._base_rules import RoleTypes
 
 
 def compare_cells(expected: Workbook, resulted: Workbook) -> list[bool]:

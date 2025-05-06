@@ -1,1 +1,1 @@
-::: cognite.neat._session._drop.DropAPI
+::: cognite.neat.session._drop.DropAPI

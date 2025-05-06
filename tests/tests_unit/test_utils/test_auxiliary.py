@@ -2,8 +2,11 @@ from typing import Any, ClassVar
 
 import pytest
 
-from cognite.neat._rules.importers import DMSImporter
-from cognite.neat._utils.auxiliary import get_classmethods, get_parameters_by_method
+from cognite.neat.core._rules.importers import DMSImporter
+from cognite.neat.core._utils.auxiliary import (
+    get_classmethods,
+    get_parameters_by_method,
+)
 
 
 @pytest.mark.parametrize(

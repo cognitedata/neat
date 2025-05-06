@@ -4,18 +4,18 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat import NeatSession
-from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.examples import nordic44_knowledge_graph
-from cognite.neat._graph.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat._graph.loaders import DMSLoader
-from cognite.neat._issues import catch_issues
-from cognite.neat._rules.analysis import RulesAnalysis
-from cognite.neat._rules.importers import InferenceImporter
-from cognite.neat._rules.models.data_types import DataType, Integer, Json, Long
-from cognite.neat._rules.models.entities import MultiValueTypeInfo
-from cognite.neat._rules.models.entities._single_value import UnknownEntity
-from cognite.neat._rules.transformers import VerifyAnyRules
-from cognite.neat._store import NeatGraphStore
+from cognite.neat.core._constants import DEFAULT_NAMESPACE
+from cognite.neat.core._graph.examples import nordic44_knowledge_graph
+from cognite.neat.core._graph.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._issues import catch_issues
+from cognite.neat.core._rules.analysis import RulesAnalysis
+from cognite.neat.core._rules.importers import InferenceImporter
+from cognite.neat.core._rules.models.data_types import DataType, Integer, Json, Long
+from cognite.neat.core._rules.models.entities import MultiValueTypeInfo
+from cognite.neat.core._rules.models.entities._single_value import UnknownEntity
+from cognite.neat.core._rules.transformers import VerifyAnyRules
+from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData, InstanceData
 
 

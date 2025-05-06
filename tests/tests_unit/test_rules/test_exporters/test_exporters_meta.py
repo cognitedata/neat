@@ -2,8 +2,8 @@ from abc import ABC
 
 import pytest
 
-from cognite.neat._rules.exporters import BaseExporter, CDFExporter
-from cognite.neat._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.exporters import BaseExporter, CDFExporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
 
 EXPORTER_CLS = [subclass for subclass in BaseExporter.__subclasses__() if subclass is not CDFExporter] + list(
     CDFExporter.__subclasses__()

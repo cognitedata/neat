@@ -3,11 +3,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from cognite.neat._client import NeatClient
-from cognite.neat._issues import catch_issues
-from cognite.neat._rules.importers import YAMLImporter
-from cognite.neat._rules.models import DMSRules
-from cognite.neat._rules.transformers import InformationToDMS, VerifyInformationRules
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._issues import catch_issues
+from cognite.neat.core._rules.importers import YAMLImporter
+from cognite.neat.core._rules.models import DMSRules
+from cognite.neat.core._rules.transformers import (
+    InformationToDMS,
+    VerifyInformationRules,
+)
 from tests.data import SchemaData
 
 

@@ -3,8 +3,8 @@ from pathlib import Path
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
-from cognite.neat._issues import IssueList, catch_issues
-from cognite.neat._issues.errors import (
+from cognite.neat.core._issues import IssueList, catch_issues
+from cognite.neat.core._issues.errors import (
     CDFMissingClientError,
     FileNotFoundNeatError,
     MetadataValueError,
@@ -12,14 +12,14 @@ from cognite.neat._issues.errors import (
     PropertyDefinitionDuplicatedError,
     PropertyValueError,
 )
-from cognite.neat._issues.warnings import (
+from cognite.neat.core._issues.warnings import (
     DeprecatedWarning,
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
 )
-from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.models import DMSRules, InformationRules
-from cognite.neat._rules.transformers import VerifyAnyRules, VerifyDMSRules
+from cognite.neat.core._rules.importers import ExcelImporter
+from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._rules.transformers import VerifyAnyRules, VerifyDMSRules
 from tests.config import DOC_RULES
 from tests.data import SchemaData
 

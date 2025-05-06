@@ -1,7 +1,7 @@
-from cognite.neat._issues import catch_issues
-from cognite.neat._issues.warnings._resources import ResourceRegexViolationWarning
-from cognite.neat._rules import importers
-from cognite.neat._rules.transformers import VerifyAnyRules
+from cognite.neat.core._issues import catch_issues
+from cognite.neat.core._issues.warnings._resources import ResourceRegexViolationWarning
+from cognite.neat.core._rules import importers
+from cognite.neat.core._rules.transformers import VerifyAnyRules
 from tests.data import GraphData
 
 

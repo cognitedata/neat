@@ -1,1 +1,1 @@
-::: cognite.neat._session._template.TemplateAPI
+::: cognite.neat.session._template.TemplateAPI

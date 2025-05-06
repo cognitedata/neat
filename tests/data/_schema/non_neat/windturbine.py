@@ -7,13 +7,13 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import NodeApply
 from cognite.client.data_classes.data_modeling.data_types import Enum, EnumValue, UnitReference
 
-from cognite.neat._client.data_classes.data_modeling import (
+from cognite.neat.core._client.data_classes.data_modeling import (
     ContainerApplyDict,
     NodeApplyDict,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat._rules.models.dms import (
+from cognite.neat.core._rules.models.dms import (
     DMSInputContainer,
     DMSInputEnum,
     DMSInputMetadata,
@@ -234,9 +234,9 @@ INPUT_RULES = DMSInputRules(
 if __name__ == "__main__":
     from pathlib import Path
 
-    from cognite.neat._rules.exporters import ExcelExporter
-    from cognite.neat._rules.importers import DMSImporter
-    from cognite.neat._rules.transformers import ImporterPipeline
+    from cognite.neat.core._rules.exporters import ExcelExporter
+    from cognite.neat.core._rules.importers import DMSImporter
+    from cognite.neat.core._rules.transformers import ImporterPipeline
 
     ROOT = Path(__file__).resolve().parent.parent.parent / "playground"
 

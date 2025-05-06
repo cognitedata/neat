@@ -3,8 +3,8 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat._rules import importers
-from cognite.neat._rules.models.entities import (
+from cognite.neat.core._rules import importers
+from cognite.neat.core._rules.models.entities import (
     ContainerEntity,
     DMSFilter,
     DMSNodeEntity,
@@ -14,7 +14,7 @@ from cognite.neat._rules.models.entities import (
     ViewEntity,
     WrappedEntity,
 )
-from cognite.neat._rules.transformers import VerifyDMSRules
+from cognite.neat.core._rules.transformers import VerifyDMSRules
 from tests import config
 
 RAW_FILTER_EXAMPLE = """{"and": [

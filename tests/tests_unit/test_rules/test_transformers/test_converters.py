@@ -4,21 +4,29 @@ from collections.abc import Sequence
 import pytest
 from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, ViewList
 
-from cognite.neat._client.data_classes.schema import DMSSchema
-from cognite.neat._client.testing import monkeypatch_neat_client
-from cognite.neat._issues.errors._general import NeatValueError
-from cognite.neat._rules._shared import ReadRules
-from cognite.neat._rules.models import DMSInputRules, InformationRules
-from cognite.neat._rules.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
-from cognite.neat._rules.models.dms._rules import DMSRules
-from cognite.neat._rules.models.entities._single_value import ClassEntity, ViewEntity
-from cognite.neat._rules.models.information import (
+from cognite.neat.core._client.data_classes.schema import DMSSchema
+from cognite.neat.core._client.testing import monkeypatch_neat_client
+from cognite.neat.core._issues.errors._general import NeatValueError
+from cognite.neat.core._rules._shared import ReadRules
+from cognite.neat.core._rules.models import DMSInputRules, InformationRules
+from cognite.neat.core._rules.models.dms import (
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputView,
+)
+from cognite.neat.core._rules.models.dms._rules import DMSRules
+from cognite.neat.core._rules.models.entities._single_value import (
+    ClassEntity,
+    ViewEntity,
+)
+from cognite.neat.core._rules.models.information import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
     InformationInputRules,
 )
-from cognite.neat._rules.transformers import (
+from cognite.neat.core._rules.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
     SubsetDMSRules,

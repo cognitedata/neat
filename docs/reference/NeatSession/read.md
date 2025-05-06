@@ -1,7 +1,7 @@
-::: cognite.neat._session._read.CDFReadAPI
-::: cognite.neat._session._read.CDFClassicAPI
-::: cognite.neat._session._read.ExcelReadAPI
-::: cognite.neat._session._read.YamlReadAPI
-::: cognite.neat._session._read.CSVReadAPI
-::: cognite.neat._session._read.XMLReadAPI
-::: cognite.neat._session._read.RDFReadAPI
+::: cognite.neat.session._read.CDFReadAPI
+::: cognite.neat.session._read.CDFClassicAPI
+::: cognite.neat.session._read.ExcelReadAPI
+::: cognite.neat.session._read.YamlReadAPI
+::: cognite.neat.session._read.CSVReadAPI
+::: cognite.neat.session._read.XMLReadAPI
+::: cognite.neat.session._read.RDFReadAPI

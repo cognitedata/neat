@@ -1,9 +1,9 @@
 from pathlib import Path
 from rich import print
 
-from cognite.neat._rules.exporters import YAMLExporter
-from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.transformers import VerifyDMSRules
+from cognite.neat.core._rules.exporters import YAMLExporter
+from cognite.neat.core._rules.importers import ExcelImporter
+from cognite.neat.core._rules.transformers import VerifyDMSRules
 
 THIS_FOLDER = Path(__file__).resolve().parent
 XLSX_FILE = THIS_FOLDER / "core_classic_mapping.xlsx"

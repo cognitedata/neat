@@ -5,11 +5,11 @@ from cognite.client.data_classes.data_modeling.data_types import ListablePropert
 from rdflib import RDF
 
 from cognite.neat import NeatSession
-from cognite.neat._client import NeatClient
-from cognite.neat._constants import DEFAULT_NAMESPACE
-from cognite.neat._graph.loaders import DMSLoader
-from cognite.neat._rules.importers import InferenceImporter
-from cognite.neat._store import NeatGraphStore
+from cognite.neat.core._client import NeatClient
+from cognite.neat.core._constants import DEFAULT_NAMESPACE
+from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._rules.importers import InferenceImporter
+from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData
 
 
