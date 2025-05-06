@@ -43,6 +43,7 @@ class TestLocationFilterLoader:
             {
                 "name": "Doctrino Asset",
                 "description": "Doctrino Asset Description",
+                "externalId": "my_asset",
                 "createdYear": 2025,
                 "price": 1234.56,
                 "isActive": True,
