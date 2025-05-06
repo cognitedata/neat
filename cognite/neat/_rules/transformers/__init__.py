@@ -1,4 +1,4 @@
-from ._base import RulesTransformer, VerifiedRulesTransformer
+from ._base import ConceptualRulesTransformer, PhysicalRulesTransformer, RulesTransformer, VerifiedRulesTransformer
 from ._converters import (
     AddClassImplements,
     AddCogniteProperties,
@@ -34,6 +34,7 @@ __all__ = [
     "AsParentPropertyId",
     "ChangeViewPrefix",
     "ClassicPrepareCore",
+    "ConceptualRulesTransformer",
     "ConversionTransformer",
     "ConvertToRules",
     "DMSToInformation",
@@ -43,6 +44,7 @@ __all__ = [
     "MapOneToOne",
     "MergeDMSRules",
     "MergeInformationRules",
+    "PhysicalRulesTransformer",
     "PrefixEntities",
     "RuleMapper",
     "RulesTransformer",

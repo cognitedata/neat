@@ -69,7 +69,7 @@ class AttachPropertyFromTargetToSource(BaseTransformer):
         namespace: Namespace to use when converting value to URIRef. Defaults to DEFAULT_NAMESPACE.
     """
 
-    description: str = "Attaches a target property from a target node that is connected to a source node."
+    _description: str = "Attaches a target property from a target node that is connected to a source node."
 
     _query_template_use_case_a: str = """
     SELECT ?sourceNode ?sourceProperty ?targetNode ?newSourceProperty ?newSourcePropertyValue WHERE {{
@@ -173,7 +173,7 @@ class PruneDanglingNodes(BaseTransformer):
         node_prune_types: list of RDF types to prune from the Graph if they are stand-alone Nodes
     """
 
-    description: str = "Prunes nodes of specific rdf types that do not have any connection to them."
+    _description: str = "Prunes nodes of specific rdf types that do not have any connection to them."
     _query_template = """
                     SELECT ?subject
                     WHERE {{
@@ -199,7 +199,7 @@ class PruneTypes(BaseTransformerStandardised):
     Removes all the instances of specific type
     """
 
-    description: str = "Prunes nodes of specific rdf types"
+    _description: str = "Prunes nodes of specific rdf types"
 
     def __init__(
         self,
@@ -250,7 +250,7 @@ class PruneDeadEndEdges(BaseTransformerStandardised):
     Removes all the triples where object is a node that is not found in graph
     """
 
-    description: str = "Pruning the graph of triples where object is a node that is not found in graph."
+    _description: str = "Pruning the graph of triples where object is a node that is not found in graph."
 
     def _iterate_query(self) -> str:
         return """
@@ -285,7 +285,7 @@ class PruneInstancesOfUnknownType(BaseTransformerStandardised):
     Removes all the triples where object is a node that is not found in graph
     """
 
-    description: str = "Prunes the graph of triples where the object is a node that is not found in the graph."
+    _description: str = "Prunes the graph of triples where the object is a node that is not found in the graph."
 
     def _iterate_query(self) -> str:
         return """

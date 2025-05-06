@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from contextlib import suppress
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Generic
@@ -7,13 +7,14 @@ from rdflib import URIRef
 
 from cognite.neat._constants import DEFAULT_NAMESPACE
 from cognite.neat._rules._shared import ReadRules, T_InputRules
+from cognite.neat._shared import Action
 from cognite.neat._utils.auxiliary import class_html_doc
 
 if TYPE_CHECKING:
     from cognite.neat._store._provenance import Agent as ProvenanceAgent
 
 
-class BaseImporter(ABC, Generic[T_InputRules]):
+class BaseImporter(Action, Generic[T_InputRules]):
     """
     BaseImporter class which all importers inherit from.
     """
