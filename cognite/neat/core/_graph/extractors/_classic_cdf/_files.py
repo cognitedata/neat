@@ -20,7 +20,7 @@ class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
         data_set_external_id: str,
     ) -> tuple[int | None, Iterable[FileMetadata]]:
         items = client.files(data_set_external_ids=data_set_external_id)
-        return None, items
+        return None, cls._filter_out_instance_id(items)
 
     @classmethod
     def _from_hierarchy(
@@ -30,9 +30,16 @@ class FilesExtractor(ClassicCDFBaseExtractor[FileMetadata]):
             filter=FileMetadataFilter(asset_subtree_ids=[{"externalId": root_asset_external_id}])
         )[0].count
         items = client.files(asset_subtree_external_ids=root_asset_external_id)
-        return total, items
+        return total, cls._filter_out_instance_id(items)
 
     @classmethod
     def _from_file(cls, file_path: str | Path) -> tuple[int | None, Iterable[FileMetadata]]:
         file_metadata = FileMetadataList.load(Path(file_path).read_text())
-        return len(file_metadata), file_metadata
+        return len(file_metadata), cls._filter_out_instance_id(file_metadata)
+
+    @classmethod
+    def _filter_out_instance_id(cls, items: Iterable[FileMetadata]) -> Iterable[FileMetadata]:
+        """Filter out TimeSeries with InstanceId."""
+        # If the InstanceId is not None, it means that the TimeSeries is already connected to CogniteTimeSeries in DMS.
+        # We do not want to download it again.
+        return (item for item in items if item.instance_id is None)
