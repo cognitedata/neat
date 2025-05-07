@@ -5,7 +5,7 @@ import yaml
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._rules.importers import YAMLImporter
+from cognite.neat.core._rules.importers import DictImporter
 from cognite.neat.core._rules.models import DMSRules
 from cognite.neat.core._rules.transformers import (
     InformationToDMS,
@@ -27,7 +27,7 @@ class TestValidate:
     ) -> None:
         dms_rules: DMSRules | None = None
         with catch_issues() as issues:
-            rules = YAMLImporter.from_file(conceptual_filepath, source_name=conceptual_filepath.name).to_rules()
+            rules = DictImporter.from_yaml_file(conceptual_filepath, source_name=conceptual_filepath.name).to_rules()
             info_rules = VerifyInformationRules(validate=True, client=neat_client).transform(rules)
             dms_rules = InformationToDMS().transform(info_rules)
 

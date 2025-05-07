@@ -16,7 +16,7 @@ def _read_source_file() -> str:
 
 
 def load_classic_to_core_mapping(org_name: str | None, source_space: str, source_version: str) -> DMSRules:
-    from cognite.neat.core._rules.importers import YAMLImporter
+    from cognite.neat.core._rules.importers import DictImporter
     from cognite.neat.core._rules.transformers import VerifyDMSRules
 
     raw_str = _read_source_file()
@@ -27,7 +27,7 @@ def load_classic_to_core_mapping(org_name: str | None, source_space: str, source
     loaded["metadata"]["space"] = source_space
     loaded["metadata"]["version"] = source_version
 
-    read: ReadRules[DMSInputRules] = YAMLImporter(loaded).to_rules()
+    read: ReadRules[DMSInputRules] = DictImporter(loaded).to_rules()
     if not isinstance(read.rules, DMSInputRules):
         raise NeatValueError(f"Expected DMS rules, but got {type(read.rules).__name__}")
 

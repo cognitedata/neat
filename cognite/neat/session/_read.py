@@ -479,7 +479,7 @@ class YamlReadAPI(BaseReadAPI):
         path = reader.materialize_path()
         importer: BaseImporter
         if format == "neat":
-            importer = importers.YAMLImporter.from_yaml_file(path, source_name=f"{reader!s}")
+            importer = importers.DictImporter.from_yaml_file(path, source_name=f"{reader!s}")
         elif format == "toolkit":
             dms_importer = importers.DMSImporter.from_path(path, self._state.client)
             if dms_importer.issue_list.has_warning_type(MissingCogniteClientWarning):

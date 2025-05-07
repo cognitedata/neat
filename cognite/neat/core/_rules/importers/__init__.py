@@ -1,21 +1,21 @@
 from ._base import BaseImporter
+from ._dict2rules import DictImporter
 from ._dms2rules import DMSImporter
 from ._dtdl2rules import DTDLImporter
 from ._rdf import IMFImporter, InferenceImporter, OWLImporter, SubclassInferenceImporter
 from ._spreadsheet2rules import ExcelImporter, GoogleSheetImporter
-from ._yaml2rules import YAMLImporter
 
 __all__ = [
     "BaseImporter",
     "DMSImporter",
     "DTDLImporter",
+    "DictImporter",
     "ExcelImporter",
     "GoogleSheetImporter",
     "IMFImporter",
     "InferenceImporter",
     "OWLImporter",
     "SubclassInferenceImporter",
-    "YAMLImporter",
 ]
 
 RulesImporters = (
@@ -25,7 +25,7 @@ RulesImporters = (
     | ExcelImporter
     | GoogleSheetImporter
     | DTDLImporter
-    | YAMLImporter
+    | DictImporter
     | InferenceImporter
     | SubclassInferenceImporter
 )

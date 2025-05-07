@@ -40,7 +40,7 @@ class YAMLReader:
             return {}, [FileReadError(filepath, f"Error reading file: {exc!s}")]
 
 
-class YAMLImporter(BaseImporter[T_InputRules]):
+class DictImporter(BaseImporter[T_InputRules]):
     """Imports the rules from a YAML file.
 
     Args:
@@ -71,7 +71,7 @@ class YAMLImporter(BaseImporter[T_InputRules]):
         return f"YAML file {self._source_name} read as unverified data model"
 
     @classmethod
-    def from_yaml_file(cls, filepath: Path, source_name: str = "Unknown") -> "YAMLImporter":
+    def from_yaml_file(cls, filepath: Path, source_name: str = "Unknown") -> "DictImporter":
         """Create a DictImporter from a YAML file."""
         data, issues = YAMLReader.read_file(filepath)
 
