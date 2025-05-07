@@ -18,6 +18,7 @@ from ._prune_graph import (
     PruneTypes,
 )
 from ._rdfpath import MakeConnectionOnExactMatch
+from ._set_type_by_id import SetRDFTypeById
 from ._value_type import ConnectionToLiteral, ConvertLiteral, LiteralToEntity, SetType, SplitMultiValueProperty
 
 __all__ = [
@@ -39,6 +40,7 @@ __all__ = [
     "PruneInstancesOfUnknownType",
     "PruneTypes",
     "RelationshipAsEdgeTransformer",
+    "SetRDFTypeById",
     "SetType",
     "SplitMultiValueProperty",
 ]
