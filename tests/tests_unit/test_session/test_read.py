@@ -5,6 +5,7 @@ from cognite.neat import NeatSession
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat.core._graph.extractors._classic_cdf._base import InstanceIdPrefix
+from cognite.neat.core._issues import NeatIssue
 from cognite.neat.core._issues.warnings import NeatValueWarning
 from tests.data import InstanceData
 
@@ -16,18 +17,23 @@ class TestReadClassicTimeSeries:
             assert len(timeseries) >= 2
             # TimeSeries with InstanceId should be skipped
             timeseries[0].instance_id = NodeId("already", "connected")
+            # The timeseries with instance_id should be skipped
+            expected_connection_drop = sum(1 for ts in timeseries if ts.asset_id) - 1
             client.time_series.aggregate_count.return_value = len(timeseries)
             client.time_series.return_value = timeseries
 
             neat: NeatSession = NeatSession(client)
 
         issues = neat.read.cdf.classic.time_series("my_data_set", identifier="externalId")
-        unexpected_type = [
-            issue
-            for issue in issues
-            if not (isinstance(issue, NeatValueWarning) and issue.value.startswith("Skipping connection"))
-        ]
-        assert not unexpected_type
+        dropped_connections: list[NeatValueWarning] = []
+        unexpected_issues: list[NeatIssue] = []
+        for issue in issues:
+            if isinstance(issue, NeatValueWarning) and issue.value.startswith("Skipping connection"):
+                dropped_connections.append(issue)
+            else:
+                unexpected_issues.append(issue)
+        assert not unexpected_issues
+        assert len(dropped_connections) == expected_connection_drop
 
         instances_ids = sorted((id_ for id_, _ in neat._state.instances.store.queries.select.list_instances_ids()))
 
