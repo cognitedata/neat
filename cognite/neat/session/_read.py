@@ -1,4 +1,5 @@
 import warnings
+from collections.abc import Set
 from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId, ViewIdentifier
@@ -129,9 +130,9 @@ class CDFReadAPI(BaseReadAPI):
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
         limit: int | None = None,
-        keep_empty_values: bool = False,
         mapping: Any | None = None,
         exclude_properties: SequenceNotStr[str] | None = None,
+        empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
     ) -> IssueList:
         """Reads a view from CDF
 
@@ -142,14 +143,13 @@ class CDFReadAPI(BaseReadAPI):
             unpack_json: If True, the JSON objects will be unpacked into the graph.
             str_to_ideal_type: If True, the string values will be converted to ideal types.
             limit: The maximum number of instances to extract. If None, all instances are extracted.
-            keep_empty_values: This is used when you unpack JSON objects. If True, the empty values
-            ("nan", "null", "none", "", " ", "nil", "n/a", "na", "unknown", "undefined") will be kept. This is useful
-                if you are classifying the data based on the property names.
             mapping: A mapping to use for the extraction. This enables you to map all the predicates and
                 types when extracting the view. This is useful if you need to change the source to be valid
                 property field.
             exclude_properties: A list of properties to exclude from the extraction. This is useful if you
                 are cleaning up the data model and want to remove properties that are not used.
+            empty_values: This is used when you unpack JSON objects. This specifies the values that should be
+                skipped as they are empty.
 
         Example:
 
@@ -176,7 +176,7 @@ class CDFReadAPI(BaseReadAPI):
             view_id_parsed,
             instance_space=instance_space,
             unpack_json=unpack_json,
-            empty_values=set() if keep_empty_values else DEFAULT_EMPTY_VALUES,
+            empty_values=empty_values,
             str_to_ideal_type=str_to_ideal_type,
             limit=limit,
         )
