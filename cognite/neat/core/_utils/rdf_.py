@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 from collections.abc import Iterable
 from typing import Any, Literal, TypeAlias, overload
 
@@ -296,3 +297,16 @@ def uri_display_name(thing: URIRef) -> str:
     elif "http://purl.org/cognite/neat/data-model/" in thing:
         return "NEAT(" + ",".join(thing.replace("http://purl.org/cognite/neat/data-model/", "").split("/")) + ")"
     return remove_namespace_from_uri(thing)
+
+
+def uri_instance_to_display_name(uri: URIRef) -> str:
+    """Convert a URI to a user-friendly string.
+    Removing the namespace and unquoting the URI.
+    If the namespace is a CDF space, then it will be included in the string as space:externalId.
+    """
+    namespace, entity_name = split_uri(uri)
+    output_str = urllib.parse.unquote(entity_name)
+
+    if space := namespace_as_space(namespace):
+        output_str = f"{space}:{output_str}"
+    return output_str
