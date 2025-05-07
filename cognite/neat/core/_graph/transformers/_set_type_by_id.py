@@ -42,7 +42,7 @@ class SetRDFTypeById(BaseTransformerStandardised):
             if self.warn_missing_instances:
                 warnings.warn(
                     NeatValueWarning(
-                        f"Cannot change type of {instance_id_str}'. "
+                        f"Cannot change type of {instance_id_str!r}. "
                         f"It is not found in the given mapping. "
                         f"Will keep type {uri_instance_to_display_name(existing_type)}."
                     ),

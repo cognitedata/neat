@@ -1,6 +1,7 @@
 from rdflib import RDF, Namespace
 
 from cognite.neat.core._graph.transformers import SetRDFTypeById
+from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._store import NeatGraphStore
 
 
@@ -23,11 +24,14 @@ class TestSetRDFTypeById:
             type_by_id={
                 "Asset1": namespace["Car"],
                 "Asset2": namespace["Bike"],
-                "Asset3": namespace["Truck"],
-            }
+            },
+            warn_missing_instances=True,
         )
         issues = store.transform(transformer)
-        assert len(issues) == 0
+        assert len(issues) == 1
+        warn = issues[0]
+        assert isinstance(warn, NeatValueWarning)
+        assert warn.value.startswith("Cannot change type of 'Asset3'")
 
         results = store.queries.select.list_triples()
 
@@ -35,5 +39,5 @@ class TestSetRDFTypeById:
         assert set(results) == {
             (id1, RDF.type, namespace["Car"]),
             (id2, RDF.type, namespace["Bike"]),
-            (id3, RDF.type, namespace["Truck"]),
+            (id3, RDF.type, namespace["Asset"]),
         }
