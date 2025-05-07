@@ -58,17 +58,24 @@ class TestReadClassicTimeSeries:
             assert len(file_metadata) >= 2
             # FileMetadata with InstanceId should be skipped
             file_metadata[0].instance_id = NodeId("already", "connected")
+            expected_connection_drop = sum(
+                1 for fm in file_metadata for _ in fm.asset_ids or [] if fm.instance_id is None
+            )
             client.files.return_value = file_metadata
 
             neat: NeatSession = NeatSession(client)
 
         issues = neat.read.cdf.classic.file_metadata("my_data_set", identifier="externalId")
-        unexpected_type = [
-            issue
-            for issue in issues
-            if not (isinstance(issue, NeatValueWarning) and issue.value.startswith("Skipping connection"))
-        ]
-        assert not unexpected_type
+
+        dropped_connections: list[NeatValueWarning] = []
+        unexpected_issues: list[NeatIssue] = []
+        for issue in issues:
+            if isinstance(issue, NeatValueWarning) and issue.value.startswith("Skipping connection"):
+                dropped_connections.append(issue)
+            else:
+                unexpected_issues.append(issue)
+        assert not unexpected_issues
+        assert len(dropped_connections) == expected_connection_drop
 
         instances_ids = sorted((id_ for id_, _ in neat._state.instances.store.queries.select.list_instances_ids()))
 
