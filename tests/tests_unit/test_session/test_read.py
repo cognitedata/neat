@@ -2,10 +2,10 @@ from cognite.client.data_classes import TimeSeriesList
 from cognite.client.data_classes.data_modeling import NodeId
 
 from cognite.neat import NeatSession
-from cognite.neat._client.testing import monkeypatch_neat_client
-from cognite.neat._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat._graph.extractors._classic_cdf._base import InstanceIdPrefix
-from cognite.neat._issues.warnings import NeatValueWarning
+from cognite.neat.core._client.testing import monkeypatch_neat_client
+from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat.core._graph.extractors._classic_cdf._base import InstanceIdPrefix
+from cognite.neat.core._issues.warnings import NeatValueWarning
 from tests.data import InstanceData
 
 
