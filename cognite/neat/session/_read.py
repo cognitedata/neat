@@ -468,6 +468,63 @@ class CDFClassicAPI(BaseReadAPI):
 
         return extract_issues
 
+    def file_metadata(self, data_set_external_id: str, identifier: Literal["id", "externalId"] = "id") -> IssueList:
+        """Read the file metadata from CDF into NEAT.
+
+        Note all files that have InstanceId set will be silently skipped. This method is for extracting
+        non-contextualized file medata only. If you want to include the potential connection from file metadata
+        to assets, use the `neat.read.cdf.graph()` method instead and select the asset hierarchy connected to this file.
+
+        Args:
+            data_set_external_id: The external id of the data set
+            identifier: The identifier to use for the file metadata. Note selecting "id" can cause issues
+                if the external ID of the file metadata is missing. Default is "id".
+
+        Returns:
+            IssueList: A list of issues that occurred during the extraction.
+
+        Example:
+            ```python
+            neat.read.cdf.time_series("data_set_external_id")
+            ```
+        """
+        namespace = CLASSIC_CDF_NAMESPACE
+        self._state._raise_exception_if_condition_not_met(
+            "Read time series",
+            empty_rules_store_required=True,
+            empty_instances_store_required=True,
+            client_required=True,
+        )
+        extractor = extractors.FilesExtractor.from_dataset(
+            cast(NeatClient, self._state.client),
+            data_set_external_id=data_set_external_id,
+            namespace=namespace,
+            identifier=identifier,
+            prefix="Classic",
+            skip_connections=True,
+        )
+        self._state.instances.neat_prefix_by_predicate_uri.update(
+            {
+                namespace["dataSetId"]: InstanceIdPrefix.data_set,
+                namespace["assetId"]: InstanceIdPrefix.asset,
+            }
+        )
+        self._state.instances.neat_prefix_by_type_uri.update(
+            {namespace[f"Classic{extractor._default_rdf_type}"]: InstanceIdPrefix.time_series}
+        )
+        extract_issues = self._state.instances.store.write(extractor)
+
+        if identifier == "externalId":
+            self._state.quoted_source_identifiers = True
+
+        self._state.instances.store.transform(
+            LiteralToEntity(None, namespace["source"], "ClassicSourceSystem", "name"),
+        )
+        # The above transformations creates a new type, so we need to update
+        self._state.instances.neat_prefix_by_type_uri.update({namespace["ClassicSourceSystem"]: "ClassicSourceSystem_"})
+
+        return extract_issues
+
 
 @session_class_wrapper
 class ExcelReadAPI(BaseReadAPI):
