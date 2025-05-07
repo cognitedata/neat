@@ -5,9 +5,10 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS, DEFAULT_NAMESPACE
-from cognite.neat.core._graph.transformers import BestClassMatch, SetType
+from cognite.neat.core._graph.transformers import BestClassMatch, SetRDFTypeById, SetType
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._rules.analysis import RulesAnalysis
 from cognite.neat.core._rules.models import DMSRules
 from cognite.neat.core._rules.transformers import SetIDDMSModel
@@ -133,4 +134,42 @@ class SetInstances:
 
         transformer = BestClassMatch(classes)
         issues = self._state.instances.store.transform(transformer)
+        return issues
+
+    def type_by_id(self, mapping: dict[str, str], warn_missing_instances: bool = False) -> IssueList:
+        """Sets the type of all instances
+
+        Args:
+            mapping: A dictionary mapping the instance id to the type id.
+            warn_missing_instances: If True, a warning will be raised if an instance is not found in the mapping.
+
+        Returns:
+            IssueList: A list of issues that were found during the transformation.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Set instance type based ID",
+            instances_required=True,
+            has_dms_rules=False,
+            has_information_rules=False,
+        )
+        type_str_by_uri = self._state.instances.store.queries.select.types()
+        type_uri_by_str = {v: k for k, v in type_str_by_uri.items()}
+        type_by_id = {
+            instance_str: type_uri_by_str[uri_str]
+            for instance_str, uri_str in mapping.items()
+            if uri_str in type_uri_by_str
+        }
+
+        transformer = SetRDFTypeById(type_by_id, warn_missing_instances=warn_missing_instances)
+        issues = self._state.instances.store.transform(transformer)
+
+        missing_types = set(mapping.values()) - set(type_uri_by_str.keys())
+        if missing_types:
+            issues.append(
+                NeatValueWarning(
+                    f"The following types were not found in the graph: {humanize_collection(missing_types)}. "
+                )
+            )
+
         return issues
