@@ -66,6 +66,7 @@ class DataModelMappingAPI:
             transformers.append(AsParentPropertyId(self._state.client))
         issues = self._state.rule_transform(*transformers)
 
+        # Convert the labels to literals - note that the mapping changes labels to tags.
         label_predicate = self._state.instances.store.queries.select.property_uri("labels")[0]
         issues.extend(self._state.instances.store.transform(ConnectionToLiteral(None, label_predicate)))
         return issues
