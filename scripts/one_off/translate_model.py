@@ -5,19 +5,19 @@ The script uses the Cloud Translation APi from Google to perform the translation
 """
 from pathlib import Path
 from googletrans import Translator
-from cognite.neat._rules.importers import ExcelImporter
-from cognite.neat._rules.exporters import ExcelExporter
-from cognite.neat._rules.models import InformationInputRules
-from cognite.neat._utils.collection_ import chunker
-from cognite.neat._utils.text import NamingStandardization
+
+from cognite.neat.core._rules.exporters import ExcelExporter
+from cognite.neat.core._rules.models import InformationInputRules
+from cognite.neat.core._utils.collection_ import chunker
+from cognite.neat.core._utils.text import NamingStandardization
 from rich import print
 import json
 
-async def translate_property_ids(input_model: Path, output_model: Path, source_language: str, translation_file: Path, standardize: bool = True) -> None:
+async def translate_property_ids(input_rules: InformationInputRules, output_model: Path, source_language: str, translation_file: Path, standardize: bool = True) -> None:
     """Translates the property Ids of the input model to English.
 
     Args:
-        input_model: A conceptual model given as a filepath to a spreadsheet.
+        input_rules: The conceptual model to translate.
         output_model: A conceptual model given as a filepath to a spreadsheet.
         source_language: The source language of the input model.
         translation_file: A file with raw translations. It is used to avoid repeated API calls.
@@ -26,12 +26,6 @@ async def translate_property_ids(input_model: Path, output_model: Path, source_l
             translated to English without standardization.
 
     """
-    importer = ExcelImporter(input_model)
-    input_rules = importer.to_rules().rules
-    if input_rules is None:
-        raise RuntimeError(f"Failed to load rules from {input_model}.")
-    assert isinstance(input_rules, InformationInputRules)
-
     class_renaming: dict[str, str] = {}
     if standardize:
         # Standardize the class Ids
@@ -45,7 +39,7 @@ async def translate_property_ids(input_model: Path, output_model: Path, source_l
     # Storing all translations to avoid repeated API calls
     translations: dict[str, str] = {}
     if translation_file.exists():
-        translations = json.loads(translation_file.read_text())
+        translations = json.loads(translation_file.read_text(encoding="utf-8"))
         assert isinstance(translations, dict)
 
     translator = Translator()
@@ -60,7 +54,7 @@ async def translate_property_ids(input_model: Path, output_model: Path, source_l
             for response in translated:
                 translations[response.origin] = response.text
             print(f"Translated {len(to_translate)} properties.")
-            translation_file.write_text(json.dumps(translations))
+            translation_file.write_text(json.dumps(translations), encoding="utf-8")
         for property_ in properties:
             property_.class_ = class_renaming.get(property_.class_, property_.class_)
             if property_.name is None:
