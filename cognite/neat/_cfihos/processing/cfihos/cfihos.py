@@ -1,35 +1,52 @@
 import pathlib
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Union
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
 
-from cognite.neat._cfihos.common.generic_classes import (
-    DataSource,
-    EntityStructure,
-    PropertyStructure,
-)
+from cognite.neat._cfihos.common.generic_classes import DataSource, EntityStructure, PropertyStructure, Relations
 from cognite.neat._cfihos.common.utils import read_input_sheet
 from cognite.neat._cfihos.processing.base_model_interpreter import (
     BaseModelInterpreter,
 )
 from cognite.neat._cfihos.processing.cfihos import constants
 
+from ..cfihos.data_sheets_column_mappings import (
+    ENTITY_CDM_EXTENSION_MAPPING,
+    ENTITY_COLUMN_MAPPING,
+    ENTITY_EDGE_COLUMN_MAPPING,
+    ENTITY_EDGE_REVERSE_COLUMN_MAPPING,
+    ENTITY_PROPERTY_METADATA_MAPPING,
+    ENTITY_RAW_COLUMN_MAPPING,
+    ENTITY_RELEVANT_PROPERTY_COLUMNS,
+    TAG_OR_EQUIPMENT_PROPERTY_METADATA_MAPPING,
+    TagOrEquipment,
+)
+
 
 @dataclass
 class cfihosTypeTag:
-    entities_abs_fpath: str = field(default=None, init=False)
-    entities_attrib_abs_fpath: str = field(default=None, init=False)
-    property_metadata_abs_fpath: str = field(default=None, init=False)
+    """Class for CFIHOS Tag type."""
+
+    entities_abs_fpath: str = field(default="", init=False)
+    entities_attrib_abs_fpath: str = field(default="", init=False)
+    property_metadata_abs_fpath: str = field(default="", init=False)
 
     # file containing the first class citizens properties' attributes
-    entity_first_class_attributes_fpath: str = field(default=None, init=False)
+    entity_first_class_attributes_fpath: str = field(default="", init=False)
 
     data_folder_abs_fpath: str
     entities_fname: str
     entities_attrib_fname: str
     property_metadata_fname: str
+
+    # If the system extends CFIHOS, the CFIHOS base files should be provided
+    base_folder_abs_fpath: str = ""
+    base_entities_attrib_fname: str = ""
+    base_property_metadata_fname: str = ""
+
     type: str = constants.CFIHOS_TYPE_TAG
     type_prefix: str = constants.CFIHOS_TYPE_TAG_PREFIX
     type_id_prefix: str = constants.CFIHOS_ID_TAG_PREFIX
@@ -37,24 +54,39 @@ class cfihosTypeTag:
     id_prefix_replacement: str = "_"
 
     def __post_init__(self):
+        """Sets the absolute file paths for the entities, entities attributes and property metadata files."""
         self.entities_abs_fpath = self.data_folder_abs_fpath + self.entities_fname
         self.entities_attrib_abs_fpath = self.data_folder_abs_fpath + self.entities_attrib_fname
         self.property_metadata_abs_fpath = self.data_folder_abs_fpath + self.property_metadata_fname
+        self.base_entities_attrib_abs_fpath = ""
+        self.base_property_metadata_abs_fpath = ""
+        if self.base_folder_abs_fpath and self.base_entities_attrib_fname:
+            self.base_entities_attrib_abs_fpath = self.base_folder_abs_fpath + self.base_entities_attrib_fname
+        if self.base_folder_abs_fpath and self.base_property_metadata_fname:
+            self.base_property_metadata_abs_fpath = self.base_folder_abs_fpath + self.base_property_metadata_fname
 
 
 @dataclass
 class cfihosTypeEquipment:
-    entities_abs_fpath: str = field(default=None, init=False)
-    entities_attrib_abs_fpath: str = field(default=None, init=False)
-    property_metadata_abs_fpath: str = field(default=None, init=False)
+    """Class for CFIHOS Equipment type."""
+
+    entities_abs_fpath: str = field(default="", init=False)
+    entities_attrib_abs_fpath: str = field(default="", init=False)
+    property_metadata_abs_fpath: str = field(default="", init=False)
 
     # file containing the first class citizens properties' attributes
-    entity_first_class_attributes_fpath: str = field(default=None, init=False)
+    entity_first_class_attributes_fpath: str = field(default="", init=False)
 
     data_folder_abs_fpath: str
     entities_fname: str
     entities_attrib_fname: str
     property_metadata_fname: str
+
+    # If the system extends CFIHOS, the CFIHOS base files should be provided
+    base_folder_abs_fpath: str = ""
+    base_entities_attrib_fname: str = ""
+    base_property_metadata_fname: str = ""
+
     type: str = constants.CFIHOS_TYPE_EQUIPMENT
     type_prefix: str = constants.CFIHOS_TYPE_EQUIPMENT_PREFIX
     type_id_prefix: str = constants.CFIHOS_ID_EQUIPMENT_PREFIX
@@ -62,28 +94,48 @@ class cfihosTypeEquipment:
     id_prefix_replacement: str = "_"
 
     def __post_init__(self):
+        """Sets the absolute file paths for the entities, entities attributes and property metadata files."""
         self.entities_abs_fpath = self.data_folder_abs_fpath + self.entities_fname
         self.entities_attrib_abs_fpath = self.data_folder_abs_fpath + self.entities_attrib_fname
         self.property_metadata_abs_fpath = self.data_folder_abs_fpath + self.property_metadata_fname
+        self.base_entities_attrib_abs_fpath = ""
+        self.base_property_metadata_abs_fpath = ""
+        if self.base_folder_abs_fpath and self.base_entities_attrib_fname:
+            self.base_entities_attrib_abs_fpath = self.base_folder_abs_fpath + self.base_entities_attrib_fname
+        if self.base_folder_abs_fpath and self.base_property_metadata_fname:
+            self.base_property_metadata_abs_fpath = self.base_folder_abs_fpath + self.base_property_metadata_fname
 
 
 @dataclass
 class cfihosTypeEntity:
-    entities_abs_fpath: str = field(default=None, init=False)
-    entities_attrib_abs_fpath: str = field(default=None, init=False)
-    entities_attrib_relation_abs_fpath: str = field(default=None, init=False)
+    """Class for CFIHOS Entity type."""
+
+    entities_abs_fpath: str = field(default="", init=False)
+    entities_attrib_abs_fpath: str = field(default="", init=False)
+    entities_attrib_relation_abs_fpath: str = field(default="", init=False)
 
     # file containing the first class citizens properties' attributes
-    entity_first_class_attributes_fpath: str = field(default=None, init=False)
+    entity_first_class_attributes_fpath: str = field(default="", init=False)
 
     # file containing the edges
-    entities_edges_abs_fpath: str = field(default=None, init=False)
+    entities_edges_abs_fpath: str = field(default="", init=False)
+
+    # file containing entities implementing core models
+    entities_core_model_abs_fpath: str = field(default="", init=False)
 
     data_folder_abs_fpath: str
     entities_fname: str
     entities_attrib_fname: str
     entities_attrib_relation_fname: str
-    entities_edges: str  # added for edge
+
+    entities_edges: str = ""  # added for edge
+    entities_core_model: str = ""  # added for core_model
+
+    # If the system extends CFIHOS, the CFIHOS base files should be provided
+    base_folder_abs_fpath: str = ""
+    base_entities_attrib_fname: str = ""
+    base_tag_attrib_fname: str = ""
+
     type: str = constants.CFIHOS_TYPE_ENTITY
     type_prefix: str = constants.CFIHOS_TYPE_ENTITY_PREFIX
     type_id_prefix: str = constants.CFIHOS_ID_ENTITY_PREFIX
@@ -91,19 +143,35 @@ class cfihosTypeEntity:
     id_prefix_replacement: str = "_"
 
     def __post_init__(self):
+        """Sets the absolute file paths for the entities, entities attributes and property metadata files.
+
+        If entities_edges and entities_core_model are provided, set the absolute file paths for these files as well.
+        """
         self.entities_abs_fpath = self.data_folder_abs_fpath + self.entities_fname
         self.entities_attrib_abs_fpath = self.data_folder_abs_fpath + self.entities_attrib_fname
         self.entities_attrib_relation_abs_fpath = self.data_folder_abs_fpath + self.entities_attrib_relation_fname
-        if self.entities_edges is not None:
+        self.base_entities_attrib_abs_fpath = ""
+        self.base_tag_attrib_abs_fpath = ""
+        if self.entities_edges:
             self.entities_edges_abs_fpath = self.data_folder_abs_fpath + self.entities_edges  # added for edge
+        if self.entities_core_model:
+            self.entities_core_model_abs_fpath = (
+                self.data_folder_abs_fpath + self.entities_core_model
+            )  # added for core_model
+        if self.base_folder_abs_fpath and self.base_entities_attrib_fname:
+            self.base_entities_attrib_abs_fpath = self.base_folder_abs_fpath + self.base_entities_attrib_fname
+        if self.base_folder_abs_fpath and self.base_tag_attrib_fname:
+            self.base_tag_attrib_abs_fpath = self.base_folder_abs_fpath + self.base_tag_attrib_fname
 
 
 @dataclass
 class CfihosProcessor(BaseModelInterpreter):
-    # Which CFIHOS entity types are included in the model
-    included_cfihos_types_config: List[dict]
+    """Class for processing CFIHOS data and returning it in a generic format."""
 
-    includes_cfihos_types: List[Union[cfihosTypeEntity, cfihosTypeEquipment, cfihosTypeEquipment]] = field(
+    # Which CFIHOS entity types are included in the model
+    included_cfihos_types_config: list[dict]
+
+    includes_cfihos_types: list[cfihosTypeEntity | cfihosTypeEquipment | cfihosTypeEquipment] = field(
         default_factory=list, init=False
     )
 
@@ -116,23 +184,23 @@ class CfihosProcessor(BaseModelInterpreter):
     rdl_master_object_name_col_name: str
 
     # Dictionary
-    cfihos_type_metadata: dict = field(default=None, init=False)
+    cfihos_type_metadata: dict = field(default_factory=dict, init=False)
 
     # ID prefix filters #TODO: this must contain the set of filters and create a replace filter function
-    id_prefix_replace_filters: Dict[str, str] = field(default=None, init=False)
+    id_prefix_replace_filters: dict[str, str] = field(default_factory=dict, init=False)
 
     _CFIHOS_ENTITY = constants.CFIHOS_TYPE_ENTITY
     _CFIHOS_EQUIPMENT = constants.CFIHOS_TYPE_EQUIPMENT
     _CFIHOS_TAG = constants.CFIHOS_TYPE_TAG
 
-    _map_cfihos_type_to_object = {
+    _map_cfihos_type_to_object: ClassVar[dict] = {
         "cfihosTypeEntity": cfihosTypeEntity,
         "cfihosTypeEquipment": cfihosTypeEquipment,
         "cfihosTypeTag": cfihosTypeTag,
     }
 
     # entities
-    _entities = None
+    _entities: dict[str, dict] = field(default_factory=dict, init=False)
 
     # Name of the model processor (from the config file)
     processor_config_name: str
@@ -142,20 +210,21 @@ class CfihosProcessor(BaseModelInterpreter):
 
     source: DataSource = field(default=DataSource.default())
 
-    _supported_cfihos_types = set([_CFIHOS_ENTITY, _CFIHOS_EQUIPMENT, _CFIHOS_TAG])
+    _supported_cfihos_types: ClassVar[set] = set([_CFIHOS_ENTITY, _CFIHOS_EQUIPMENT, _CFIHOS_TAG])
 
-    _map_entity_id_to_dms_id: Dict[str, str] = field(default=None, init=False)
-    _map_dms_id_to_entity_id: Dict[str, str] = field(default=None, init=False)
-    _map_entity_name_to_entity_id: Dict[str, str] = field(default=None, init=False)
+    _map_entity_id_to_dms_id: dict[str, str] = field(default_factory=dict, init=False)
+    _map_dms_id_to_entity_id: dict[str, str] = field(default_factory=dict, init=False)
+    _map_entity_name_to_entity_id: dict[str, str] = field(default_factory=dict, init=False)
 
     def __post_init__(self):
-        # Setup cifhos included type object
+        """Setup cifhos included type object."""
         for init_config in self.included_cfihos_types_config:
             cfihos_type = init_config.pop("type")
             type_obj = self._map_cfihos_type_to_object.get(cfihos_type)
             if type_obj is None:
                 raise KeyError(
-                    f"Provided CFIHOS type {cfihos_type} is not supported. Msut be one of the following: {list(self._map_cfihos_type_to_object.keys())}"
+                    f"Provided CFIHOS type {cfihos_type} is not supported. "
+                    f"Must be one of the following: {list(self._map_cfihos_type_to_object.keys())}"
                 )
             self.includes_cfihos_types.append(type_obj(**init_config))
 
@@ -175,13 +244,13 @@ class CfihosProcessor(BaseModelInterpreter):
         self._init_mapping_tables()
 
     def _init_mapping_tables(self):
-        """_summary_"""
+        """Initializes mapping tables."""
         self._init_entity_name_to_entity_id()
         self._init_entity_id_to_dms_id()
         self._map_dms_id_to_entity_id = {val: key for key, val in self._map_entity_id_to_dms_id.items()}
 
     def _init_entity_name_to_entity_id(self):
-        """Creates a mapping table from entity name to model id"""
+        """Creates a mapping table from entity name to model id."""
         abs_fpath = self.abs_fpath_model_raw_data_folder / pathlib.Path(self.rdl_master_objects_fname)
         df = read_input_sheet(abs_fpath, source=self.source)[
             [self.rdl_master_object_id_col_name, self.rdl_master_object_name_col_name]
@@ -190,13 +259,14 @@ class CfihosProcessor(BaseModelInterpreter):
             zip(
                 df[self.rdl_master_object_name_col_name],
                 df[self.rdl_master_object_id_col_name],
+                strict=False,
             )
         )
 
     def _init_entity_id_to_dms_id(self):
         id_prefix_to_entity_types = {}
         id_prefix_filters = []
-        for type_id, metadata in self.cfihos_type_metadata.items():
+        for _, metadata in self.cfihos_type_metadata.items():
             id_prefix_to_entity_types.setdefault(metadata["type_id_prefix"], []).append(metadata["type_prefix"])
             id_prefix_filters.append(metadata["type_id_prefix"])
 
@@ -216,7 +286,7 @@ class CfihosProcessor(BaseModelInterpreter):
                     entity_ending_id = row[self.rdl_master_object_id_col_name]
                     for (
                         remove_str,
-                        replace_str,
+                        _,
                     ) in self.id_prefix_replace_filters.items():  # Revise this one
                         entity_ending_id = entity_ending_id.replace(remove_str, entity_ending_id)
 
@@ -229,20 +299,24 @@ class CfihosProcessor(BaseModelInterpreter):
         self._map_entity_id_to_dms_id = entity_to_dms_mapping
 
     def replace_id_func(self, s: str):
+        """Replace id prefixes."""
         for replace_str, replacement_str in self.id_prefix_replace_filters.items():
             s = s.replace(replace_str, replacement_str)
         return s
 
-    def process(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        """
-        Process the CFIHOS Entity, Tag and Equipment data and return the processed
-        entities, properties and property metadata in a generic format
+    def process(self) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Process the CFIHOS Entity, Tag and Equipment data and return the processed.
+
+        entities, properties and property metadata in a generic format.
 
         Returns:
             Tuple[pd.DataFrame,pd.DataFrame, pd.DataFrame]: DataFrames of model entities, corresponding properties,
             and properties metadata
         """
-        processing_funcs = {
+        processing_funcs: dict[
+            str,
+            Callable[[Any], tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]],
+        ] = {
             constants.CFIHOS_TYPE_ENTITY: self._process_and_retrieve_entities,
             constants.CFIHOS_TYPE_TAG: self._process_and_retrieve_tags,
             constants.CFIHOS_TYPE_EQUIPMENT: self._process_and_retrieve_equipment,
@@ -273,13 +347,14 @@ class CfihosProcessor(BaseModelInterpreter):
         df_properties_metadata = pd.concat(list_of_properties_metadata_df)
 
         df_entities[PropertyStructure.FIRSTCLASSCITIZEN] = (
-            df_entities[PropertyStructure.FIRSTCLASSCITIZEN].fillna(False).astype(bool)
+            df_entities[PropertyStructure.FIRSTCLASSCITIZEN].astype("boolean").fillna(False)
         )
         df_properties[PropertyStructure.FIRSTCLASSCITIZEN] = (
-            df_properties[PropertyStructure.FIRSTCLASSCITIZEN].fillna(False).astype(bool)
+            df_properties[PropertyStructure.FIRSTCLASSCITIZEN].astype("boolean").fillna(False)
         )
 
-        # add unique_validaiton_id column to make sure no duplicate properties per entity. duplicate properties for the same entity should be unique if one entity is FCC
+        # add unique_validaiton_id column to make sure no duplicate properties per entity.
+        # Duplicate properties for the same entity should be unique if one entity is FCC
         df_properties[PropertyStructure.UNIQUE_VALIDATION_ID] = np.where(
             df_properties[PropertyStructure.FIRSTCLASSCITIZEN],
             df_properties[EntityStructure.ID] + df_properties[PropertyStructure.ID],
@@ -292,11 +367,18 @@ class CfihosProcessor(BaseModelInterpreter):
         ]
         df_properties_metadata.drop_duplicates(subset=[PropertyStructure.ID], inplace=True)
 
-        if df_entities[EntityStructure.ID].is_unique is False:
-            raise ValueError("Duplicated entity ids detected")
+        if not df_entities[EntityStructure.ID].is_unique:
+            duplicate_entities = df_entities.loc[
+                df_entities[EntityStructure.ID].duplicated(keep=False), ["entityId", "entityName", "description"]
+            ]
+            raise ValueError(f"Duplicated entity ids detected:\n{duplicate_entities}")
 
-        if df_properties[PropertyStructure.UNIQUE_VALIDATION_ID].is_unique is False:
-            raise ValueError("Duplicated entity-property ids detected")
+        if not df_properties[PropertyStructure.UNIQUE_VALIDATION_ID].is_unique:
+            duplicate_properties = df_properties.loc[
+                df_properties[PropertyStructure.UNIQUE_VALIDATION_ID].duplicated(keep=False),
+                ["entityId", "entityName", "propertyId", "propertyName", "unique_validation_id"],
+            ]
+            raise ValueError(f"Duplicated entity-property ids detected:\n{duplicate_properties}")
 
         df_properties[PropertyStructure.FIRSTCLASSCITIZEN] = (
             df_properties[PropertyStructure.FIRSTCLASSCITIZEN].fillna(False).astype(bool)
@@ -312,11 +394,20 @@ class CfihosProcessor(BaseModelInterpreter):
         df = df[list(mapping_table.values())]
         return df
 
+    def _extend_property_metadata(
+        self, fpath: str, mapping_table: dict[str, str], metadata_subset: pd.DataFrame
+    ) -> pd.DataFrame:
+        base_metadata = self._get_property_metadata(fpath, mapping_table)
+        extended_metadata = pd.concat([metadata_subset, base_metadata], ignore_index=True)
+        return extended_metadata
+
     def _process_and_retrieve_entities(
         self, cfihos_type_obj: cfihosTypeEntity
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        """process data according to cfihos entities structures and returns the processed entity data
-        according to the generic structure
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Process data according to cfihos entities structures and returns it according to the generic structure.
+
+        In case the reverse relation does not have a corresponding through property (a direct relation), the
+        direct relation is added to the properties dataframe.
 
         Args:
             cfihos_type_obj (cfihosTypeEntity): A CFIHOS Entity Type object containing all the necessary info
@@ -326,39 +417,16 @@ class CfihosProcessor(BaseModelInterpreter):
             Tuple[pd.DataFrame,pd.DataFrame, pd.DataFrame]: A df containing the entities, corresponding property info
             and entity properties metadata
         """
-
-        entity_raw_col_mapping = {
-            EntityStructure.ID: "CFIHOS unique ID",
-            EntityStructure.NAME: "name",
-            EntityStructure.INHERITS_FROM_ID: "parent CFIHOS unique ID",
-            EntityStructure.INHERITS_FROM_NAME: "parent entity name",
-        }
-
-        entity_col_renaming = {
-            "name": EntityStructure.NAME,
-            "definition": EntityStructure.DESCRIPTION,
-            "parent CFIHOS unique ID": EntityStructure.INHERITS_FROM_ID,
-            "parent entity name": EntityStructure.INHERITS_FROM_NAME,
-            "is first class citizen": EntityStructure.FIRSTCLASSCITIZEN,
-        }
-
-        entity_prop_metadata_renaming = {
-            "CFIHOS unique id": PropertyStructure.ID,
-            "name": PropertyStructure.NAME,
-            "definition": PropertyStructure.DESCRIPTION,
-            "format": PropertyStructure.TARGET_TYPE,
-        }
-
         df = read_input_sheet(
             cfihos_type_obj.entities_abs_fpath,
             source=self.source,
             keep_default_na=False,
         )
-        df[EntityStructure.ID] = df[entity_raw_col_mapping[EntityStructure.ID]]
+        df[EntityStructure.ID] = df[ENTITY_RAW_COLUMN_MAPPING[EntityStructure.ID]]
         df = df.set_index(df[EntityStructure.ID])
 
         # Convert towards generic types
-        df = df.rename(columns=entity_col_renaming)
+        df = df.rename(columns=ENTITY_COLUMN_MAPPING)
 
         # Not all entities strucutres has Parent cols
         if (EntityStructure.INHERITS_FROM_ID in df.columns) and (EntityStructure.INHERITS_FROM_NAME in df.columns):
@@ -383,23 +451,47 @@ class CfihosProcessor(BaseModelInterpreter):
                 EntityStructure.FIRSTCLASSCITIZEN,
             ]
         ]
+
+        # adding entities implementing core model
+        if cfihos_type_obj.entities_core_model:
+            # # Read Core Data Model inheritance requirements
+            df_inherits_cdm = read_input_sheet(
+                cfihos_type_obj.entities_core_model_abs_fpath,
+                source=self.source,
+                keep_default_na=False,
+            )
+
+            # Dropping columns (only relevant for IMOD, Core structures have their own names/descriptions)
+            df_inherits_cdm.drop(columns=["name", "description"], inplace=True)
+            df_inherits_cdm = df_inherits_cdm.rename(columns=ENTITY_CDM_EXTENSION_MAPPING)
+            df_inherits_cdm[EntityStructure.IMPLEMENTS_CORE_MODEL] = df_inherits_cdm.apply(
+                lambda row: {
+                    "space": row["inherited from space"],
+                    "external_id": row[EntityStructure.IMPLEMENTS_CORE_MODEL],
+                    "version": row["type version"],
+                },
+                axis=1,
+            )
+            df_grouped_inheritance = (
+                df_inherits_cdm.groupby(EntityStructure.ID)
+                .agg({EntityStructure.IMPLEMENTS_CORE_MODEL: list})
+                .reset_index()
+            )
+            df = pd.merge(df.reset_index(drop=True), df_grouped_inheritance, on=EntityStructure.ID, how="left")
+            df = df.set_index(df[EntityStructure.ID])
+        else:
+            df[EntityStructure.IMPLEMENTS_CORE_MODEL] = None
+
         # Get properties relation to entities
         df_prop = read_input_sheet(
             cfihos_type_obj.entities_attrib_relation_abs_fpath,
             source=self.source,
             keep_default_na=False,
         )
-        prop_columns_of_interest = {
-            "entity CFIHOS unique id": EntityStructure.ID,
-            "entity name": EntityStructure.NAME,
-            "attribute CFIHOS unique id": PropertyStructure.ID,
-            "attribute name": PropertyStructure.NAME,
-            "constraint must be present in": PropertyStructure.PROPERTY_TYPE,
-            "entity attribute definition": PropertyStructure.DESCRIPTION,
-            "identifier / mandatory / optional": PropertyStructure.IS_REQUIRED,
-        }
-        df_prop = df_prop[list(prop_columns_of_interest)]
-        df_prop = df_prop.rename(columns=prop_columns_of_interest)
+
+        df_prop = df_prop[list(ENTITY_RELEVANT_PROPERTY_COLUMNS)]
+        df_prop = df_prop.rename(columns=ENTITY_RELEVANT_PROPERTY_COLUMNS)
+        df_prop = self._assign_rev_through_property(df_prop)
         df_prop[PropertyStructure.FIRSTCLASSCITIZEN] = False
         df_prop[PropertyStructure.FIRSTCLASSCITIZEN] = df_prop[PropertyStructure.FIRSTCLASSCITIZEN].replace(
             np.nan, False
@@ -408,8 +500,23 @@ class CfihosProcessor(BaseModelInterpreter):
         # Get related properties
         df_prop_metadata = self._get_property_metadata(
             fpath=cfihos_type_obj.entities_attrib_abs_fpath,
-            mapping_table=entity_prop_metadata_renaming,
+            mapping_table=ENTITY_PROPERTY_METADATA_MAPPING,
         )
+
+        if cfihos_type_obj.base_entities_attrib_abs_fpath:
+            df_prop_metadata = self._extend_property_metadata(
+                fpath=cfihos_type_obj.base_entities_attrib_abs_fpath,
+                mapping_table=ENTITY_PROPERTY_METADATA_MAPPING,
+                metadata_subset=df_prop_metadata,
+            )
+
+        if cfihos_type_obj.base_tag_attrib_abs_fpath:
+            df_prop_metadata = self._extend_property_metadata(
+                fpath=cfihos_type_obj.base_tag_attrib_abs_fpath,
+                mapping_table=TAG_OR_EQUIPMENT_PROPERTY_METADATA_MAPPING,
+                metadata_subset=df_prop_metadata,
+            )
+
         metadata_suffix = "_metadata"
         df_prop = df_prop.merge(
             df_prop_metadata,
@@ -420,13 +527,15 @@ class CfihosProcessor(BaseModelInterpreter):
         df_prop = df_prop.drop(df_prop.filter(regex=f"{metadata_suffix}$").columns, axis=1)
 
         # Check for entity relation, if so update target type to entity type instead of referring to string, int, etc.
-        set_target_type = lambda x, y: x if (x) else y
+        # TODO: Simplify this
+        def set_target_type(x, y):
+            return x if (x) else y
+
         df_prop[PropertyStructure.TARGET_TYPE] = df_prop.apply(
             lambda x: set_target_type(x[PropertyStructure.PROPERTY_TYPE], x[PropertyStructure.TARGET_TYPE]),
             axis=1,
         )
 
-        df_prop[PropertyStructure.MULTI_VALUED] = False  # TODO Missing data on this, thus defualts to false
         df_prop[PropertyStructure.UOM] = None  # TODO: verify that this will always be Null
         df_prop[PropertyStructure.ENUMERATION_TABLE] = None  # TODO: verify that this will always be Null
         df_prop["temp_prop_type_dict"] = df_prop[PropertyStructure.PROPERTY_TYPE].apply(
@@ -437,17 +546,28 @@ class CfihosProcessor(BaseModelInterpreter):
             lambda row: self._get_property_field_target_type(row, temp_prop_type_dic_col_name="temp_prop_type_dict"),
             axis=1,
         )
-        df_prop = df_prop.drop(columns=["temp_prop_type_dict"])
+
         df_prop[PropertyStructure.IS_UNIQUE] = df_prop[PropertyStructure.IS_REQUIRED].map(
             lambda s: self._get_property_field_is_unique(s)
         )  # TODO: using is required is a bad way of solving this, should be its own field
         df_prop[PropertyStructure.IS_REQUIRED] = df_prop[PropertyStructure.IS_REQUIRED].map(
             lambda s: self._get_property_field_is_required(s)
         )
-        # Update all id's of all entity relation's
-        df_prop.loc[df_prop[PropertyStructure.PROPERTY_TYPE] == "ENTITY_RELATION", PropertyStructure.ID] = (
-            df_prop.loc[df_prop[PropertyStructure.PROPERTY_TYPE] == "ENTITY_RELATION", PropertyStructure.ID] + "_rel"
-        )
+
+        # Update all id's of all entity relations
+        df_prop.loc[df_prop[PropertyStructure.PROPERTY_TYPE] == "ENTITY_RELATION", PropertyStructure.ID] += "_rel"
+
+        # Add _list to direct or reverese direct relation that is multivalued (MULTI_VALUED is boolean)
+        df_prop.loc[df_prop[PropertyStructure.MULTI_VALUED], PropertyStructure.ID] += "_list"
+
+        # Create reverse direct relations if provided
+        rows_with_reverse_relations = df_prop[df_prop[PropertyStructure.REV_THROUGH_PROPERTY] != ""]
+
+        if not rows_with_reverse_relations.empty:
+            reverse_direct_relations = self._create_reverse_direct_relations(rows_with_reverse_relations)
+            df_prop = self._add_property_rows(df_prop, reverse_direct_relations)
+
+        df_prop = df_prop.drop(columns=["temp_prop_type_dict"])
 
         # Get df_prop_metadata rows that do not exist in df_properties
         df_prop_metadata = df_prop_metadata[
@@ -457,7 +577,7 @@ class CfihosProcessor(BaseModelInterpreter):
         df_prop_metadata[PropertyStructure.ENUMERATION_TABLE] = None  # TODO: verify that this will always be Null
         df_prop_metadata = self._transform_properties(df_prop_metadata)
 
-        if cfihos_type_obj.entities_edges is not None:
+        if cfihos_type_obj.entities_edges:
             # Read entities-edge relations csv
             df_edge_all = read_input_sheet(
                 cfihos_type_obj.entities_edges_abs_fpath,
@@ -470,27 +590,10 @@ class CfihosProcessor(BaseModelInterpreter):
                 df_edge_all["source"] + "." + df_edge_all["edge unique id"]
             )
 
-            edge_columns = {
-                "source": PropertyStructure.EDGE_SOURCE,
-                "destination": PropertyStructure.EDGE_TARGET,
-                "edge unique id": PropertyStructure.ID,
-                "edge name": PropertyStructure.NAME,
-                "edge definition": PropertyStructure.DESCRIPTION,
-                PropertyStructure.EDGE_EXTERNAL_ID: PropertyStructure.EDGE_EXTERNAL_ID,
-            }
-
-            # source becomes the target in reverse
-            reverse_edge_columns = {
-                "source": PropertyStructure.EDGE_TARGET,
-                "destination": PropertyStructure.EDGE_SOURCE,
-                "reverse edge unique id": PropertyStructure.ID,
-                "reverse edge name": PropertyStructure.NAME,
-                "reverse edge definition": PropertyStructure.DESCRIPTION,
-                PropertyStructure.EDGE_EXTERNAL_ID: PropertyStructure.EDGE_EXTERNAL_ID,
-            }
-
-            df_edge = df_edge_all[list(edge_columns.keys())].rename(columns=edge_columns)
-            df_reverse_edge = df_edge_all[list(reverse_edge_columns.keys())].rename(columns=reverse_edge_columns)
+            df_edge = df_edge_all[list(ENTITY_EDGE_COLUMN_MAPPING)].rename(columns=ENTITY_EDGE_COLUMN_MAPPING)
+            df_reverse_edge = df_edge_all[list(ENTITY_EDGE_REVERSE_COLUMN_MAPPING)].rename(
+                columns=ENTITY_EDGE_REVERSE_COLUMN_MAPPING
+            )
 
             # Assign directions and external ID
             df_edge[PropertyStructure.EDGE_DIRECTION] = "outwards"
@@ -509,50 +612,15 @@ class CfihosProcessor(BaseModelInterpreter):
         return df, df_prop, df_prop_metadata
 
     def _process_and_retrieve_tag_or_equipment(
-        self, cfihos_type_obj: Union[cfihosTypeEquipment, cfihosTypeTag]
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        tag_and_equipment_types = [
-            constants.CFIHOS_TYPE_EQUIPMENT,
-            constants.CFIHOS_TYPE_TAG,
-        ]
-        if cfihos_type_obj.type not in tag_and_equipment_types:
+        self, cfihos_type_obj: cfihosTypeEquipment | cfihosTypeTag
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        if cfihos_type_obj.type not in constants.CFIHOS_TYPE_EQUIPMENT_AND_TAG:
             raise ValueError(
-                f"cfihos-type '{cfihos_type_obj.type} not supported. Function supports {tag_and_equipment_types}"
+                f"cfihos-type '{cfihos_type_obj.type} not supported. "
+                f"Function supports {constants.CFIHOS_TYPE_EQUIPMENT_AND_TAG}"
             )
-        property_metadata_column_renamings = {
-            "CFIHOS unique id": PropertyStructure.ID,
-            "property name": PropertyStructure.NAME,
-            "property definition": PropertyStructure.DESCRIPTION,
-            "property data type": PropertyStructure.TARGET_TYPE,
-            "picklist name": PropertyStructure.ENUMERATION_TABLE,
-            # TODO: Use this for UOM instead from entity properties in the future (CFIHOS V.1.5.?)
-            "unit of measure dimension code": PropertyStructure.UOM,
-        }
 
-        entity_raw_col_mapping = {
-            EntityStructure.ID: "CFIHOS unique id",
-            EntityStructure.NAME: f"{cfihos_type_obj.type} class name",
-            "parent_name_key": f"parent {cfihos_type_obj.type} class name",
-            "parent_join_key": "parent_join_key",
-            "entity_join_key": EntityStructure.ID,
-        }
-
-        parent_suffix = "_parent"
-
-        entity_col_renaming = {
-            f"{cfihos_type_obj.type} class name": EntityStructure.NAME,
-            f"{cfihos_type_obj.type} class definition": EntityStructure.DESCRIPTION,
-            f"{cfihos_type_obj.type} class name{parent_suffix}": EntityStructure.INHERITS_FROM_NAME,
-            f"{EntityStructure.ID}{parent_suffix}": EntityStructure.INHERITS_FROM_ID,
-        }
-
-        entity_prop_renaming = {
-            f"{cfihos_type_obj.type} class CFIHOS unique id": EntityStructure.ID,
-            f"{cfihos_type_obj.type} class name": EntityStructure.NAME,
-            f"{cfihos_type_obj.type} property CFIHOS unique id": PropertyStructure.ID,
-            f"{cfihos_type_obj.type} property name": PropertyStructure.NAME,
-            "SI unit of measure code": PropertyStructure.UOM,  # TODO - What should this be?
-        }
+        tag_or_equipment = TagOrEquipment(cfihos_type_obj.type)
 
         df = read_input_sheet(
             cfihos_type_obj.entities_abs_fpath,
@@ -561,63 +629,67 @@ class CfihosProcessor(BaseModelInterpreter):
         )
 
         # Convert to global unique CFIHOS ID
-        df[entity_raw_col_mapping[EntityStructure.ID]] = np.where(
-            df[entity_raw_col_mapping[EntityStructure.ID]].str.startswith(cfihos_type_obj.type_id_prefix),
-            cfihos_type_obj.type_prefix + df[entity_raw_col_mapping[EntityStructure.ID]],
-            df[entity_raw_col_mapping[EntityStructure.ID]],
+        df[tag_or_equipment.raw_column_mapping[EntityStructure.ID]] = np.where(
+            df[tag_or_equipment.raw_column_mapping[EntityStructure.ID]].str.startswith(cfihos_type_obj.type_id_prefix),
+            cfihos_type_obj.type_prefix + df[tag_or_equipment.raw_column_mapping[EntityStructure.ID]],
+            df[tag_or_equipment.raw_column_mapping[EntityStructure.ID]],
         )
 
-        df[entity_raw_col_mapping["parent_join_key"]] = df[entity_raw_col_mapping["parent_name_key"]].map(
-            self._map_entity_name_to_entity_id
-        )
+        df[tag_or_equipment.raw_column_mapping["parent_join_key"]] = df[
+            tag_or_equipment.raw_column_mapping["parent_name_key"]
+        ].map(self._map_entity_name_to_entity_id)
+
         # Convert to global unique CFIHOS ID
-        df[entity_raw_col_mapping["parent_join_key"]] = np.where(
-            df[entity_raw_col_mapping["parent_join_key"]].str.startswith(cfihos_type_obj.type_id_prefix),
-            cfihos_type_obj.type_prefix + df[entity_raw_col_mapping["parent_join_key"]],
-            df[entity_raw_col_mapping["parent_join_key"]],
+        df[tag_or_equipment.raw_column_mapping["parent_join_key"]] = np.where(
+            df[tag_or_equipment.raw_column_mapping["parent_join_key"]].str.startswith(cfihos_type_obj.type_id_prefix),
+            cfihos_type_obj.type_prefix + df[tag_or_equipment.raw_column_mapping["parent_join_key"]],
+            df[tag_or_equipment.raw_column_mapping["parent_join_key"]],
         )
 
-        df[EntityStructure.ID] = df[entity_raw_col_mapping[EntityStructure.ID]]
+        df[EntityStructure.ID] = df[tag_or_equipment.raw_column_mapping[EntityStructure.ID]]
 
-        if entity_raw_col_mapping["parent_join_key"] is not None:
-            df_parent = df[[EntityStructure.ID, entity_raw_col_mapping[EntityStructure.NAME]]]
+        if tag_or_equipment.raw_column_mapping["parent_join_key"] is not None:
+            df_parent = df[[EntityStructure.ID, tag_or_equipment.raw_column_mapping[EntityStructure.NAME]]]
             df_parent = df_parent.drop_duplicates(subset=EntityStructure.ID)
 
             # Check for inheritance
             df = df.merge(
                 df_parent,
                 how="left",
-                left_on=entity_raw_col_mapping["parent_join_key"],
-                right_on=entity_raw_col_mapping["entity_join_key"],
-                suffixes=("", parent_suffix),
+                left_on=tag_or_equipment.raw_column_mapping["parent_join_key"],
+                right_on=tag_or_equipment.raw_column_mapping["entity_join_key"],
+                suffixes=("", constants.PARENT_SUFFIX),
             )
 
             for idx, row in df.iterrows():
                 cfihos_parent_id_col = f"{EntityStructure.ID}_parent"
-                cfihos_parent_name_col = f"{cfihos_type_obj.type} class name{parent_suffix}"
+                cfihos_parent_name_col = f"{cfihos_type_obj.type} class name{constants.PARENT_SUFFIX}"
                 if pd.isnull(row[cfihos_parent_id_col]):
                     cfihos_parent_name = row[f"parent {cfihos_type_obj.type} class name"]
                     cfihos_parent_id = self._map_entity_name_to_entity_id.get(cfihos_parent_name, None)
-                    df.loc[idx, cfihos_parent_id_col] = None
-                    df.loc[idx, cfihos_parent_name_col] = None
+                    df.at[idx, cfihos_parent_id_col] = None
+                    df.at[idx, cfihos_parent_name_col] = None
                     if cfihos_parent_id is None:
                         self._loggingInfo(f"parent name '{cfihos_parent_name}' is None, for {row[EntityStructure.ID]}")
                         continue
-                    for entity_type, metadata in self.cfihos_type_metadata.items():
+                    for _, metadata in self.cfihos_type_metadata.items():
                         if cfihos_parent_id.startswith(metadata["type_prefix"] + metadata["type_id_prefix"]):
-                            df.loc[idx, cfihos_parent_id_col] = cfihos_parent_id
-                            df.loc[idx, cfihos_parent_name_col] = cfihos_parent_name
+                            df.at[idx, cfihos_parent_id_col] = cfihos_parent_id
+                            df.at[idx, cfihos_parent_name_col] = cfihos_parent_name
                             break
 
         else:
             df[EntityStructure.INHERITS_FROM_ID] = None
             df[EntityStructure.INHERITS_FROM_NAME] = None
 
-        parent_entity_id_col = f"{EntityStructure.ID}_parent"
-        parent_entity_name_col = f"{cfihos_type_obj.type} class name{parent_suffix}"
-
         df_collected_inheritance = (
-            df[[parent_entity_name_col, parent_entity_id_col, EntityStructure.ID]]
+            df[
+                [
+                    tag_or_equipment.parent_entity_name_column,
+                    tag_or_equipment.parent_entity_id_column,
+                    EntityStructure.ID,
+                ]
+            ]
             .groupby(EntityStructure.ID)
             .agg(lambda x: list(x))
         )
@@ -630,14 +702,18 @@ class CfihosProcessor(BaseModelInterpreter):
             suffixes=("", "_inherit"),
         )
 
-        df[f"{parent_entity_id_col}"] = df[f"{parent_entity_id_col}_inherit"]
-        df[f"{parent_entity_id_col}"] = df[f"{parent_entity_id_col}"].apply(lambda x: x if x != [None] else None)
-        df[f"{parent_entity_name_col}"] = df[f"{parent_entity_name_col}_inherit"]
+        df[f"{tag_or_equipment.parent_entity_id_column}"] = df[f"{tag_or_equipment.parent_entity_id_column}_inherit"]
+        df[f"{tag_or_equipment.parent_entity_id_column}"] = df[f"{tag_or_equipment.parent_entity_id_column}"].apply(
+            lambda x: x if x != [None] else None
+        )
+        df[f"{tag_or_equipment.parent_entity_name_column}"] = df[
+            f"{tag_or_equipment.parent_entity_name_column}_inherit"
+        ]
 
         df = df.set_index(df[EntityStructure.ID])
 
         # Convert towards generic types
-        df = df.rename(columns=entity_col_renaming)
+        df = df.rename(columns=tag_or_equipment.column_renaming)
 
         df[EntityStructure.INHERITS_FROM_ID] = df[EntityStructure.INHERITS_FROM_ID].replace({np.nan: None})
         df[EntityStructure.INHERITS_FROM_NAME] = df[EntityStructure.INHERITS_FROM_NAME].replace({np.nan: None})
@@ -660,12 +736,19 @@ class CfihosProcessor(BaseModelInterpreter):
         )
 
         # Rename properties according to generic types
-        df_prop = df_prop.rename(columns=entity_prop_renaming)
+        df_prop = df_prop.rename(columns=tag_or_equipment.property_mapping)
 
         df_prop_metadata = self._get_property_metadata(
             fpath=cfihos_type_obj.property_metadata_abs_fpath,
-            mapping_table=property_metadata_column_renamings,
+            mapping_table=TAG_OR_EQUIPMENT_PROPERTY_METADATA_MAPPING,
         )
+
+        if cfihos_type_obj.base_property_metadata_abs_fpath:
+            df_prop_metadata = self._extend_property_metadata(
+                fpath=cfihos_type_obj.base_property_metadata_abs_fpath,
+                mapping_table=TAG_OR_EQUIPMENT_PROPERTY_METADATA_MAPPING,
+                metadata_subset=df_prop_metadata,
+            )
 
         join_key = PropertyStructure.ID
         metadata_suffix = "_metadata"
@@ -683,7 +766,9 @@ class CfihosProcessor(BaseModelInterpreter):
 
         df_prop = df_prop.drop(df_prop.filter(regex=f"{metadata_suffix}$").columns, axis=1)
 
-        metadata_columns_of_interest = [val for val in property_metadata_column_renamings.values() if val != join_key]
+        metadata_columns_of_interest = [
+            val for val in TAG_OR_EQUIPMENT_PROPERTY_METADATA_MAPPING.values() if val != join_key
+        ]
 
         # Convert to global unique CFIHOS ID
         df_prop[EntityStructure.ID] = np.where(
@@ -702,8 +787,8 @@ class CfihosProcessor(BaseModelInterpreter):
                         PropertyStructure.ID,
                         PropertyStructure.NAME,
                         PropertyStructure.UOM,
+                        *metadata_columns_of_interest,
                     ]
-                    + metadata_columns_of_interest
                 )
             )
         ]
@@ -729,7 +814,7 @@ class CfihosProcessor(BaseModelInterpreter):
         return self._process_and_retrieve_tag_or_equipment(cfihos_type_obj)
 
     def _transform_properties(self, df_prop: pd.DataFrame) -> pd.DataFrame:
-        """Transforms and enriches the properties according to the generic property structure
+        """Transforms and enriches the properties according to the generic property structure.
 
         Args:
             df_prop (pd.DataFrame): A DataFrame containing the property information
@@ -737,7 +822,6 @@ class CfihosProcessor(BaseModelInterpreter):
         Returns:
             pd.DataFrame: The transformed DataFrame
         """
-
         df_prop[PropertyStructure.IS_REQUIRED] = False  # TODO Missing data on this, thus defaults to false
         df_prop[PropertyStructure.MULTI_VALUED] = False  # TODO Missing data on this, thus defaults to false
 
@@ -746,7 +830,11 @@ class CfihosProcessor(BaseModelInterpreter):
             "" if PropertyStructure.UOM not in df_prop.columns else df_prop[PropertyStructure.UOM]
         )
 
-        is_entity_relation = lambda x, y: None if (x or y) else None
+        def is_entity_relation(x, y):
+            if x or y:
+                pass
+            return None
+
         df_prop[PropertyStructure.PROPERTY_TYPE] = df_prop.apply(
             lambda x: is_entity_relation(x[PropertyStructure.ENUMERATION_TABLE], x[PropertyStructure.UOM]),
             axis=1,
@@ -755,28 +843,29 @@ class CfihosProcessor(BaseModelInterpreter):
             lambda row: self._get_property_field_type(row)
         )
         df_prop[PropertyStructure.PROPERTY_TYPE] = df_prop["temp_prop_type_dict"].apply(lambda x: x["type"])
-        if len(df_prop) > 0:
-            df_prop[PropertyStructure.TARGET_TYPE] = df_prop.apply(
-                lambda row: self._get_property_field_target_type(row, temp_prop_type_dic_col_name="temp_prop_type_dict"),
-                axis=1,
-            )        
-            df_prop[PropertyStructure.IS_REQUIRED] = df_prop[PropertyStructure.IS_REQUIRED].map(
-                lambda s: self._get_property_field_is_required(s)
-            )
-            df_prop[PropertyStructure.IS_UNIQUE] = df_prop[PropertyStructure.IS_REQUIRED].map(
-                lambda s: self._get_property_field_is_unique(s)
-            )  # TODO: base using is_req to determine both this and above
+        df_prop[PropertyStructure.TARGET_TYPE] = df_prop.apply(
+            lambda row: self._get_property_field_target_type(row, temp_prop_type_dic_col_name="temp_prop_type_dict"),
+            axis=1,
+        )
         df_prop = df_prop.drop(columns=["temp_prop_type_dict"])
+        df_prop[PropertyStructure.IS_REQUIRED] = df_prop[PropertyStructure.IS_REQUIRED].map(
+            lambda s: self._get_property_field_is_required(s)
+        )
+        df_prop[PropertyStructure.IS_UNIQUE] = df_prop[PropertyStructure.IS_REQUIRED].map(
+            lambda s: self._get_property_field_is_unique(s)
+        )  # TODO: base using is_req to determine both this and above
+
         return df_prop
 
     def _get_property_field_is_required(self, s: str) -> bool:
-        """Infers the is_required property field from string
+        """Infers the is_required property field from string.
+
         Args:
             s (str): cfihos field with the is required information
         Raises:
             KeyError: If provided string value is unknown to mapping logic
         Returns:
-            str: True if field is required, else False
+            str: True if field is required, else False.
         """
         mapper = {
             False: False,
@@ -789,18 +878,20 @@ class CfihosProcessor(BaseModelInterpreter):
             raise KeyError(f"Could not map property field 'is required field' - '{s}'")
         return mapper[s]
 
-    def _get_property_field_is_unique(self, s: str) -> bool:
-        """Infers the is unique property field from string
+    def _get_property_field_is_unique(self, s: str | bool) -> bool:
+        """Infers the is unique property field from string.
+
         Args:
-            s (str): cfihos field with the is unique information
+            s (str | bool): cfihos field with the is unique information
         Raises:
             KeyError: If provided string value is unknown to mapping logic
         Returns:
-            str: True if field is unique, else False
+            str: True if field is unique, else False.
         """
+        if isinstance(s, bool):
+            return s
+
         mapper = {
-            False: False,
-            True: True,
             "Optional": False,
             "Mandatory": False,
             "Identifier": True,
@@ -809,8 +900,8 @@ class CfihosProcessor(BaseModelInterpreter):
             raise KeyError(f"Could not map cfihos is unique field - '{s}'")
         return mapper[s]
 
-    def _get_property_field_type(self, s: str):
-        if s is None or len(s) == 0:
+    def _get_property_field_type(self, s: str | None) -> dict[str, str]:
+        if s is None or not s:
             return {"type": "BASIC_DATA_TYPE"}
         else:
             return {"type": "ENTITY_RELATION", "pointsTo": s}
@@ -829,11 +920,13 @@ class CfihosProcessor(BaseModelInterpreter):
                 return self._map_entity_id_to_dms_id[
                     self._map_entity_name_to_entity_id[prop_type["pointsTo"].replace("  ", " ")]
                 ]
-        try:
-            if raw_target_type.startswith("Text,"):
-                raw_target_type = "Text"
-        except Exception:
-            # TODO: Fix
+
+        if isinstance(raw_target_type, float) and np.isnan(raw_target_type):
+            self._loggingError(f"Error in target type conversion: {raw_target_type}. A string type shall be assigned.")
+            self._loggingError(f"Property dict:\n{property_dict}")
+            raw_target_type = "Text"
+
+        if raw_target_type.startswith("Text,"):
             raw_target_type = "Text"
 
         target_type_converter = {
@@ -848,5 +941,74 @@ class CfihosProcessor(BaseModelInterpreter):
         }
         try:
             return target_type_converter[raw_target_type]
-        except KeyError:
-            raise KeyError(f"Missing conversion for '{raw_target_type}'")
+        except KeyError as e:
+            raise KeyError(f"Missing conversion for '{raw_target_type}'") from e
+
+    def _assign_rev_through_property(self, df_prop: pd.DataFrame) -> pd.DataFrame:
+        """Assigns the reverse through property to the property DataFrame.
+
+        The reverse through property is assigned to the property ID if it is not empty.
+
+        Args:
+            df_prop (pd.DataFrame): The property DataFrame
+
+        """
+        df_prop.loc[df_prop[PropertyStructure.REV_THROUGH_PROPERTY] != "", PropertyStructure.REV_THROUGH_PROPERTY] = (
+            df_prop[PropertyStructure.ID]
+        )
+        return df_prop
+
+    def _create_reverse_direct_relations(self, relations: pd.DataFrame) -> pd.DataFrame:
+        """Creates a missing direct relation based on a reverse relation.
+
+        Properties
+        isRequired, firstClassCitizen, unitOfMeasure, enumerationTableName, isUnique
+        remain the same as in the provided Reverse Direct Relation.
+
+        Args:
+            relations (pd.DataFrame): The reverse relation
+
+        Returns:
+            pd.DataFrame: The missing direct relation
+        """
+        missing_direct_relation = relations.copy()
+
+        missing_direct_relation[EntityStructure.ID] = relations[PropertyStructure.TARGET_TYPE].map(
+            self._map_dms_id_to_entity_id
+        )
+        missing_direct_relation[EntityStructure.NAME] = relations["temp_prop_type_dict"].apply(lambda x: x["pointsTo"])
+        missing_direct_relation[PropertyStructure.ID] += "_" + relations[EntityStructure.ID].apply(
+            lambda id: id.split("-")[-1]
+        )
+        missing_direct_relation[PropertyStructure.NAME] = relations[PropertyStructure.REV_PROPERTY_NAME]
+        missing_direct_relation[PropertyStructure.PROPERTY_TYPE] = Relations.REVERSE
+        missing_direct_relation[PropertyStructure.DESCRIPTION] = relations[PropertyStructure.REV_PROPERTY_DESCRIPTION]
+        missing_direct_relation[PropertyStructure.REV_THROUGH_PROPERTY] = relations[PropertyStructure.ID]
+        missing_direct_relation[PropertyStructure.MULTI_VALUED] = True
+        missing_direct_relation[PropertyStructure.TARGET_TYPE] = relations[EntityStructure.ID].map(
+            self._map_entity_id_to_dms_id
+        )
+        missing_direct_relation[PropertyStructure.UNIQUE_VALIDATION_ID] = (
+            missing_direct_relation[EntityStructure.ID] + missing_direct_relation[PropertyStructure.ID]
+        )
+
+        return missing_direct_relation
+
+    def _add_property_rows(self, df_prop: pd.DataFrame, properties_to_add: pd.DataFrame) -> pd.DataFrame:
+        """Adds property rows to the entity properties DataFrame.
+
+        Args:
+            df_prop (pd.DataFrame): The entity properties DataFrame
+            properties_to_add (pd.DataFrame): The properties to add
+
+        Returns:
+            pd.DataFrame: The updated DataFrame, with the property rows added
+        """
+        try:
+            self._loggingInfo(f"Appending {len(properties_to_add)} reverse direct relation properties")
+            self._loggingDebug("\n" + ("\n".join(properties_to_add[PropertyStructure.ID])))
+            df_prop = pd.concat([df_prop, properties_to_add], ignore_index=True)
+        except Exception as e:
+            self._loggingError(f"Error adding properties: {e}\nThe property rows will not be added.")
+
+        return df_prop

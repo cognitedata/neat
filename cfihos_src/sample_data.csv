@@ -1,0 +1,11 @@
+Tag Number,Class ID,Class Name,Property Name,Property Value,Unit
+PMP-1001,CFIHOS-00000028,Tag Entity,Tag Number,PMP-1001,
+PMP-1001,CFIHOS-30000550,Pump,Fluid Name,Water,
+PMP-1001,CFIHOS-30000550,Pump,Normal Operating Volume Flow Rate,150,m³/h
+PMP-1001,CFIHOS-30000550,Pump,Normal Operating Inlet Pressure,1.5,bar
+PMP-1001,CFIHOS-30000550,Pump,Normal Operating Outlet Pressure,3.5,bar
+PMP-1001,CFIHOS-30000550,Pump,Orientation,Horizontal,
+PMP-1001,CFIHOS-30000550,Pump,Insulation Class,F,
+PMP-1001,CFIHOS-30000551,Centrifugal Pump,Impeller Diameter,250,mm
+PMP-1001,CFIHOS-30000551,Centrifugal Pump,Number of Stages,2,
+PMP-1001,CFIHOS-30000551,Centrifugal Pump,Specific Speed,2200,rpm

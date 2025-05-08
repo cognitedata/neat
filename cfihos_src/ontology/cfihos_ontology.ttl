@@ -1,0 +1,2075 @@
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ns1: <http://purl.org/cognite/neat/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xom_draft_domain_model_views: <http://purl.org/cognite/neat/data-model/verified/logical/xom_draft_domain_model_views/cfihos_centrifugal_pump/1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+xom_draft_domain_model_views: a owl:Ontology ;
+    rdfs:label "cfihos_centrifugal_pump" ;
+    ns1:prefix "xom_draft_domain_model_views" ;
+    dcterms:created "2025-04-05T22:55:01.297310"^^xsd:dateTime ;
+    dcterms:creator "Ali" ;
+    dcterms:description "CFIHOS Centrifugal Pump CFIHOS Model" ;
+    dcterms:hasVersion "1" ;
+    dcterms:modified "2025-04-05T22:55:01.297314"^^xsd:dateTime ;
+    dcterms:title "cfihos_centrifugal_pump" ;
+    owl:versionInfo "1" .
+
+xom_draft_domain_model_views:CFIHOS_10000001 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000001" ;
+    rdfs:comment """A code that uniquely identifies the area within the plant
+The geographical area within the plant where the tag is located""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:CFIHOS_00000003 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000001_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000001_rel" ;
+    rdfs:comment "The geographical area within the plant where the tag is located" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000003 .
+
+xom_draft_domain_model_views:CFIHOS_10000002 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000002" ;
+    rdfs:comment "A name describing the location of an area within the plant" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000003 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000003 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000003" ;
+    rdfs:comment """The site at which the plant is located
+A code that uniquely identifies the site""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000031 xom_draft_domain_model_views:CFIHOS_00000001 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000003_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000003_rel" ;
+    rdfs:comment "The site at which the plant is located" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000031 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000001 .
+
+xom_draft_domain_model_views:CFIHOS_10000004 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000004" ;
+    rdfs:comment "A unique name to identify a geographical location" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000001 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000005 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000005" ;
+    rdfs:comment """The plant where the tag is or will be located
+The plant the process unit is part of
+The plant that the document revision is related to
+The plant the area is part of
+The plant the purchase order is part of
+The plant at which the maintenance unit is located
+The plant the commissioning unit is part of
+The plant where the equipment is or will be installed
+A code that uniquely identifies the plant
+The plant at which the corrosion loop is located
+The plant at which the construction assembly is constructed""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000037 xom_draft_domain_model_views:CFIHOS_00000006 xom_draft_domain_model_views:CFIHOS_00000007 xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:CFIHOS_00000036 xom_draft_domain_model_views:CFIHOS_00000035 xom_draft_domain_model_views:CFIHOS_00000003 xom_draft_domain_model_views:CFIHOS_00000002 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000010 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000031 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000004 xom_draft_domain_model_views:CFIHOS_00000026 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000005_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000005_rel" ;
+    rdfs:comment """The plant where the tag is or will be located
+The plant the process unit is part of
+The plant that the document revision is related to
+The plant the area is part of
+The plant the purchase order is part of
+The plant at which the maintenance unit is located
+The plant the commissioning unit is part of
+The plant where the equipment is or will be installed
+The plant at which the corrosion loop is located
+The plant at which the construction assembly is constructed""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000037 xom_draft_domain_model_views:CFIHOS_00000006 xom_draft_domain_model_views:CFIHOS_00000007 xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:CFIHOS_00000036 xom_draft_domain_model_views:CFIHOS_00000035 xom_draft_domain_model_views:CFIHOS_00000003 xom_draft_domain_model_views:CFIHOS_00000002 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000010 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000004 xom_draft_domain_model_views:CFIHOS_00000026 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000031 .
+
+xom_draft_domain_model_views:CFIHOS_10000006 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000006" ;
+    rdfs:comment "The full name of the plant" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000031 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000008 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000008" ;
+    rdfs:comment "A name describing the function of the process unit" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000002 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000009 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000009" ;
+    rdfs:comment """The unit that will or has commissioned the tag
+A code that uniquely identifies the commissioning unit within a plant""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000037 xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000004 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000009_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000009_rel" ;
+    rdfs:comment """The unit that will or has commissioned the tag
+A code that uniquely identifies the commissioning unit within a plant""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000037 xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000037 xom_draft_domain_model_views:CFIHOS_00000004 ) ] .
+
+xom_draft_domain_model_views:CFIHOS_10000010 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000010" ;
+    rdfs:comment "The name by which the commission unit is usually designated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000004 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000013 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000013" ;
+    rdfs:comment """The unit that is in charge of maintaining the tag
+The maintenance unit to which the maintenance system belongs
+A code that uniquely identifies the maintenance unit at a plant""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000006 xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000007 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000013_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000013_rel" ;
+    rdfs:comment """The unit that is in charge of maintaining the tag
+The maintenance unit to which the maintenance system belongs""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000007 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000006 .
+
+xom_draft_domain_model_views:CFIHOS_10000014 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000014" ;
+    rdfs:comment "The name by which the maintenance unit is usually designated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000006 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000015 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000015" ;
+    rdfs:comment """A code that uniquely identifies the maintenance system within a maintenance unit
+The maintenance system through which the tag is maintained""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000007 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000015_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000015_rel" ;
+    rdfs:comment "The maintenance system through which the tag is maintained" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000007 .
+
+xom_draft_domain_model_views:CFIHOS_10000016 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000016" ;
+    rdfs:comment "The name by which the maintenance system is usually designated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000007 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000017 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000017" ;
+    rdfs:comment "The date at which the maintenance system has been started for the first time (on a continuous basis)" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000007 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000018 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000018" ;
+    rdfs:comment """A code that uniquely identifies the corrosion loop at a plant
+The corrosion loop that includes the tag""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000010 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000018_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000018_rel" ;
+    rdfs:comment "The corrosion loop that includes the tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000010 .
+
+xom_draft_domain_model_views:CFIHOS_10000019 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000019" ;
+    rdfs:comment "The name by which the corrosion loop is usually designated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000010 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000020 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000020" ;
+    rdfs:comment "A description of what the corrosion loop is" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000010 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000021 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000021" ;
+    rdfs:comment "A description of the process performed by the elements of the corrosion loop" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000010 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000022 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000022" ;
+    rdfs:comment "A description of the expected effects of the corrosion" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000010 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000023 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000023" ;
+    rdfs:comment """The type of corrosion loop that classifies this corrosion loop
+A code that uniquely identifies the type of corrosion loop""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000010 xom_draft_domain_model_views:CFIHOS_00000011 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000023_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000023_rel" ;
+    rdfs:comment "The type of corrosion loop that classifies this corrosion loop" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000010 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000011 .
+
+xom_draft_domain_model_views:CFIHOS_10000024 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000024" ;
+    rdfs:comment "The name by which the corrosion loop type is usually designated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000011 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000025 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000025" ;
+    rdfs:comment "An identification of the engineering phase in which the tag is" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000025_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000025_rel" ;
+    rdfs:comment "An identification of the engineering phase in which the tag is" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000040 .
+
+xom_draft_domain_model_views:CFIHOS_10000026 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000026" ;
+    rdfs:comment "A requisition number that has been placed to acquire the tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000027 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000027" ;
+    rdfs:comment "An indication whether the loss of the functionality provided by the tag would have an immediate cost impact, like a loss of production" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000028 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000028" ;
+    rdfs:comment "An indication whether the tag should be considered as a safety critical element, as per International Standards" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000029 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000029" ;
+    rdfs:comment """A code, as per SDE standards, that uniquely identifies the safety item group
+The safety critical item group assigned to the tag, and identified according to International Standard""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:CFIHOS_00000041 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000029_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000029_rel" ;
+    rdfs:comment "The safety critical item group assigned to the tag, and identified according to International Standard" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000041 .
+
+xom_draft_domain_model_views:CFIHOS_10000030 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000030" ;
+    rdfs:comment "A documentation of the outcome of the SCE assessment" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000031 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000031" ;
+    rdfs:comment "A code used to identify uniquely the equipment." ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000032 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000032" ;
+    rdfs:comment "The date at which the equipment was actually purchased" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000033 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000033" ;
+    rdfs:comment "The date at which the equipment was actually started up" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000035 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000035" ;
+    rdfs:comment "The date at which the warrant on the equipment will end" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000036 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000036" ;
+    rdfs:comment "An indicator whether the company is a manufacturer or not" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000037 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000037" ;
+    rdfs:comment "An indicator whether the company is a supplier or not" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000038 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000038" ;
+    rdfs:comment "The name of the person to contact in the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000039 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000039" ;
+    rdfs:comment "A description of the role of the contact person within the organization of the company." ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000040 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000040" ;
+    rdfs:comment """The full name of the tag class
+The full name of the tag or equipment class""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000034 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000040_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000040_rel" ;
+    rdfs:comment "The full name of the tag or equipment class" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000034 .
+
+xom_draft_domain_model_views:CFIHOS_10000042 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000042" ;
+    rdfs:comment "An indication whether the tag or equipment class is an aggregation of other tag or equipment classes and should not be used for associating properties" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000045 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000045" ;
+    rdfs:comment "An indication whether equipment are expected to be installed for tags that are associated with this tag class" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000034 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000047 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000047" ;
+    rdfs:comment """The full name of the equipment class
+The full name of the tag or equipment class""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000008 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000047_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000047_rel" ;
+    rdfs:comment "The full name of the tag or equipment class" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000008 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000033 .
+
+xom_draft_domain_model_views:CFIHOS_10000055 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000055" ;
+    rdfs:comment "An indication whether spare part information is required for equipment related to this class or not" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000033 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000064 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000064" ;
+    rdfs:comment """The type of review to be conducted for the documents classified with this document type and this discipline
+A code that uniquely identifies a document review type""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000060 xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000064_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000064_rel" ;
+    rdfs:comment """The type of review to be conducted for the documents classified with this document type and this discipline
+A code that uniquely identifies a document review type""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000060 .
+
+xom_draft_domain_model_views:CFIHOS_10000065 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000065" ;
+    rdfs:comment "The latest forecast date at which the document is expected to be issued for review" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000066 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000066" ;
+    rdfs:comment "The date on which the document revision  was actually reviewed" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000067 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000067" ;
+    rdfs:comment "The latest forecast date at which the document is expected to be issued for approval" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000068 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000068" ;
+    rdfs:comment "The date at which the document revision has been issued for approval" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000069 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000069" ;
+    rdfs:comment "The latest forecast date at which the document is expected to be issued approved for design" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000070 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000070" ;
+    rdfs:comment "The date at which the document revision has been issued approved for design" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000071 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000071" ;
+    rdfs:comment "The latest forecast date at which the document is expected to be issued approved for construction" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000072 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000072" ;
+    rdfs:comment "The date at which the document revision has been issued approved for construction" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000073 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000073" ;
+    rdfs:comment "The latest forecast date at which the document is expected to be issued as-built" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000074 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000074" ;
+    rdfs:comment "The date at which the document revision has been issued as-built" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000075 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000075" ;
+    rdfs:comment "The name by which the discipline is designated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000021 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000076 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000076" ;
+    rdfs:comment "The date the document was revised" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000022 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000077 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000077" ;
+    rdfs:comment "The name of the company who has generated the document revision" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000022 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000077_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000077_rel" ;
+    rdfs:comment "The name of the company who has generated the document revision" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000009 .
+
+xom_draft_domain_model_views:CFIHOS_10000078 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000078" ;
+    rdfs:comment "The name of the person who created the document revision" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000079 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000079" ;
+    rdfs:comment "The name (or the User ID) of the person who has approved the document revision" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000080 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000080" ;
+    rdfs:comment "The name of the electronic file (including the file extension) with the full path" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000081 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000081" ;
+    rdfs:comment "A code used to identify the content of a document at a certain point in time according to the  originator which doesn't necessarily conform to the Owner/Operator's document revision coding scheme" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000082 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000082" ;
+    rdfs:comment "The name of the file as provided by the manufacturer" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000083 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000083" ;
+    rdfs:comment """A code that uniquely identifies the status of document revisions
+The status of the document revision""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000043 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000083_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000083_rel" ;
+    rdfs:comment "The status of the document revision" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000043 .
+
+xom_draft_domain_model_views:CFIHOS_10000084 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000084" ;
+    rdfs:comment "A unique name used to identify the project" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000022 xom_draft_domain_model_views:CFIHOS_00000030 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000085 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000085" ;
+    rdfs:comment "Any additional comment / explanation for a document revision" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000086 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000086" ;
+    rdfs:comment """A code that uniquely identifies an export control classification
+The Export Control Rule that is applicable for the document revision (e.g., ECCN, EAR)""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000045 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000086_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000086_rel" ;
+    rdfs:comment "The Export Control Rule that is applicable for the document revision (e.g., ECCN, EAR)" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000045 .
+
+xom_draft_domain_model_views:CFIHOS_10000087 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000087" ;
+    rdfs:comment """The transmittal through which this document revision was communicated
+A unique transmittal identifier generated by the document control system of the company sending the transmittal""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000024 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000087_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000087_rel" ;
+    rdfs:comment "The transmittal through which this document revision was communicated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000024 .
+
+xom_draft_domain_model_views:CFIHOS_10000088 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000088" ;
+    rdfs:comment "Indicate the Access restriction applicable for the Document" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000091 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000091" ;
+    rdfs:comment "The full name of the recipient of the document. revision" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000093 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000093" ;
+    rdfs:comment "The location of a media when not stored as an electronic file" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000094 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000094" ;
+    rdfs:comment """An Indication of the media type used for storing the content. of the document revision
+The type of media used to store the content of the additional file
+A code that uniquely identifies the storage media""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000023 xom_draft_domain_model_views:CFIHOS_00000088 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000094_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000094_rel" ;
+    rdfs:comment """An Indication of the media type used for storing the content. of the document revision
+The type of media used to store the content of the additional file""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000023 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000088 .
+
+xom_draft_domain_model_views:CFIHOS_10000096 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000096" ;
+    rdfs:comment """The project stage in which the document revision is created or modified
+A code that uniquely identifies the stage of projects""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000047 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000096_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000096_rel" ;
+    rdfs:comment "The project stage in which the document revision is created or modified" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000047 .
+
+xom_draft_domain_model_views:CFIHOS_10000099 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000099" ;
+    rdfs:comment "An expression that represents the format of the tags belonging to the tag class" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000034 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000100 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000100" ;
+    rdfs:comment """The document type a discipline document type refers to
+A code that uniquely identifies a document type""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000032 xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000100_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000100_rel" ;
+    rdfs:comment """The document type a discipline document type refers to
+A code that uniquely identifies a document type""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000032 .
+
+xom_draft_domain_model_views:CFIHOS_10000101 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000101" ;
+    rdfs:comment """The type of asset that is used as reference for the discipline document type
+A code that uniquely identifies the type of asset""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000056 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000101_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000101_rel" ;
+    rdfs:comment "The type of asset that is used as reference for the discipline document type" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000056 .
+
+xom_draft_domain_model_views:CFIHOS_10000112 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000112" ;
+    rdfs:comment """A code that uniquely identifies the document representation type
+The representation type that should be used for documents of this type, for this discipline""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000057 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000112_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000112_rel" ;
+    rdfs:comment "The representation type that should be used for documents of this type, for this discipline" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000057 .
+
+xom_draft_domain_model_views:CFIHOS_10000122 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000122" ;
+    rdfs:comment "A comment about this discipline and document type" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000123 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000123" ;
+    rdfs:comment "An indicator which specifies if documents classified with this document type require a paper hardcopy. during project and/or after project" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000124 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000124" ;
+    rdfs:comment "An indicator which specifies if documents classified with this document type have to be translated in another language. during project and/or after project." ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000125 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000125" ;
+    rdfs:comment "Specifies if documents classified with this document type have to be maintain in an As Built condition." ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000126 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000126" ;
+    rdfs:comment "A description in a short and concise manner of the content of the additional file" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000023 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000127 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000127" ;
+    rdfs:comment "The unique name of the electronic file (including its extension)" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000023 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000128 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000128" ;
+    rdfs:comment "A unique code used to identify the purchase order within the company issuing the purchase order" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000036 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000128_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000128_rel" ;
+    rdfs:comment "A unique code used to identify the purchase order within the company issuing the purchase order" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000036 .
+
+xom_draft_domain_model_views:CFIHOS_10000129 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000129" ;
+    rdfs:comment "The number of media provided with the transmittal" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000024 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000130 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000130" ;
+    rdfs:comment """The construction assembly of a plant where the tag resides
+A code that uniquely identifies the construction assembly at a plant""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000026 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000130_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000130_rel" ;
+    rdfs:comment "The construction assembly of a plant where the tag resides" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000026 .
+
+xom_draft_domain_model_views:CFIHOS_10000131 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000131" ;
+    rdfs:comment "A name describing the purpose of a construction assembly" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000026 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000136 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000136" ;
+    rdfs:comment "The date the purchase order is issued" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000036 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000142 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000142" ;
+    rdfs:comment """The reason for issuing the transmittal
+A code that uniquely identifies the reason for issue""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000024 xom_draft_domain_model_views:CFIHOS_00000048 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000142_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000142_rel" ;
+    rdfs:comment "The reason for issuing the transmittal" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000024 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000048 .
+
+xom_draft_domain_model_views:CFIHOS_10000144 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000144" ;
+    rdfs:comment "The date of sending the transmittal" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000024 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000146 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000146" ;
+    rdfs:comment """A code that uniquely identifies the unit of measure dimension in CFIHOS
+A unique identifier, assigned in the CFIHOS Reference Data Library (RDL) to the tag or equipment class
+A code that uniquely identifies the unit of measure in CFIHOS
+A unique identifier, assigned in the CFIHOS Reference Data Library (RDL) to the discipline
+A unique identifier, assigned in the CFIHOS Reference Data Library (RDL) to the document type""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000021 xom_draft_domain_model_views:CFIHOS_00000072 xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000032 xom_draft_domain_model_views:CFIHOS_00000073 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000147 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000147" ;
+    rdfs:comment """The primary language that the document revision is written in
+The code by which ISO designates a language, in its ISO639-1 standard
+The language that should be used by default for all exchange of information related to that plant
+The language in which is expressed the additional file""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000044 xom_draft_domain_model_views:CFIHOS_00000023 xom_draft_domain_model_views:CFIHOS_00000031 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000147_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000147_rel" ;
+    rdfs:comment """The primary language that the document revision is written in
+The language that should be used by default for all exchange of information related to that plant
+The language in which is expressed the additional file""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000023 xom_draft_domain_model_views:CFIHOS_00000031 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000044 .
+
+xom_draft_domain_model_views:CFIHOS_10000148 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000148" ;
+    rdfs:comment "The name by which the document type is designated" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000032 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000149 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000149" ;
+    rdfs:comment "The first line of the address of the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000150 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000150" ;
+    rdfs:comment "A name used to uniquely identify the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000151 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000151" ;
+    rdfs:comment """The country where the company address is located
+A code that uniquely identifies a country, according to ISO 3166-1""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000009 xom_draft_domain_model_views:CFIHOS_00000039 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000151_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000151_rel" ;
+    rdfs:comment "The country where the company address is located" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000039 .
+
+xom_draft_domain_model_views:CFIHOS_10000153 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000153" ;
+    rdfs:comment """The discipline a leaf node commissioning unit refers to
+The discipline a discipline document type refers to
+A code that  uniquely identifies a discipline""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000037 xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000021 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000153_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000153_rel" ;
+    rdfs:comment "The discipline a discipline document type refers to" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000021 .
+
+xom_draft_domain_model_views:CFIHOS_10000154 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000154" ;
+    rdfs:comment """The unique identifier for the document according to the Owner/Operator document numbering scheme, to which the additional file is associated
+The unique identifier for the Document according to the Owner/Operator Document numbering scheme
+The document master to which this revision is related""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000023 xom_draft_domain_model_views:CFIHOS_00000022 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000154_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000154_rel" ;
+    rdfs:comment """The unique identifier for the document according to the Owner/Operator document numbering scheme, to which the additional file is associated
+The document master to which this revision is related""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000023 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000022 .
+
+xom_draft_domain_model_views:CFIHOS_10000155 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000155" ;
+    rdfs:comment "The official email address of the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000156 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000156" ;
+    rdfs:comment "The official fax number of the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000157 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000157" ;
+    rdfs:comment """The process unit within the plant to which the tag provides part of the functionality
+A code that uniquely identifies the process unit within the plant""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:CFIHOS_00000002 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000157_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000157_rel" ;
+    rdfs:comment "The process unit within the plant to which the tag provides part of the functionality" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000002 .
+
+xom_draft_domain_model_views:CFIHOS_10000158 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000158" ;
+    rdfs:comment """A name used to uniquely identify the company who manufactures the model / part
+A name used to uniquely identify the company. who manufactures the equipment""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000008 xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000158_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000158_rel" ;
+    rdfs:comment """A name used to uniquely identify the company who manufactures the model / part
+A name used to uniquely identify the company. who manufactures the equipment""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000008 xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000009 .
+
+xom_draft_domain_model_views:CFIHOS_10000159 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000159" ;
+    rdfs:comment """A unique name to identify the model part of the manufacturer, and that the equipment is associated with
+A unique name to identify the model part of the manufacturer""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000008 xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000159_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000159_rel" ;
+    rdfs:comment """A unique name to identify the model part of the manufacturer, and that the equipment is associated with
+A unique name to identify the model part of the manufacturer""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000008 .
+
+xom_draft_domain_model_views:CFIHOS_10000160 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000160" ;
+    rdfs:comment "The unique identifier for the Document according to the originator document numbering scheme" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000022 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000161 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000161" ;
+    rdfs:comment """A code that uniquely identifies the project
+The project for which the transmittal has been issued
+The code that identifies the project the document revision refers to""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000030 xom_draft_domain_model_views:CFIHOS_00000024 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000161_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000161_rel" ;
+    rdfs:comment """The project for which the transmittal has been issued
+The code that identifies the project the document revision refers to""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000024 xom_draft_domain_model_views:CFIHOS_00000035 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000030 .
+
+xom_draft_domain_model_views:CFIHOS_10000162 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000162" ;
+    rdfs:comment """A code used to identify the content of a purchase order item at a certain point in time
+A code used to identify the content of a document at a certain point in time according to the Owner/Operator Document Revision Coding scheme
+A code used to identify the content of a document at a certain point in time""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000023 xom_draft_domain_model_views:CFIHOS_00000035 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000162_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000162_rel" ;
+    rdfs:comment "A code used to identify the content of a document at a certain point in time according to the Owner/Operator Document Revision Coding scheme" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000023 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000035 .
+
+xom_draft_domain_model_views:CFIHOS_10000163 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000163" ;
+    rdfs:comment "A unique identification number for the equipment as prescribed by the manufacturer" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000164 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000164" ;
+    rdfs:comment "The name of the company supplying (vendor) the equipment" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000164_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000164_rel" ;
+    rdfs:comment "The name of the company supplying (vendor) the equipment" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000009 .
+
+xom_draft_domain_model_views:CFIHOS_10000165 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000165" ;
+    rdfs:comment "The name of the company that receives the purchase order" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000036 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000165_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000165_rel" ;
+    rdfs:comment "The name of the company that receives the purchase order" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000036 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000009 .
+
+xom_draft_domain_model_views:CFIHOS_10000166 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000166" ;
+    rdfs:comment "The full name of a tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000166_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000166_rel" ;
+    rdfs:comment "The full name of a tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000028 .
+
+xom_draft_domain_model_views:CFIHOS_10000167 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000167" ;
+    rdfs:comment "The official telephone number of the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000168 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000168" ;
+    rdfs:comment "A description, in a short and concise manner, of the content of the document" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000169 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000169" ;
+    rdfs:comment "The date at which the equipment was actually installed" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000170 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000170" ;
+    rdfs:comment "The price of the equipment for accounting, excluding freight, shipping and insurance costs" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000175 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000175" ;
+    rdfs:comment "A code that uniquely identifies the parent of a construction assembly at a plant" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000026 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000175_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000175_rel" ;
+    rdfs:comment "A code that uniquely identifies the parent of a construction assembly at a plant" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000026 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000026 .
+
+xom_draft_domain_model_views:CFIHOS_10000176 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000176" ;
+    rdfs:comment "A code that uniquely identifies the parent of the commission unit at the plant" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000004 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000176_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000176_rel" ;
+    rdfs:comment "A code that uniquely identifies the parent of the commission unit at the plant" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000004 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000004 .
+
+xom_draft_domain_model_views:CFIHOS_10000177 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000177" ;
+    rdfs:comment "A functional description of the tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000178 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000178" ;
+    rdfs:comment "An identification of the parentage of the tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000178_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000178_rel" ;
+    rdfs:comment "An identification of the parentage of the tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000028 .
+
+xom_draft_domain_model_views:CFIHOS_10000179 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000179" ;
+    rdfs:comment """The company responsible for the design of the commissioning unit
+The company responsible for the design of the tag""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000037 xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000179_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000179_rel" ;
+    rdfs:comment "The company responsible for the design of the tag" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000028 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000009 .
+
+xom_draft_domain_model_views:CFIHOS_10000180 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000180" ;
+    rdfs:comment """The name of the company issuing the purchase order through which this equipment was acquired
+The name of the company issuing the purchase order""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000036 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000180_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000180_rel" ;
+    rdfs:comment """The name of the company issuing the purchase order through which this equipment was acquired
+The name of the company issuing the purchase order""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000036 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000009 .
+
+xom_draft_domain_model_views:CFIHOS_10000185 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000185" ;
+    rdfs:comment "The second line of the address of the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000186 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000186" ;
+    rdfs:comment "The third line of the address of the company" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000009 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000187 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000187" ;
+    rdfs:comment "A description of what is being purchased" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000036 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000188 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000188" ;
+    rdfs:comment "The name assigned by ISO to the country, in its 3166-1 standard" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000039 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000189 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000189" ;
+    rdfs:comment "A code that uniquely identifies an engineering phase or status" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000040 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000190 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000190" ;
+    rdfs:comment "The description of what the engineering status or phase represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000040 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000191 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000191" ;
+    rdfs:comment "A description of what the safety critical item group represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000041 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000192 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000192" ;
+    rdfs:comment "A description of the main function of the model part" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000008 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000193 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000193" ;
+    rdfs:comment """A code that uniquely identifies a currency, as per ISO 4217
+The currency in which the price of the equipment is labelled.""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000042 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000193_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000193_rel" ;
+    rdfs:comment "The currency in which the price of the equipment is labelled." ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000042 .
+
+xom_draft_domain_model_views:CFIHOS_10000194 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000194" ;
+    rdfs:comment "The name that is assigned to the ISO currency" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000042 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000195 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000195" ;
+    rdfs:comment "An indication whether this document is to be developed to meet regulatory compliance requirements" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000035 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000196 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000196" ;
+    rdfs:comment "The description of what the document status represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000043 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000197 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000197" ;
+    rdfs:comment "The name that ISO assigns to a language, in its ISO639-1 standard" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000044 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000198 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000198" ;
+    rdfs:comment "A description of what the export control classification represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000045 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000200 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000200" ;
+    rdfs:comment "The name of the project stage" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000047 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000201 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000201" ;
+    rdfs:comment "A description of what the reason for issue represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000048 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000207 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000207" ;
+    rdfs:comment "At alternate way of identifying uniquely a combination of discipline and document type" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000207_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000207_rel" ;
+    rdfs:comment "At alternate way of identifying uniquely a combination of discipline and document type" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000022 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000027 .
+
+xom_draft_domain_model_views:CFIHOS_10000208 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000208" ;
+    rdfs:comment "A description of what the discipline covers" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000021 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000209 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000209" ;
+    rdfs:comment "The full description of what the document type covers" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000032 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000210 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000210" ;
+    rdfs:comment """A code that uniquely identifies a document type classification
+The classification to which the document type belongs""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000032 xom_draft_domain_model_views:CFIHOS_00000054 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000210_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000210_rel" ;
+    rdfs:comment "The classification to which the document type belongs" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000032 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000054 .
+
+xom_draft_domain_model_views:CFIHOS_10000211 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000211" ;
+    rdfs:comment "A description of what the document type classification represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000054 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000212 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000212" ;
+    rdfs:comment "A description of what the asset type represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000056 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000213 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000213" ;
+    rdfs:comment "A description of what the document representation type is or represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000057 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000214 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000214" ;
+    rdfs:comment "A code that uniquely identifies a format that a document can take" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000058 xom_draft_domain_model_views:CFIHOS_00000022 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000215 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000215" ;
+    rdfs:comment "A description of what the document format represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000058 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000216 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000216" ;
+    rdfs:comment "A description of what the document review type represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000060 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000234 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000234" ;
+    rdfs:comment "A code that uniquely identifies the unit of measure dimension" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000072 xom_draft_domain_model_views:CFIHOS_00000073 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000234_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000234_rel" ;
+    rdfs:comment "A code that uniquely identifies the unit of measure dimension" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000073 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000072 .
+
+xom_draft_domain_model_views:CFIHOS_10000235 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000235" ;
+    rdfs:comment "The name of the unit of measure dimension" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000072 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000237 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000237" ;
+    rdfs:comment """The unit of measure in which is expressed the quantity purchased in the purchase order item
+A code that uniquely identifies the unit of measure""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000073 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000237_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000237_rel" ;
+    rdfs:comment "The unit of measure in which is expressed the quantity purchased in the purchase order item" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000105 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000073 .
+
+xom_draft_domain_model_views:CFIHOS_10000238 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000238" ;
+    rdfs:comment "The name by which is designated the unit of measure" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000073 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000239 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000239" ;
+    rdfs:comment "The symbol that usually used to represent the unit of measure" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000073 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000240 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000240" ;
+    rdfs:comment """The default measurement system that is used by a plant
+The default measurement system that is used by a site
+A code that uniquely identifies the measurement system""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000075 xom_draft_domain_model_views:CFIHOS_00000073 xom_draft_domain_model_views:CFIHOS_00000031 xom_draft_domain_model_views:CFIHOS_00000001 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000240_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000240_rel" ;
+    rdfs:comment """The default measurement system that is used by a plant
+The default measurement system that is used by a site
+A code that uniquely identifies the measurement system""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000073 xom_draft_domain_model_views:CFIHOS_00000031 xom_draft_domain_model_views:CFIHOS_00000001 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000075 .
+
+xom_draft_domain_model_views:CFIHOS_10000241 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000241" ;
+    rdfs:comment "The name under which the measurement system is known" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000075 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000252 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000252" ;
+    rdfs:comment "The name of the company who has sent the transmittal" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000024 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000252_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000252_rel" ;
+    rdfs:comment "The name of the company who has sent the transmittal" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000024 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000009 .
+
+xom_draft_domain_model_views:CFIHOS_10000255 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000255" ;
+    rdfs:comment "A description of what the storage media represents" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000088 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000256 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000256" ;
+    rdfs:comment "The full name of the tag or equipment class" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000257 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000257" ;
+    rdfs:comment "The full name of the tag or equipment class" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000257_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000257_rel" ;
+    rdfs:comment "The full name of the tag or equipment class" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000090 .
+
+xom_draft_domain_model_views:CFIHOS_10000258 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000258" ;
+    rdfs:comment "A definition of what the tag or equipment class is" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000259 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000259" ;
+    rdfs:comment "An indication that the tag or equipment class is considered as a tag class" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000260 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000260" ;
+    rdfs:comment "An indication that the tag or equipment class is considered as an equipment class" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000261 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000261" ;
+    rdfs:comment "An explanation of why the tag or equipment class was created / needed" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000034 xom_draft_domain_model_views:CFIHOS_00000033 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000299 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000299" ;
+    rdfs:comment "A code that uniquely identifies an item in a purchase order" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000012 xom_draft_domain_model_views:CFIHOS_00000105 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000299_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000299_rel" ;
+    rdfs:comment "A code that uniquely identifies an item in a purchase order" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000012 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000105 .
+
+xom_draft_domain_model_views:CFIHOS_10000300 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000300" ;
+    rdfs:comment "A description of what is being purchased through this item" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000105 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000301 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000301" ;
+    rdfs:comment "The date, initially estimated, for the delivery of the purchase order item" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000105 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000302 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000302" ;
+    rdfs:comment "The latest revised date for the delivery of the purchase order item" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000105 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000303 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000303" ;
+    rdfs:comment "The quantity of what is purchased in this order item" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000105 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000028 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000355 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000355" ;
+    rdfs:comment """A code that uniquely identifies the timing for the native file delivery
+The format under which the native document should be provided""" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000135 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000355_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000355_rel" ;
+    rdfs:comment "The format under which the native document should be provided" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000135 .
+
+xom_draft_domain_model_views:CFIHOS_10000356 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000356" ;
+    rdfs:comment "A description of what the timing of the native file delivery represents." ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000135 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000357 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000357" ;
+    rdfs:comment "The format under which the native document should be provided" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000357_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000357_rel" ;
+    rdfs:comment "The format under which the native document should be provided" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000058 .
+
+xom_draft_domain_model_views:CFIHOS_10000358 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_10000358" ;
+    rdfs:comment "The format under which the authoritative record should be provided" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_10000358_rel a owl:ObjectProperty ;
+    rdfs:label "CFIHOS_10000358_rel" ;
+    rdfs:comment "The format under which the authoritative record should be provided" ;
+    rdfs:domain xom_draft_domain_model_views:CFIHOS_00000027 ;
+    rdfs:range xom_draft_domain_model_views:CFIHOS_00000058 .
+
+xom_draft_domain_model_views:CFIHOS_40000040 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000040" ;
+    rdfs:comment "Specifies the level of chloride in the liquid." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000066 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000066" ;
+    rdfs:comment "Specify if the liquid contains corrosive agents." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000104 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000104" ;
+    rdfs:comment "Specify if the liquid contains erosive agents." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000110 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000110" ;
+    rdfs:comment "Specify the gas group classification of the physical object in accordance with IEC/EN 60079-20" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000112 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000112" ;
+    rdfs:comment "Specify the temperature classification of the physical object in accordance with CENELEC EN50014" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000113 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000113" ;
+    rdfs:comment "Specify the hazardous zone in which the functional or physical object is expected to operate." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000132 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000132" ;
+    rdfs:comment "The name of the product in liquid or gas phase." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000142 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000142" ;
+    rdfs:comment "Specifies the level of H2S in the fluid." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000172 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000172" ;
+    rdfs:comment "Specify if the functional or physical object can be immersed or not." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000177 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000177" ;
+    rdfs:comment "The class of electrical insulation used by a  physical object." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000204 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000204" ;
+    rdfs:comment "The hazardous category of the liquid according to an agreed reference standard." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000205 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000205" ;
+    rdfs:comment "The name of the product in liquid phase." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000206 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000206" ;
+    rdfs:comment "The temperature which is the lowest ambient temperature at  which a functional or physical object is expected to operate." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000254 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000254" ;
+    rdfs:comment "The differential pressure  at which a functional or physical object is expected to operate normally." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000255 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000255" ;
+    rdfs:comment "The dynamic viscosity at which a functional or physical object is expected to operate normally." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000272 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000272" ;
+    rdfs:comment "The temperature at which a functional or physical object is expected to operate normally at its inlet connection." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000278 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000278" ;
+    rdfs:comment "The pressure at which a functional or physical object is expected to operate normally at its outlet connection." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000284 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000284" ;
+    rdfs:comment "The specific gravity at which a functional or physical object is expected to operate normally." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000293 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000293" ;
+    rdfs:comment "A volume flow rate a functional or physical object is designed to deliver under normal conditions." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000309 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000309" ;
+    rdfs:comment "Specifies if the equipment is working continuously or in an intermittent way." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000310 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000310" ;
+    rdfs:comment "Specifies if the equipment is working alone or with similar equipment in parallel." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000333 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000333" ;
+    rdfs:comment "A volume flow rate a functional or physical object is designed to deliver at specified conditions." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000412 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000412" ;
+    rdfs:comment "The medium used for testing purpose." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000454 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000454" ;
+    rdfs:comment "The temperature which is the highest ambient temperature at  which a functional or physical object is expected to operate." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000466 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000466" ;
+    rdfs:comment "The pressure which is the highest pressure at which a functional or physical object is expected to operate at its inlet connection." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000487 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000487" ;
+    rdfs:comment "A specification according to which an item is intended to be designed" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000503 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000503" ;
+    rdfs:comment "The lowest temperature at which a functional or physical object is designed." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000504 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000504" ;
+    rdfs:comment "A temperature that is the lowest temperature at which a functional or physical object is expected to operate." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000505 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000505" ;
+    rdfs:comment "A volume flow rate that is the lowest volume flow rate at which a functional or physical object is expected to operate." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000507 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000507" ;
+    rdfs:comment "NPSH for a particular pumping system at a certain flow rate and temperature." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000511 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000511" ;
+    rdfs:comment "An inlet pressure at which a functional or physical object is expected to operate normally." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000514 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000514" ;
+    rdfs:comment "A temperature at which a functional or physical object is expected to operate normally." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000515 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000515" ;
+    rdfs:comment "A vapour pressure at which a functional or physical object is expected to operate normally." ;
+    rdfs:domain xom_draft_domain_model_views:TCFIHOS_30000521 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000532 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000532" ;
+    rdfs:comment "A pressure to which an object should be subjected to test for leakage and structural integrity." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000535 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000535" ;
+    rdfs:comment "The highest pressure at which a functional or physical object is designed for." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000536 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000536" ;
+    rdfs:comment "The highest temperature at which a functional or physical object is designed." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000538 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000538" ;
+    rdfs:comment "A temperature that is the highest temperature at which a functional or physical object is expected to operate." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000546 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000546" ;
+    rdfs:comment "The mass per unit volume of an object or a fluid" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000552 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000552" ;
+    rdfs:comment "The pressure which is the lowest pressure at which a functional or physical object is expected to operate at its inlet connection." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000554 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000554" ;
+    rdfs:comment "The pressure which is the lowest pressure at which a functional or physical object is expected to operate at its outlet connection." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000558 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000558" ;
+    rdfs:comment "The volume flow rate at which a functional or physical object is expected to operate normally." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000561 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000561" ;
+    rdfs:comment "The mount position of an equipment such as horizontal, vertical or submerged" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000575 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000575" ;
+    rdfs:comment "The pressure which is the highest pressure at which a functional or physical object is expected to operate at its outlet connection." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000577 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000577" ;
+    rdfs:comment "A volume flow rate that is the highest volume flow rate at which a functional or physical object is expected to operate." ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:CFIHOS_40000637 a owl:DatatypeProperty ;
+    rdfs:label "CFIHOS_40000637" ;
+    rdfs:comment "The pump type selected on a pump's specification sheet" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:TCFIHOS_30000521 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:XOM_10000001 a owl:DatatypeProperty ;
+    rdfs:label "XOM_10000001" ;
+    rdfs:comment "custom definition 1" ;
+    rdfs:domain xom_draft_domain_model_views:XOM_00000001 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:XOM_10000002 a owl:DatatypeProperty ;
+    rdfs:label "XOM_10000002" ;
+    rdfs:comment "custom definition 2" ;
+    rdfs:domain xom_draft_domain_model_views:XOM_00000001 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:XOM_10000003 a owl:DatatypeProperty ;
+    rdfs:label "XOM_10000003" ;
+    rdfs:comment "custom definition 3" ;
+    rdfs:domain xom_draft_domain_model_views:XOM_00000001 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:XOM_10000004 a owl:DatatypeProperty ;
+    rdfs:label "XOM_10000004" ;
+    rdfs:comment "custom definition 4" ;
+    rdfs:domain xom_draft_domain_model_views:XOM_00000002 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:XOM_10000005 a owl:DatatypeProperty ;
+    rdfs:label "XOM_10000005" ;
+    rdfs:comment "custom definition 5" ;
+    rdfs:domain xom_draft_domain_model_views:XOM_00000002 ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:entityType a owl:DatatypeProperty ;
+    rdfs:label "entityType" ;
+    rdfs:comment "" ;
+    rdfs:domain [ a owl:Class ;
+            owl:unionOf ( xom_draft_domain_model_views:CFIHOS_00000024 xom_draft_domain_model_views:CFIHOS_00000048 xom_draft_domain_model_views:CFIHOS_00000090 xom_draft_domain_model_views:CFIHOS_00000060 xom_draft_domain_model_views:CFIHOS_00000057 xom_draft_domain_model_views:CFIHOS_00000135 xom_draft_domain_model_views:TCFIHOS_30000521 xom_draft_domain_model_views:CFIHOS_00000088 xom_draft_domain_model_views:CFIHOS_00000056 xom_draft_domain_model_views:CFIHOS_00000045 xom_draft_domain_model_views:CFIHOS_00000054 xom_draft_domain_model_views:CFIHOS_00000058 xom_draft_domain_model_views:TCFIHOS_30000550 xom_draft_domain_model_views:CFIHOS_00000047 xom_draft_domain_model_views:TCFIHOS_30000314 xom_draft_domain_model_views:CFIHOS_00000027 xom_draft_domain_model_views:CFIHOS_00000033 xom_draft_domain_model_views:CFIHOS_00000043 xom_draft_domain_model_views:CFIHOS_00000034 ) ] ;
+    rdfs:range xsd:string .
+
+xom_draft_domain_model_views:XOM_00000002 a owl:Class ;
+    rdfs:label "XOM_00000002" ;
+    rdfs:comment "custom description" .
+
+xom_draft_domain_model_views:CFIHOS_00000011 a owl:Class ;
+    rdfs:label "CFIHOS_00000011" ;
+    rdfs:comment "A classification of corrosion loops" .
+
+xom_draft_domain_model_views:CFIHOS_00000030 a owl:Class ;
+    rdfs:label "CFIHOS_00000030" ;
+    rdfs:comment "A temporary endeavour undertaken to create an asset or a service" .
+
+xom_draft_domain_model_views:CFIHOS_00000039 a owl:Class ;
+    rdfs:label "CFIHOS_00000039" ;
+    rdfs:comment "A country, as recognized by ISO in its 3166-1 standard" .
+
+xom_draft_domain_model_views:CFIHOS_00000040 a owl:Class ;
+    rdfs:label "CFIHOS_00000040" ;
+    rdfs:comment "A phase of the engineering activities" .
+
+xom_draft_domain_model_views:CFIHOS_00000041 a owl:Class ;
+    rdfs:label "CFIHOS_00000041" ;
+    rdfs:comment "A classification of tags according to safety requirements" .
+
+xom_draft_domain_model_views:CFIHOS_00000042 a owl:Class ;
+    rdfs:label "CFIHOS_00000042" ;
+    rdfs:comment "A currency, as recognized by the ISO organization in its 4217 standard" .
+
+xom_draft_domain_model_views:CFIHOS_00000044 a owl:Class ;
+    rdfs:label "CFIHOS_00000044" ;
+    rdfs:comment "A language, as recognized by ISO in its 639-1 standard" .
+
+xom_draft_domain_model_views:CFIHOS_00000075 a owl:Class ;
+    rdfs:label "CFIHOS_00000075" ;
+    rdfs:comment "A collection of units of measure related to each other" .
+
+xom_draft_domain_model_views:XOM_00000001 a owl:Class ;
+    rdfs:label "XOM_00000001" ;
+    rdfs:comment "custom description" .
+
+xom_draft_domain_model_views:CFIHOS_00000043 a owl:Class ;
+    rdfs:label "CFIHOS_00000043" ;
+    rdfs:comment "A status that a document, revision can have during its lifecycle" .
+
+xom_draft_domain_model_views:CFIHOS_00000045 a owl:Class ;
+    rdfs:label "CFIHOS_00000045" ;
+    rdfs:comment "A rule that applies to some goods and services when being exported" .
+
+xom_draft_domain_model_views:CFIHOS_00000047 a owl:Class ;
+    rdfs:label "CFIHOS_00000047" ;
+    rdfs:comment "A phase through which a project goes from conception to implementation" .
+
+xom_draft_domain_model_views:CFIHOS_00000048 a owl:Class ;
+    rdfs:label "CFIHOS_00000048" ;
+    rdfs:comment "The reason for which transmittals are issued" .
+
+xom_draft_domain_model_views:CFIHOS_00000054 a owl:Class ;
+    rdfs:label "CFIHOS_00000054" ;
+    rdfs:comment "A classification of document types according to their nature" .
+
+xom_draft_domain_model_views:CFIHOS_00000056 a owl:Class ;
+    rdfs:label "CFIHOS_00000056" ;
+    rdfs:comment "A classification of discipline document types according to the type of asset they refer to" .
+
+xom_draft_domain_model_views:CFIHOS_00000057 a owl:Class ;
+    rdfs:label "CFIHOS_00000057" ;
+    rdfs:comment "A classification of the documents according to how they should be represented" .
+
+xom_draft_domain_model_views:CFIHOS_00000060 a owl:Class ;
+    rdfs:label "CFIHOS_00000060" ;
+    rdfs:comment "A type of review that is required for a document" .
+
+xom_draft_domain_model_views:CFIHOS_00000072 a owl:Class ;
+    rdfs:label "CFIHOS_00000072" ;
+    rdfs:comment "A grouping of units of measure that relate to the same kind of quantity" .
+
+xom_draft_domain_model_views:CFIHOS_00000088 a owl:Class ;
+    rdfs:label "CFIHOS_00000088" ;
+    rdfs:comment "A type of technology used to store some documents" .
+
+xom_draft_domain_model_views:CFIHOS_00000135 a owl:Class ;
+    rdfs:label "CFIHOS_00000135" ;
+    rdfs:comment "An indication of when the native file should be available" .
+
+xom_draft_domain_model_views:CFIHOS_00000001 a owl:Class ;
+    rdfs:label "CFIHOS_00000001" ;
+    rdfs:comment "A geographical surface that can be identified on a map" .
+
+xom_draft_domain_model_views:CFIHOS_00000002 a owl:Class ;
+    rdfs:label "CFIHOS_00000002" ;
+    rdfs:comment "A decomposition of the high level Facility function into more granular sub-functions" .
+
+xom_draft_domain_model_views:CFIHOS_00000003 a owl:Class ;
+    rdfs:label "CFIHOS_00000003" ;
+    rdfs:comment "A geographical surface occupied by a Plant" .
+
+xom_draft_domain_model_views:CFIHOS_00000006 a owl:Class ;
+    rdfs:label "CFIHOS_00000006" ;
+    rdfs:comment "A grouping of maintenance system by the maintenance discipline. This grouping allows one to perform maintenance activities" .
+
+xom_draft_domain_model_views:CFIHOS_00000021 a owl:Class ;
+    rdfs:label "CFIHOS_00000021" ;
+    rdfs:comment "A branch of knowledge of expertise which is responsible for the content of the deliverable" .
+
+xom_draft_domain_model_views:CFIHOS_00000058 a owl:Class ;
+    rdfs:label "CFIHOS_00000058" ;
+    rdfs:comment "A format, or package, that has to be used to provide a given type of document" .
+
+xom_draft_domain_model_views:CFIHOS_00000008 a owl:Class ;
+    rdfs:label "CFIHOS_00000008" ;
+    rdfs:comment "A type of equipment that is manufactured by a manufacturer" .
+
+xom_draft_domain_model_views:CFIHOS_00000032 a owl:Class ;
+    rdfs:label "CFIHOS_00000032" ;
+    rdfs:comment "A classification of documents" .
+
+xom_draft_domain_model_views:CFIHOS_00000037 a owl:Class ;
+    rdfs:label "CFIHOS_00000037" ;
+    rdfs:comment "A commissioning unit that is at the lowest level in the hierarchical structure of commissioning units" .
+
+xom_draft_domain_model_views:CFIHOS_00000004 a owl:Class ;
+    rdfs:label "CFIHOS_00000004" ;
+    rdfs:comment "A grouping of tags (if the commissioning unit is at the lowest level in the structure), or sub-commissioning units, by the commissioning discipline" .
+
+xom_draft_domain_model_views:CFIHOS_00000007 a owl:Class ;
+    rdfs:label "CFIHOS_00000007" ;
+    rdfs:comment "A grouping of tags  that can be maintained at the same time" .
+
+xom_draft_domain_model_views:CFIHOS_00000026 a owl:Class ;
+    rdfs:label "CFIHOS_00000026" ;
+    rdfs:comment "A grouping of tags intended to be assembled and installed as a whole" .
+
+xom_draft_domain_model_views:CFIHOS_00000031 a owl:Class ;
+    rdfs:label "CFIHOS_00000031" ;
+    rdfs:comment "An assembly of equipment that perform a physical or chemical process, including production, transportation and storage" .
+
+xom_draft_domain_model_views:CFIHOS_00000073 a owl:Class ;
+    rdfs:label "CFIHOS_00000073" ;
+    rdfs:comment "A unit that qualifies the size of a quantity" .
+
+xom_draft_domain_model_views:CFIHOS_00000010 a owl:Class ;
+    rdfs:label "CFIHOS_00000010" ;
+    rdfs:comment "A grouping of tags with similar operating conditions, e.g. pipe, equipment, .. (i.e., made of similar materials of construction, sharing similar corrosion/degradation rate)" .
+
+xom_draft_domain_model_views:CFIHOS_00000023 a owl:Class ;
+    rdfs:label "CFIHOS_00000023" ;
+    rdfs:comment "A file that makes up a particular document revision." .
+
+xom_draft_domain_model_views:CFIHOS_00000036 a owl:Class ;
+    rdfs:label "CFIHOS_00000036" ;
+    rdfs:comment "A commercial document used to request a third party to supply goods or services in return for payment" .
+
+xom_draft_domain_model_views:CFIHOS_00000024 a owl:Class ;
+    rdfs:label "CFIHOS_00000024" ;
+    rdfs:comment "An exchange of information between two companies" .
+
+xom_draft_domain_model_views:CFIHOS_00000033 a owl:Class ;
+    rdfs:label "CFIHOS_00000033" ;
+    rdfs:comment "A classification of equipment and equipment models, according to its physical assembly of component(s)" ;
+    rdfs:subClassOf xom_draft_domain_model_views:CFIHOS_00000090 .
+
+xom_draft_domain_model_views:CFIHOS_00000090 a owl:Class ;
+    rdfs:label "CFIHOS_00000090" ;
+    rdfs:comment "A tag class or an equipment class" .
+
+xom_draft_domain_model_views:CFIHOS_00000034 a owl:Class ;
+    rdfs:label "CFIHOS_00000034" ;
+    rdfs:comment "A classification of tags according to the functions they are required to perform" ;
+    rdfs:subClassOf xom_draft_domain_model_views:CFIHOS_00000090 .
+
+xom_draft_domain_model_views:CFIHOS_00000009 a owl:Class ;
+    rdfs:label "CFIHOS_00000009" ;
+    rdfs:comment "A legal entity engaged in business as a proprietorship, partnership, corporation, or other form" .
+
+xom_draft_domain_model_views:CFIHOS_00000105 a owl:Class ;
+    rdfs:label "CFIHOS_00000105" ;
+    rdfs:comment "An item on a purchase order" .
+
+xom_draft_domain_model_views:CFIHOS_00000027 a owl:Class ;
+    rdfs:label "CFIHOS_00000027" ;
+    rdfs:comment "An identification of what type of document is required for what discipline, and what are their delivery requirements" .
+
+xom_draft_domain_model_views:CFIHOS_00000022 a owl:Class ;
+    rdfs:label "CFIHOS_00000022" ;
+    rdfs:comment "A placeholder that allows a project to identify a particular information content to be created or updated" .
+
+xom_draft_domain_model_views:CFIHOS_00000012 a owl:Class ;
+    rdfs:label "CFIHOS_00000012" ;
+    rdfs:comment "A physical device designed to perform a function" .
+
+xom_draft_domain_model_views:CFIHOS_00000035 a owl:Class ;
+    rdfs:label "CFIHOS_00000035" ;
+    rdfs:comment "A user-readable set of data structured in order to be printed and stored as a whole (includes drawings)" .
+
+xom_draft_domain_model_views:TCFIHOS_30000314 a owl:Class ;
+    rdfs:label "TCFIHOS_30000314" ;
+    rdfs:comment "An equipment class that contains classes that normally are the responsibility of a department for mechanical engineering." ;
+    rdfs:subClassOf xom_draft_domain_model_views:CFIHOS_00000028 .
+
+xom_draft_domain_model_views:CFIHOS_00000028 a owl:Class ;
+    rdfs:label "CFIHOS_00000028" ;
+    rdfs:comment "An object designed for performing functional requirements and serving as a specification for equipment" .
+
+xom_draft_domain_model_views:TCFIHOS_30000550 a owl:Class ;
+    rdfs:label "TCFIHOS_30000550" ;
+    rdfs:comment "A physical object that adds or removes mechanical energy to a fluid, either constantly or periodically." ;
+    rdfs:subClassOf xom_draft_domain_model_views:CFIHOS_00000028,
+        xom_draft_domain_model_views:TCFIHOS_30000314 .
+
+xom_draft_domain_model_views:TCFIHOS_30000521 a owl:Class ;
+    rdfs:label "TCFIHOS_30000521" ;
+    rdfs:comment "A dynamic pump that contains impellers provided with vanes to generate centrifugal force to achieve the required pressure head." ;
+    rdfs:subClassOf xom_draft_domain_model_views:CFIHOS_00000028,
+        xom_draft_domain_model_views:TCFIHOS_30000314,
+        xom_draft_domain_model_views:TCFIHOS_30000550 .
+

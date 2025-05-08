@@ -1,0 +1,311 @@
+{
+  data_model_name: "NEAT CFIHOS Model",
+  data_model_external_id: "NEAT_CFIHOS_Model_3",  
+  data_model_description: "Generated NEAT Domain Model based on CFIHOS",
+  container_data_model_space: "xom_draft_domain_model_containers",
+  views_data_model_space: "xom_draft_domain_model_views",
+  model_version: "1",
+  model_creator: "Ali",
+  model_processors_config:
+       [
+      {
+        STANDARD-CFIHOS:
+           {
+            processor_engine: CFIHOS,
+            source: csv,
+            abs_fpath_model_raw_data_folder: ../cognite/neat/_cfihos/src/1.5/,
+            rdl_master_objects_fname: CFIHOS RDL Master Objects v1.5.csv,
+            rdl_master_object_id_col_name: CFIHOS unique id,
+            rdl_master_object_name_col_name: CFIHOS name,
+            included_cfihos_types_config:
+              [
+                {
+                  type: cfihosTypeEntity,
+                  data_folder_abs_fpath: ../cognite/neat/_cfihos/src/1.5/,
+                  entities_fname: CFIHOS entities v1.5 extended.csv,
+                  entities_attrib_fname: CFIHOS entity attributes v1.5 extended.csv,
+                  entities_attrib_relation_fname: CFIHOS entity attribute relationships v1.5 extended.csv,
+                  entities_edges: ,
+                },
+                {
+                  type: cfihosTypeEquipment,
+                  data_folder_abs_fpath: ../cognite/neat/_cfihos/src/1.5/,
+                  entities_fname: "CFIHOS equipment class v1.5.csv",
+                  entities_attrib_fname: "CFIHOS equipment class properties v1.5.csv",
+                  property_metadata_fname: "CFIHOS property v1.5.csv",
+                },
+                {
+                  type: cfihosTypeTag,
+                  data_folder_abs_fpath: ../cognite/neat/_cfihos/src/1.5/,
+                  entities_fname: "CFIHOS tag class v1.5.csv",
+                  entities_attrib_fname: "CFIHOS tag class properties v1.5.csv",
+                  property_metadata_fname: "CFIHOS property v1.5.csv",
+                },
+              ],
+          }
+      },
+      {
+        XOM-CFIHOS:
+           {
+            processor_engine: CFIHOS,
+            source: csv,
+            abs_fpath_model_raw_data_folder: ../cognite/neat/_cfihos/src/xom/,
+            rdl_master_objects_fname: XOM RDL Master Objects.csv,
+            rdl_master_object_id_col_name: CFIHOS unique id,
+            rdl_master_object_name_col_name: CFIHOS name,
+            included_cfihos_types_config:
+              [
+                {
+                  type: cfihosTypeEntity,
+                  data_folder_abs_fpath: ../cognite/neat/_cfihos/src/xom/,
+                  entities_fname: XOM entities.csv,
+                  entities_attrib_fname: XOM entity attributes.csv,
+                  entities_attrib_relation_fname: XOM entity attribute relationships.csv,
+                  entities_edges: ,
+                  type_id_prefix: XOM-0,
+                  id_prefix: XOM-,
+                },
+                {
+                  type: cfihosTypeEquipment,
+                  data_folder_abs_fpath: ../cognite/neat/_cfihos/src/xom/,
+                  entities_fname: "XOM equipment class.csv",
+                  entities_attrib_fname: "XOM equipment class properties.csv",
+                  property_metadata_fname: "XOM property.csv",
+                },
+                {
+                  type: cfihosTypeTag,
+                  data_folder_abs_fpath: ../cognite/neat/_cfihos/src/xom/,
+                  entities_fname: "XOM tag class.csv",
+                  entities_attrib_fname: "XOM tag class properties.csv",
+                  property_metadata_fname: "XOM property.csv",
+                },
+              ],
+          }
+      },
+    ],
+  scope_config: Scoped, # All, Tags, Equipment, Scoped,
+  scopes:
+    [
+      {
+        scope_name: centrifugal_pump,
+        scope_description: "CFIHOS Centrifugal Pump CFIHOS Model",
+        scope_subset:
+          [
+            TCFIHOS-30000521,
+            TCFIHOS-30000864, #Rotary Pump Tag
+            ECFIHOS-30000864 #Rotary Pump Equipment
+          ],
+      },
+      {
+        scope_name: heat_exchanger,       
+        scope_description: "Heat Exchanger CFIHOS Model",
+        scope_subset:
+          [
+            TCFIHOS-30000390,
+            # TCFIHOS-30000864 #Rotary Pump Tag
+            # ECFIHOS-30000864 #Rotary Pump Equipment
+          ],
+      },
+    ],
+
+    containers_indexes:
+    {
+      CFIHOS_00000003:
+      [
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+      ],
+      EPC_00010005:
+      [
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+          {
+          index_id: EPC_10010018_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010018],
+          },
+      ],
+      CFIHOS_00000031:
+      [
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+      ],
+      CFIHOS_00000028:
+      [
+          {
+          index_id: CFIHOS_10000001_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001_rel],
+          },
+          {
+          index_id: CFIHOS_10000001_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001],
+          },
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+          {
+          index_id: CFIHOS_10000166_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000166],
+          },
+          {
+          index_id: CFIHOS_10000157_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157_rel],
+          },
+          {
+          index_id: CFIHOS_10000157_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157],
+          },
+          {
+          index_id: EPC_10010018_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010018],
+          },
+          {
+          index_id: EPC_10010027_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010027],
+          },
+          {
+          index_id: EPC_10010030_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010030],
+          },
+      ],
+      CFIHOS_1_10000001_10000101_1:
+      [
+          {
+          index_id: CFIHOS_10000001_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001],
+          },
+          {
+          index_id: CFIHOS_10000005_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005],
+          },
+      ],
+      CFIHOS_1_10000101_10000201:
+      [
+          {
+          index_id: CFIHOS_10000166_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000166],
+          },
+          {
+          index_id: CFIHOS_10000157_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157],
+          },
+      ],
+      CFIHOS_1_10000101_10000201_ext:
+      [
+          {
+          index_id: CFIHOS_10000166_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000166_rel],
+          },
+          {
+          index_id: CFIHOS_10000157_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157_rel],
+          },
+      ],
+      CFIHOS_1_10000001_10000101_ext:
+      [
+          {
+          index_id: CFIHOS_10000001_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000001_rel],
+          },
+          {
+          index_id: CFIHOS_10000005_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000005_rel_index],
+          },
+      ],
+      EPC_10010001_10010101_ext:
+      [
+          {
+          index_id: EPC_10010007_rel_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010007_rel],
+          },
+      ],
+      EPC_10010001_10010101_1:
+      [
+          {
+          index_id: EPC_10010007_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010007],
+          },
+          {
+          index_id: EPC_10010030_index,
+          index_type: BTreeIndex,
+          properties: [EPC_10010030],
+          },
+      ],
+      EPC_00010001:
+      [
+          {
+          index_id: CFIHOS_10000153_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000153_rel],
+          },
+          {
+          index_id: CFIHOS_10000153_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000153],
+          },
+          {
+          index_id: CFIHOS_10000157_rel_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157_rel],
+          },
+          {
+          index_id: CFIHOS_10000157_index,
+          index_type: BTreeIndex,
+          properties: [CFIHOS_10000157],
+          },
+      ],
+      EntityTypeGroup:
+      [
+          {
+          index_id: entityType_index,
+          index_type: BTreeIndex,
+          properties: [entityType],
+          },
+      ]
+    }
+
+}

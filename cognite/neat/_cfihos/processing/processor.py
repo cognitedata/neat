@@ -477,6 +477,133 @@ class Processor:
 
             cur_entity_prop_ids = {}
             cur_fcc_entity_prop_ids = {}
+            for _, prop_row in self._df_entity_properties[
+                (self._df_entity_properties[EntityStructure.ID] == row[EntityStructure.ID])
+            ].iterrows():
+                # Check for duplicates
+                if (
+                    not prop_row[PropertyStructure.FIRSTCLASSCITIZEN]
+                    and prop_row[PropertyStructure.ID] in cur_entity_prop_ids
+                ):
+                    raise ValueError(
+                        f"Found duplicate property id '{prop_row[PropertyStructure.ID]}' in {unique_entity_id}"
+                    )
+                if (
+                    prop_row[PropertyStructure.FIRSTCLASSCITIZEN]
+                    and prop_row[PropertyStructure.ID] in cur_fcc_entity_prop_ids
+                ):
+                    raise ValueError(
+                        f"Found duplicate property id '{prop_row[PropertyStructure.ID]}' in FCC {unique_entity_id}"
+                    )
+                if prop_row[PropertyStructure.FIRSTCLASSCITIZEN]:
+                    cur_fcc_entity_prop_ids[prop_row[PropertyStructure.ID]] = 1
+                else:
+                    cur_entity_prop_ids[prop_row[PropertyStructure.ID]] = 1
+
+                if prop_row[PropertyStructure.PROPERTY_TYPE] == "ENTITY_RELATION":
+                    if self._map_dms_id_to_entity_id.get(prop_row[PropertyStructure.TARGET_TYPE], False) is False:
+                        logging.warning(
+                            f"[WARNING] Could not map target property "
+                            f"{prop_row[PropertyStructure.TARGET_TYPE]} for {row[EntityStructure.ID]}"
+                        )
+                        continue
+
+                property_group = ""
+                if row[EntityStructure.FIRSTCLASSCITIZEN]:
+                    property_group = prop_row[EntityStructure.ID].replace("-", "_")
+                else:
+                    # Generate dms friendly property name, while ensuring that the CFIHOS ID is preserved
+                    property_group = self.get_property_group_from_id(prop_row)
+
+                # NOTE: We are simplifying UOM for now in CFIHOS by having propertyId holding value and propertyIdUoM holding the corresponding UOM value
+                if prop_row[PropertyStructure.UOM]:
+                    property_row_uom = self._create_property_row(
+                        prop_row,
+                        property_group=property_group,
+                        is_first_class_citzen=row[EntityStructure.FIRSTCLASSCITIZEN],
+                        is_uom_variant=True,
+                    )
+
+                    self._model_properties[f"{prop_row[PropertyStructure.ID].replace('-', '_')}_UOM"] = property_row_uom
+                    self._model_property_groups.setdefault(property_group, []).append(property_row_uom)
+
+                    # # check if the UOM property is a UOM (This is a rare or none existing case as enities don't have UOMs)
+                    # if prop_row[PropertyStructure.FIRSTCLASSCITIZEN]:
+                    #     property_row_uom[PropertyStructure.PROPERTY_GROUP] = prop_row[EntityStructure.ID]
+                    # entities[unique_entity_id][EntityStructure.PROPERTIES].append(property_row_uom)
+
+                target_type = self._map_entity_id_to_dms_name.get(
+                    prop_row[PropertyStructure.TARGET_TYPE],
+                    prop_row[PropertyStructure.TARGET_TYPE],
+                )
+                property_row = self._create_property_row(
+                    prop_row,
+                    property_group=property_group,
+                    is_first_class_citzen=row[EntityStructure.FIRSTCLASSCITIZEN],
+                    is_edge_property=True
+                    if prop_row[PropertyStructure.PROPERTY_TYPE] == PropertyStructure.ENTITY_EDGE
+                    else False,
+                    target_type=target_type,
+                )
+
+                self._model_property_groups.setdefault(property_group, []).append(property_row)
+                entities[unique_entity_id][EntityStructure.PROPERTIES].append(property_row)
+
+        self._add_inherited_properties(entities)
+        self._model_entities = entities
+
+        # Regroup model and entity properties after adding UOM properties
+        self._df_properties = pd.DataFrame(
+            data=self._model_properties.values(), columns=list(self._model_properties.values())[0].keys()
+        )
+        self._add_property_groups(CONTAINER_PROPERTY_LIMIT)
+        self._regroup_properties(CONTAINER_PROPERTY_LIMIT)
+        self._model_properties.update(self._df_properties.to_dict("index"))
+
+    def _create_model_entities_2(self):
+        # Update model entities with new property groups def _create_model_entities(self):
+        """
+        Creates model entities from the collected entity data. This function processes the entity DataFrame, validates them for
+        uniqueness, maps entity IDs, and constructs a dictionary of entities with their properties.
+
+        This method performs the following steps:
+        - Iterates through the entities DataFrame and constructs a dictionary of entities.
+        - Validates that each entity and its properties have unique IDs.
+        - Maps entity IDs from _map_entity_id_to_dms_id and constructs property rows for each entity.
+        - Adds custom extended search properties from the configuration file (if enabled).
+        - Adds inherited properties to the entities.
+        - Regroups and updates model properties after adding UOM properties.
+
+        Returns:
+            None
+        """
+        entities = {}
+
+        for _, row in self._df_entities.iterrows():
+            unique_entity_id = row[EntityStructure.ID]
+            # Check for duplicates
+            if unique_entity_id in entities:
+                raise ValueError(f"Found duplicate cfihos entity id: {unique_entity_id}")
+
+            entities[unique_entity_id] = {
+                EntityStructure.ID: self._map_entity_id_to_dms_id[row[EntityStructure.ID]],
+                EntityStructure.NAME: row[EntityStructure.NAME],
+                EntityStructure.DESCRIPTION: row[EntityStructure.DESCRIPTION],
+                EntityStructure.INHERITS_FROM_ID: [
+                    self._map_entity_id_to_dms_id[parent_id] for parent_id in row[EntityStructure.INHERITS_FROM_ID]
+                ]
+                if row[EntityStructure.INHERITS_FROM_ID] is not None
+                else None,
+                EntityStructure.INHERITS_FROM_NAME: row[EntityStructure.INHERITS_FROM_NAME],
+                EntityStructure.FULL_INHERITANCE: {},
+                "cfihosType": row["type"],
+                "cfihosId": row[EntityStructure.ID],
+                EntityStructure.PROPERTIES: [],
+                EntityStructure.FIRSTCLASSCITIZEN: True if row[EntityStructure.FIRSTCLASSCITIZEN] else False,
+            }
+
+            cur_entity_prop_ids = {}
+            cur_fcc_entity_prop_ids = {}
 
             for _, prop_row in self._df_entity_properties[
                 (self._df_entity_properties[EntityStructure.ID] == row[EntityStructure.ID])

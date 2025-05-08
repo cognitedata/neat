@@ -1,16 +1,11 @@
-from typing import Tuple
-
 from cognite.client.data_classes import data_modeling
 from cognite.client.data_classes.data_modeling import data_types
-import pandas as pd
 
 from cognite.neat._cfihos.common.constants import CONTAINER_PROPERTY_LIMIT
 from cognite.neat._cfihos.common.generic_classes import (
-    EntityStructure,
     PropertyStructure,
 )
 from cognite.neat._cfihos.common.log import log_init
-from cognite.neat._utils.reader._base import NeatReader
 
 logging = log_init(f"{__name__}", "i")
 
@@ -28,7 +23,7 @@ def create_container_from_property_struct_dict(
     space: str,
     property_data: dict[str, dict],
     containers_indexes: list[dict[str, list[str]]],
-) -> Tuple[list[data_modeling.ContainerApply], list[str]]:
+) -> tuple[list[data_modeling.ContainerApply], list[str]]:
     """
     Creates data model containers from a dictionary of property structures. This function organizes properties into
     containers, applies indexing where necessary, and publishes the containers to the specified space.
@@ -91,20 +86,31 @@ def create_container_from_property_struct_dict(
                                 properties=[prop[PropertyStructure.ID]], cursorable=False
                             )
                         elif container_index["index_type"] == "InvertedIndex":
-                            container_indexes_dict[
-                                container_index["index_id"]
-                            ] = data_modeling.containers.InvertedIndex(
-                                properties=[prop[PropertyStructure.ID]], cursorable=False
+                            container_indexes_dict[container_index["index_id"]] = (
+                                data_modeling.containers.InvertedIndex(
+                                    properties=[prop[PropertyStructure.ID]], cursorable=False
+                                )
                             )
-        containers.append({"Container":property_group, "Name": "", "Description" : "", "Constraint": "", "Class (linage)": property_group, "Properties":  properties_dict})
-        # containers.append(
-        #     data_modeling.ContainerApply(
-        #         space=space, external_id=property_group, indexes=container_indexes_dict, properties=properties_dict
-        #     )
-        # )
+        containers.append(
+            {
+                "Container": property_group,
+                "Name": "",
+                "Description": "",
+                "Constraint": "",
+                "Class (linage)": property_group,
+                "Properties": properties_dict,
+            }
+        )
 
     # TODO: Quick fix to handling entity type
-    containers.append({"Container":"EntityTypeGroup", "Name": "", "Description" : "", "Constraint": "", "Class (linage)": "EntityTypeGroup", "Properties": {
+    containers.append(
+        {
+            "Container": "EntityTypeGroup",
+            "Name": "",
+            "Description": "",
+            "Constraint": "",
+            "Class (linage)": "EntityTypeGroup",
+            "Properties": {
                 "entityType": data_modeling.ContainerProperty(
                     type=data_types.Text(),
                     nullable=False,
@@ -113,57 +119,8 @@ def create_container_from_property_struct_dict(
                     default_value=None,
                     description=None,
                 )
-            } })
-
-
-    # containers.append(
-    #     data_modeling.ContainerApply(
-    #         space=space,
-    #         external_id="EntityTypeGroup",
-    #         indexes={
-    #             entity_group_index["index_id"]: data_modeling.containers.BTreeIndex(
-    #                 properties=entity_group_index["properties"], cursorable=False
-    #             )
-    #             for entity_group_index in containers_indexes["EntityTypeGroup"]
-    #         }
-    #         if "EntityTypeGroup" in containers_indexes.keys()
-    #         else {},
-    #         properties={
-    #             "entityType": data_modeling.ContainerProperty(
-    #                 type=data_types.Text(),
-    #                 nullable=False,
-    #                 auto_increment=False,
-    #                 name="entity_type",
-    #                 default_value=None,
-    #                 description=None,
-    #             )
-    #         },
-    #     )
-    # )
-
-    # TODO: implement Dry run
-    # Publish containers
-    # cdf_client.data_modeling.containers.apply(containers)
-    # logging.info(f"Upserted {len(containers)} containers to space {space}")
-    
-    
-    # df_containers = pd.DataFrame(containers)
-
-    # print(df_containers)
-    
-    # #pecify the existing file and sheet name
-    # file_path = NeatReader.create("cfihos_src/dmsTemplates/cdf-dms-xom-draft_population.xlsx").materialize_path()
-    # sheet_name = "Containers"
-
-    # # Write to the existing Excel file
-    # with pd.ExcelWriter(file_path, mode='a', engine='openpyxl', if_sheet_exists='overlay') as writer:
-    #     df_containers.to_excel(writer, sheet_name=sheet_name, index=False, startrow=writer.sheets[sheet_name].max_row)
-
-    # file_path = 'output.xlsx'  # Replace with your desired file path
-    # sheet_name = 'CustomSheet'  # Replace with your desired sheet name
-
-    # # Using ExcelWriter to specify sheet
-    # with pd.ExcelWriter(file_path, engine='openpyxl', mode='w') as writer:
-    #     df_containers.to_excel(writer, sheet_name=sheet_name, index=False)
+            },
+        }
+    )
 
     return containers

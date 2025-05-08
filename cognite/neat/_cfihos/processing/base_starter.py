@@ -117,7 +117,6 @@ class base_starter_class:
         logging.info(f"STEP 3: Started upserting {len(containers)} population views on-top of containers ...")
 
         lst_views, lst_properties = build_views_from_containers(
-            version=self.model_version,
             containers=containers,
             entities=self.model_entities,
         )
@@ -157,8 +156,6 @@ class base_starter_class:
             map_dms_id_to_model_id=self.map_dms_id_to_entity_id,
         )
         lst_entity_views, lst_entity_properties = build_views_from_entities(
-            containers_space=self.container_space,
-            views_space=self.views_space,
             version=self.model_version,
             entities=scoped_model,
         )

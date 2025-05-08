@@ -12,6 +12,7 @@ class EntityStructure:
     PROPERTIES: str = "properties"
     FCC_PREFIX = "FCC_"
     FIRSTCLASSCITIZEN = "firstClassCitizen"
+    IMPLEMENTS_CORE_MODEL = "implementsCoreModel"  # str in CSV -> list[dict] after processing
 
 
 # Property Fields
@@ -40,7 +41,10 @@ class PropertyStructure:
     EDGE_TARGET = "edgeTarget"
     EDGE_EXTERNAL_ID = "edgeExternalId"
     ENTITY_EDGE = "entityEdge"
-    Direct_Relation = "DirectRelation"
+    DIRECT_RELATION = "DirectRelation"
+    REV_THROUGH_PROPERTY = "throughProperty"  # str
+    REV_PROPERTY_NAME = "revPropertyName"  # str
+    REV_PROPERTY_DESCRIPTION = "revPropertyDescription"  # str
 
 
 class GitHubAttributes:
@@ -67,3 +71,10 @@ class ScopeConfig:
     TAGS: str = "Tags"
     EQUIPMENT: str = "Equipment"
     SCOPED: str = "Scoped"
+
+
+class Relations:
+    """Relation Types."""
+
+    DIRECT = "ENTITY_RELATION"
+    REVERSE = "ENTITY_REVERSE_RELATION"

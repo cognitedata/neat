@@ -23,6 +23,7 @@ from cognite.neat._rules.models import (
     RoleTypes,
     SchemaCompleteness,
 )
+from cognite.neat._session._state import SessionState
 
 from ._base import BaseImporter
 
@@ -129,15 +130,18 @@ class CFIHOSImporter(BaseImporter[T_InputRules]):
         filepath (Path): The path to the Excel file.
     """
 
-    def __init__(self, filepath: Path, model_type="containers", scope="") -> None:
+    def __init__(self, filepath: Path, state: SessionState, model_type="containers", scope="") -> None:
         self.filepath = filepath
         self.scope = scope
         self.model_type = model_type
+        self.state = state
 
     def to_rules(self) -> ReadRules[T_InputRules]:
         # issue_list = IssueList(title=f"'{self.filepath.name}'") TODO: implement issueList as Excel reader to validate the format of CFIHOS csv/excel files
         if not self.filepath.exists():
             raise FileNotFoundNeatError(self.filepath)
+
+        print(self.state)
 
         user_reader = CFIHOSReader()
         if self.model_type == "containers":
