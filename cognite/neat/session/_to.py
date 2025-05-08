@@ -14,7 +14,7 @@ from cognite.neat.core._data_model._shared import VerifiedRules
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import DMSRules, InformationRules
 from cognite.neat.core._data_model.models.dms import DMSMetadata
-from cognite.neat.core._graph import loaders
+from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat.core._utils.upload import UploadResultList
 from cognite.neat.session._experimental import ExperimentalFlags
