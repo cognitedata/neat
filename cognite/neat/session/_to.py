@@ -5,6 +5,7 @@ from typing import Any, Literal, cast, overload
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
+from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat.core._client._api_client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS
@@ -410,6 +411,7 @@ class CDFToAPI:
         instance_space: str | None = None,
         space_from_property: str | None = None,
         use_source_space: bool = False,
+        instance_spaces: SequenceNotStr[str] | None = None,
         name: str | None = None,
     ) -> UploadResultList:
         """Creates a location filter for the given data model and instance spaces.
@@ -420,6 +422,7 @@ class CDFToAPI:
             instance_space: The instance spaces to use. If None, the space_from_property is used.
             space_from_property: Looks up spaces in the property with the given name for each instance
             use_source_space: If True, the instance space will be set to the source space of the instance.
+            instance_spaces: The instance spaces to use. If None, the space_from_property is used.
             name: The name of the location filter. If None, the name will be set to the data model id.
 
         Returns:
@@ -432,11 +435,15 @@ class CDFToAPI:
         )
         data_model_id = self._state.rule_store.last_verified_dms_rules.metadata.as_data_model_id()
 
-        instance_space_loader = self._create_instance_loader(instance_space, space_from_property, use_source_space)
+        if instance_spaces is not None:
+            selected_instance_spaces = list(instance_spaces)
+        else:
+            instance_space_loader = self._create_instance_loader(instance_space, space_from_property, use_source_space)
+            selected_instance_spaces = list(set(instance_space_loader.space_by_instance_uri.values()))
         client = cast(NeatClient, self._state.client)
         loader = loaders.LocationFilterLoader(
             data_model_id=data_model_id,
-            instance_spaces=list(set(instance_space_loader.space_by_instance_uri.values())),
+            instance_spaces=selected_instance_spaces,
             name=name,
         )
 
