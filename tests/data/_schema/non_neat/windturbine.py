@@ -13,7 +13,7 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.core._rules.models.dms import (
+from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
     DMSInputEnum,
     DMSInputMetadata,
@@ -234,9 +234,9 @@ INPUT_RULES = DMSInputRules(
 if __name__ == "__main__":
     from pathlib import Path
 
-    from cognite.neat.core._rules.exporters import ExcelExporter
-    from cognite.neat.core._rules.importers import DMSImporter
-    from cognite.neat.core._rules.transformers import ImporterPipeline
+    from cognite.neat.core._data_model.exporters import ExcelExporter
+    from cognite.neat.core._data_model.importers import DMSImporter
+    from cognite.neat.core._data_model.transformers import ImporterPipeline
 
     ROOT = Path(__file__).resolve().parent.parent.parent / "playground"
 

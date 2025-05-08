@@ -25,6 +25,15 @@ from cognite.neat.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     is_readonly_property,
 )
+from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis._base import ViewQuery, ViewQueryDict
+from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models.data_types import (
+    _DATA_TYPE_BY_DMS_TYPE,
+    Json,
+    String,
+)
+from cognite.neat.core._data_model.models.information._rules import InformationRules
 from cognite.neat.core._issues import IssueList, NeatError, NeatIssue, catch_issues
 from cognite.neat.core._issues.errors import (
     AuthorizationError,
@@ -39,15 +48,6 @@ from cognite.neat.core._issues.warnings import (
     PropertyTypeNotSupportedWarning,
     ResourceNeatWarning,
 )
-from cognite.neat.core._rules.analysis import RulesAnalysis
-from cognite.neat.core._rules.analysis._base import ViewQuery, ViewQueryDict
-from cognite.neat.core._rules.models import DMSRules
-from cognite.neat.core._rules.models.data_types import (
-    _DATA_TYPE_BY_DMS_TYPE,
-    Json,
-    String,
-)
-from cognite.neat.core._rules.models.information._rules import InformationRules
 from cognite.neat.core._shared import InstanceType
 from cognite.neat.core._store import NeatGraphStore
 from cognite.neat.core._utils.auxiliary import create_sha256_hash

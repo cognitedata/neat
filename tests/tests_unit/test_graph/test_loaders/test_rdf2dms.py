@@ -1,13 +1,13 @@
 import pytest
 
-from cognite.neat.core._graph.loaders import DMSLoader
-from cognite.neat.core._issues import IssueList
-from cognite.neat.core._rules.importers import SubclassInferenceImporter
-from cognite.neat.core._rules.models import DMSRules
-from cognite.neat.core._rules.models.information._rules import InformationRules
-from cognite.neat.core._rules.transformers._converters import (
+from cognite.neat.core._data_model.importers import SubclassInferenceImporter
+from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models.information._rules import InformationRules
+from cognite.neat.core._data_model.transformers._converters import (
     ToCompliantEntities,
 )
+from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._issues import IssueList
 from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData
 

@@ -6,8 +6,8 @@ from cognite.client.utils.useful_types import SequenceNotStr
 from rdflib import URIRef
 
 from cognite.neat.core._constants import COGNITE_MODELS
+from cognite.neat.core._data_model.transformers import DropModelViews
 from cognite.neat.core._issues import IssueList
-from cognite.neat.core._rules.transformers import DropModelViews
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper

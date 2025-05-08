@@ -11,13 +11,13 @@ import numpy
 import pandas as pd
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat.core._rules._constants import EntityTypes
-from cognite.neat.core._rules.analysis import RulesAnalysis
-from cognite.neat.core._rules.models import DMSRules, InformationRules
-from cognite.neat.core._rules.models.data_types import DataType
-from cognite.neat.core._rules.models.entities import ClassEntity
-from cognite.neat.core._rules.models.information import InformationProperty
-from cognite.neat.core._rules.transformers import SubsetInformationRules
+from cognite.neat.core._data_model._constants import EntityTypes
+from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models.data_types import DataType
+from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.models.information import InformationProperty
+from cognite.neat.core._data_model.transformers import SubsetInformationRules
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
 
@@ -45,7 +45,7 @@ class MockGraphGenerator(BaseExtractor):
     ):
         if isinstance(rules, DMSRules):
             # fixes potential issues with circular dependencies
-            from cognite.neat.core._rules.transformers import DMSToInformation
+            from cognite.neat.core._data_model.transformers import DMSToInformation
 
             self.rules = DMSToInformation().transform(rules)
         elif isinstance(rules, InformationRules):

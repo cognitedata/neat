@@ -14,17 +14,11 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.core._issues import NeatError, catch_issues
-from cognite.neat.core._issues.errors import PropertyDefinitionDuplicatedError
-from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
-from cognite.neat.core._issues.warnings.user_modeling import (
-    ViewsAndDataModelNotInSameSpaceWarning,
-)
-from cognite.neat.core._rules._shared import ReadRules
-from cognite.neat.core._rules.importers import DMSImporter
-from cognite.neat.core._rules.models import DMSRules, InformationRules
-from cognite.neat.core._rules.models.data_types import String
-from cognite.neat.core._rules.models.dms import (
+from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model.importers import DMSImporter
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models.data_types import String
+from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputNode,
@@ -36,17 +30,23 @@ from cognite.neat.core._rules.models.dms import (
     DMSSchema,
     DMSValidation,
 )
-from cognite.neat.core._rules.models.dms._exporter import _DMSExporter
-from cognite.neat.core._rules.models.entities._single_value import (
+from cognite.neat.core._data_model.models.dms._exporter import _DMSExporter
+from cognite.neat.core._data_model.models.entities._single_value import (
     ContainerEntity,
     UnknownEntity,
     ViewEntity,
 )
-from cognite.neat.core._rules.transformers import (
+from cognite.neat.core._data_model.transformers import (
     DMSToInformation,
     InformationToDMS,
     MapOneToOne,
     VerifyDMSRules,
+)
+from cognite.neat.core._issues import NeatError, catch_issues
+from cognite.neat.core._issues.errors import PropertyDefinitionDuplicatedError
+from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
+from cognite.neat.core._issues.warnings.user_modeling import (
+    ViewsAndDataModelNotInSameSpaceWarning,
 )
 from tests.data import GraphData
 from tests.utils import normalize_neat_id_in_rules

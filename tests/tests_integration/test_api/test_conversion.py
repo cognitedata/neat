@@ -4,13 +4,13 @@ import pytest
 import yaml
 
 from cognite.neat.core._client import NeatClient
-from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._rules.importers import YAMLImporter
-from cognite.neat.core._rules.models import DMSRules
-from cognite.neat.core._rules.transformers import (
+from cognite.neat.core._data_model.importers import YAMLImporter
+from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.transformers import (
     InformationToDMS,
     VerifyInformationRules,
 )
+from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData
 
 

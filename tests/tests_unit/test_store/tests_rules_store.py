@@ -2,10 +2,10 @@ import pytest
 import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
+from cognite.neat.core._data_model import catalog, exporters, importers, transformers
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._rules import catalog, exporters, importers, transformers
-from cognite.neat.core._rules.models import DMSRules, InformationRules
-from cognite.neat.core._rules.transformers import VerifiedRulesTransformer
 from cognite.neat.core._store import NeatRulesStore
 from cognite.neat.core._store.exceptions import InvalidActivityInput
 
