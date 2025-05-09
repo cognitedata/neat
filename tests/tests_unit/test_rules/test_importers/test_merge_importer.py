@@ -107,7 +107,7 @@ def merge_importer_unhappy_test_cases() -> Iterable:
 
 class TestMergeImporter:
     def test_merge_importer_happy_path(self) -> None:
-        importer = DMSMergeImporter.from_importers(
+        importer = DMSMergeImporter(
             existing=ImportExisting(),
             additional=ImportAdditional(),
         )
@@ -128,7 +128,15 @@ class TestMergeImporter:
     def test_merge_importer_unhappy_path(
         self, existing: ReadRules[InputRules], additional: ReadRules[InputRules], expected: str
     ) -> None:
+        class DummyExistingFailing(BaseImporter):
+            def to_rules(self) -> ReadRules[InputRules]:
+                return existing
+
+        class DummyAdditionalFailing(BaseImporter):
+            def to_rules(self) -> ReadRules[InputRules]:
+                return additional
+
         # Test with existing rules as None
         with pytest.raises(NeatError) as e:
-            DMSMergeImporter(existing=existing, additional=additional).to_rules()
+            DMSMergeImporter(DummyExistingFailing(), DummyAdditionalFailing()).to_rules()
         assert str(e.value) == expected
