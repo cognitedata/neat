@@ -1503,10 +1503,12 @@ class MergePhysicalDataModels(VerifiedDataModelTransformer[PhysicalDataModel, Ph
                 if output.containers is None:
                     output.containers = SheetList[PhysicalContainer]()
                 output.containers.append(new_containers_by_entity[prop.container])
+                existing_containers.add(prop.container)
             if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections:
                 if output.enum is None:
                     output.enum = SheetList[PhysicalEnum]()
                 output.enum.append(new_enum_collections_by_entity[prop.value_type.collection])
+                existing_enum_collections.add(prop.value_type.collection)
 
         existing_nodes = {node.node for node in output.nodes or []}
         for node in self.extra.nodes or []:
@@ -1514,6 +1516,7 @@ class MergePhysicalDataModels(VerifiedDataModelTransformer[PhysicalDataModel, Ph
                 if output.nodes is None:
                     output.nodes = SheetList[PhysicalNodeType]()
                 output.nodes.append(node)
+                existing_nodes.add(node.node)
 
         return output
 
