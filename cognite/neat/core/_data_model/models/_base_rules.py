@@ -99,7 +99,7 @@ class DataModelType(StrEnum):
     enterprise = "enterprise"
 
 
-class DataModelAspect(StrEnum):
+class DataModelLevel(StrEnum):
     conceptual = "conceptual"
     logical = "logical"
     physical = "physical"
@@ -140,7 +140,7 @@ class BaseMetadata(SchemaModel):
     """
 
     role: ClassVar[RoleTypes] = Field(description="Role of the person creating the data model")
-    aspect: ClassVar[DataModelAspect] = Field(description="Aspect of the data model")
+    level: ClassVar[DataModelLevel] = Field(description="Aspect of the data model")
     space: SpaceType = Field(description="The space where the data model is defined")
     external_id: DataModelExternalIdType = Field(
         alias="externalId", description="External identifier for the data model"
@@ -223,7 +223,7 @@ class BaseMetadata(SchemaModel):
             Unlike namespace, the identifier does not end with "/" or "#".
 
         """
-        return DEFAULT_NAMESPACE[f"data-model/verified/{self.aspect}/{self.space}/{self.external_id}/{self.version}"]
+        return DEFAULT_NAMESPACE[f"data-model/verified/{self.level}/{self.space}/{self.external_id}/{self.version}"]
 
     @property
     def namespace(self) -> Namespace:

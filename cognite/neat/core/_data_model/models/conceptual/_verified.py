@@ -12,14 +12,14 @@ from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.models._base_rules import (
     BaseMetadata,
     BaseRules,
-    DataModelAspect,
+    DataModelLevel,
     RoleTypes,
     SheetList,
     SheetRow,
 )
 from cognite.neat.core._data_model.models._types import (
     ClassEntityType,
-    InformationPropertyType,
+    ConceptualPropertyType,
     MultiValueTypeType,
     URIRefType,
 )
@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 class ConceptualMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information
-    aspect: ClassVar[DataModelAspect] = DataModelAspect.logical
+    level: ClassVar[DataModelLevel] = DataModelLevel.conceptual
 
     # Linking to Conceptual and Physical data model aspects
     physical: URIRef | str | None = Field(None, description="Link to the physical data model aspect")
@@ -125,8 +125,9 @@ class ConceptualProperty(SheetRow):
     class_: ClassEntityType = Field(
         alias="Class", description="Class id that the property is defined for, strongly advise `PascalCase` usage."
     )
-    property_: InformationPropertyType = Field(
-        alias="Property", description="Property id, strongly advised to `camelCase` usage."
+    property_: ConceptualPropertyType = Field(
+        alias="Property",
+        description="Property id, strongly advised to `camelCase` usage.",
     )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the property.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the property.")
@@ -277,7 +278,7 @@ class ConceptualDataModel(BaseRules):
         for property_ in self.properties:
             property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
 
-    def sync_with_dms_rules(self, dms_rules: "DMSRules") -> None:
+    def sync_with_physical_data_model(self, dms_rules: "DMSRules") -> None:
         # Sync at the metadata level
         if dms_rules.metadata.logical == self.metadata.identifier:
             self.metadata.physical = dms_rules.metadata.identifier
@@ -285,17 +286,17 @@ class ConceptualDataModel(BaseRules):
             # if models are not linked to start with, we skip
             return None
 
-        info_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
-        dms_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
-        for neat_id, prop in dms_properties_by_neat_id.items():
-            if prop.logical in info_properties_by_neat_id:
-                info_properties_by_neat_id[prop.logical].physical = neat_id
+        conceptual_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
+        physical_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
+        for neat_id, prop in physical_properties_by_neat_id.items():
+            if prop.logical in conceptual_properties_by_neat_id:
+                conceptual_properties_by_neat_id[prop.logical].physical = neat_id
 
-        info_classes_by_neat_id = {cls.neatId: cls for cls in self.classes}
-        dms_views_by_neat_id = {view.neatId: view for view in dms_rules.views}
-        for neat_id, view in dms_views_by_neat_id.items():
-            if view.logical in info_classes_by_neat_id:
-                info_classes_by_neat_id[view.logical].physical = neat_id
+        classes_by_neat_id = {cls.neatId: cls for cls in self.classes}
+        views_by_neat_id = {view.neatId: view for view in dms_rules.views}
+        for neat_id, view in views_by_neat_id.items():
+            if view.logical in classes_by_neat_id:
+                classes_by_neat_id[view.logical].physical = neat_id
 
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat.core._data_model.transformers._converters import (
@@ -310,7 +311,7 @@ class ConceptualDataModel(BaseRules):
 
     def _repr_html_(self) -> str:
         summary = {
-            "type": "Logical Data Model",
+            "type": "Conceptual Data Model",
             "intended for": "Information Architect",
             "name": self.metadata.name,
             "external_id": self.metadata.external_id,

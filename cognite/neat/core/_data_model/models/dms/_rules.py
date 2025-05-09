@@ -14,7 +14,7 @@ from cognite.neat.core._data_model.models._base_rules import (
     BaseMetadata,
     BaseRules,
     ContainerProperty,
-    DataModelAspect,
+    DataModelLevel,
     RoleTypes,
     SheetList,
     SheetRow,
@@ -55,7 +55,7 @@ _DEFAULT_VERSION = "1"
 
 class DMSMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
-    aspect: ClassVar[DataModelAspect] = DataModelAspect.physical
+    aspect: ClassVar[DataModelLevel] = DataModelLevel.physical
     logical: URIRefType | None = None
 
     def as_space(self) -> dm.SpaceApply:

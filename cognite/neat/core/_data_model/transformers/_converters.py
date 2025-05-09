@@ -1550,7 +1550,7 @@ class _InformationRulesConverter:
             containers=SheetList[DMSContainer](containers),
         )
 
-        self.rules.sync_with_dms_rules(dms_rules)
+        self.rules.sync_with_physical_data_model(dms_rules)
 
         return dms_rules
 
