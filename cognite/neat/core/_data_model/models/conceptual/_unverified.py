@@ -7,7 +7,10 @@ from cognite.client import data_modeling as dm
 from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model.models._base_input import InputComponent, InputRules
+from cognite.neat.core._data_model.models._base_unverified import (
+    UnverifiedComponent,
+    UnverifiedDataModel,
+)
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
@@ -26,7 +29,7 @@ from ._rules import (
 
 
 @dataclass
-class UnverifiedConceptualMetadata(InputComponent[InformationMetadata]):
+class UnverifiedConceptualMetadata(UnverifiedComponent[InformationMetadata]):
     space: str
     external_id: str
     version: str
@@ -75,7 +78,7 @@ class UnverifiedConceptualMetadata(InputComponent[InformationMetadata]):
 
 
 @dataclass
-class UnverifiedConceptualProperty(InputComponent[InformationProperty]):
+class UnverifiedConceptualProperty(UnverifiedComponent[InformationProperty]):
     class_: ClassEntity | str
     property_: str
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
@@ -111,7 +114,7 @@ class UnverifiedConceptualProperty(InputComponent[InformationProperty]):
 
 
 @dataclass
-class UnverifiedConceptualClass(InputComponent[InformationClass]):
+class UnverifiedConceptualClass(UnverifiedComponent[InformationClass]):
     class_: ClassEntity | str
     name: str | None = None
     description: str | None = None
@@ -144,7 +147,7 @@ class UnverifiedConceptualClass(InputComponent[InformationClass]):
 
 
 @dataclass
-class UnverifiedConceptualDataModel(InputRules[InformationRules]):
+class UnverifiedConceptualDataModel(UnverifiedDataModel[InformationRules]):
     metadata: UnverifiedConceptualMetadata
     properties: list[UnverifiedConceptualProperty] = field(default_factory=list)
     classes: list[UnverifiedConceptualClass] = field(default_factory=list)

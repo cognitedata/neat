@@ -1,15 +1,15 @@
-"""Module for base classes for the input models.
+"""Module for base classes for the unverified models.
 
-The philosophy of the input models is:
+The philosophy of the unverified data models is:
 
-* Provide an easy way to input rules. The type hints are made to be human-friendly, for example, Literal instead of
-  Enum.
+* Provide an easy way to read data model into neat. The type hints are made to be human-friendly,
+  for example, Literal instead of Enum.
 * The .dump() method should fill out defaults and have shortcuts. For example, if the prefix is not provided for
   a class, then the prefix from the metadata is used. For views, if the class is not provided, it is assumed to
   be the same as the view.
 
-The base classes are to make it easy to create the input models with default behavior. They are also used for
-testing to ensure that input models correctly map to the verified rules models.
+The base classes are to make it easy to create the unverified data models with default behavior.
+They are also used for testing to ensure that unverified models correctly map to the verified models.
 """
 
 import sys
@@ -32,7 +32,7 @@ T_RuleModel = TypeVar("T_RuleModel", bound=SchemaModel)
 
 
 @dataclass
-class InputRules(Generic[T_BaseRules], ABC):
+class UnverifiedDataModel(Generic[T_BaseRules], ABC):
     """Input rules are raw data that is not yet validated."""
 
     @classmethod
@@ -127,11 +127,11 @@ class InputRules(Generic[T_BaseRules], ABC):
         return output
 
 
-T_InputRules = TypeVar("T_InputRules", bound=InputRules)
+T_InputRules = TypeVar("T_InputRules", bound=UnverifiedDataModel)
 
 
 @dataclass
-class InputComponent(ABC, Generic[T_RuleModel]):
+class UnverifiedComponent(ABC, Generic[T_RuleModel]):
     @classmethod
     @abstractmethod
     def _get_verified_cls(cls) -> type[T_RuleModel]:
