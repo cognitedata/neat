@@ -619,18 +619,23 @@ class ExcelReadAPI(BaseReadAPI):
     def __init__(self, state: SessionState, verbose: bool) -> None:
         super().__init__(state, verbose)
 
-    def __call__(self, io: Any, enable_manual_edit: bool = False) -> IssueList:
+    def __call__(
+        self, io: Any, enable_manual_edit: bool = False, merge_into_cdf_model: DataModelIdentifier | None = None
+    ) -> IssueList:
         """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
         or a DMS Architect.
 
         Args:
             io: file path to the Excel sheet
             enable_manual_edit: If True, the user will be able to re-import rules which where edit outside NeatSession
+            merge_into_cdf_model: If provided, the Execl model will be merged into this existing data model from CDF.
 
         !!! note "Manual Edit Warning"
             This is an alpha feature and is subject to change without notice.
             It is expected to have some limitations and may not work as expected in all cases.
         """
+        if enable_manual_edit and merge_into_cdf_model:
+            raise NeatValueError("Cannot use both enable_manual_edit and merge_into_cdf_model at the same time.")
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
@@ -642,8 +647,10 @@ class ExcelReadAPI(BaseReadAPI):
                 "Read Excel Rules",
                 empty_rules_store_required=True,
             )
-
-        return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
+        if merge_into_cdf_model:
+            return self._state.rule_import(importers.ExcelCDFImporter(path, merge_into_cdf_model))
+        else:
+            return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
 
 
 @session_class_wrapper
