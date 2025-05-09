@@ -8,8 +8,8 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat.core._client import NeatClient
+from cognite.neat.core._data_model import importers
 from cognite.neat.core._issues.errors._general import NeatValueError
-from cognite.neat.core._rules import importers
 from tests.data import GraphData, SchemaData
 
 

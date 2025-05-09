@@ -4,32 +4,32 @@ from typing import Any
 import pytest
 
 from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
-from cognite.neat.core._issues import NeatError
-from cognite.neat.core._issues._base import MultiValueError
-from cognite.neat.core._issues.errors import ResourceNotDefinedError
-from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
-from cognite.neat.core._rules._shared import ReadRules
-from cognite.neat.core._rules.models import DMSRules, data_types
-from cognite.neat.core._rules.models.data_types import DataType, String
-from cognite.neat.core._rules.models.entities import ClassEntity, MultiValueTypeInfo
-from cognite.neat.core._rules.models.information import (
+from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model.models import DMSRules, data_types
+from cognite.neat.core._data_model.models.data_types import DataType, String
+from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
+from cognite.neat.core._data_model.models.information import (
     InformationClass,
     InformationInputRules,
     InformationProperty,
     InformationRules,
     InformationValidation,
 )
-from cognite.neat.core._rules.models.information._rules_input import (
+from cognite.neat.core._data_model.models.information._rules_input import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
 )
-from cognite.neat.core._rules.transformers._converters import (
+from cognite.neat.core._data_model.transformers._converters import (
     InformationToDMS,
     ToCompliantEntities,
     _InformationRulesConverter,
 )
-from cognite.neat.core._rules.transformers._verification import VerifyAnyRules
+from cognite.neat.core._data_model.transformers._verification import VerifyAnyRules
+from cognite.neat.core._issues import NeatError
+from cognite.neat.core._issues._base import MultiValueError
+from cognite.neat.core._issues.errors import ResourceNotDefinedError
+from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
 
 
 def case_insensitive_value_types():

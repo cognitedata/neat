@@ -4,20 +4,20 @@ from typing import Any, Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat.core._constants import BASE_MODEL
-from cognite.neat.core._issues import IssueList, catch_issues
-from cognite.neat.core._rules._shared import ReadRules
-from cognite.neat.core._rules.exporters import ExcelExporter
-from cognite.neat.core._rules.importers import ExcelImporter
-from cognite.neat.core._rules.models import InformationInputRules
-from cognite.neat.core._rules.models._base_rules import RoleTypes
-from cognite.neat.core._rules.models.dms import DMSValidation
-from cognite.neat.core._rules.transformers import (
+from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model.exporters import ExcelExporter
+from cognite.neat.core._data_model.importers import ExcelImporter
+from cognite.neat.core._data_model.models import InformationInputRules
+from cognite.neat.core._data_model.models._base_rules import RoleTypes
+from cognite.neat.core._data_model.models.dms import DMSValidation
+from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     IncludeReferenced,
     ToDataProductModel,
     ToEnterpriseModel,
     VerifiedRulesTransformer,
 )
+from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._utils.reader import NeatReader, PathReader
 from cognite.neat.session._experimental import ExperimentalFlags
 

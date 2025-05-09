@@ -8,7 +8,7 @@ from openpyxl import load_workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
 
-from cognite.neat.core._rules._constants import get_internal_properties
+from cognite.neat.core._data_model._constants import get_internal_properties
 
 
 @dataclass

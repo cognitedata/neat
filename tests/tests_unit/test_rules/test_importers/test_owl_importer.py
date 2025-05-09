@@ -1,9 +1,9 @@
+from cognite.neat.core._data_model import importers
+from cognite.neat.core._data_model._constants import EntityTypes
+from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.transformers._verification import VerifyAnyRules
 from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._rules import importers
-from cognite.neat.core._rules._constants import EntityTypes
-from cognite.neat.core._rules.analysis import RulesAnalysis
-from cognite.neat.core._rules.models.entities import ClassEntity
-from cognite.neat.core._rules.transformers._verification import VerifyAnyRules
 
 
 def test_ill_formed_owl_importer():

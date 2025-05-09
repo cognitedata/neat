@@ -13,9 +13,9 @@ from cognite.client.data_classes.data_modeling.instances import Instance, Proper
 from rdflib import Namespace
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._rules._shared import DMSRules, InformationRules, VerifiedRules
-from cognite.neat.core._rules.models.data_types import DataType, String
-from cognite.neat.core._rules.models.entities import ClassEntity
+from cognite.neat.core._data_model._shared import DMSRules, InformationRules, VerifiedRules
+from cognite.neat.core._data_model.models.data_types import DataType, String
+from cognite.neat.core._data_model.models.entities import ClassEntity
 
 
 class DataClassCreator:

@@ -4,13 +4,13 @@ from typing import Literal, cast
 from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
-from cognite.neat.core._graph.extractors import KnowledgeGraphExtractor
-from cognite.neat.core._issues import IssueList
-from cognite.neat.core._rules.importers import BaseImporter, InferenceImporter
-from cognite.neat.core._rules.models import DMSRules, InformationRules
-from cognite.neat.core._rules.transformers import (
+from cognite.neat.core._data_model.importers import BaseImporter, InferenceImporter
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.transformers import (
     VerifiedRulesTransformer,
 )
+from cognite.neat.core._graph.extractors import KnowledgeGraphExtractor
+from cognite.neat.core._issues import IssueList
 from cognite.neat.core._store import NeatGraphStore, NeatRulesStore
 from cognite.neat.core._utils.upload import UploadResultList
 
