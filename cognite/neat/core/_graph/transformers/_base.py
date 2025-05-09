@@ -100,10 +100,13 @@ class BaseTransformerStandardised(ABC):
         if self._skip_count_query():
             skipped_count_res = list(graph.query(self._skip_count_query()))
             skipped_count = int(skipped_count_res[0][0])  # type: ignore [index, arg-type]
-            warnings.warn(
-                NeatValueWarning(f"Skipping {skipped_count} properties in transformation {self.__class__.__name__}"),
-                stacklevel=2,
-            )
+            if skipped_count > 0:
+                warnings.warn(
+                    NeatValueWarning(
+                        f"Skipping {skipped_count} properties in transformation {self.__class__.__name__}"
+                    ),
+                    stacklevel=2,
+                )
             outcome.skipped = skipped_count
 
         if iteration_count == 0:
