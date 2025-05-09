@@ -8,7 +8,9 @@ from cognite.neat import _version
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.models import DMSRules
-from cognite.neat.core._data_model.models.conceptual._rules import InformationRules
+from cognite.neat.core._data_model.models.conceptual._verified import (
+    ConceptualDataModel,
+)
 from cognite.neat.core._data_model.transformers import (
     InformationToDMS,
     MergeDMSRules,
@@ -242,7 +244,7 @@ class NeatSession:
             data_model_id=dm.DataModelId.load(model_id) if last_entity is None else None,
         )
 
-        def action() -> tuple[InformationRules, DMSRules | None]:
+        def action() -> tuple[ConceptualDataModel, DMSRules | None]:
             unverified_information = importer.to_rules()
             unverified_information = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_information)
 

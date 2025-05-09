@@ -1,6 +1,6 @@
 from cognite.neat.core._data_model.models.conceptual import (
-    InformationClass,
-    InformationMetadata,
+    ConceptualClass,
+    ConceptualMetadata,
     UnverifiedConceptualClass,
 )
 
@@ -9,7 +9,7 @@ class TestBaseRules:
     def test_strip_whitespace_metadata(
         self,
     ) -> None:
-        meta = InformationMetadata.model_validate(
+        meta = ConceptualMetadata.model_validate(
             {
                 "role": "  information architect  ",
                 "space": "  my_space  ",
@@ -35,7 +35,7 @@ class TestBaseRules:
             description="  My Class Description  ",
         )
 
-        class_ = InformationClass.model_validate(row.dump(default_prefix="neat"))
+        class_ = ConceptualClass.model_validate(row.dump(default_prefix="neat"))
 
         assert class_.class_.suffix == "MyClass"
         assert class_.name == "My Class Name"

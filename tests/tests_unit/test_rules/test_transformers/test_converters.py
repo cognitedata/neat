@@ -7,7 +7,7 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import DMSInputRules, InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSInputRules
 from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualClass,
     UnverifiedConceptualDataModel,
@@ -70,7 +70,7 @@ class TestStandardizeNaming:
             classes=[UnverifiedConceptualClass(class_name)],
         )
 
-        res: InformationRules = StandardizeNaming().transform(information.as_verified_rules())
+        res: ConceptualDataModel = StandardizeNaming().transform(information.as_verified_rules())
 
         assert res.properties[0].property_ == "tagName"
         assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
@@ -90,7 +90,7 @@ class TestToInformationCompliantEntities:
             classes=[UnverifiedConceptualClass(class_name)],
         )
 
-        res: InformationRules = (
+        res: ConceptualDataModel = (
             ToDMSCompliantEntities(rename_warning="raise")
             .transform(ReadRules(information, {}))
             .rules.as_verified_rules()
@@ -105,7 +105,7 @@ class TestToInformationCompliantEntities:
 
 
 class TestRulesSubsetting:
-    def test_subset_information_rules(self, david_rules: InformationRules) -> None:
+    def test_subset_information_rules(self, david_rules: ConceptualDataModel) -> None:
         class_ = ClassEntity.load("power:GeoLocation")
         subset = SubsetInformationRules({class_}).transform(david_rules)
 

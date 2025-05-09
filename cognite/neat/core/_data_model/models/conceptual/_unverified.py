@@ -20,16 +20,16 @@ from cognite.neat.core._data_model.models.entities import (
 )
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
-from ._rules import (
-    InformationClass,
-    InformationMetadata,
-    InformationProperty,
-    InformationRules,
+from ._verified import (
+    ConceptualClass,
+    ConceptualDataModel,
+    ConceptualMetadata,
+    ConceptualProperty,
 )
 
 
 @dataclass
-class UnverifiedConceptualMetadata(UnverifiedComponent[InformationMetadata]):
+class UnverifiedConceptualMetadata(UnverifiedComponent[ConceptualMetadata]):
     space: str
     external_id: str
     version: str
@@ -43,8 +43,8 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[InformationMetadata]):
     source_id: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationMetadata]:
-        return InformationMetadata
+    def _get_verified_cls(cls) -> type[ConceptualMetadata]:
+        return ConceptualMetadata
 
     def dump(self, **kwargs: Any) -> dict[str, Any]:
         output = super().dump()
@@ -78,7 +78,7 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[InformationMetadata]):
 
 
 @dataclass
-class UnverifiedConceptualProperty(UnverifiedComponent[InformationProperty]):
+class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
     class_: ClassEntity | str
     property_: str
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
@@ -97,8 +97,8 @@ class UnverifiedConceptualProperty(UnverifiedComponent[InformationProperty]):
     conceptual: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationProperty]:
-        return InformationProperty
+    def _get_verified_cls(cls) -> type[ConceptualProperty]:
+        return ConceptualProperty
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
@@ -114,7 +114,7 @@ class UnverifiedConceptualProperty(UnverifiedComponent[InformationProperty]):
 
 
 @dataclass
-class UnverifiedConceptualClass(UnverifiedComponent[InformationClass]):
+class UnverifiedConceptualClass(UnverifiedComponent[ConceptualClass]):
     class_: ClassEntity | str
     name: str | None = None
     description: str | None = None
@@ -126,8 +126,8 @@ class UnverifiedConceptualClass(UnverifiedComponent[InformationClass]):
     conceptual: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationClass]:
-        return InformationClass
+    def _get_verified_cls(cls) -> type[ConceptualClass]:
+        return ConceptualClass
 
     @property
     def class_str(self) -> str:
@@ -147,15 +147,15 @@ class UnverifiedConceptualClass(UnverifiedComponent[InformationClass]):
 
 
 @dataclass
-class UnverifiedConceptualDataModel(UnverifiedDataModel[InformationRules]):
+class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
     metadata: UnverifiedConceptualMetadata
     properties: list[UnverifiedConceptualProperty] = field(default_factory=list)
     classes: list[UnverifiedConceptualClass] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[InformationRules]:
-        return InformationRules
+    def _get_verified_cls(cls) -> type[ConceptualDataModel]:
+        return ConceptualDataModel
 
     def dump(self) -> dict[str, Any]:
         default_prefix = self.metadata.prefix

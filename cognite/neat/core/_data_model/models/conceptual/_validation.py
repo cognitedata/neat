@@ -18,14 +18,18 @@ from cognite.neat.core._issues.warnings._resources import (
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from cognite.neat.core._utils.text import humanize_collection
 
-from ._rules import InformationRules
+from ._verified import ConceptualDataModel
 
 
 class InformationValidation:
     """This class does all the validation of the Information rules that have dependencies
     between components."""
 
-    def __init__(self, rules: InformationRules, read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None):
+    def __init__(
+        self,
+        rules: ConceptualDataModel,
+        read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+    ):
         self.rules = rules
         self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
         self._metadata = rules.metadata

@@ -17,7 +17,7 @@ from cognite.neat.core._constants import (
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.catalog import classic_model
 from cognite.neat.core._data_model.models import (
-    InformationRules,
+    ConceptualDataModel,
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._instances.extractors._base import KnowledgeGraphExtractor
@@ -208,7 +208,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
         yield from self._extract_asset_parent_data_sets()
 
-    def get_information_rules(self) -> InformationRules:
+    def get_information_rules(self) -> ConceptualDataModel:
         # To avoid circular imports
         from cognite.neat.core._data_model.importers import ExcelImporter
 

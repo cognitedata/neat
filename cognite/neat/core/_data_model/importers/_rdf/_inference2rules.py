@@ -13,10 +13,10 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT, get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models import InformationRules, data_types
+from cognite.neat.core._data_model.models import ConceptualDataModel, data_types
 from cognite.neat.core._data_model.models.conceptual import (
-    InformationClass,
-    InformationMetadata,
+    ConceptualClass,
+    ConceptualMetadata,
     UnverifiedConceptualClass,
     UnverifiedConceptualProperty,
 )
@@ -272,7 +272,7 @@ class InferenceImporter(BaseRDFImporter):
 
     def _default_metadata(self) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
-        return InformationMetadata(
+        return ConceptualMetadata(
             space=self.data_model_id.space,
             external_id=self.data_model_id.external_id,
             version=cast(str, self.data_model_id.version),
@@ -357,7 +357,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
         self,
         issue_list: IssueList,
         graph: Graph,
-        rules: InformationRules | None = None,
+        rules: ConceptualDataModel | None = None,
         data_model_id: dm.DataModelId | tuple[str, str, str] | None = None,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> None:
@@ -523,7 +523,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             existing_class_properties = {}
             existing_classes = {}
         properties_by_class_by_subclass: list[_ReadProperties] = []
-        existing_class: InformationClass | None
+        existing_class: ConceptualClass | None
         total_instance_count = sum(count_by_type.values())
         iterable = count_by_type.items()
         if GLOBAL_CONFIG.use_iterate_bar_threshold and total_instance_count > GLOBAL_CONFIG.use_iterate_bar_threshold:
@@ -606,7 +606,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
     def _default_metadata(self) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
-        return InformationMetadata(
+        return ConceptualMetadata(
             space=self.data_model_id.space,
             external_id=self.data_model_id.external_id,
             version=cast(str, self.data_model_id.version),

@@ -38,22 +38,21 @@ if TYPE_CHECKING:
     from cognite.neat.core._data_model.models import DMSRules
 
 
-class InformationMetadata(BaseMetadata):
+class ConceptualMetadata(BaseMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information
     aspect: ClassVar[DataModelAspect] = DataModelAspect.logical
 
     # Linking to Conceptual and Physical data model aspects
     physical: URIRef | str | None = Field(None, description="Link to the physical data model aspect")
-    conceptual: URIRef | str | None = Field(None, description="Link to the conceptual data model aspect")
 
 
-def _get_metadata(context: Any) -> InformationMetadata | None:
-    if isinstance(context, dict) and isinstance(context.get("metadata"), InformationMetadata):
+def _get_metadata(context: Any) -> ConceptualMetadata | None:
+    if isinstance(context, dict) and isinstance(context.get("metadata"), ConceptualMetadata):
         return context["metadata"]
     return None
 
 
-class InformationClass(SheetRow):
+class ConceptualClass(SheetRow):
     """
     Class is a category of things that share a common set of attributes and relationships.
 
@@ -82,7 +81,6 @@ class InformationClass(SheetRow):
         None,
         description="Link to the class representation in the physical data model aspect",
     )
-    conceptual: URIRefType | None = Field(None, description="Link to the conceptual data model aspect")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.class_,)
@@ -107,7 +105,7 @@ class InformationClass(SheetRow):
         return ",".join(str(value) for value in value)
 
 
-class InformationProperty(SheetRow):
+class ConceptualProperty(SheetRow):
     """
     A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
     or a relationship to another class.
@@ -168,7 +166,6 @@ class InformationProperty(SheetRow):
         None,
         description="Link to the class representation in the physical data model aspect",
     )
-    conceptual: URIRefType | None = Field(None, description="Link to the conceptual data model aspect")
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return self.class_, self.property_
@@ -239,14 +236,14 @@ class InformationProperty(SheetRow):
             return EntityTypes.undefined
 
 
-class InformationRules(BaseRules):
-    metadata: InformationMetadata = Field(alias="Metadata", description="Metadata for the logical data model")
-    properties: SheetList[InformationProperty] = Field(alias="Properties", description="List of properties")
-    classes: SheetList[InformationClass] = Field(alias="Classes", description="List of classes")
+class ConceptualDataModel(BaseRules):
+    metadata: ConceptualMetadata = Field(alias="Metadata", description="Metadata for the conceptual data model")
+    properties: SheetList[ConceptualProperty] = Field(alias="Properties", description="List of properties")
+    classes: SheetList[ConceptualClass] = Field(alias="Classes", description="List of classes")
     prefixes: dict[str, Namespace] = Field(
         alias="Prefixes",
         default_factory=get_default_prefixes_and_namespaces,
-        description="the definition of the prefixes that are used in the semantic data model",
+        description="the definition of the prefixes that are used in the conceptual data model",
     )
 
     @field_validator("prefixes", mode="before")
@@ -258,7 +255,7 @@ class InformationRules(BaseRules):
         return values
 
     @model_validator(mode="after")
-    def set_neat_id(self) -> "InformationRules":
+    def set_neat_id(self) -> "ConceptualDataModel":
         namespace = self.metadata.namespace
 
         for class_ in self.classes:
@@ -309,7 +306,7 @@ class InformationRules(BaseRules):
 
     @classmethod
     def display_type_name(cls) -> str:
-        return "VerifiedInformationModel"
+        return "VerifiedConceptualDataModel"
 
     def _repr_html_(self) -> str:
         summary = {

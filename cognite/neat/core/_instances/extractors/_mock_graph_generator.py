@@ -13,8 +13,8 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
-from cognite.neat.core._data_model.models.conceptual import InformationProperty
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ClassEntity
 from cognite.neat.core._data_model.transformers import SubsetInformationRules
@@ -38,7 +38,7 @@ class MockGraphGenerator(BaseExtractor):
 
     def __init__(
         self,
-        rules: InformationRules | DMSRules,
+        rules: ConceptualDataModel | DMSRules,
         class_count: dict[str | ClassEntity, int] | None = None,
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
@@ -48,7 +48,7 @@ class MockGraphGenerator(BaseExtractor):
             from cognite.neat.core._data_model.transformers import DMSToInformation
 
             self.rules = DMSToInformation().transform(rules)
-        elif isinstance(rules, InformationRules):
+        elif isinstance(rules, ConceptualDataModel):
             self.rules = rules
         else:
             raise ValueError("Rules must be of type InformationRules or DMSRules!")
@@ -85,7 +85,7 @@ class MockGraphGenerator(BaseExtractor):
 
 
 def generate_triples(
-    rules: InformationRules,
+    rules: ConceptualDataModel,
     class_count: dict[ClassEntity, int],
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
@@ -294,8 +294,8 @@ def _generate_mock_data_property_triples(
 
 def _generate_mock_object_property_triples(
     class_: ClassEntity,
-    property_definition: InformationProperty,
-    class_property_pairs: dict[ClassEntity, list[InformationProperty]],
+    property_definition: ConceptualProperty,
+    class_property_pairs: dict[ClassEntity, list[ConceptualProperty]],
     sym_pairs: set[tuple[ClassEntity, ClassEntity]],
     instance_ids: dict[ClassEntity, list[URIRef]],
     namespace: Namespace,
@@ -365,7 +365,7 @@ def _generate_mock_object_property_triples(
 
 def _generate_triples_per_class(
     class_: ClassEntity,
-    class_properties_pairs: dict[ClassEntity, list[InformationProperty]],
+    class_properties_pairs: dict[ClassEntity, list[ConceptualProperty]],
     sym_pairs: set[tuple[ClassEntity, ClassEntity]],
     instance_ids: dict[ClassEntity, list[URIRef]],
     namespace: Namespace,

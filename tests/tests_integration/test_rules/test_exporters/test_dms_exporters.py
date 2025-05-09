@@ -7,11 +7,15 @@ from cognite.client.data_classes import Row
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules, SheetList
+from cognite.neat.core._data_model.models import (
+    ConceptualDataModel,
+    DMSRules,
+    SheetList,
+)
 from cognite.neat.core._data_model.models.conceptual import (
-    InformationClass,
-    InformationMetadata,
-    InformationProperty,
+    ConceptualClass,
+    ConceptualMetadata,
+    ConceptualProperty,
 )
 from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
@@ -60,9 +64,9 @@ def svein_harald_dms_rules() -> DMSRules:
 
 
 @pytest.fixture(scope="session")
-def table_example() -> InformationRules:
-    return InformationRules(
-        metadata=InformationMetadata(
+def table_example() -> ConceptualDataModel:
+    return ConceptualDataModel(
+        metadata=ConceptualMetadata(
             schema_="complete",
             prefix="sp_table_example",
             namespace="http://neat.org",
@@ -73,44 +77,44 @@ def table_example() -> InformationRules:
             updated="2024-03-16T17:40:00Z",
             creator=["Anders"],
         ),
-        properties=SheetList[InformationProperty](
+        properties=SheetList[ConceptualProperty](
             [
-                InformationProperty(
+                ConceptualProperty(
                     class_="Table",
                     property_="color",
                     value_type="string",
                     min_count=0,
                     max_count=1.0,
                 ),
-                InformationProperty(
+                ConceptualProperty(
                     class_="Table",
                     property_="height",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
-                InformationProperty(
+                ConceptualProperty(
                     class_="Table",
                     property_="width",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
-                InformationProperty(
+                ConceptualProperty(
                     class_="Table",
                     property_="on",
                     value_type="Item",
                     min_count=0,
                     max_count=float("inf"),
                 ),
-                InformationProperty(
+                ConceptualProperty(
                     class_="Item",
                     property_="name",
                     value_type="string",
                     min_count=1,
                     max_count=1,
                 ),
-                InformationProperty(
+                ConceptualProperty(
                     class_="Item",
                     property_="category",
                     value_type="string",
@@ -119,10 +123,10 @@ def table_example() -> InformationRules:
                 ),
             ]
         ),
-        classes=SheetList[InformationClass](
+        classes=SheetList[ConceptualClass](
             [
-                InformationClass(class_="Table", name="Table"),
-                InformationClass(class_="Item", name="Item"),
+                ConceptualClass(class_="Table", name="Table"),
+                ConceptualClass(class_="Item", name="Item"),
             ]
         ),
     )

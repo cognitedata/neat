@@ -6,8 +6,8 @@ import pytest
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
+    ConceptualDataModel,
     DMSRules,
-    InformationRules,
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.dms import DMSInputRules
@@ -45,8 +45,8 @@ def david_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture(scope="session")
-def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> InformationRules:
-    return InformationRules.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())
+def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> ConceptualDataModel:
+    return ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())
 
 
 @pytest.fixture(scope="session")

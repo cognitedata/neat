@@ -48,7 +48,7 @@ from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings._general import NeatValueWarning
 
 if TYPE_CHECKING:
-    from cognite.neat.core._data_model.models import InformationRules
+    from cognite.neat.core._data_model.models import ConceptualDataModel
 
 _DEFAULT_VERSION = "1"
 
@@ -494,7 +494,7 @@ class DMSRules(BaseRules):
         for property_ in self.properties:
             property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
 
-    def sync_with_info_rules(self, info_rules: "InformationRules") -> None:
+    def sync_with_info_rules(self, info_rules: "ConceptualDataModel") -> None:
         # Sync at the metadata level
         if info_rules.metadata.physical == self.metadata.identifier:
             self.metadata.logical = info_rules.metadata.identifier

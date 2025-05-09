@@ -1,4 +1,3 @@
-from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
 from ._unverified import (
     UnverifiedConceptualClass,
     UnverifiedConceptualDataModel,
@@ -6,12 +5,18 @@ from ._unverified import (
     UnverifiedConceptualProperty,
 )
 from ._validation import InformationValidation
+from ._verified import (
+    ConceptualClass,
+    ConceptualDataModel,
+    ConceptualMetadata,
+    ConceptualProperty,
+)
 
 __all__ = [
-    "InformationClass",
-    "InformationMetadata",
-    "InformationProperty",
-    "InformationRules",
+    "ConceptualClass",
+    "ConceptualDataModel",
+    "ConceptualMetadata",
+    "ConceptualProperty",
     "InformationValidation",
     "UnverifiedConceptualClass",
     "UnverifiedConceptualDataModel",

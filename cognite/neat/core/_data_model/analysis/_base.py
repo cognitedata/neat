@@ -11,10 +11,10 @@ import pandas as pd
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.conceptual import (
-    InformationClass,
-    InformationProperty,
+    ConceptualClass,
+    ConceptualProperty,
 )
 from cognite.neat.core._data_model.models.dms import DMSProperty
 from cognite.neat.core._data_model.models.dms._rules import DMSView
@@ -111,12 +111,16 @@ class ViewQueryDict(dict, MutableMapping[dm.ViewId, ViewQuery]):
 
 
 class RulesAnalysis:
-    def __init__(self, information: InformationRules | None = None, dms: DMSRules | None = None) -> None:
+    def __init__(
+        self,
+        information: ConceptualDataModel | None = None,
+        dms: DMSRules | None = None,
+    ) -> None:
         self._information = information
         self._dms = dms
 
     @property
-    def information(self) -> InformationRules:
+    def information(self) -> ConceptualDataModel:
         if self._information is None:
             raise NeatValueError("Information rules are required for this analysis")
         return self._information
@@ -171,7 +175,7 @@ class RulesAnalysis:
 
     def properties_by_class(
         self, include_ancestors: bool = False, include_different_space: bool = False
-    ) -> dict[ClassEntity, list[InformationProperty]]:
+    ) -> dict[ClassEntity, list[ConceptualProperty]]:
         """Get a dictionary of classes and their properties.
 
         Args:
@@ -182,7 +186,7 @@ class RulesAnalysis:
             dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
 
         """
-        properties_by_classes: dict[ClassEntity, list[InformationProperty]] = defaultdict(list)
+        properties_by_classes: dict[ClassEntity, list[ConceptualProperty]] = defaultdict(list)
         for prop in self.information.properties:
             properties_by_classes[prop.class_].append(prop)
 
@@ -268,16 +272,16 @@ class RulesAnalysis:
         }
 
     @property
-    def _class_by_neat_id(self) -> dict[URIRef, InformationClass]:
+    def _class_by_neat_id(self) -> dict[URIRef, ConceptualClass]:
         """Get a dictionary of class neat IDs to
         class entities."""
 
         return {cls.neatId: cls for cls in self.information.classes if cls.neatId}
 
-    def class_by_suffix(self) -> dict[str, InformationClass]:
+    def class_by_suffix(self) -> dict[str, ConceptualClass]:
         """Get a dictionary of class suffixes to class entities."""
         # TODO: Remove this method
-        class_dict: dict[str, InformationClass] = {}
+        class_dict: dict[str, ConceptualClass] = {}
         for definition in self.information.classes:
             entity = definition.class_
             if entity.suffix in class_dict:
@@ -293,7 +297,7 @@ class RulesAnalysis:
         return class_dict
 
     @property
-    def class_by_class_entity(self) -> dict[ClassEntity, InformationClass]:
+    def class_by_class_entity(self) -> dict[ClassEntity, ConceptualClass]:
         """Get a dictionary of class entities to class entities."""
         rules = self.information
         return {cls.class_: cls for cls in rules.classes}
@@ -304,9 +308,9 @@ class RulesAnalysis:
         rules = self.dms
         return {view.view: view for view in rules.views}
 
-    def property_by_id(self) -> dict[str, list[InformationProperty]]:
+    def property_by_id(self) -> dict[str, list[ConceptualProperty]]:
         """Get a dictionary of property IDs to property entities."""
-        property_dict: dict[str, list[InformationProperty]] = defaultdict(list)
+        property_dict: dict[str, list[ConceptualProperty]] = defaultdict(list)
         for prop in self.information.properties:
             property_dict[prop.property_].append(prop)
         return property_dict
@@ -315,11 +319,11 @@ class RulesAnalysis:
         self,
         has_instance_source: bool = False,
         include_ancestors: bool = False,
-    ) -> dict[ClassEntity, dict[str, InformationProperty]]:
+    ) -> dict[ClassEntity, dict[str, ConceptualProperty]]:
         """Get a dictionary of class entities to dictionaries of property IDs to property entities."""
-        class_property_pairs: dict[ClassEntity, dict[str, InformationProperty]] = {}
+        class_property_pairs: dict[ClassEntity, dict[str, ConceptualProperty]] = {}
         for class_, properties in self.properties_by_class(include_ancestors).items():
-            processed_properties: dict[str, InformationProperty] = {}
+            processed_properties: dict[str, ConceptualProperty] = {}
             for prop in properties:
                 if prop.property_ in processed_properties:
                     warnings.warn(
@@ -372,7 +376,7 @@ class RulesAnalysis:
 
         properties_by_class = self.properties_by_class(include_ancestors)
 
-        prop: InformationProperty
+        prop: ConceptualProperty
         for prop in itertools.chain.from_iterable(properties_by_class.values()):
             if not isinstance(prop.value_type, ClassEntity):
                 continue
@@ -419,14 +423,14 @@ class RulesAnalysis:
         return sym_pairs
 
     @overload
-    def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, InformationProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, ConceptualProperty]: ...
 
     @overload
     def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
 
     def _properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
-    ) -> dict[URIRef, InformationProperty] | dict[URIRef, DMSProperty]:
+    ) -> dict[URIRef, ConceptualProperty] | dict[URIRef, DMSProperty]:
         if format == "info":
             return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
         elif format == "dms":
@@ -435,11 +439,11 @@ class RulesAnalysis:
             raise NeatValueError(f"Invalid format: {format}")
 
     @property
-    def classes_by_neat_id(self) -> dict[URIRef, InformationClass]:
+    def classes_by_neat_id(self) -> dict[URIRef, ConceptualClass]:
         return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
 
     @property
-    def multi_value_properties(self) -> list[InformationProperty]:
+    def multi_value_properties(self) -> list[ConceptualProperty]:
         return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
 
     @property
