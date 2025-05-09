@@ -6,7 +6,7 @@ from cognite.neat.core._data_model.transformers import (
     PhysicalDataModelMapper,
     VerifiedDataModelTransformer,
 )
-from cognite.neat.core._graph.transformers import ConnectionToLiteral
+from cognite.neat.core._instances.transformers import ConnectionToLiteral
 from cognite.neat.core._issues import IssueList
 
 from ._state import SessionState
