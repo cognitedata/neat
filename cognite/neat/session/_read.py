@@ -369,6 +369,33 @@ class CDFDataModelAPI(BaseReadAPI):
         importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
         return self._state.rule_import(importer)
 
+    def update(self, data_model_id: DataModelIdentifier, spreadsheet_io: Any) -> IssueList:
+        """Updates a Data Model from CDF with a local
+
+        Args:
+            data_model_id:
+            spreadsheet_io:
+
+        Returns:
+            IssueList: A list of issues that occurred during the read.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Update data model from CDF",
+            empty_rules_store_required=True,
+            client_required=True,
+        )
+        data_model_id = DataModelId.load(data_model_id)
+
+        if not data_model_id.version:
+            raise NeatSessionError("Data model version is required to read a data model.")
+
+        cdf_importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
+        # The Excel importer can be either conceptual or physical.
+        excel_importer = importers.ExcelImporter(spreadsheet_io)  # type: ignore[var-annotated]
+        importer = importers.DMSMergeImporter(cdf_importer, excel_importer)
+        return self._state.rule_import(importer)
+
 
 @session_class_wrapper
 class CDFClassicAPI(BaseReadAPI):
