@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Literal, cast
 
 import pandas as pd
-from cognite.client.utils._importing import local_import
 from pandas import ExcelFile
 from rdflib import Namespace, URIRef
 
@@ -285,31 +284,3 @@ class ExcelImporter(BaseImporter[T_InputRules]):
     @property
     def source_uri(self) -> URIRef:
         return URIRef(f"file://{self.filepath.name}")
-
-
-class GoogleSheetImporter(BaseImporter[T_InputRules]):
-    """Import rules from a Google Sheet.
-
-    .. warning::
-
-        This importer is experimental and may not work as expected.
-
-    Args:
-        sheet_id (str): The Google Sheet ID.
-        skiprows (int): The number of rows to skip when reading the Google Sheet.
-    """
-
-    def __init__(self, sheet_id: str, skiprows: int = 1):
-        self.sheet_id = sheet_id
-        self.skiprows = skiprows
-
-    def to_rules(self) -> ReadRules[T_InputRules]:
-        raise NotImplementedError("Google Sheet Importer is not yet implemented.")
-
-    def _get_sheets(self) -> dict[str, pd.DataFrame]:
-        local_import("gspread", "google")
-        import gspread  # type: ignore[import]
-
-        client_google = gspread.service_account()
-        google_sheet = client_google.open_by_key(self.sheet_id)
-        return {worksheet.title: pd.DataFrame(worksheet.get_all_records()) for worksheet in google_sheet.worksheets()}

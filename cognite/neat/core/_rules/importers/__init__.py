@@ -3,7 +3,7 @@ from ._dict2rules import DictImporter
 from ._dms2rules import DMSImporter
 from ._dtdl2rules import DTDLImporter
 from ._rdf import IMFImporter, InferenceImporter, OWLImporter, SubclassInferenceImporter
-from ._spreadsheet2rules import ExcelImporter, GoogleSheetImporter
+from ._spreadsheet2rules import ExcelImporter
 
 __all__ = [
     "BaseImporter",
@@ -11,7 +11,6 @@ __all__ = [
     "DTDLImporter",
     "DictImporter",
     "ExcelImporter",
-    "GoogleSheetImporter",
     "IMFImporter",
     "InferenceImporter",
     "OWLImporter",
@@ -23,7 +22,6 @@ RulesImporters = (
     | IMFImporter
     | DMSImporter
     | ExcelImporter
-    | GoogleSheetImporter
     | DTDLImporter
     | DictImporter
     | InferenceImporter
