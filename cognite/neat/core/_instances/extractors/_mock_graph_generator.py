@@ -14,9 +14,9 @@ from rdflib import RDF, Literal, Namespace, URIRef
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models.conceptual import InformationProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.models.information import InformationProperty
 from cognite.neat.core._data_model.transformers import SubsetInformationRules
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri

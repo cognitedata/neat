@@ -11,14 +11,14 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.core._constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models.data_types import DataType
-from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.models.information import (
+from cognite.neat.core._data_model.models.conceptual import (
     InformationClass,
     InformationMetadata,
     InformationProperty,
     InformationRules,
 )
+from cognite.neat.core._data_model.models.data_types import DataType
+from cognite.neat.core._data_model.models.entities import ClassEntity
 from cognite.neat.core._issues import MultiValueError
 from cognite.neat.core._issues.errors import (
     PropertyDefinitionDuplicatedError,

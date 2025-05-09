@@ -9,9 +9,9 @@ from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_SPACES, DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models.conceptual import InformationProperty
 from cognite.neat.core._data_model.models.data_types import Json
 from cognite.neat.core._data_model.models.entities import UnknownEntity
-from cognite.neat.core._data_model.models.information import InformationProperty
 from cognite.neat.core._data_model.transformers import DMSToInformation, VerifyDMSRules
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_warnings
 from cognite.neat.core._issues.warnings import (

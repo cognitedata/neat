@@ -10,8 +10,8 @@ from openpyxl.worksheet.datavalidation import DataValidation
 
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.models.conceptual._rules import InformationRules
 from cognite.neat.core._data_model.models.entities._single_value import ClassEntity
-from cognite.neat.core._data_model.models.information._rules import InformationRules
 
 from ._base import BaseExporter
 

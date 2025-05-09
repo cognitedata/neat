@@ -10,9 +10,9 @@ from cognite.neat.core._constants import get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._data_model.models._base_rules import RoleTypes
+from cognite.neat.core._data_model.models.conceptual import InformationInputRules
 from cognite.neat.core._data_model.models.data_types import AnyURI
 from cognite.neat.core._data_model.models.entities import UnknownEntity
-from cognite.neat.core._data_model.models.information import InformationInputRules
 from cognite.neat.core._issues import IssueList, MultiValueError
 from cognite.neat.core._issues.errors import FileReadError
 from cognite.neat.core._issues.errors._general import NeatValueError

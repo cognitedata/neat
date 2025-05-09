@@ -39,6 +39,10 @@ from cognite.neat.core._data_model.models import (
     DMSInputRules,
     DMSSchema,
 )
+from cognite.neat.core._data_model.models.conceptual import (
+    InformationInputClass,
+    InformationInputProperty,
+)
 from cognite.neat.core._data_model.models.data_types import DataType, Enum, String
 from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
@@ -56,10 +60,6 @@ from cognite.neat.core._data_model.models.entities import (
     EdgeEntity,
     ReverseConnectionEntity,
     ViewEntity,
-)
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputProperty,
 )
 from cognite.neat.core._issues import (
     IssueList,

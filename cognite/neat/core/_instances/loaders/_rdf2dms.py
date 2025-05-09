@@ -28,12 +28,12 @@ from cognite.neat.core._constants import (
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.analysis._base import ViewQuery, ViewQueryDict
 from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models.conceptual._rules import InformationRules
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
     Json,
     String,
 )
-from cognite.neat.core._data_model.models.information._rules import InformationRules
 from cognite.neat.core._issues import IssueList, NeatError, NeatIssue, catch_issues
 from cognite.neat.core._issues.errors import (
     AuthorizationError,

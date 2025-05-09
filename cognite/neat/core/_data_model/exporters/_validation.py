@@ -1,8 +1,8 @@
 from collections import defaultdict
 from collections.abc import Iterable
 
+from cognite.neat.core._data_model.models.conceptual import InformationProperty
 from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.models.information import InformationProperty
 
 
 def duplicated_properties(

@@ -1,6 +1,6 @@
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import InformationRules
-from cognite.neat.core._data_model.models.information import (
+from cognite.neat.core._data_model.models.conceptual import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,

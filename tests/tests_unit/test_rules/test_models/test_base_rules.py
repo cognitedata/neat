@@ -1,4 +1,4 @@
-from cognite.neat.core._data_model.models.information import (
+from cognite.neat.core._data_model.models.conceptual import (
     InformationClass,
     InformationInputClass,
     InformationMetadata,

@@ -8,7 +8,7 @@ from cognite.neat import _version
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.models import DMSRules
-from cognite.neat.core._data_model.models.information._rules import InformationRules
+from cognite.neat.core._data_model.models.conceptual._rules import InformationRules
 from cognite.neat.core._data_model.transformers import (
     InformationToDMS,
     MergeDMSRules,

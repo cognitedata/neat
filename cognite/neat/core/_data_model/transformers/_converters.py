@@ -45,6 +45,13 @@ from cognite.neat.core._data_model.models import (
     SheetList,
     data_types,
 )
+from cognite.neat.core._data_model.models.conceptual import (
+    InformationClass,
+    InformationInputClass,
+    InformationInputProperty,
+    InformationMetadata,
+    InformationProperty,
+)
 from cognite.neat.core._data_model.models.data_types import (
     AnyURI,
     DataType,
@@ -70,13 +77,6 @@ from cognite.neat.core._data_model.models.entities import (
     ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
-)
-from cognite.neat.core._data_model.models.information import (
-    InformationClass,
-    InformationInputClass,
-    InformationInputProperty,
-    InformationMetadata,
-    InformationProperty,
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues._factory import from_pydantic_errors
@@ -1931,7 +1931,7 @@ class _DMSRulesConverter:
     def as_information_rules(
         self,
     ) -> "InformationRules":
-        from cognite.neat.core._data_model.models.information._rules import (
+        from cognite.neat.core._data_model.models.conceptual._rules import (
             InformationClass,
             InformationProperty,
             InformationRules,
@@ -2011,7 +2011,7 @@ class _DMSRulesConverter:
 
     @classmethod
     def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "InformationMetadata":
-        from cognite.neat.core._data_model.models.information._rules import (
+        from cognite.neat.core._data_model.models.conceptual._rules import (
             InformationMetadata,
         )
 

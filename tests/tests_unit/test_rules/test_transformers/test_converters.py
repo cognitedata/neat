@@ -8,6 +8,12 @@ from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import DMSInputRules, InformationRules
+from cognite.neat.core._data_model.models.conceptual import (
+    InformationInputClass,
+    InformationInputMetadata,
+    InformationInputProperty,
+    InformationInputRules,
+)
 from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
@@ -18,12 +24,6 @@ from cognite.neat.core._data_model.models.dms._rules import DMSRules
 from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ViewEntity,
-)
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
-    InformationInputRules,
 )
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,

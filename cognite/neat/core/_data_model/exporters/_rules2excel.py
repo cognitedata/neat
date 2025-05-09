@@ -21,11 +21,11 @@ from cognite.neat.core._data_model.models import (
     SheetRow,
 )
 from cognite.neat.core._data_model.models._base_rules import BaseMetadata, RoleTypes
+from cognite.neat.core._data_model.models.conceptual._rules import InformationRules
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
 )
 from cognite.neat.core._data_model.models.dms._rules import DMSRules
-from cognite.neat.core._data_model.models.information._rules import InformationRules
 from cognite.neat.core._utils.spreadsheet import (
     find_column_with_value,
     generate_data_validation,

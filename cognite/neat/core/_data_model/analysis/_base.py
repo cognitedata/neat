@@ -12,6 +12,10 @@ from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
 from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models.conceptual import (
+    InformationClass,
+    InformationProperty,
+)
 from cognite.neat.core._data_model.models.dms import DMSProperty
 from cognite.neat.core._data_model.models.dms._rules import DMSView
 from cognite.neat.core._data_model.models.entities import (
@@ -21,10 +25,6 @@ from cognite.neat.core._data_model.models.entities import (
 )
 from cognite.neat.core._data_model.models.entities._single_value import (
     UnknownEntity,
-)
-from cognite.neat.core._data_model.models.information import (
-    InformationClass,
-    InformationProperty,
 )
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import NeatValueWarning

@@ -14,14 +14,14 @@ from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT, get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import InformationRules, data_types
-from cognite.neat.core._data_model.models.data_types import AnyURI
-from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
-from cognite.neat.core._data_model.models.information import (
+from cognite.neat.core._data_model.models.conceptual import (
     InformationClass,
     InformationInputClass,
     InformationInputProperty,
     InformationMetadata,
 )
+from cognite.neat.core._data_model.models.data_types import AnyURI
+from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.warnings import PropertyValueTypeUndefinedWarning
 from cognite.neat.core._store import NeatGraphStore

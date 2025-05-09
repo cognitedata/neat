@@ -6,20 +6,20 @@ import pytest
 from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import DMSRules, data_types
-from cognite.neat.core._data_model.models.data_types import DataType, String
-from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
-from cognite.neat.core._data_model.models.information import (
+from cognite.neat.core._data_model.models.conceptual import (
     InformationClass,
     InformationInputRules,
     InformationProperty,
     InformationRules,
     InformationValidation,
 )
-from cognite.neat.core._data_model.models.information._rules_input import (
+from cognite.neat.core._data_model.models.conceptual._rules_input import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
 )
+from cognite.neat.core._data_model.models.data_types import DataType, String
+from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
 from cognite.neat.core._data_model.transformers._converters import (
     InformationToDMS,
     ToCompliantEntities,

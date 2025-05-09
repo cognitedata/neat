@@ -14,7 +14,7 @@ from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
     Interface,
 )
 from cognite.neat.core._data_model.models import InformationInputRules
-from cognite.neat.core._data_model.models.information import InformationInputMetadata
+from cognite.neat.core._data_model.models.conceptual import InformationInputMetadata
 from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat.core._issues.warnings import (
     FileItemNotSupportedWarning,

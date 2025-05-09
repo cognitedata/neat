@@ -2,7 +2,7 @@ import pytest
 
 from cognite.neat.core._data_model.importers import SubclassInferenceImporter
 from cognite.neat.core._data_model.models import DMSRules
-from cognite.neat.core._data_model.models.information._rules import InformationRules
+from cognite.neat.core._data_model.models.conceptual._rules import InformationRules
 from cognite.neat.core._data_model.transformers._converters import (
     ToCompliantEntities,
 )
