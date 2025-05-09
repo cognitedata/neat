@@ -11,9 +11,9 @@ from cognite.neat.core._data_model.models.data_types import DataType, Integer, J
 from cognite.neat.core._data_model.models.entities import MultiValueTypeInfo
 from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
 from cognite.neat.core._data_model.transformers import VerifyAnyRules
-from cognite.neat.core._graph.examples import nordic44_knowledge_graph
-from cognite.neat.core._graph.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._instances.examples import nordic44_knowledge_graph
+from cognite.neat.core._instances.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat.core._instances.loaders import DMSLoader
 from cognite.neat.core._issues import catch_issues
 from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData, InstanceData

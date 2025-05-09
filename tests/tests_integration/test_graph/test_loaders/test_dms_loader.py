@@ -8,7 +8,7 @@ from cognite.neat import NeatSession
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import InferenceImporter
-from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._instances.loaders import DMSLoader
 from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData
 

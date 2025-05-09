@@ -18,7 +18,7 @@ from rdflib import RDF, XSD, Literal, Namespace, URIRef
 from typing_extensions import Self
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._graph.extractors._base import BaseExtractor
+from cognite.neat.core._instances.extractors._base import BaseExtractor
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat.core._shared import Triple

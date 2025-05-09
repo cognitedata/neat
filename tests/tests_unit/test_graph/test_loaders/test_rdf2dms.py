@@ -6,7 +6,7 @@ from cognite.neat.core._data_model.models.information._rules import InformationR
 from cognite.neat.core._data_model.transformers._converters import (
     ToCompliantEntities,
 )
-from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._instances.loaders import DMSLoader
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData

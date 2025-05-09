@@ -17,7 +17,7 @@ from cognite.neat.core._constants import (
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.catalog import classic_model
 from cognite.neat.core._data_model.models import InformationInputRules, InformationRules
-from cognite.neat.core._graph.extractors._base import KnowledgeGraphExtractor
+from cognite.neat.core._instances.extractors._base import KnowledgeGraphExtractor
 from cognite.neat.core._issues.errors import NeatValueError, ResourceNotFoundError
 from cognite.neat.core._issues.warnings import CDFAuthWarning, NeatValueWarning
 from cognite.neat.core._shared import Triple

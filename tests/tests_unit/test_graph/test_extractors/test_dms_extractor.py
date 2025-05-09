@@ -10,7 +10,7 @@ from cognite.client.data_classes.data_modeling.instances import Instance, Proper
 from requests import Response
 
 from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._graph.extractors import DMSExtractor
+from cognite.neat.core._instances.extractors import DMSExtractor
 from tests.data import GraphData
 
 
