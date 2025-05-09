@@ -2,7 +2,7 @@ import urllib.parse
 
 from rdflib import Namespace
 
-from cognite.neat.core._rules.models.information import InformationInputClass, InformationInputProperty
+from cognite.neat.core._data_model.models.information import InformationInputClass, InformationInputProperty
 from cognite.neat.core._utils.mapping import create_predicate_mapping, create_type_mapping
 
 
