@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from rdflib import URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._rules.models import InformationRules
+from cognite.neat.core._data_model.models import InformationRules
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.auxiliary import class_html_doc
 

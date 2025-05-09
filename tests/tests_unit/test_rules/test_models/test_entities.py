@@ -1,9 +1,8 @@
 import pytest
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._rules._constants import ENTITY_PATTERN
-from cognite.neat.core._rules.models.entities import (
+from cognite.neat.core._data_model._constants import ENTITY_PATTERN
+from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
     ClassEntity,
     DataModelEntity,
@@ -18,6 +17,7 @@ from cognite.neat.core._rules.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
+from cognite.neat.core._issues.errors import NeatValueError
 
 DEFAULT_SPACE = "sp_my_space"
 DEFAULT_VERSION = "vDefault"

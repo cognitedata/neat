@@ -1,8 +1,8 @@
+from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.importers import InferenceImporter
 from cognite.neat.core._graph.examples import nordic44_knowledge_graph
 from cognite.neat.core._graph.extractors import RdfFileExtractor
 from cognite.neat.core._graph.transformers._value_type import SplitMultiValueProperty
-from cognite.neat.core._rules.analysis import RulesAnalysis
-from cognite.neat.core._rules.importers import InferenceImporter
 from cognite.neat.core._store import NeatGraphStore
 
 

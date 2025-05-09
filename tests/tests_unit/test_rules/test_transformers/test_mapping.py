@@ -1,12 +1,12 @@
-from cognite.neat.core._rules.models.dms import (
+from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat.core._rules.models.entities import ContainerEntity, ViewEntity
-from cognite.neat.core._rules.transformers import RuleMapper
+from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
+from cognite.neat.core._data_model.transformers import RuleMapper
 
 
 class TestClassicToCoreMapper:

@@ -10,6 +10,21 @@ from cognite.neat.core._constants import (
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
+from cognite.neat.core._data_model.catalog import imf_attributes
+from cognite.neat.core._data_model.importers import ExcelImporter, SubclassInferenceImporter
+from cognite.neat.core._data_model.models.dms import (
+    DMSInputContainer,
+    DMSInputMetadata,
+    DMSInputProperty,
+    DMSInputRules,
+    DMSInputView,
+)
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ClassEntity,
+    ContainerEntity,
+    ViewEntity,
+)
+from cognite.neat.core._data_model.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.core._graph.extractors import (
     AssetsExtractor,
     FilesExtractor,
@@ -18,21 +33,6 @@ from cognite.neat.core._graph.extractors import (
 from cognite.neat.core._graph.loaders import DMSLoader
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.warnings import PropertyDirectRelationLimitWarning
-from cognite.neat.core._rules.catalog import imf_attributes
-from cognite.neat.core._rules.importers import ExcelImporter, SubclassInferenceImporter
-from cognite.neat.core._rules.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
-)
-from cognite.neat.core._rules.models.entities._single_value import (
-    ClassEntity,
-    ContainerEntity,
-    ViewEntity,
-)
-from cognite.neat.core._rules.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._store import NeatGraphStore
 from tests.data import GraphData, InstanceData

@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from cognite.neat.core._rules.exporters import YAMLExporter
-from cognite.neat.core._rules.importers import DictImporter
-from cognite.neat.core._rules.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.exporters import YAMLExporter
+from cognite.neat.core._data_model.importers import DictImporter
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
 
 
 class TestYAMLExporter:

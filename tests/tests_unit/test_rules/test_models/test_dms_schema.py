@@ -11,6 +11,8 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
+from cognite.neat.core._data_model.models import DMSSchema
+from cognite.neat.core._data_model.models.dms import DMSValidation
 from cognite.neat.core._issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.core._issues.errors import (
     PropertyNotFoundError,
@@ -21,8 +23,6 @@ from cognite.neat.core._issues.warnings import FileTypeUnexpectedWarning
 from cognite.neat.core._issues.warnings.user_modeling import (
     DirectRelationMissingSourceWarning,
 )
-from cognite.neat.core._rules.models import DMSSchema
-from cognite.neat.core._rules.models.dms import DMSValidation
 
 
 def invalid_schema_test_cases() -> Iterable[ParameterSet]:

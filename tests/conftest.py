@@ -4,13 +4,13 @@ import pandas as pd
 import pytest
 
 from cognite.neat.core._client.data_classes.schema import DMSSchema
-from cognite.neat.core._rules.importers import ExcelImporter
-from cognite.neat.core._rules.models import (
+from cognite.neat.core._data_model.importers import ExcelImporter
+from cognite.neat.core._data_model.models import (
     DMSRules,
     InformationInputRules,
     InformationRules,
 )
-from cognite.neat.core._rules.models.dms import DMSInputRules
+from cognite.neat.core._data_model.models.dms import DMSInputRules
 from cognite.neat.core._utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 from tests.data import SchemaData

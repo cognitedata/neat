@@ -1,11 +1,11 @@
 import warnings
 
-from cognite.neat.core._issues._base import IssueList
-from cognite.neat.core._rules.models.entities._single_value import (
+from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ViewEntity,
 )
-from cognite.neat.core._rules.transformers import SubsetDMSRules, SubsetInformationRules
+from cognite.neat.core._data_model.transformers import SubsetDMSRules, SubsetInformationRules
+from cognite.neat.core._issues._base import IssueList
 from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState

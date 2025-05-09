@@ -8,14 +8,14 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat.core._client._api_client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS
+from cognite.neat.core._data_model import exporters
+from cognite.neat.core._data_model._constants import PATTERNS
+from cognite.neat.core._data_model._shared import VerifiedRules
+from cognite.neat.core._data_model.importers import DMSImporter
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models.dms import DMSMetadata
 from cognite.neat.core._graph import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
-from cognite.neat.core._rules import exporters
-from cognite.neat.core._rules._constants import PATTERNS
-from cognite.neat.core._rules._shared import VerifiedRules
-from cognite.neat.core._rules.importers import DMSImporter
-from cognite.neat.core._rules.models import DMSRules, InformationRules
-from cognite.neat.core._rules.models.dms import DMSMetadata
 from cognite.neat.core._utils.upload import UploadResultList
 from cognite.neat.session._experimental import ExperimentalFlags
 
