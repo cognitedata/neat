@@ -1,9 +1,9 @@
-from cognite.neat.core._rules._shared import ReadRules
-from cognite.neat.core._rules.importers import DMSMergeImporter
-from cognite.neat.core._rules.importers._base import BaseImporter
-from cognite.neat.core._rules.models import DMSInputRules, DMSRules, InformationInputRules
-from cognite.neat.core._rules.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
-from cognite.neat.core._rules.models.information import (
+from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model.importers import DMSMergeImporter
+from cognite.neat.core._data_model.importers._base import BaseImporter
+from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, InformationInputRules
+from cognite.neat.core._data_model.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
+from cognite.neat.core._data_model.models.information import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
