@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.models.conceptual import (
     InformationRules,
     InformationValidation,
 )
-from cognite.neat.core._data_model.models.conceptual._rules_input import (
+from cognite.neat.core._data_model.models.conceptual._unverified import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,

@@ -1,5 +1,5 @@
 from ._rules import InformationClass, InformationMetadata, InformationProperty, InformationRules
-from ._rules_input import (
+from ._unverified import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,

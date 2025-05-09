@@ -5,7 +5,7 @@ from cognite.neat.core._data_model.models import (
     DMSRules,
     InformationRules,
 )
-from cognite.neat.core._data_model.models.conceptual._rules_input import (
+from cognite.neat.core._data_model.models.conceptual._unverified import (
     InformationInputRules,
 )
 from cognite.neat.core._data_model.models.dms._rules_input import DMSInputRules
