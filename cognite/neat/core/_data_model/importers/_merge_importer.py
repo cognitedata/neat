@@ -28,11 +28,6 @@ class DMSMergeImporter(BaseImporter):
         # Local import to avoid circular import
         from cognite.neat.core._data_model.transformers._converters import MergeDMSRules
 
-        if self.existing.rules is None:
-            raise NeatValueError("Cannot merge. Existing data model failed read")
-        if self.additional.rules is None:
-            raise NeatValueError("Cannot merge. Additional data model failed read")
-
         existing_dms = self._get_dms_model(self.existing.rules, "Existing")
         additional_dms = self._get_dms_model(self.additional.rules, "Additional")
         merged = MergeDMSRules(additional_dms).transform(existing_dms)
@@ -43,9 +38,12 @@ class DMSMergeImporter(BaseImporter):
         )
 
     @staticmethod
-    def _get_dms_model(input_model: InformationInputRules | DMSInputRules, name: str) -> DMSRules:
+    def _get_dms_model(input_model: InformationInputRules | DMSInputRules | None, name: str) -> DMSRules:
         # Local import to avoid circular import
         from cognite.neat.core._data_model.transformers import InformationToDMS
+
+        if input_model is None:
+            raise NeatValueError(f"Cannot merge. {name} data model failed read.")
 
         verified_model = input_model.as_verified_rules()
         if isinstance(verified_model, DMSRules):

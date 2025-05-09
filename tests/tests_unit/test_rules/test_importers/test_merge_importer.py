@@ -1,4 +1,8 @@
-from cognite.neat.core._data_model._shared import ReadRules
+from collections.abc import Iterable
+
+import pytest
+
+from cognite.neat.core._data_model._shared import InputRules, ReadRules
 from cognite.neat.core._data_model.importers import DMSMergeImporter
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, InformationInputRules
@@ -8,6 +12,7 @@ from cognite.neat.core._data_model.models.information import (
     InformationInputMetadata,
     InformationInputProperty,
 )
+from cognite.neat.core._issues.errors import NeatError
 
 
 class ImportAdditional(BaseImporter):
@@ -79,6 +84,27 @@ class ImportExisting(BaseImporter):
         )
 
 
+def merge_importer_unhappy_test_cases() -> Iterable:
+    """Test cases for unhappy path of merge importer."""
+    yield pytest.param(
+        ReadRules(None, {}),
+        ReadRules(None, {}),
+        "NeatValueError: Cannot merge. Existing data model failed read.",
+        id="Missing existing rules",
+    )
+    yield pytest.param(
+        ReadRules(
+            DMSInputRules(
+                DMSInputMetadata(external_id="my_model", version="1.0.0", creator="doctrino", space="my_space"), [], []
+            ),
+            {},
+        ),
+        ReadRules(None, {}),
+        "NeatValueError: Cannot merge. Additional data model failed read.",
+        id="Missing additional rules",
+    )
+
+
 class TestMergeImporter:
     def test_merge_importer_happy_path(self) -> None:
         importer = DMSMergeImporter.from_importers(
@@ -97,3 +123,12 @@ class TestMergeImporter:
             ("CogniteEquipment", "asset"),
             ("MyAsset", "location"),
         }
+
+    @pytest.mark.parametrize("existing, additional, expected", list(merge_importer_unhappy_test_cases()))
+    def test_merge_importer_unhappy_path(
+        self, existing: ReadRules[InputRules], additional: ReadRules[InputRules], expected: str
+    ) -> None:
+        # Test with existing rules as None
+        with pytest.raises(NeatError) as e:
+            DMSMergeImporter(existing=existing, additional=additional).to_rules()
+        assert str(e.value) == expected
