@@ -1,4 +1,4 @@
-from cognite.neat.core._data_model._shared import InputRules, ReadRules
+from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, InformationInputRules, InformationRules
 from cognite.neat.core._issues.errors import NeatValueError
 
@@ -12,7 +12,7 @@ class DMSMergeImporter(BaseImporter):
         additional: The additional data model to merge.
     """
 
-    def __init__(self, existing: ReadRules[InputRules], additional: ReadRules[InputRules]):
+    def __init__(self, existing: BaseImporter, additional: BaseImporter):
         self.existing = existing
         self.additional = additional
 
@@ -20,21 +20,19 @@ class DMSMergeImporter(BaseImporter):
     def description(self) -> str:
         return "Merges two data models into one."
 
-    @classmethod
-    def from_importers(cls, existing: BaseImporter, additional: BaseImporter) -> "DMSMergeImporter":
-        return cls(existing.to_rules(), additional.to_rules())
-
     def to_rules(self) -> ReadRules[DMSInputRules]:
         # Local import to avoid circular import
         from cognite.neat.core._data_model.transformers._converters import MergeDMSRules
 
-        existing_dms = self._get_dms_model(self.existing.rules, "Existing")
-        additional_dms = self._get_dms_model(self.additional.rules, "Additional")
+        existing_input = self.existing.to_rules()
+        existing_dms = self._get_dms_model(existing_input.rules, "Existing")
+        additional_input = self.additional.to_rules()
+        additional_dms = self._get_dms_model(additional_input.rules, "Additional")
         merged = MergeDMSRules(additional_dms).transform(existing_dms)
 
         return ReadRules(
             rules=DMSInputRules.load(merged.dump()),
-            read_context=self.additional.read_context or self.existing.read_context,
+            read_context=additional_input.read_context or existing_input.read_context,
         )
 
     @staticmethod
