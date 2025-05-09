@@ -6,8 +6,8 @@ from rdflib import RDF, Namespace
 
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
-from cognite.neat.core._graph.extractors import AssetsExtractor, BaseExtractor
-from cognite.neat.core._graph.loaders import InstanceSpaceLoader
+from cognite.neat.core._instances.extractors import AssetsExtractor, BaseExtractor
+from cognite.neat.core._instances.loaders import InstanceSpaceLoader
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._store import NeatGraphStore
 from cognite.neat.core._utils.upload import UploadResult
