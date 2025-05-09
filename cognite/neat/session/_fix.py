@@ -1,7 +1,7 @@
-from cognite.neat.core._issues._base import IssueList
-from cognite.neat.core._rules.transformers import (
+from cognite.neat.core._data_model.transformers import (
     ToCompliantEntities,
 )
+from cognite.neat.core._issues._base import IssueList
 
 from ._state import SessionState
 from .exceptions import session_class_wrapper

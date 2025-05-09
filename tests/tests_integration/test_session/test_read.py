@@ -6,10 +6,10 @@ from cognite.client import CogniteClient
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
+from cognite.neat.core._data_model.catalog import hello_world_pump
 from cognite.neat.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
 )
-from cognite.neat.core._rules.catalog import hello_world_pump
 from tests.data import SchemaData
 
 

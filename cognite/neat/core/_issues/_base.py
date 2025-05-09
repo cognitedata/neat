@@ -119,7 +119,7 @@ class NeatIssue:
 
     @classmethod
     def _dump_value(cls, value: Any) -> list | int | bool | float | str | dict:
-        from cognite.neat.core._rules.models.entities import Entity
+        from cognite.neat.core._data_model.models.entities import Entity
 
         if isinstance(value, str | int | bool | float):
             return value
@@ -173,7 +173,7 @@ class NeatIssue:
 
     @classmethod
     def _load_value(cls, type_: Any, value: Any) -> Any:
-        from cognite.neat.core._rules.models.entities import Entity
+        from cognite.neat.core._data_model.models.entities import Entity
 
         if isinstance(type_, UnionType) or get_origin(type_) is UnionType:
             args = get_args(type_)

@@ -12,22 +12,22 @@ from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
+from cognite.neat.core._data_model._shared import T_VerifiedRules, VerifiedRules
+from cognite.neat.core._data_model.exporters import BaseExporter
+from cognite.neat.core._data_model.exporters._base import CDFExporter, T_Export
+from cognite.neat.core._data_model.importers import BaseImporter
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.transformers import (
+    DMSToInformation,
+    VerifiedRulesTransformer,
+    VerifyAnyRules,
+)
 from cognite.neat.core._graph.extractors import (
     DMSGraphExtractor,
     KnowledgeGraphExtractor,
 )
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._rules._shared import T_VerifiedRules, VerifiedRules
-from cognite.neat.core._rules.exporters import BaseExporter
-from cognite.neat.core._rules.exporters._base import CDFExporter, T_Export
-from cognite.neat.core._rules.importers import BaseImporter
-from cognite.neat.core._rules.models import DMSRules, InformationRules
-from cognite.neat.core._rules.transformers import (
-    DMSToInformation,
-    VerifiedRulesTransformer,
-    VerifyAnyRules,
-)
 from cognite.neat.core._utils.upload import UploadResultList
 
 from ._provenance import (

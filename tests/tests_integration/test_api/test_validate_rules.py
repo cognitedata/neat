@@ -6,9 +6,9 @@ import pytest
 import yaml
 
 from cognite.neat.core._client import NeatClient
+from cognite.neat.core._data_model.importers import YAMLImporter
+from cognite.neat.core._data_model.transformers import VerifyDMSRules
 from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._rules.importers import YAMLImporter
-from cognite.neat.core._rules.transformers import VerifyDMSRules
 from tests.data import SchemaData
 
 

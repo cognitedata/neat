@@ -6,8 +6,8 @@ from typing import get_args, get_origin
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from cognite.neat.core._rules.models import DMSRules, InformationRules
-from cognite.neat.core._rules.models._base_rules import BaseRules
+from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models._base_rules import BaseRules
 
 DMS_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'physical' / 'reference.md'
 INFO_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'logical' / 'reference.md'
