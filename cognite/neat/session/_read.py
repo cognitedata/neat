@@ -391,9 +391,12 @@ class CDFDataModelAPI(BaseReadAPI):
             raise NeatSessionError("Data model version is required to read a data model.")
 
         cdf_importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
+        reader = NeatReader.create(spreadsheet_io)
+        path = reader.materialize_path()
+
         # The Excel importer can be either conceptual or physical.
-        excel_importer = importers.ExcelImporter(spreadsheet_io)  # type: ignore[var-annotated]
-        importer = importers.DMSMergeImporter(cdf_importer, excel_importer)
+        excel_importer = importers.ExcelImporter(path)  # type: ignore[var-annotated]
+        importer = importers.DMSMergeImporter(cdf_importer, excel_importer, cast(NeatClient, self._state.client))
         return self._state.rule_import(importer)
 
 

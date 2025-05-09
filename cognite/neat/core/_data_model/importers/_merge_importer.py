@@ -1,3 +1,4 @@
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, InformationInputRules, InformationRules
 from cognite.neat.core._issues.errors import NeatValueError
@@ -12,9 +13,10 @@ class DMSMergeImporter(BaseImporter):
         additional: The additional data model to merge.
     """
 
-    def __init__(self, existing: BaseImporter, additional: BaseImporter):
+    def __init__(self, existing: BaseImporter, additional: BaseImporter, client: NeatClient | None = None):
         self.existing = existing
         self.additional = additional
+        self.client = client
 
     @property
     def description(self) -> str:
@@ -35,8 +37,7 @@ class DMSMergeImporter(BaseImporter):
             read_context=additional_input.read_context or existing_input.read_context,
         )
 
-    @staticmethod
-    def _get_dms_model(input_model: InformationInputRules | DMSInputRules | None, name: str) -> DMSRules:
+    def _get_dms_model(self, input_model: InformationInputRules | DMSInputRules | None, name: str) -> DMSRules:
         # Local import to avoid circular import
         from cognite.neat.core._data_model.transformers import InformationToDMS
 
@@ -47,6 +48,6 @@ class DMSMergeImporter(BaseImporter):
         if isinstance(verified_model, DMSRules):
             return verified_model
         elif isinstance(verified_model, InformationRules):
-            return InformationToDMS().transform(verified_model)
+            return InformationToDMS(client=self.client).transform(verified_model)
         else:
             raise NeatValueError(f"Cannot merge. {name} data model is not a DMS or Information data model")
