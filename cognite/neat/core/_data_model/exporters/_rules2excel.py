@@ -20,7 +20,10 @@ from cognite.neat.core._data_model._shared import VerifiedRules
 from cognite.neat.core._data_model.models import (
     SheetRow,
 )
-from cognite.neat.core._data_model.models._base_rules import BaseMetadata, RoleTypes
+from cognite.neat.core._data_model.models._base_verified import (
+    BaseVerifiedMetadata,
+    RoleTypes,
+)
 from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
@@ -149,7 +152,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         self._write_metadata_sheet(
             workbook,
-            cast(BaseMetadata, rules_model.model_fields["metadata"].annotation).default().model_dump(),
+            cast(BaseVerifiedMetadata, rules_model.model_fields["metadata"].annotation).default().model_dump(),
         )
 
         for sheet_name, headers in headers_by_sheet.items():

@@ -8,7 +8,7 @@ from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
-from cognite.neat.core._data_model.models._base_rules import RoleTypes
+from cognite.neat.core._data_model.models._base_verified import RoleTypes
 from cognite.neat.core._data_model.models.dms import DMSValidation
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,

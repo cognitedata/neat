@@ -20,14 +20,14 @@ from typing import Any, Generic, TypeVar, Union, cast, get_args, get_origin, ove
 
 import pandas as pd
 
-from ._base_rules import BaseRules, SchemaModel
+from ._base_verified import BaseVerifiedDataModel, SchemaModel
 
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
     from typing_extensions import Self
 
-T_BaseRules = TypeVar("T_BaseRules", bound=BaseRules)
+T_BaseRules = TypeVar("T_BaseRules", bound=BaseVerifiedDataModel)
 T_RuleModel = TypeVar("T_RuleModel", bound=SchemaModel)
 
 

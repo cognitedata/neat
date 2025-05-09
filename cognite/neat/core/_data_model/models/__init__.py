@@ -6,7 +6,7 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
 
-from ._base_rules import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetList, SheetRow
+from ._base_verified import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetList, SheetRow
 from .dms._rules import DMSRules
 from .dms._rules_input import DMSInputRules
 

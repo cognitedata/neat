@@ -10,9 +10,9 @@ from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import DMS_CONTAINER_LIST_MAX_LIMIT
-from cognite.neat.core._data_model.models._base_rules import (
-    BaseMetadata,
-    BaseRules,
+from cognite.neat.core._data_model.models._base_verified import (
+    BaseVerifiedDataModel,
+    BaseVerifiedMetadata,
     ContainerProperty,
     DataModelLevel,
     RoleTypes,
@@ -53,7 +53,7 @@ if TYPE_CHECKING:
 _DEFAULT_VERSION = "1"
 
 
-class DMSMetadata(BaseMetadata):
+class DMSMetadata(BaseVerifiedMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
     aspect: ClassVar[DataModelLevel] = DataModelLevel.physical
     logical: URIRefType | None = None
@@ -453,7 +453,7 @@ class DMSEnum(SheetRow):
         return str(value)
 
 
-class DMSRules(BaseRules):
+class DMSRules(BaseVerifiedDataModel):
     metadata: DMSMetadata = Field(alias="Metadata", description="Contains information about the data model.")
     properties: SheetList[DMSProperty] = Field(
         alias="Properties", description="Contains the properties of the data model."

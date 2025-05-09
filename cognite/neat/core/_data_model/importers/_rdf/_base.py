@@ -9,7 +9,7 @@ from typing_extensions import Self
 from cognite.neat.core._constants import get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers._base import BaseImporter
-from cognite.neat.core._data_model.models._base_rules import RoleTypes
+from cognite.neat.core._data_model.models._base_verified import RoleTypes
 from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualDataModel,
 )

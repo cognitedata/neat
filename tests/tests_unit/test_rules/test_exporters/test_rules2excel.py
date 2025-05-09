@@ -9,7 +9,7 @@ from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
     DMSRules,
 )
-from cognite.neat.core._data_model.models._base_rules import RoleTypes
+from cognite.neat.core._data_model.models._base_verified import RoleTypes
 from cognite.neat.core._issues.errors._general import NeatValueError
 
 

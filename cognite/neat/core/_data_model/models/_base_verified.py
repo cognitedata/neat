@@ -134,7 +134,7 @@ class SchemaModel(BaseModel):
         return value
 
 
-class BaseMetadata(SchemaModel):
+class BaseVerifiedMetadata(SchemaModel):
     """
     Metadata model for data model
     """
@@ -237,7 +237,7 @@ class BaseMetadata(SchemaModel):
         return repr(self.as_data_model_id())
 
     @classmethod
-    def default(cls) -> "BaseMetadata":
+    def default(cls) -> "BaseVerifiedMetadata":
         """Returns a default instance of the metadata model."""
         now = datetime.now()
         return cls(
@@ -252,7 +252,7 @@ class BaseMetadata(SchemaModel):
         )
 
 
-class BaseRules(SchemaModel, ABC):
+class BaseVerifiedDataModel(SchemaModel, ABC):
     """
     Rules is a core concept in `neat`. This represents fusion of data model
     definitions and (optionally) the transformation rules used to transform the data/graph
@@ -265,7 +265,7 @@ class BaseRules(SchemaModel, ABC):
         metadata: Data model metadata
     """
 
-    metadata: BaseMetadata
+    metadata: BaseVerifiedMetadata
 
     @classmethod
     def headers_by_sheet(cls, by_alias: bool = False) -> dict[str, list[str]]:

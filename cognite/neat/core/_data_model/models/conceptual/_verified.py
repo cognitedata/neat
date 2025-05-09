@@ -9,9 +9,9 @@ from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model._constants import EntityTypes
-from cognite.neat.core._data_model.models._base_rules import (
-    BaseMetadata,
-    BaseRules,
+from cognite.neat.core._data_model.models._base_verified import (
+    BaseVerifiedDataModel,
+    BaseVerifiedMetadata,
     DataModelLevel,
     RoleTypes,
     SheetList,
@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from cognite.neat.core._data_model.models import DMSRules
 
 
-class ConceptualMetadata(BaseMetadata):
+class ConceptualMetadata(BaseVerifiedMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.information
     level: ClassVar[DataModelLevel] = DataModelLevel.conceptual
 
@@ -237,7 +237,7 @@ class ConceptualProperty(SheetRow):
             return EntityTypes.undefined
 
 
-class ConceptualDataModel(BaseRules):
+class ConceptualDataModel(BaseVerifiedDataModel):
     metadata: ConceptualMetadata = Field(alias="Metadata", description="Metadata for the conceptual data model")
     properties: SheetList[ConceptualProperty] = Field(alias="Properties", description="List of properties")
     classes: SheetList[ConceptualClass] = Field(alias="Classes", description="List of classes")
