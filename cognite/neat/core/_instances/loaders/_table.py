@@ -9,14 +9,19 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from rdflib import RDF, URIRef
 
+from cognite.neat.core._data_model.importers import SubclassInferenceImporter
+from cognite.neat.core._data_model.models import InformationInputRules
+from cognite.neat.core._data_model.models import data_types as dt
+from cognite.neat.core._data_model.models.data_types import DataType
+from cognite.neat.core._data_model.models.entities import (
+    ClassEntity,
+    MultiValueTypeInfo,
+    UnknownEntity,
+    load_value_type,
+)
+from cognite.neat.core._data_model.models.information import InformationInputProperty
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._rules.importers import SubclassInferenceImporter
-from cognite.neat.core._rules.models import InformationInputRules
-from cognite.neat.core._rules.models import data_types as dt
-from cognite.neat.core._rules.models.data_types import DataType
-from cognite.neat.core._rules.models.entities import ClassEntity, MultiValueTypeInfo, UnknownEntity, load_value_type
-from cognite.neat.core._rules.models.information import InformationInputProperty
 from cognite.neat.core._store import NeatGraphStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat.core._utils.io_ import to_directory_compatible

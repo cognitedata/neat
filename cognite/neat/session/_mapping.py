@@ -1,5 +1,3 @@
-from cognite.neat.core._graph.transformers import ConnectionToLiteral
-from cognite.neat.core._issues import IssueList
 from cognite.neat.core._data_model.models.mapping import load_classic_to_core_mapping
 from cognite.neat.core._data_model.transformers import (
     AsParentPropertyId,
@@ -8,6 +6,8 @@ from cognite.neat.core._data_model.transformers import (
     RuleMapper,
     VerifiedRulesTransformer,
 )
+from cognite.neat.core._graph.transformers import ConnectionToLiteral
+from cognite.neat.core._issues import IssueList
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper

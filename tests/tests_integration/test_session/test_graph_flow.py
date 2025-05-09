@@ -14,8 +14,8 @@ from cognite.client.data_classes.data_modeling import (
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
-from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._data_model.models.entities import ContainerEntity
+from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from tests.data import GraphData, SchemaData
 
 RESERVED_PROPERTIES = frozenset(
