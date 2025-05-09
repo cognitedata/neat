@@ -9,7 +9,7 @@ from rdflib import RDF, Graph, Literal, Namespace, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE, DEFAULT_NAMESPACE
-from cognite.neat.core._graph import extractors
+from cognite.neat.core._instances import extractors
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import ResourceNotFoundWarning
 from cognite.neat.core._utils.collection_ import iterate_progress_bar

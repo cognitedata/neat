@@ -25,12 +25,12 @@ from cognite.neat.core._data_model.models.entities._single_value import (
     ViewEntity,
 )
 from cognite.neat.core._data_model.transformers import DMSToInformation, InformationToDMS
-from cognite.neat.core._graph.extractors import (
+from cognite.neat.core._instances.extractors import (
     AssetsExtractor,
     FilesExtractor,
     RdfFileExtractor,
 )
-from cognite.neat.core._graph.loaders import DMSLoader
+from cognite.neat.core._instances.loaders import DMSLoader
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.warnings import PropertyDirectRelationLimitWarning
 from cognite.neat.core._shared import Triple
