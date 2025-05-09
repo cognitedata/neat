@@ -10,7 +10,9 @@ from cognite.neat.core._constants import get_default_prefixes_and_namespaces
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._data_model.models._base_rules import RoleTypes
-from cognite.neat.core._data_model.models.conceptual import InformationInputRules
+from cognite.neat.core._data_model.models.conceptual import (
+    UnverifiedConceptualDataModel,
+)
 from cognite.neat.core._data_model.models.data_types import AnyURI
 from cognite.neat.core._data_model.models.entities import UnknownEntity
 from cognite.neat.core._issues import IssueList, MultiValueError
@@ -25,7 +27,7 @@ DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 DEFAULT_RDF_DATA_MODEL_ID = ("neat_space", "RDFDataModel", "rdf")
 
 
-class BaseRDFImporter(BaseImporter[InformationInputRules]):
+class BaseRDFImporter(BaseImporter[UnverifiedConceptualDataModel]):
     """Baser RDF importers used for all rules importers that are using RDF as input.
 
     Args:
@@ -115,7 +117,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
 
     def to_rules(
         self,
-    ) -> ReadRules[InformationInputRules]:
+    ) -> ReadRules[UnverifiedConceptualDataModel]:
         """
         Creates `Rules` object from the data for target role.
         """
@@ -126,7 +128,7 @@ class BaseRDFImporter(BaseImporter[InformationInputRules]):
 
         rules_dict = self._to_rules_components()
 
-        rules = InformationInputRules.load(rules_dict)
+        rules = UnverifiedConceptualDataModel.load(rules_dict)
         self.issue_list.trigger_warnings()
         return ReadRules(rules, {})
 

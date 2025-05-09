@@ -26,7 +26,7 @@ from ._rules import (
 
 
 @dataclass
-class InformationInputMetadata(InputComponent[InformationMetadata]):
+class UnverifiedConceptualMetadata(InputComponent[InformationMetadata]):
     space: str
     external_id: str
     version: str
@@ -75,7 +75,7 @@ class InformationInputMetadata(InputComponent[InformationMetadata]):
 
 
 @dataclass
-class InformationInputProperty(InputComponent[InformationProperty]):
+class UnverifiedConceptualProperty(InputComponent[InformationProperty]):
     class_: ClassEntity | str
     property_: str
     value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
@@ -103,12 +103,15 @@ class InformationInputProperty(InputComponent[InformationProperty]):
         output["Value Type"] = load_value_type(self.value_type, default_prefix)
         return output
 
-    def copy(self, update: dict[str, Any], default_prefix: str) -> "InformationInputProperty":
-        return cast(InformationInputProperty, type(self)._load({**self.dump(default_prefix), **update}))
+    def copy(self, update: dict[str, Any], default_prefix: str) -> "UnverifiedConceptualProperty":
+        return cast(
+            UnverifiedConceptualProperty,
+            type(self)._load({**self.dump(default_prefix), **update}),
+        )
 
 
 @dataclass
-class InformationInputClass(InputComponent[InformationClass]):
+class UnverifiedConceptualClass(InputComponent[InformationClass]):
     class_: ClassEntity | str
     name: str | None = None
     description: str | None = None
@@ -141,10 +144,10 @@ class InformationInputClass(InputComponent[InformationClass]):
 
 
 @dataclass
-class InformationInputRules(InputRules[InformationRules]):
-    metadata: InformationInputMetadata
-    properties: list[InformationInputProperty] = field(default_factory=list)
-    classes: list[InformationInputClass] = field(default_factory=list)
+class UnverifiedConceptualDataModel(InputRules[InformationRules]):
+    metadata: UnverifiedConceptualMetadata
+    properties: list[UnverifiedConceptualProperty] = field(default_factory=list)
+    classes: list[UnverifiedConceptualClass] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
 
     @classmethod

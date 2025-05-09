@@ -1,10 +1,10 @@
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import InformationRules
 from cognite.neat.core._data_model.models.conceptual import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
-    InformationInputRules,
+    UnverifiedConceptualClass,
+    UnverifiedConceptualDataModel,
+    UnverifiedConceptualMetadata,
+    UnverifiedConceptualProperty,
 )
 
 
@@ -33,22 +33,22 @@ class TestRulesAnalysis:
 
 class TestAnalysis:
     def test_parents_by_class(self) -> None:
-        generation = InformationInputRules(
-            metadata=InformationInputMetadata(
+        generation = UnverifiedConceptualDataModel(
+            metadata=UnverifiedConceptualMetadata(
                 "my_space",
                 "my_external_id",
                 "v1",
                 "doctrino",
             ),
             properties=[
-                InformationInputProperty("child", "childProp", "string"),
-                InformationInputProperty("parent", "parentProp", "string"),
-                InformationInputProperty("grandparent", "grandparentProp", "string"),
+                UnverifiedConceptualProperty("child", "childProp", "string"),
+                UnverifiedConceptualProperty("parent", "parentProp", "string"),
+                UnverifiedConceptualProperty("grandparent", "grandparentProp", "string"),
             ],
             classes=[
-                InformationInputClass("child", implements="parent"),
-                InformationInputClass("parent", implements="grandparent"),
-                InformationInputClass("grandparent", implements=None),
+                UnverifiedConceptualClass("child", implements="parent"),
+                UnverifiedConceptualClass("parent", implements="grandparent"),
+                UnverifiedConceptualClass("grandparent", implements=None),
             ],
         )
 

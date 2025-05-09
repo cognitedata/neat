@@ -10,8 +10,8 @@ from cognite.neat.core._data_model._shared import (
 from cognite.neat.core._data_model.models import (
     DMSInputRules,
     DMSRules,
-    InformationInputRules,
     InformationRules,
+    UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import InformationValidation
 from cognite.neat.core._data_model.models.dms import DMSValidation
@@ -81,13 +81,13 @@ class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]
         return super().transform(rules)
 
 
-class VerifyInformationRules(VerificationTransformer[ReadRules[InformationInputRules], InformationRules]):
+class VerifyInformationRules(VerificationTransformer[ReadRules[UnverifiedConceptualDataModel], InformationRules]):
     """Class to verify Information rules."""
 
     _rules_cls = InformationRules
     _validation_cls = InformationValidation
 
-    def transform(self, rules: ReadRules[InformationInputRules]) -> InformationRules:
+    def transform(self, rules: ReadRules[UnverifiedConceptualDataModel]) -> InformationRules:
         return super().transform(rules)
 
 
@@ -95,7 +95,7 @@ class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
     """Class to verify arbitrary rules"""
 
     def _get_rules_cls(self, in_: T_ReadInputRules) -> type[VerifiedRules]:
-        if isinstance(in_.rules, InformationInputRules):
+        if isinstance(in_.rules, UnverifiedConceptualDataModel):
             return InformationRules
         elif isinstance(in_.rules, DMSInputRules):
             return DMSRules

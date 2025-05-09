@@ -8,8 +8,8 @@ from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import (
     DMSInputRules,
     DMSRules,
-    InformationInputRules,
     InformationRules,
+    UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
     AddClassImplements,
@@ -51,7 +51,12 @@ def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
 class TestRuleTransformer:
     @pytest.mark.parametrize("transformer_cls", TRANSFORMATION_CLASSES)
     def test_transform_method_valid_signature(self, transformer_cls: type[RulesTransformer]) -> None:
-        valid_type_hints = {DMSRules, InformationRules, ReadRules[InformationInputRules], ReadRules[DMSInputRules]}
+        valid_type_hints = {
+            DMSRules,
+            InformationRules,
+            ReadRules[UnverifiedConceptualDataModel],
+            ReadRules[DMSInputRules],
+        }
 
         type_hint = transformer_cls.transform_type_hint()
 

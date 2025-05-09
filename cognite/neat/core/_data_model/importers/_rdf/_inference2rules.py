@@ -16,9 +16,9 @@ from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import InformationRules, data_types
 from cognite.neat.core._data_model.models.conceptual import (
     InformationClass,
-    InformationInputClass,
-    InformationInputProperty,
     InformationMetadata,
+    UnverifiedConceptualClass,
+    UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import AnyURI
 from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
@@ -399,13 +399,13 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
     def _create_classes_properties(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
-    ) -> tuple[list[InformationInputClass], list[InformationInputProperty]]:
+    ) -> tuple[list[UnverifiedConceptualClass], list[UnverifiedConceptualProperty]]:
         if self._rules:
             existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
         else:
             existing_classes = {}
-        classes: list[InformationInputClass] = []
-        properties_by_class_suffix_by_property_id: dict[str, dict[str, InformationInputProperty]] = {}
+        classes: list[UnverifiedConceptualClass] = []
+        properties_by_class_suffix_by_property_id: dict[str, dict[str, UnverifiedConceptualProperty]] = {}
 
         # Help for IDE
         type_uri: URIRef
@@ -429,9 +429,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 parent_suffix = remove_namespace_from_uri(parent_uri)
                 self._add_uri_namespace_to_prefixes(parent_uri, prefixes)
                 if parent_suffix not in existing_classes:
-                    classes.append(InformationInputClass(class_=parent_suffix))
+                    classes.append(UnverifiedConceptualClass(class_=parent_suffix))
                 else:
-                    classes.append(InformationInputClass.load(existing_classes[parent_suffix].model_dump()))
+                    classes.append(UnverifiedConceptualClass.load(existing_classes[parent_suffix].model_dump()))
             else:
                 shared_property_uris = set()
             shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
@@ -441,16 +441,16 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
                 if class_suffix not in existing_classes:
                     classes.append(
-                        InformationInputClass(
+                        UnverifiedConceptualClass(
                             class_=class_suffix,
                             implements=parent_suffix,
                             instance_source=type_uri,
                         )
                     )
                 else:
-                    classes.append(InformationInputClass.load(existing_classes[class_suffix].model_dump()))
+                    classes.append(UnverifiedConceptualClass.load(existing_classes[class_suffix].model_dump()))
 
-                properties_by_id: dict[str, InformationInputProperty] = {}
+                properties_by_id: dict[str, UnverifiedConceptualProperty] = {}
                 for property_uri, read_properties in properties_by_property_uri.items():
                     if property_uri in shared_property_uris:
                         shared_properties[property_uri].extend(read_properties)
@@ -577,10 +577,10 @@ class SubclassInferenceImporter(BaseRDFImporter):
         property_uri: URIRef,
         property_id: str,
         prefixes: dict[str, Namespace],
-    ) -> InformationInputProperty:
+    ) -> UnverifiedConceptualProperty:
         first = read_properties[0]
         value_type = self._get_value_type(read_properties, prefixes)
-        return InformationInputProperty(
+        return UnverifiedConceptualProperty(
             class_=class_suffix,
             property_=property_id,
             max_count=first.max_occurrence,

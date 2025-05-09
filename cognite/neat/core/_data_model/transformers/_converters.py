@@ -40,17 +40,17 @@ from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import (
     DMSInputRules,
     DMSRules,
-    InformationInputRules,
     InformationRules,
     SheetList,
+    UnverifiedConceptualDataModel,
     data_types,
 )
 from cognite.neat.core._data_model.models.conceptual import (
     InformationClass,
-    InformationInputClass,
-    InformationInputProperty,
     InformationMetadata,
     InformationProperty,
+    UnverifiedConceptualClass,
+    UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import (
     AnyURI,
@@ -111,7 +111,12 @@ class ConversionTransformer(VerifiedRulesTransformer[T_VerifiedIn, T_VerifiedOut
     ...
 
 
-class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
+class ToDMSCompliantEntities(
+    RulesTransformer[
+        ReadRules[UnverifiedConceptualDataModel],
+        ReadRules[UnverifiedConceptualDataModel],
+    ]
+):
     """Converts input rules to rules that is compliant with the Information Model.
 
     This is typically used with importers from arbitrary sources to ensure that classes and properties have valid
@@ -130,13 +135,13 @@ class ToDMSCompliantEntities(RulesTransformer[ReadRules[InformationInputRules], 
     def description(self) -> str:
         return "Ensures that all entities are compliant with the Information Model."
 
-    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+    def transform(self, rules: ReadRules[UnverifiedConceptualDataModel]) -> ReadRules[UnverifiedConceptualDataModel]:
         if rules.rules is None:
             return rules
         # Doing dump to obtain a copy, and ensure that all entities are created. Input allows
         # string for entities, the dump call will convert these to entities.
         dumped = rules.rules.dump()
-        copy = InformationInputRules.load(dumped)
+        copy = UnverifiedConceptualDataModel.load(dumped)
 
         new_by_old_class_suffix: dict[str, str] = {}
         for cls in copy.classes:
@@ -2238,7 +2243,12 @@ class SubsetInformationRules(VerifiedRulesTransformer[InformationRules, Informat
             raise NeatValueError(f"Cannot subset rules: {e}") from e
 
 
-class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
+class AddCogniteProperties(
+    RulesTransformer[
+        ReadRules[UnverifiedConceptualDataModel],
+        ReadRules[UnverifiedConceptualDataModel],
+    ]
+):
     """This transformer looks at the implements of the classes and adds all properties
     from the parent (and ancestors) classes that are not already included in the data model.
 
@@ -2257,7 +2267,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
         """Get the description of the transformer."""
         return "Add Cognite properties for all concepts that implements a Cognite concept."
 
-    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+    def transform(self, rules: ReadRules[UnverifiedConceptualDataModel]) -> ReadRules[UnverifiedConceptualDataModel]:
         input_ = rules.rules
         if input_ is None:
             raise NeatValueError("Rule read failed. Cannot add cognite properties to None rules.")
@@ -2283,7 +2293,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
         except CycleError as e:
             raise NeatValueError(f"Cycle detected in the class hierarchy: {e}") from e
 
-        new_properties: list[InformationInputProperty] = input_.properties.copy()
+        new_properties: list[UnverifiedConceptualProperty] = input_.properties.copy()
         for class_entity in topological_order:
             if class_entity not in dependencies_by_class:
                 continue
@@ -2296,7 +2306,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
 
             if self._dummy_property:
                 new_properties.append(
-                    InformationInputProperty(
+                    UnverifiedConceptualProperty(
                         class_=class_entity,
                         property_=f"{to_camel_case(class_entity.suffix)}{self._dummy_property}",
                         value_type=String(),
@@ -2305,7 +2315,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
                     )
                 )
 
-        new_classes: list[InformationInputClass] = input_.classes.copy()
+        new_classes: list[UnverifiedConceptualClass] = input_.classes.copy()
         existing_classes = {cls.class_ for cls in input_.classes}
         for class_entity, view in views_by_class_entity.items():
             if class_entity not in existing_classes:
@@ -2313,7 +2323,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
                 existing_classes.add(class_entity)
 
         return ReadRules(
-            rules=InformationInputRules(
+            rules=UnverifiedConceptualDataModel(
                 metadata=input_.metadata,
                 properties=new_properties,
                 classes=new_classes,
@@ -2324,10 +2334,12 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
 
     @staticmethod
     def _get_properties_by_class(
-        properties: list[InformationInputProperty], read_context: dict[str, SpreadsheetRead], default_space: str
-    ) -> dict[ClassEntity, dict[str, InformationInputProperty]]:
+        properties: list[UnverifiedConceptualProperty],
+        read_context: dict[str, SpreadsheetRead],
+        default_space: str,
+    ) -> dict[ClassEntity, dict[str, UnverifiedConceptualProperty]]:
         issues = IssueList()
-        properties_by_class: dict[ClassEntity, dict[str, InformationInputProperty]] = defaultdict(dict)
+        properties_by_class: dict[ClassEntity, dict[str, UnverifiedConceptualProperty]] = defaultdict(dict)
         for prop in properties:
             try:
                 dumped = prop.dump(default_prefix=default_space)
@@ -2342,7 +2354,9 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
 
     @staticmethod
     def _get_dependencies_by_class(
-        classes: list[InformationInputClass], read_context: dict[str, SpreadsheetRead], default_space: str
+        classes: list[UnverifiedConceptualClass],
+        read_context: dict[str, SpreadsheetRead],
+        default_space: str,
     ) -> dict[ClassEntity, set[ClassEntity]]:
         dependencies_by_class: dict[ClassEntity, set[ClassEntity]] = {}
         issues = IssueList()
