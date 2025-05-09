@@ -2,7 +2,7 @@ from cognite.client.data_classes.data_modeling import DataModelId
 
 from cognite.neat.core._client.data_classes.location_filters import LocationFilterWrite
 from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._graph.loaders import LocationFilterLoader
+from cognite.neat.core._instances.loaders import LocationFilterLoader
 from cognite.neat.core._utils.upload import UploadResult
 
 

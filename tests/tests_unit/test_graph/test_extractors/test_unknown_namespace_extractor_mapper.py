@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.core._graph.extractors import BaseExtractor, UnknownNamespaceExtractorMapper
+from cognite.neat.core._instances.extractors import BaseExtractor, UnknownNamespaceExtractorMapper
 from cognite.neat.core._shared import Triple
 
 
