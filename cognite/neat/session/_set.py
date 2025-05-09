@@ -6,12 +6,12 @@ from rdflib import Namespace
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS, DEFAULT_NAMESPACE, DEFAULT_SPACE_URI
-from cognite.neat.core._instances.transformers import BestClassMatch, SetRDFTypeById, SetType
-from cognite.neat.core._issues import IssueList
-from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import SetIDDMSModel
+from cognite.neat.core._instances.transformers import BestClassMatch, SetRDFTypeById, SetType
+from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._utils.read import read_conceptual_model
 from cognite.neat.core._utils.text import humanize_collection
 

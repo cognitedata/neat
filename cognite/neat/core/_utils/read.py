@@ -1,9 +1,9 @@
 from typing import Any
 
+from cognite.neat.core._data_model import importers
+from cognite.neat.core._data_model.models import InformationRules
 from cognite.neat.core._issues import catch_issues
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._rules import importers
-from cognite.neat.core._rules.models import InformationRules
 from cognite.neat.core._utils.reader import NeatReader
 
 
