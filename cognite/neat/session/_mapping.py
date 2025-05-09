@@ -1,3 +1,4 @@
+from cognite.neat.core._graph.transformers import ConnectionToLiteral
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._rules.models.mapping import load_classic_to_core_mapping
 from cognite.neat.core._rules.transformers import (
@@ -54,6 +55,7 @@ class DataModelMappingAPI:
         transformers: list[VerifiedRulesTransformer] = []
         if company_prefix:
             transformers.append(ChangeViewPrefix("Classic", company_prefix))
+
         transformers.extend(
             [
                 RuleMapper(load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)),
@@ -62,4 +64,9 @@ class DataModelMappingAPI:
         )
         if use_parent_property_name:
             transformers.append(AsParentPropertyId(self._state.client))
-        return self._state.rule_transform(*transformers)
+        issues = self._state.rule_transform(*transformers)
+
+        # Convert the labels to literals - note that the mapping changes labels to tags.
+        label_predicate = self._state.instances.store.queries.select.property_uri("labels")[0]
+        issues.extend(self._state.instances.store.transform(ConnectionToLiteral(None, label_predicate)))
+        return issues
