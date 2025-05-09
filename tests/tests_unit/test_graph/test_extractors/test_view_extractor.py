@@ -1,4 +1,4 @@
-from cognite.neat.core._graph.extractors import ViewExtractor
+from cognite.neat.core._instances.extractors import ViewExtractor
 from tests.data import GraphData
 
 from .test_dms_extractor import instance_apply_to_read
