@@ -65,6 +65,7 @@ class ImportExisting(BaseImporter):
                         "CogniteEquipment",
                         "asset",
                         "CogniteAsset",
+                        connection="direct",
                         min_count=0,
                         max_count=10,
                         container="CogniteEquipment",
