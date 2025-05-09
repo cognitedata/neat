@@ -30,6 +30,8 @@ class DMSMergeImporter(BaseImporter):
         existing_dms = self._get_dms_model(existing_input.rules, "Existing")
         additional_input = self.additional.to_rules()
         additional_dms = self._get_dms_model(additional_input.rules, "Additional")
+        if additional_dms.metadata.identifier != existing_dms.metadata.identifier:
+            raise NeatValueError("Cannot merge. The identifiers of the two data models do not match.")
         merged = MergeDMSRules(additional_dms).transform(existing_dms)
 
         return ReadRules(
