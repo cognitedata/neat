@@ -55,7 +55,7 @@ _DEFAULT_VERSION = "1"
 
 class DMSMetadata(BaseVerifiedMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
-    aspect: ClassVar[DataModelLevel] = DataModelLevel.physical
+    level: ClassVar[DataModelLevel] = DataModelLevel.physical
     logical: URIRefType | None = None
 
     def as_space(self) -> dm.SpaceApply:
@@ -525,7 +525,7 @@ class DMSRules(BaseVerifiedDataModel):
 
     def _repr_html_(self) -> str:
         summary = {
-            "aspect": self.metadata.aspect,
+            "aspect": self.metadata.level,
             "intended for": "DMS Architect",
             "name": self.metadata.name,
             "space": self.metadata.space,

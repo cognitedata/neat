@@ -39,7 +39,6 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[ConceptualMetadata]):
     created: datetime | str | None = None
     updated: datetime | str | None = None
     physical: str | URIRef | None = None
-    conceptual: str | URIRef | None = None
     source_id: str | URIRef | None = None
 
     @classmethod
@@ -94,7 +93,6 @@ class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
 
     # linking
     physical: str | URIRef | None = None
-    conceptual: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[ConceptualProperty]:
@@ -123,7 +121,6 @@ class UnverifiedConceptualClass(UnverifiedComponent[ConceptualClass]):
     neatId: str | URIRef | None = None
     # linking
     physical: str | URIRef | None = None
-    conceptual: str | URIRef | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[ConceptualClass]:
