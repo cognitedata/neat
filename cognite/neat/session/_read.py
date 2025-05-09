@@ -94,34 +94,8 @@ class CDFReadAPI(BaseReadAPI):
 
     def __init__(self, state: SessionState, verbose: bool) -> None:
         super().__init__(state, verbose)
+        self.data_model = CDFDataModelAPI(state, verbose)
         self.classic = CDFClassicAPI(state, verbose)
-
-    def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
-        """Reads a Data Model from CDF to the knowledge graph.
-
-        Args:
-            data_model_id: Tuple of strings with the id of a CDF Data Model.
-            Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
-
-        Example:
-            ```python
-            neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
-            ```
-        """
-
-        data_model_id = DataModelId.load(data_model_id)
-
-        if not data_model_id.version:
-            raise NeatSessionError("Data model version is required to read a data model.")
-
-        self._state._raise_exception_if_condition_not_met(
-            "Read data model from CDF",
-            empty_rules_store_required=True,
-            client_required=True,
-        )
-
-        importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
-        return self._state.rule_import(importer)
 
     def view(
         self,
@@ -364,6 +338,36 @@ class CDFReadAPI(BaseReadAPI):
             str_to_ideal_type=str_to_ideal_type,
         )
         return self._state.instances.store.write(extractor)
+
+
+@session_class_wrapper
+class CDFDataModelAPI(BaseReadAPI):
+    def __call__(self, data_model_id: DataModelIdentifier) -> IssueList:
+        """Reads a Data Model from CDF to the knowledge graph.
+
+        Args:
+            data_model_id: Tuple of strings with the id of a CDF Data Model.
+            Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
+
+        Example:
+            ```python
+            neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
+            ```
+        """
+
+        data_model_id = DataModelId.load(data_model_id)
+
+        if not data_model_id.version:
+            raise NeatSessionError("Data model version is required to read a data model.")
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read data model from CDF",
+            empty_rules_store_required=True,
+            client_required=True,
+        )
+
+        importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
