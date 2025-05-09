@@ -1,7 +1,7 @@
 from rdflib import Literal, Namespace
 
-from cognite.neat.core._graph.extractors import DictExtractor
-from cognite.neat.core._graph.extractors._dict import DEFAULT_EMPTY_VALUES, IGNORED_BY_TRIPLE_STORE
+from cognite.neat.core._instances.extractors import DictExtractor
+from cognite.neat.core._instances.extractors._dict import DEFAULT_EMPTY_VALUES, IGNORED_BY_TRIPLE_STORE
 from cognite.neat.core._store import NeatGraphStore
 
 

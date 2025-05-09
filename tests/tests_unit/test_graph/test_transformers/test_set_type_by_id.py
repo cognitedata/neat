@@ -1,6 +1,6 @@
 from rdflib import RDF, Namespace
 
-from cognite.neat.core._graph.transformers import SetRDFTypeById
+from cognite.neat.core._instances.transformers import SetRDFTypeById
 from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._store import NeatGraphStore
 

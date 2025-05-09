@@ -3,7 +3,7 @@ from collections.abc import Iterable
 
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.core._graph.extractors import BaseExtractor, ExcludePredicateExtractor
+from cognite.neat.core._instances.extractors import BaseExtractor, ExcludePredicateExtractor
 from cognite.neat.core._issues import catch_warnings
 from cognite.neat.core._shared import Triple
 

@@ -5,9 +5,9 @@ from pathlib import Path
 import pyarrow.parquet as pq
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.core._graph import extractors
-from cognite.neat.core._graph.examples import nordic44_knowledge_graph
-from cognite.neat.core._graph.loaders import DictLoader
+from cognite.neat.core._instances import extractors
+from cognite.neat.core._instances.examples import nordic44_knowledge_graph
+from cognite.neat.core._instances.loaders import DictLoader
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._store import NeatGraphStore
 

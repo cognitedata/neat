@@ -8,6 +8,8 @@ from cognite.neat.core._data_model.transformers import (
     PhysicalDataModelMapper,
     VerifiedDataModelTransformer,
 )
+from cognite.neat.core._instances.transformers import ConnectionToLiteral
+from cognite.neat.core._issues import IssueList
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
