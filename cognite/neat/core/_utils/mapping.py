@@ -4,7 +4,7 @@ from typing import overload
 
 from rdflib import Namespace, URIRef
 
-from cognite.neat.core._rules.models.information import InformationClass, InformationProperty
+from cognite.neat.core._data_model.models.information import InformationClass, InformationProperty
 
 
 @overload

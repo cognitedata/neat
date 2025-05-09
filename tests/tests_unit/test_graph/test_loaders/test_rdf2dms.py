@@ -1,7 +1,5 @@
 import pytest
 
-from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
-from cognite.neat.core._issues import IssueList
 from cognite.neat.core._data_model.importers import SubclassInferenceImporter
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual._verified import (
