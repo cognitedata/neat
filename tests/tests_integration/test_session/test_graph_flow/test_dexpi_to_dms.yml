@@ -87,7 +87,7 @@ rules:
     created: '2024-09-19T00:00:00Z'
     creator: NEAT
     external_id: DEXPI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1
     name: Dexpi
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/dexpi_playground/DEXPI/v1.3.1
@@ -97,7 +97,7 @@ rules:
   properties:
   - container: ActuatingElectricalFunction
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction/ComponentClassURI
@@ -106,7 +106,7 @@ rules:
     view_property: ComponentClassURI
   - container: ActuatingElectricalFunction
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction/tag
@@ -115,7 +115,7 @@ rules:
     view_property: tag
   - container: ActuatingFunction
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingFunction/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/ComponentClassURI
@@ -125,7 +125,7 @@ rules:
   - connection: direct
     container: ActuatingFunction
     container_property: isFulfilledBy
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/isFulfilledBy
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingFunction/isFulfilledBy
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/isFulfilledBy
@@ -133,7 +133,7 @@ rules:
     view: ActuatingFunction
     view_property: isFulfilledBy
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/isLogicalEndOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingFunction/isLogicalEndOf
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/isLogicalEndOf
@@ -142,7 +142,7 @@ rules:
     view_property: isLogicalEndOf
   - container: ActuatingFunction
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingFunction/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingFunction/tag
@@ -151,7 +151,7 @@ rules:
     view_property: tag
   - container: ActuatingSystem
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingSystem/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingSystem/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingSystem/ComponentClassURI
@@ -161,7 +161,7 @@ rules:
   - connection: direct
     container: ActuatingSystem
     container_property: fulfills
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingSystem/fulfills
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingSystem/fulfills
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingSystem/fulfills
@@ -170,7 +170,7 @@ rules:
     view_property: fulfills
   - container: ActuatingSystem
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingSystem/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingSystem/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingSystem/tag
@@ -179,7 +179,7 @@ rules:
     view_property: tag
   - container: BallValve
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/ComponentClassURI
@@ -188,7 +188,7 @@ rules:
     view_property: ComponentClassURI
   - container: BallValve
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/ComponentName
@@ -197,7 +197,7 @@ rules:
     view_property: ComponentName
   - container: BallValve
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/itemTagAssignmentClass
@@ -206,7 +206,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: BallValve
     container_property: nominalDiameterAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/nominalDiameterAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/nominalDiameterAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/nominalDiameterAssignmentClass
@@ -215,7 +215,7 @@ rules:
     view_property: nominalDiameterAssignmentClass
   - container: BallValve
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/objectDisplayNameAssignmentClass
@@ -224,7 +224,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: BallValve
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/sequenceAssignmentClass
@@ -233,7 +233,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: BallValve
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/tag
@@ -242,7 +242,7 @@ rules:
     view_property: tag
   - container: BallValve
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/tagTypeAssignmentClass
@@ -251,7 +251,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: BallValve
     container_property: valvePositionAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve/valvePositionAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve/valvePositionAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve/valvePositionAssignmentClass
@@ -260,7 +260,7 @@ rules:
     view_property: valvePositionAssignmentClass
   - container: BlindFlange
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BlindFlange/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BlindFlange/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BlindFlange/ComponentClassURI
@@ -269,7 +269,7 @@ rules:
     view_property: ComponentClassURI
   - container: BlindFlange
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BlindFlange/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BlindFlange/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BlindFlange/ComponentName
@@ -278,7 +278,7 @@ rules:
     view_property: ComponentName
   - container: BlindFlange
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BlindFlange/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BlindFlange/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BlindFlange/tag
@@ -287,7 +287,7 @@ rules:
     view_property: tag
   - container: ButterflyValve
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/ComponentClassURI
@@ -296,7 +296,7 @@ rules:
     view_property: ComponentClassURI
   - container: ButterflyValve
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/ComponentName
@@ -305,7 +305,7 @@ rules:
     view_property: ComponentName
   - container: ButterflyValve
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/itemTagAssignmentClass
@@ -314,7 +314,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: ButterflyValve
     container_property: nominalDiameterAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/nominalDiameterAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/nominalDiameterAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/nominalDiameterAssignmentClass
@@ -323,7 +323,7 @@ rules:
     view_property: nominalDiameterAssignmentClass
   - container: ButterflyValve
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/objectDisplayNameAssignmentClass
@@ -332,7 +332,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: ButterflyValve
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/sequenceAssignmentClass
@@ -341,7 +341,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: ButterflyValve
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/tag
@@ -350,7 +350,7 @@ rules:
     view_property: tag
   - container: ButterflyValve
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/tagTypeAssignmentClass
@@ -359,7 +359,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: ButterflyValve
     container_property: valvePositionAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve/valvePositionAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve/valvePositionAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve/valvePositionAssignmentClass
@@ -368,7 +368,7 @@ rules:
     view_property: valvePositionAssignmentClass
   - container: CentrifugalPump
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/ComponentClassURI
@@ -377,7 +377,7 @@ rules:
     view_property: ComponentClassURI
   - container: CentrifugalPump
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/ComponentName
@@ -387,7 +387,7 @@ rules:
   - connection: direct
     container: CentrifugalPump
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/isAPartOf
@@ -397,7 +397,7 @@ rules:
   - connection: direct
     container: CentrifugalPump
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/isLocatedIn
@@ -406,7 +406,7 @@ rules:
     view_property: isLocatedIn
   - container: CentrifugalPump
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/objectDisplayNameAssignmentClass
@@ -415,7 +415,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: CentrifugalPump
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/sequenceAssignmentClass
@@ -424,7 +424,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: CentrifugalPump
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tag
@@ -433,7 +433,7 @@ rules:
     view_property: tag
   - container: CentrifugalPump
     container_property: tagNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tagNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tagNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tagNameAssignmentClass
@@ -442,7 +442,7 @@ rules:
     view_property: tagNameAssignmentClass
   - container: CentrifugalPump
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump/tagTypeAssignmentClass
@@ -451,7 +451,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: CheckValve
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/ComponentClassURI
@@ -460,7 +460,7 @@ rules:
     view_property: ComponentClassURI
   - container: CheckValve
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/ComponentName
@@ -469,7 +469,7 @@ rules:
     view_property: ComponentName
   - container: CheckValve
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/itemTagAssignmentClass
@@ -478,7 +478,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: CheckValve
     container_property: nominalDiameterAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/nominalDiameterAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/nominalDiameterAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/nominalDiameterAssignmentClass
@@ -487,7 +487,7 @@ rules:
     view_property: nominalDiameterAssignmentClass
   - container: CheckValve
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/objectDisplayNameAssignmentClass
@@ -496,7 +496,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: CheckValve
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/sequenceAssignmentClass
@@ -505,7 +505,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: CheckValve
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/tag
@@ -514,7 +514,7 @@ rules:
     view_property: tag
   - container: CheckValve
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve/tagTypeAssignmentClass
@@ -523,7 +523,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: ControlledActuator
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ControlledActuator/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ControlledActuator/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ControlledActuator/ComponentClassURI
@@ -532,7 +532,7 @@ rules:
     view_property: ComponentClassURI
   - container: ControlledActuator
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ControlledActuator/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ControlledActuator/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ControlledActuator/ComponentName
@@ -541,7 +541,7 @@ rules:
     view_property: ComponentName
   - container: ControlledActuator
     container_property: failActionSpecialization
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ControlledActuator/failActionSpecialization
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ControlledActuator/failActionSpecialization
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ControlledActuator/failActionSpecialization
@@ -550,7 +550,7 @@ rules:
     view_property: failActionSpecialization
   - container: ControlledActuator
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ControlledActuator/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ControlledActuator/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ControlledActuator/tag
@@ -559,7 +559,7 @@ rules:
     view_property: tag
   - container: ControlledActuator
     container_property: typeCodeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ControlledActuator/typeCodeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ControlledActuator/typeCodeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ControlledActuator/typeCodeAssignmentClass
@@ -568,7 +568,7 @@ rules:
     view_property: typeCodeAssignmentClass
   - container: CustomHeatExchanger
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/ComponentClassURI
@@ -577,7 +577,7 @@ rules:
     view_property: ComponentClassURI
   - container: CustomHeatExchanger
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/ComponentName
@@ -587,7 +587,7 @@ rules:
   - connection: direct
     container: CustomHeatExchanger
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/isAPartOf
@@ -597,7 +597,7 @@ rules:
   - connection: direct
     container: CustomHeatExchanger
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/isLocatedIn
@@ -606,7 +606,7 @@ rules:
     view_property: isLocatedIn
   - container: CustomHeatExchanger
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/objectDisplayNameAssignmentClass
@@ -615,7 +615,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: CustomHeatExchanger
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/sequenceAssignmentClass
@@ -624,7 +624,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: CustomHeatExchanger
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tag
@@ -633,7 +633,7 @@ rules:
     view_property: tag
   - container: CustomHeatExchanger
     container_property: tagNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tagNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tagNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tagNameAssignmentClass
@@ -642,7 +642,7 @@ rules:
     view_property: tagNameAssignmentClass
   - container: CustomHeatExchanger
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/tagTypeAssignmentClass
@@ -651,7 +651,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: CustomHeatExchanger
     container_property: typeNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/typeNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/typeNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/typeNameAssignmentClass
@@ -660,7 +660,7 @@ rules:
     view_property: typeNameAssignmentClass
   - container: CustomHeatExchanger
     container_property: typeURIAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/typeURIAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/typeURIAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger/typeURIAssignmentClass
@@ -669,7 +669,7 @@ rules:
     view_property: typeURIAssignmentClass
   - container: CustomInlinePrimaryElement
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/ComponentClassURI
@@ -678,7 +678,7 @@ rules:
     view_property: ComponentClassURI
   - container: CustomInlinePrimaryElement
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/ComponentName
@@ -688,7 +688,7 @@ rules:
   - connection: direct
     container: CustomInlinePrimaryElement
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/connection
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/connection
@@ -698,7 +698,7 @@ rules:
   - connection: direct
     container: CustomInlinePrimaryElement
     container_property: isTheLocationOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/isTheLocationOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/isTheLocationOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/isTheLocationOf
@@ -707,7 +707,7 @@ rules:
     view_property: isTheLocationOf
   - container: CustomInlinePrimaryElement
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/itemTagAssignmentClass
@@ -716,7 +716,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: CustomInlinePrimaryElement
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/sequenceAssignmentClass
@@ -725,7 +725,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: CustomInlinePrimaryElement
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/tag
@@ -734,7 +734,7 @@ rules:
     view_property: tag
   - container: CustomInlinePrimaryElement
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/tagTypeAssignmentClass
@@ -743,7 +743,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: CustomInlinePrimaryElement
     container_property: typeNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/typeNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/typeNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/typeNameAssignmentClass
@@ -752,7 +752,7 @@ rules:
     view_property: typeNameAssignmentClass
   - container: CustomInlinePrimaryElement
     container_property: typeURIAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/typeURIAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/typeURIAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement/typeURIAssignmentClass
@@ -761,7 +761,7 @@ rules:
     view_property: typeURIAssignmentClass
   - container: CustomOperatedValve
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/ComponentClassURI
@@ -770,7 +770,7 @@ rules:
     view_property: ComponentClassURI
   - container: CustomOperatedValve
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/ComponentName
@@ -780,7 +780,7 @@ rules:
   - connection: direct
     container: CustomOperatedValve
     container_property: isReferencedBy
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/isReferencedBy
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/isReferencedBy
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/isReferencedBy
@@ -789,7 +789,7 @@ rules:
     view_property: isReferencedBy
   - container: CustomOperatedValve
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/itemTagAssignmentClass
@@ -798,7 +798,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: CustomOperatedValve
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/sequenceAssignmentClass
@@ -807,7 +807,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: CustomOperatedValve
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/tag
@@ -816,7 +816,7 @@ rules:
     view_property: tag
   - container: CustomOperatedValve
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/tagTypeAssignmentClass
@@ -825,7 +825,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: CustomOperatedValve
     container_property: typeNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typeNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typeNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typeNameAssignmentClass
@@ -834,7 +834,7 @@ rules:
     view_property: typeNameAssignmentClass
   - container: CustomOperatedValve
     container_property: typeURIAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typeURIAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typeURIAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typeURIAssignmentClass
@@ -843,7 +843,7 @@ rules:
     view_property: typeURIAssignmentClass
   - container: CustomOperatedValve
     container_property: typicalReferenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typicalReferenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typicalReferenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve/typicalReferenceAssignmentClass
@@ -852,7 +852,7 @@ rules:
     view_property: typicalReferenceAssignmentClass
   - container: CustomPipingComponent
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/ComponentClassURI
@@ -861,7 +861,7 @@ rules:
     view_property: ComponentClassURI
   - container: CustomPipingComponent
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/ComponentName
@@ -870,7 +870,7 @@ rules:
     view_property: ComponentName
   - container: CustomPipingComponent
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/itemTagAssignmentClass
@@ -879,7 +879,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: CustomPipingComponent
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/objectDisplayNameAssignmentClass
@@ -888,7 +888,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: CustomPipingComponent
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/tag
@@ -897,7 +897,7 @@ rules:
     view_property: tag
   - container: CustomPipingComponent
     container_property: typeNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/typeNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/typeNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/typeNameAssignmentClass
@@ -906,7 +906,7 @@ rules:
     view_property: typeNameAssignmentClass
   - container: CustomPipingComponent
     container_property: typeURIAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/typeURIAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/typeURIAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent/typeURIAssignmentClass
@@ -915,7 +915,7 @@ rules:
     view_property: typeURIAssignmentClass
   - container: ElectricHeater
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/ComponentClassURI
@@ -924,7 +924,7 @@ rules:
     view_property: ComponentClassURI
   - container: ElectricHeater
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/ComponentName
@@ -934,7 +934,7 @@ rules:
   - connection: direct
     container: ElectricHeater
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/connection
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/connection
@@ -944,7 +944,7 @@ rules:
   - connection: direct
     container: ElectricHeater
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/isAPartOf
@@ -954,7 +954,7 @@ rules:
   - connection: direct
     container: ElectricHeater
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/isLocatedIn
@@ -963,7 +963,7 @@ rules:
     view_property: isLocatedIn
   - container: ElectricHeater
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/objectDisplayNameAssignmentClass
@@ -972,7 +972,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: ElectricHeater
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/sequenceAssignmentClass
@@ -981,7 +981,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: ElectricHeater
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/tag
@@ -990,7 +990,7 @@ rules:
     view_property: tag
   - container: ElectricHeater
     container_property: tagNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/tagNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/tagNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/tagNameAssignmentClass
@@ -999,7 +999,7 @@ rules:
     view_property: tagNameAssignmentClass
   - container: ElectricHeater
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater/tagTypeAssignmentClass
@@ -1008,7 +1008,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: Flange
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Flange/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Flange/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Flange/ComponentClassURI
@@ -1017,7 +1017,7 @@ rules:
     view_property: ComponentClassURI
   - container: Flange
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Flange/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Flange/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Flange/ComponentName
@@ -1027,7 +1027,7 @@ rules:
   - connection: direct
     container: Flange
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Flange/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Flange/connection
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Flange/connection
@@ -1037,7 +1037,7 @@ rules:
   - connection: direct
     container: Flange
     container_property: isTheLocationOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Flange/isTheLocationOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Flange/isTheLocationOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Flange/isTheLocationOf
@@ -1046,7 +1046,7 @@ rules:
     view_property: isTheLocationOf
   - container: Flange
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Flange/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Flange/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Flange/tag
@@ -1055,7 +1055,7 @@ rules:
     view_property: tag
   - container: FlowInPipeOffPageConnector
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/ComponentClassURI
@@ -1064,7 +1064,7 @@ rules:
     view_property: ComponentClassURI
   - container: FlowInPipeOffPageConnector
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/ComponentName
@@ -1074,7 +1074,7 @@ rules:
   - connection: direct
     container: FlowInPipeOffPageConnector
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/connection
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/connection
@@ -1083,7 +1083,7 @@ rules:
     view_property: connection
   - container: FlowInPipeOffPageConnector
     container_property: pipeConnectorNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/pipeConnectorNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/pipeConnectorNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/pipeConnectorNumberAssignmentClass
@@ -1092,7 +1092,7 @@ rules:
     view_property: pipeConnectorNumberAssignmentClass
   - container: FlowInPipeOffPageConnector
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector/tag
@@ -1101,7 +1101,7 @@ rules:
     view_property: tag
   - container: FlowOutPipeOffPageConnector
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/ComponentClassURI
@@ -1110,7 +1110,7 @@ rules:
     view_property: ComponentClassURI
   - container: FlowOutPipeOffPageConnector
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/ComponentName
@@ -1119,7 +1119,7 @@ rules:
     view_property: ComponentName
   - container: FlowOutPipeOffPageConnector
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector/tag
@@ -1128,7 +1128,7 @@ rules:
     view_property: tag
   - container: FlowOutSignalOffPageConnector
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/ComponentClassURI
@@ -1137,7 +1137,7 @@ rules:
     view_property: ComponentClassURI
   - container: FlowOutSignalOffPageConnector
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/ComponentName
@@ -1147,7 +1147,7 @@ rules:
   - connection: direct
     container: FlowOutSignalOffPageConnector
     container_property: isLogicalEndOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/isLogicalEndOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/isLogicalEndOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/isLogicalEndOf
@@ -1156,7 +1156,7 @@ rules:
     view_property: isLogicalEndOf
   - container: FlowOutSignalOffPageConnector
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector/tag
@@ -1165,7 +1165,7 @@ rules:
     view_property: tag
   - container: GateValve
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/ComponentClassURI
@@ -1174,7 +1174,7 @@ rules:
     view_property: ComponentClassURI
   - container: GateValve
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/ComponentName
@@ -1184,7 +1184,7 @@ rules:
   - connection: direct
     container: GateValve
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/connection
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/connection
@@ -1194,7 +1194,7 @@ rules:
   - connection: direct
     container: GateValve
     container_property: isReferencedBy
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/isReferencedBy
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/isReferencedBy
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/isReferencedBy
@@ -1204,7 +1204,7 @@ rules:
   - connection: direct
     container: GateValve
     container_property: isTheLocationOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/isTheLocationOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/isTheLocationOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/isTheLocationOf
@@ -1213,7 +1213,7 @@ rules:
     view_property: isTheLocationOf
   - container: GateValve
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/itemTagAssignmentClass
@@ -1222,7 +1222,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: GateValve
     container_property: nominalDiameterAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/nominalDiameterAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/nominalDiameterAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/nominalDiameterAssignmentClass
@@ -1231,7 +1231,7 @@ rules:
     view_property: nominalDiameterAssignmentClass
   - container: GateValve
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/objectDisplayNameAssignmentClass
@@ -1240,7 +1240,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: GateValve
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/sequenceAssignmentClass
@@ -1249,7 +1249,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: GateValve
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/tag
@@ -1258,7 +1258,7 @@ rules:
     view_property: tag
   - container: GateValve
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/tagTypeAssignmentClass
@@ -1267,7 +1267,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: GateValve
     container_property: typicalReferenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/typicalReferenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/typicalReferenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/typicalReferenceAssignmentClass
@@ -1276,7 +1276,7 @@ rules:
     view_property: typicalReferenceAssignmentClass
   - container: GateValve
     container_property: valvePositionAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve/valvePositionAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve/valvePositionAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve/valvePositionAssignmentClass
@@ -1285,7 +1285,7 @@ rules:
     view_property: valvePositionAssignmentClass
   - container: InstrumentationLoopFunction
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/ComponentClassURI
@@ -1294,7 +1294,7 @@ rules:
     view_property: ComponentClassURI
   - container: InstrumentationLoopFunction
     container_property: instrumentationLoopFunctionNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/instrumentationLoopFunctionNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/instrumentationLoopFunctionNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/instrumentationLoopFunctionNumberAssignmentClass
@@ -1302,7 +1302,7 @@ rules:
     view: InstrumentationLoopFunction
     view_property: instrumentationLoopFunctionNumberAssignmentClass
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isACollectionIncluding
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isACollectionIncluding
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isACollectionIncluding
@@ -1312,7 +1312,7 @@ rules:
   - connection: direct
     container: InstrumentationLoopFunction
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isAPartOf
@@ -1322,7 +1322,7 @@ rules:
   - connection: direct
     container: InstrumentationLoopFunction
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/isLocatedIn
@@ -1331,7 +1331,7 @@ rules:
     view_property: isLocatedIn
   - container: InstrumentationLoopFunction
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction/tag
@@ -1340,7 +1340,7 @@ rules:
     view_property: tag
   - container: MeasuringLineFunction
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/ComponentClassURI
@@ -1350,7 +1350,7 @@ rules:
   - connection: direct
     container: MeasuringLineFunction
     container_property: hasLogicalEnd
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/hasLogicalEnd
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/hasLogicalEnd
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/hasLogicalEnd
@@ -1360,7 +1360,7 @@ rules:
   - connection: direct
     container: MeasuringLineFunction
     container_property: hasLogicalStart
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/hasLogicalStart
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/hasLogicalStart
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/hasLogicalStart
@@ -1369,7 +1369,7 @@ rules:
     view_property: hasLogicalStart
   - container: MeasuringLineFunction
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction/tag
@@ -1378,7 +1378,7 @@ rules:
     view_property: tag
   - container: MetaData
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/ComponentClassURI
@@ -1387,7 +1387,7 @@ rules:
     view_property: ComponentClassURI
   - container: MetaData
     container_property: areaIsa95NameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/areaIsa95NameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/areaIsa95NameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/areaIsa95NameAssignmentClass
@@ -1396,7 +1396,7 @@ rules:
     view_property: areaIsa95NameAssignmentClass
   - container: MetaData
     container_property: creatorNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/creatorNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/creatorNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/creatorNameAssignmentClass
@@ -1405,7 +1405,7 @@ rules:
     view_property: creatorNameAssignmentClass
   - container: MetaData
     container_property: drawingNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/drawingNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/drawingNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/drawingNameAssignmentClass
@@ -1414,7 +1414,7 @@ rules:
     view_property: drawingNameAssignmentClass
   - container: MetaData
     container_property: drawingNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/drawingNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/drawingNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/drawingNumberAssignmentClass
@@ -1423,7 +1423,7 @@ rules:
     view_property: drawingNumberAssignmentClass
   - container: MetaData
     container_property: drawingSubTitleAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/drawingSubTitleAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/drawingSubTitleAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/drawingSubTitleAssignmentClass
@@ -1432,7 +1432,7 @@ rules:
     view_property: drawingSubTitleAssignmentClass
   - container: MetaData
     container_property: plantSystemIdentificationCodeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/plantSystemIdentificationCodeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/plantSystemIdentificationCodeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/plantSystemIdentificationCodeAssignmentClass
@@ -1441,7 +1441,7 @@ rules:
     view_property: plantSystemIdentificationCodeAssignmentClass
   - container: MetaData
     container_property: processPlantNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/processPlantNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/processPlantNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/processPlantNameAssignmentClass
@@ -1450,7 +1450,7 @@ rules:
     view_property: processPlantNameAssignmentClass
   - container: MetaData
     container_property: revisionNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/revisionNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/revisionNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/revisionNumberAssignmentClass
@@ -1459,7 +1459,7 @@ rules:
     view_property: revisionNumberAssignmentClass
   - container: MetaData
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData/tag
@@ -1468,7 +1468,7 @@ rules:
     view_property: tag
   - container: Note
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Note/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Note/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Note/ComponentClassURI
@@ -1477,7 +1477,7 @@ rules:
     view_property: ComponentClassURI
   - container: Note
     container_property: Label
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Note/Label
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Note/Label
     max_count: 2
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Note/Label
@@ -1487,7 +1487,7 @@ rules:
   - connection: direct
     container: Note
     container_property: isACommentReferringTo
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Note/isACommentReferringTo
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Note/isACommentReferringTo
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Note/isACommentReferringTo
@@ -1496,7 +1496,7 @@ rules:
     view_property: isACommentReferringTo
   - container: Note
     container_property: localNoteIdentifierAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Note/localNoteIdentifierAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Note/localNoteIdentifierAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Note/localNoteIdentifierAssignmentClass
@@ -1505,7 +1505,7 @@ rules:
     view_property: localNoteIdentifierAssignmentClass
   - container: Note
     container_property: noteTextAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Note/noteTextAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Note/noteTextAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Note/noteTextAssignmentClass
@@ -1514,7 +1514,7 @@ rules:
     view_property: noteTextAssignmentClass
   - container: Note
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Note/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Note/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Note/tag
@@ -1523,7 +1523,7 @@ rules:
     view_property: tag
   - container: Nozzle
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/ComponentClassURI
@@ -1532,7 +1532,7 @@ rules:
     view_property: ComponentClassURI
   - container: Nozzle
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/ComponentName
@@ -1542,7 +1542,7 @@ rules:
   - connection: direct
     container: Nozzle
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/connection
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/connection
@@ -1552,7 +1552,7 @@ rules:
   - connection: direct
     container: Nozzle
     container_property: isTheLocationOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/isTheLocationOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/isTheLocationOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/isTheLocationOf
@@ -1561,7 +1561,7 @@ rules:
     view_property: isTheLocationOf
   - container: Nozzle
     container_property: isVirtualAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/isVirtualAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/isVirtualAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/isVirtualAssignmentClass
@@ -1570,7 +1570,7 @@ rules:
     view_property: isVirtualAssignmentClass
   - container: Nozzle
     container_property: isVirtualMountAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/isVirtualMountAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/isVirtualMountAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/isVirtualMountAssignmentClass
@@ -1579,7 +1579,7 @@ rules:
     view_property: isVirtualMountAssignmentClass
   - container: Nozzle
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/itemTagAssignmentClass
@@ -1588,7 +1588,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: Nozzle
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/objectDisplayNameAssignmentClass
@@ -1597,7 +1597,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: Nozzle
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/sequenceAssignmentClass
@@ -1606,7 +1606,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: Nozzle
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/tag
@@ -1615,7 +1615,7 @@ rules:
     view_property: tag
   - container: Nozzle
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle/tagTypeAssignmentClass
@@ -1624,7 +1624,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: OperatedValveReference
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/OperatedValveReference/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/OperatedValveReference/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/OperatedValveReference/ComponentClassURI
@@ -1634,7 +1634,7 @@ rules:
   - connection: direct
     container: OperatedValveReference
     container_property: refersTo
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/OperatedValveReference/refersTo
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/OperatedValveReference/refersTo
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/OperatedValveReference/refersTo
@@ -1643,7 +1643,7 @@ rules:
     view_property: refersTo
   - container: OperatedValveReference
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/OperatedValveReference/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/OperatedValveReference/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/OperatedValveReference/tag
@@ -1652,7 +1652,7 @@ rules:
     view_property: tag
   - container: PipeOffPageConnectorReferenceByNumber
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/ComponentClassURI
@@ -1661,7 +1661,7 @@ rules:
     view_property: ComponentClassURI
   - container: PipeOffPageConnectorReferenceByNumber
     container_property: referencedConnectorNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedConnectorNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedConnectorNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedConnectorNumberAssignmentClass
@@ -1670,7 +1670,7 @@ rules:
     view_property: referencedConnectorNumberAssignmentClass
   - container: PipeOffPageConnectorReferenceByNumber
     container_property: referencedDrawingDescriptorAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedDrawingDescriptorAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedDrawingDescriptorAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedDrawingDescriptorAssignmentClass
@@ -1679,7 +1679,7 @@ rules:
     view_property: referencedDrawingDescriptorAssignmentClass
   - container: PipeOffPageConnectorReferenceByNumber
     container_property: referencedDrawingNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedDrawingNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedDrawingNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/referencedDrawingNumberAssignmentClass
@@ -1688,7 +1688,7 @@ rules:
     view_property: referencedDrawingNumberAssignmentClass
   - container: PipeOffPageConnectorReferenceByNumber
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber/tag
@@ -1697,7 +1697,7 @@ rules:
     view_property: tag
   - container: PipeReducer
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeReducer/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeReducer/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeReducer/ComponentClassURI
@@ -1706,7 +1706,7 @@ rules:
     view_property: ComponentClassURI
   - container: PipeReducer
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeReducer/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeReducer/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeReducer/ComponentName
@@ -1715,7 +1715,7 @@ rules:
     view_property: ComponentName
   - container: PipeReducer
     container_property: nominalDiameterInAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeReducer/nominalDiameterInAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeReducer/nominalDiameterInAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeReducer/nominalDiameterInAssignmentClass
@@ -1724,7 +1724,7 @@ rules:
     view_property: nominalDiameterInAssignmentClass
   - container: PipeReducer
     container_property: nominalDiameterOutAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeReducer/nominalDiameterOutAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeReducer/nominalDiameterOutAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeReducer/nominalDiameterOutAssignmentClass
@@ -1733,7 +1733,7 @@ rules:
     view_property: nominalDiameterOutAssignmentClass
   - container: PipeReducer
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeReducer/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeReducer/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeReducer/tag
@@ -1742,7 +1742,7 @@ rules:
     view_property: tag
   - container: PipeTee
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeTee/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeTee/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeTee/ComponentClassURI
@@ -1752,7 +1752,7 @@ rules:
   - connection: direct
     container: PipeTee
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeTee/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeTee/connection
     max_count: 2
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeTee/connection
@@ -1761,7 +1761,7 @@ rules:
     view_property: connection
   - container: PipeTee
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeTee/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeTee/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeTee/tag
@@ -1770,7 +1770,7 @@ rules:
     view_property: tag
   - container: PipingNetworkSegment
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/ComponentClassURI
@@ -1779,7 +1779,7 @@ rules:
     view_property: ComponentClassURI
   - container: PipingNetworkSegment
     container_property: heatTracingTypeSpecialization
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/heatTracingTypeSpecialization
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/heatTracingTypeSpecialization
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/heatTracingTypeSpecialization
@@ -1788,7 +1788,7 @@ rules:
     view_property: heatTracingTypeSpecialization
   - container: PipingNetworkSegment
     container_property: nominalDiameterNumericalValueRepresentationAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/nominalDiameterNumericalValueRepresentationAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/nominalDiameterNumericalValueRepresentationAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/nominalDiameterNumericalValueRepresentationAssignmentClass
@@ -1797,7 +1797,7 @@ rules:
     view_property: nominalDiameterNumericalValueRepresentationAssignmentClass
   - container: PipingNetworkSegment
     container_property: segmentLineTypeRepresentationAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/segmentLineTypeRepresentationAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/segmentLineTypeRepresentationAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/segmentLineTypeRepresentationAssignmentClass
@@ -1806,7 +1806,7 @@ rules:
     view_property: segmentLineTypeRepresentationAssignmentClass
   - container: PipingNetworkSegment
     container_property: slopeSpecialization
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/slopeSpecialization
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/slopeSpecialization
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/slopeSpecialization
@@ -1815,7 +1815,7 @@ rules:
     view_property: slopeSpecialization
   - container: PipingNetworkSegment
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment/tag
@@ -1824,7 +1824,7 @@ rules:
     view_property: tag
   - container: PipingNetworkSystem
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/ComponentClassURI
@@ -1833,7 +1833,7 @@ rules:
     view_property: ComponentClassURI
   - container: PipingNetworkSystem
     container_property: heatTraceRequiredAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/heatTraceRequiredAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/heatTraceRequiredAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/heatTraceRequiredAssignmentClass
@@ -1843,7 +1843,7 @@ rules:
   - connection: direct
     container: PipingNetworkSystem
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/isAPartOf
@@ -1853,7 +1853,7 @@ rules:
   - connection: direct
     container: PipingNetworkSystem
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/isLocatedIn
@@ -1862,7 +1862,7 @@ rules:
     view_property: isLocatedIn
   - container: PipingNetworkSystem
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/itemTagAssignmentClass
@@ -1871,7 +1871,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: PipingNetworkSystem
     container_property: lineDescriptionAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/lineDescriptionAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/lineDescriptionAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/lineDescriptionAssignmentClass
@@ -1880,7 +1880,7 @@ rules:
     view_property: lineDescriptionAssignmentClass
   - container: PipingNetworkSystem
     container_property: lineSuffixAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/lineSuffixAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/lineSuffixAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/lineSuffixAssignmentClass
@@ -1889,7 +1889,7 @@ rules:
     view_property: lineSuffixAssignmentClass
   - container: PipingNetworkSystem
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/objectDisplayNameAssignmentClass
@@ -1898,7 +1898,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: PipingNetworkSystem
     container_property: pipingClassCodeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/pipingClassCodeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/pipingClassCodeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/pipingClassCodeAssignmentClass
@@ -1907,7 +1907,7 @@ rules:
     view_property: pipingClassCodeAssignmentClass
   - container: PipingNetworkSystem
     container_property: productCodeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/productCodeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/productCodeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/productCodeAssignmentClass
@@ -1916,7 +1916,7 @@ rules:
     view_property: productCodeAssignmentClass
   - container: PipingNetworkSystem
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/tag
@@ -1925,7 +1925,7 @@ rules:
     view_property: tag
   - container: PipingNetworkSystem
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem/tagTypeAssignmentClass
@@ -1934,7 +1934,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: PlantSystem
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlantSystem/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlantSystem/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlantSystem/ComponentClassURI
@@ -1944,7 +1944,7 @@ rules:
   - connection: direct
     container: PlantSystem
     container_property: isTheLocationOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlantSystem/isTheLocationOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlantSystem/isTheLocationOf
     max_count: 42
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlantSystem/isTheLocationOf
@@ -1953,7 +1953,7 @@ rules:
     view_property: isTheLocationOf
   - container: PlantSystem
     container_property: plantSystemIdentificationCodeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlantSystem/plantSystemIdentificationCodeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlantSystem/plantSystemIdentificationCodeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlantSystem/plantSystemIdentificationCodeAssignmentClass
@@ -1962,7 +1962,7 @@ rules:
     view_property: plantSystemIdentificationCodeAssignmentClass
   - container: PlantSystem
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlantSystem/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlantSystem/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlantSystem/tag
@@ -1971,7 +1971,7 @@ rules:
     view_property: tag
   - container: PlateHeatExchanger
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/ComponentClassURI
@@ -1980,7 +1980,7 @@ rules:
     view_property: ComponentClassURI
   - container: PlateHeatExchanger
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/ComponentName
@@ -1990,7 +1990,7 @@ rules:
   - connection: direct
     container: PlateHeatExchanger
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/isAPartOf
@@ -2000,7 +2000,7 @@ rules:
   - connection: direct
     container: PlateHeatExchanger
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/isLocatedIn
@@ -2009,7 +2009,7 @@ rules:
     view_property: isLocatedIn
   - container: PlateHeatExchanger
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/objectDisplayNameAssignmentClass
@@ -2018,7 +2018,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: PlateHeatExchanger
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/sequenceAssignmentClass
@@ -2027,7 +2027,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: PlateHeatExchanger
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tag
@@ -2036,7 +2036,7 @@ rules:
     view_property: tag
   - container: PlateHeatExchanger
     container_property: tagNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tagNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tagNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tagNameAssignmentClass
@@ -2045,7 +2045,7 @@ rules:
     view_property: tagNameAssignmentClass
   - container: PlateHeatExchanger
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger/tagTypeAssignmentClass
@@ -2054,7 +2054,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: PressureVessel
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/ComponentClassURI
@@ -2063,7 +2063,7 @@ rules:
     view_property: ComponentClassURI
   - container: PressureVessel
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/ComponentName
@@ -2072,7 +2072,7 @@ rules:
     view_property: ComponentName
   - container: PressureVessel
     container_property: Label
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/Label
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/Label
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/Label
@@ -2081,7 +2081,7 @@ rules:
     view_property: Label
   - container: PressureVessel
     container_property: elevationAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/elevationAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/elevationAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/elevationAssignmentClass
@@ -2091,7 +2091,7 @@ rules:
   - connection: direct
     container: PressureVessel
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/isAPartOf
@@ -2101,7 +2101,7 @@ rules:
   - connection: direct
     container: PressureVessel
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/isLocatedIn
@@ -2111,7 +2111,7 @@ rules:
   - connection: direct
     container: PressureVessel
     container_property: isReferencedInComment
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/isReferencedInComment
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/isReferencedInComment
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/isReferencedInComment
@@ -2120,7 +2120,7 @@ rules:
     view_property: isReferencedInComment
   - container: PressureVessel
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/objectDisplayNameAssignmentClass
@@ -2129,7 +2129,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: PressureVessel
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/sequenceAssignmentClass
@@ -2138,7 +2138,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: PressureVessel
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/tag
@@ -2147,7 +2147,7 @@ rules:
     view_property: tag
   - container: PressureVessel
     container_property: tagNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/tagNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/tagNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/tagNameAssignmentClass
@@ -2156,7 +2156,7 @@ rules:
     view_property: tagNameAssignmentClass
   - container: PressureVessel
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel/tagTypeAssignmentClass
@@ -2165,7 +2165,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/ComponentClassURI
@@ -2174,7 +2174,7 @@ rules:
     view_property: ComponentClassURI
   - container: ProcessInstrumentationFunction
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/ComponentName
@@ -2184,7 +2184,7 @@ rules:
   - connection: direct
     container: ProcessInstrumentationFunction
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/connection
     max_count: 2
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/connection
@@ -2194,7 +2194,7 @@ rules:
   - connection: direct
     container: ProcessInstrumentationFunction
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isAPartOf
     max_count: 2
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isAPartOf
@@ -2204,7 +2204,7 @@ rules:
   - connection: direct
     container: ProcessInstrumentationFunction
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLocatedIn
@@ -2214,7 +2214,7 @@ rules:
   - connection: direct
     container: ProcessInstrumentationFunction
     container_property: isLogicalEndOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLogicalEndOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLogicalEndOf
     max_count: 2
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLogicalEndOf
@@ -2222,7 +2222,7 @@ rules:
     view: ProcessInstrumentationFunction
     view_property: isLogicalEndOf
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLogicalStartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLogicalStartOf
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/isLogicalStartOf
@@ -2231,7 +2231,7 @@ rules:
     view_property: isLogicalStartOf
   - container: ProcessInstrumentationFunction
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/itemTagAssignmentClass
@@ -2240,7 +2240,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/objectDisplayNameAssignmentClass
@@ -2249,7 +2249,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: processInstrumentationFunctionCategoryAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionCategoryAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionCategoryAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionCategoryAssignmentClass
@@ -2258,7 +2258,7 @@ rules:
     view_property: processInstrumentationFunctionCategoryAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: processInstrumentationFunctionLocationAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionLocationAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionLocationAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionLocationAssignmentClass
@@ -2267,7 +2267,7 @@ rules:
     view_property: processInstrumentationFunctionLocationAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: processInstrumentationFunctionNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionNumberAssignmentClass
@@ -2276,7 +2276,7 @@ rules:
     view_property: processInstrumentationFunctionNumberAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: processInstrumentationFunctionTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionTypeAssignmentClass
@@ -2285,7 +2285,7 @@ rules:
     view_property: processInstrumentationFunctionTypeAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: processInstrumentationFunctionsAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionsAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionsAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/processInstrumentationFunctionsAssignmentClass
@@ -2294,7 +2294,7 @@ rules:
     view_property: processInstrumentationFunctionsAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/tag
@@ -2303,7 +2303,7 @@ rules:
     view_property: tag
   - container: ProcessInstrumentationFunction
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/tagTypeAssignmentClass
@@ -2312,7 +2312,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: ProcessInstrumentationFunction
     container_property: typeCodeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/typeCodeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/typeCodeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction/typeCodeAssignmentClass
@@ -2321,7 +2321,7 @@ rules:
     view_property: typeCodeAssignmentClass
   - container: ProcessPlant
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessPlant/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessPlant/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessPlant/ComponentClassURI
@@ -2331,7 +2331,7 @@ rules:
   - connection: direct
     container: ProcessPlant
     container_property: isACollectionIncluding
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessPlant/isACollectionIncluding
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessPlant/isACollectionIncluding
     max_count: 47
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessPlant/isACollectionIncluding
@@ -2340,7 +2340,7 @@ rules:
     view_property: isACollectionIncluding
   - container: ProcessPlant
     container_property: processPlantIdentificationCodeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessPlant/processPlantIdentificationCodeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessPlant/processPlantIdentificationCodeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessPlant/processPlantIdentificationCodeAssignmentClass
@@ -2349,7 +2349,7 @@ rules:
     view_property: processPlantIdentificationCodeAssignmentClass
   - container: ProcessPlant
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessPlant/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessPlant/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessPlant/tag
@@ -2358,7 +2358,7 @@ rules:
     view_property: tag
   - container: ProcessSignalGeneratingFunction
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/ComponentClassURI
@@ -2368,7 +2368,7 @@ rules:
   - connection: direct
     container: ProcessSignalGeneratingFunction
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/isLocatedIn
@@ -2378,7 +2378,7 @@ rules:
   - connection: direct
     container: ProcessSignalGeneratingFunction
     container_property: isLogicalStartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/isLogicalStartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/isLogicalStartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/isLogicalStartOf
@@ -2387,7 +2387,7 @@ rules:
     view_property: isLogicalStartOf
   - container: ProcessSignalGeneratingFunction
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction/tag
@@ -2396,7 +2396,7 @@ rules:
     view_property: tag
   - container: PropertyBreak
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/ComponentClassURI
@@ -2405,7 +2405,7 @@ rules:
     view_property: ComponentClassURI
   - container: PropertyBreak
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/ComponentName
@@ -2414,7 +2414,7 @@ rules:
     view_property: ComponentName
   - container: PropertyBreak
     container_property: breakValue1AssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/breakValue1AssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/breakValue1AssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/breakValue1AssignmentClass
@@ -2423,7 +2423,7 @@ rules:
     view_property: breakValue1AssignmentClass
   - container: PropertyBreak
     container_property: breakValue2AssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/breakValue2AssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/breakValue2AssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/breakValue2AssignmentClass
@@ -2433,7 +2433,7 @@ rules:
   - connection: direct
     container: PropertyBreak
     container_property: connection
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/connection
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/connection
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/connection
@@ -2442,7 +2442,7 @@ rules:
     view_property: connection
   - container: PropertyBreak
     container_property: lineIdBreakAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/lineIdBreakAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/lineIdBreakAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/lineIdBreakAssignmentClass
@@ -2451,7 +2451,7 @@ rules:
     view_property: lineIdBreakAssignmentClass
   - container: PropertyBreak
     container_property: pipingClassBreakSpecialization
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/pipingClassBreakSpecialization
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/pipingClassBreakSpecialization
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/pipingClassBreakSpecialization
@@ -2460,7 +2460,7 @@ rules:
     view_property: pipingClassBreakSpecialization
   - container: PropertyBreak
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak/tag
@@ -2469,7 +2469,7 @@ rules:
     view_property: tag
   - container: RotaryPump
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/ComponentClassURI
@@ -2478,7 +2478,7 @@ rules:
     view_property: ComponentClassURI
   - container: RotaryPump
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/ComponentName
@@ -2488,7 +2488,7 @@ rules:
   - connection: direct
     container: RotaryPump
     container_property: isAPartOf
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/isAPartOf
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/isAPartOf
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/isAPartOf
@@ -2498,7 +2498,7 @@ rules:
   - connection: direct
     container: RotaryPump
     container_property: isLocatedIn
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/isLocatedIn
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/isLocatedIn
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/isLocatedIn
@@ -2507,7 +2507,7 @@ rules:
     view_property: isLocatedIn
   - container: RotaryPump
     container_property: objectDisplayNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/objectDisplayNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/objectDisplayNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/objectDisplayNameAssignmentClass
@@ -2516,7 +2516,7 @@ rules:
     view_property: objectDisplayNameAssignmentClass
   - container: RotaryPump
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/sequenceAssignmentClass
@@ -2525,7 +2525,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: RotaryPump
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/tag
@@ -2534,7 +2534,7 @@ rules:
     view_property: tag
   - container: RotaryPump
     container_property: tagNameAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/tagNameAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/tagNameAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/tagNameAssignmentClass
@@ -2543,7 +2543,7 @@ rules:
     view_property: tagNameAssignmentClass
   - container: RotaryPump
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump/tagTypeAssignmentClass
@@ -2552,7 +2552,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: SafetyValveOrFitting
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/ComponentClassURI
@@ -2561,7 +2561,7 @@ rules:
     view_property: ComponentClassURI
   - container: SafetyValveOrFitting
     container_property: ComponentName
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/ComponentName
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/ComponentName
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/ComponentName
@@ -2570,7 +2570,7 @@ rules:
     view_property: ComponentName
   - container: SafetyValveOrFitting
     container_property: itemTagAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/itemTagAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/itemTagAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/itemTagAssignmentClass
@@ -2579,7 +2579,7 @@ rules:
     view_property: itemTagAssignmentClass
   - container: SafetyValveOrFitting
     container_property: sequenceAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/sequenceAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/sequenceAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/sequenceAssignmentClass
@@ -2588,7 +2588,7 @@ rules:
     view_property: sequenceAssignmentClass
   - container: SafetyValveOrFitting
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/tag
@@ -2597,7 +2597,7 @@ rules:
     view_property: tag
   - container: SafetyValveOrFitting
     container_property: tagTypeAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/tagTypeAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/tagTypeAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting/tagTypeAssignmentClass
@@ -2606,7 +2606,7 @@ rules:
     view_property: tagTypeAssignmentClass
   - container: SignalConveyingFunction
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/ComponentClassURI
@@ -2616,7 +2616,7 @@ rules:
   - connection: direct
     container: SignalConveyingFunction
     container_property: hasLogicalEnd
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/hasLogicalEnd
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/hasLogicalEnd
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/hasLogicalEnd
@@ -2626,7 +2626,7 @@ rules:
   - connection: direct
     container: SignalConveyingFunction
     container_property: hasLogicalStart
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/hasLogicalStart
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/hasLogicalStart
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/hasLogicalStart
@@ -2635,7 +2635,7 @@ rules:
     view_property: hasLogicalStart
   - container: SignalConveyingFunction
     container_property: portStatusSpecialization
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/portStatusSpecialization
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/portStatusSpecialization
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/portStatusSpecialization
@@ -2644,7 +2644,7 @@ rules:
     view_property: portStatusSpecialization
   - container: SignalConveyingFunction
     container_property: signalConveyingFunctionTypeRepresentationAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/signalConveyingFunctionTypeRepresentationAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/signalConveyingFunctionTypeRepresentationAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/signalConveyingFunctionTypeRepresentationAssignmentClass
@@ -2653,7 +2653,7 @@ rules:
     view_property: signalConveyingFunctionTypeRepresentationAssignmentClass
   - container: SignalConveyingFunction
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction/tag
@@ -2662,7 +2662,7 @@ rules:
     view_property: tag
   - container: SignalOffPageConnectorReferenceByNumber
     container_property: ComponentClassURI
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/ComponentClassURI
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/ComponentClassURI
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/ComponentClassURI
@@ -2671,7 +2671,7 @@ rules:
     view_property: ComponentClassURI
   - container: SignalOffPageConnectorReferenceByNumber
     container_property: referencedDrawingNumberAssignmentClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/referencedDrawingNumberAssignmentClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/referencedDrawingNumberAssignmentClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/referencedDrawingNumberAssignmentClass
@@ -2680,7 +2680,7 @@ rules:
     view_property: referencedDrawingNumberAssignmentClass
   - container: SignalOffPageConnectorReferenceByNumber
     container_property: tag
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/tag
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/tag
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber/tag
@@ -2689,166 +2689,166 @@ rules:
     view_property: tag
   views:
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingElectricalFunction
     view: ActuatingElectricalFunction
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingFunction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingFunction
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingFunction
     view: ActuatingFunction
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ActuatingSystem
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ActuatingSystem
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ActuatingSystem
     view: ActuatingSystem
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BallValve
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BallValve
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BallValve
     view: BallValve
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/BlindFlange
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/BlindFlange
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/BlindFlange
     view: BlindFlange
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ButterflyValve
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ButterflyValve
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ButterflyValve
     view: ButterflyValve
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CentrifugalPump
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CentrifugalPump
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CentrifugalPump
     view: CentrifugalPump
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CheckValve
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CheckValve
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CheckValve
     view: CheckValve
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ControlledActuator
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ControlledActuator
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ControlledActuator
     view: ControlledActuator
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomHeatExchanger
     view: CustomHeatExchanger
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomInlinePrimaryElement
     view: CustomInlinePrimaryElement
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomOperatedValve
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomOperatedValve
     view: CustomOperatedValve
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CustomPipingComponent
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/CustomPipingComponent
     view: CustomPipingComponent
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ElectricHeater
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ElectricHeater
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ElectricHeater
     view: ElectricHeater
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Flange
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Flange
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Flange
     view: Flange
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowInPipeOffPageConnector
     view: FlowInPipeOffPageConnector
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutPipeOffPageConnector
     view: FlowOutPipeOffPageConnector
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/FlowOutSignalOffPageConnector
     view: FlowOutSignalOffPageConnector
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/GateValve
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/GateValve
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/GateValve
     view: GateValve
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InstrumentationLoopFunction
     view: InstrumentationLoopFunction
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MeasuringLineFunction
     view: MeasuringLineFunction
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/MetaData
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/MetaData
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/MetaData
     view: MetaData
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Note
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Note
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Note
     view: Note
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/Nozzle
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/Nozzle
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/Nozzle
     view: Nozzle
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/OperatedValveReference
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/OperatedValveReference
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/OperatedValveReference
     view: OperatedValveReference
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeOffPageConnectorReferenceByNumber
     view: PipeOffPageConnectorReferenceByNumber
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeReducer
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeReducer
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeReducer
     view: PipeReducer
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipeTee
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipeTee
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipeTee
     view: PipeTee
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSegment
     view: PipingNetworkSegment
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PipingNetworkSystem
     view: PipingNetworkSystem
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlantSystem
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlantSystem
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlantSystem
     view: PlantSystem
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PlateHeatExchanger
     view: PlateHeatExchanger
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PressureVessel
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PressureVessel
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PressureVessel
     view: PressureVessel
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessInstrumentationFunction
     view: ProcessInstrumentationFunction
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessPlant
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessPlant
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessPlant
     view: ProcessPlant
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ProcessSignalGeneratingFunction
     view: ProcessSignalGeneratingFunction
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/PropertyBreak
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/PropertyBreak
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/PropertyBreak
     view: PropertyBreak
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/RotaryPump
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/RotaryPump
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/RotaryPump
     view: RotaryPump
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SafetyValveOrFitting
     view: SafetyValveOrFitting
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalConveyingFunction
     view: SignalConveyingFunction
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/SignalOffPageConnectorReferenceByNumber
     view: SignalOffPageConnectorReferenceByNumber

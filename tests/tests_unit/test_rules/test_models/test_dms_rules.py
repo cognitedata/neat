@@ -16,7 +16,7 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.data_types import String
 from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
@@ -1266,7 +1266,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, no_properties", list(case_unknown_value_types()))
     def test_case_unknown_value_types(self, raw: dict[str, dict[str, Any]], no_properties: int) -> None:
-        rules = InformationRules.model_validate(raw)
+        rules = ConceptualDataModel.model_validate(raw)
         dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules)
         assert len(dms_rules.properties) == no_properties
 
@@ -1338,7 +1338,7 @@ class TestDMSRules:
         alice_rules = DMSInputRules.load(alice_spreadsheet).as_verified_rules()
         info_rules = DMSToInformation().transform(alice_rules)
 
-        assert isinstance(info_rules, InformationRules)
+        assert isinstance(info_rules, ConceptualDataModel)
 
     def test_dump_skip_default_space_and_version(self) -> None:
         dms_rules = DMSInputRules(

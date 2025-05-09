@@ -135,9 +135,9 @@ SpaceType = Annotated[
     AfterValidator(_external_id_validation_factory(EntityTypes.space, "")),
 ]
 
-InformationPropertyType = Annotated[
+ConceptualPropertyType = Annotated[
     str,
-    AfterValidator(_external_id_validation_factory(EntityTypes.information_property, "Property column in properties")),
+    AfterValidator(_external_id_validation_factory(EntityTypes.conceptual_property, "Property column in properties")),
 ]
 DmsPropertyType = Annotated[
     str,

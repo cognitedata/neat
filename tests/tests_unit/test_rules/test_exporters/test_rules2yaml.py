@@ -2,7 +2,7 @@ from pathlib import Path
 
 from cognite.neat.core._data_model.exporters import YAMLExporter
 from cognite.neat.core._data_model.importers import YAMLImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 
 
 class TestYAMLExporter:
@@ -15,7 +15,7 @@ class TestYAMLExporter:
 
         assert alice_rules.dump() == recreated_rules.dump()
 
-    def test_export_import_information_rules(self, david_rules: InformationRules, tmp_path: Path) -> None:
+    def test_export_import_information_rules(self, david_rules: ConceptualDataModel, tmp_path: Path) -> None:
         exporter = YAMLExporter(files="single", output="yaml")
         exporter.export_to_file(david_rules, tmp_path / "tmp.yaml")
         importer = YAMLImporter.from_file(tmp_path / "tmp.yaml")

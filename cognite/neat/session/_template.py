@@ -7,8 +7,8 @@ from cognite.neat.core._constants import BASE_MODEL
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.models import InformationInputRules
-from cognite.neat.core._data_model.models._base_rules import RoleTypes
+from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
+from cognite.neat.core._data_model.models._base_verified import RoleTypes
 from cognite.neat.core._data_model.models.dms import DMSValidation
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
@@ -185,10 +185,10 @@ class TemplateAPI:
             output_path = Path(output)
 
         with catch_issues() as issues:
-            read: ReadRules[InformationInputRules] = ExcelImporter(path).to_rules()
+            read: ReadRules[UnverifiedConceptualDataModel] = ExcelImporter(path).to_rules()
             if read.rules is not None:
                 # If rules are None there will be issues that are already caught.
-                if not isinstance(read.rules, InformationInputRules):
+                if not isinstance(read.rules, UnverifiedConceptualDataModel):
                     raise NeatSessionError(f"The input {reader.name} must contain an InformationInputRules object. ")
                 if self._state.client is None:
                     raise NeatSessionError("Client must be set in the session to run the extension.")

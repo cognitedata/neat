@@ -12,7 +12,7 @@ data_product:
     created: '2025-01-08T06:40:43.340000'
     creator: Cognite
     external_id: DataProduct
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1
     name: data_product data model
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_data_product/DataProduct/v1
@@ -51,7 +51,7 @@ data_product:
     view_property: children
   - container: sp_windfarm:ClassicAsset
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/classicExternalId
@@ -61,7 +61,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicAsset
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
@@ -71,7 +71,7 @@ data_product:
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/description
@@ -98,7 +98,7 @@ data_product:
     view_property: files
   - container: sp_windfarm:ClassicAsset
     container_property: geoLocation
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
@@ -107,7 +107,7 @@ data_product:
     view_property: geoLocation
   - container: sp_windfarm:ClassicAsset
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
@@ -118,7 +118,7 @@ data_product:
     container_property: name
     immutable: false
     index: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/name
@@ -129,7 +129,7 @@ data_product:
     container: cdf_cdm:CogniteAsset
     container_property: assetHierarchy_parent
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
@@ -179,7 +179,7 @@ data_product:
     container_property: source
     immutable: false
     index: source
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/source
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/source
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/source
@@ -255,7 +255,7 @@ data_product:
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/labels
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
@@ -273,7 +273,7 @@ data_product:
     view_property: timeSeries
   - container: sp_windfarm:ClassicDataSet
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/classicExternalId
@@ -282,7 +282,7 @@ data_product:
     view_property: classicExternalId
   - container: sp_windfarm:ClassicDataSet
     container_property: description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
@@ -291,7 +291,7 @@ data_product:
     view_property: description
   - container: sp_windfarm:ClassicDataSet
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
@@ -300,7 +300,7 @@ data_product:
     view_property: metadata
   - container: sp_windfarm:ClassicDataSet
     container_property: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
@@ -309,7 +309,7 @@ data_product:
     view_property: name
   - container: sp_windfarm:ClassicDataSet
     container_property: writeProtected
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
@@ -524,7 +524,7 @@ data_product:
     container: cdf_cdm:CogniteActivity
     container_property: assets
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
@@ -533,7 +533,7 @@ data_product:
     view_property: assets
   - container: sp_windfarm:ClassicEvent
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/classicExternalId
@@ -543,7 +543,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicEvent
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
@@ -553,7 +553,7 @@ data_product:
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/description
@@ -564,7 +564,7 @@ data_product:
     container_property: endTime
     immutable: false
     index: endTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
@@ -585,7 +585,7 @@ data_product:
     view_property: equipment
   - container: sp_windfarm:ClassicEvent
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
@@ -630,7 +630,7 @@ data_product:
     container_property: source
     immutable: false
     index: source
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/source
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/source
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/source
@@ -707,7 +707,7 @@ data_product:
     container_property: startTime
     immutable: false
     index: startTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
@@ -716,7 +716,7 @@ data_product:
     view_property: startTime
   - container: sp_windfarm:ClassicEvent
     container_property: subtype
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
@@ -747,7 +747,7 @@ data_product:
     view_property: timeSeries
   - container: sp_windfarm:ClassicEvent
     container_property: type
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/type
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/type
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/type
@@ -768,7 +768,7 @@ data_product:
     container: cdf_cdm:CogniteFile
     container_property: assets
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
@@ -777,7 +777,7 @@ data_product:
     view_property: assets
   - container: sp_windfarm:ClassicFile
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/classicExternalId
@@ -787,7 +787,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicFile
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
@@ -807,7 +807,7 @@ data_product:
   - container: cdf_cdm:CogniteFile
     container_property: directory
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/directory
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/directory
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/directory
@@ -825,7 +825,7 @@ data_product:
     view_property: equipment
   - container: sp_windfarm:ClassicFile
     container_property: geoLocation
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
@@ -847,7 +847,7 @@ data_product:
     view_property: isUploaded
   - container: sp_windfarm:ClassicFile
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
@@ -857,7 +857,7 @@ data_product:
   - container: cdf_cdm:CogniteFile
     container_property: mimeType
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
@@ -868,7 +868,7 @@ data_product:
     container_property: name
     immutable: false
     index: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/name
@@ -877,7 +877,7 @@ data_product:
     view_property: name
   - container: sp_windfarm:ClassicFile
     container_property: securityCategories
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
@@ -889,7 +889,7 @@ data_product:
     container_property: source
     immutable: false
     index: source
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/source
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/source
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/source
@@ -911,7 +911,7 @@ data_product:
     container_property: sourceCreatedTime
     immutable: false
     index: sourceCreatedTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
@@ -944,7 +944,7 @@ data_product:
     container_property: sourceUpdatedTime
     immutable: false
     index: sourceUpdatedTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
@@ -965,7 +965,7 @@ data_product:
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/labels
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/labels
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/labels
@@ -985,7 +985,7 @@ data_product:
     view_property: uploadedTime
   - container: sp_windfarm:ClassicLabel
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/classicExternalId
@@ -995,7 +995,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicLabel
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
@@ -1004,7 +1004,7 @@ data_product:
     view_property: dataSetId
   - container: sp_windfarm:ClassicLabel
     container_property: description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/description
@@ -1013,7 +1013,7 @@ data_product:
     view_property: description
   - container: sp_windfarm:ClassicLabel
     container_property: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/name
@@ -1022,7 +1022,7 @@ data_product:
     view_property: name
   - container: sp_windfarm:ClassicRelationship
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/classicExternalId
@@ -1031,7 +1031,7 @@ data_product:
     view_property: classicExternalId
   - container: sp_windfarm:ClassicRelationship
     container_property: confidence
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
@@ -1041,7 +1041,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicRelationship
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
@@ -1050,7 +1050,7 @@ data_product:
     view_property: dataSetId
   - container: sp_windfarm:ClassicRelationship
     container_property: endTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
@@ -1058,7 +1058,7 @@ data_product:
     view: ClassicRelationship
     view_property: endTime
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
@@ -1067,7 +1067,7 @@ data_product:
     view_property: labels
   - container: sp_windfarm:ClassicRelationship
     container_property: sourceType
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
@@ -1076,7 +1076,7 @@ data_product:
     view_property: sourceType
   - container: sp_windfarm:ClassicRelationship
     container_property: startTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
@@ -1085,7 +1085,7 @@ data_product:
     view_property: startTime
   - container: sp_windfarm:ClassicRelationship
     container_property: targetType
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
@@ -1095,7 +1095,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicSequence
     container_property: assetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
@@ -1104,7 +1104,7 @@ data_product:
     view_property: assetId
   - container: sp_windfarm:ClassicSequence
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/classicExternalId
@@ -1113,7 +1113,7 @@ data_product:
     view_property: classicExternalId
   - container: sp_windfarm:ClassicSequence
     container_property: columns
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/columns
     max_count: 400
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
@@ -1123,7 +1123,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicSequence
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
@@ -1132,7 +1132,7 @@ data_product:
     view_property: dataSetId
   - container: sp_windfarm:ClassicSequence
     container_property: description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/description
@@ -1141,7 +1141,7 @@ data_product:
     view_property: description
   - container: sp_windfarm:ClassicSequence
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
@@ -1150,7 +1150,7 @@ data_product:
     view_property: metadata
   - container: sp_windfarm:ClassicSequence
     container_property: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/name
@@ -1159,7 +1159,7 @@ data_product:
     view_property: name
   - container: sp_windfarm:ClassicSequence
     container_property: rows
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/rows
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
@@ -1208,7 +1208,7 @@ data_product:
   - container: cdf_cdm:CogniteDescribable
     container_property: name
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
@@ -1259,7 +1259,7 @@ data_product:
     container: cdf_cdm:CogniteTimeSeries
     container_property: assets
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
@@ -1268,7 +1268,7 @@ data_product:
     view_property: assets
   - container: sp_windfarm:ClassicTimeSeries
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/classicExternalId
@@ -1278,7 +1278,7 @@ data_product:
   - connection: direct
     container: sp_windfarm:ClassicTimeSeries
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
@@ -1288,7 +1288,7 @@ data_product:
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
@@ -1311,7 +1311,7 @@ data_product:
     container_property: isStep
     default: false
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
     max_count: 1
     min_count: 1
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
@@ -1320,7 +1320,7 @@ data_product:
     view_property: isStep
   - container: sp_windfarm:ClassicTimeSeries
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
@@ -1331,7 +1331,7 @@ data_product:
     container_property: name
     immutable: false
     index: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
@@ -1397,7 +1397,7 @@ data_product:
   - container: cdf_cdm:CogniteTimeSeries
     container_property: sourceUnit
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
@@ -1429,7 +1429,7 @@ data_product:
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
@@ -1439,7 +1439,7 @@ data_product:
   - container: cdf_cdm:CogniteTimeSeries
     container_property: type
     immutable: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
     max_count: 1
     min_count: 1
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
@@ -1449,12 +1449,12 @@ data_product:
   views:
   - filter_: hasData(cdf_cdm:CogniteAsset,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteVisualizable,sp_windfarm:ClassicAsset)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset
     view: ClassicAsset
   - filter_: hasData(sp_windfarm:ClassicDataSet)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet
     view: ClassicDataSet
   - description: Equipment represents physical supplies or devices.
@@ -1465,38 +1465,38 @@ data_product:
     view: ClassicEquipment
   - filter_: hasData(cdf_cdm:CogniteActivity,cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSchedulable,cdf_cdm:CogniteSourceable,sp_windfarm:ClassicEvent)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent
     view: ClassicEvent
   - filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteFile,cdf_cdm:CogniteSourceable,sp_windfarm:ClassicFile)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile
     view: ClassicFile
   - filter_: hasData(sp_windfarm:ClassicLabel)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel
     view: ClassicLabel
   - filter_: hasData(sp_windfarm:ClassicRelationship)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship
     view: ClassicRelationship
   - filter_: hasData(sp_windfarm:ClassicSequence)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence
     view: ClassicSequence
   - description: A source system that provides data to the data model.
     filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceSystem,sp_windfarm:ClassicSourceSystem)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     view: ClassicSourceSystem
   - filter_: hasData(cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteTimeSeries,sp_windfarm:ClassicTimeSeries)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     view: ClassicTimeSeries
 instances:
@@ -2207,7 +2207,7 @@ rules:
     created: '2025-01-08T06:40:43.340000'
     creator: Cognite
     external_id: WindFarm
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1
     name: Wind Farm
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_windfarm/WindFarm/v1
@@ -2236,7 +2236,7 @@ rules:
     view_property: children
   - container: ClassicAsset
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/classicExternalId
@@ -2246,7 +2246,7 @@ rules:
   - connection: direct
     container: ClassicAsset
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
@@ -2256,7 +2256,7 @@ rules:
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/description
@@ -2283,7 +2283,7 @@ rules:
     view_property: files
   - container: ClassicAsset
     container_property: geoLocation
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
@@ -2292,7 +2292,7 @@ rules:
     view_property: geoLocation
   - container: ClassicAsset
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
@@ -2303,7 +2303,7 @@ rules:
     container_property: name
     immutable: false
     index: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/name
@@ -2314,7 +2314,7 @@ rules:
     container: cdf_cdm:CogniteAsset
     container_property: assetHierarchy_parent
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
@@ -2353,7 +2353,7 @@ rules:
     container_property: source
     immutable: false
     index: source
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/source
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/source
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/source
@@ -2363,7 +2363,7 @@ rules:
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/labels
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset/labels
@@ -2381,7 +2381,7 @@ rules:
     view_property: timeSeries
   - container: ClassicDataSet
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/classicExternalId
@@ -2390,7 +2390,7 @@ rules:
     view_property: classicExternalId
   - container: ClassicDataSet
     container_property: description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/description
@@ -2399,7 +2399,7 @@ rules:
     view_property: description
   - container: ClassicDataSet
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
@@ -2408,7 +2408,7 @@ rules:
     view_property: metadata
   - container: ClassicDataSet
     container_property: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/name
@@ -2417,7 +2417,7 @@ rules:
     view_property: name
   - container: ClassicDataSet
     container_property: writeProtected
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
@@ -2491,7 +2491,7 @@ rules:
     container: cdf_cdm:CogniteActivity
     container_property: assets
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
@@ -2500,7 +2500,7 @@ rules:
     view_property: assets
   - container: ClassicEvent
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/classicExternalId
@@ -2510,7 +2510,7 @@ rules:
   - connection: direct
     container: ClassicEvent
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
@@ -2520,7 +2520,7 @@ rules:
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/description
@@ -2531,7 +2531,7 @@ rules:
     container_property: endTime
     immutable: false
     index: endTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
@@ -2552,7 +2552,7 @@ rules:
     view_property: equipment
   - container: ClassicEvent
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
@@ -2564,7 +2564,7 @@ rules:
     container_property: source
     immutable: false
     index: source
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/source
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/source
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/source
@@ -2575,7 +2575,7 @@ rules:
     container_property: startTime
     immutable: false
     index: startTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
@@ -2584,7 +2584,7 @@ rules:
     view_property: startTime
   - container: ClassicEvent
     container_property: subtype
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
@@ -2605,7 +2605,7 @@ rules:
     view_property: timeSeries
   - container: ClassicEvent
     container_property: type
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent/type
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/type
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent/type
@@ -2616,7 +2616,7 @@ rules:
     container: cdf_cdm:CogniteFile
     container_property: assets
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
@@ -2625,7 +2625,7 @@ rules:
     view_property: assets
   - container: ClassicFile
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/classicExternalId
@@ -2635,7 +2635,7 @@ rules:
   - connection: direct
     container: ClassicFile
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
@@ -2645,7 +2645,7 @@ rules:
   - container: cdf_cdm:CogniteFile
     container_property: directory
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/directory
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/directory
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/directory
@@ -2663,7 +2663,7 @@ rules:
     view_property: equipment
   - container: ClassicFile
     container_property: geoLocation
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
@@ -2672,7 +2672,7 @@ rules:
     view_property: geoLocation
   - container: ClassicFile
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/metadata
@@ -2682,7 +2682,7 @@ rules:
   - container: cdf_cdm:CogniteFile
     container_property: mimeType
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
@@ -2693,7 +2693,7 @@ rules:
     container_property: name
     immutable: false
     index: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/name
@@ -2702,7 +2702,7 @@ rules:
     view_property: name
   - container: ClassicFile
     container_property: securityCategories
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
@@ -2714,7 +2714,7 @@ rules:
     container_property: source
     immutable: false
     index: source
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/source
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/source
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/source
@@ -2725,7 +2725,7 @@ rules:
     container_property: sourceCreatedTime
     immutable: false
     index: sourceCreatedTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
@@ -2736,7 +2736,7 @@ rules:
     container_property: sourceUpdatedTime
     immutable: false
     index: sourceUpdatedTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
@@ -2746,7 +2746,7 @@ rules:
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile/labels
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/labels
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile/labels
@@ -2755,7 +2755,7 @@ rules:
     view_property: tags
   - container: ClassicLabel
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/classicExternalId
@@ -2765,7 +2765,7 @@ rules:
   - connection: direct
     container: ClassicLabel
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
@@ -2774,7 +2774,7 @@ rules:
     view_property: dataSetId
   - container: ClassicLabel
     container_property: description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/description
@@ -2783,7 +2783,7 @@ rules:
     view_property: description
   - container: ClassicLabel
     container_property: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel/name
@@ -2792,7 +2792,7 @@ rules:
     view_property: name
   - container: ClassicRelationship
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/classicExternalId
@@ -2801,7 +2801,7 @@ rules:
     view_property: classicExternalId
   - container: ClassicRelationship
     container_property: confidence
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
@@ -2811,7 +2811,7 @@ rules:
   - connection: direct
     container: ClassicRelationship
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
@@ -2820,7 +2820,7 @@ rules:
     view_property: dataSetId
   - container: ClassicRelationship
     container_property: endTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
@@ -2828,7 +2828,7 @@ rules:
     view: ClassicRelationship
     view_property: endTime
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
@@ -2837,7 +2837,7 @@ rules:
     view_property: labels
   - container: ClassicRelationship
     container_property: sourceType
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
@@ -2846,7 +2846,7 @@ rules:
     view_property: sourceType
   - container: ClassicRelationship
     container_property: startTime
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
@@ -2855,7 +2855,7 @@ rules:
     view_property: startTime
   - container: ClassicRelationship
     container_property: targetType
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
@@ -2865,7 +2865,7 @@ rules:
   - connection: direct
     container: ClassicSequence
     container_property: assetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
@@ -2874,7 +2874,7 @@ rules:
     view_property: assetId
   - container: ClassicSequence
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/classicExternalId
@@ -2883,7 +2883,7 @@ rules:
     view_property: classicExternalId
   - container: ClassicSequence
     container_property: columns
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/columns
     max_count: 400
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/columns
@@ -2893,7 +2893,7 @@ rules:
   - connection: direct
     container: ClassicSequence
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
@@ -2902,7 +2902,7 @@ rules:
     view_property: dataSetId
   - container: ClassicSequence
     container_property: description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/description
@@ -2911,7 +2911,7 @@ rules:
     view_property: description
   - container: ClassicSequence
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
@@ -2920,7 +2920,7 @@ rules:
     view_property: metadata
   - container: ClassicSequence
     container_property: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/name
@@ -2929,7 +2929,7 @@ rules:
     view_property: name
   - container: ClassicSequence
     container_property: rows
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/rows
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence/rows
@@ -2948,7 +2948,7 @@ rules:
   - container: cdf_cdm:CogniteDescribable
     container_property: name
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem/name
@@ -2969,7 +2969,7 @@ rules:
     container: cdf_cdm:CogniteTimeSeries
     container_property: assets
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
@@ -2978,7 +2978,7 @@ rules:
     view_property: assets
   - container: ClassicTimeSeries
     container_property: classicExternalId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/classicExternalId
@@ -2988,7 +2988,7 @@ rules:
   - connection: direct
     container: ClassicTimeSeries
     container_property: dataSetId
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
@@ -2998,7 +2998,7 @@ rules:
   - container: cdf_cdm:CogniteDescribable
     container_property: description
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
@@ -3021,7 +3021,7 @@ rules:
     container_property: isStep
     default: false
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
     max_count: 1
     min_count: 1
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
@@ -3030,7 +3030,7 @@ rules:
     view_property: isStep
   - container: ClassicTimeSeries
     container_property: metadata
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
@@ -3041,7 +3041,7 @@ rules:
     container_property: name
     immutable: false
     index: name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
@@ -3063,7 +3063,7 @@ rules:
   - container: cdf_cdm:CogniteTimeSeries
     container_property: sourceUnit
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
@@ -3073,7 +3073,7 @@ rules:
   - container: cdf_cdm:CogniteDescribable
     container_property: tags
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
     max_count: 1000
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
@@ -3083,7 +3083,7 @@ rules:
   - container: cdf_cdm:CogniteTimeSeries
     container_property: type
     immutable: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
     max_count: 1
     min_count: 1
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
@@ -3094,7 +3094,7 @@ rules:
     container: cdf_cdm:CogniteTimeSeries
     container_property: unit
     immutable: false
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
@@ -3289,11 +3289,11 @@ rules:
     view: cdf_cdm:CogniteVisualizable(version=v1)
   - implements: cdf_cdm:CogniteAsset(version=v1)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicAsset
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicAsset
     view: ClassicAsset
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicDataSet
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicDataSet
     view: ClassicDataSet
   - description: Equipment represents physical supplies or devices.
@@ -3304,34 +3304,34 @@ rules:
     view: ClassicEquipment
   - implements: cdf_cdm:CogniteActivity(version=v1)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicEvent
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicEvent
     view: ClassicEvent
   - implements: cdf_cdm:CogniteFile(version=v1)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicFile
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicFile
     view: ClassicFile
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicLabel
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicLabel
     view: ClassicLabel
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicRelationship
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicRelationship
     view: ClassicRelationship
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSequence
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSequence
     view: ClassicSequence
   - description: A source system that provides data to the data model.
     implements: cdf_cdm:CogniteSourceSystem(version=v1)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicSourceSystem
     view: ClassicSourceSystem
   - implements: cdf_cdm:CogniteTimeSeries(version=v1)
     in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/ClassicDataModel/v1/ClassicTimeSeries
     view: ClassicTimeSeries

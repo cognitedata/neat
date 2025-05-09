@@ -7,7 +7,13 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import DMSInputRules, InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSInputRules
+from cognite.neat.core._data_model.models.conceptual import (
+    UnverifiedConceptualClass,
+    UnverifiedConceptualDataModel,
+    UnverifiedConceptualMetadata,
+    UnverifiedConceptualProperty,
+)
 from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
     DMSInputMetadata,
@@ -18,12 +24,6 @@ from cognite.neat.core._data_model.models.dms._rules import DMSRules
 from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ViewEntity,
-)
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
-    InformationInputRules,
 )
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
@@ -62,15 +62,15 @@ class TestStandardizeNaming:
 
     def test_transform_information(self) -> None:
         class_name = "not_a_good_cLass_NAME"
-        information = InformationInputRules(
-            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
+        information = UnverifiedConceptualDataModel(
+            metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
+                UnverifiedConceptualProperty(class_name, "TAG_NAME", "string", max_count=1),
             ],
-            classes=[InformationInputClass(class_name)],
+            classes=[UnverifiedConceptualClass(class_name)],
         )
 
-        res: InformationRules = StandardizeNaming().transform(information.as_verified_rules())
+        res: ConceptualDataModel = StandardizeNaming().transform(information.as_verified_rules())
 
         assert res.properties[0].property_ == "tagName"
         assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
@@ -80,17 +80,17 @@ class TestStandardizeNaming:
 class TestToInformationCompliantEntities:
     def test_transform_information(self) -> None:
         class_name = "not_a_good_cLass_NAME"
-        information = InformationInputRules(
-            metadata=InformationInputMetadata("my_space", "MyModel", "me", "v1"),
+        information = UnverifiedConceptualDataModel(
+            metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                InformationInputProperty(class_name, "TAG_NAME", "string", max_count=1),
-                InformationInputProperty(class_name, "State(Previous)", "string", max_count=1),
-                InformationInputProperty(class_name, "P&ID", "string", max_count=1),
+                UnverifiedConceptualProperty(class_name, "TAG_NAME", "string", max_count=1),
+                UnverifiedConceptualProperty(class_name, "State(Previous)", "string", max_count=1),
+                UnverifiedConceptualProperty(class_name, "P&ID", "string", max_count=1),
             ],
-            classes=[InformationInputClass(class_name)],
+            classes=[UnverifiedConceptualClass(class_name)],
         )
 
-        res: InformationRules = (
+        res: ConceptualDataModel = (
             ToDMSCompliantEntities(rename_warning="raise")
             .transform(ReadRules(information, {}))
             .rules.as_verified_rules()
@@ -105,7 +105,7 @@ class TestToInformationCompliantEntities:
 
 
 class TestRulesSubsetting:
-    def test_subset_information_rules(self, david_rules: InformationRules) -> None:
+    def test_subset_information_rules(self, david_rules: ConceptualDataModel) -> None:
         class_ = ClassEntity.load("power:GeoLocation")
         subset = SubsetInformationRules({class_}).transform(david_rules)
 
@@ -134,12 +134,12 @@ class TestRulesSubsetting:
 
 class TestAddCogniteProperties:
     def test_add_cognite_properties(self, cognite_core_schema: DMSSchema) -> None:
-        input_rules = InformationInputRules(
-            metadata=InformationInputMetadata("my_space", "MyModel", "v1", "doctrino"),
+        input_rules = UnverifiedConceptualDataModel(
+            metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "v1", "doctrino"),
             properties=[],
             classes=[
-                InformationInputClass("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
-                InformationInputClass("WindTurbine", implements="PowerGeneratingUnit"),
+                UnverifiedConceptualClass("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
+                UnverifiedConceptualClass("WindTurbine", implements="PowerGeneratingUnit"),
             ],
         )
         read_model = cognite_core_schema.as_read_model()

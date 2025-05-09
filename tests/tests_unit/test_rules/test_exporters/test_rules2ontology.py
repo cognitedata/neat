@@ -3,13 +3,13 @@ from pathlib import Path
 from rdflib import DCTERMS, RDF, RDFS, Graph, Literal, Namespace
 
 from cognite.neat.core._data_model.exporters._rules2ontology import SemanticDataModelExporter
-from cognite.neat.core._data_model.models import InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel
 
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
 
 
 class TestOntologyExporter:
-    def test_export_semantic_data_model(self, david_rules: InformationRules, tmp_path: Path) -> None:
+    def test_export_semantic_data_model(self, david_rules: ConceptualDataModel, tmp_path: Path) -> None:
         exporter = SemanticDataModelExporter()
         ttl_path = tmp_path / "test.ttl"
 

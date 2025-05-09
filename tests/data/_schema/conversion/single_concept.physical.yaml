@@ -5,7 +5,7 @@ metadata:
   created: '2025-04-01T12:42:41.515473'
   creator: doctrino
   external_id: vanillaModel
-  logical: http://purl.org/cognite/neat/data-model/verified/logical/my_space/vanillaModel/v1
+  logical: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1
   role: DMS Architect
   space: my_space
   updated: '2025-04-01T12:42:41.515473'
@@ -13,7 +13,7 @@ metadata:
 properties:
 - container: Sensor
   container_property: maxTemperature
-  logical: http://purl.org/cognite/neat/data-model/verified/logical/my_space/vanillaModel/v1/Sensor/maxTemperature
+  logical: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/maxTemperature
   max_count: .inf
   min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/maxTemperature
@@ -22,7 +22,7 @@ properties:
   view_property: maxTemperature
 - container: Sensor
   container_property: minTemperature
-  logical: http://purl.org/cognite/neat/data-model/verified/logical/my_space/vanillaModel/v1/Sensor/minTemperature
+  logical: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/minTemperature
   max_count: .inf
   min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/minTemperature
@@ -31,6 +31,6 @@ properties:
   view_property: minTemperature
 views:
 - implements: ''
-  logical: http://purl.org/cognite/neat/data-model/verified/logical/my_space/vanillaModel/v1/Sensor
+  logical: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor
   view: Sensor

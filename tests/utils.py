@@ -13,7 +13,11 @@ from cognite.client.data_classes.data_modeling.instances import Instance, Proper
 from rdflib import Namespace
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model._shared import DMSRules, InformationRules, VerifiedRules
+from cognite.neat.core._data_model._shared import (
+    ConceptualDataModel,
+    DMSRules,
+    VerifiedRules,
+)
 from cognite.neat.core._data_model.models.data_types import DataType, String
 from cognite.neat.core._data_model.models.entities import ClassEntity
 
@@ -104,7 +108,7 @@ def get_all_subclasses(cls: T_Type, only_concrete: bool = False) -> list[T_Type]
 
 
 def normalize_neat_id_in_rules(rules: VerifiedRules) -> VerifiedRules:
-    if isinstance(rules, InformationRules):
+    if isinstance(rules, ConceptualDataModel):
         for i, class_ in enumerate(rules.classes):
             class_.neatId = DEFAULT_NAMESPACE[f"Class_{i}"]
         for i, property_ in enumerate(rules.properties):

@@ -20,12 +20,17 @@ from cognite.neat.core._data_model._shared import VerifiedRules
 from cognite.neat.core._data_model.models import (
     SheetRow,
 )
-from cognite.neat.core._data_model.models._base_rules import BaseMetadata, RoleTypes
+from cognite.neat.core._data_model.models._base_verified import (
+    BaseVerifiedMetadata,
+    RoleTypes,
+)
+from cognite.neat.core._data_model.models.conceptual._verified import (
+    ConceptualDataModel,
+)
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
 )
 from cognite.neat.core._data_model.models.dms._rules import DMSRules
-from cognite.neat.core._data_model.models.information._rules import InformationRules
 from cognite.neat.core._utils.spreadsheet import (
     find_column_with_value,
     generate_data_validation,
@@ -140,14 +145,14 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        rules_model = DMSRules if role == RoleTypes.dms else InformationRules
+        rules_model = DMSRules if role == RoleTypes.dms else ConceptualDataModel
 
         headers_by_sheet = rules_model.headers_by_sheet(by_alias=True)
         headers_by_sheet.pop("Metadata")
 
         self._write_metadata_sheet(
             workbook,
-            cast(BaseMetadata, rules_model.model_fields["metadata"].annotation).default().model_dump(),
+            cast(BaseVerifiedMetadata, rules_model.model_fields["metadata"].annotation).default().model_dump(),
         )
 
         for sheet_name, headers in headers_by_sheet.items():
@@ -185,7 +190,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
             self._write_sheets(workbook, dumped_reference_rules, reference_rules, sheet_prefix=prefix)
             self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
 
-        if isinstance(rules, InformationRules) and rules.prefixes:
+        if isinstance(rules, ConceptualDataModel) and rules.prefixes:
             self._write_prefixes_sheet(workbook, rules.prefixes)
 
         if self._styling_level > 0:

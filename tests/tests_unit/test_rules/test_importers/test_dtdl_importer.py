@@ -2,7 +2,7 @@ import pytest
 
 from cognite.neat.core._data_model.importers import DTDLImporter
 from cognite.neat.core._data_model.importers._dtdl2rules.spec import DTMI, Interface
-from cognite.neat.core._data_model.models import InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel
 from cognite.neat.core._data_model.transformers import VerifyInformationRules
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._issues.errors import (
@@ -44,7 +44,7 @@ class TestDTDLImporter:
             rules = VerifyInformationRules().transform(read_rules)
 
         assert issues == expected_issues
-        assert isinstance(rules, InformationRules)
+        assert isinstance(rules, ConceptualDataModel)
         assert len(rules.classes) == 2
 
     @pytest.mark.skip("Will be fixed in separate PR")

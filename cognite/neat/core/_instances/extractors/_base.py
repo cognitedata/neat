@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from rdflib import URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model.models import InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.auxiliary import class_html_doc
 
@@ -38,7 +38,7 @@ class KnowledgeGraphExtractor(BaseExtractor):
     """A knowledge graph extractor extracts triples with a schema"""
 
     @abstractmethod
-    def get_information_rules(self) -> InformationRules:
+    def get_information_rules(self) -> ConceptualDataModel:
         """Returns the information rules that the extractor uses."""
         raise NotImplementedError()
 
