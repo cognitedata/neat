@@ -10,6 +10,14 @@ from cognite.neat.core._constants import (
     CLASSIC_CDF_NAMESPACE,
     get_default_prefixes_and_namespaces,
 )
+from cognite.neat.core._data_model import catalog, importers
+from cognite.neat.core._data_model.importers import BaseImporter
+from cognite.neat.core._data_model.models.entities._single_value import ViewEntity
+from cognite.neat.core._data_model.transformers import ClassicPrepareCore
+from cognite.neat.core._data_model.transformers._converters import (
+    ToEnterpriseModel,
+    _SubsetEditableCDMRules,
+)
 from cognite.neat.core._graph import examples as instances_examples
 from cognite.neat.core._graph import extractors
 from cognite.neat.core._graph.extractors._classic_cdf._base import InstanceIdPrefix
@@ -28,14 +36,6 @@ from cognite.neat.core._graph.transformers._prune_graph import (
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import MissingCogniteClientWarning
-from cognite.neat.core._data_model import catalog, importers
-from cognite.neat.core._data_model.importers import BaseImporter
-from cognite.neat.core._data_model.models.entities._single_value import ViewEntity
-from cognite.neat.core._data_model.transformers import ClassicPrepareCore
-from cognite.neat.core._data_model.transformers._converters import (
-    ToEnterpriseModel,
-    _SubsetEditableCDMRules,
-)
 from cognite.neat.core._utils.mapping import create_predicate_mapping, create_type_mapping
 from cognite.neat.core._utils.read import read_conceptual_model
 from cognite.neat.core._utils.reader import NeatReader
