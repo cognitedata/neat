@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
+from unittest.mock import MagicMock
 
 from cognite.client.testing import CogniteClientMock
 
@@ -9,6 +10,7 @@ from cognite.neat.core._client._api_client import NeatClient
 from ._api.data_modeling_loaders import DataModelLoaderAPI
 from ._api.neat_instances import NeatInstancesAPI
 from ._api.schema import SchemaAPI
+from ._api.statistics import StatisticsAPI
 
 
 class NeatClientMock(CogniteClientMock):
@@ -22,6 +24,8 @@ class NeatClientMock(CogniteClientMock):
             super().__init__(*args, **kwargs)
             return
         super().__init__(*args, **kwargs)
+        self.instance_statistics = MagicMock(spec_set=StatisticsAPI)
+
         self.schema = SchemaAPI(self)
         self.loaders = DataModelLoaderAPI(self)
         self.instances = NeatInstancesAPI(self)
