@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import cast
 from warnings import WarningMessage
 
@@ -10,7 +11,7 @@ from .errors import NeatValueError, SpreadsheetError
 
 
 def from_pydantic_errors(
-    errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
+    errors: list[ErrorDetails], read_info_by_sheet: Mapping[str, object] | None = None
 ) -> list[NeatError]:
     read_info_by_sheet = read_info_by_sheet or {}
     return [
@@ -29,13 +30,15 @@ def from_warning(warning: WarningMessage) -> NeatWarning | None:
     return None
 
 
-def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead]) -> NeatError:
+def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: Mapping[str, object]) -> NeatError:
     neat_error = _create_neat_value_error(error)
     location = error["loc"]
 
     # only errors caused in model_validate will have location information
     if location:
-        return SpreadsheetError.create(location, neat_error, read_info_by_sheet.get(cast(str, location[0])))
+        read_info = read_info_by_sheet.get(cast(str, location[0]))
+        if isinstance(read_info, SpreadsheetRead | None):
+            return SpreadsheetError.create(location, neat_error, read_info)
 
     # errors that occur while for example parsing spreadsheet in input rules
     # will not have location information so we return neat_error as is

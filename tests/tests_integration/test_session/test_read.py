@@ -87,3 +87,8 @@ class TestRead:
         issues = neat.read.cdf.classic.graph(root_asset_external_id="Utsira")
 
         assert len(issues) == 0
+
+    def test_read_view(self, cognite_client: CogniteClient) -> None:
+        neat: NeatSession = NeatSession(client=cognite_client)
+        issues = neat.read.cdf.view(("cdf_cdm", "CogniteAsset", "v1"), limit=5)
+        assert len(issues) == 0

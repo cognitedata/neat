@@ -1,10 +1,8 @@
 import warnings
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 
 from pydantic import ValidationError
-
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 from ._base import IssueList, MultiValueError, NeatError
 from ._factory import from_pydantic_errors, from_warning
@@ -26,7 +24,7 @@ def catch_warnings() -> Iterator[IssueList]:
 
 
 @contextmanager
-def catch_issues(read_info_by_sheet: dict[str, SpreadsheetRead] | None = None) -> Iterator[IssueList]:
+def catch_issues(read_info_by_sheet: Mapping[str, object] | None = None) -> Iterator[IssueList]:
     """This is an internal help function to handle issues and warnings.
 
     Args:

@@ -379,7 +379,11 @@ class SelectQueries(BaseQuery):
             entry["type"]: entry["instanceCount"]
             for entry in self.types_with_instance_and_property_count(remove_namespace=False, named_graph=named_graph)
         }
-        query = """SELECT ?type ?property (COUNT(DISTINCT ?instance) AS ?instanceCount)
+        query = """SELECT
+        ?type
+        ?property
+        (COUNT(DISTINCT ?value) as ?cardinality)
+        (COUNT(DISTINCT ?instance) AS ?instanceCount)
     WHERE {
       ?instance a ?type .
       ?instance ?property ?value .
@@ -391,10 +395,13 @@ class SelectQueries(BaseQuery):
             {
                 "type": urllib.parse.unquote(remove_namespace_from_uri(type_)) if remove_namespace else type_,
                 "property": urllib.parse.unquote(remove_namespace_from_uri(property)) if remove_namespace else property,
+                "cardinality": cast(RdfLiteral, cardinality).toPython(),
                 "instanceCount": cast(RdfLiteral, instance_count).toPython(),
                 "total": instance_count_by_type[type_],
             }
-            for type_, property, instance_count in list(cast(list[ResultRow], self.graph(named_graph).query(query)))
+            for type_, property, cardinality, instance_count in list(
+                cast(list[ResultRow], self.graph(named_graph).query(query))
+            )
         ]
 
     @overload

@@ -1,6 +1,8 @@
 from ._base import BaseImporter
 from ._dms2rules import DMSImporter
 from ._dtdl2rules import DTDLImporter
+from ._graph2model import GraphImporter
+from ._merge_importer import DMSMergeImporter
 from ._rdf import IMFImporter, InferenceImporter, OWLImporter, SubclassInferenceImporter
 from ._spreadsheet2rules import ExcelImporter
 from ._yaml2rules import YAMLImporter
@@ -8,8 +10,10 @@ from ._yaml2rules import YAMLImporter
 __all__ = [
     "BaseImporter",
     "DMSImporter",
+    "DMSMergeImporter",
     "DTDLImporter",
     "ExcelImporter",
+    "GraphImporter",
     "IMFImporter",
     "InferenceImporter",
     "OWLImporter",

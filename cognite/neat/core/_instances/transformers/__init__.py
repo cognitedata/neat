@@ -1,4 +1,5 @@
 from ._base import BaseTransformerStandardised
+from ._best_class_match import BestClassMatch
 from ._classic_cdf import (
     AddAssetDepth,
     AssetEventConnector,
@@ -17,6 +18,7 @@ from ._prune_graph import (
     PruneTypes,
 )
 from ._rdfpath import MakeConnectionOnExactMatch
+from ._set_type_by_id import SetRDFTypeById
 from ._value_type import ConnectionToLiteral, ConvertLiteral, LiteralToEntity, SetType, SplitMultiValueProperty
 
 __all__ = [
@@ -27,6 +29,7 @@ __all__ = [
     "AssetSequenceConnector",
     "AssetTimeSeriesConnector",
     "AttachPropertyFromTargetToSource",
+    "BestClassMatch",
     "ConnectionToLiteral",
     "ConvertLiteral",
     "LiteralToEntity",
@@ -37,6 +40,7 @@ __all__ = [
     "PruneInstancesOfUnknownType",
     "PruneTypes",
     "RelationshipAsEdgeTransformer",
+    "SetRDFTypeById",
     "SetType",
     "SplitMultiValueProperty",
 ]
@@ -62,4 +66,5 @@ Transformers = (
     | BaseTransformerStandardised
     | LookupRelationshipSourceTarget
     | SetType
+    | BestClassMatch
 )

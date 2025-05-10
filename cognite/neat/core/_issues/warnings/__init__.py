@@ -20,6 +20,7 @@ from ._general import (
     NotSupportedWarning,
     RegexViolationWarning,
 )
+from ._instances import MultiClassFoundWarning, NoClassFoundWarning, PartialClassFoundWarning
 from ._models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
@@ -62,10 +63,13 @@ __all__ = [
     "FileReadWarning",
     "FileTypeUnexpectedWarning",
     "MissingCogniteClientWarning",
+    "MultiClassFoundWarning",
     "NeatValueWarning",
+    "NoClassFoundWarning",
     "NotSupportedHasDataFilterLimitWarning",
     "NotSupportedViewContainerLimitWarning",
     "NotSupportedWarning",
+    "PartialClassFoundWarning",
     "PrincipleMatchingSpaceAndVersionWarning",
     "PrincipleOneModelOneSpaceWarning",
     "PrincipleSolutionBuildsOnEnterpriseWarning",

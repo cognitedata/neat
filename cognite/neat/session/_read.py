@@ -1,7 +1,8 @@
 import warnings
+from collections.abc import Set
 from typing import Any, Literal, cast
 
-from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
+from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier, ViewId, ViewIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat.core._client import NeatClient
@@ -20,6 +21,7 @@ from cognite.neat.core._data_model.transformers._converters import (
 from cognite.neat.core._instances import examples as instances_examples
 from cognite.neat.core._instances import extractors
 from cognite.neat.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
+from cognite.neat.core._instances.extractors._dict import DEFAULT_EMPTY_VALUES
 from cognite.neat.core._instances.transformers import (
     ConvertLiteral,
     LiteralToEntity,
@@ -34,6 +36,8 @@ from cognite.neat.core._instances.transformers._prune_graph import (
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import MissingCogniteClientWarning
+from cognite.neat.core._utils.mapping import create_predicate_mapping, create_type_mapping
+from cognite.neat.core._utils.read import read_conceptual_model
 from cognite.neat.core._utils.reader import NeatReader
 from cognite.neat.session._experimental import ExperimentalFlags
 
@@ -75,7 +79,6 @@ class ReadAPI:
         self._state.instances.store.write(extractors.RdfFileExtractor.from_zip(path))
 
 
-@session_class_wrapper
 class BaseReadAPI:
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
@@ -91,24 +94,49 @@ class CDFReadAPI(BaseReadAPI):
 
     def __init__(self, state: SessionState, verbose: bool) -> None:
         super().__init__(state, verbose)
+        self.data_model = CDFDataModelAPI(state, verbose)
         self.classic = CDFClassicAPI(state, verbose)
 
-    def data_model(self, data_model_id: DataModelIdentifier) -> IssueList:
-        """Reads a Data Model from CDF to the knowledge graph.
+    def view(
+        self,
+        view_id: ViewIdentifier,
+        instance_space: str | SequenceNotStr[str] | None = None,
+        unpack_json: bool = False,
+        str_to_ideal_type: bool = False,
+        limit: int | None = None,
+        mapping: Any | None = None,
+        exclude_properties: SequenceNotStr[str] | None = None,
+        empty_values: Set[str] = DEFAULT_EMPTY_VALUES,
+    ) -> IssueList:
+        """Reads a view from CDF
 
         Args:
-            data_model_id: Tuple of strings with the id of a CDF Data Model.
-            Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
+            view_id: Tuple of strings with the id of a CDF View.
+                Notation as follows (<name_of_space>, <name_of_view>, <view_version>) or ViewId.
+            instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
+            unpack_json: If True, the JSON objects will be unpacked into the graph.
+            str_to_ideal_type: If True, the string values will be converted to ideal types.
+            limit: The maximum number of instances to extract. If None, all instances are extracted.
+            mapping: A mapping to use for the extraction. This enables you to map all the predicates and
+                types when extracting the view. This is useful if you need to change the source to be valid
+                property field.
+            exclude_properties: A list of properties to exclude from the extraction. This is useful if you
+                are cleaning up the data model and want to remove properties that are not used.
+            empty_values: This is used when you unpack JSON objects. This specifies the values that should be
+                skipped as they are empty.
 
         Example:
+
+            Read all assets with properties in the CogniteAsset view into the knowledge graph.
+
             ```python
-            neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
+            neat.read.cdf.view(("cdf_cdm", "CogniteAsset", "v1"))
             ```
         """
 
-        data_model_id = DataModelId.load(data_model_id)
+        view_id_parsed = ViewId.load(view_id)
 
-        if not data_model_id.version:
+        if not view_id_parsed.version:
             raise NeatSessionError("Data model version is required to read a data model.")
 
         self._state._raise_exception_if_condition_not_met(
@@ -117,8 +145,30 @@ class CDFReadAPI(BaseReadAPI):
             client_required=True,
         )
 
-        importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
-        return self._state.rule_import(importer)
+        extractor: extractors.BaseExtractor = extractors.ViewExtractor.from_view(
+            cast(NeatClient, self._state.client),
+            view_id_parsed,
+            instance_space=instance_space,
+            unpack_json=unpack_json,
+            empty_values=empty_values,
+            str_to_ideal_type=str_to_ideal_type,
+            limit=limit,
+        )
+
+        if mapping:
+            rules = read_conceptual_model(mapping)
+            extractor = extractors.UnknownNamespaceExtractorMapper(
+                extractor,
+                type_mapping=create_type_mapping(rules.classes),
+                predicate_mapping=create_predicate_mapping(rules.properties),
+            )
+        if exclude_properties is not None:
+            extractor = extractors.ExcludePredicateExtractor(
+                extractor,
+                exclude_predicates=set(exclude_properties),
+            )
+
+        return self._state.instances.store.write(extractor)
 
     def core_data_model(self, concepts: str | list[str]) -> IssueList:
         """Subset the data model to the desired concepts.
@@ -288,6 +338,66 @@ class CDFReadAPI(BaseReadAPI):
             str_to_ideal_type=str_to_ideal_type,
         )
         return self._state.instances.store.write(extractor)
+
+
+@session_class_wrapper
+class CDFDataModelAPI(BaseReadAPI):
+    def __call__(self, data_model_id: DataModelIdentifier) -> IssueList:
+        """Reads a Data Model from CDF to the knowledge graph.
+
+        Args:
+            data_model_id: Tuple of strings with the id of a CDF Data Model.
+            Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
+
+        Example:
+            ```python
+            neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
+            ```
+        """
+
+        data_model_id = DataModelId.load(data_model_id)
+
+        if not data_model_id.version:
+            raise NeatSessionError("Data model version is required to read a data model.")
+
+        self._state._raise_exception_if_condition_not_met(
+            "Read data model from CDF",
+            empty_rules_store_required=True,
+            client_required=True,
+        )
+
+        importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
+        return self._state.rule_import(importer)
+
+    def update(self, data_model_id: DataModelIdentifier, spreadsheet_io: Any) -> IssueList:
+        """Updates a Data Model from CDF with a local
+
+        Args:
+            data_model_id:
+            spreadsheet_io:
+
+        Returns:
+            IssueList: A list of issues that occurred during the read.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Update data model from CDF",
+            empty_rules_store_required=True,
+            client_required=True,
+        )
+        data_model_id = DataModelId.load(data_model_id)
+
+        if not data_model_id.version:
+            raise NeatSessionError("Data model version is required to read a data model.")
+
+        cdf_importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
+        reader = NeatReader.create(spreadsheet_io)
+        path = reader.materialize_path()
+
+        # The Excel importer can be either conceptual or physical.
+        excel_importer = importers.ExcelImporter(path)  # type: ignore[var-annotated]
+        importer = importers.DMSMergeImporter(cdf_importer, excel_importer, cast(NeatClient, self._state.client))
+        return self._state.rule_import(importer)
 
 
 @session_class_wrapper
