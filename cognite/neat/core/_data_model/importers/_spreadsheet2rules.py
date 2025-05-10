@@ -4,6 +4,7 @@ generating a list of rules based on which nodes that form the graph are made.
 """
 
 from collections import UserDict, defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
@@ -271,7 +272,7 @@ class ExcelImporter(BaseImporter[T_InputRules]):
 
         sheets = user_read.sheets
         original_role = user_read.role
-        read_info_by_sheet = user_read.read_info_by_sheet
+        read_info_by_sheet: Mapping[str, object] = user_read.read_info_by_sheet
 
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))
