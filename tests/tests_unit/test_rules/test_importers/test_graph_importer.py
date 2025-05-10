@@ -11,9 +11,10 @@ from tests.data import GraphData
 
 def graph_importer_test_cases() -> Iterable:
     """Generate test cases for the GraphImporter."""
+    car_conceptual = InformationInputRules.load(GraphData.car.get_care_rules().dump())
     yield pytest.param(
         GraphData.car.TRIPLES,
-        InformationInputRules.load(GraphData.car.get_care_rules().dump()),
+        car_conceptual,
         id="Car example",
     )
 
@@ -31,7 +32,9 @@ class TestGraphImporter:
         actual = rules.rules
         assert actual is not None, "Failed to convert graph to rules"
 
-        exclude = {"metadata"}
+        # Prefixes are set to defaults upon loading a data model
+        # while the GraphImporter uses the prefixes from the graph
+        exclude = {"metadata": {"creator", "created", "updated", "description", "name"}, "prefixes": True}
         assert actual.as_verified_rules().dump(exclude=exclude) == expected.as_verified_rules().dump(exclude=exclude), (
             "The rules generated from the graph do not match the expected rules."
         )
