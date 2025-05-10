@@ -259,7 +259,8 @@ class GraphImporter(BaseImporter[InformationInputRules]):
             if namespace not in prefixes:
                 prefixes[namespace] = Namespace(namespace)
             uri_refs.append(suffix)
-        return ", ".join(uri_refs)
+        # Sort the URIs to ensure deterministic output
+        return ", ".join(sorted(uri_refs))
 
     def _create_default_metadata(self) -> InformationInputMetadata:
         now = datetime.now(timezone.utc)
