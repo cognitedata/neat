@@ -123,4 +123,4 @@ class TestGraphImporter:
             actual = rules.rules
             assert actual is not None, "Failed to convert graph to rules"
             assert len(record) == 1
-            assert str(record[0]) == str(expected_warning)
+            assert str(record[0].message) == str(expected_warning)
