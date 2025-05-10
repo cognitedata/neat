@@ -20,10 +20,12 @@ class TestViewExtractor:
             for triple in GraphData.car.TRIPLES
             if (
                 triple[0] in {GraphData.car._instance_ns["Car1"], GraphData.car._instance_ns["Car2"]}
-                and triple[1] != GraphData.car._model_ns["Car.Manufacturer"]
+                # Removing make as that is an edge, and above we are only extracting the Car nodes.
+                and triple[1] != GraphData.car._model_ns["make"]
             )
         }
 
         triples = set(extractor.extract())
 
-        assert expected_triples == triples
+        assert len(triples) == len(expected_triples)
+        assert set(expected_triples) == triples
