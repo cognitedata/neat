@@ -1,5 +1,6 @@
 import itertools
 import urllib.parse
+import warnings
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -21,6 +22,7 @@ from cognite.neat.core._data_model.models.information import (
     InformationInputProperty,
 )
 from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._store import NeatGraphStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar
 from cognite.neat.core._utils.rdf_ import split_uri
@@ -92,16 +94,28 @@ class GraphImporter(BaseImporter[InformationInputRules]):
             raise NeatValueError("Version is required when setting a Data Model ID")
 
     def to_rules(self) -> ReadRules[InformationInputRules]:
+        metadata = self._create_default_metadata()
+        if not self.store.queries.select.has_data():
+            warnings.warn(NeatValueWarning("Cannot infer data model. No data found in the graph."), stacklevel=2)
+            return ReadRules(InformationInputRules(metadata, [], [], {}), {})
+
         parent_by_child = self._read_parent_by_child_from_graph()
         count_by_type = self._read_types_with_counts_from_graph()
+        if not count_by_type:
+            warnings.warn(
+                NeatValueWarning("Cannot infer data model. No RDF.type triples found in the graph."), stacklevel=2
+            )
+            return ReadRules(InformationInputRules(metadata, [], [], {}), {})
+
         read_properties = self._read_class_properties_from_graph(count_by_type, parent_by_child)
 
         prefixes: dict[str, Namespace] = {}
         classes, properties = self._create_classes_properties(read_properties, prefixes)
         read_context: dict[str, object] = {"inferred_from": count_by_type}
+
         return ReadRules(
             InformationInputRules(
-                metadata=self._create_default_metadata(),
+                metadata=metadata,
                 classes=classes,
                 properties=properties,
                 prefixes=prefixes,
