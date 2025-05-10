@@ -37,7 +37,7 @@ def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: Mapping[str, o
     # only errors caused in model_validate will have location information
     if location:
         read_info = read_info_by_sheet.get(cast(str, location[0]))
-        if isinstance(read_info, SpreadsheetRead):
+        if isinstance(read_info, SpreadsheetRead | None):
             return SpreadsheetError.create(location, neat_error, read_info)
 
     # errors that occur while for example parsing spreadsheet in input rules
