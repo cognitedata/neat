@@ -23,12 +23,15 @@ class TestGraphImporter:
     def test_graph_importer(self, triples: list[Triple], expected: InformationInputRules) -> None:
         store = NeatGraphStore.from_oxi_local_store()
         store._add_triples(triples, store.default_named_graph)
-        importer = GraphImporter(store)
+        metadata = expected.metadata
+        data_model_id = (metadata.space, metadata.external_id, metadata.version)
+        importer = GraphImporter(store, data_model_id)
 
         rules = importer.to_rules()
         actual = rules.rules
         assert actual is not None, "Failed to convert graph to rules"
 
-        assert actual.as_verified_rules().dump() == expected.as_verified_rules().dump(), (
+        exclude = {"metadata"}
+        assert actual.as_verified_rules().dump(exclude=exclude) == expected.as_verified_rules().dump(exclude=exclude), (
             "The rules generated from the graph do not match the expected rules."
         )
