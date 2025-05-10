@@ -177,6 +177,8 @@ class ConceptualProperty(SheetRow):
     def parse_max_count(cls, value: int | float | None) -> int | float | None:
         if value is None:
             return float("inf")
+        if isinstance(value, float) and not (math.isnan(value) or math.isinf(value)) and int(value) == value:
+            return int(value)
         return value
 
     @field_validator("instance_source", mode="before")
