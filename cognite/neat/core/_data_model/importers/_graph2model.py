@@ -14,21 +14,18 @@ from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import InformationInputRules
-from cognite.neat.core._data_model.models.data_types import AnyURI
 from cognite.neat.core._data_model.models.entities import UnknownEntity
 from cognite.neat.core._data_model.models.information import (
     InformationInputClass,
     InformationInputMetadata,
     InformationInputProperty,
 )
-from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._store import NeatGraphStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar
 from cognite.neat.core._utils.rdf_ import split_uri
 
 from ._base import BaseImporter
-from ._rdf._base import DEFAULT_NON_EXISTING_NODE_TYPE
 
 
 # Internal helper class
@@ -43,7 +40,13 @@ class _ReadProperties:
 
 
 class GraphImporter(BaseImporter[InformationInputRules]):
-    """Infers a data model from the data in a Graph."""
+    """Infers a data model from the triples in a Graph Store.
+
+    Args:
+        store: The graph store to read from.
+        data_model_id: The data model id to be used for the imported rules.
+
+    """
 
     _ordered_class_query = """SELECT DISTINCT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class }
@@ -82,15 +85,11 @@ class GraphImporter(BaseImporter[InformationInputRules]):
         self,
         store: NeatGraphStore,
         data_model_id: DataModelIdentifier = ("neat_space", "NeatInferredDataModel", "v1"),
-        issue_list: IssueList | None = None,
-        non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> None:
         self.store = store
-        self.issue_list = issue_list or IssueList()
         self.data_model_id = DataModelId.load(data_model_id)
         if self.data_model_id.version is None:
             raise NeatValueError("Version is required when setting a Data Model ID")
-        self.non_existing_node_type = non_existing_node_type
 
     def to_rules(self) -> ReadRules[InformationInputRules]:
         parent_by_child = self._read_parent_by_child_from_graph()
