@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Generic, TypeAlias, TypeVar
 
@@ -23,7 +24,7 @@ class ReadRules(Generic[T_InputRules]):
     """This represents a rules that has been read."""
 
     rules: T_InputRules | None
-    read_context: dict[str, SpreadsheetRead]
+    read_context: Mapping[str, object]
 
     @classmethod
     def display_type_name(cls) -> str:
