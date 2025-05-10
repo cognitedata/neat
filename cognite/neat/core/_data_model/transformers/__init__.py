@@ -12,7 +12,6 @@ from ._converters import (
     InformationToDMS,
     MergeDMSRules,
     MergeIdenticalProperties,
-    MergeInformationRules,
     PrefixEntities,
     SetIDDMSModel,
     StandardizeNaming,
@@ -27,6 +26,7 @@ from ._converters import (
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
+from ._merge_conceptual import MergeInformationRules
 from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 
 __all__ = [
