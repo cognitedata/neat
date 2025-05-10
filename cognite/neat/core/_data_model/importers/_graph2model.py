@@ -182,16 +182,17 @@ class GraphImporter(BaseImporter[InformationInputRules]):
             )
             for type_uri, properties_by_property_uri in properties_by_class_by_property.items():
                 class_str, class_ = self._create_class(
-                    type_uri, set_instance_source=False, prefixes=prefixes, implements=parent_str
+                    type_uri, set_instance_source=True, prefixes=prefixes, implements=parent_str
                 )
                 classes.append(class_)
-                properties_by_id: dict[str, InformationInputProperty] = {}
                 for property_uri, read_properties in properties_by_property_uri.items():
                     namespace, property_suffix = split_uri(property_uri)
                     if namespace not in prefixes:
                         prefixes[namespace] = Namespace(namespace)
-                    properties_by_id[property_uri] = self._create_property(
-                        read_properties, class_str, property_uri, urllib.parse.unquote(property_suffix), prefixes
+                    properties.append(
+                        self._create_property(
+                            read_properties, class_str, property_uri, urllib.parse.unquote(property_suffix), prefixes
+                        )
                     )
         return classes, properties
 
