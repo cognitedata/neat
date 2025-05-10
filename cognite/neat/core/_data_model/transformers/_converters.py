@@ -89,7 +89,6 @@ from cognite.neat.core._issues.warnings._models import (
     SolutionModelBuildOnTopOfCDMWarning,
 )
 from cognite.neat.core._utils.rdf_ import get_inheritance_path
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from cognite.neat.core._utils.text import (
     NamingStandardization,
     humanize_collection,
@@ -2449,7 +2448,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
 
     @staticmethod
     def _get_properties_by_class(
-        properties: list[InformationInputProperty], read_context: dict[str, SpreadsheetRead], default_space: str
+        properties: list[InformationInputProperty], read_context: Mapping[str, object], default_space: str
     ) -> dict[ClassEntity, dict[str, InformationInputProperty]]:
         issues = IssueList()
         properties_by_class: dict[ClassEntity, dict[str, InformationInputProperty]] = defaultdict(dict)
@@ -2467,7 +2466,7 @@ class AddCogniteProperties(RulesTransformer[ReadRules[InformationInputRules], Re
 
     @staticmethod
     def _get_dependencies_by_class(
-        classes: list[InformationInputClass], read_context: dict[str, SpreadsheetRead], default_space: str
+        classes: list[InformationInputClass], read_context: Mapping[str, object], default_space: str
     ) -> dict[ClassEntity, set[ClassEntity]]:
         dependencies_by_class: dict[ClassEntity, set[ClassEntity]] = {}
         issues = IssueList()
