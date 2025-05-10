@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Generic, TypeAlias, TypeVar
 
@@ -32,7 +33,7 @@ class ImportedDataModel(Generic[T_UnverifiedDataModel]):
     """
 
     unverified_data_model: T_UnverifiedDataModel | None
-    context: dict[str, SpreadsheetRead]
+    context: Mapping[str, object]
 
     @classmethod
     def display_type_name(cls) -> str:
