@@ -1524,26 +1524,6 @@ class MergePhysicalDataModels(VerifiedDataModelTransformer[PhysicalDataModel, Ph
         return f"Merged with {self.extra.metadata.as_data_model_id()}"
 
 
-class MergeConceptualDataModels(VerifiedDataModelTransformer[ConceptualDataModel, ConceptualDataModel]):
-    def __init__(self, extra: ConceptualDataModel) -> None:
-        self.extra = extra
-
-    def transform(self, data_model: ConceptualDataModel) -> ConceptualDataModel:
-        output = data_model.model_copy(deep=True)
-        existing_classes = {cls.concept for cls in output.concepts}
-        for cls in self.extra.concepts:
-            if cls.concept not in existing_classes:
-                output.concepts.append(cls)
-        existing_properties = {(prop.concept, prop.property_) for prop in output.properties}
-        for prop in self.extra.properties:
-            if (prop.concept, prop.property_) not in existing_properties:
-                output.properties.append(prop)
-        for prefix, namespace in self.extra.prefixes.items():
-            if prefix not in output.prefixes:
-                output.prefixes[prefix] = namespace
-        return output
-
-
 class _ConceptualDataModelConverter:
     _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
