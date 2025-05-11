@@ -207,6 +207,8 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
         primary: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
         secondary: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
     ) -> DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity:
+        # We use a set and list to preserve the order of the types
+        # and to avoid duplicates
         seen_types: set[DataType | ClassEntity] = set()
         ordered_types: list[DataType | ClassEntity] = []
         for type_ in (primary, secondary):
