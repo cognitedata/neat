@@ -10,6 +10,7 @@ from cognite.neat.core._data_model.models.entities import (
 )
 from cognite.neat.core._data_model.models.information import InformationClass, InformationProperty
 from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
+from cognite.neat.core._issues.errors import NeatValueError
 
 
 class MergeInformationRules(VerifiedRulesTransformer[InformationRules, InformationRules]):
@@ -44,10 +45,14 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
             output = rules.model_copy(deep=True)
             secondary_classes = {cls.class_: cls for cls in self.secondary.classes}
             secondary_properties = {(prop.class_, prop.property_): prop for prop in self.secondary.properties}
-        else:
+        elif self.join == "secondary":
             output = self.secondary.model_copy(deep=True)
             secondary_classes = {cls.class_: cls for cls in rules.classes}
             secondary_properties = {(prop.class_, prop.property_): prop for prop in rules.properties}
+        else:
+            raise NeatValueError(
+                f"Invalid join strategy: {self.join}. Must be one of ['primary', 'secondary', 'combined']"
+            )
 
         merged_class_by_id = self._merge_classes(output.classes, secondary_classes)
         output.classes = SheetList[InformationClass](merged_class_by_id.values())
@@ -69,12 +74,11 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
             secondary_cls = new_classes[cls_]
             if self._swap_priority:
                 primary_cls, secondary_cls = secondary_cls, primary_cls
-            merged_cls = self.merge_classes(
+            merged_classes[cls_] = self.merge_classes(
                 primary=primary_cls,
                 secondary=secondary_cls,
                 conflict_resolution=self.conflict_resolution,
             )
-            merged_classes[cls_] = merged_cls
 
         if self.join == "combined":
             for cls_, secondary_cls in new_classes.items():
@@ -95,12 +99,11 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
             secondary_property = secondary_properties[(cls_, prop_id)]
             if self._swap_priority:
                 primary_property, secondary_property = secondary_property, primary_property
-            merged_property = self.merge_properties(
+            merged_properties[(cls_, prop_id)] = self.merge_properties(
                 primary=primary_property,
                 secondary=secondary_property,
                 conflict_resolution=self.conflict_resolution,
             )
-            merged_properties[(cls_, prop_id)] = merged_property
 
         if self.join == "combined":
             for (cls_, prop_id), prop in secondary_properties.items():
@@ -110,6 +113,11 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
 
     @property
     def _swap_priority(self) -> bool:
+        """We swap the priority if 'join' and 'priority' are mismatched. For example, if
+        we use a 'primary' join strategy, i.e., selecting classes from the primary model, but prioritize the
+        secondary classes that matches the primary classes.
+        """
+
         return (self.priority == "secondary" and (self.join in ["primary", "combined"])) or (
             self.priority == "primary" and (self.join == "secondary")
         )
