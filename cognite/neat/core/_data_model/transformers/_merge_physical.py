@@ -77,15 +77,15 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
         used_containers = {prop.container for prop in output.properties if prop.container}
         merged_containers = self._merge_containers(output.containers or [], secondary_containers, used_containers)
-        output.containers = SheetList[DMSContainer](merged_containers.values())
+        output.containers = SheetList[DMSContainer](merged_containers.values()) or None
 
         used_nodes = self._get_used_nodes(output.views, output.properties)
         merged_nodes = self._merge_nodes(output.nodes or [], secondary_nodes, used_nodes)
-        output.nodes = SheetList[DMSNode](merged_nodes.values())
+        output.nodes = SheetList[DMSNode](merged_nodes.values()) or None
 
         used_enum_collections = self._get_used_enum_collections(output.properties)
         merged_enum = self._merge_enum(output.enum or [], secondary_enum, used_enum_collections)
-        output.enum = SheetList[DMSEnum](merged_enum.values())
+        output.enum = SheetList[DMSEnum](merged_enum.values()) or None
 
         return output
 
@@ -233,7 +233,23 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         primary: DMSProperty,
         secondary: DMSProperty,
     ) -> DMSProperty:
-        raise NotImplementedError()
+        return DMSProperty(
+            view=primary.view,
+            view_property=primary.view_property,
+            name=primary.name or secondary.name,
+            description=primary.description or secondary.description,
+            connection=primary.connection,
+            value_type=primary.value_type,
+            min_count=primary.min_count,
+            max_count=primary.max_count,
+            immutable=primary.immutable,
+            default=primary.default,
+            container=primary.container,
+            container_property=primary.container_property,
+            index=primary.index,
+            constraint=primary.constraint,
+            logical=primary.logical,
+        )
 
     @classmethod
     def merge_views(
@@ -242,7 +258,25 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         secondary: DMSView,
         conflict_resolution: Literal["priority", "combine"] = "priority",
     ) -> DMSView:
-        raise NotImplementedError()
+        # Combined = merge implements for both classes
+        # Priority = keep the primary with fallback to secondary
+        implements = (primary.implements or secondary.implements or []).copy()
+        if conflict_resolution == "combined":
+            seen = set(implements)
+            for cls_ in secondary.implements or []:
+                if cls_ not in seen:
+                    seen.add(cls_)
+                    implements.append(cls_)
+        return DMSView(
+            neatId=primary.neatId,
+            view=primary.view,
+            implements=implements,
+            filter_=primary.filter_,
+            name=primary.name or secondary.name,
+            description=primary.description or secondary.description,
+            logical=primary.logical,
+            in_model=primary.in_model,
+        )
 
     @classmethod
     def merge_containers(
