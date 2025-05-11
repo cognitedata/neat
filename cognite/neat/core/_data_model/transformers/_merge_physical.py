@@ -1,49 +1,66 @@
-from cognite.neat.core._data_model.models import DMSRules, SheetList
-from cognite.neat.core._data_model.models.data_types import Enum
-from cognite.neat.core._data_model.models.dms import DMSContainer, DMSEnum, DMSNode
+from typing import Literal
+
+from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models.dms import DMSContainer, DMSProperty, DMSView
 from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
 
 
 class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
-    def __init__(self, extra: DMSRules) -> None:
-        self.extra = extra
+    """Merges two DMS rules into one.
 
-    def transform(self, rules: DMSRules) -> DMSRules:
-        output = rules.model_copy(deep=True)
-        existing_views = {view.view for view in output.views}
-        for view in self.extra.views:
-            if view.view not in existing_views:
-                output.views.append(view)
-        existing_properties = {(prop.view, prop.view_property) for prop in output.properties}
-        existing_containers = {container.container for container in output.containers or []}
-        existing_enum_collections = {collection.collection for collection in output.enum or []}
-        new_containers_by_entity = {container.container: container for container in self.extra.containers or []}
-        new_enum_collections_by_entity = {collection.collection: collection for collection in self.extra.enum or []}
-        for prop in self.extra.properties:
-            if (prop.view, prop.view_property) in existing_properties:
-                continue
-            output.properties.append(prop)
-            if prop.container and prop.container not in existing_containers:
-                if output.containers is None:
-                    output.containers = SheetList[DMSContainer]()
-                output.containers.append(new_containers_by_entity[prop.container])
-                existing_containers.add(prop.container)
-            if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections:
-                if output.enum is None:
-                    output.enum = SheetList[DMSEnum]()
-                output.enum.append(new_enum_collections_by_entity[prop.value_type.collection])
-                existing_enum_collections.add(prop.value_type.collection)
+    Args:
+        secondary: The secondary model. The primary model is the one that is passed to the transform method.
+        join: The join strategy for merging views. To only keep views from the primary model, use "primary".
+            To only keep views from the secondary model, use "secondary". To keep all views, use "combined".
+        priority: For properties that exist in both models, the priority determines which model's property is kept.
+            For example, if 'name' of a property exists in both models, and the priority is set to "primary",
+            the property from the primary model will be kept.
+        conflict_resolution: TODO
 
-        existing_nodes = {node.node for node in output.nodes or []}
-        for node in self.extra.nodes or []:
-            if node.node not in existing_nodes:
-                if output.nodes is None:
-                    output.nodes = SheetList[DMSNode]()
-                output.nodes.append(node)
-                existing_nodes.add(node.node)
+    """
 
-        return output
+    def __init__(
+        self,
+        secondary: DMSRules,
+        join: Literal["primary", "secondary", "combined"] = "combined",
+        priority: Literal["primary", "secondary"] = "primary",
+        conflict_resolution: Literal["priority", "combined"] = "priority",
+    ) -> None:
+        self.secondary = secondary
+        self.join = join
+        self.priority = priority
+        self.conflict_resolution = conflict_resolution
 
     @property
     def description(self) -> str:
-        return f"Merged with {self.extra.metadata.as_data_model_id()}"
+        return f"Merged with {self.secondary.metadata.as_data_model_id()}"
+
+    def transform(self, rules: DMSRules) -> DMSRules:
+        raise NotImplementedError()
+
+    @classmethod
+    def merge_properties(
+        cls,
+        primary: DMSProperty,
+        secondary: DMSProperty,
+        conflict_resolution: Literal["priority", "combined"] = "priority",
+    ) -> DMSProperty:
+        raise NotImplementedError()
+
+    @classmethod
+    def merge_views(
+        cls,
+        primary: DMSView,
+        secondary: DMSView,
+        conflict_resolution: Literal["priority", "combined"] = "priority",
+    ) -> DMSView:
+        raise NotImplementedError()
+
+    @classmethod
+    def merge_containers(
+        cls,
+        primary: DMSContainer,
+        secondary: DMSContainer,
+        conflict_resolution: Literal["priority", "combined"] = "priority",
+    ) -> DMSContainer:
+        raise NotImplementedError()
