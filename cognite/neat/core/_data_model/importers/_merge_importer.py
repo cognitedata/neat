@@ -24,7 +24,7 @@ class DMSMergeImporter(BaseImporter):
 
     def to_rules(self) -> ReadRules[DMSInputRules]:
         # Local import to avoid circular import
-        from cognite.neat.core._data_model.transformers._converters import MergeDMSRules
+        from cognite.neat.core._data_model.transformers import MergeDMSRules
 
         existing_input = self.existing.to_rules()
         existing_dms = self._get_dms_model(existing_input.rules, "Existing")
