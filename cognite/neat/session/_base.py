@@ -297,6 +297,11 @@ class NeatSession:
                 converted, join="primary", priority="primary", conflict_resolution="priority"
             ).transform(last_entity.dms)
 
+            # We need to sync the metadata between the two rules, such that the `.sync_with_info_rules` method works.
+            updated.metadata.physical = updated_dms.metadata.identifier
+            updated_dms.metadata.logical = updated.metadata.identifier
+            updated_dms.sync_with_info_rules(updated)
+
             return updated, updated_dms
 
         return self._state.rule_store.do_activity(action, importer)
