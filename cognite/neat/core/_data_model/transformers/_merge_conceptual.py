@@ -2,7 +2,12 @@ from collections.abc import Iterable, Set
 from typing import Literal
 
 from cognite.neat.core._data_model.models import InformationRules, SheetList
-from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.models.data_types import DataType
+from cognite.neat.core._data_model.models.entities import (
+    ClassEntity,
+    MultiValueTypeInfo,
+    UnknownEntity,
+)
 from cognite.neat.core._data_model.models.information import InformationClass, InformationProperty
 from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
 
@@ -116,13 +121,21 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
         secondary: InformationClass,
         conflict_resolution: Literal["priority", "combined"] = "priority",
     ) -> InformationClass:
+        # Combined = merge implements for both classes
+        # Priority = keep the primary with fallback to secondary
+        implements = (primary.implements or secondary.implements or []).copy()
+        if conflict_resolution == "combined":
+            seen = set(implements)
+            for cls_ in secondary.implements or []:
+                if cls_ not in seen:
+                    seen.add(cls_)
+                    implements.append(cls_)
         return InformationClass(
             neatId=primary.neatId,
             class_=primary.class_,
             name=primary.name or secondary.name,
             description=primary.description or secondary.description,
-            implements=(primary.implements or [])
-            + (secondary.implements or [] if conflict_resolution == "combined" else []),
+            implements=implements,
             instance_source=primary.instance_source or secondary.instance_source,
             physical=primary.physical,
             conceptual=primary.conceptual,
@@ -135,4 +148,86 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
         secondary: InformationProperty,
         conflict_resolution: Literal["priority", "combined"] = "priority",
     ) -> InformationProperty:
-        raise NotImplementedError()
+        # Combined = merge value types and instance sources
+        # Priority = keep the primary with fallback to secondary
+        instance_source = (primary.instance_source or secondary.instance_source or []).copy()
+        if conflict_resolution == "combined":
+            seen = set(instance_source)
+            for source in secondary.instance_source or []:
+                if source not in seen:
+                    seen.add(source)
+                    instance_source.append(source)
+
+        use_primary = conflict_resolution == "priority"
+        return InformationProperty(
+            neatId=primary.neatId,
+            class_=primary.class_,
+            property_=primary.property_,
+            name=primary.name or secondary.name,
+            description=primary.description or secondary.description,
+            min_count=primary.min_count
+            if use_primary
+            else cls._merge_min_count(primary.min_count, secondary.min_count),
+            max_count=primary.max_count
+            if use_primary
+            else cls._merge_max_count(primary.max_count, secondary.max_count),
+            default=primary.default or secondary.default,
+            value_type=primary.value_type
+            if use_primary
+            else cls._merge_value_type(primary.value_type, secondary.value_type),
+            instance_source=instance_source,
+            inherited=primary.inherited,
+            physical=primary.physical,
+            conceptual=primary.conceptual,
+        )
+
+    @staticmethod
+    def _merge_min_count(primary: int | None, secondary: int | None) -> int | None:
+        if primary is None:
+            return secondary
+        if secondary is None:
+            return primary
+        return min(primary, secondary)
+
+    @staticmethod
+    def _merge_max_count(primary: int | float | None, secondary: int | float | None) -> int | float | None:
+        if primary is None:
+            return secondary
+        if secondary is None:
+            return primary
+        output = max(primary, secondary)
+        try:
+            return int(output)
+        except (OverflowError, ValueError):
+            # The value is float('inf') or float('-inf')
+            return output
+
+    @staticmethod
+    def _merge_value_type(
+        primary: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
+        secondary: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
+    ) -> DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity:
+        seen_types: set[DataType | ClassEntity] = set()
+        ordered_types: list[DataType | ClassEntity] = []
+        for type_ in (primary, secondary):
+            if isinstance(type_, MultiValueTypeInfo):
+                for t in type_.types:
+                    if t not in seen_types:
+                        seen_types.add(t)
+                        ordered_types.append(t)
+            elif isinstance(type_, ClassEntity):
+                if type_ not in seen_types:
+                    seen_types.add(type_)
+                    ordered_types.append(type_)
+            elif isinstance(type_, DataType):
+                if type_ not in seen_types:
+                    seen_types.add(type_)
+                    ordered_types.append(type_)
+            else:
+                raise NotImplementedError(f"Unsupported type: {type_}")
+        if len(ordered_types) == 1:
+            return ordered_types[0]
+        elif len(ordered_types) > 1:
+            return MultiValueTypeInfo(types=ordered_types)
+        else:
+            return UnknownEntity()
