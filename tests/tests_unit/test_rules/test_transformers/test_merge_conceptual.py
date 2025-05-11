@@ -141,10 +141,12 @@ class TestMergeConceptual:
     ):
         primary_model = primary.as_verified_rules()
         secondary_model = secondary.as_verified_rules()
+        expected_model = expected.as_verified_rules()
+
         transformer = MergeInformationRules(secondary_model, **args)
         merged = transformer.transform(primary_model)
 
-        assert merged.dump() == expected.dump()
+        assert merged.dump() == expected_model.dump()
 
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_properties_test_cases()))
     def test_merge_properties(
