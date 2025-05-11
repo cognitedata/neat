@@ -26,10 +26,11 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         priority: For properties that exist in both models, the priority determines which model's property is kept.
             For example, if 'name' of a property exists in both models, and the priority is set to "primary",
             the property from the primary model will be kept.
-        conflict_resolution: The conflict resolution strategy for merging views. This applies to fields that
-            can be combined, such as view.implements. If set to "combine", the implements list will be combined
+        conflict_resolution: The conflict resolution strategy for merging views. This only apply to the
+            view.implements fields. If set to "combine", the implements list will be combined
             to include all implements from both models. If set to "priority", the implements list will be
-            given by the 'priority' argument.
+            given by the 'priority' argument. Note that in theory many of the container properties could also
+            be combined. However, this easily leads to breaking changes in the model, so we do not allow it.
     """
 
     def __init__(
