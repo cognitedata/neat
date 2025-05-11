@@ -116,7 +116,17 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
         secondary: InformationClass,
         conflict_resolution: Literal["priority", "combined"] = "priority",
     ) -> InformationClass:
-        raise NotImplementedError()
+        return InformationClass(
+            neatId=primary.neatId,
+            class_=primary.class_,
+            name=primary.name or secondary.name,
+            description=primary.description or secondary.description,
+            implements=(primary.implements or [])
+            + (secondary.implements or [] if conflict_resolution == "combined" else []),
+            instance_source=primary.instance_source or secondary.instance_source,
+            physical=primary.physical,
+            conceptual=primary.conceptual,
+        )
 
     @classmethod
     def merge_properties(
