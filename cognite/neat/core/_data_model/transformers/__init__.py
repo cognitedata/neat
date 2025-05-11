@@ -29,6 +29,9 @@ from ._converters import (
     ToExtensionModel,
     ToSolutionModel,
 )
+from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
+from ._merge_conceptual import MergeInformationRules
+from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 from ._mapping import AsParentPropertyId, MapOneToOne, PhysicalDataModelMapper
 from ._verification import (
     VerifyAnyDataModel,
