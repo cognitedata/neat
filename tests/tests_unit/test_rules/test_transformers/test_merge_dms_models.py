@@ -4,15 +4,18 @@ import pytest
 
 from cognite.neat.core._data_model.models import data_types as dt
 from cognite.neat.core._data_model.models.dms import (
+    DMSContainer,
+    DMSEnum,
     DMSInputContainer,
     DMSInputMetadata,
     DMSInputProperty,
     DMSInputRules,
     DMSInputView,
+    DMSNode,
     DMSProperty,
     DMSView,
 )
-from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
+from cognite.neat.core._data_model.models.entities import ClassEntity, ContainerEntity, DMSNodeEntity, ViewEntity
 from cognite.neat.core._data_model.transformers import MergeDMSRules
 
 
@@ -156,6 +159,75 @@ def merge_views_test_cases() -> Iterable:
     )
 
 
+def merge_containers_test_cases() -> Iterable:
+    container = ContainerEntity.load("my_space:CarContainer")
+    first = DMSContainer(container=container, used_for="node")
+    second = DMSContainer(
+        container=container,
+        name="Car Container",
+        description="This is a car container",
+        used_for="all",
+    )
+    yield pytest.param(
+        first,
+        second,
+        DMSContainer(
+            container=container,
+            name="Car Container",
+            description="This is a car container",
+            used_for="node",
+        ),
+        id="Merge two containers.",
+    )
+
+
+def merge_node_test_cases() -> Iterable:
+    node = DMSNodeEntity.load("my_space:CarNode")
+    primary = DMSNode(node=node, usage="type")
+    secondary = DMSNode(
+        node=node,
+        name="Car Node",
+        description="This is a car node",
+        usage="type",
+    )
+    yield pytest.param(
+        primary,
+        secondary,
+        DMSNode(
+            node=node,
+            name="Car Node",
+            description="This is a car node",
+            usage="type",
+        ),
+        id="Merge two nodes.",
+    )
+
+
+def merge_enum_test_cases() -> Iterable:
+    collection = ClassEntity.load("my_space:MyCollection")
+    primary = DMSEnum(
+        collection=collection,
+        value="my_value",
+    )
+    secondary = DMSEnum(
+        collection=collection,
+        value="my_value",
+        name="My Value",
+        description="This is my value",
+    )
+    yield pytest.param(
+        primary,
+        secondary,
+        DMSEnum(
+            collection=collection,
+            name="My Value",
+            description="This is my value",
+            value="my_value",
+        ),
+        id="Merge two enums.",
+    )
+
+
 class TestMergeConceptual:
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_model_test_cases()))
     def test_merge_models(
@@ -180,7 +252,6 @@ class TestMergeConceptual:
         self,
         primary: DMSProperty,
         secondary: DMSProperty,
-        args: dict[str, object],
         expected: DMSProperty,
     ) -> None:
         actual = MergeDMSRules.merge_properties(primary, secondary)
@@ -197,6 +268,36 @@ class TestMergeConceptual:
     ) -> None:
         actual = MergeDMSRules.merge_views(primary, secondary, **args)
 
+        assert actual.model_dump() == expected.model_dump()
+
+    @pytest.mark.parametrize("primary, secondary, expected", list(merge_containers_test_cases()))
+    def test_merge_containers(
+        self,
+        primary: DMSContainer,
+        secondary: DMSContainer,
+        expected: DMSContainer,
+    ) -> None:
+        actual = MergeDMSRules.merge_containers(primary, secondary)
+        assert actual.model_dump() == expected.model_dump()
+
+    @pytest.mark.parametrize("primary, secondary, expected", list(merge_node_test_cases()))
+    def test_merge_nodes(
+        self,
+        primary: DMSNode,
+        secondary: DMSNode,
+        expected: DMSNode,
+    ) -> None:
+        actual = MergeDMSRules.merge_nodes(primary, secondary)
+        assert actual.model_dump() == expected.model_dump()
+
+    @pytest.mark.parametrize("primary, secondary, expected", list(merge_enum_test_cases()))
+    def test_merge_enums(
+        self,
+        primary: DMSEnum,
+        secondary: DMSEnum,
+        expected: DMSEnum,
+    ) -> None:
+        actual = MergeDMSRules.merge_enum(primary, secondary)
         assert actual.model_dump() == expected.model_dump()
 
     def test_merge_models_duplicated_properties(self) -> None:
