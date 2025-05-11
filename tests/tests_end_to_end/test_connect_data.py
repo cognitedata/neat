@@ -13,6 +13,38 @@ from cognite.neat.core._shared import Triple
 class TestConnectData:
     def test_connect_data_to_existing_model(self) -> None:
         with monkeypatch_neat_client() as client:
+            space = dm.Space(
+                "my_space",
+                False,
+                1,
+                1,
+            )
+            view = dm.View(
+                space=space.space,
+                external_id="MyView",
+                version="v1",
+                name=None,
+                description=None,
+                created_time=1234567890,
+                last_updated_time=1234567890,
+                filter=None,
+                implements=None,
+                writable=True,
+                is_global=False,
+                used_for="node",
+                properties={
+                    "name": dm.MappedProperty(
+                        container=dm.ContainerId("my_space", "my_container"),
+                        container_property_identifier="name",
+                        type=dm.data_types.Text(),
+                        auto_increment=False,
+                        nullable=True,
+                        immutable=False,
+                    )
+                },
+            )
+            view_id = view.as_id()
+
             client.data_modeling.data_models.retrieve.return_value = dm.DataModelList(
                 [
                     dm.DataModel(
@@ -24,32 +56,7 @@ class TestConnectData:
                         is_global=False,
                         name=None,
                         description=None,
-                        views=[
-                            dm.View(
-                                space="my_space",
-                                external_id="MyView",
-                                version="v1",
-                                name=None,
-                                description=None,
-                                created_time=1234567890,
-                                last_updated_time=1234567890,
-                                filter=None,
-                                implements=None,
-                                writable=True,
-                                is_global=False,
-                                used_for="node",
-                                properties={
-                                    "name": dm.MappedProperty(
-                                        container=dm.ContainerId("my_space", "my_container"),
-                                        container_property_identifier="name",
-                                        type=dm.data_types.Text(),
-                                        auto_increment=False,
-                                        nullable=True,
-                                        immutable=False,
-                                    )
-                                },
-                            )
-                        ],
+                        views=[view],
                     )
                 ]
             )
@@ -77,6 +84,8 @@ class TestConnectData:
                     )
                 ]
             )
+            client.data_modeling.spaces.retrieve.return_value = dm.SpaceList([space])
+            client.data_modeling.views.retrieve.return_value = dm.ViewList([view])
             neat: NeatSession = NeatSession(client=client)
 
         instance_space = Namespace(DEFAULT_SPACE_URI.format(space="sp_instances"))
@@ -99,19 +108,24 @@ class TestConnectData:
 
         assert len(issues) == 0
         assert len(instances) == 2
-        assert [node.dump() for node in instances] == [
-            dm.NodeApply(
-                "sp_instances",
-                "my_thing",
-                sources=[
-                    dm.NodeOrEdgeData(dm.ViewId("my_space", "MyView", "v1"), {"name": "My Thing"}),
-                ],
-            ),
-            dm.NodeApply(
-                "sp_instances",
-                "my_other_thing",
-                sources=[
-                    dm.NodeOrEdgeData(dm.ViewId("my_space", "MyView", "v1"), {"name": "My Other Thing"}),
-                ],
-            ),
-        ]
+        expected = dm.NodeApplyList(
+            [
+                dm.NodeApply(
+                    "sp_instances",
+                    "my_other_thing",
+                    sources=[
+                        dm.NodeOrEdgeData(view_id, {"name": "My Other Thing"}),
+                    ],
+                    type=dm.DirectRelationReference("my_space", "MyView"),
+                ),
+                dm.NodeApply(
+                    "sp_instances",
+                    "my_thing",
+                    sources=[
+                        dm.NodeOrEdgeData(view_id, {"name": "My Thing"}),
+                    ],
+                    type=dm.DirectRelationReference("my_space", "MyView"),
+                ),
+            ]
+        )
+        assert [node.dump() for node in instances] == expected.dump()
