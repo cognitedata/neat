@@ -146,7 +146,8 @@ class TestMergeConceptual:
         transformer = MergeInformationRules(secondary_model, **args)
         merged = transformer.transform(primary_model)
 
-        assert merged.dump() == expected_model.dump()
+        exclude = {"metadata": {"created", "updated"}}
+        assert merged.dump(exclude=exclude) == expected_model.dump(exclude=exclude)
 
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_properties_test_cases()))
     def test_merge_properties(
