@@ -15,8 +15,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         priority: For properties that exist in both models, the priority determines which model's property is kept.
             For example, if 'name' of a property exists in both models, and the priority is set to "primary",
             the property from the primary model will be kept.
-        conflict_resolution: TODO
-
+        conflict_resolution: The conflict resolution strategy for merging views. This applies to fields that
+            can be combined, such as view.implements. If set to "combine", the implements list will be combined
+            to include all implements from both models. If set to "priority", the implements list will be
+            given by the 'priority' argument.
     """
 
     def __init__(
@@ -24,7 +26,7 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         secondary: DMSRules,
         join: Literal["primary", "secondary", "combined"] = "combined",
         priority: Literal["primary", "secondary"] = "primary",
-        conflict_resolution: Literal["priority", "combined"] = "priority",
+        conflict_resolution: Literal["priority", "combine"] = "priority",
     ) -> None:
         self.secondary = secondary
         self.join = join
@@ -43,7 +45,6 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         cls,
         primary: DMSProperty,
         secondary: DMSProperty,
-        conflict_resolution: Literal["priority", "combined"] = "priority",
     ) -> DMSProperty:
         raise NotImplementedError()
 
@@ -52,7 +53,7 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         cls,
         primary: DMSView,
         secondary: DMSView,
-        conflict_resolution: Literal["priority", "combined"] = "priority",
+        conflict_resolution: Literal["priority", "combine"] = "priority",
     ) -> DMSView:
         raise NotImplementedError()
 
@@ -61,6 +62,5 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         cls,
         primary: DMSContainer,
         secondary: DMSContainer,
-        conflict_resolution: Literal["priority", "combined"] = "priority",
     ) -> DMSContainer:
         raise NotImplementedError()
