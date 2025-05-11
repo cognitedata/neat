@@ -162,7 +162,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
 
     def _lookup_spaces(self) -> None:
         # Case 1: Same instance space for all instances:
-        if isinstance(self.instance_space, str) and self.space_property is None:
+        if isinstance(self.instance_space, str) and self.space_property is None and self.use_source_space is False:
             self._space_by_instance_uri = defaultdict(lambda: cast(str, self.instance_space))
             # Adding a dummy entry to ensure that the instance space is included
             self._space_by_instance_uri[URIRef(self.instance_space)] = self.instance_space
@@ -184,7 +184,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
             raise ValueError("Either 'instance_space", "space_property', or 'use_source_space' must be provided. ")
 
     def _lookup_instance_uris(self, graph_store: NeatGraphStore) -> None:
-        for class_uri, instance_uri in graph_store.queries.select.list_instances_ids():
+        for instance_uri, class_uri in graph_store.queries.select.list_instances_ids():
             namespace, external_id = split_uri(instance_uri)
             space = namespace_as_space(namespace)
             if space is None:
