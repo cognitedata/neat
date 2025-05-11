@@ -19,7 +19,7 @@ from cognite.neat.core._data_model.transformers import (
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import RegexViolationError
-from cognite.neat.core._issues.errors._general import NeatImportError
+from cognite.neat.core._issues.errors._general import NeatImportError, NeatValueError
 from cognite.neat.core._store._rules_store import RulesEntity
 from cognite.neat.core._utils.auxiliary import local_import
 
@@ -269,7 +269,37 @@ class NeatSession:
 
         This assumes that you have read in instances and a data model.
         """
-        raise NotImplementedError()
+        self._state._raise_exception_if_condition_not_met(
+            "Connect data to data model", has_information_rules=True, instances_required=True
+        )
+        if not self._state.rule_store.provenance:
+            raise NeatValueError("Failed to find the last data model in the session.")
+        last_entity = self._state.rule_store.provenance[-1].target_entity
+        importer = importers.GraphImporter(
+            self._state.instances.store, last_entity.information.metadata.as_data_model_id()
+        )
+
+        def action() -> tuple[InformationRules, DMSRules | None]:
+            data_schema = importer.to_rules()
+            if data_schema.rules is None:
+                raise NeatValueError("Failed to infer the data model from the instances.")
+            conceptual = VerifyInformationRules().transform(data_schema)
+
+            updated = MergeInformationRules(
+                conceptual, join="primary", priority="primary", conflict_resolution="priority"
+            ).transform(last_entity.information)
+
+            if last_entity.dms is None:
+                return updated, None
+            converted = InformationToDMS(reserved_properties="warning", client=self._state.client).transform(updated)
+
+            updated_dms = MergeDMSRules(
+                converted, join="primary", priority="primary", conflict_resolution="priority"
+            ).transform(last_entity.dms)
+
+            return updated, updated_dms
+
+        return self._state.rule_store.do_activity(action, importer)
 
     def _repr_html_(self) -> str:
         state = self._state
