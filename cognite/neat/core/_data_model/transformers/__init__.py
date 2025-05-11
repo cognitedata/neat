@@ -10,7 +10,6 @@ from ._converters import (
     DropModelViews,
     IncludeReferenced,
     InformationToDMS,
-    MergeDMSRules,
     MergeIdenticalProperties,
     MergeInformationRules,
     MergeConceptualDataModels,
@@ -31,6 +30,7 @@ from ._converters import (
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
 from ._merge_conceptual import MergeInformationRules
+from ._merge_physical import MergeDMSRules
 from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 from ._mapping import AsParentPropertyId, MapOneToOne, PhysicalDataModelMapper
 from ._verification import (

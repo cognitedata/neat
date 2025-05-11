@@ -55,11 +55,17 @@ from cognite.neat.core._data_model.models.conceptual import (
 from cognite.neat.core._data_model.models.data_types import (
     AnyURI,
     DataType,
-    Enum,
     File,
     String,
     Timeseries,
 )
+from cognite.neat.core._data_model.models.dms import (
+    DMSMetadata,
+    DMSProperty,
+    DMSValidation,
+    DMSView,
+)
+from cognite.neat.core._data_model.models.dms._rules import DMSContainer
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     ContainerEntity,
@@ -1477,51 +1483,6 @@ class ChangeViewPrefix(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalD
             if prop.value_type in new_by_old and isinstance(prop.value_type, ViewEntity):
                 prop.value_type = new_by_old[prop.value_type]
         return output
-
-
-class MergePhysicalDataModels(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):
-    def __init__(self, extra: PhysicalDataModel) -> None:
-        self.extra = extra
-
-    def transform(self, data_model: PhysicalDataModel) -> PhysicalDataModel:
-        output = data_model.model_copy(deep=True)
-        existing_views = {view.view for view in output.views}
-        for view in self.extra.views:
-            if view.view not in existing_views:
-                output.views.append(view)
-        existing_properties = {(prop.view, prop.view_property) for prop in output.properties}
-        existing_containers = {container.container for container in output.containers or []}
-        existing_enum_collections = {collection.collection for collection in output.enum or []}
-        new_containers_by_entity = {container.container: container for container in self.extra.containers or []}
-        new_enum_collections_by_entity = {collection.collection: collection for collection in self.extra.enum or []}
-        for prop in self.extra.properties:
-            if (prop.view, prop.view_property) in existing_properties:
-                continue
-            output.properties.append(prop)
-            if prop.container and prop.container not in existing_containers:
-                if output.containers is None:
-                    output.containers = SheetList[PhysicalContainer]()
-                output.containers.append(new_containers_by_entity[prop.container])
-                existing_containers.add(prop.container)
-            if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections:
-                if output.enum is None:
-                    output.enum = SheetList[PhysicalEnum]()
-                output.enum.append(new_enum_collections_by_entity[prop.value_type.collection])
-                existing_enum_collections.add(prop.value_type.collection)
-
-        existing_nodes = {node.node for node in output.nodes or []}
-        for node in self.extra.nodes or []:
-            if node.node not in existing_nodes:
-                if output.nodes is None:
-                    output.nodes = SheetList[PhysicalNodeType]()
-                output.nodes.append(node)
-                existing_nodes.add(node.node)
-
-        return output
-
-    @property
-    def description(self) -> str:
-        return f"Merged with {self.extra.metadata.as_data_model_id()}"
 
 
 class _ConceptualDataModelConverter:
