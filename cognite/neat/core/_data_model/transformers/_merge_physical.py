@@ -250,7 +250,14 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         primary: DMSContainer,
         secondary: DMSContainer,
     ) -> DMSContainer:
-        raise NotImplementedError()
+        return DMSContainer(
+            neatId=primary.neatId,
+            container=primary.container,
+            constraint=primary.constraint,
+            used_for=primary.used_for,
+            name=primary.name or secondary.name,
+            description=primary.description or secondary.description,
+        )
 
     @classmethod
     def merge_nodes(
@@ -258,7 +265,13 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         primary: DMSNode,
         secondary: DMSNode,
     ) -> DMSNode:
-        raise NotImplementedError()
+        return DMSNode(
+            neatId=primary.neatId,
+            node=primary.node,
+            usage=primary.usage,
+            name=primary.name or secondary.name,
+            description=primary.description or secondary.description,
+        )
 
     @classmethod
     def merge_enum(
@@ -266,4 +279,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         primary: DMSEnum,
         secondary: DMSEnum,
     ) -> DMSEnum:
-        raise NotImplementedError()
+        return DMSEnum(
+            neatId=primary.neatId,
+            collection=primary.collection,
+            value=primary.value,
+            name=primary.name or secondary.name,
+            description=primary.description or secondary.description,
+        )
