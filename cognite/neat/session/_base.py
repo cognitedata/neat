@@ -264,6 +264,13 @@ class NeatSession:
 
         return self._state.rule_store.do_activity(action, importer)
 
+    def connect_data(self) -> IssueList:
+        """Connect the instances to the data model.
+
+        This assumes that you have read in instances and a data model.
+        """
+        raise NotImplementedError()
+
     def _repr_html_(self) -> str:
         state = self._state
         if state.instances.empty and state.rule_store.empty:
