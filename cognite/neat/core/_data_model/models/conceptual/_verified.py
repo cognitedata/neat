@@ -27,8 +27,8 @@ from cognite.neat.core._data_model.models._types import (
 # NeatIdType,
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
-    ConceptEntity,
     ClassEntityList,
+    ConceptEntity,
     ConceptualEntity,
     UnknownEntity,
 )
@@ -54,17 +54,17 @@ def _get_metadata(context: Any) -> ConceptualMetadata | None:
 
 class ConceptualConcept(SheetRow):
     """
-    Class is a category of things that share a common set of attributes and relationships.
+    Concept is a category of things that share a common set of attributes and relationships.
 
     Args:
-        class_: The class ID of the class.
+        concept: An ID of the concept.
         description: A description of the class.
         implements: Which classes the current class implements.
     """
 
     concept: ConceptEntityType = Field(
-        alias="Class",
-        description="Class id being defined, use strongly advise `PascalCase` usage.",
+        alias="Concept",
+        description="Concept id being defined, use strongly advise `PascalCase` usage.",
     )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the class.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the class.")
@@ -86,7 +86,7 @@ class ConceptualConcept(SheetRow):
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.concept,)
 
-    @field_serializer("class_", when_used="unless-none")
+    @field_serializer("concept", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
         if (metadata := _get_metadata(info.context)) and isinstance(value, ConceptualEntity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
@@ -97,22 +97,22 @@ class ConceptualConcept(SheetRow):
         if isinstance(value, list) and (metadata := _get_metadata(info.context)):
             return ",".join(
                 (
-                    class_.dump(prefix=metadata.prefix, version=metadata.version)
-                    if isinstance(class_, ConceptualEntity)
-                    else str(class_)
+                    concept.dump(prefix=metadata.prefix, version=metadata.version)
+                    if isinstance(concept, ConceptualEntity)
+                    else str(concept)
                 )
-                for class_ in value
+                for concept in value
             )
         return ",".join(str(value) for value in value)
 
 
 class ConceptualProperty(SheetRow):
     """
-    A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
-    or a relationship to another class.
+    A property is a characteristic of a concept. It is a named attribute of a concept
+    that describes a range of values or a relationship to another concept.
 
     Args:
-        class_: Class ID to which property belongs
+        concept: Concept ID to which property belongs
         property_: Property ID of the property
         name: Property name.
         value_type: Type of value property will hold (data or link to another class)
@@ -133,12 +133,10 @@ class ConceptualProperty(SheetRow):
     )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the property.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the property.")
-    value_type: DataType | ConceptEntityType | MultiValueTypeType | UnknownEntity = (
-        Field(
-            alias="Value Type",
-            union_mode="left_to_right",
-            description="Value type that the property can hold. It takes either subset of XSD type or a class defined.",
-        )
+    value_type: DataType | ConceptEntityType | MultiValueTypeType | UnknownEntity = Field(
+        alias="Value Type",
+        union_mode="left_to_right",
+        description="Value type that the property can hold. It takes either subset of XSD type or a class defined.",
     )
     min_count: int | None = Field(
         alias="Min Count",
@@ -224,7 +222,7 @@ class ConceptualProperty(SheetRow):
             return None
         return value
 
-    @field_serializer("class_", "value_type", when_used="unless-none")
+    @field_serializer("concept", "value_type", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
         if (metadata := _get_metadata(info.context)) and isinstance(value, ConceptualEntity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
@@ -244,9 +242,7 @@ class ConceptualProperty(SheetRow):
 class ConceptualDataModel(BaseVerifiedDataModel):
     metadata: ConceptualMetadata = Field(alias="Metadata", description="Metadata for the conceptual data model")
     properties: SheetList[ConceptualProperty] = Field(alias="Properties", description="List of properties")
-    concepts: SheetList[ConceptualConcept] = Field(
-        alias="Concepts", description="List of concepts"
-    )
+    concepts: SheetList[ConceptualConcept] = Field(alias="Concepts", description="List of concepts")
     prefixes: dict[str, Namespace] = Field(
         alias="Prefixes",
         default_factory=get_default_prefixes_and_namespaces,
@@ -265,14 +261,12 @@ class ConceptualDataModel(BaseVerifiedDataModel):
     def set_neat_id(self) -> "ConceptualDataModel":
         namespace = self.metadata.namespace
 
-        for class_ in self.concepts:
-            if not class_.neatId:
-                class_.neatId = namespace[class_.concept.suffix]
+        for concept in self.concepts:
+            if not concept.neatId:
+                concept.neatId = namespace[concept.concept.suffix]
         for property_ in self.properties:
             if not property_.neatId:
-                property_.neatId = namespace[
-                    f"{property_.concept.suffix}/{property_.property_}"
-                ]
+                property_.neatId = namespace[f"{property_.concept.suffix}/{property_.property_}"]
 
         return self
 
@@ -281,12 +275,10 @@ class ConceptualDataModel(BaseVerifiedDataModel):
 
         namespace = self.metadata.namespace
 
-        for class_ in self.concepts:
-            class_.neatId = namespace[class_.concept.suffix]
+        for concept in self.concepts:
+            concept.neatId = namespace[concept.concept.suffix]
         for property_ in self.properties:
-            property_.neatId = namespace[
-                f"{property_.concept.suffix}/{property_.property_}"
-            ]
+            property_.neatId = namespace[f"{property_.concept.suffix}/{property_.property_}"]
 
     def sync_with_physical_data_model(self, physical_data_model: "PhysicalDataModel") -> None:
         # Sync at the metadata level
