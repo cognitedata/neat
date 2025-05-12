@@ -15,6 +15,7 @@ class TestConceptualPropertyRenaming:
             properties=[
                 UnverifiedConceptualProperty("Asset", "parent", "Asset", min_count=0, max_count=1),
                 UnverifiedConceptualProperty("Asset", "name", "text", min_count=0, max_count=1),
+                UnverifiedConceptualProperty("Asset", "tags", "text", min_count=0, max_count=100),
             ],
             classes=[UnverifiedConceptualClass("Asset")],
         ).as_verified_rules()
@@ -25,14 +26,16 @@ class TestConceptualPropertyRenaming:
                     ("Asset", "parent"): ("Asset", "asset_parent"),
                     ("Asset", "does_not_exist"): ("Asset", "asset_does_not_exist"),
                     ("DoesNotExist", "parent"): ("Asset", "asset_parent"),
-                    ("Asset", "name"): ("Asset", "parent"),
+                    ("Asset", "tags"): ("Asset", "parent"),
+                    ("Asset", "name"): ("DoesNotExistEither", "name"),
                 }
             ).transform(input_model)
 
-        assert len(issues) == 3
+        assert len(issues) == 4
         assert {str(issue) for issue in issues} == {
             "NeatValueWarning: Property 'does_not_exist' not found in concept 'Asset'.",
             "NeatValueWarning: Concept 'DoesNotExist' not found in data model.",
+            "NeatValueWarning: Concept 'DoesNotExistEither' not found in data model.",
             "NeatValueWarning: Property 'parent' already exists in concept 'Asset'.",
         }
         assert mapped.properties[0].property_ == "asset_parent"
