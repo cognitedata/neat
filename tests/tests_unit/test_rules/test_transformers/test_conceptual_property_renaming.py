@@ -24,9 +24,15 @@ class TestConceptualPropertyRenaming:
                 {
                     ("Asset", "parent"): ("Asset", "asset_parent"),
                     ("Asset", "does_not_exist"): ("Asset", "asset_does_not_exist"),
+                    ("DoesNotExist", "parent"): ("Asset", "asset_parent"),
+                    ("Asset", "name"): ("Asset", "parent"),
                 }
             ).transform(input_model)
 
-        assert len(issues) == 1
-        assert issues[0].message == "Property 'does_not_exist' not found in class 'Asset'."
+        assert len(issues) == 3
+        assert {str(issue) for issue in issues} == {
+            "NeatValueWarning: Property 'does_not_exist' not found in concept 'Asset'.",
+            "NeatValueWarning: Concept 'DoesNotExist' not found in data model.",
+            "NeatValueWarning: Property 'parent' already exists in concept 'Asset'.",
+        }
         assert mapped.properties[0].property_ == "asset_parent"
