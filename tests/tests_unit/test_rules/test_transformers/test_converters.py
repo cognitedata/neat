@@ -31,8 +31,8 @@ from cognite.neat.core._data_model.models.physical._verified import PhysicalData
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
+    SubsetConceptualDataModel,
     SubsetDMSRules,
-    SubsetInformationRules,
     ToDMSCompliantEntities,
 )
 from cognite.neat.core._issues.errors._general import NeatValueError
@@ -107,19 +107,19 @@ class TestToInformationCompliantEntities:
         assert res.properties[2].property_ == "pId"
 
 
-class TestRulesSubsetting:
+class TestDataModelSubsetting:
     def test_subset_information_rules(self, david_rules: ConceptualDataModel) -> None:
-        class_ = ConceptEntity.load("power:GeoLocation")
-        subset = SubsetInformationRules({class_}).transform(david_rules)
+        concept = ConceptEntity.load("power:GeoLocation")
+        subset = SubsetConceptualDataModel({concept}).transform(david_rules)
 
-        assert subset.concepts[0].concept == class_
+        assert subset.concepts[0].concept == concept
         assert len(subset.concepts) == 1
 
     def test_subset_information_rules_fails(self, david_rules: PhysicalDataModel) -> None:
         class_ = ConceptEntity.load("power:GeoLooocation")
 
         with pytest.raises(NeatValueError):
-            _ = SubsetInformationRules({class_}).transform(david_rules)
+            _ = SubsetConceptualDataModel({class_}).transform(david_rules)
 
     def test_subset_dms_rules(self, alice_rules: PhysicalDataModel) -> None:
         view = ViewEntity.load("power:GeoLocation(version=0.1.0)")

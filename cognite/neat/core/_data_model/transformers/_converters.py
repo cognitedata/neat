@@ -72,9 +72,9 @@ from cognite.neat.core._data_model.models.entities import (
     ViewEntity,
 )
 from cognite.neat.core._data_model.models.physical import (
-    DMSValidation,
     PhysicalMetadata,
     PhysicalProperty,
+    PhysicalValidation,
     PhysicalView,
 )
 from cognite.neat.core._data_model.models.physical._verified import (
@@ -1186,7 +1186,7 @@ class IncludeReferenced(VerifiedRulesTransformer[PhysicalDataModel, PhysicalData
 
     def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         dms_rules = rules
-        view_ids, container_ids = DMSValidation(dms_rules).imported_views_and_containers_ids()
+        view_ids, container_ids = PhysicalValidation(dms_rules).imported_views_and_containers_ids()
         if not (view_ids or container_ids):
             warnings.warn(
                 NeatValueWarning(
@@ -2200,35 +2200,35 @@ class SubsetDMSRules(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataMod
             raise NeatValueError(f"Cannot subset rules: {e}") from e
 
 
-class SubsetInformationRules(VerifiedRulesTransformer[ConceptualDataModel, ConceptualDataModel]):
-    """Subsets InformationRules to only include the specified classes."""
+class SubsetConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, ConceptualDataModel]):
+    """Subsets Conceptual Data Model to only include the specified concepts."""
 
-    def __init__(self, classes: set[ConceptEntity]):
-        self._classes = classes
+    def __init__(self, concepts: set[ConceptEntity]):
+        self._concepts = concepts
 
     def transform(self, rules: ConceptualDataModel) -> ConceptualDataModel:
         analysis = DataModelAnalysis(conceptual=rules)
 
-        class_by_class_entity = analysis.concept_by_concept_entity
-        parent_entity_by_class_entity = analysis.parents_by_concept()
+        concept_by_concept_entity = analysis.concept_by_concept_entity
+        parent_entity_by_concept_entity = analysis.parents_by_concept()
 
         available = analysis.defined_concepts(include_ancestors=True)
-        subset = available.intersection(self._classes)
+        subset = available.intersection(self._concepts)
 
         # need to add all the parent classes of the desired classes to the possible classes
         ancestors: set[ConceptEntity] = set()
-        for class_ in subset:
+        for concept in subset:
             ancestors = ancestors.union(
-                {ancestor for ancestor in get_inheritance_path(class_, parent_entity_by_class_entity)}
+                {ancestor for ancestor in get_inheritance_path(concept, parent_entity_by_concept_entity)}
             )
         subset = subset.union(ancestors)
 
         if not subset:
-            raise NeatValueError("None of the requested classes are defined in the rules!")
+            raise NeatValueError("None of the requested concepts are defined in the rules!")
 
-        if nonexisting := self._classes - subset:
+        if nonexisting := self._concepts - subset:
             raise NeatValueError(
-                "Following requested classes do not exist"
+                "Following requested concepts do not exist"
                 f" in the rules: [{','.join([class_.suffix for class_ in nonexisting])}]"
                 ". Aborting."
             )
@@ -2236,15 +2236,15 @@ class SubsetInformationRules(VerifiedRulesTransformer[ConceptualDataModel, Conce
         subsetted_rules: dict[str, Any] = {
             "metadata": rules.metadata.model_copy(),
             "prefixes": (rules.prefixes or {}).copy(),
-            "classes": SheetList[ConceptualConcept](),
+            "concepts": SheetList[ConceptualConcept](),
             "properties": SheetList[ConceptualProperty](),
         }
 
-        for class_ in subset:
-            subsetted_rules["classes"].append(class_by_class_entity[class_])
+        for concept in subset:
+            subsetted_rules["concepts"].append(concept_by_concept_entity[concept])
 
-        for class_, properties in analysis.properties_by_concepts(include_ancestors=False).items():
-            if class_ not in subset:
+        for concept, properties in analysis.properties_by_concepts(include_ancestors=False).items():
+            if concept not in subset:
                 continue
             for property_ in properties:
                 # datatype property can be added directly
@@ -2303,17 +2303,11 @@ class AddCogniteProperties(
         default_space = input_.metadata.space
         default_version = input_.metadata.version
 
-        dependencies_by_concept = self._get_dependencies_by_concepts(
-            input_.concepts, rules.read_context, default_space
-        )
+        dependencies_by_concept = self._get_dependencies_by_concepts(input_.concepts, rules.read_context, default_space)
 
-        properties_by_concepts = self._get_properties_by_concepts(
-            input_.properties, rules.read_context, default_space
-        )
+        properties_by_concepts = self._get_properties_by_concepts(input_.properties, rules.read_context, default_space)
 
-        cognite_implements_concepts = self._get_cognite_concepts(
-            dependencies_by_concept
-        )
+        cognite_implements_concepts = self._get_cognite_concepts(dependencies_by_concept)
         views_by_concept_entity = self._get_views_by_concept(
             cognite_implements_concepts, default_space, default_version
         )
@@ -2322,16 +2316,12 @@ class AddCogniteProperties(
             for prop_id, view_prop in view.properties.items():
                 if prop_id in properties_by_concepts[concept_entity]:
                     continue
-                properties_by_concepts[concept_entity][prop_id] = (
-                    DMSImporter.as_information_input_property(
-                        concept_entity, prop_id, view_prop
-                    )
+                properties_by_concepts[concept_entity][prop_id] = DMSImporter.as_information_input_property(
+                    concept_entity, prop_id, view_prop
                 )
 
         try:
-            topological_order = TopologicalSorter(
-                dependencies_by_concept
-            ).static_order()
+            topological_order = TopologicalSorter(dependencies_by_concept).static_order()
         except CycleError as e:
             raise NeatValueError(f"Cycle detected in the class hierarchy: {e}") from e
 
@@ -2343,13 +2333,11 @@ class AddCogniteProperties(
                 for prop in properties_by_concepts[parent].values():
                     if prop.property_ not in properties_by_concepts[concept_entity]:
                         new_prop = prop.copy(
-                            update={"Class": concept_entity},
+                            update={"Concept": concept_entity},
                             default_prefix=default_space,
                         )
                         new_properties.append(new_prop)
-                        properties_by_concepts[concept_entity][
-                            prop.property_
-                        ] = new_prop
+                        properties_by_concepts[concept_entity][prop.property_] = new_prop
 
             if self._dummy_property:
                 new_properties.append(
@@ -2437,9 +2425,6 @@ class AddCogniteProperties(
     def _get_views_by_concept(
         self, concepts: set[ConceptEntity], default_space: str, default_version: str
     ) -> dict[ConceptEntity, View]:
-        view_ids = [
-            concept.as_view_entity(default_space, default_version).as_id()
-            for concept in concepts
-        ]
+        view_ids = [concept.as_view_entity(default_space, default_version).as_id() for concept in concepts]
         views = self._client.loaders.views.retrieve(view_ids, include_ancestor=True, include_connected=True)
         return {ConceptEntity(prefix=view.space, suffix=view.external_id, version=view.version): view for view in views}

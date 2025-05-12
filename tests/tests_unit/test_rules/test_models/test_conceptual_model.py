@@ -10,7 +10,7 @@ from cognite.neat.core._data_model.models.conceptual import (
     ConceptualConcept,
     ConceptualDataModel,
     ConceptualProperty,
-    InformationValidation,
+    ConceptualValidation,
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual._unverified import (
@@ -49,9 +49,9 @@ def case_insensitive_value_types():
                 "version": "0.1.0",
                 "name": "Power to Consumer Data Model",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
@@ -60,7 +60,7 @@ def case_insensitive_value_types():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -92,16 +92,16 @@ def duplicated_entries():
                 "version": "0.1.0",
                 "name": "Power to Consumer Data Model",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
@@ -110,7 +110,7 @@ def duplicated_entries():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -122,7 +122,7 @@ def duplicated_entries():
                     "Transformation": None,
                 },
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -143,7 +143,7 @@ def duplicated_entries():
             ),
             ResourceDuplicatedError(
                 identifier=ConceptEntity(prefix="power", suffix="GeneratingUnit"),
-                resource_type="class",
+                resource_type="concept",
                 location="the Classes sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         },
@@ -165,16 +165,16 @@ def incomplete_rules_case():
                 "version": "0.1.0",
                 "name": "Power to Consumer Data Model",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Implements": None,
                 }
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit2",
+                    "Concept": "GeneratingUnit2",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "string",
@@ -188,12 +188,12 @@ def incomplete_rules_case():
         [
             ResourceNotDefinedError[ConceptEntity](
                 ConceptEntity(prefix="power", suffix="GeneratingUnit2"),
-                "class",
+                "Concept",
                 "Classes sheet",
             ),
             ResourceNotDefinedError[ConceptEntity](
                 ConceptEntity(prefix="power", suffix="GeneratingUnit"),
-                "class",
+                "Concept",
                 "Classes sheet",
             ),
         ],
@@ -229,7 +229,7 @@ class TestInformationRules:
     @pytest.mark.skip("Temp skipping: enabling in new PR")
     def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
         rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(incomplete_rules).dump())
-        issues = InformationValidation(rules).validate()
+        issues = ConceptualValidation(rules).validate()
 
         assert len(issues) == 2
         assert set(issues) == set(expected_exception)
@@ -317,9 +317,9 @@ def non_compliant_entities():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "Generating.Unit",
+                    "Concept": "Generating.Unit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
@@ -328,7 +328,7 @@ def non_compliant_entities():
             ],
             "Properties": [
                 {
-                    "Class": "Generating.Unit",
+                    "Concept": "Generating.Unit",
                     "Property": "IdentifiedObject.name",
                     "Description": None,
                     "Value Type": "StrING",

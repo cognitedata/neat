@@ -21,7 +21,7 @@ from cognite.neat.core._utils.text import humanize_collection
 from ._verified import ConceptualDataModel
 
 
-class InformationValidation:
+class ConceptualValidation:
     """This class does all the validation of the Information rules that have dependencies
     between components."""
 
@@ -51,7 +51,7 @@ class InformationValidation:
 
     def _duplicated_resources(self) -> None:
         properties_sheet = self._read_info_by_spreadsheet.get("Properties")
-        classes_sheet = self._read_info_by_spreadsheet.get("Classes")
+        concepts_sheet = self._read_info_by_spreadsheet.get("Concepts")
 
         visited = defaultdict(list)
         for row_no, property_ in enumerate(self._properties):
@@ -77,7 +77,7 @@ class InformationValidation:
         visited = defaultdict(list)
         for row_no, class_ in enumerate(self._classes):
             visited[class_._identifier()].append(
-                classes_sheet.adjusted_row_number(row_no) if classes_sheet else row_no + 1
+                concepts_sheet.adjusted_row_number(row_no) if concepts_sheet else row_no + 1
             )
 
         for identifier, rows in visited.items():
@@ -86,7 +86,7 @@ class InformationValidation:
             self.issue_list.append(
                 ResourceDuplicatedError(
                     identifier[0],
-                    "class",
+                    "concept",
                     (f"the Classes sheet at row {humanize_collection(rows)} if data model is read from a spreadsheet."),
                 )
             )
@@ -104,7 +104,7 @@ class InformationValidation:
                 if not class_parent_pairs[class_] and class_.prefix == self._metadata.prefix:
                     self.issue_list.append(
                         ResourceNotDefinedWarning(
-                            resource_type="class",
+                            resource_type="concept",
                             identifier=class_,
                             location="Properties sheet",
                         )
@@ -119,8 +119,8 @@ class InformationValidation:
                 self.issue_list.append(
                     ResourceNotDefinedError(
                         identifier=class_,
-                        resource_type="class",
-                        location="Classes sheet",
+                        resource_type="concept",
+                        location="Concepts sheet",
                     )
                 )
 
@@ -137,35 +137,31 @@ class InformationValidation:
                 else:
                     self.issue_list.append(
                         ResourceNotDefinedWarning(
-                            resource_type="class",
+                            resource_type="concept",
                             identifier=parent,
-                            location="Classes sheet",
+                            location="Concepts sheet",
                         )
                     )
 
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass
         defined_classes = {class_.concept for class_ in self._classes}
-        classes_with_explicit_properties = {
-            property_.concept for property_ in self._properties
-        }
+        classes_with_explicit_properties = {property_.concept for property_ in self._properties}
 
         # USE CASE: models are complete
         if missing_classes := classes_with_explicit_properties.difference(defined_classes):
             for class_ in missing_classes:
                 self.issue_list.append(
                     ResourceNotDefinedWarning(
-                        resource_type="class",
+                        resource_type="concept",
                         identifier=class_,
-                        location="Classes sheet",
+                        location="Concepts sheet",
                     )
                 )
 
     def _referenced_value_types_exist(self) -> None:
         # adding UnknownEntity to the set of defined classes to handle the case where a property references an unknown
-        defined_classes = {class_.concept for class_ in self._classes} | {
-            UnknownEntity()
-        }
+        defined_classes = {class_.concept for class_ in self._classes} | {UnknownEntity()}
         referred_object_types = {
             property_.value_type
             for property_ in self.rules.properties
@@ -177,9 +173,9 @@ class InformationValidation:
             for missing in missing_value_types:
                 self.issue_list.append(
                     ResourceNotDefinedWarning(
-                        resource_type="class",
+                        resource_type="concept",
                         identifier=missing,
-                        location="Classes sheet",
+                        location="Concepts sheet",
                     )
                 )
 
@@ -200,8 +196,8 @@ class InformationValidation:
                 self.issue_list.append(
                     ResourceRegexViolationWarning(
                         prop_.concept,
-                        "Class",
-                        "Properties sheet, Class column",
+                        "Concept",
+                        "Properties sheet, Concept column",
                         PATTERNS.view_id_compliance.pattern,
                     )
                 )
@@ -241,8 +237,8 @@ class InformationValidation:
                 self.issue_list.append(
                     ResourceRegexViolationWarning(
                         class_.concept,
-                        "Class",
-                        "Classes sheet, Class column",
+                        "Concept",
+                        "Concepts sheet, Class column",
                         PATTERNS.view_id_compliance.pattern,
                     )
                 )
@@ -253,8 +249,8 @@ class InformationValidation:
                         self.issue_list.append(
                             ResourceRegexViolationWarning(
                                 parent,
-                                "Class",
-                                "Classes sheet, Implements column",
+                                "Concept",
+                                "Concepts sheet, Implements column",
                                 PATTERNS.view_id_compliance.pattern,
                             )
                         )

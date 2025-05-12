@@ -68,14 +68,14 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     _helper_sheet_name: str = "_helper"
     _main_header_by_sheet_name: ClassVar[dict[str, str]] = {
         "Properties": "Definition of Properties",
-        "Classes": "Definition of Classes",
+        "Concepts": "Definition of Concepts",
         "Views": "Definition of Views",
         "Containers": "Definition of Containers",
         "Nodes": "Definition of Nodes",
         "Enum": "Definition of Enum Collections",
     }
     _helper_sheet_column_indexes_by_names: ClassVar[dict[str, int]] = {
-        "Class": 1,
+        "Concept": 1,
         "View": 1,
         "Implements": 2,
         "Value Type": 3,
@@ -254,7 +254,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         self._add_data_validation(
             workbook,
-            sheet_name="Views" if role == RoleTypes.dms else "Classes",
+            sheet_name="Views" if role == RoleTypes.dms else "Concepts",
             column_name="Implements",
             data_validator_name="implements",
             data_validators=data_validators,
@@ -275,8 +275,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self._add_data_validation(
             workbook,
             sheet_name="Properties",
-            column_name="View" if role == RoleTypes.dms else "Class",
-            data_validator_name="views_or_classes",
+            column_name="View" if role == RoleTypes.dms else "Concept",
+            data_validator_name="views_or_concepts",
             data_validators=data_validators,
             validation_range=100,
             total_rows=100 * 100,
@@ -364,26 +364,26 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                 )
             concept_counter += 1
 
-        views_or_classes_sheet = "Views" if role == RoleTypes.dms else "Classes"
-        view_or_class_column = "View" if role == RoleTypes.dms else "Class"
+        views_or_concepts_sheet = "Views" if role == RoleTypes.dms else "Concepts"
+        view_or_concept_column = "View" if role == RoleTypes.dms else "Concept"
 
         for i in range(no_rows):
             workbook[self._helper_sheet_name].cell(
                 row=i + 1,
-                column=self._helper_sheet_column_indexes_by_names[view_or_class_column],
-                value=f'=IF(ISBLANK({views_or_classes_sheet}!A{i + 3}), "", {views_or_classes_sheet}!A{i + 3})',
+                column=self._helper_sheet_column_indexes_by_names[view_or_concept_column],
+                value=f'=IF(ISBLANK({views_or_concepts_sheet}!A{i + 3}), "", {views_or_concepts_sheet}!A{i + 3})',
             )
 
             workbook[self._helper_sheet_name].cell(
                 row=concept_counter + i + 1,
                 column=self._helper_sheet_column_indexes_by_names["Implements"],
-                value=f'=IF(ISBLANK({views_or_classes_sheet}!A{i + 3}), "", {views_or_classes_sheet}!A{i + 3})',
+                value=f'=IF(ISBLANK({views_or_concepts_sheet}!A{i + 3}), "", {views_or_concepts_sheet}!A{i + 3})',
             )
 
             workbook[self._helper_sheet_name].cell(
                 row=value_type_counter + i + 1,
                 column=self._helper_sheet_column_indexes_by_names["Value Type"],
-                value=f'=IF(ISBLANK({views_or_classes_sheet}!A{i + 3}), "", {views_or_classes_sheet}!A{i + 3})',
+                value=f'=IF(ISBLANK({views_or_concepts_sheet}!A{i + 3}), "", {views_or_concepts_sheet}!A{i + 3})',
             )
 
             if role == RoleTypes.dms:

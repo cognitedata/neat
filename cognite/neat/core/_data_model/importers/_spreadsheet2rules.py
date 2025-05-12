@@ -253,12 +253,14 @@ class ExcelImporter(BaseImporter[T_InputRules]):
     """
 
     def __init__(self, filepath: Path):
-        self.filepath = self._make_forward_compatible_spreadsheet(filepath)
+        self.filepath = filepath
 
     def to_rules(self) -> ReadRules[T_InputRules]:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
             raise FileNotFoundNeatError(self.filepath)
+
+        self.filepath = self._make_forward_compatible_spreadsheet(self.filepath)
 
         with pd.ExcelFile(self.filepath) as excel_file:
             user_reader = SpreadsheetReader(issue_list)

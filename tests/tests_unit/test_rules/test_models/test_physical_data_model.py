@@ -25,9 +25,9 @@ from cognite.neat.core._data_model.models.entities._single_value import (
 )
 from cognite.neat.core._data_model.models.physical import (
     DMSSchema,
-    DMSValidation,
     PhysicalMetadata,
     PhysicalProperty,
+    PhysicalValidation,
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
@@ -1207,9 +1207,9 @@ def case_unknown_value_types():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
@@ -1218,7 +1218,7 @@ def case_unknown_value_types():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -1230,7 +1230,7 @@ def case_unknown_value_types():
                     "Transformation": None,
                 },
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "voltage",
                     "Description": None,
                     "Value Type": UnknownEntity(),
@@ -1277,7 +1277,7 @@ class TestDMSRules:
         normalize_neat_id_in_rules(expected_rules)
 
         assert valid_rules.model_dump() == expected_rules.model_dump()
-        issues = DMSValidation(valid_rules).validate()
+        issues = PhysicalValidation(valid_rules).validate()
         assert not issues
         # testing case insensitive value types
         assert isinstance(valid_rules.properties[0].value_type, String)
@@ -1287,7 +1287,7 @@ class TestDMSRules:
         self, raw: UnverifiedPhysicalDataModel, expected_errors: list[NeatError]
     ) -> None:
         rules = raw.as_verified_rules()
-        issues = DMSValidation(rules).validate()
+        issues = PhysicalValidation(rules).validate()
 
         assert len(issues.errors) == 2
 
@@ -1773,7 +1773,7 @@ class TestDMSValidation:
         expected_views: set[ViewEntity],
         expected_containers: set[ContainerEntity],
     ) -> None:
-        validation = DMSValidation(input_rules.as_verified_rules())
+        validation = PhysicalValidation(input_rules.as_verified_rules())
         actual_views, actual_containers = validation.imported_views_and_containers_ids()
 
         assert actual_views == expected_views

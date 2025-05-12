@@ -29,5 +29,5 @@ class TestSubInferenceImporter:
             "turbineType",
             "maxCapacity",
         }
-        actual_properties = {prop["property_"] for prop in rules["properties"] if prop["class_"] == "ClassicAsset"}
+        actual_properties = {prop["property_"] for prop in rules["properties"] if prop["concept"] == "ClassicAsset"}
         assert expected_metadata_properties <= actual_properties

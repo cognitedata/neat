@@ -158,33 +158,33 @@ class InferenceImporter(BaseRDFImporter):
             Tuple of data model and prefixes of the graph
         """
 
-        classes: dict[str, dict] = {}
+        concepts: dict[str, dict] = {}
         properties: dict[str, dict] = {}
         prefixes: dict[str, Namespace] = {}
         count_by_value_type_by_property: dict[str, dict[str, int]] = defaultdict(Counter)
 
         # Infers all the classes in the graph
-        for class_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
-            if (class_id := remove_namespace_from_uri(cast(URIRef, class_uri))) in classes:
+        for concept_uri, no_instances in self.graph.query(ORDERED_CLASSES_QUERY):  # type: ignore[misc]
+            if (concept_id := remove_namespace_from_uri(cast(URIRef, concept_uri))) in concepts:
                 # handles cases when class id is already present in classes
-                class_id = f"{class_id}_{len(classes) + 1}"
+                concept_id = f"{concept_id}_{len(concepts) + 1}"
 
-            classes[class_id] = {
-                "class_": class_id,
-                "uri": class_uri,
+            concepts[concept_id] = {
+                "concept": concept_id,
+                "uri": concept_uri,
                 "comment": f"Inferred from knowledge graph, where this class has <{no_instances}> instances",
             }
 
-            self._add_uri_namespace_to_prefixes(cast(URIRef, class_uri), prefixes)
+            self._add_uri_namespace_to_prefixes(cast(URIRef, concept_uri), prefixes)
 
         instances_query = (
             INSTANCES_OF_CLASS_QUERY if self.max_number_of_instance == -1 else INSTANCES_OF_CLASS_RICHNESS_ORDERED_QUERY
         )
 
-        classes_iterable = iterate_progress_bar(classes.items(), len(classes), "Inferring classes")
+        classes_iterable = iterate_progress_bar(concepts.items(), len(concepts), "Inferring classes")
 
         # Infers all the properties of the class
-        for class_id, class_definition in classes_iterable:
+        for concept_id, class_definition in classes_iterable:
             for (  # type: ignore[misc]
                 instance,
                 _,
@@ -216,7 +216,7 @@ class InferenceImporter(BaseRDFImporter):
 
                         issue = PropertyValueTypeUndefinedWarning(
                             resource_type="Property",
-                            identifier=f"{class_id}:{property_id}",
+                            identifier=f"{concept_id}:{property_id}",
                             property_name=property_id,
                             default_action="Remove the property from the rules",
                             recommended_action="Make sure that graph is complete",
@@ -225,10 +225,10 @@ class InferenceImporter(BaseRDFImporter):
                         if issue not in self.issue_list:
                             self.issue_list.append(issue)
 
-                    id_ = f"{class_id}:{property_id}"
+                    id_ = f"{concept_id}:{property_id}"
 
                     definition = {
-                        "class_": class_id,
+                        "concept": concept_id,
                         "property_": property_id,
                         "max_count": cast(RdfLiteral, occurrence).value,
                         "value_type": value_type_id,
@@ -265,7 +265,7 @@ class InferenceImporter(BaseRDFImporter):
 
         return {
             "metadata": self._default_metadata(),
-            "classes": list(classes.values()),
+            "concepts": list(concepts.values()),
             "properties": list(properties.values()),
             "prefixes": prefixes,
         }
@@ -392,7 +392,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             default_space = metadata["space"]
         return {
             "metadata": metadata,
-            "classes": [cls.dump(default_space) for cls in classes],
+            "concepts": [cls.dump(default_space) for cls in classes],
             "properties": [prop.dump(default_space) for prop in properties],
             "prefixes": prefixes,
         }

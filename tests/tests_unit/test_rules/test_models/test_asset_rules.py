@@ -26,16 +26,16 @@ def case_asset_relationship():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
@@ -44,7 +44,7 @@ def case_asset_relationship():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "ACLineSegment",
@@ -82,16 +82,16 @@ def case_circular_dependency():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
@@ -100,7 +100,7 @@ def case_circular_dependency():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "ACLineSegment",
@@ -113,7 +113,7 @@ def case_circular_dependency():
                     "Implementation": "Asset(property=parentExternalId)",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "GeneratingUnit",
@@ -152,16 +152,16 @@ def parent_property_points_to_data_type():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
@@ -170,7 +170,7 @@ def parent_property_points_to_data_type():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "ACLineSegment",
@@ -183,7 +183,7 @@ def parent_property_points_to_data_type():
                     "Implementation": "Asset(property=parentExternalId)",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "string",

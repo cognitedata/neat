@@ -9,7 +9,7 @@ from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
 from cognite.neat.core._data_model.models._base_verified import RoleTypes
-from cognite.neat.core._data_model.models.physical import DMSValidation
+from cognite.neat.core._data_model.models.physical import PhysicalValidation
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     IncludeReferenced,
@@ -106,7 +106,7 @@ class TemplateAPI:
                 will be included.
         """
         last_rules = self._state.rule_store.last_verified_rules
-        view_ids, container_ids = DMSValidation(
+        view_ids, container_ids = PhysicalValidation(
             self._state.rule_store.last_verified_dms_rules
         ).imported_views_and_containers_ids()
         transformers: list[VerifiedRulesTransformer] = []

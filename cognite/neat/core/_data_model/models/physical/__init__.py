@@ -9,7 +9,7 @@ from ._unverified import (
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from ._validation import DMSValidation
+from ._validation import PhysicalValidation
 from ._verified import (
     PhysicalContainer,
     PhysicalDataModel,
@@ -22,13 +22,13 @@ from ._verified import (
 
 __all__ = [
     "DMSSchema",
-    "DMSValidation",
     "PhysicalContainer",
     "PhysicalDataModel",
     "PhysicalEnum",
     "PhysicalMetadata",
     "PhysicalNodeType",
     "PhysicalProperty",
+    "PhysicalValidation",
     "PhysicalView",
     "UnverifiedPhysicalContainer",
     "UnverifiedPhysicalDataModel",

@@ -3,26 +3,26 @@ there are loaders to TransformationRules pydantic class."""
 
 from cognite.neat.core._data_model.importers._rdf._base import BaseRDFImporter
 from cognite.neat.core._data_model.importers._rdf._shared import (
-    parse_classes,
+    parse_concepts,
     parse_properties,
 )
 
 CLASSES_QUERY = """
-    SELECT ?class_ ?name ?description ?implements
+    SELECT ?concept ?name ?description ?implements
     WHERE {{
         VALUES ?type {{ imf:BlockType imf:TerminalType imf:AttributeType }}
-        ?class_ a ?type .
+        ?concept a ?type .
 
-        OPTIONAL {{?class_ rdfs:subClassOf ?parent }}.
-        OPTIONAL {{?class_ rdfs:label|skos:prefLabel ?name }}.
-        OPTIONAL {{?class_ rdfs:comment|skos:definition ?description}}.
+        OPTIONAL {{?concept rdfs:subClassOf ?parent }}.
+        OPTIONAL {{?concept rdfs:label|skos:prefLabel ?name }}.
+        OPTIONAL {{?concept rdfs:comment|skos:definition ?description}}.
 
 
         # Add imf:Attribute as parent class when no parent is found
         BIND(IF(!bound(?parent) && ?type = imf:AttributeType, imf:Attribute, ?parent) AS ?implements)
 
         # FILTERS
-        FILTER (!isBlank(?class_))
+        FILTER (!isBlank(?concept))
         FILTER (!bound(?implements) || !isBlank(?implements))
 
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "{language}"))
@@ -31,13 +31,13 @@ CLASSES_QUERY = """
     """
 
 PROPERTIES_QUERY = """
-    SELECT ?class_ ?property_ ?name ?description ?value_type ?min_count ?max_count ?default
+    SELECT ?concept ?property_ ?name ?description ?value_type ?min_count ?max_count ?default
     WHERE
     {{
         # CASE 1: Handling Blocks and Terminals
         {{
             VALUES ?type {{ imf:BlockType imf:TerminalType }}
-            ?class_ a ?type ;
+            ?concept a ?type ;
                 sh:property ?propertyShape .
                 ?propertyShape sh:path ?property_ .
 
@@ -55,10 +55,10 @@ PROPERTIES_QUERY = """
 
         # CASE 2: Handling Attributes
         {{
-            ?class_ a imf:AttributeType .
+            ?concept a imf:AttributeType .
             BIND(xsd:anyURI AS ?valueShape)
             BIND(imf:predicate AS ?property_)
-            ?class_  ?property_ ?defaultURI .
+            ?concept  ?property_ ?defaultURI .
             BIND(STR(?defaultURI) AS ?default)
 
         }}
@@ -67,7 +67,7 @@ PROPERTIES_QUERY = """
         BIND(IF(BOUND(?valueShape), ?valueShape, IF(BOUND(?range) , ?range , ?valueShape)) AS ?value_type)
 
         FILTER (!isBlank(?property_))
-        FILTER (!bound(?class_) || !isBlank(?class_))
+        FILTER (!bound(?concept) || !isBlank(?concept))
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "{language}"))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "{language}"))
     }}
@@ -84,14 +84,14 @@ class IMFImporter(BaseRDFImporter):
     def _to_rules_components(
         self,
     ) -> dict:
-        classes, issue_list = parse_classes(self.graph, CLASSES_QUERY, self.language, self.issue_list)
+        classes, issue_list = parse_concepts(self.graph, CLASSES_QUERY, self.language, self.issue_list)
         self.issue_list = issue_list
         properties, issue_list = parse_properties(self.graph, PROPERTIES_QUERY, self.language, self.issue_list)
         self.issue_list = issue_list
 
         components = {
             "Metadata": self._metadata,
-            "Classes": list(classes.values()) if classes else [],
+            "Concepts": list(classes.values()) if classes else [],
             "Properties": list(properties.values()) if properties else [],
         }
 

@@ -17,7 +17,7 @@ from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDa
 from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ConceptEntity
-from cognite.neat.core._data_model.transformers import SubsetInformationRules
+from cognite.neat.core._data_model.transformers import SubsetConceptualDataModel
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
 
@@ -120,7 +120,7 @@ def generate_triples(
 
     # Subset data model to only classes that are defined in class count
     rules = (
-        SubsetInformationRules(classes=set(class_count.keys())).transform(rules)
+        SubsetConceptualDataModel(concepts=set(class_count.keys())).transform(rules)
         if defined_classes != set(class_count.keys())
         else rules
     )
