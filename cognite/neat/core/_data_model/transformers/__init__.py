@@ -1,4 +1,5 @@
 from ._base import RulesTransformer, VerifiedRulesTransformer
+from ._conceptual_property_renaming import ConceptualPropertyRenaming
 from ._converters import (
     AddClassImplements,
     AddCogniteProperties,
@@ -35,6 +36,7 @@ __all__ = [
     "AsParentPropertyId",
     "ChangeViewPrefix",
     "ClassicPrepareCore",
+    "ConceptualPropertyRenaming",
     "ConversionTransformer",
     "ConvertToRules",
     "DMSToInformation",
