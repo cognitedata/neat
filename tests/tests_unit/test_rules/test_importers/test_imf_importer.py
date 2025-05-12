@@ -12,7 +12,7 @@ def test_imf_importer():
 
     regex_violations = [issue for issue in issues if isinstance(issue, ResourceRegexViolationWarning)]
 
-    assert len(rules.classes) == 63
+    assert len(rules.concepts) == 63
     assert len(rules.properties) == 62
     assert len(issues) == 207
     assert len(regex_violations) == 129

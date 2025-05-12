@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
-from cognite.neat.core._data_model.models.entities._single_value import ClassEntity
+from cognite.neat.core._data_model.models.entities._single_value import ConceptEntity
 
 from ._base import BaseExporter
 
@@ -76,7 +76,7 @@ class InstanceTemplateExporter(BaseExporter[ConceptualDataModel, Workbook]):
                         class_.suffix,
                         get_column_letter(i + 2),
                         self.no_rows,
-                        cast(ClassEntity, property_.value_type).suffix,
+                        cast(ConceptEntity, property_.value_type).suffix,
                         "A",
                     )
 

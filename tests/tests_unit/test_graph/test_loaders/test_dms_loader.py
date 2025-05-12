@@ -20,7 +20,7 @@ from cognite.neat.core._data_model.models.dms import (
     UnverifiedPhysicalView,
 )
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     ViewEntity,
 )
@@ -63,9 +63,9 @@ def test_metadata_as_json_filed():
 
     # simulating update of the INFORMATION rules
 
-    info_rules.classes[0].class_ = ClassEntity.load("neat_space:YourAsset")
+    info_rules.concepts[0].concept = ConceptEntity.load("neat_space:YourAsset")
     for prop in info_rules.properties:
-        prop.class_ = ClassEntity.load("neat_space:YourAsset")
+        prop.concept = ConceptEntity.load("neat_space:YourAsset")
         prop.property_ = f"your_{prop.property_}"
 
     loader = DMSLoader(dms_rules, info_rules, store, dms_rules.metadata.space)
@@ -210,8 +210,8 @@ def test_dms_load_respect_container_cardinality() -> None:
         store.dataset.add(triple)
 
     # Link the schema to the triples
-    info.classes[0].instance_source = my_type
-    info.classes[1].instance_source = my_other_type
+    info.concepts[0].instance_source = my_type
+    info.concepts[1].instance_source = my_other_type
     info.properties[0].instance_source = [to_other_prop2]
     info.properties[1].instance_source = [to_other_prop3]
     info.properties[2].instance_source = [name_prop]

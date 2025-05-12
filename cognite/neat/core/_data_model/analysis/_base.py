@@ -13,13 +13,13 @@ from rdflib import URIRef
 
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    ConceptualConcept,
     ConceptualProperty,
 )
 from cognite.neat.core._data_model.models.dms import PhysicalProperty
 from cognite.neat.core._data_model.models.dms._verified import PhysicalView
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     MultiValueTypeInfo,
     ViewEntity,
 )
@@ -34,23 +34,25 @@ T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
 @dataclass(frozen=True)
 class Linkage:
-    source_class: ClassEntity
+    source_class: ConceptEntity
     connecting_property: str
-    target_class: ClassEntity
+    target_class: ConceptEntity
     max_occurrence: int | float | None
 
 
 class LinkageSet(set, Set[Linkage]):
     @property
-    def source_class(self) -> set[ClassEntity]:
+    def source_class(self) -> set[ConceptEntity]:
         return {link.source_class for link in self}
 
     @property
-    def target_class(self) -> set[ClassEntity]:
+    def target_class(self) -> set[ConceptEntity]:
         return {link.target_class for link in self}
 
-    def get_target_classes_by_source(self) -> dict[ClassEntity, set[ClassEntity]]:
-        target_classes_by_source: dict[ClassEntity, set[ClassEntity]] = defaultdict(set)
+    def get_target_classes_by_source(self) -> dict[ConceptEntity, set[ConceptEntity]]:
+        target_classes_by_source: dict[ConceptEntity, set[ConceptEntity]] = defaultdict(
+            set
+        )
         for link in self:
             target_classes_by_source[link.source_class].add(link.target_class)
         return target_classes_by_source
@@ -133,7 +135,7 @@ class RulesAnalysis:
 
     def parents_by_class(
         self, include_ancestors: bool = False, include_different_space: bool = False
-    ) -> dict[ClassEntity, set[ClassEntity]]:
+    ) -> dict[ConceptEntity, set[ConceptEntity]]:
         """Get a dictionary of classes and their parents.
 
         Args:
@@ -143,12 +145,12 @@ class RulesAnalysis:
         Returns:
             dict[ClassEntity, set[ClassEntity]]: Values parents with class as key.
         """
-        parents_by_class: dict[ClassEntity, set[ClassEntity]] = {}
-        for class_ in self.information.classes:
-            parents_by_class[class_.class_] = set()
+        parents_by_class: dict[ConceptEntity, set[ConceptEntity]] = {}
+        for class_ in self.information.concepts:
+            parents_by_class[class_.concept] = set()
             for parent in class_.implements or []:
-                if include_different_space or parent.prefix == class_.class_.prefix:
-                    parents_by_class[class_.class_].add(parent)
+                if include_different_space or parent.prefix == class_.concept.prefix:
+                    parents_by_class[class_.concept].add(parent)
                 else:
                     warnings.warn(
                         NeatValueWarning(
@@ -175,7 +177,7 @@ class RulesAnalysis:
 
     def properties_by_class(
         self, include_ancestors: bool = False, include_different_space: bool = False
-    ) -> dict[ClassEntity, list[ConceptualProperty]]:
+    ) -> dict[ConceptEntity, list[ConceptualProperty]]:
         """Get a dictionary of classes and their properties.
 
         Args:
@@ -186,9 +188,11 @@ class RulesAnalysis:
             dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
 
         """
-        properties_by_classes: dict[ClassEntity, list[ConceptualProperty]] = defaultdict(list)
+        properties_by_classes: dict[ConceptEntity, list[ConceptualProperty]] = (
+            defaultdict(list)
+        )
         for prop in self.information.properties:
-            properties_by_classes[prop.class_].append(prop)
+            properties_by_classes[prop.concept].append(prop)
 
         if include_ancestors:
             parents_by_classes = self.parents_by_class(
@@ -272,18 +276,18 @@ class RulesAnalysis:
         }
 
     @property
-    def _class_by_neat_id(self) -> dict[URIRef, ConceptualClass]:
+    def _class_by_neat_id(self) -> dict[URIRef, ConceptualConcept]:
         """Get a dictionary of class neat IDs to
         class entities."""
 
-        return {cls.neatId: cls for cls in self.information.classes if cls.neatId}
+        return {cls.neatId: cls for cls in self.information.concepts if cls.neatId}
 
-    def class_by_suffix(self) -> dict[str, ConceptualClass]:
+    def class_by_suffix(self) -> dict[str, ConceptualConcept]:
         """Get a dictionary of class suffixes to class entities."""
         # TODO: Remove this method
-        class_dict: dict[str, ConceptualClass] = {}
-        for definition in self.information.classes:
-            entity = definition.class_
+        class_dict: dict[str, ConceptualConcept] = {}
+        for definition in self.information.concepts:
+            entity = definition.concept
             if entity.suffix in class_dict:
                 warnings.warn(
                     NeatValueWarning(
@@ -297,10 +301,10 @@ class RulesAnalysis:
         return class_dict
 
     @property
-    def class_by_class_entity(self) -> dict[ClassEntity, ConceptualClass]:
+    def class_by_class_entity(self) -> dict[ConceptEntity, ConceptualConcept]:
         """Get a dictionary of class entities to class entities."""
         rules = self.information
-        return {cls.class_: cls for cls in rules.classes}
+        return {cls.concept: cls for cls in rules.concepts}
 
     @property
     def view_by_view_entity(self) -> dict[ViewEntity, PhysicalView]:
@@ -319,9 +323,9 @@ class RulesAnalysis:
         self,
         has_instance_source: bool = False,
         include_ancestors: bool = False,
-    ) -> dict[ClassEntity, dict[str, ConceptualProperty]]:
+    ) -> dict[ConceptEntity, dict[str, ConceptualProperty]]:
         """Get a dictionary of class entities to dictionaries of property IDs to property entities."""
-        class_property_pairs: dict[ClassEntity, dict[str, ConceptualProperty]] = {}
+        class_property_pairs: dict[ConceptEntity, dict[str, ConceptualProperty]] = {}
         for class_, properties in self.properties_by_class(include_ancestors).items():
             processed_properties: dict[str, ConceptualProperty] = {}
             for prop in properties:
@@ -348,7 +352,7 @@ class RulesAnalysis:
     def defined_classes(
         self,
         include_ancestors: bool = False,
-    ) -> set[ClassEntity]:
+    ) -> set[ConceptEntity]:
         """Returns classes that have properties defined for them in the data model.
 
         Args:
@@ -358,7 +362,10 @@ class RulesAnalysis:
             Set of classes that have been defined in the data model
         """
         properties_by_class = self.properties_by_class(include_ancestors)
-        return {prop.class_ for prop in itertools.chain.from_iterable(properties_by_class.values())}
+        return {
+            prop.concept
+            for prop in itertools.chain.from_iterable(properties_by_class.values())
+        }
 
     def class_linkage(
         self,
@@ -378,11 +385,11 @@ class RulesAnalysis:
 
         prop: ConceptualProperty
         for prop in itertools.chain.from_iterable(properties_by_class.values()):
-            if not isinstance(prop.value_type, ClassEntity):
+            if not isinstance(prop.value_type, ConceptEntity):
                 continue
             class_linkage.add(
                 Linkage(
-                    source_class=prop.class_,
+                    source_class=prop.concept,
                     connecting_property=prop.property_,
                     target_class=prop.value_type,
                     max_occurrence=prop.max_count,
@@ -394,7 +401,7 @@ class RulesAnalysis:
     def symmetrically_connected_classes(
         self,
         include_ancestors: bool = False,
-    ) -> set[tuple[ClassEntity, ClassEntity]]:
+    ) -> set[tuple[ConceptEntity, ConceptEntity]]:
         """Returns a set of pairs of symmetrically linked classes.
 
         Args:
@@ -408,7 +415,7 @@ class RulesAnalysis:
             in both directions. For example, if class A is connected to class B, and class B
             is connected to class A, then classes A and B are symmetrically connected.
         """
-        sym_pairs: set[tuple[ClassEntity, ClassEntity]] = set()
+        sym_pairs: set[tuple[ConceptEntity, ConceptEntity]] = set()
         class_linkage = self.class_linkage(include_ancestors)
         if not class_linkage:
             return sym_pairs
@@ -423,10 +430,14 @@ class RulesAnalysis:
         return sym_pairs
 
     @overload
-    def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, ConceptualProperty]: ...
+    def _properties_by_neat_id(
+        self, format: Literal["info"] = "info"
+    ) -> dict[URIRef, ConceptualProperty]: ...
 
     @overload
-    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, PhysicalProperty]: ...
+    def _properties_by_neat_id(
+        self, format: Literal["dms"] = "dms"
+    ) -> dict[URIRef, PhysicalProperty]: ...
 
     def _properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
@@ -439,8 +450,12 @@ class RulesAnalysis:
             raise NeatValueError(f"Invalid format: {format}")
 
     @property
-    def classes_by_neat_id(self) -> dict[URIRef, ConceptualClass]:
-        return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
+    def classes_by_neat_id(self) -> dict[URIRef, ConceptualConcept]:
+        return {
+            class_.neatId: class_
+            for class_ in self.information.concepts
+            if class_.neatId
+        }
 
     @property
     def multi_value_properties(self) -> list[ConceptualProperty]:
@@ -478,8 +493,12 @@ class RulesAnalysis:
                     # start off with renaming of properties on the information level
                     # this is to encounter for special cases of e.g. space, startNode and endNode
                     property_renaming_config=(
-                        {uri: prop_.property_ for prop_ in info_properties for uri in prop_.instance_source or []}
-                        if (info_properties := properties_by_class.get(class_.class_))
+                        {
+                            uri: prop_.property_
+                            for prop_ in info_properties
+                            for uri in prop_.instance_source or []
+                        }
+                        if (info_properties := properties_by_class.get(class_.concept))
                         else {}
                     ),
                 )
@@ -537,19 +556,19 @@ class RulesAnalysis:
         di_graph = nx.MultiDiGraph()
 
         # Add nodes and edges from Views sheet
-        for class_ in rules.classes:
+        for class_ in rules.concepts:
             # if possible use human readable label coming from the view name
 
             di_graph.add_node(
-                class_.class_.suffix,
-                label=class_.name or class_.class_.suffix,
+                class_.concept.suffix,
+                label=class_.name or class_.concept.suffix,
             )
 
             if format == "implements" and class_.implements:
                 for parent in class_.implements:
                     di_graph.add_node(parent.suffix, label=parent.suffix)
                     di_graph.add_edge(
-                        class_.class_.suffix,
+                        class_.concept.suffix,
                         parent.suffix,
                         label="implements",
                         dashes=True,
@@ -558,12 +577,14 @@ class RulesAnalysis:
         if format == "data-model":
             # Add nodes and edges from Properties sheet
             for prop_ in rules.properties:
-                if isinstance(prop_.value_type, ClassEntity) and not isinstance(prop_.value_type, UnknownEntity):
-                    di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
+                if isinstance(prop_.value_type, ConceptEntity) and not isinstance(
+                    prop_.value_type, UnknownEntity
+                ):
+                    di_graph.add_node(prop_.concept.suffix, label=prop_.concept.suffix)
                     di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
 
                     di_graph.add_edge(
-                        prop_.class_.suffix,
+                        prop_.concept.suffix,
                         prop_.value_type.suffix,
                         label=prop_.name or prop_.property_,
                     )

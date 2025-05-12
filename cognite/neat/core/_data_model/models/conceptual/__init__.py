@@ -1,24 +1,24 @@
 from ._unverified import (
-    UnverifiedConceptualClass,
+    UnverifiedConceptualConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
 from ._validation import InformationValidation
 from ._verified import (
-    ConceptualClass,
+    ConceptualConcept,
     ConceptualDataModel,
     ConceptualMetadata,
     ConceptualProperty,
 )
 
 __all__ = [
-    "ConceptualClass",
+    "ConceptualConcept",
     "ConceptualDataModel",
     "ConceptualMetadata",
     "ConceptualProperty",
     "InformationValidation",
-    "UnverifiedConceptualClass",
+    "UnverifiedConceptualConcept",
     "UnverifiedConceptualDataModel",
     "UnverifiedConceptualMetadata",
     "UnverifiedConceptualProperty",

@@ -4,7 +4,7 @@ from ._multi_value import MultiValueTypeInfo
 from ._single_value import (
     AssetEntity,
     AssetFields,
-    ClassEntity,
+    ConceptEntity,
     ConceptualEntity,
     ContainerEntity,
     DataModelEntity,
@@ -28,7 +28,7 @@ __all__ = [
     "AssetEntity",
     "AssetFields",
     "CdfResourceEntityList",
-    "ClassEntity",
+    "ConceptEntity",
     "ClassEntityList",
     "ConceptualEntity",
     "ContainerEntity",

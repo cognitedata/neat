@@ -14,7 +14,7 @@ from cognite.neat.core._data_model.models.dms import (
     PhysicalProperty,
 )
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     ViewEntity,
 )
@@ -161,7 +161,9 @@ class RuleMapper(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel])
             (prop.view.external_id, prop.view_property): prop for prop in new_rules.properties
         }
         existing_enum_collections = {item.collection for item in new_rules.enum or []}
-        mapping_enums_by_collection: dict[ClassEntity, list[PhysicalEnum]] = defaultdict(list)
+        mapping_enums_by_collection: dict[ConceptEntity, list[PhysicalEnum]] = (
+            defaultdict(list)
+        )
         for item in self.mapping.enum or []:
             mapping_enums_by_collection[item.collection].append(item)
         existing_containers = {container.container for container in new_rules.containers or []}

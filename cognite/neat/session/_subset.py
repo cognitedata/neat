@@ -1,7 +1,7 @@
 import warnings
 
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     ViewEntity,
 )
 from cognite.neat.core._data_model.transformers import SubsetDMSRules, SubsetInformationRules
@@ -70,11 +70,16 @@ class SubsetAPI:
                 after = len(self._state.rule_store.last_verified_dms_rules.views)
 
         elif information:
-            classes = {ClassEntity(prefix=information.metadata.space, suffix=concept) for concept in concepts}
+            classes = {
+                ConceptEntity(prefix=information.metadata.space, suffix=concept)
+                for concept in concepts
+            }
 
             issues = self._state.rule_transform(SubsetInformationRules(classes=classes))
             if not issues:
-                after = len(self._state.rule_store.last_verified_information_rules.classes)
+                after = len(
+                    self._state.rule_store.last_verified_information_rules.concepts
+                )
 
         else:
             raise NeatSessionError("Something went terrible wrong. Please contact the neat team.")

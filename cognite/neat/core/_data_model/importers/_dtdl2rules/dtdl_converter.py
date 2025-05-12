@@ -19,7 +19,7 @@ from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
     TelemetryV2,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConceptualConcept,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import (
@@ -28,7 +28,7 @@ from cognite.neat.core._data_model.models.data_types import (
     Json,
     String,
 )
-from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import (
     PropertyTypeNotSupportedError,
@@ -45,7 +45,7 @@ class _DTDLConverter:
     def __init__(self, issues: IssueList | None = None) -> None:
         self.issues = IssueList(issues or [])
         self.properties: list[UnverifiedConceptualProperty] = []
-        self.classes: list[UnverifiedConceptualClass] = []
+        self.classes: list[UnverifiedConceptualConcept] = []
         self._item_by_id: dict[DTMI, DTDLBase] = {}
 
         self._method_by_type = {
@@ -66,8 +66,8 @@ class _DTDLConverter:
             raise ValueError("No classes found")
         counted = Counter(
             class_.prefix
-            for class_ in (cls_.class_ for cls_ in self.classes)
-            if isinstance(class_, ClassEntity) and isinstance(class_.prefix, str)
+            for class_ in (cls_.concept for cls_ in self.classes)
+            if isinstance(class_, ConceptEntity) and isinstance(class_.prefix, str)
         )
         if not counted:
             raise ValueError("No prefixes found")
@@ -103,8 +103,8 @@ class _DTDLConverter:
             )
 
     def convert_interface(self, item: Interface, _: str | None) -> None:
-        class_ = UnverifiedConceptualClass(
-            class_=item.id_.as_class_id(),
+        class_ = UnverifiedConceptualConcept(
+            concept=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
             implements=[parent.as_class_id() for parent in item.extends or []] or None,
@@ -122,9 +122,9 @@ class _DTDLConverter:
                 )
             elif isinstance(sub_item_or_id, DTMI):
                 sub_item = self._item_by_id[sub_item_or_id]
-                self.convert_item(sub_item, class_.class_str)
+                self.convert_item(sub_item, class_.concept_str)
             else:
-                self.convert_item(sub_item_or_id, class_.class_str)
+                self.convert_item(sub_item_or_id, class_.concept_str)
         # interface.schema objects are handled in the convert method
 
     def convert_property(
@@ -138,7 +138,7 @@ class _DTDLConverter:
             return None
 
         prop = UnverifiedConceptualProperty(
-            class_=ClassEntity.load(parent),
+            class_=ConceptEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -183,7 +183,7 @@ class _DTDLConverter:
         if value_type is None:
             return
         prop = UnverifiedConceptualProperty(
-            class_=ClassEntity.load(parent),
+            class_=ConceptEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -202,7 +202,7 @@ class _DTDLConverter:
         if value_type is None:
             return
         prop = UnverifiedConceptualProperty(
-            class_=ClassEntity.load(parent),
+            class_=ConceptEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -217,7 +217,7 @@ class _DTDLConverter:
             self._missing_parent_warning(item)
             return None
         if item.target is not None:
-            value_type: DataType | ClassEntity
+            value_type: DataType | ConceptEntity
             if item.target in self._item_by_id:
                 value_type = item.target.as_class_id()
             else:
@@ -231,7 +231,7 @@ class _DTDLConverter:
                 value_type = Json()
 
             prop = UnverifiedConceptualProperty(
-                class_=ClassEntity.load(parent),
+                class_=ConceptEntity.load(parent),
                 property_=item.name,
                 name=item.display_name,
                 description=item.description,
@@ -254,8 +254,8 @@ class _DTDLConverter:
             )
             return None
 
-        class_ = UnverifiedConceptualClass(
-            class_=item.id_.as_class_id(),
+        class_ = UnverifiedConceptualConcept(
+            concept=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
         )
@@ -266,7 +266,7 @@ class _DTDLConverter:
             if value_type is None:
                 continue
             prop = UnverifiedConceptualProperty(
-                class_=class_.class_,
+                class_=class_.concept,
                 name=field_.name,
                 description=field_.description,
                 property_=field_.name,
@@ -278,7 +278,7 @@ class _DTDLConverter:
 
     def schema_to_value_type(
         self, schema: Schema | Interface | DTMI | None, item: DTDLBase
-    ) -> DataType | ClassEntity | None:
+    ) -> DataType | ConceptEntity | None:
         input_type = self._item_by_id.get(schema) if isinstance(schema, DTMI) else schema
 
         if isinstance(input_type, Enum):

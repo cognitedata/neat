@@ -12,7 +12,7 @@ from cognite.neat.core._data_model.models import (
     UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConceptualConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
@@ -25,7 +25,7 @@ from cognite.neat.core._data_model.models.dms import (
 )
 from cognite.neat.core._data_model.models.dms._verified import PhysicalDataModel
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     ViewEntity,
 )
 from cognite.neat.core._data_model.transformers import (
@@ -68,16 +68,18 @@ class TestStandardizeNaming:
         information = UnverifiedConceptualDataModel(
             metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                UnverifiedConceptualProperty(class_name, "TAG_NAME", "string", max_count=1),
+                UnverifiedConceptualProperty(
+                    class_name, "TAG_NAME", "string", max_count=1
+                ),
             ],
-            classes=[UnverifiedConceptualClass(class_name)],
+            concepts=[UnverifiedConceptualConcept(class_name)],
         )
 
         res: ConceptualDataModel = StandardizeNaming().transform(information.as_verified_rules())
 
         assert res.properties[0].property_ == "tagName"
-        assert res.properties[0].class_.suffix == "NotAGoodCLassNAME"
-        assert res.classes[0].class_.suffix == "NotAGoodCLassNAME"
+        assert res.properties[0].concept.suffix == "NotAGoodCLassNAME"
+        assert res.concepts[0].concept.suffix == "NotAGoodCLassNAME"
 
 
 class TestToInformationCompliantEntities:
@@ -86,11 +88,15 @@ class TestToInformationCompliantEntities:
         information = UnverifiedConceptualDataModel(
             metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                UnverifiedConceptualProperty(class_name, "TAG_NAME", "string", max_count=1),
-                UnverifiedConceptualProperty(class_name, "State(Previous)", "string", max_count=1),
+                UnverifiedConceptualProperty(
+                    class_name, "TAG_NAME", "string", max_count=1
+                ),
+                UnverifiedConceptualProperty(
+                    class_name, "State(Previous)", "string", max_count=1
+                ),
                 UnverifiedConceptualProperty(class_name, "P&ID", "string", max_count=1),
             ],
-            classes=[UnverifiedConceptualClass(class_name)],
+            concepts=[UnverifiedConceptualConcept(class_name)],
         )
 
         res: ConceptualDataModel = (
@@ -100,8 +106,8 @@ class TestToInformationCompliantEntities:
         )
 
         assert res.properties[0].property_ == "TAG_NAME"
-        assert res.properties[0].class_.suffix == "not_a_good_cLass_NAME"
-        assert res.classes[0].class_.suffix == "not_a_good_cLass_NAME"
+        assert res.properties[0].concept.suffix == "not_a_good_cLass_NAME"
+        assert res.concepts[0].concept.suffix == "not_a_good_cLass_NAME"
 
         assert res.properties[1].property_ == "statePrevious"
         assert res.properties[2].property_ == "pId"
@@ -109,14 +115,14 @@ class TestToInformationCompliantEntities:
 
 class TestRulesSubsetting:
     def test_subset_information_rules(self, david_rules: ConceptualDataModel) -> None:
-        class_ = ClassEntity.load("power:GeoLocation")
+        class_ = ConceptEntity.load("power:GeoLocation")
         subset = SubsetInformationRules({class_}).transform(david_rules)
 
-        assert subset.classes[0].class_ == class_
-        assert len(subset.classes) == 1
+        assert subset.concepts[0].concept == class_
+        assert len(subset.concepts) == 1
 
     def test_subset_information_rules_fails(self, david_rules: PhysicalDataModel) -> None:
-        class_ = ClassEntity.load("power:GeoLooocation")
+        class_ = ConceptEntity.load("power:GeoLooocation")
 
         with pytest.raises(NeatValueError):
             _ = SubsetInformationRules({class_}).transform(david_rules)
@@ -138,11 +144,17 @@ class TestRulesSubsetting:
 class TestAddCogniteProperties:
     def test_add_cognite_properties(self, cognite_core_schema: DMSSchema) -> None:
         input_rules = UnverifiedConceptualDataModel(
-            metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "v1", "doctrino"),
+            metadata=UnverifiedConceptualMetadata(
+                "my_space", "MyModel", "v1", "doctrino"
+            ),
             properties=[],
-            classes=[
-                UnverifiedConceptualClass("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
-                UnverifiedConceptualClass("WindTurbine", implements="PowerGeneratingUnit"),
+            concepts=[
+                UnverifiedConceptualConcept(
+                    "PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"
+                ),
+                UnverifiedConceptualConcept(
+                    "WindTurbine", implements="PowerGeneratingUnit"
+                ),
             ],
         )
         read_model = cognite_core_schema.as_read_model()
@@ -159,7 +171,7 @@ class TestAddCogniteProperties:
 
             result = AddCogniteProperties(client).transform(ReadRules(input_rules, {}))
         assert result.rules is not None
-        actual_classes = {str(c.class_) for c in result.rules.classes}
+        actual_classes = {str(c.concept) for c in result.rules.concepts}
         expected_classes = (
             {"PowerGeneratingUnit", "WindTurbine"}
             | {

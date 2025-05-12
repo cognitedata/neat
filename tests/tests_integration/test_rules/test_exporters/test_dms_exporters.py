@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.models import (
     SheetList,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    ConceptualConcept,
     ConceptualMetadata,
     ConceptualProperty,
 )
@@ -80,42 +80,42 @@ def table_example() -> ConceptualDataModel:
         properties=SheetList[ConceptualProperty](
             [
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="color",
                     value_type="string",
                     min_count=0,
                     max_count=1.0,
                 ),
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="height",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="width",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="on",
                     value_type="Item",
                     min_count=0,
                     max_count=float("inf"),
                 ),
                 ConceptualProperty(
-                    class_="Item",
+                    concept="Item",
                     property_="name",
                     value_type="string",
                     min_count=1,
                     max_count=1,
                 ),
                 ConceptualProperty(
-                    class_="Item",
+                    concept="Item",
                     property_="category",
                     value_type="string",
                     min_count=0,
@@ -123,10 +123,10 @@ def table_example() -> ConceptualDataModel:
                 ),
             ]
         ),
-        classes=SheetList[ConceptualClass](
+        concepts=SheetList[ConceptualConcept](
             [
-                ConceptualClass(class_="Table", name="Table"),
-                ConceptualClass(class_="Item", name="Item"),
+                ConceptualConcept(concept="Table", name="Table"),
+                ConceptualConcept(concept="Item", name="Item"),
             ]
         ),
     )

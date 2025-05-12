@@ -146,7 +146,7 @@ class DTDLImporter(BaseImporter[UnverifiedConceptualDataModel]):
         rules = UnverifiedConceptualDataModel(
             metadata=UnverifiedConceptualMetadata.load(metadata),
             properties=converter.properties,
-            classes=converter.classes,
+            concepts=converter.classes,
         )
         converter.issues.trigger_warnings()
         if converter.issues.has_errors:

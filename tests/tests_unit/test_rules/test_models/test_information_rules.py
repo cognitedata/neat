@@ -7,19 +7,22 @@ from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import PhysicalDataModel, data_types
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    ConceptualConcept,
     ConceptualDataModel,
     ConceptualProperty,
     InformationValidation,
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual._unverified import (
-    UnverifiedConceptualClass,
+    UnverifiedConceptualConcept,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, String
-from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
+from cognite.neat.core._data_model.models.entities import (
+    ConceptEntity,
+    MultiValueTypeInfo,
+)
 from cognite.neat.core._data_model.transformers._converters import (
     InformationToDMS,
     ToCompliantEntities,
@@ -139,7 +142,7 @@ def duplicated_entries():
                 location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
             ResourceDuplicatedError(
-                identifier=ClassEntity(prefix="power", suffix="GeneratingUnit"),
+                identifier=ConceptEntity(prefix="power", suffix="GeneratingUnit"),
                 resource_type="class",
                 location="the Classes sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
@@ -183,13 +186,13 @@ def incomplete_rules_case():
             ],
         },
         [
-            ResourceNotDefinedError[ClassEntity](
-                ClassEntity(prefix="power", suffix="GeneratingUnit2"),
+            ResourceNotDefinedError[ConceptEntity](
+                ConceptEntity(prefix="power", suffix="GeneratingUnit2"),
                 "class",
                 "Classes sheet",
             ),
-            ResourceNotDefinedError[ClassEntity](
-                ClassEntity(prefix="power", suffix="GeneratingUnit"),
+            ResourceNotDefinedError[ConceptEntity](
+                ConceptEntity(prefix="power", suffix="GeneratingUnit"),
                 "class",
                 "Classes sheet",
             ),
@@ -219,7 +222,9 @@ class TestInformationRules:
             "power:Substation.secondaryPowerLine",
             "power:WindFarm.exportCable",
         }
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
+        missing = sample_expected_properties - {
+            f"{prop.concept}.{prop.property_}" for prop in valid_rules.properties
+        }
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
@@ -280,7 +285,7 @@ class TestInformationRulesConverter:
                 version="0.1.0",
                 creator="Anders",
             ),
-            classes=[UnverifiedConceptualClass(class_="MassiveClass")],
+            concepts=[UnverifiedConceptualConcept(concept="MassiveClass")],
             properties=[
                 UnverifiedConceptualProperty(
                     class_="MassiveClass",
@@ -398,10 +403,10 @@ class TestInformationConverter:
 
         rules = ToCompliantEntities().transform(rules)
 
-        assert rules.classes[0].class_.prefix == "power_or_not"
-        assert rules.classes[0].class_.suffix == "Generating_Unit"
+        assert rules.concepts[0].concept.prefix == "power_or_not"
+        assert rules.concepts[0].concept.suffix == "Generating_Unit"
         assert rules.properties[0].property_ == "IdentifiedObject_name"
-        assert rules.properties[0].class_.suffix == "Generating_Unit"
+        assert rules.properties[0].concept.suffix == "Generating_Unit"
 
 
 class TestInformationProperty:
@@ -444,40 +449,45 @@ class TestInformationProperty:
                     "name",
                     "text",
                 ),
-                ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+                ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
                 id="CogniteAsset name",
             )
         ],
     )
-    def test_validate_class_entity(self, raw: UnverifiedConceptualProperty, expected: ClassEntity) -> None:
+    def test_validate_class_entity(
+        self, raw: UnverifiedConceptualProperty, expected: ConceptEntity
+    ) -> None:
         prop = ConceptualProperty.model_validate(raw.dump(default_prefix="my_space"))
 
-        assert prop.class_ == expected
+        assert prop.concept == expected
 
 
 class TestInformationClass:
+
     @pytest.mark.parametrize(
         "raw, class_, implements",
         [
             (
-                UnverifiedConceptualClass(
-                    class_="WindTurbine",
+                UnverifiedConceptualConcept(
+                    concept="WindTurbine",
                     description="Power generating unite",
                     implements="cdf_cdm:CogniteAsset(version=v1)",
                 ),
-                ClassEntity(prefix="my_space", suffix="WindTurbine"),
-                ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+                ConceptEntity(prefix="my_space", suffix="WindTurbine"),
+                ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
             )
         ],
     )
     def test_validate_class_entity(
         self,
-        raw: UnverifiedConceptualClass,
-        class_: ClassEntity,
-        implements: ClassEntity,
+        raw: UnverifiedConceptualConcept,
+        class_: ConceptEntity,
+        implements: ConceptEntity,
     ) -> None:
-        info_class = ConceptualClass.model_validate(raw.dump(default_prefix="my_space"))
+        info_class = ConceptualConcept.model_validate(
+            raw.dump(default_prefix="my_space")
+        )
 
-        assert info_class.class_ == class_
+        assert info_class.concept == class_
         assert isinstance(info_class.implements, list)
         assert info_class.implements[0] == implements

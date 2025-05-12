@@ -10,12 +10,12 @@ from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.models.data_types import DataType
 
 from ._constants import _PARSE, Undefined
-from ._single_value import ClassEntity, UnknownEntity
+from ._single_value import ConceptEntity, UnknownEntity
 
 
 class MultiValueTypeInfo(BaseModel):
     type_: ClassVar[EntityTypes] = EntityTypes.multi_value_type
-    types: list[DataType | ClassEntity]
+    types: list[DataType | ConceptEntity]
 
     def __str__(self) -> str:
         return ", ".join([str(t) for t in self.types])
@@ -57,19 +57,23 @@ class MultiValueTypeInfo(BaseModel):
         else:
             return {
                 "types": [
-                    (DataType.load(type_) if DataType.is_data_type(type_) else ClassEntity.load(type_))
+                    (
+                        DataType.load(type_)
+                        if DataType.is_data_type(type_)
+                        else ConceptEntity.load(type_)
+                    )
                     for type_ in types
                 ]
             }
 
     def set_default_prefix(self, prefix: str) -> None:
         for type_ in self.types:
-            if isinstance(type_, ClassEntity) and type_.prefix is Undefined:
+            if isinstance(type_, ConceptEntity) and type_.prefix is Undefined:
                 type_.prefix = prefix
 
     def is_multi_object_type(self) -> bool:
         """Will signalize to DMS converter to create connection to unknown Node type"""
-        return all(isinstance(t, ClassEntity) for t in self.types)
+        return all(isinstance(t, ConceptEntity) for t in self.types)
 
     def is_multi_data_type(self) -> bool:
         """Will signalize to DMS converter to attempt to find the best data type for value"""

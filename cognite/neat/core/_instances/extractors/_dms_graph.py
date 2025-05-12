@@ -211,14 +211,16 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         verified_dms.sync_with_conceptual_data_model(information_rules)
 
         # Adding startNode and endNode to the information rules for views that are used for edges.
-        classes_by_prefix = {cls_.class_.prefix: cls_ for cls_ in information_rules.classes}
+        classes_by_prefix = {
+            cls_.concept.prefix: cls_ for cls_ in information_rules.concepts
+        }
         for view in self._model_views:
             if view.used_for == "edge" and view.external_id in classes_by_prefix:
                 cls_ = classes_by_prefix[view.external_id]
                 for property_ in ("startNode", "endNode"):
                     information_rules.properties.append(
                         ConceptualProperty(
-                            class_=cls_.class_,
+                            concept=cls_.concept,
                             property_=property_,
                             value_type=UnknownEntity(),
                             min_count=0,

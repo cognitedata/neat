@@ -1,7 +1,7 @@
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConceptualConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
@@ -43,12 +43,14 @@ class TestAnalysis:
             properties=[
                 UnverifiedConceptualProperty("child", "childProp", "string"),
                 UnverifiedConceptualProperty("parent", "parentProp", "string"),
-                UnverifiedConceptualProperty("grandparent", "grandparentProp", "string"),
+                UnverifiedConceptualProperty(
+                    "grandparent", "grandparentProp", "string"
+                ),
             ],
-            classes=[
-                UnverifiedConceptualClass("child", implements="parent"),
-                UnverifiedConceptualClass("parent", implements="grandparent"),
-                UnverifiedConceptualClass("grandparent", implements=None),
+            concepts=[
+                UnverifiedConceptualConcept("child", implements="parent"),
+                UnverifiedConceptualConcept("parent", implements="grandparent"),
+                UnverifiedConceptualConcept("grandparent", implements=None),
             ],
         )
 

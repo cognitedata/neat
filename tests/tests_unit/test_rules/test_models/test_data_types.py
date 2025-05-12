@@ -13,12 +13,12 @@ from cognite.neat.core._data_model.models.data_types import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.core._data_model.models.entities import ClassEntity, UnitEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity, UnitEntity
 
 
 class DemoProperty(BaseModel):
     property_: str = Field(alias="property")
-    value_type: DataType | ClassEntity = Field(alias="valueType")
+    value_type: DataType | ConceptEntity = Field(alias="valueType")
 
     def dump(self) -> dict[str, Any]:
         return self.model_dump(by_alias=True, exclude_none=True)
@@ -92,7 +92,7 @@ class TestDataTypes:
                 },
                 DemoProperty(
                     property="a_class",
-                    valueType=ClassEntity(prefix="my_namespace", suffix="person"),
+                    valueType=ConceptEntity(prefix="my_namespace", suffix="person"),
                 ),
             ),
             (
@@ -102,7 +102,9 @@ class TestDataTypes:
                 },
                 DemoProperty(
                     property="a_class_versioned",
-                    valueType=ClassEntity(prefix="my_namespace", suffix="person", version="1"),
+                    valueType=ConceptEntity(
+                        prefix="my_namespace", suffix="person", version="1"
+                    ),
                 ),
             ),
         ],

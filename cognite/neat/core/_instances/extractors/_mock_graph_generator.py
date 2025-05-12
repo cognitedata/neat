@@ -16,7 +16,7 @@ from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
-from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.transformers import SubsetInformationRules
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
@@ -39,7 +39,7 @@ class MockGraphGenerator(BaseExtractor):
     def __init__(
         self,
         rules: ConceptualDataModel | PhysicalDataModel,
-        class_count: dict[str | ClassEntity, int] | None = None,
+        class_count: dict[str | ConceptEntity, int] | None = None,
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
     ):
@@ -59,10 +59,11 @@ class MockGraphGenerator(BaseExtractor):
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
-                ClassEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
+                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value
+                for key, value in class_count.items()
             }
-        elif all(isinstance(key, ClassEntity) for key in class_count.keys()):
-            self.class_count = cast(dict[ClassEntity, int], class_count)
+        elif all(isinstance(key, ConceptEntity) for key in class_count.keys()):
+            self.class_count = cast(dict[ConceptEntity, int], class_count)
         else:
             raise ValueError("Class count keys must be of type str! or ClassEntity! or empty dict!")
 
@@ -86,7 +87,7 @@ class MockGraphGenerator(BaseExtractor):
 
 def generate_triples(
     rules: ConceptualDataModel,
-    class_count: dict[ClassEntity, int],
+    class_count: dict[ConceptEntity, int],
     stop_on_exception: bool = False,
     allow_isolated_classes: bool = True,
 ) -> list[Triple]:
@@ -217,7 +218,7 @@ def _prettify_generation_order(generation_order: dict, depth: dict | None = None
 
 
 def _remove_higher_occurring_sym_pair(
-    class_linkage: pd.DataFrame, sym_pairs: set[tuple[ClassEntity, ClassEntity]]
+    class_linkage: pd.DataFrame, sym_pairs: set[tuple[ConceptEntity, ConceptEntity]]
 ) -> pd.DataFrame:
     """Remove symmetric pair which is higher in occurrence."""
     rows_to_remove = set()
@@ -293,11 +294,11 @@ def _generate_mock_data_property_triples(
 
 
 def _generate_mock_object_property_triples(
-    class_: ClassEntity,
+    class_: ConceptEntity,
     property_definition: ConceptualProperty,
-    class_property_pairs: dict[ClassEntity, list[ConceptualProperty]],
-    sym_pairs: set[tuple[ClassEntity, ClassEntity]],
-    instance_ids: dict[ClassEntity, list[URIRef]],
+    class_property_pairs: dict[ConceptEntity, list[ConceptualProperty]],
+    sym_pairs: set[tuple[ConceptEntity, ConceptEntity]],
+    instance_ids: dict[ConceptEntity, list[URIRef]],
     namespace: Namespace,
     stop_on_exception: bool,
 ) -> list[tuple[URIRef, URIRef, URIRef]]:
@@ -317,7 +318,9 @@ def _generate_mock_object_property_triples(
     # Handling symmetric property
 
     if tuple((class_, property_definition.value_type)) in sym_pairs:
-        symmetric_class_properties = class_property_pairs[cast(ClassEntity, property_definition.value_type)]
+        symmetric_class_properties = class_property_pairs[
+            cast(ConceptEntity, property_definition.value_type)
+        ]
         candidates = list(
             filter(
                 lambda instance: instance.value_type == class_,
@@ -337,8 +340,8 @@ def _generate_mock_object_property_triples(
     triples = []
 
     for i, source in enumerate(instance_ids[class_]):
-        target = instance_ids[cast(ClassEntity, property_definition.value_type)][
-            i % len(instance_ids[cast(ClassEntity, property_definition.value_type)])
+        target = instance_ids[cast(ConceptEntity, property_definition.value_type)][
+            i % len(instance_ids[cast(ConceptEntity, property_definition.value_type)])
         ]
         triples += [
             (
@@ -358,16 +361,18 @@ def _generate_mock_object_property_triples(
             ]
 
     if symmetric_property:
-        class_property_pairs[cast(ClassEntity, property_definition.value_type)].remove(symmetric_property)
+        class_property_pairs[
+            cast(ConceptEntity, property_definition.value_type)
+        ].remove(symmetric_property)
 
     return triples
 
 
 def _generate_triples_per_class(
-    class_: ClassEntity,
-    class_properties_pairs: dict[ClassEntity, list[ConceptualProperty]],
-    sym_pairs: set[tuple[ClassEntity, ClassEntity]],
-    instance_ids: dict[ClassEntity, list[URIRef]],
+    class_: ConceptEntity,
+    class_properties_pairs: dict[ConceptEntity, list[ConceptualProperty]],
+    sym_pairs: set[tuple[ConceptEntity, ConceptEntity]],
+    instance_ids: dict[ConceptEntity, list[URIRef]],
     namespace: Namespace,
     stop_on_exception: bool,
 ) -> list[Triple]:

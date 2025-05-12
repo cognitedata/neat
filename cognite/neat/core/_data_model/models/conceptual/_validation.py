@@ -2,7 +2,7 @@ import itertools
 from collections import Counter, defaultdict
 
 from cognite.neat.core._data_model._constants import PATTERNS, EntityTypes
-from cognite.neat.core._data_model.models.entities import ClassEntity, UnknownEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity, UnknownEntity
 from cognite.neat.core._data_model.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
@@ -34,7 +34,7 @@ class InformationValidation:
         self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
         self._metadata = rules.metadata
         self._properties = rules.properties
-        self._classes = rules.classes
+        self._classes = rules.concepts
         self.issue_list = IssueList()
 
     def validate(self) -> IssueList:
@@ -92,8 +92,8 @@ class InformationValidation:
             )
 
     def _classes_without_properties(self) -> None:
-        defined_classes = {class_.class_ for class_ in self._classes}
-        referred_classes = {property_.class_ for property_ in self._properties}
+        defined_classes = {class_.concept for class_ in self._classes}
+        referred_classes = {property_.concept for property_ in self._properties}
         class_parent_pairs = self._class_parent_pairs()
 
         if classes_without_properties := defined_classes.difference(referred_classes):
@@ -111,8 +111,8 @@ class InformationValidation:
                     )
 
     def _undefined_classes(self) -> None:
-        defined_classes = {class_.class_ for class_ in self._classes}
-        referred_classes = {property_.class_ for property_ in self._properties}
+        defined_classes = {class_.concept for class_ in self._classes}
+        referred_classes = {property_.concept for property_ in self._properties}
 
         if undefined_classes := referred_classes.difference(defined_classes):
             for class_ in undefined_classes:
@@ -145,8 +145,10 @@ class InformationValidation:
 
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass
-        defined_classes = {class_.class_ for class_ in self._classes}
-        classes_with_explicit_properties = {property_.class_ for property_ in self._properties}
+        defined_classes = {class_.concept for class_ in self._classes}
+        classes_with_explicit_properties = {
+            property_.concept for property_ in self._properties
+        }
 
         # USE CASE: models are complete
         if missing_classes := classes_with_explicit_properties.difference(defined_classes):
@@ -161,7 +163,9 @@ class InformationValidation:
 
     def _referenced_value_types_exist(self) -> None:
         # adding UnknownEntity to the set of defined classes to handle the case where a property references an unknown
-        defined_classes = {class_.class_ for class_ in self._classes} | {UnknownEntity()}
+        defined_classes = {class_.concept for class_ in self._classes} | {
+            UnknownEntity()
+        }
         referred_object_types = {
             property_.value_type
             for property_ in self.rules.properties
@@ -192,10 +196,10 @@ class InformationValidation:
                         PATTERNS.dms_property_id_compliance.pattern,
                     )
                 )
-            if not PATTERNS.view_id_compliance.match(prop_.class_.suffix):
+            if not PATTERNS.view_id_compliance.match(prop_.concept.suffix):
                 self.issue_list.append(
                     ResourceRegexViolationWarning(
-                        prop_.class_,
+                        prop_.concept,
                         "Class",
                         "Properties sheet, Class column",
                         PATTERNS.view_id_compliance.pattern,
@@ -204,7 +208,7 @@ class InformationValidation:
 
             # Handling Value Type
             if (
-                isinstance(prop_.value_type, ClassEntity)
+                isinstance(prop_.value_type, ConceptEntity)
                 and prop_.value_type != UnknownEntity()
                 and not PATTERNS.view_id_compliance.match(prop_.value_type.suffix)
             ):
@@ -219,7 +223,7 @@ class InformationValidation:
             if isinstance(prop_.value_type, MultiValueTypeInfo):
                 for value_type in prop_.value_type.types:
                     if (
-                        isinstance(prop_.value_type, ClassEntity)
+                        isinstance(prop_.value_type, ConceptEntity)
                         and prop_.value_type != UnknownEntity()
                         and not PATTERNS.view_id_compliance.match(value_type.suffix)
                     ):
@@ -233,10 +237,10 @@ class InformationValidation:
                         )
 
         for class_ in self._classes:
-            if not PATTERNS.view_id_compliance.match(class_.class_.suffix):
+            if not PATTERNS.view_id_compliance.match(class_.concept.suffix):
                 self.issue_list.append(
                     ResourceRegexViolationWarning(
-                        class_.class_,
+                        class_.concept,
                         "Class",
                         "Classes sheet, Class column",
                         PATTERNS.view_id_compliance.pattern,
@@ -255,15 +259,15 @@ class InformationValidation:
                             )
                         )
 
-    def _class_parent_pairs(self) -> dict[ClassEntity, list[ClassEntity]]:
-        class_parent_pairs: dict[ClassEntity, list[ClassEntity]] = {}
-        classes = self.rules.model_copy(deep=True).classes
+    def _class_parent_pairs(self) -> dict[ConceptEntity, list[ConceptEntity]]:
+        class_parent_pairs: dict[ConceptEntity, list[ConceptEntity]] = {}
+        classes = self.rules.model_copy(deep=True).concepts
 
         for class_ in classes:
-            class_parent_pairs[class_.class_] = []
+            class_parent_pairs[class_.concept] = []
             if class_.implements is None:
                 continue
-            class_parent_pairs[class_.class_].extend(class_.implements)
+            class_parent_pairs[class_.concept].extend(class_.implements)
 
         return class_parent_pairs
 

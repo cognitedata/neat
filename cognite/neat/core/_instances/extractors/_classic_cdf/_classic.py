@@ -234,8 +234,8 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             if is_snake_case:
                 prop_id = to_snake_case(prop_id)
             prop.instance_source = [self._namespace[prop_id]]
-        for cls_ in verified.classes:
-            cls_id = cls_.class_.suffix
+        for cls_ in verified.concepts:
+            cls_id = cls_.concept.suffix
             if is_snake_case:
                 cls_id = to_snake_case(cls_id)
             cls_.instance_source = self._namespace[cls_id]

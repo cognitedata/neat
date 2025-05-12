@@ -15,9 +15,9 @@ from cognite.neat.core._constants import NEAT, get_default_prefixes_and_namespac
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel, data_types
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    ConceptualConcept,
     ConceptualMetadata,
-    UnverifiedConceptualClass,
+    UnverifiedConceptualConcept,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import AnyURI
@@ -399,12 +399,14 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
     def _create_classes_properties(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
-    ) -> tuple[list[UnverifiedConceptualClass], list[UnverifiedConceptualProperty]]:
+    ) -> tuple[list[UnverifiedConceptualConcept], list[UnverifiedConceptualProperty]]:
         if self._rules:
-            existing_classes = {class_.class_.suffix: class_ for class_ in self._rules.classes}
+            existing_classes = {
+                class_.concept.suffix: class_ for class_ in self._rules.concepts
+            }
         else:
             existing_classes = {}
-        classes: list[UnverifiedConceptualClass] = []
+        classes: list[UnverifiedConceptualConcept] = []
         properties_by_class_suffix_by_property_id: dict[str, dict[str, UnverifiedConceptualProperty]] = {}
 
         # Help for IDE
@@ -429,9 +431,13 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 parent_suffix = remove_namespace_from_uri(parent_uri)
                 self._add_uri_namespace_to_prefixes(parent_uri, prefixes)
                 if parent_suffix not in existing_classes:
-                    classes.append(UnverifiedConceptualClass(class_=parent_suffix))
+                    classes.append(UnverifiedConceptualConcept(concept=parent_suffix))
                 else:
-                    classes.append(UnverifiedConceptualClass.load(existing_classes[parent_suffix].model_dump()))
+                    classes.append(
+                        UnverifiedConceptualConcept.load(
+                            existing_classes[parent_suffix].model_dump()
+                        )
+                    )
             else:
                 shared_property_uris = set()
             shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
@@ -441,14 +447,18 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
                 if class_suffix not in existing_classes:
                     classes.append(
-                        UnverifiedConceptualClass(
-                            class_=class_suffix,
+                        UnverifiedConceptualConcept(
+                            concept=class_suffix,
                             implements=parent_suffix,
                             instance_source=type_uri,
                         )
                     )
                 else:
-                    classes.append(UnverifiedConceptualClass.load(existing_classes[class_suffix].model_dump()))
+                    classes.append(
+                        UnverifiedConceptualConcept.load(
+                            existing_classes[class_suffix].model_dump()
+                        )
+                    )
 
                 properties_by_id: dict[str, UnverifiedConceptualProperty] = {}
                 for property_uri, read_properties in properties_by_property_uri.items():
@@ -518,12 +528,14 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 ).items()
                 for prop in properties
             }
-            existing_classes = {cls_.class_.suffix: cls_ for cls_ in self._rules.classes}
+            existing_classes = {
+                cls_.concept.suffix: cls_ for cls_ in self._rules.concepts
+            }
         else:
             existing_class_properties = {}
             existing_classes = {}
         properties_by_class_by_subclass: list[_ReadProperties] = []
-        existing_class: ConceptualClass | None
+        existing_class: ConceptualConcept | None
         total_instance_count = sum(count_by_type.values())
         iterable = count_by_type.items()
         if GLOBAL_CONFIG.use_iterate_bar_threshold and total_instance_count > GLOBAL_CONFIG.use_iterate_bar_threshold:

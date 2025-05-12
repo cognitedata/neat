@@ -45,7 +45,7 @@ class TestDTDLImporter:
 
         assert issues == expected_issues
         assert isinstance(rules, ConceptualDataModel)
-        assert len(rules.classes) == 2
+        assert len(rules.concepts) == 2
 
     @pytest.mark.skip("Will be fixed in separate PR")
     def tests_import_invalid_data_model_and_return_errors(self) -> None:

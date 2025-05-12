@@ -16,7 +16,7 @@ from cognite.neat.core._data_model._constants import (
     SPLIT_ON_EQUAL_PATTERN,
 )
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     UnitEntity,
 )
 
@@ -397,7 +397,7 @@ class Enum(DataType):
 
     name: typing.Literal["enum"] = "enum"
 
-    collection: ClassEntity
+    collection: ConceptEntity
     unknown_value: str | None = Field(None, alias="unknownValue")
 
 
