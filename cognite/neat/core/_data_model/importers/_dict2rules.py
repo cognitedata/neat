@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any, cast
 
@@ -40,6 +41,30 @@ class YAMLReader:
             return {}, [FileReadError(filepath, f"Error reading file: {exc!s}")]
 
 
+class JSONReader(BaseFileReader):
+    """Handles reading and parsing JSON files with error handling."""
+
+    @staticmethod
+    def read_file(
+        filepath: Path, allowed_extensions: frozenset[str] = frozenset([".json"])
+    ) -> tuple[dict[str, Any], list[NeatIssue]]:
+        """Read a JSON file and return the data with any issues encountered."""
+        issues = BaseFileReader.validate_file(filepath, allowed_extensions)
+        if issues:
+            return {}, issues
+        # Try to load the JSON
+        try:
+            data = json.loads(filepath.read_text())
+            if not isinstance(data, dict):
+                issues.append(FileReadError(filepath, "JSON content is not an object"))
+                return {}, issues
+            return data, issues
+        except json.JSONDecodeError as exc:
+            return {}, [FileReadError(filepath, f"Invalid JSON: {exc!s}")]
+        except Exception as exc:
+            return {}, [FileReadError(filepath, f"Error reading file: {exc!s}")]
+
+
 class DictImporter(BaseImporter[T_InputRules]):
     """Imports the rules from a YAML file.
 
@@ -74,6 +99,16 @@ class DictImporter(BaseImporter[T_InputRules]):
     def from_yaml_file(cls, filepath: Path, source_name: str = "Unknown") -> "DictImporter":
         """Create a DictImporter from a YAML file."""
         data, issues = YAMLReader.read_file(filepath)
+
+        if issues:
+            return cls({}, issues)
+
+        return cls(data, filepaths=[filepath], source_name=source_name)
+
+    @classmethod
+    def from_json_file(cls, filepath: Path, source_name: str = "Unknown") -> "DictImporter":
+        """Create a DictImporter from a JSON file."""
+        data, issues = JSONReader.read_file(filepath)
 
         if issues:
             return cls({}, issues)
