@@ -8,6 +8,7 @@ from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat.core._client._api_client import NeatClient
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat.core._data_model import exporters
 from cognite.neat.core._data_model._constants import PATTERNS
@@ -564,6 +565,17 @@ class ToPythonAPI:
             elif isinstance(item, NeatIssue):
                 issue_list.append(item)
         return instances, issue_list
+
+    def data_model(
+        self,
+    ) -> DMSSchema:
+        """Export the verified DMS data model to Python format."""
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS data model to Python",
+            has_dms_rules=True,
+        )
+        exporter = exporters.DMSExporter()
+        return self._state.rule_store.export(exporter)
 
 
 @session_class_wrapper
