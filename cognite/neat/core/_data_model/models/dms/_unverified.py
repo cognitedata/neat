@@ -22,8 +22,8 @@ from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ContainerEntity,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
+    PhysicalUnknownEntity,
     ReverseConnectionEntity,
     ViewEntity,
     load_connection,
@@ -33,7 +33,16 @@ from cognite.neat.core._data_model.models.entities._wrapped import DMSFilter
 from cognite.neat.core._issues.warnings import DeprecatedWarning
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
-from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+from ._verified import (
+    _DEFAULT_VERSION,
+    PhysicalContainer,
+    PhysicalDataModel,
+    PhysicalEnum,
+    PhysicalMetadata,
+    PhysicalNodeType,
+    PhysicalProperty,
+    PhysicalView,
+)
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -42,7 +51,7 @@ else:
 
 
 @dataclass
-class UnverifiedPhysicalMetadata(UnverifiedComponent[DMSMetadata]):
+class UnverifiedPhysicalMetadata(UnverifiedComponent[PhysicalMetadata]):
     space: str
     external_id: str
     creator: str
@@ -55,8 +64,8 @@ class UnverifiedPhysicalMetadata(UnverifiedComponent[DMSMetadata]):
     source_id: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSMetadata]:
-        return DMSMetadata
+    def _get_verified_cls(cls) -> type[PhysicalMetadata]:
+        return PhysicalMetadata
 
     def dump(self) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -113,10 +122,10 @@ class UnverifiedPhysicalMetadata(UnverifiedComponent[DMSMetadata]):
 
 
 @dataclass
-class UnverifiedPhysicalProperty(UnverifiedComponent[DMSProperty]):
+class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     view: str
     view_property: str | None
-    value_type: str | DataType | ViewEntity | DMSUnknownEntity
+    value_type: str | DataType | ViewEntity | PhysicalUnknownEntity
     name: str | None = None
     description: str | None = None
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None = None
@@ -145,8 +154,8 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[DMSProperty]):
         )
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSProperty]:
-        return DMSProperty
+    def _get_verified_cls(cls) -> type[PhysicalProperty]:
+        return PhysicalProperty
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -206,7 +215,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[DMSProperty]):
 
 
 @dataclass
-class UnverifiedPhysicalContainer(UnverifiedComponent[DMSContainer]):
+class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     container: str
     name: str | None = None
     description: str | None = None
@@ -215,8 +224,8 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[DMSContainer]):
     used_for: Literal["node", "edge", "all"] | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSContainer]:
-        return DMSContainer
+    def _get_verified_cls(cls) -> type[PhysicalContainer]:
+        return PhysicalContainer
 
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -249,7 +258,7 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[DMSContainer]):
 
 
 @dataclass
-class UnverifiedPhysicalView(UnverifiedComponent[DMSView]):
+class UnverifiedPhysicalView(UnverifiedComponent[PhysicalView]):
     view: str
     name: str | None = None
     description: str | None = None
@@ -264,8 +273,8 @@ class UnverifiedPhysicalView(UnverifiedComponent[DMSView]):
             self.in_model = True
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSView]:
-        return DMSView
+    def _get_verified_cls(cls) -> type[PhysicalView]:
+        return PhysicalView
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -307,7 +316,7 @@ class UnverifiedPhysicalView(UnverifiedComponent[DMSView]):
 
 
 @dataclass
-class UnverifiedPhysicalNodeType(UnverifiedComponent[DMSNode]):
+class UnverifiedPhysicalNodeType(UnverifiedComponent[PhysicalNodeType]):
     node: str
     usage: Literal["type", "collocation"]
     name: str | None = None
@@ -315,8 +324,8 @@ class UnverifiedPhysicalNodeType(UnverifiedComponent[DMSNode]):
     neatId: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSNode]:
-        return DMSNode
+    def _get_verified_cls(cls) -> type[PhysicalNodeType]:
+        return PhysicalNodeType
 
     @classmethod
     def from_node_type(cls, node_type: dm.NodeApply) -> "UnverifiedPhysicalNodeType":
@@ -329,7 +338,7 @@ class UnverifiedPhysicalNodeType(UnverifiedComponent[DMSNode]):
 
 
 @dataclass
-class UnverifiedPhysicalEnum(UnverifiedComponent[DMSEnum]):
+class UnverifiedPhysicalEnum(UnverifiedComponent[PhysicalEnum]):
     collection: str
     value: str
     name: str | None = None
@@ -337,12 +346,12 @@ class UnverifiedPhysicalEnum(UnverifiedComponent[DMSEnum]):
     neatId: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSEnum]:
-        return DMSEnum
+    def _get_verified_cls(cls) -> type[PhysicalEnum]:
+        return PhysicalEnum
 
 
 @dataclass
-class UnverifiedPhysicalDataModel(UnverifiedDataModel[DMSRules]):
+class UnverifiedPhysicalDataModel(UnverifiedDataModel[PhysicalDataModel]):
     metadata: UnverifiedPhysicalMetadata
     properties: list[UnverifiedPhysicalProperty]
     views: list[UnverifiedPhysicalView]
@@ -351,8 +360,8 @@ class UnverifiedPhysicalDataModel(UnverifiedDataModel[DMSRules]):
     nodes: list[UnverifiedPhysicalNodeType] | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSRules]:
-        return DMSRules
+    def _get_verified_cls(cls) -> type[PhysicalDataModel]:
+        return PhysicalDataModel
 
     def dump(self) -> dict[str, Any]:
         default_space = self.metadata.space

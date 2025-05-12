@@ -119,7 +119,7 @@ class NeatIssue:
 
     @classmethod
     def _dump_value(cls, value: Any) -> list | int | bool | float | str | dict:
-        from cognite.neat.core._data_model.models.entities import Entity
+        from cognite.neat.core._data_model.models.entities import ConceptualEntity
 
         if isinstance(value, str | int | bool | float):
             return value
@@ -131,7 +131,7 @@ class NeatIssue:
             return [cls._dump_value(item) for item in value]
         elif isinstance(value, ViewId | ContainerId):
             return value.dump(camel_case=True, include_type=True)
-        elif isinstance(value, Entity):
+        elif isinstance(value, ConceptualEntity):
             return value.dump()
         elif isinstance(value, PropertyId):
             return value.dump(camel_case=True)
@@ -173,7 +173,7 @@ class NeatIssue:
 
     @classmethod
     def _load_value(cls, type_: Any, value: Any) -> Any:
-        from cognite.neat.core._data_model.models.entities import Entity
+        from cognite.neat.core._data_model.models.entities import ConceptualEntity
 
         if isinstance(type_, UnionType) or get_origin(type_) is UnionType:
             args = get_args(type_)
@@ -194,7 +194,7 @@ class NeatIssue:
             return PropertyId.load(value)
         elif type_ is ContainerId:
             return ContainerId.load(value)
-        elif inspect.isclass(type_) and issubclass(type_, Entity):
+        elif inspect.isclass(type_) and issubclass(type_, ConceptualEntity):
             return type_.load(value)
         elif type_ is NeatError:
             return cls.load(value)

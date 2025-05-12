@@ -7,7 +7,7 @@ from rdflib.term import Literal
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.dms import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
@@ -177,7 +177,7 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     ],
 )
 
-BASE_MODEL: DMSRules = UnverifiedPhysicalDataModel(
+BASE_MODEL: PhysicalDataModel = UnverifiedPhysicalDataModel(
     metadata=UnverifiedPhysicalMetadata(
         space="sp_base",
         external_id="Base",
@@ -271,7 +271,7 @@ INSTANCES = [
 
 
 @lru_cache(maxsize=1)
-def get_car_dms_rules() -> DMSRules:
+def get_car_dms_rules() -> PhysicalDataModel:
     # Local import to avoid circular import
     from tests.data import SchemaData
 

@@ -27,7 +27,7 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.analysis._base import ViewQuery, ViewQueryDict
-from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
@@ -115,7 +115,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def __init__(
         self,
-        dms_rules: DMSRules,
+        dms_rules: PhysicalDataModel,
         info_rules: ConceptualDataModel,
         graph_store: NeatGraphStore,
         instance_space: str,

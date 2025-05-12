@@ -51,7 +51,7 @@ from cognite.neat.core._issues.warnings.user_modeling import (
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from cognite.neat.core._utils.text import humanize_collection
 
-from ._rules import DMSProperty, DMSRules
+from ._verified import PhysicalDataModel, PhysicalProperty
 
 
 class DMSValidation:
@@ -60,7 +60,7 @@ class DMSValidation:
 
     def __init__(
         self,
-        rules: DMSRules,
+        rules: PhysicalDataModel,
         client: NeatClient | None = None,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ) -> None:
@@ -320,7 +320,9 @@ class DMSValidation:
         return parents_by_view
 
     def _consistent_container_properties(self) -> IssueList:
-        container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
+        container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]] = defaultdict(
+            list
+        )
         for prop_no, prop in enumerate(self._properties):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
@@ -475,7 +477,7 @@ class DMSValidation:
                     UndefinedViewWarning(
                         str(prop_.view),
                         str(prop_.value_type),
-                        prop_.view_property,
+                        prop_.property_,
                     )
                 )
         return issue_list
@@ -506,7 +508,7 @@ class DMSValidation:
                             prop.container,
                             "container property",
                             prop.container_property,
-                            dm.PropertyId(prop.view.as_id(), prop.view_property),
+                            dm.PropertyId(prop.view.as_id(), prop.property_),
                             "view property",
                         )
                     )
@@ -516,7 +518,7 @@ class DMSValidation:
                     ResourceNotFoundError(
                         prop.view,
                         "view",
-                        prop.view_property,
+                        prop.property_,
                         "property",
                     )
                 )

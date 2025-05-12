@@ -16,13 +16,13 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.data_types import String
 from cognite.neat.core._data_model.models.dms import (
-    DMSMetadata,
-    DMSProperty,
     DMSSchema,
     DMSValidation,
+    PhysicalMetadata,
+    PhysicalProperty,
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
@@ -1252,7 +1252,7 @@ class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
 
-        assert isinstance(valid_rules, DMSRules)
+        assert isinstance(valid_rules, PhysicalDataModel)
 
         sample_expected_properties = {
             "power:GeneratingUnit(version=0.1.0).name",
@@ -1260,7 +1260,7 @@ class TestDMSRules:
             "power:Substation(version=0.1.0).mainTransformer",
         }
         missing = sample_expected_properties - {
-            f"{prop.view.versioned_id}.{prop.view_property}" for prop in valid_rules.properties
+            f"{prop.view.versioned_id}.{prop.property_}" for prop in valid_rules.properties
         }
         assert not missing, f"Missing properties: {missing}"
 
@@ -1271,7 +1271,7 @@ class TestDMSRules:
         assert len(dms_rules.properties) == no_properties
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
-    def test_load_valid_rules(self, raw: UnverifiedPhysicalDataModel, expected_rules: DMSRules) -> None:
+    def test_load_valid_rules(self, raw: UnverifiedPhysicalDataModel, expected_rules: PhysicalDataModel) -> None:
         valid_rules = raw.as_verified_rules()
         normalize_neat_id_in_rules(valid_rules)
         normalize_neat_id_in_rules(expected_rules)
@@ -1293,7 +1293,7 @@ class TestDMSRules:
 
         assert sorted(issues) == sorted(expected_errors)
 
-    def test_alice_to_and_from_dms(self, alice_rules: DMSRules) -> None:
+    def test_alice_to_and_from_dms(self, alice_rules: PhysicalDataModel) -> None:
         schema = alice_rules.as_schema()
         recreated_rules = DMSImporter(schema).to_rules().rules.as_verified_rules()
 
@@ -1448,7 +1448,7 @@ class TestDMSRules:
             updated="2024-03-16",
         )
 
-        metadata = DMSMetadata.model_validate(raw_metadata)
+        metadata = PhysicalMetadata.model_validate(raw_metadata)
 
         assert metadata.version == "14"
 
@@ -1594,7 +1594,7 @@ class TestDMSRules:
         )
         verified = rules.as_verified_rules()
 
-        assert isinstance(verified, DMSRules)
+        assert isinstance(verified, PhysicalDataModel)
 
         dumped = verified.dump(entities_exclude_defaults=True)
 
@@ -1687,7 +1687,7 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
 
 
 class TestDMSExporter:
-    def test_svein_harald_as_schema(self, svein_harald_dms_rules: DMSRules) -> None:
+    def test_svein_harald_as_schema(self, svein_harald_dms_rules: PhysicalDataModel) -> None:
         expected_views = {"GeneratingUnit", "EnergyArea", "TimeseriesForecastProduct"}
         expected_model_views = expected_views
 
@@ -1698,7 +1698,7 @@ class TestDMSExporter:
         actual_model_views = {view.external_id for view in schema.data_model.views}
         assert actual_model_views == expected_model_views
 
-    def test_olav_rebuild_as_schema(self, olav_rebuild_dms_rules: DMSRules) -> None:
+    def test_olav_rebuild_as_schema(self, olav_rebuild_dms_rules: PhysicalDataModel) -> None:
         expected_views = {
             "Point",
             "Polygon",
@@ -1729,9 +1729,9 @@ class TestDMSExporter:
         raw: UnverifiedPhysicalDataModel,
         expected_edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
     ) -> None:
-        dms_rules = DMSRules.model_validate(raw.dump())
+        dms_rules = PhysicalDataModel.model_validate(raw.dump())
         view_by_id = {view.view: view for view in dms_rules.views}
-        properties_by_view_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
+        properties_by_view_id: dict[dm.ViewId, list[PhysicalProperty]] = defaultdict(list)
         for prop in dms_rules.properties:
             properties_by_view_id[prop.view.as_id()].append(prop)
 
@@ -1796,7 +1796,7 @@ class TestDMSProperty:
         ],
     )
     def test_model_validate(self, raw: UnverifiedPhysicalProperty):
-        prop = DMSProperty.model_validate(raw.dump("sp", "v1"))
+        prop = PhysicalProperty.model_validate(raw.dump("sp", "v1"))
         assert prop.model_dump(exclude_unset=True)
 
     @pytest.mark.parametrize(
@@ -1817,7 +1817,7 @@ class TestDMSProperty:
     )
     def test_model_validate_invalid(self, raw: UnverifiedPhysicalProperty, expected_msg: str):
         with pytest.raises(ValidationError) as e:
-            _ = DMSProperty.model_validate(raw.dump("sp", "v1"))
+            _ = PhysicalProperty.model_validate(raw.dump("sp", "v1"))
 
         errors = e.value.errors()
         assert len(errors) == 1

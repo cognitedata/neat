@@ -3,15 +3,15 @@ import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat.core._data_model import catalog, exporters, importers, transformers
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._store import NeatRulesStore
 from cognite.neat.core._store.exceptions import InvalidActivityInput
 
 
-class FailingTransformer(VerifiedRulesTransformer[DMSRules, DMSRules]):
-    def transform(self, rules: DMSRules) -> DMSRules:
+class FailingTransformer(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         raise NeatValueError("This transformer always fails")
 
     @property
@@ -58,4 +58,4 @@ class TestRuleStore:
             _ = store.transform(transformers.ToCompliantEntities())
 
         assert exc_info.value.expected == (ConceptualDataModel,)
-        assert exc_info.value.have == (DMSRules,)
+        assert exc_info.value.have == (PhysicalDataModel,)

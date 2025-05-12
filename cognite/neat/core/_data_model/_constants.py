@@ -17,7 +17,7 @@ class EntityTypes(StrEnum):
     class_ = "class"
     parent_class = "parent_class"
     property_ = "property"
-    dms_property = "dms_property"
+    physical_property = "physical_property"
     conceptual_property = "conceptual_property"
     object_property = "ObjectProperty"
     data_property = "DatatypeProperty"
@@ -171,7 +171,7 @@ class _Patterns:
         elif entity == EntityTypes.container:
             return self.view_id_compliance
 
-        elif entity == EntityTypes.dms_property:
+        elif entity == EntityTypes.physical_property:
             return self.dms_property_id_compliance
 
         elif entity == EntityTypes.version:

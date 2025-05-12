@@ -7,26 +7,26 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 )
 
 from ._base_verified import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetList, SheetRow
-from .dms._rules import DMSRules
 from .dms._unverified import UnverifiedPhysicalDataModel
+from .dms._verified import PhysicalDataModel
 
 INPUT_RULES_BY_ROLE: dict[RoleTypes, type[UnverifiedConceptualDataModel] | type[UnverifiedPhysicalDataModel]] = {
     RoleTypes.information: UnverifiedConceptualDataModel,
     RoleTypes.dms: UnverifiedPhysicalDataModel,
 }
-VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[DMSRules]] = {
+VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[PhysicalDataModel]] = {
     RoleTypes.information: ConceptualDataModel,
-    RoleTypes.dms: DMSRules,
+    RoleTypes.dms: PhysicalDataModel,
 }
 
 
 __all__ = [
     "INPUT_RULES_BY_ROLE",
     "ConceptualDataModel",
-    "DMSRules",
     "DMSSchema",
     "DataModelType",
     "ExtensionCategory",
+    "PhysicalDataModel",
     "RoleTypes",
     "SchemaCompleteness",
     "SheetList",

@@ -15,7 +15,7 @@ from rdflib import Namespace
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import (
     ConceptualDataModel,
-    DMSRules,
+    PhysicalDataModel,
     VerifiedRules,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, String
@@ -114,7 +114,7 @@ def normalize_neat_id_in_rules(rules: VerifiedRules) -> VerifiedRules:
         for i, property_ in enumerate(rules.properties):
             property_.neatId = DEFAULT_NAMESPACE[f"Property_{i}"]
 
-    elif isinstance(rules, DMSRules):
+    elif isinstance(rules, PhysicalDataModel):
         for i, view in enumerate(rules.views):
             view.neatId = DEFAULT_NAMESPACE[f"View_{i}"]
         for i, property_ in enumerate(rules.properties):

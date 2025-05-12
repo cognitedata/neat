@@ -7,7 +7,7 @@ from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSRules,
+    PhysicalDataModel,
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.dms import UnverifiedPhysicalDataModel
@@ -29,7 +29,7 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 
 @pytest.fixture(scope="session")
-def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> DMSRules:
+def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> PhysicalDataModel:
     return UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
 
 
@@ -50,12 +50,12 @@ def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> ConceptualDataM
 
 
 @pytest.fixture(scope="session")
-def svein_harald_dms_rules() -> DMSRules:
+def svein_harald_dms_rules() -> PhysicalDataModel:
     return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
 
 
 @pytest.fixture(scope="session")
-def olav_rebuild_dms_rules() -> DMSRules:
+def olav_rebuild_dms_rules() -> PhysicalDataModel:
     return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_verified_rules()
 
 

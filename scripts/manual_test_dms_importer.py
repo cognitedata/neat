@@ -32,7 +32,7 @@ from cognite.client.data_classes.data_modeling import DataModelId
 
 from rich.panel import Panel
 
-from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.exporters import DMSExporter
 from pathlib import Path
@@ -73,7 +73,7 @@ def main():
             for issue in issues.warnings:
                 print(issue)
             warning += 1
-        assert isinstance(rules, DMSRules)
+        assert isinstance(rules, PhysicalDataModel)
         try:
             information = DMSToInformation().transform(rules)
         except Exception as e:

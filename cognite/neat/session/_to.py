@@ -12,8 +12,8 @@ from cognite.neat.core._data_model import exporters
 from cognite.neat.core._data_model._constants import PATTERNS
 from cognite.neat.core._data_model._shared import VerifiedRules
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
-from cognite.neat.core._data_model.models.dms import DMSMetadata
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat.core._data_model.models.dms import PhysicalMetadata
 from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat.core._utils.upload import UploadResultList
@@ -118,7 +118,7 @@ class ToAPI:
 
         if include_reference is not False:
             if include_reference is True and self._state.last_reference is not None:
-                ref_rules: ConceptualDataModel | DMSRules | None = self._state.last_reference
+                ref_rules: ConceptualDataModel | PhysicalDataModel | None = self._state.last_reference
             elif include_reference is True:
                 ref_rules = None
             else:
@@ -135,7 +135,7 @@ class ToAPI:
             if ref_rules is not None:
                 prefix = "Ref"
                 if (
-                    isinstance(ref_rules.metadata, DMSMetadata)
+                    isinstance(ref_rules.metadata, PhysicalMetadata)
                     and ref_rules.metadata.as_data_model_id() in COGNITE_MODELS
                 ):
                     prefix = "CDM"

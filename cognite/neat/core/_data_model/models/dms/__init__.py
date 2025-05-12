@@ -1,6 +1,5 @@
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 
-from ._rules import DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
 from ._unverified import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
@@ -11,17 +10,26 @@ from ._unverified import (
     UnverifiedPhysicalView,
 )
 from ._validation import DMSValidation
+from ._verified import (
+    PhysicalContainer,
+    PhysicalDataModel,
+    PhysicalEnum,
+    PhysicalMetadata,
+    PhysicalNodeType,
+    PhysicalProperty,
+    PhysicalView,
+)
 
 __all__ = [
-    "DMSContainer",
-    "DMSEnum",
-    "DMSMetadata",
-    "DMSNode",
-    "DMSProperty",
-    "DMSRules",
     "DMSSchema",
     "DMSValidation",
-    "DMSView",
+    "PhysicalContainer",
+    "PhysicalDataModel",
+    "PhysicalEnum",
+    "PhysicalMetadata",
+    "PhysicalNodeType",
+    "PhysicalProperty",
+    "PhysicalView",
     "UnverifiedPhysicalContainer",
     "UnverifiedPhysicalDataModel",
     "UnverifiedPhysicalEnum",

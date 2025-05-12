@@ -13,7 +13,7 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ClassEntity
@@ -38,12 +38,12 @@ class MockGraphGenerator(BaseExtractor):
 
     def __init__(
         self,
-        rules: ConceptualDataModel | DMSRules,
+        rules: ConceptualDataModel | PhysicalDataModel,
         class_count: dict[str | ClassEntity, int] | None = None,
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
     ):
-        if isinstance(rules, DMSRules):
+        if isinstance(rules, PhysicalDataModel):
             # fixes potential issues with circular dependencies
             from cognite.neat.core._data_model.transformers import DMSToInformation
 

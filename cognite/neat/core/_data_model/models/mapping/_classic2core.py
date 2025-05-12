@@ -5,7 +5,7 @@ import yaml
 
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models.dms import (
-    DMSRules,
+    PhysicalDataModel,
     UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._issues.errors import NeatValueError
@@ -18,7 +18,7 @@ def _read_source_file() -> str:
     return _CLASSIC_TO_CORE_MAPPING.read_text()
 
 
-def load_classic_to_core_mapping(org_name: str | None, source_space: str, source_version: str) -> DMSRules:
+def load_classic_to_core_mapping(org_name: str | None, source_space: str, source_version: str) -> PhysicalDataModel:
     from cognite.neat.core._data_model.importers import YAMLImporter
     from cognite.neat.core._data_model.transformers import VerifyDMSRules
 

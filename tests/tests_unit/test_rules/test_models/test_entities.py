@@ -5,12 +5,12 @@ from cognite.neat.core._data_model._constants import ENTITY_PATTERN
 from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
     ClassEntity,
+    ConceptualEntity,
     DataModelEntity,
-    DMSEntity,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
-    Entity,
+    PhysicalEntity,
+    PhysicalUnknownEntity,
     ReferenceEntity,
     RelationshipEntity,
     UnitEntity,
@@ -58,7 +58,7 @@ TEST_CASES = [
     (
         ViewEntity,
         "#N/A",
-        DMSUnknownEntity.from_id(None),
+        PhysicalUnknownEntity.from_id(None),
     ),
     (
         ClassEntity,
@@ -120,8 +120,8 @@ class TestEntities:
     @pytest.mark.parametrize(
         "cls_, raw, expected", TEST_CASES, ids=[f"{cls_.__name__} {raw}" for cls_, raw, _ in TEST_CASES]
     )
-    def test_load_dump(self, cls_: type[Entity], raw: str, expected: Entity) -> None:
-        if issubclass(cls_, DMSEntity):
+    def test_load_dump(self, cls_: type[ConceptualEntity], raw: str, expected: ConceptualEntity) -> None:
+        if issubclass(cls_, PhysicalEntity):
             defaults = {"space": DEFAULT_SPACE, "version": DEFAULT_VERSION}
         elif issubclass(cls_, AssetEntity | RelationshipEntity):
             defaults = {}

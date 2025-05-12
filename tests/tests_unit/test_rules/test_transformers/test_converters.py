@@ -23,7 +23,7 @@ from cognite.neat.core._data_model.models.dms import (
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.models.dms._rules import DMSRules
+from cognite.neat.core._data_model.models.dms._verified import PhysicalDataModel
 from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ViewEntity,
@@ -58,7 +58,7 @@ class TestStandardizeNaming:
         transformed = StandardizeNaming().transform(dms.as_verified_rules())
 
         assert transformed.views[0].view.suffix == "MyPoorlyFormattedView"
-        assert transformed.properties[0].view_property == "andStrangelyNamedProperty"
+        assert transformed.properties[0].property_ == "andStrangelyNamedProperty"
         assert transformed.properties[0].view.suffix == "MyPoorlyFormattedView"
         assert transformed.properties[0].container.suffix == "MyContainer"
         assert transformed.containers[0].container.suffix == "MyContainer"
@@ -115,20 +115,20 @@ class TestRulesSubsetting:
         assert subset.classes[0].class_ == class_
         assert len(subset.classes) == 1
 
-    def test_subset_information_rules_fails(self, david_rules: DMSRules) -> None:
+    def test_subset_information_rules_fails(self, david_rules: PhysicalDataModel) -> None:
         class_ = ClassEntity.load("power:GeoLooocation")
 
         with pytest.raises(NeatValueError):
             _ = SubsetInformationRules({class_}).transform(david_rules)
 
-    def test_subset_dms_rules(self, alice_rules: DMSRules) -> None:
+    def test_subset_dms_rules(self, alice_rules: PhysicalDataModel) -> None:
         view = ViewEntity.load("power:GeoLocation(version=0.1.0)")
         subset = SubsetDMSRules({view}).transform(alice_rules)
 
         assert subset.views[0].view == view
         assert len(subset.views) == 1
 
-    def test_subset_dms_rules_fails(self, alice_rules: DMSRules) -> None:
+    def test_subset_dms_rules_fails(self, alice_rules: PhysicalDataModel) -> None:
         view = ViewEntity.load("power:GeoLooocation(version=0.1.0)")
 
         with pytest.raises(NeatValueError):

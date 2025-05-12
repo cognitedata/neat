@@ -3,7 +3,7 @@ from typing import Generic, TypeAlias, TypeVar
 
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSRules,
+    PhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual._unverified import (
     UnverifiedConceptualDataModel,
@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.models.dms._unverified import (
 )
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
-VerifiedRules: TypeAlias = ConceptualDataModel | DMSRules
+VerifiedRules: TypeAlias = ConceptualDataModel | PhysicalDataModel
 
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
 InputRules: TypeAlias = UnverifiedPhysicalDataModel | UnverifiedConceptualDataModel
@@ -42,6 +42,9 @@ ReadInputRules: TypeAlias = ReadRules[UnverifiedPhysicalDataModel] | ReadRules[U
 T_ReadInputRules = TypeVar("T_ReadInputRules", bound=ReadInputRules)
 
 Rules: TypeAlias = (
-    ConceptualDataModel | DMSRules | ReadRules[UnverifiedPhysicalDataModel] | ReadRules[UnverifiedConceptualDataModel]
+    ConceptualDataModel
+    | PhysicalDataModel
+    | ReadRules[UnverifiedPhysicalDataModel]
+    | ReadRules[UnverifiedConceptualDataModel]
 )
 T_Rules = TypeVar("T_Rules", bound=Rules)

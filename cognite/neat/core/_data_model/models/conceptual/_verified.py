@@ -29,13 +29,13 @@ from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     ClassEntityList,
-    Entity,
+    ConceptualEntity,
     UnknownEntity,
 )
 from cognite.neat.core._issues.errors import PropertyDefinitionError
 
 if TYPE_CHECKING:
-    from cognite.neat.core._data_model.models import DMSRules
+    from cognite.neat.core._data_model.models import PhysicalDataModel
 
 
 class ConceptualMetadata(BaseVerifiedMetadata):
@@ -87,7 +87,7 @@ class ConceptualClass(SheetRow):
 
     @field_serializer("class_", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
-        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _get_metadata(info.context)) and isinstance(value, ConceptualEntity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
@@ -97,7 +97,7 @@ class ConceptualClass(SheetRow):
             return ",".join(
                 (
                     class_.dump(prefix=metadata.prefix, version=metadata.version)
-                    if isinstance(class_, Entity)
+                    if isinstance(class_, ConceptualEntity)
                     else str(class_)
                 )
                 for class_ in value
@@ -222,7 +222,7 @@ class ConceptualProperty(SheetRow):
 
     @field_serializer("class_", "value_type", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
-        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _get_metadata(info.context)) and isinstance(value, ConceptualEntity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
@@ -278,27 +278,27 @@ class ConceptualDataModel(BaseVerifiedDataModel):
         for property_ in self.properties:
             property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
 
-    def sync_with_physical_data_model(self, dms_rules: "DMSRules") -> None:
+    def sync_with_physical_data_model(self, physical_data_model: "PhysicalDataModel") -> None:
         # Sync at the metadata level
-        if dms_rules.metadata.logical == self.metadata.identifier:
-            self.metadata.physical = dms_rules.metadata.identifier
+        if physical_data_model.metadata.conceptual == self.metadata.identifier:
+            self.metadata.physical = physical_data_model.metadata.identifier
         else:
             # if models are not linked to start with, we skip
             return None
 
         conceptual_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
-        physical_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
+        physical_properties_by_neat_id = {prop.neatId: prop for prop in physical_data_model.properties}
         for neat_id, prop in physical_properties_by_neat_id.items():
-            if prop.logical in conceptual_properties_by_neat_id:
-                conceptual_properties_by_neat_id[prop.logical].physical = neat_id
+            if prop.conceptual in conceptual_properties_by_neat_id:
+                conceptual_properties_by_neat_id[prop.conceptual].physical = neat_id
 
         classes_by_neat_id = {cls.neatId: cls for cls in self.classes}
-        views_by_neat_id = {view.neatId: view for view in dms_rules.views}
+        views_by_neat_id = {view.neatId: view for view in physical_data_model.views}
         for neat_id, view in views_by_neat_id.items():
-            if view.logical in classes_by_neat_id:
-                classes_by_neat_id[view.logical].physical = neat_id
+            if view.conceptual in classes_by_neat_id:
+                classes_by_neat_id[view.conceptual].physical = neat_id
 
-    def as_dms_rules(self) -> "DMSRules":
+    def as_dms_rules(self) -> "PhysicalDataModel":
         from cognite.neat.core._data_model.transformers._converters import (
             _InformationRulesConverter,
         )
@@ -311,8 +311,8 @@ class ConceptualDataModel(BaseVerifiedDataModel):
 
     def _repr_html_(self) -> str:
         summary = {
-            "type": "Conceptual Data Model",
-            "intended for": "Information Architect",
+            "level": self.metadata.level,
+            "intended for": "Domain Expert and/or Information Architect",
             "name": self.metadata.name,
             "external_id": self.metadata.external_id,
             "version": self.metadata.version,

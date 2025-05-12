@@ -30,7 +30,7 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
 )
-from cognite.neat.core._data_model.models.dms._rules import DMSRules
+from cognite.neat.core._data_model.models.dms._verified import PhysicalDataModel
 from cognite.neat.core._utils.spreadsheet import (
     find_column_with_value,
     generate_data_validation,
@@ -145,7 +145,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        rules_model = DMSRules if role == RoleTypes.dms else ConceptualDataModel
+        rules_model = PhysicalDataModel if role == RoleTypes.dms else ConceptualDataModel
 
         headers_by_sheet = rules_model.headers_by_sheet(by_alias=True)
         headers_by_sheet.pop("Metadata")

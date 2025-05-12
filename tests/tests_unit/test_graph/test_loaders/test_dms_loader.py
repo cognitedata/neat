@@ -59,7 +59,7 @@ def test_metadata_as_json_filed():
 
     for prop in dms_rules.properties:
         prop.view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
-        prop.view_property = f"my_{prop.view_property}"
+        prop.property_ = f"my_{prop.property_}"
 
     # simulating update of the INFORMATION rules
 
@@ -185,7 +185,7 @@ def test_dms_load_respect_container_cardinality() -> None:
     ).as_verified_rules()
     info = DMSToInformation().transform(dms)
     info.metadata.physical = dms.metadata.identifier
-    dms.sync_with_info_rules(info)
+    dms.sync_with_conceptual_data_model(info)
 
     store = NeatGraphStore.from_memory_store()
     namespace = DEFAULT_NAMESPACE

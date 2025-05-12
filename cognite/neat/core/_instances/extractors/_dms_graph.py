@@ -8,7 +8,7 @@ from rdflib import Namespace, URIRef
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_SPACES, DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import Json
 from cognite.neat.core._data_model.models.entities import UnknownEntity
@@ -48,7 +48,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
 
         self._views: list[dm.View] | None = None
         self._information_rules: ConceptualDataModel | None = None
-        self._dms_rules: DMSRules | None = None
+        self._dms_rules: PhysicalDataModel | None = None
 
     @classmethod
     def from_data_model_id(
@@ -170,7 +170,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             self._information_rules, self._dms_rules = self._create_rules()
         return self._information_rules
 
-    def get_dms_rules(self) -> DMSRules:
+    def get_dms_rules(self) -> PhysicalDataModel:
         """Returns the DMS rules that the extractor uses."""
         if self._dms_rules is None:
             self._information_rules, self._dms_rules = self._create_rules()
@@ -180,7 +180,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         """Returns the issues that occurred during the extraction."""
         return self._issues
 
-    def _create_rules(self) -> tuple[ConceptualDataModel, DMSRules]:
+    def _create_rules(self) -> tuple[ConceptualDataModel, PhysicalDataModel]:
         # The DMS and Information rules must be created together to link them property.
         importer = DMSImporter.from_data_model(self._client, self._data_model)
         unverified_dms = importer.to_rules()
@@ -207,8 +207,8 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
 
         # We need to sync the metadata between the two rules, such that the `.sync_with_info_rules` method works.
         information_rules.metadata.physical = verified_dms.metadata.identifier
-        verified_dms.metadata.logical = information_rules.metadata.identifier
-        verified_dms.sync_with_info_rules(information_rules)
+        verified_dms.metadata.conceptual = information_rules.metadata.identifier
+        verified_dms.sync_with_conceptual_data_model(information_rules)
 
         # Adding startNode and endNode to the information rules for views that are used for edges.
         classes_by_prefix = {cls_.class_.prefix: cls_ for cls_ in information_rules.classes}

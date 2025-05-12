@@ -11,13 +11,13 @@ import pandas as pd
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualClass,
     ConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import DMSProperty
-from cognite.neat.core._data_model.models.dms._rules import DMSView
+from cognite.neat.core._data_model.models.dms import PhysicalProperty
+from cognite.neat.core._data_model.models.dms._verified import PhysicalView
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     MultiValueTypeInfo,
@@ -114,7 +114,7 @@ class RulesAnalysis:
     def __init__(
         self,
         information: ConceptualDataModel | None = None,
-        dms: DMSRules | None = None,
+        dms: PhysicalDataModel | None = None,
     ) -> None:
         self._information = information
         self._dms = dms
@@ -126,7 +126,7 @@ class RulesAnalysis:
         return self._information
 
     @property
-    def dms(self) -> DMSRules:
+    def dms(self) -> PhysicalDataModel:
         if self._dms is None:
             raise NeatValueError("DMS rules are required for this analysis")
         return self._dms
@@ -230,11 +230,11 @@ class RulesAnalysis:
 
     def properties_by_view(
         self, include_ancestors: bool = False, include_different_space: bool = False
-    ) -> dict[ViewEntity, list[DMSProperty]]:
+    ) -> dict[ViewEntity, list[PhysicalProperty]]:
         """Get a dictionary of views and their properties."""
         # This is a duplicate fo the properties_by_class method, but for views
         # The choice to duplicate the code is to avoid generics which will make the code less readable.
-        properties_by_views: dict[ViewEntity, list[DMSProperty]] = defaultdict(list)
+        properties_by_views: dict[ViewEntity, list[PhysicalProperty]] = defaultdict(list)
         for prop in self.dms.properties:
             properties_by_views[prop.view].append(prop)
 
@@ -243,20 +243,20 @@ class RulesAnalysis:
                 include_ancestors=include_ancestors, include_different_space=include_different_space
             )
             for view, parents in implements_by_view.items():
-                view_properties = {prop.view_property for prop in properties_by_views[view]}
+                view_properties = {prop.property_ for prop in properties_by_views[view]}
                 for parent in parents:
                     for parent_prop in properties_by_views[parent]:
-                        if parent_prop.view_property not in view_properties:
+                        if parent_prop.property_ not in view_properties:
                             child_prop = parent_prop.model_copy(update={"view": view})
                             properties_by_views[view].append(child_prop)
-                            view_properties.add(child_prop.view_property)
+                            view_properties.add(child_prop.property_)
 
         return properties_by_views
 
     @property
     def logical_uri_by_view(self) -> dict[ViewEntity, URIRef]:
         """Get the logical URI by view."""
-        return {view.view: view.logical for view in self.dms.views if view.logical}
+        return {view.view: view.conceptual for view in self.dms.views if view.conceptual}
 
     def logical_uri_by_property_by_view(
         self,
@@ -267,7 +267,7 @@ class RulesAnalysis:
         properties_by_view = self.properties_by_view(include_ancestors, include_different_space)
 
         return {
-            view: {prop.view_property: prop.logical for prop in properties if prop.logical}
+            view: {prop.property_: prop.conceptual for prop in properties if prop.conceptual}
             for view, properties in properties_by_view.items()
         }
 
@@ -303,7 +303,7 @@ class RulesAnalysis:
         return {cls.class_: cls for cls in rules.classes}
 
     @property
-    def view_by_view_entity(self) -> dict[ViewEntity, DMSView]:
+    def view_by_view_entity(self) -> dict[ViewEntity, PhysicalView]:
         """Get a dictionary of class entities to class entities."""
         rules = self.dms
         return {view.view: view for view in rules.views}
@@ -426,11 +426,11 @@ class RulesAnalysis:
     def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, ConceptualProperty]: ...
 
     @overload
-    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, PhysicalProperty]: ...
 
     def _properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
-    ) -> dict[URIRef, ConceptualProperty] | dict[URIRef, DMSProperty]:
+    ) -> dict[URIRef, ConceptualProperty] | dict[URIRef, PhysicalProperty]:
         if format == "info":
             return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
         elif format == "dms":
@@ -525,7 +525,7 @@ class RulesAnalysis:
                     di_graph.add_edge(
                         prop_.view.suffix,
                         prop_.value_type.suffix,
-                        label=prop_.name or prop_.view_property,
+                        label=prop_.name or prop_.property_,
                     )
 
         return di_graph

@@ -56,8 +56,8 @@ from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     ContainerEntity,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
+    PhysicalUnknownEntity,
     ReverseConnectionEntity,
     ViewEntity,
 )
@@ -413,8 +413,8 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         cls,
         prop: ViewPropertyApply | ViewProperty,
         container_property: dm.ContainerProperty | None = None,
-        enum_collection_by_container_property: dict[tuple[dm.ContainerId, str], str] | None = None,
-    ) -> DataType | ViewEntity | DMSUnknownEntity | None:
+        enum_collection_by_container_property: (dict[tuple[dm.ContainerId, str], str] | None) = None,
+    ) -> DataType | ViewEntity | PhysicalUnknownEntity | None:
         if isinstance(
             prop,
             SingleEdgeConnectionApply
@@ -436,7 +436,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
                 prop_type = prop.type
             if isinstance(prop_type, dm.DirectRelation):
                 if prop.source is None:
-                    return DMSUnknownEntity()
+                    return PhysicalUnknownEntity()
                 else:
                     return ViewEntity.from_id(prop.source)
             elif isinstance(prop_type, PropertyTypeWithUnit) and prop_type.unit:

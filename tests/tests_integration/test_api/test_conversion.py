@@ -5,7 +5,7 @@ import yaml
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.importers import YAMLImporter
-from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
     InformationToDMS,
     VerifyInformationRules,
@@ -25,14 +25,14 @@ class TestValidate:
     def test_convert_conceptual_rules(
         self, conceptual_filepath: Path, physical_filepath: Path, neat_client: NeatClient
     ) -> None:
-        dms_rules: DMSRules | None = None
+        dms_rules: PhysicalDataModel | None = None
         with catch_issues() as issues:
             rules = YAMLImporter.from_file(conceptual_filepath, source_name=conceptual_filepath.name).to_rules()
             info_rules = VerifyInformationRules(validate=True, client=neat_client).transform(rules)
             dms_rules = InformationToDMS().transform(info_rules)
 
         assert not issues
-        assert isinstance(dms_rules, DMSRules)
+        assert isinstance(dms_rules, PhysicalDataModel)
         assert dms_rules.dump(mode="json", sort=True, exclude_none=True, exclude_unset=True) == yaml.safe_load(
             physical_filepath.read_text()
         )

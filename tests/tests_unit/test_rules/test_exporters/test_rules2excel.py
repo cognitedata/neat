@@ -7,7 +7,7 @@ from openpyxl import Workbook, load_workbook
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSRules,
+    PhysicalDataModel,
 )
 from cognite.neat.core._data_model.models._base_verified import RoleTypes
 from cognite.neat.core._issues.errors._general import NeatValueError
@@ -41,7 +41,7 @@ def compare_data_validators(expected: Workbook, resulted: Workbook) -> list[bool
 
 
 class TestExcelExporter:
-    def test_export_dms_rules(self, alice_rules: DMSRules):
+    def test_export_dms_rules(self, alice_rules: PhysicalDataModel):
         exporter = ExcelExporter(styling="maximal")
         workbook = exporter.export(alice_rules)
         assert "Metadata" in workbook.sheetnames

@@ -9,7 +9,7 @@ from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSRules,
+    PhysicalDataModel,
     SheetList,
 )
 from cognite.neat.core._data_model.models.conceptual import (
@@ -28,7 +28,7 @@ from tests.config import DOC_RULES
 
 
 @pytest.fixture(scope="session")
-def alice_rules() -> DMSRules:
+def alice_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "cdf-dms-architect-alice.xlsx"
 
     excel_importer = ExcelImporter(filepath)
@@ -37,7 +37,7 @@ def alice_rules() -> DMSRules:
 
 
 @pytest.fixture(scope="session")
-def olav_dms_rules() -> DMSRules:
+def olav_dms_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "dms-analytics-olav.xlsx"
 
     excel_importer = ExcelImporter(filepath)
@@ -46,7 +46,7 @@ def olav_dms_rules() -> DMSRules:
 
 
 @pytest.fixture(scope="session")
-def olav_rebuilt_dms_rules() -> DMSRules:
+def olav_rebuilt_dms_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "dms-rebuild-olav.xlsx"
 
     excel_importer = ExcelImporter(filepath)
@@ -55,7 +55,7 @@ def olav_rebuilt_dms_rules() -> DMSRules:
 
 
 @pytest.fixture(scope="session")
-def svein_harald_dms_rules() -> DMSRules:
+def svein_harald_dms_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "dms-addition-svein-harald.xlsx"
 
     excel_importer = ExcelImporter(filepath)
