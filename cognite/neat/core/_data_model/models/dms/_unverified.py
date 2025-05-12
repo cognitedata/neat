@@ -60,7 +60,7 @@ class UnverifiedPhysicalMetadata(UnverifiedComponent[PhysicalMetadata]):
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
     source_id: str | URIRef | None = None
 
     @classmethod
@@ -138,7 +138,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     index: str | list[str] | None = None
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     @property
     def nullable(self) -> bool | None:
@@ -266,7 +266,7 @@ class UnverifiedPhysicalView(UnverifiedComponent[PhysicalView]):
     filter_: Literal["hasData", "nodeType", "rawFilter"] | str | None = None
     in_model: bool = True
     neatId: str | URIRef | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     def __post_init__(self) -> None:
         if self.in_model is None:
@@ -387,7 +387,7 @@ class UnverifiedPhysicalDataModel(UnverifiedDataModel[PhysicalDataModel]):
     def _repr_html_(self) -> str:
         summary = {
             "type": "Physical Data Model",
-            "intended for": "DMS Architect",
+            "intended for": "Data Engineer",
             "name": self.metadata.name,
             "space": self.metadata.space,
             "external_id": self.metadata.external_id,
