@@ -299,13 +299,13 @@ def uri_display_name(thing: URIRef) -> str:
     return remove_namespace_from_uri(thing)
 
 
-def uri_instance_to_display_name(uri: URIRef) -> str:
+def uri_to_cdf_id(uri: URIRef) -> str:
     """Convert a URI to a user-friendly string.
     Removing the namespace and unquoting the URI.
     If the namespace is a CDF space, then it will be included in the string as space:externalId.
     """
-    namespace, entity_name = split_uri(uri)
-    output_str = urllib.parse.unquote(entity_name)
+    namespace, entity_id = split_uri(uri)
+    output_str = urllib.parse.unquote(entity_id)
 
     if space := namespace_as_space(namespace):
         output_str = f"{space}:{output_str}"

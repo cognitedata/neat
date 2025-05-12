@@ -2,7 +2,7 @@ import urllib.parse
 
 from rdflib import RDF, Namespace
 
-from cognite.neat.core._graph.transformers import ConnectionToLiteral
+from cognite.neat.core._instances.transformers import ConnectionToLiteral
 from cognite.neat.core._store import NeatGraphStore
 
 

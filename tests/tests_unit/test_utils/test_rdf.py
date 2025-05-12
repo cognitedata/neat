@@ -2,7 +2,7 @@ import pytest
 from rdflib import Namespace, URIRef
 
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
-from cognite.neat.core._utils.rdf_ import uri_instance_to_display_name
+from cognite.neat.core._utils.rdf_ import uri_to_cdf_id
 
 
 class TestURIInstanceToDisplayName:
@@ -15,4 +15,4 @@ class TestURIInstanceToDisplayName:
         ],
     )
     def test_to_display_name(self, uri: URIRef, expected: str) -> None:
-        assert uri_instance_to_display_name(uri) == expected
+        assert uri_to_cdf_id(uri) == expected
