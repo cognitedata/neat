@@ -4,7 +4,7 @@ from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ViewEntity,
 )
-from cognite.neat.core._data_model.transformers import SubsetDMSRules, SubsetInformationRules
+from cognite.neat.core._data_model.transformers import SubsetConceptualDataModel, SubsetDMSRules
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.session._experimental import ExperimentalFlags
 
@@ -72,7 +72,7 @@ class SubsetAPI:
         elif information:
             classes = {ClassEntity(prefix=information.metadata.space, suffix=concept) for concept in concepts}
 
-            issues = self._state.rule_transform(SubsetInformationRules(classes=classes))
+            issues = self._state.rule_transform(SubsetConceptualDataModel(classes=classes))
             if not issues:
                 after = len(self._state.rule_store.last_verified_information_rules.classes)
 

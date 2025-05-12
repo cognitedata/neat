@@ -8,14 +8,13 @@ from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import ConceptualDataModel, DMSInputRules
+from cognite.neat.core._data_model.models import data_types as dt
 from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualClass,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models import DMSInputRules, InformationRules
-from cognite.neat.core._data_model.models import data_types as dt
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,
@@ -34,8 +33,8 @@ from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     MergeIdenticalProperties,
     StandardizeNaming,
+    SubsetConceptualDataModel,
     SubsetDMSRules,
-    SubsetInformationRules,
     ToDMSCompliantEntities,
 )
 from cognite.neat.core._issues.errors._general import NeatValueError
@@ -199,7 +198,7 @@ class TestMergeIdenticalProperties:
 class TestRulesSubsetting:
     def test_subset_information_rules(self, david_rules: ConceptualDataModel) -> None:
         class_ = ClassEntity.load("power:GeoLocation")
-        subset = SubsetInformationRules({class_}).transform(david_rules)
+        subset = SubsetConceptualDataModel({class_}).transform(david_rules)
 
         assert subset.classes[0].class_ == class_
         assert len(subset.classes) == 1
@@ -208,7 +207,7 @@ class TestRulesSubsetting:
         class_ = ClassEntity.load("power:GeoLooocation")
 
         with pytest.raises(NeatValueError):
-            _ = SubsetInformationRules({class_}).transform(david_rules)
+            _ = SubsetConceptualDataModel({class_}).transform(david_rules)
 
     def test_subset_dms_rules(self, alice_rules: DMSRules) -> None:
         view = ViewEntity.load("power:GeoLocation(version=0.1.0)")

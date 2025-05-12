@@ -302,10 +302,10 @@ class ConceptualDataModel(BaseVerifiedDataModel):
 
     def as_dms_rules(self) -> "DMSRules":
         from cognite.neat.core._data_model.transformers._converters import (
-            _InformationRulesConverter,
+            _ConceptualDataModelConverter,
         )
 
-        return _InformationRulesConverter(self).as_dms_rules()
+        return _ConceptualDataModelConverter(self).as_dms_rules()
 
     @classmethod
     def display_type_name(cls) -> str:

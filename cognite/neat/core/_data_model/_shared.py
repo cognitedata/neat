@@ -10,7 +10,6 @@ from cognite.neat.core._data_model.models.conceptual._unverified import (
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.dms._rules_input import DMSInputRules
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 VerifiedRules: TypeAlias = ConceptualDataModel | DMSRules
 

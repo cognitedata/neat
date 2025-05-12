@@ -5,11 +5,11 @@ from rdflib import RDF, RDFS, Literal, Namespace
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import GraphImporter
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
-    InformationInputRules,
+from cognite.neat.core._data_model.models.conceptual import (
+    UnverifiedConceptualClass,
+    UnverifiedConceptualDataModel,
+    UnverifiedConceptualMetadata,
+    UnverifiedConceptualProperty,
 )
 from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._shared import Triple
@@ -19,7 +19,7 @@ from tests.data import GraphData
 
 def graph_importer_test_cases() -> Iterable:
     """Generate test cases for the GraphImporter."""
-    car_conceptual = InformationInputRules.load(GraphData.car.get_care_rules().dump())
+    car_conceptual = UnverifiedConceptualDataModel.load(GraphData.car.get_care_rules().dump())
     yield pytest.param(
         GraphData.car.TRIPLES,
         car_conceptual,
@@ -28,19 +28,19 @@ def graph_importer_test_cases() -> Iterable:
 
     instance_space = Namespace("http://example.com/instance_space/")
     schema_space = DEFAULT_NAMESPACE
-    expected_model = InformationInputRules(
-        metadata=InformationInputMetadata("my_space", "my_model", "v1", "doctrino"),
+    expected_model = UnverifiedConceptualDataModel(
+        metadata=UnverifiedConceptualMetadata("my_space", "my_model", "v1", "doctrino"),
         properties=[
-            InformationInputProperty(
+            UnverifiedConceptualProperty(
                 "Car", "manufacturer", "#N/A", max_count=1, instance_source=schema_space["manufacturer"]
             ),
-            InformationInputProperty(
+            UnverifiedConceptualProperty(
                 "Car", "weight", "integer, text", max_count=1, instance_source=schema_space["weight"]
             ),
         ],
         classes=[
-            InformationInputClass("Vehicle"),
-            InformationInputClass("Car", implements="Vehicle", instance_source=schema_space["Car"]),
+            UnverifiedConceptualClass("Vehicle"),
+            UnverifiedConceptualClass("Car", implements="Vehicle", instance_source=schema_space["Car"]),
         ],
         prefixes={},
     )
@@ -63,8 +63,8 @@ def graph_importer_test_cases() -> Iterable:
 
 
 def graph_importer_warning_test_cases() -> Iterable:
-    empty_model = InformationInputRules(
-        metadata=InformationInputMetadata("my_space", "my_model", "v1", "doctrino"),
+    empty_model = UnverifiedConceptualDataModel(
+        metadata=UnverifiedConceptualMetadata("my_space", "my_model", "v1", "doctrino"),
         properties=[],
         classes=[],
         prefixes={},
@@ -90,7 +90,7 @@ def graph_importer_warning_test_cases() -> Iterable:
 
 class TestGraphImporter:
     @pytest.mark.parametrize("triples, expected", list(graph_importer_test_cases()))
-    def test_graph_importer(self, triples: list[Triple], expected: InformationInputRules) -> None:
+    def test_graph_importer(self, triples: list[Triple], expected: UnverifiedConceptualDataModel) -> None:
         store = NeatGraphStore.from_oxi_local_store()
         store._add_triples(triples, store.default_named_graph)
         metadata = expected.metadata
@@ -110,7 +110,7 @@ class TestGraphImporter:
 
     @pytest.mark.parametrize("triples, expected_model, expected_warning", list(graph_importer_warning_test_cases()))
     def test_graph_importer_warnings(
-        self, triples: list[Triple], expected_model: InformationInputRules, expected_warning: NeatValueWarning
+        self, triples: list[Triple], expected_model: UnverifiedConceptualDataModel, expected_warning: NeatValueWarning
     ) -> None:
         store = NeatGraphStore.from_oxi_local_store()
         store._add_triples(triples, store.default_named_graph)

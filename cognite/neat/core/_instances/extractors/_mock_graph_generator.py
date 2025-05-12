@@ -17,7 +17,7 @@ from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.transformers import SubsetInformationRules
+from cognite.neat.core._data_model.transformers import SubsetConceptualDataModel
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
 
@@ -51,7 +51,7 @@ class MockGraphGenerator(BaseExtractor):
         elif isinstance(rules, ConceptualDataModel):
             self.rules = rules
         else:
-            raise ValueError("Rules must be of type InformationRules or DMSRules!")
+            raise ValueError("Rules must be of type ConceptualDataModel or DMSRules!")
 
         if not class_count:
             self.class_count = {
@@ -120,7 +120,7 @@ def generate_triples(
 
     # Subset data model to only classes that are defined in class count
     rules = (
-        SubsetInformationRules(classes=set(class_count.keys())).transform(rules)
+        SubsetConceptualDataModel(classes=set(class_count.keys())).transform(rules)
         if defined_classes != set(class_count.keys())
         else rules
     )

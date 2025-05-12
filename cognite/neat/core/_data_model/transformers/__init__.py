@@ -15,8 +15,8 @@ from ._converters import (
     SetIDDMSModel,
     StandardizeNaming,
     StandardizeSpaceAndVersion,
+    SubsetConceptualDataModel,
     SubsetDMSRules,
-    SubsetInformationRules,
     ToCompliantEntities,
     ToDataProductModel,
     ToDMSCompliantEntities,
@@ -25,9 +25,9 @@ from ._converters import (
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
-from ._merge_conceptual import MergeInformationRules
+from ._merge_conceptual import MergeConceptualDataModel
 from ._merge_physical import MergeDMSRules
-from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
+from ._verification import VerifyAnyRules, VerifyConceptualDataModel, VerifyDMSRules
 
 __all__ = [
     "AddClassImplements",
@@ -42,17 +42,17 @@ __all__ = [
     "IncludeReferenced",
     "InformationToDMS",
     "MapOneToOne",
+    "MergeConceptualDataModel",
     "MergeDMSRules",
     "MergeIdenticalProperties",
-    "MergeInformationRules",
     "PrefixEntities",
     "RuleMapper",
     "RulesTransformer",
     "SetIDDMSModel",
     "StandardizeNaming",
     "StandardizeSpaceAndVersion",
+    "SubsetConceptualDataModel",
     "SubsetDMSRules",
-    "SubsetInformationRules",
     "ToCompliantEntities",
     "ToDMSCompliantEntities",
     "ToDataProductModel",
@@ -61,6 +61,6 @@ __all__ = [
     "ToSolutionModel",
     "VerifiedRulesTransformer",
     "VerifyAnyRules",
+    "VerifyConceptualDataModel",
     "VerifyDMSRules",
-    "VerifyInformationRules",
 ]

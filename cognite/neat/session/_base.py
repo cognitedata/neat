@@ -13,11 +13,11 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 )
 from cognite.neat.core._data_model.transformers import (
     InformationToDMS,
+    MergeConceptualDataModel,
     MergeDMSRules,
     MergeIdenticalProperties,
-    MergeInformationRules,
     ToDMSCompliantEntities,
-    VerifyInformationRules,
+    VerifyConceptualDataModel,
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import RegexViolationError
@@ -252,10 +252,10 @@ class NeatSession:
             )
             unverified_information = MergeIdenticalProperties().transform(unverified_information)
 
-            extra_info = VerifyInformationRules().transform(unverified_information)
+            extra_info = VerifyConceptualDataModel().transform(unverified_information)
             if not last_entity:
                 return extra_info, None
-            merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
+            merged_info = MergeConceptualDataModel(extra_info).transform(last_entity.information)
             if not last_entity.dms:
                 return merged_info, None
 
@@ -281,13 +281,13 @@ class NeatSession:
             self._state.instances.store, last_entity.information.metadata.as_data_model_id()
         )
 
-        def action() -> tuple[InformationRules, DMSRules | None]:
+        def action() -> tuple[ConceptualDataModel, DMSRules | None]:
             data_schema = importer.to_rules()
             if data_schema.rules is None:
                 raise NeatValueError("Failed to infer the data model from the instances.")
-            conceptual = VerifyInformationRules().transform(data_schema)
+            conceptual = VerifyConceptualDataModel().transform(data_schema)
 
-            updated = MergeInformationRules(
+            updated = MergeConceptualDataModel(
                 conceptual, join="primary", priority="primary", conflict_resolution="priority"
             ).transform(last_entity.information)
 
