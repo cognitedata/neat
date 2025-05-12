@@ -6,20 +6,20 @@ import pytest
 from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import DMSRules, data_types
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualClass,
+    ConceptualDataModel,
+    ConceptualProperty,
+    InformationValidation,
+    UnverifiedConceptualDataModel,
+)
+from cognite.neat.core._data_model.models.conceptual._unverified import (
+    UnverifiedConceptualClass,
+    UnverifiedConceptualMetadata,
+    UnverifiedConceptualProperty,
+)
 from cognite.neat.core._data_model.models.data_types import DataType, String
 from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
-from cognite.neat.core._data_model.models.information import (
-    InformationClass,
-    InformationInputRules,
-    InformationProperty,
-    InformationRules,
-    InformationValidation,
-)
-from cognite.neat.core._data_model.models.information._rules_input import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
-)
 from cognite.neat.core._data_model.transformers._converters import (
     InformationToDMS,
     ToCompliantEntities,
@@ -201,7 +201,7 @@ def incomplete_rules_case():
 class TestInformationRules:
     @pytest.mark.parametrize("duplicated_rules, expected_exception", list(duplicated_entries()))
     def test_duplicated_entries(self, duplicated_rules, expected_exception) -> None:
-        input_rules = ReadRules(rules=InformationInputRules.load(duplicated_rules), read_context={})
+        input_rules = ReadRules(rules=UnverifiedConceptualDataModel.load(duplicated_rules), read_context={})
         transformer = VerifyAnyRules(validate=True)
 
         with pytest.raises(MultiValueError) as e:
@@ -210,9 +210,9 @@ class TestInformationRules:
         assert set(e.value.errors) == expected_exception
 
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = InformationRules.model_validate(InformationInputRules.load(david_spreadsheet).dump())
+        valid_rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())
 
-        assert isinstance(valid_rules, InformationRules)
+        assert isinstance(valid_rules, ConceptualDataModel)
 
         sample_expected_properties = {
             "power:WindTurbine.manufacturer",
@@ -225,7 +225,7 @@ class TestInformationRules:
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
     @pytest.mark.skip("Temp skipping: enabling in new PR")
     def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
-        rules = InformationRules.model_validate(InformationInputRules.load(incomplete_rules).dump())
+        rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(incomplete_rules).dump())
         issues = InformationValidation(rules).validate()
 
         assert len(issues) == 2
@@ -233,10 +233,10 @@ class TestInformationRules:
 
     @pytest.mark.parametrize("rules, expected_exception", list(case_insensitive_value_types()))
     def test_case_insensitivity(self, rules: dict[str, dict[str, Any]], expected_exception: DataType) -> None:
-        assert InformationRules.model_validate(rules).properties[0].value_type == expected_exception
+        assert ConceptualDataModel.model_validate(rules).properties[0].value_type == expected_exception
 
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        info_rules = InformationRules.model_validate(david_spreadsheet)
+        info_rules = ConceptualDataModel.model_validate(david_spreadsheet)
 
         dms_rules = InformationToDMS().transform(info_rules)
 
@@ -272,17 +272,17 @@ class TestInformationRulesConverter:
         assert actual_space == expected_space
 
     def test_convert_above_container_limit(self) -> None:
-        info = InformationInputRules(
-            metadata=InformationInputMetadata(
+        info = UnverifiedConceptualDataModel(
+            metadata=UnverifiedConceptualMetadata(
                 space="bad_model",
                 external_id="bad_model",
                 name="Bad Model",
                 version="0.1.0",
                 creator="Anders",
             ),
-            classes=[InformationInputClass(class_="MassiveClass")],
+            classes=[UnverifiedConceptualClass(class_="MassiveClass")],
             properties=[
-                InformationInputProperty(
+                UnverifiedConceptualProperty(
                     class_="MassiveClass",
                     property_=f"property_{no}",
                     value_type="string",
@@ -392,7 +392,7 @@ class TestInformationConverter:
         self,
         rules_dict: dict[str, dict[str, Any]],
     ) -> None:
-        input_rules = ReadRules(rules=InformationInputRules.load(rules_dict), read_context={})
+        input_rules = ReadRules(rules=UnverifiedConceptualDataModel.load(rules_dict), read_context={})
         transformer = VerifyAnyRules(validate=True)
         rules = transformer.transform(input_rules)
 
@@ -409,7 +409,7 @@ class TestInformationProperty:
         "raw",
         [
             pytest.param(
-                InformationInputProperty(
+                UnverifiedConceptualProperty(
                     class_="MyAsset",
                     property_="name",
                     value_type="string",
@@ -419,7 +419,7 @@ class TestInformationProperty:
                 id="Instance Source with ampersand",
             ),
             pytest.param(
-                InformationInputProperty(
+                UnverifiedConceptualProperty(
                     class_="MyAsset",
                     property_="name",
                     value_type="string",
@@ -430,16 +430,16 @@ class TestInformationProperty:
             ),
         ],
     )
-    def test_rdf_properties(self, raw: InformationInputProperty):
-        prop = InformationProperty.model_validate(raw.dump(default_prefix="power"))
+    def test_rdf_properties(self, raw: UnverifiedConceptualProperty):
+        prop = ConceptualProperty.model_validate(raw.dump(default_prefix="power"))
 
-        assert isinstance(prop, InformationProperty)
+        assert isinstance(prop, ConceptualProperty)
 
     @pytest.mark.parametrize(
         "raw, expected",
         [
             pytest.param(
-                InformationInputProperty(
+                UnverifiedConceptualProperty(
                     "cdf_cdm:CogniteAsset(version=v1)",
                     "name",
                     "text",
@@ -449,8 +449,8 @@ class TestInformationProperty:
             )
         ],
     )
-    def test_validate_class_entity(self, raw: InformationInputProperty, expected: ClassEntity) -> None:
-        prop = InformationProperty.model_validate(raw.dump(default_prefix="my_space"))
+    def test_validate_class_entity(self, raw: UnverifiedConceptualProperty, expected: ClassEntity) -> None:
+        prop = ConceptualProperty.model_validate(raw.dump(default_prefix="my_space"))
 
         assert prop.class_ == expected
 
@@ -460,7 +460,7 @@ class TestInformationClass:
         "raw, class_, implements",
         [
             (
-                InformationInputClass(
+                UnverifiedConceptualClass(
                     class_="WindTurbine",
                     description="Power generating unite",
                     implements="cdf_cdm:CogniteAsset(version=v1)",
@@ -472,11 +472,11 @@ class TestInformationClass:
     )
     def test_validate_class_entity(
         self,
-        raw: InformationInputClass,
+        raw: UnverifiedConceptualClass,
         class_: ClassEntity,
         implements: ClassEntity,
     ) -> None:
-        info_class = InformationClass.model_validate(raw.dump(default_prefix="my_space"))
+        info_class = ConceptualClass.model_validate(raw.dump(default_prefix="my_space"))
 
         assert info_class.class_ == class_
         assert isinstance(info_class.implements, list)

@@ -6,8 +6,8 @@ from typing import get_args, get_origin
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
-from cognite.neat.core._data_model.models._base_rules import BaseRules
+from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models._base_verified import BaseVerifiedDataModel
 
 DMS_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'physical' / 'reference.md'
 INFO_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'logical' / 'reference.md'
@@ -33,7 +33,9 @@ SHEET_TEMPLATE = """## {sheet_name} Sheet
 ROW_TEMPLATE = """| {column_name} | {description} | {mandatory} |"""
 
 
-def generate_reference(name: str, rules: type[BaseRules], target_file: Path) -> None:
+def generate_reference(
+    name: str, rules: type[BaseVerifiedDataModel], target_file: Path
+) -> None:
     sheet_overview: list[str] = []
     sheet_list: list[str] = []
     for field_name, field_ in rules.model_fields.items():
@@ -98,4 +100,4 @@ def get_field_cls_type(field: FieldInfo) -> type[BaseModel]:
 
 if __name__ == "__main__":
     generate_reference("physical", DMSRules, DMS_REFERENCE_MD)
-    generate_reference("logical", InformationRules, INFO_REFERENCE_MD)
+    generate_reference("logical", ConceptualDataModel, INFO_REFERENCE_MD)
