@@ -120,6 +120,18 @@ class SelectQueries(BaseQuery):
         # MyPy is not very happy with RDFLib, so just ignore the type hinting here
         return (tuple(res) if class_uri is None else res[0] for res in self.graph(named_graph).query(query))  # type: ignore[index, return-value, arg-type]
 
+    def list_instance_object_ids(self, limit: int = -1, named_graph: URIRef | None = None) -> Iterable[URIRef]:
+        query = (
+            "SELECT DISTINCT ?object WHERE { "
+            "?subject ?predicate ?object . FILTER(?predicate != rdf:type && isURI(?object))"
+            "}"
+        )
+        if limit != -1:
+            query += f" LIMIT {limit}"
+
+        # MyPy is not very happy with RDFLib, so just ignore the type hinting here
+        return cast(Iterable[URIRef], (res[0] for res in self.graph(named_graph).query(query)))  # type: ignore[index]
+
     def type_with_property(self, type_: URIRef, property_uri: URIRef, named_graph: URIRef | None = None) -> bool:
         """Check if a property exists in the graph store
 

@@ -1,3 +1,4 @@
+import itertools
 import json
 from collections import defaultdict
 from collections.abc import Iterable
@@ -16,7 +17,7 @@ from cognite.neat.core._issues.errors import ResourceCreationError, ResourceNotF
 from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._store import NeatGraphStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar_if_above_config_threshold
-from cognite.neat.core._utils.rdf_ import namespace_as_space, remove_namespace_from_uri, split_uri
+from cognite.neat.core._utils.rdf_ import namespace_as_space, split_uri
 from cognite.neat.core._utils.text import NamingStandardization
 from cognite.neat.core._utils.upload import UploadResult
 
@@ -184,14 +185,16 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
             raise ValueError("Either 'instance_space", "space_property', or 'use_source_space' must be provided. ")
 
     def _lookup_instance_uris(self, graph_store: NeatGraphStore) -> None:
-        for instance_uri, class_uri in graph_store.queries.select.list_instances_ids():
+        instance_iterable = itertools.chain(
+            (res[0] for res in graph_store.queries.select.list_instances_ids()),
+            graph_store.queries.select.list_instance_object_ids(),
+        )
+
+        for instance_uri in instance_iterable:
             namespace, external_id = split_uri(instance_uri)
             space = namespace_as_space(namespace)
             if space is None:
-                instance_type = remove_namespace_from_uri(class_uri)
-                error = ResourceCreationError(
-                    instance_uri, instance_type, f"Could not find space for {instance_uri!s}."
-                )
+                error = ResourceCreationError(instance_uri, "Unknown", f"Could not find space for {instance_uri!s}.")
                 self._lookup_issues.append(error)
             else:
                 self._space_by_instance_uri[instance_uri] = space

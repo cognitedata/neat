@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 import pytest
 from cognite.client.data_classes import AssetWriteList
-from rdflib import RDF, Namespace
+from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
@@ -42,6 +42,24 @@ def load_instance_spaces_test_cases():
     store_from_cdf.write(CDFMockExtractor())
     yield pytest.param(
         InstanceSpaceLoader(graph_store=store_from_cdf, use_source_space=True), {"source_space"}, id="Space from source"
+    )
+
+    store2 = NeatGraphStore.from_oxi_local_store()
+    namespace1 = Namespace(DEFAULT_SPACE_URI.format(space="space1"))
+    namespace2 = Namespace(DEFAULT_SPACE_URI.format(space="space2"))
+    schema_space = Namespace(DEFAULT_SPACE_URI.format(space="sp_schema"))
+
+    class DummyExtractor(BaseExtractor):
+        def extract(self) -> Iterable[Triple]:
+            asset2 = namespace2["my_instance2"]
+            yield asset2, RDF.type, schema_space["Asset"]
+            yield asset2, schema_space["name"], Literal("My Instance")
+            yield asset2, schema_space["parent"], namespace1["my_instance"]
+
+    store2.write(DummyExtractor())
+
+    yield pytest.param(
+        InstanceSpaceLoader(graph_store=store2, use_source_space=True), {"space1", "space2"}, id="Space as object"
     )
 
 
