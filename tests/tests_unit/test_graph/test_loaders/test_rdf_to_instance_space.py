@@ -59,7 +59,7 @@ def load_instance_spaces_test_cases():
     store2.write(DummyExtractor())
 
     yield pytest.param(
-        InstanceSpaceLoader(graph_store=store2, use_source_space=True), {"space1", "spaces2"}, id="Space as object"
+        InstanceSpaceLoader(graph_store=store2, use_source_space=True), {"space1", "space2"}, id="Space as object"
     )
 
 
