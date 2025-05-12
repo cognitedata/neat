@@ -318,7 +318,7 @@ class ConceptualDataModel(BaseVerifiedDataModel):
             "name": self.metadata.name,
             "external_id": self.metadata.external_id,
             "version": self.metadata.version,
-            "classes": len(self.concepts),
+            "concepts": len(self.concepts),
             "properties": len(self.properties),
         }
 

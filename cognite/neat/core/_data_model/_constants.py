@@ -15,6 +15,7 @@ class EntityTypes(StrEnum):
     predicate = "predicate"
     object = "object"
     class_ = "class"
+    concept = "concept"
     parent_class = "parent_class"
     property_ = "property"
     physical_property = "physical_property"

@@ -3,12 +3,15 @@ In more details, it traverses the graph and abstracts class and properties, basi
 generating a list of rules based on which nodes that form the graph are made.
 """
 
+import tempfile
 from collections import UserDict, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
 
 import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from pandas import ExcelFile
 from rdflib import Namespace, URIRef
 
@@ -36,11 +39,11 @@ SOURCE_SHEET__TARGET_FIELD__HEADERS = [
         "Properties",
         "Properties",
         {
-            RoleTypes.information: ["Class", "Property"],
+            RoleTypes.information: ["Concept", "Property"],
             RoleTypes.dms: ["View", "View Property"],
         },
     ),
-    ("Classes", "Classes", ["Class"]),
+    ("Concepts", "Concepts", ["Concept"]),
     ("Containers", "Containers", ["Container"]),
     ("Views", "Views", ["View"]),
     ("Enum", "Enum", ["Collection"]),
@@ -250,7 +253,7 @@ class ExcelImporter(BaseImporter[T_InputRules]):
     """
 
     def __init__(self, filepath: Path):
-        self.filepath = filepath
+        self.filepath = self._make_forward_compatible_spreadsheet(filepath)
 
     def to_rules(self) -> ReadRules[T_InputRules]:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
@@ -259,7 +262,6 @@ class ExcelImporter(BaseImporter[T_InputRules]):
 
         with pd.ExcelFile(self.filepath) as excel_file:
             user_reader = SpreadsheetReader(issue_list)
-
             user_read = user_reader.read(excel_file, self.filepath)
 
         issue_list.trigger_warnings()
@@ -275,6 +277,14 @@ class ExcelImporter(BaseImporter[T_InputRules]):
 
         rules_cls = INPUT_RULES_BY_ROLE[original_role]
         rules = cast(T_InputRules, rules_cls.load(sheets))
+
+        # Delete the temporary file if it was created
+        if "temp_neat_file" in self.filepath.name:
+            try:
+                self.filepath.unlink()
+            except Exception as e:
+                issue_list.append(FileReadError(self.filepath, f"Failed to delete temporary file: {e}"))
+
         return ReadRules(rules, read_info_by_sheet)
 
     @property
@@ -284,3 +294,48 @@ class ExcelImporter(BaseImporter[T_InputRules]):
     @property
     def source_uri(self) -> URIRef:
         return URIRef(f"file://{self.filepath.name}")
+
+    def _make_forward_compatible_spreadsheet(self, filepath: Path) -> Path:
+        """Makes the spreadsheet forward compatible by renaming legacy class with concept
+
+        Args:
+            filepath (Path): The path to the Excel file.
+
+        """
+
+        workbook = load_workbook(filepath)
+
+        if "Classes" in workbook.sheetnames:
+            print(
+                (
+                    "You are using a legacy spreadsheet format, "
+                    "which we will support until v1.0 of neat."
+                    " Please update your spreadsheet to the new format."
+                ),
+            )
+            _replace_class_with_concept_cell(workbook["Classes"])
+            sheet = workbook["Classes"]
+            sheet.title = "Concepts"
+
+            if "Properties" in workbook.sheetnames:
+                _replace_class_with_concept_cell(workbook["Properties"])
+
+            with tempfile.NamedTemporaryFile(prefix="temp_neat_file", suffix=".xlsx", delete=False) as temp_file:
+                workbook.save(temp_file.name)
+                return Path(temp_file.name)
+
+        else:
+            return filepath
+
+
+def _replace_class_with_concept_cell(sheet: Worksheet) -> None:
+    """
+    Replaces the word "Class" with "Concept" in the first row of the given sheet.
+
+    Args:
+        sheet (Worksheet): The sheet in which to replace the word "Class".
+    """
+    for row in sheet.iter_rows():
+        for cell in row:
+            if cell.value == "Class":
+                cell.value = "Concept"

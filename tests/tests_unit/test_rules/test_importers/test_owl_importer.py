@@ -19,7 +19,7 @@ def test_ill_formed_owl_importer():
     acceptable_properties = []
 
     for prop in input.rules.properties:
-        if prop.class_ != "Award":
+        if prop.concept != "Award":
             acceptable_properties.append(prop)
 
     input.rules.properties = acceptable_properties

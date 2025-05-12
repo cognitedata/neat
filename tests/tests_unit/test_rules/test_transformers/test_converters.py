@@ -183,7 +183,7 @@ class TestAddCogniteProperties:
 
         properties_by_class = defaultdict(set)
         for prop in result.rules.properties:
-            properties_by_class[prop.class_.dump(prefix="my_space")].add(prop.property_)
+            properties_by_class[prop.concept.dump(prefix="my_space")].add(prop.property_)
 
         assert set(properties_by_class.keys()) == {"PowerGeneratingUnit", "WindTurbine"}
         assert properties_by_class["PowerGeneratingUnit"] == expected_properties

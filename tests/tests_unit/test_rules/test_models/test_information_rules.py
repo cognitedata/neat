@@ -222,9 +222,7 @@ class TestInformationRules:
             "power:Substation.secondaryPowerLine",
             "power:WindFarm.exportCable",
         }
-        missing = sample_expected_properties - {
-            f"{prop.concept}.{prop.property_}" for prop in valid_rules.properties
-        }
+        missing = sample_expected_properties - {f"{prop.concept}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
@@ -288,7 +286,7 @@ class TestInformationRulesConverter:
             concepts=[UnverifiedConceptualConcept(concept="MassiveClass")],
             properties=[
                 UnverifiedConceptualProperty(
-                    class_="MassiveClass",
+                    concept="MassiveClass",
                     property_=f"property_{no}",
                     value_type="string",
                     max_count=1,
@@ -415,7 +413,7 @@ class TestInformationProperty:
         [
             pytest.param(
                 UnverifiedConceptualProperty(
-                    class_="MyAsset",
+                    concept="MyAsset",
                     property_="name",
                     value_type="string",
                     max_count=1,
@@ -425,7 +423,7 @@ class TestInformationProperty:
             ),
             pytest.param(
                 UnverifiedConceptualProperty(
-                    class_="MyAsset",
+                    concept="MyAsset",
                     property_="name",
                     value_type="string",
                     max_count=1,
@@ -454,16 +452,13 @@ class TestInformationProperty:
             )
         ],
     )
-    def test_validate_class_entity(
-        self, raw: UnverifiedConceptualProperty, expected: ConceptEntity
-    ) -> None:
+    def test_validate_class_entity(self, raw: UnverifiedConceptualProperty, expected: ConceptEntity) -> None:
         prop = ConceptualProperty.model_validate(raw.dump(default_prefix="my_space"))
 
         assert prop.concept == expected
 
 
 class TestInformationClass:
-
     @pytest.mark.parametrize(
         "raw, class_, implements",
         [
@@ -484,9 +479,7 @@ class TestInformationClass:
         class_: ConceptEntity,
         implements: ConceptEntity,
     ) -> None:
-        info_class = ConceptualConcept.model_validate(
-            raw.dump(default_prefix="my_space")
-        )
+        info_class = ConceptualConcept.model_validate(raw.dump(default_prefix="my_space"))
 
         assert info_class.concept == class_
         assert isinstance(info_class.implements, list)

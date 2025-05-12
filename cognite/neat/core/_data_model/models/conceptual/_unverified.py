@@ -68,7 +68,7 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[ConceptualMetadata]):
             Unlike namespace, the identifier does not end with "/" or "#".
 
         """
-        return DEFAULT_NAMESPACE[f"data-model/unverified/logical/{self.space}/{self.external_id}/{self.version}"]
+        return DEFAULT_NAMESPACE[f"data-model/unverified/conceptual/{self.space}/{self.external_id}/{self.version}"]
 
     @property
     def namespace(self) -> Namespace:
@@ -78,7 +78,7 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[ConceptualMetadata]):
 
 @dataclass
 class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
-    class_: ConceptEntity | str
+    concept: ConceptEntity | str
     property_: str
     value_type: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity | str
     name: str | None = None
@@ -100,7 +100,7 @@ class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        output["Class"] = ConceptEntity.load(self.class_, prefix=default_prefix)
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Value Type"] = load_value_type(self.value_type, default_prefix)
         return output
 
@@ -135,16 +135,10 @@ class UnverifiedConceptualConcept(UnverifiedComponent[ConceptualConcept]):
         parent: list[ConceptEntity] | None = None
         if isinstance(self.implements, str):
             self.implements = self.implements.strip()
-            parent = [
-                ConceptEntity.load(parent, prefix=default_prefix)
-                for parent in self.implements.split(",")
-            ]
+            parent = [ConceptEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
         elif isinstance(self.implements, list):
-            parent = [
-                ConceptEntity.load(parent_, prefix=default_prefix)
-                for parent_ in self.implements
-            ]
-        output["Class"] = ConceptEntity.load(self.concept, prefix=default_prefix)
+            parent = [ConceptEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Implements"] = parent
         return output
 
@@ -166,7 +160,7 @@ class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
-            Classes=[class_.dump(default_prefix) for class_ in self.concepts],
+            Concepts=[class_.dump(default_prefix) for class_ in self.concepts],
             Prefixes=self.prefixes,
         )
 

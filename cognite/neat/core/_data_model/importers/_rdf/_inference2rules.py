@@ -581,7 +581,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
         first = read_properties[0]
         value_type = self._get_value_type(read_properties, prefixes)
         return UnverifiedConceptualProperty(
-            class_=class_suffix,
+            concept=class_suffix,
             property_=property_id,
             max_count=first.max_occurrence,
             value_type=value_type,

@@ -138,7 +138,7 @@ class _DTDLConverter:
             return None
 
         prop = UnverifiedConceptualProperty(
-            class_=ConceptEntity.load(parent),
+            concept=ConceptEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -183,7 +183,7 @@ class _DTDLConverter:
         if value_type is None:
             return
         prop = UnverifiedConceptualProperty(
-            class_=ConceptEntity.load(parent),
+            concept=ConceptEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -202,7 +202,7 @@ class _DTDLConverter:
         if value_type is None:
             return
         prop = UnverifiedConceptualProperty(
-            class_=ConceptEntity.load(parent),
+            concept=ConceptEntity.load(parent),
             property_=item.name,
             name=item.display_name,
             description=item.description,
@@ -231,7 +231,7 @@ class _DTDLConverter:
                 value_type = Json()
 
             prop = UnverifiedConceptualProperty(
-                class_=ConceptEntity.load(parent),
+                concept=ConceptEntity.load(parent),
                 property_=item.name,
                 name=item.display_name,
                 description=item.description,
@@ -266,7 +266,7 @@ class _DTDLConverter:
             if value_type is None:
                 continue
             prop = UnverifiedConceptualProperty(
-                class_=class_.concept,
+                concept=class_.concept,
                 name=field_.name,
                 description=field_.description,
                 property_=field_.name,

@@ -171,14 +171,16 @@ class ToDMSCompliantEntities(
                 if self._renaming == "warning":
                     warnings.warn(
                         NeatValueWarning(
-                            f"Invalid property name {prop.class_.suffix}.{prop.property_!r}. Renaming to {new_property}"  # type: ignore[union-attr]
+                            f"Invalid property name {prop.concept.suffix}.{prop.property_!r}."
+                            f" Renaming to {new_property}"
+                            # type: ignore[union-attr]
                         ),
                         stacklevel=2,
                     )
                 prop.property_ = new_property
 
-            if isinstance(prop.class_, ConceptEntity) and prop.class_.suffix in new_by_old_class_suffix:
-                prop.class_.suffix = new_by_old_class_suffix[prop.class_.suffix]
+            if isinstance(prop.concept, ConceptEntity) and prop.concept.suffix in new_by_old_class_suffix:
+                prop.concept.suffix = new_by_old_class_suffix[prop.concept.suffix]
 
             if isinstance(prop.value_type, ConceptEntity) and prop.value_type.suffix in new_by_old_class_suffix:
                 prop.value_type.suffix = new_by_old_class_suffix[prop.value_type.suffix]
@@ -2333,7 +2335,7 @@ class AddCogniteProperties(
             if self._dummy_property:
                 new_properties.append(
                     UnverifiedConceptualProperty(
-                        class_=class_entity,
+                        concept=class_entity,
                         property_=f"{to_camel_case(class_entity.suffix)}{self._dummy_property}",
                         value_type=String(),
                         min_count=0,

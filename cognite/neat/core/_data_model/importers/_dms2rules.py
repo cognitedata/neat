@@ -661,7 +661,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
             raise NeatValueError(f"Failed to get value type for {entity} property {prop_id}")
 
         return UnverifiedConceptualProperty(
-            class_=entity,
+            concept=entity,
             property_=prop_id,
             value_type=str(value_type),
             name=view_property.name,
