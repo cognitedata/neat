@@ -183,7 +183,7 @@ class RulesAnalysis:
             include_different_space: Whether to include properties from parent classes in different spaces.
 
         Returns:
-            dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
+            dict[ClassEntity, list[ConceptualProperty]]: Values properties with class as key.
 
         """
         properties_by_classes: dict[ClassEntity, list[ConceptualProperty]] = defaultdict(list)

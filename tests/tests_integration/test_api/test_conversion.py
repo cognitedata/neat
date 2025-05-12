@@ -8,7 +8,7 @@ from cognite.neat.core._data_model.importers import YAMLImporter
 from cognite.neat.core._data_model.models import DMSRules
 from cognite.neat.core._data_model.transformers import (
     InformationToDMS,
-    VerifyInformationRules,
+    VerifyConceptualDataModel,
 )
 from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData
@@ -28,7 +28,7 @@ class TestValidate:
         dms_rules: DMSRules | None = None
         with catch_issues() as issues:
             rules = YAMLImporter.from_file(conceptual_filepath, source_name=conceptual_filepath.name).to_rules()
-            info_rules = VerifyInformationRules(validate=True, client=neat_client).transform(rules)
+            info_rules = VerifyConceptualDataModel(validate=True, client=neat_client).transform(rules)
             dms_rules = InformationToDMS().transform(info_rules)
 
         assert not issues

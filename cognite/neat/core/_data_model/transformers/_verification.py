@@ -81,7 +81,7 @@ class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]
         return super().transform(rules)
 
 
-class VerifyInformationRules(VerificationTransformer[ReadRules[UnverifiedConceptualDataModel], ConceptualDataModel]):
+class VerifyConceptualDataModel(VerificationTransformer[ReadRules[UnverifiedConceptualDataModel], ConceptualDataModel]):
     """Class to verify Information rules."""
 
     _rules_cls = ConceptualDataModel

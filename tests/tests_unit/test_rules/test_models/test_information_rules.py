@@ -23,7 +23,7 @@ from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValu
 from cognite.neat.core._data_model.transformers._converters import (
     InformationToDMS,
     ToCompliantEntities,
-    _InformationRulesConverter,
+    _ConceptualDataModelConverter,
 )
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyRules
 from cognite.neat.core._issues import NeatError
@@ -267,7 +267,7 @@ class TestInformationRulesConverter:
         ],
     )
     def test_to_space(self, prefix: str, expected_space: str) -> None:
-        actual_space = _InformationRulesConverter._to_space(prefix)
+        actual_space = _ConceptualDataModelConverter._to_space(prefix)
 
         assert actual_space == expected_space
 
@@ -352,7 +352,7 @@ class TestInformationConverter:
         ],
     )
     def test_bump_suffix(self, name: str, expected: str) -> None:
-        actual = _InformationRulesConverter._bump_suffix(name)
+        actual = _ConceptualDataModelConverter._bump_suffix(name)
 
         assert actual == expected
 
@@ -383,7 +383,7 @@ class TestInformationConverter:
         ],
     )
     def test_convert_multivalue_type(self, multi: MultiValueTypeInfo, expected: DataType) -> None:
-        actual = _InformationRulesConverter.convert_multi_data_type(multi)
+        actual = _ConceptualDataModelConverter.convert_multi_data_type(multi)
 
         assert actual == expected
 
@@ -404,7 +404,7 @@ class TestInformationConverter:
         assert rules.properties[0].class_.suffix == "Generating_Unit"
 
 
-class TestInformationProperty:
+class TestConceptualProperty:
     @pytest.mark.parametrize(
         "raw",
         [
@@ -455,7 +455,7 @@ class TestInformationProperty:
         assert prop.class_ == expected
 
 
-class TestInformationClass:
+class TestConceptualClass:
     @pytest.mark.parametrize(
         "raw, class_, implements",
         [

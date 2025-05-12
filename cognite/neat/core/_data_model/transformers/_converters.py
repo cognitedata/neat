@@ -212,7 +212,9 @@ class ToDMSCompliantEntities(
         return property_
 
 
-class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
+class MergeIdenticalProperties(
+    RulesTransformer[ReadRules[UnverifiedConceptualDataModel], ReadRules[UnverifiedConceptualDataModel]]
+):
     """Merges identical properties in the rules
 
     This is typically used to ensure that all the properties are unique and do not have duplicates.
@@ -222,23 +224,25 @@ class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules]
     def description(self) -> str:
         return "Merges identical properties in the rules."
 
-    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+    def transform(self, rules: ReadRules[UnverifiedConceptualDataModel]) -> ReadRules[UnverifiedConceptualDataModel]:
         if rules.rules is None:
             return rules
         # Doing dump to obtain a copy, and ensure that all entities are created. Input allows
         # string for entities, the dump call will convert these to entities.
         dumped = rules.rules.dump()
-        copy = InformationInputRules.load(dumped)
+        copy = UnverifiedConceptualDataModel.load(dumped)
         copy.properties = self._merge_identical_properties(copy.properties)
         return ReadRules(rules=copy, read_context=rules.read_context)
 
-    def _merge_identical_properties(self, properties: list[InformationInputProperty]) -> list[InformationInputProperty]:
-        counter: dict[tuple[ClassEntity, str], list[InformationInputProperty]] = defaultdict(list)
+    def _merge_identical_properties(
+        self, properties: list[UnverifiedConceptualProperty]
+    ) -> list[UnverifiedConceptualProperty]:
+        counter: dict[tuple[ClassEntity, str], list[UnverifiedConceptualProperty]] = defaultdict(list)
         for prop in properties:
             cls_ = cast(ClassEntity, prop.class_)  # Safe due to the dump above
             counter[(cls_, prop.property_)].append(prop)
 
-        merged_properties: list[InformationInputProperty] = []
+        merged_properties: list[UnverifiedConceptualProperty] = []
         for (cls_, prop_id), properties in counter.items():
             if len(properties) > 1:
                 warnings.warn(
@@ -254,9 +258,9 @@ class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules]
 
         return merged_properties
 
-    def _as_one_property(self, properties: list[InformationInputProperty]) -> InformationInputProperty:
+    def _as_one_property(self, properties: list[UnverifiedConceptualProperty]) -> UnverifiedConceptualProperty:
         first = properties[0]
-        return InformationInputProperty(
+        return UnverifiedConceptualProperty(
             class_=first.class_,
             property_=first.property_,
             # We know that value_type cannot be str due to the dump above
@@ -678,7 +682,7 @@ class StandardizeNaming(ConversionTransformer):
 
 
 class InformationToDMS(ConversionTransformer[ConceptualDataModel, DMSRules]):
-    """Converts InformationRules to DMSRules."""
+    """Converts ConceptualDataModel to DMSRules."""
 
     def __init__(
         self,
@@ -691,13 +695,13 @@ class InformationToDMS(ConversionTransformer[ConceptualDataModel, DMSRules]):
         self.client = client
 
     def transform(self, rules: ConceptualDataModel) -> DMSRules:
-        return _InformationRulesConverter(rules, self.client).as_dms_rules(
+        return _ConceptualDataModelConverter(rules, self.client).as_dms_rules(
             self.ignore_undefined_value_types, self.reserved_properties
         )
 
 
 class DMSToInformation(ConversionTransformer[DMSRules, ConceptualDataModel]):
-    """Converts DMSRules to InformationRules."""
+    """Converts DMSRules to ConceptualDataModel."""
 
     def __init__(self, instance_namespace: Namespace | None = None):
         self.instance_namespace = instance_namespace
@@ -1446,7 +1450,7 @@ class ChangeViewPrefix(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return output
 
 
-class _InformationRulesConverter:
+class _ConceptualDataModelConverter:
     _start_or_end_node: ClassVar[frozenset[str]] = frozenset({"endNode", "end_node", "startNode", "start_node"})
 
     def __init__(self, information: ConceptualDataModel, client: NeatClient | None = None):
@@ -2230,8 +2234,8 @@ class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
             raise NeatValueError(f"Cannot subset rules: {e}") from e
 
 
-class SubsetInformationRules(VerifiedRulesTransformer[ConceptualDataModel, ConceptualDataModel]):
-    """Subsets InformationRules to only include the specified classes."""
+class SubsetConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, ConceptualDataModel]):
+    """Subsets ConceptualDataModel to only include the specified classes."""
 
     def __init__(self, classes: set[ClassEntity]):
         self._classes = classes

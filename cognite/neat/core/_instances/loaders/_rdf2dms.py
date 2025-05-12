@@ -95,7 +95,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     Args:
         dms_rules (DMSRules): The DMS rules used by the data model.
-        info_rules (InformationRules): The information rules used by the data model, used to
+        info_rules (ConceptualDataModel): The information rules used by the data model, used to
             look+up the instances in the store.
         graph_store (NeatGraphStore): The graph store to load the data from.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.

@@ -1,19 +1,19 @@
 from collections.abc import Iterable, Set
 from typing import Literal
 
-from cognite.neat.core._data_model.models import InformationRules, SheetList
+from cognite.neat.core._data_model.models import ConceptualDataModel, SheetList
+from cognite.neat.core._data_model.models.conceptual import ConceptualClass, ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     MultiValueTypeInfo,
     UnknownEntity,
 )
-from cognite.neat.core._data_model.models.information import InformationClass, InformationProperty
 from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
 from cognite.neat.core._issues.errors import NeatValueError
 
 
-class MergeInformationRules(VerifiedRulesTransformer[InformationRules, InformationRules]):
+class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, ConceptualDataModel]):
     """Merges two conceptual models into one.
 
     Args:
@@ -30,7 +30,7 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
 
     def __init__(
         self,
-        secondary: InformationRules,
+        secondary: ConceptualDataModel,
         join: Literal["primary", "secondary", "combined"] = "combined",
         priority: Literal["primary", "secondary"] = "primary",
         conflict_resolution: Literal["priority", "combined"] = "priority",
@@ -40,7 +40,7 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
         self.priority = priority
         self.conflict_resolution = conflict_resolution
 
-    def transform(self, rules: InformationRules) -> InformationRules:
+    def transform(self, rules: ConceptualDataModel) -> ConceptualDataModel:
         if self.join in ["primary", "combined"]:
             output = rules.model_copy(deep=True)
             secondary_classes = {cls.class_: cls for cls in self.secondary.classes}
@@ -55,18 +55,18 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
             )
 
         merged_class_by_id = self._merge_classes(output.classes, secondary_classes)
-        output.classes = SheetList[InformationClass](merged_class_by_id.values())
+        output.classes = SheetList[ConceptualClass](merged_class_by_id.values())
 
         merged_properties = self._merge_properties(
             output.properties, secondary_properties, set(merged_class_by_id.keys())
         )
-        output.properties = SheetList[InformationProperty](merged_properties.values())
+        output.properties = SheetList[ConceptualProperty](merged_properties.values())
 
         return output
 
     def _merge_classes(
-        self, primary_classes: Iterable[InformationClass], new_classes: dict[ClassEntity, InformationClass]
-    ) -> dict[ClassEntity, InformationClass]:
+        self, primary_classes: Iterable[ConceptualClass], new_classes: dict[ClassEntity, ConceptualClass]
+    ) -> dict[ClassEntity, ConceptualClass]:
         merged_classes = {cls.class_: cls for cls in primary_classes}
         for cls_, primary_cls in merged_classes.items():
             if cls_ not in new_classes:
@@ -88,10 +88,10 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
 
     def _merge_properties(
         self,
-        primary_properties: Iterable[InformationProperty],
-        secondary_properties: dict[tuple[ClassEntity, str], InformationProperty],
+        primary_properties: Iterable[ConceptualProperty],
+        secondary_properties: dict[tuple[ClassEntity, str], ConceptualProperty],
         used_classes: Set[ClassEntity],
-    ) -> dict[tuple[ClassEntity, str], InformationProperty]:
+    ) -> dict[tuple[ClassEntity, str], ConceptualProperty]:
         merged_properties = {(prop.class_, prop.property_): prop for prop in primary_properties}
         for (cls_, prop_id), primary_property in merged_properties.items():
             if (cls_ not in used_classes) or (cls_, prop_id) not in secondary_properties:
@@ -125,10 +125,10 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
     @classmethod
     def merge_classes(
         cls,
-        primary: InformationClass,
-        secondary: InformationClass,
+        primary: ConceptualClass,
+        secondary: ConceptualClass,
         conflict_resolution: Literal["priority", "combined"] = "priority",
-    ) -> InformationClass:
+    ) -> ConceptualClass:
         # Combined = merge implements for both classes
         # Priority = keep the primary with fallback to secondary
         implements = (primary.implements or secondary.implements or []).copy()
@@ -138,7 +138,7 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
                 if cls_ not in seen:
                     seen.add(cls_)
                     implements.append(cls_)
-        return InformationClass(
+        return ConceptualClass(
             neatId=primary.neatId,
             class_=primary.class_,
             name=primary.name or secondary.name,
@@ -146,16 +146,15 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
             implements=implements,
             instance_source=primary.instance_source or secondary.instance_source,
             physical=primary.physical,
-            conceptual=primary.conceptual,
         )
 
     @classmethod
     def merge_properties(
         cls,
-        primary: InformationProperty,
-        secondary: InformationProperty,
+        primary: ConceptualProperty,
+        secondary: ConceptualProperty,
         conflict_resolution: Literal["priority", "combined"] = "priority",
-    ) -> InformationProperty:
+    ) -> ConceptualProperty:
         # Combined = merge value types and instance sources
         # Priority = keep the primary with fallback to secondary
         instance_source = (primary.instance_source or secondary.instance_source or []).copy()
@@ -167,7 +166,7 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
                     instance_source.append(source)
 
         use_primary = conflict_resolution == "priority"
-        return InformationProperty(
+        return ConceptualProperty(
             neatId=primary.neatId,
             class_=primary.class_,
             property_=primary.property_,
@@ -186,7 +185,6 @@ class MergeInformationRules(VerifiedRulesTransformer[InformationRules, Informati
             instance_source=instance_source,
             inherited=primary.inherited,
             physical=primary.physical,
-            conceptual=primary.conceptual,
         )
 
     @staticmethod

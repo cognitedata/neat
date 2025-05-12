@@ -15,7 +15,7 @@ from cognite.neat.core._data_model.models.dms import (
     DMSInputRules,
     DMSInputView,
 )
-from cognite.neat.core._data_model.transformers import VerifyInformationRules
+from cognite.neat.core._data_model.transformers import VerifyConceptualDataModel
 
 INSTANCE_SPACE = "sp_cars"
 MODEL_SPACE = "sp_example_car"
@@ -72,7 +72,7 @@ def get_care_rules() -> ConceptualDataModel:
     from tests.data import SchemaData
 
     read_rules = importers.ExcelImporter(SchemaData.Conceptual.info_arch_car_rules_xlsx).to_rules()
-    return VerifyInformationRules().transform(read_rules)
+    return VerifyConceptualDataModel().transform(read_rules)
 
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(

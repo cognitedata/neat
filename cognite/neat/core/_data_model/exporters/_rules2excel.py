@@ -50,7 +50,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
             rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file. The model id is expected to be a tuple of (prefix, title)
-            (space, external_id) for InformationRules and DMSRules respectively.
+            (space, external_id) for ConceptualDataModel and DMSRules respectively.
 
         sheet_prefix: The prefix to use for the sheet names in the Excel file. Defaults to an empty string.
 
