@@ -2303,40 +2303,59 @@ class AddCogniteProperties(
         default_space = input_.metadata.space
         default_version = input_.metadata.version
 
-        dependencies_by_class = self._get_dependencies_by_class(input_.concepts, rules.read_context, default_space)
-        properties_by_class = self._get_properties_by_class(input_.properties, rules.read_context, default_space)
-        cognite_implements_concepts = self._get_cognite_concepts(dependencies_by_class)
-        views_by_class_entity = self._get_views_by_class(cognite_implements_concepts, default_space, default_version)
+        dependencies_by_concept = self._get_dependencies_by_concepts(
+            input_.concepts, rules.read_context, default_space
+        )
 
-        for class_entity, view in views_by_class_entity.items():
+        properties_by_concepts = self._get_properties_by_concepts(
+            input_.properties, rules.read_context, default_space
+        )
+
+        cognite_implements_concepts = self._get_cognite_concepts(
+            dependencies_by_concept
+        )
+        views_by_concept_entity = self._get_views_by_concept(
+            cognite_implements_concepts, default_space, default_version
+        )
+
+        for concept_entity, view in views_by_concept_entity.items():
             for prop_id, view_prop in view.properties.items():
-                if prop_id in properties_by_class[class_entity]:
+                if prop_id in properties_by_concepts[concept_entity]:
                     continue
-                properties_by_class[class_entity][prop_id] = DMSImporter.as_information_input_property(
-                    class_entity, prop_id, view_prop
+                properties_by_concepts[concept_entity][prop_id] = (
+                    DMSImporter.as_information_input_property(
+                        concept_entity, prop_id, view_prop
+                    )
                 )
 
         try:
-            topological_order = TopologicalSorter(dependencies_by_class).static_order()
+            topological_order = TopologicalSorter(
+                dependencies_by_concept
+            ).static_order()
         except CycleError as e:
             raise NeatValueError(f"Cycle detected in the class hierarchy: {e}") from e
 
         new_properties: list[UnverifiedConceptualProperty] = input_.properties.copy()
-        for class_entity in topological_order:
-            if class_entity not in dependencies_by_class:
+        for concept_entity in topological_order:
+            if concept_entity not in dependencies_by_concept:
                 continue
-            for parent in dependencies_by_class[class_entity]:
-                for prop in properties_by_class[parent].values():
-                    if prop.property_ not in properties_by_class[class_entity]:
-                        new_prop = prop.copy(update={"Class": class_entity}, default_prefix=default_space)
+            for parent in dependencies_by_concept[concept_entity]:
+                for prop in properties_by_concepts[parent].values():
+                    if prop.property_ not in properties_by_concepts[concept_entity]:
+                        new_prop = prop.copy(
+                            update={"Class": concept_entity},
+                            default_prefix=default_space,
+                        )
                         new_properties.append(new_prop)
-                        properties_by_class[class_entity][prop.property_] = new_prop
+                        properties_by_concepts[concept_entity][
+                            prop.property_
+                        ] = new_prop
 
             if self._dummy_property:
                 new_properties.append(
                     UnverifiedConceptualProperty(
-                        concept=class_entity,
-                        property_=f"{to_camel_case(class_entity.suffix)}{self._dummy_property}",
+                        concept=concept_entity,
+                        property_=f"{to_camel_case(concept_entity.suffix)}{self._dummy_property}",
                         value_type=String(),
                         min_count=0,
                         max_count=1,
@@ -2345,10 +2364,10 @@ class AddCogniteProperties(
 
         new_classes: list[UnverifiedConceptualConcept] = input_.concepts.copy()
         existing_classes = {cls.concept for cls in input_.concepts}
-        for class_entity, view in views_by_class_entity.items():
-            if class_entity not in existing_classes:
+        for concept_entity, view in views_by_concept_entity.items():
+            if concept_entity not in existing_classes:
                 new_classes.append(DMSImporter.as_information_input_class(view))
-                existing_classes.add(class_entity)
+                existing_classes.add(concept_entity)
 
         return ReadRules(
             rules=UnverifiedConceptualDataModel(
@@ -2361,7 +2380,7 @@ class AddCogniteProperties(
         )
 
     @staticmethod
-    def _get_properties_by_class(
+    def _get_properties_by_concepts(
         properties: list[UnverifiedConceptualProperty],
         read_context: dict[str, SpreadsheetRead],
         default_space: str,
@@ -2374,32 +2393,32 @@ class AddCogniteProperties(
             except ValidationError as e:
                 issues.extend(from_pydantic_errors(e.errors(), read_context))
                 continue
-            class_entity = cast(ConceptEntity, dumped["Class"])
-            properties_by_class[class_entity][prop.property_] = prop
+            concept_entity = cast(ConceptEntity, dumped["Concept"])
+            properties_by_class[concept_entity][prop.property_] = prop
         if issues.has_errors:
             raise issues.as_errors(operation="Reading properties")
         return properties_by_class
 
     @staticmethod
-    def _get_dependencies_by_class(
-        classes: list[UnverifiedConceptualConcept],
+    def _get_dependencies_by_concepts(
+        concepts: list[UnverifiedConceptualConcept],
         read_context: dict[str, SpreadsheetRead],
         default_space: str,
     ) -> dict[ConceptEntity, set[ConceptEntity]]:
-        dependencies_by_class: dict[ConceptEntity, set[ConceptEntity]] = {}
+        dependencies_by_concepts: dict[ConceptEntity, set[ConceptEntity]] = {}
         issues = IssueList()
-        for raw in classes:
+        for raw in concepts:
             try:
                 dumped = raw.dump(default_prefix=default_space)
             except ValidationError as e:
                 issues.extend(from_pydantic_errors(e.errors(), read_context))
                 continue
-            class_entity = cast(ConceptEntity, dumped["Class"])
+            concept_entity = cast(ConceptEntity, dumped["Concept"])
             implements = cast(list[ConceptEntity] | None, dumped["Implements"])
-            dependencies_by_class[class_entity] = set(implements or [])
+            dependencies_by_concepts[concept_entity] = set(implements or [])
         if issues.has_errors:
             raise issues.as_errors(operation="Reading classes")
-        return dependencies_by_class
+        return dependencies_by_concepts
 
     @staticmethod
     def _get_cognite_concepts(
@@ -2415,9 +2434,12 @@ class AddCogniteProperties(
             raise NeatValueError("None of the classes implement Cognite Core concepts.")
         return cognite_implements_concepts
 
-    def _get_views_by_class(
-        self, classes: set[ConceptEntity], default_space: str, default_version: str
+    def _get_views_by_concept(
+        self, concepts: set[ConceptEntity], default_space: str, default_version: str
     ) -> dict[ConceptEntity, View]:
-        view_ids = [class_.as_view_entity(default_space, default_version).as_id() for class_ in classes]
+        view_ids = [
+            concept.as_view_entity(default_space, default_version).as_id()
+            for concept in concepts
+        ]
         views = self._client.loaders.views.retrieve(view_ids, include_ancestor=True, include_connected=True)
         return {ConceptEntity(prefix=view.space, suffix=view.external_id, version=view.version): view for view in views}

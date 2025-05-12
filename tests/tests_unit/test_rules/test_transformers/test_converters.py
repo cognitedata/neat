@@ -137,7 +137,7 @@ class TestRulesSubsetting:
 
 class TestAddCogniteProperties:
     def test_add_cognite_properties(self, cognite_core_schema: DMSSchema) -> None:
-        input_rules = UnverifiedConceptualDataModel(
+        unverified_conceptual_dm = UnverifiedConceptualDataModel(
             metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "v1", "doctrino"),
             properties=[],
             concepts=[
@@ -157,10 +157,10 @@ class TestAddCogniteProperties:
         with monkeypatch_neat_client() as client:
             client.data_modeling.views.retrieve.side_effect = cognite_core
 
-            result = AddCogniteProperties(client).transform(ReadRules(input_rules, {}))
+            result = AddCogniteProperties(client).transform(ReadRules(unverified_conceptual_dm, {}))
         assert result.rules is not None
-        actual_classes = {str(c.concept) for c in result.rules.concepts}
-        expected_classes = (
+        actual_concepts = {str(c.concept) for c in result.rules.concepts}
+        expected_concepts = (
             {"PowerGeneratingUnit", "WindTurbine"}
             | {
                 f"{view_id.space}:{view_id.external_id}(version={view_id.version})"
@@ -172,7 +172,7 @@ class TestAddCogniteProperties:
             "cdf_cdm:CognitePointCloudModel(version=v1)",
             "cdf_cdm:CognitePointCloudRevision(version=v1)",
         }
-        assert actual_classes == expected_classes
+        assert actual_concepts == expected_concepts
         cognite_asset = cognite_core_schema.views[ViewId("cdf_cdm", "CogniteAsset", "v1")]
         expected_properties = set(cognite_asset.properties.keys())
         expected_properties |= {
@@ -181,10 +181,10 @@ class TestAddCogniteProperties:
             for prop_id in cognite_core_schema.views[parent].properties.keys()
         }
 
-        properties_by_class = defaultdict(set)
+        properties_by_concept = defaultdict(set)
         for prop in result.rules.properties:
-            properties_by_class[prop.concept.dump(prefix="my_space")].add(prop.property_)
+            properties_by_concept[prop.concept.dump(prefix="my_space")].add(prop.property_)
 
-        assert set(properties_by_class.keys()) == {"PowerGeneratingUnit", "WindTurbine"}
-        assert properties_by_class["PowerGeneratingUnit"] == expected_properties
-        assert properties_by_class["WindTurbine"] == expected_properties
+        assert set(properties_by_concept.keys()) == {"PowerGeneratingUnit", "WindTurbine"}
+        assert properties_by_concept["PowerGeneratingUnit"] == expected_properties
+        assert properties_by_concept["WindTurbine"] == expected_properties
