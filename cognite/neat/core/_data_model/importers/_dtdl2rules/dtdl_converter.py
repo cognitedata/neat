@@ -18,6 +18,10 @@ from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
     Telemetry,
     TelemetryV2,
 )
+from cognite.neat.core._data_model.models.conceptual import (
+    UnverifiedConceptualClass,
+    UnverifiedConceptualProperty,
+)
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_NAME,
     DataType,
@@ -25,10 +29,6 @@ from cognite.neat.core._data_model.models.data_types import (
     String,
 )
 from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputProperty,
-)
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import (
     PropertyTypeNotSupportedError,
@@ -44,8 +44,8 @@ from cognite.neat.core._issues.warnings import (
 class _DTDLConverter:
     def __init__(self, issues: IssueList | None = None) -> None:
         self.issues = IssueList(issues or [])
-        self.properties: list[InformationInputProperty] = []
-        self.classes: list[InformationInputClass] = []
+        self.properties: list[UnverifiedConceptualProperty] = []
+        self.classes: list[UnverifiedConceptualClass] = []
         self._item_by_id: dict[DTMI, DTDLBase] = {}
 
         self._method_by_type = {
@@ -103,7 +103,7 @@ class _DTDLConverter:
             )
 
     def convert_interface(self, item: Interface, _: str | None) -> None:
-        class_ = InformationInputClass(
+        class_ = UnverifiedConceptualClass(
             class_=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
@@ -137,7 +137,7 @@ class _DTDLConverter:
         if value_type is None:
             return None
 
-        prop = InformationInputProperty(
+        prop = UnverifiedConceptualProperty(
             class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
@@ -182,7 +182,7 @@ class _DTDLConverter:
         value_type = self.schema_to_value_type(item.request.schema_, item)
         if value_type is None:
             return
-        prop = InformationInputProperty(
+        prop = UnverifiedConceptualProperty(
             class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
@@ -201,7 +201,7 @@ class _DTDLConverter:
         value_type = self.schema_to_value_type(item.schema_, item)
         if value_type is None:
             return
-        prop = InformationInputProperty(
+        prop = UnverifiedConceptualProperty(
             class_=ClassEntity.load(parent),
             property_=item.name,
             name=item.display_name,
@@ -230,7 +230,7 @@ class _DTDLConverter:
                 )
                 value_type = Json()
 
-            prop = InformationInputProperty(
+            prop = UnverifiedConceptualProperty(
                 class_=ClassEntity.load(parent),
                 property_=item.name,
                 name=item.display_name,
@@ -254,7 +254,7 @@ class _DTDLConverter:
             )
             return None
 
-        class_ = InformationInputClass(
+        class_ = UnverifiedConceptualClass(
             class_=item.id_.as_class_id(),
             name=item.display_name,
             description=item.description,
@@ -265,7 +265,7 @@ class _DTDLConverter:
             value_type = self.schema_to_value_type(field_.schema_, item)
             if value_type is None:
                 continue
-            prop = InformationInputProperty(
+            prop = UnverifiedConceptualProperty(
                 class_=class_.class_,
                 name=field_.name,
                 description=field_.description,

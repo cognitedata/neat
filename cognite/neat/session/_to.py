@@ -12,7 +12,7 @@ from cognite.neat.core._data_model import exporters
 from cognite.neat.core._data_model._constants import PATTERNS
 from cognite.neat.core._data_model._shared import VerifiedRules
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import DMSRules, InformationRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.dms import DMSMetadata
 from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
@@ -118,7 +118,7 @@ class ToAPI:
 
         if include_reference is not False:
             if include_reference is True and self._state.last_reference is not None:
-                ref_rules: InformationRules | DMSRules | None = self._state.last_reference
+                ref_rules: ConceptualDataModel | DMSRules | None = self._state.last_reference
             elif include_reference is True:
                 ref_rules = None
             else:
