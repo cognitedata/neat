@@ -12,6 +12,7 @@ import pandas as pd
 from pandas import ExcelFile
 
 from cognite.neat._cfihos.processing.base_starter import base_starter_class
+from cognite.neat._client import NeatClient
 from cognite.neat._issues import IssueList
 from cognite.neat._issues.errors import (
     FileMissingRequiredFieldError,
@@ -70,11 +71,13 @@ class MetadataRaw(UserDict):
 class CFIHOSReader:
     def __init__(
         self,
+        client: NeatClient,
         # issue_list: IssueList,
         required: bool = True,
         sheet_prefix: Literal["", "Last", "Ref", "CDMRef"] = "",
     ):
         # self.issue_list = issue_list
+        self.client = client
         self.required = required
         self._sheet_prefix = sheet_prefix
         self._seen_files: set[Path] = set()
@@ -102,7 +105,7 @@ class CFIHOSReader:
         filePath = str(filepath)  # TODO: this is a temp solution. path should be a path object and pass to processor
         cfihos_starter = base_starter_class(filePath)
         cfihos_starter.process_model()
-        cfihos_rules = cfihos_starter.build_containers_model()
+        cfihos_rules = cfihos_starter.build_containers_model(self.client)
 
         # cfihosResult = ReadResult(Properties=sheets["Properties"], Containers=sheets["Containers"], Views=sheets["Views"], Metadata=sheets["Metadata"])
 
@@ -141,9 +144,7 @@ class CFIHOSImporter(BaseImporter[T_InputRules]):
         if not self.filepath.exists():
             raise FileNotFoundNeatError(self.filepath)
 
-        print(self.state)
-
-        user_reader = CFIHOSReader()
+        user_reader = CFIHOSReader(self.state.client)
         if self.model_type == "containers":
             cfihos_read = user_reader.read_container_model(self.filepath)
         elif self.model_type == "views":

@@ -5,8 +5,9 @@ from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.common.reader import read_yaml
 from cognite.neat._cfihos.common.utils import collect_model_subset
 from cognite.neat._cfihos.dms.container import create_container_from_property_struct_dict
-from cognite.neat._cfihos.dms.views import build_views_from_containers, build_views_from_entities
+from cognite.neat._cfihos.dms.views import add_core_views, build_views_from_containers, build_views_from_entities
 from cognite.neat._cfihos.processing.processor import Processor
+from cognite.neat._client import NeatClient
 
 logging = log_init(f"{__name__}", "i")
 
@@ -104,7 +105,7 @@ class base_starter_class:
         self._map_dms_id_to_entity_id = model_processor.map_dms_id_to_entity_id
         self._model_entities = model_processor.model_entities
 
-    def build_containers_model(self) -> cfihosReadResult:
+    def build_containers_model(self, client: NeatClient) -> cfihosReadResult:
         # Setup containers from models
         logging.info(f"STEP 2: Started upserting {len(self._model_properties)} container properties ...")
         containers = create_container_from_property_struct_dict(
@@ -121,6 +122,9 @@ class base_starter_class:
             entities=self.model_entities,
         )
 
+        lst_cdm_views, lst_cdm_properties = add_core_views(client, lst_views, lst_properties)
+        # lst_views.extend(lst_cdm_views), lst_properties.extend(lst_cdm_properties)
+
         logging.info("STEP 4: generating NEAT rules ...")
 
         container_model_dict = {
@@ -136,9 +140,9 @@ class base_starter_class:
         }
 
         return {
-            "Properties": lst_properties,
+            "Properties": lst_cdm_properties,
             "Containers": containers,
-            "Views": lst_views,
+            "Views": lst_cdm_views,
             "Metadata": container_model_dict,
         }
 

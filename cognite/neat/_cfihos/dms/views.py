@@ -14,6 +14,22 @@ from cognite.neat._cfihos.common.utils import get_relation_target_if_eligible
 
 logging = log_init(f"{__name__}", "i")
 
+map_dms_neat_property_type = {
+    "String": data_types.Text().dump(),
+    "Int": data_types.Int32(),
+    "Float32": data_types.Float32(),
+    "Boolean": data_types.Boolean(),
+    "Timestamp": data_types.Timestamp(),
+}
+
+map_dms_neat_property_type = {
+    str(data_types.Text()): "String",
+    str(data_types.Int32()): "Int",
+    str(data_types.Float32()): "Float32",
+    str(data_types.Boolean()): "Boolean",
+    str(data_types.Timestamp()): "Timestamp",
+}
+
 
 def _create_inheritance_tree_from_root_node(entities: dict) -> dict:
     """
@@ -414,7 +430,8 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
 
 def add_core_views(
     cdf_client: CogniteClient,
-    original_views: list[data_modeling.ViewApply | data_modeling.ViewId],
+    lst_original_views: list[dict],
+    lst_original_properties: list[dict],
 ) -> list[data_modeling.ViewApply | data_modeling.ViewId]:
     """Adds core views to the list of views.
 
@@ -429,10 +446,90 @@ def add_core_views(
         list[data_modeling.ViewApply | data_modeling.ViewId]: The updated list of views.
     """
     try:
-        core_views = cdf_client.data_modeling.views.list(space="cdf_cdm", include_global=True, limit=-1).as_ids()
-        logging.info(f"Adding {len(core_views)} core views to the list of data model views.")
-        original_views.extend(core_views)
+        # core_views_dict_list = cdf_client.data_modeling.views.list(space="cdf_cdm", include_global=True, limit=-1).as_apply()
+        core_views_list = cdf_client.data_modeling.views.list(space="cdf_cdm", include_global=True, limit=-1)
+        for original_cdm_view in core_views_list:
+            print(original_cdm_view.external_id)
+            lst_original_views.append(
+                {
+                    "View": original_cdm_view.external_id,
+                    "Name": None,
+                    "Description": None,
+                    "Implements": ",".join([parent_view.external_id for parent_view in original_cdm_view.implements])
+                    if original_cdm_view.implements
+                    else None,
+                    "Filter": None,
+                    "In Model": True,
+                }
+            )
+            for propertyName, propertyObject in original_cdm_view.properties.items():
+                print(propertyName)
+
+                match type(propertyObject):
+                    case data_modeling.MappedProperty:
+                        container_property = propertyObject.container.space + ":" + propertyObject.container.external_id
+                        connection_property = (
+                            "direct" if type(propertyObject.type) == data_types.DirectRelation else None
+                        )
+                        value_type_property = (
+                            propertyObject.source.external_id
+                            if type(propertyObject.type) == data_types.DirectRelation
+                            else f"enum(collection={propertyObject.container.external_id}.{propertyName})"
+                            if type(propertyObject.type) == data_types.Enum
+                            else propertyObject.type._type
+                        )
+                    case data_modeling.MultiEdgeConnection:
+                        container_property = None
+                        connection_property = f"edge(properties={propertyObject.edge_source.external_id},type={propertyObject.type.external_id})"
+                        value_type_property = propertyObject.source.external_id
+                    case data_modeling.MultiReverseDirectRelation:
+                        container_property = None
+                        connection_property = f"reverse(property={propertyObject.through.property})"
+                        value_type_property = propertyObject.source.external_id
+                    case _:
+                        if (
+                            str(type(propertyObject))
+                            == "<class 'cognite.client.data_classes.data_modeling.views.SingleReverseDirectRelation'>"
+                        ):
+                            container_property = None
+                            connection_property = f"reverse(property={propertyObject.through.property})"
+                            value_type_property = propertyObject.source.external_id
+                        else:
+                            print(f"Unknown property type: {type(propertyObject)}")
+                            continue
+                lst_original_properties.append(
+                    {
+                        "View": original_cdm_view.external_id,
+                        "View Property": propertyName,
+                        "Name": propertyObject.name if propertyObject.name else None,
+                        "Description": propertyObject.description if propertyObject.description else None,
+                        "Connection": connection_property,
+                        "Value Type": value_type_property,
+                        "Nullable": propertyObject.nullable
+                        if type(propertyObject) == data_modeling.MappedProperty and hasattr(propertyObject, "nullable")
+                        else None,
+                        "Immutable": propertyObject.immutable
+                        if type(propertyObject) == data_modeling.MappedProperty and hasattr(propertyObject, "immutable")
+                        else None,
+                        "Is List": propertyObject.type.is_list
+                        if type(propertyObject) == data_modeling.MappedProperty
+                        and hasattr(propertyObject.type, "is_list")
+                        else False,
+                        "Default": None,
+                        "Reference": None,
+                        "Container": container_property,
+                        "Container Property": propertyObject.container_property_identifier
+                        if type(propertyObject) == data_modeling.MappedProperty
+                        else None,
+                        "Index": None,
+                        "Constraint": None,
+                        "Class (linage)": propertyName,
+                        "Property (linage)": propertyName,
+                    }
+                )
+
+        logging.info(f"Adding {len(core_views_list)} core views to the list of data model views.")
     except CogniteAPIError as e:
         logging.error(f"Error retrieving core views: {e}")
         raise e
-    return original_views
+    return lst_original_views, lst_original_properties
