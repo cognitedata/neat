@@ -1,0 +1,59 @@
+containers:
+- container: CogniteDescriable
+  used_for: node
+- container: Equipment
+  used_for: node
+metadata:
+  created: 2025-05-12 10:25:12.414295
+  creator: me
+  external_id: MyModel
+  role: DMS Architect
+  space: my_space
+  updated: 2025-05-12 10:25:12.414295
+  version: v1
+properties:
+- container: CogniteDescriable
+  container_property: name
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Asset/name
+  value_type: text
+  view: Asset
+  view_property: name
+- connection: reverse(property=asset)
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Asset/equipment
+  value_type: Equipment
+  view: Asset
+  view_property: equipment
+- container: CogniteDescriable
+  container_property: name
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Equipment/name
+  value_type: text
+  view: Equipment
+  view_property: name
+- connection: direct
+  container: Equipment
+  container_property: asset
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Equipment/asset
+  value_type: Asset2
+  view: Equipment
+  view_property: asset
+- container: CogniteDescriable
+  container_property: name
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Asset2/name
+  value_type: text
+  view: Asset2
+  view_property: name
+- connection: reverse(property=asset)
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Asset2/equipment
+  value_type: Equipment
+  view: Asset2
+  view_property: equipment
+views:
+- in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Asset
+  view: Asset
+- in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Equipment
+  view: Equipment
+- in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/MyModel/v1/Asset2
+  view: Asset2

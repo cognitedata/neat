@@ -1,0 +1,10 @@
+- NeatIssue: ReversedConnectionNotFeasibleWarning
+  identifier:
+    externalId: Asset
+    space: my_space
+    type: view
+    version: v1
+  propertyName: equipment
+  reason: ViewId(space='my_space', external_id='Equipment', version='v1') asset is not
+    pointing to ViewId(space='my_space', external_id='Asset', version='v1')
+  resourceType: reversed connection

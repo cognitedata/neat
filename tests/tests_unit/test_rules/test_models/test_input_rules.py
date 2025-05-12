@@ -9,23 +9,23 @@ from pydantic import BaseModel
 from rdflib import URIRef
 
 from cognite.neat.core._data_model.models import SheetList
-from cognite.neat.core._data_model.models._base_input import InputRules
+from cognite.neat.core._data_model.models._base_unverified import UnverifiedDataModel
 from tests.utils import DataClassCreator, get_all_subclasses
 
 
 def input_rules_instances_iterator() -> Iterable[ParameterSet]:
-    for cls_ in get_all_subclasses(InputRules, only_concrete=True):
+    for cls_ in get_all_subclasses(UnverifiedDataModel, only_concrete=True):
         yield pytest.param(DataClassCreator(cls_).create_instance(), id=cls_.__name__)
 
 
 def input_rules_cls_iterator() -> Iterable[ParameterSet]:
-    for cls_ in get_all_subclasses(InputRules, only_concrete=True):
+    for cls_ in get_all_subclasses(UnverifiedDataModel, only_concrete=True):
         yield pytest.param(cls_, id=cls_.__name__)
 
 
 class TestInputRules:
     @pytest.mark.parametrize("input_rules_cls", input_rules_cls_iterator())
-    def test_input_rules_match_verified_cls(self, input_rules_cls: type[InputRules]) -> None:
+    def test_input_rules_match_verified_cls(self, input_rules_cls: type[UnverifiedDataModel]) -> None:
         """Test that all classes that inherit from InputRules have a matching verified class."""
         verified_cls = input_rules_cls._get_verified_cls()
         input_parameters = dataclass_to_parameters(input_rules_cls)
@@ -34,7 +34,7 @@ class TestInputRules:
         assert input_parameters == verified_parameters, f"Parameters mismatch for {input_rules_cls.__name__}"
 
     @pytest.mark.parametrize("input_rules", input_rules_instances_iterator())
-    def test_issues_dump_load(self, input_rules: InputRules) -> None:
+    def test_issues_dump_load(self, input_rules: UnverifiedDataModel) -> None:
         """Test that all classes that inherit from InputRules can be dumped and loaded."""
         dumped = input_rules.dump()
         assert isinstance(dumped, dict)
@@ -45,7 +45,9 @@ class TestInputRules:
         assert input_rules.metadata == loaded.metadata, f"Dump and load mismatch for {type(input_rules).__name__}"
 
 
-def dataclass_to_parameters(input_rules_cls: type[InputRules]) -> dict[str, set[str]]:
+def dataclass_to_parameters(
+    input_rules_cls: type[UnverifiedDataModel],
+) -> dict[str, set[str]]:
     output: dict[str, set[str]] = {}
     for field_ in fields(input_rules_cls):
         type_ = field_.type

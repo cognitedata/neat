@@ -16,7 +16,10 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.catalog import classic_model
-from cognite.neat.core._data_model.models import InformationInputRules, InformationRules
+from cognite.neat.core._data_model.models import (
+    ConceptualDataModel,
+    UnverifiedConceptualDataModel,
+)
 from cognite.neat.core._instances.extractors._base import KnowledgeGraphExtractor
 from cognite.neat.core._issues.errors import NeatValueError, ResourceNotFoundError
 from cognite.neat.core._issues.warnings import CDFAuthWarning, NeatValueWarning
@@ -205,11 +208,14 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
 
         yield from self._extract_asset_parent_data_sets()
 
-    def get_information_rules(self) -> InformationRules:
+    def get_information_rules(self) -> ConceptualDataModel:
         # To avoid circular imports
         from cognite.neat.core._data_model.importers import ExcelImporter
 
-        unverified = cast(ReadRules[InformationInputRules], ExcelImporter(classic_model).to_rules())
+        unverified = cast(
+            ReadRules[UnverifiedConceptualDataModel],
+            ExcelImporter(classic_model).to_rules(),
+        )
         if unverified.rules is None:
             raise NeatValueError(f"Could not read the classic model rules from {classic_model}.")
 

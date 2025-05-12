@@ -1,37 +1,37 @@
 classes:
 - class_: cdf_cdm:Cognite360Image(version=v1)
   implements: cdf_cdm:Cognite3DTransformation(version=v1),cdf_cdm:CogniteCubeMap(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite360Image
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite360Image
 - class_: cdf_cdm:Cognite360ImageAnnotation(version=v1)
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteAnnotation(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite360ImageAnnotation
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite360ImageAnnotation
 - class_: cdf_cdm:Cognite360ImageCollection(version=v1)
   description: Represents a logical collection of Cognite360Image instances
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite360ImageCollection
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite360ImageCollection
 - class_: cdf_cdm:Cognite360ImageModel(version=v1)
   description: Navigational aid for traversing Cognite360ImageModel instances
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite360ImageModel
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite360ImageModel
 - class_: cdf_cdm:Cognite360ImageStation(version=v1)
   description: A way to group images across collections. Used for creating visual
     scan history
   implements: cdf_cdm:CogniteDescribable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite360ImageStation
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite360ImageStation
 - class_: cdf_cdm:Cognite3DModel(version=v1)
   description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
     Image360)
   implements: cdf_cdm:CogniteDescribable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite3DModel
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite3DModel
 - class_: cdf_cdm:Cognite3DObject(version=v1)
   description: This is the virtual position representation of an object in the physical
     world, connecting an asset to one or more 3D resources
   implements: cdf_cdm:CogniteDescribable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite3DObject
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite3DObject
 - class_: cdf_cdm:Cognite3DRevision(version=v1)
   description: Shared revision information for various 3D data types. Normally not
     used directly, but through CognitePointCloudRevision, Image360Collection or CogniteCADRevision
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite3DRevision
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite3DRevision
 - class_: cdf_cdm:Cognite3DTransformation(version=v1)
   description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
     enabling precise adjustments to an object's position, orientation, and size in
@@ -39,107 +39,107 @@ classes:
     spatial axes, rotation around these axes using Euler angles, and scaling along
     each axis to modify the object's dimensions. The object's transformation is defined
     in "CDF space", a coordinate system where the positive Z axis is the up direction
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/Cognite3DTransformation
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/Cognite3DTransformation
 - class_: cdf_cdm:CogniteActivity(version=v1)
   description: Represents activities. Activities typically happen over a period and
     have a start and end time.
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteSchedulable(version=v1)
   name: Activity
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteActivity
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteActivity
 - class_: cdf_cdm:CogniteAnnotation(version=v1)
   description: Annotation represents contextualization results or links
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteAnnotation
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteAnnotation
 - class_: cdf_cdm:CogniteAsset(version=v1)
   description: Assets represent systems that support industrial functions or processes.
     Assets are often called 'functional location'.
   implements: cdf_cdm:CogniteVisualizable(version=v1),cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
   name: Asset
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteAsset
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteAsset
 - class_: cdf_cdm:CogniteAssetClass(version=v1)
   description: Represents the class of an asset.
   implements: cdf_cdm:CogniteDescribable(version=v1)
   name: Asset class
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteAssetClass
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteAssetClass
 - class_: cdf_cdm:CogniteAssetType(version=v1)
   description: Represents the type of an asset.
   implements: cdf_cdm:CogniteDescribable(version=v1)
   name: Asset type
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteAssetType
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteAssetType
 - class_: cdf_cdm:CogniteCADModel(version=v1)
   description: Navigational aid for traversing CogniteCADModel instances
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteCADModel
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteCADModel
 - class_: cdf_cdm:CogniteCADNode(version=v1)
   description: Represents nodes from the 3D model that have been contextualized
   implements: cdf_cdm:CogniteDescribable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteCADNode
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteCADNode
 - class_: cdf_cdm:CogniteCADRevision(version=v1)
   implements: cdf_cdm:Cognite3DRevision(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteCADRevision
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteCADRevision
 - class_: cdf_cdm:CogniteCubeMap(version=v1)
   description: The cube map holds references to 6 images in used to visually represent
     the surrounding environment
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteCubeMap
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteCubeMap
 - class_: cdf_cdm:CogniteDescribable(version=v1)
   description: The describable core concept is used as a standard way of holding the
     bare minimum of information about the instance
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteDescribable
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteDescribable
 - class_: cdf_cdm:CogniteEquipment(version=v1)
   description: Equipment represents physical supplies or devices.
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
   name: Equipment
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteEquipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteEquipment
 - class_: cdf_cdm:CogniteEquipmentType(version=v1)
   description: Represents the type of equipment.
   implements: cdf_cdm:CogniteDescribable(version=v1)
   name: Equipment type
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteEquipmentType
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteEquipmentType
 - class_: cdf_cdm:CogniteFile(version=v1)
   description: Represents files.
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
   name: File
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteFile
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteFile
 - class_: cdf_cdm:CogniteFileCategory(version=v1)
   description: Represents the categories of files as determined by contextualization
     or categorization.
   implements: cdf_cdm:CogniteDescribable(version=v1)
   name: File category
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteFileCategory
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteFileCategory
 - class_: cdf_cdm:CognitePointCloudVolume(version=v1)
   description: PointCloud volume definition
   implements: cdf_cdm:CogniteDescribable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CognitePointCloudVolume
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CognitePointCloudVolume
 - class_: cdf_cdm:CogniteSchedulable(version=v1)
   description: CogniteSchedulable represents the metadata about when an activity (or
     similar) starts and ends.
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteSchedulable
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteSchedulable
 - class_: cdf_cdm:CogniteSourceSystem(version=v1)
   description: The CogniteSourceSystem core concept is used to standardize the way
     source system is stored.
   implements: cdf_cdm:CogniteDescribable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteSourceSystem
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteSourceSystem
 - class_: cdf_cdm:CogniteSourceable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteSourceable
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteSourceable
 - class_: cdf_cdm:CogniteTimeSeries(version=v1)
   description: Represents a series of data points in time order.
   implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
   name: Time series
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteTimeSeries
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteTimeSeries
 - class_: cdf_cdm:CogniteUnit(version=v1)
   description: Represents a single unit of measurement
   implements: cdf_cdm:CogniteDescribable(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteUnit
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteUnit
 - class_: cdf_cdm:CogniteVisualizable(version=v1)
   description: CogniteVisualizable defines the standard way to reference a related
     3D resource
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/CogniteVisualizable
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/CogniteVisualizable
 - class_: PowerGeneratingUnit
   implements: cdf_cdm:CogniteAsset(version=v1)
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/CircuitShare
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/CircuitShare
 - class_: WindTurbine
   implements: PowerGeneratingUnit
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/EnergyCongestionZone
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/EnergyCongestionZone
 metadata:
   created: '2025-03-12T14:42:00.631000'
   creator: doctrino
@@ -147,7 +147,7 @@ metadata:
   external_id: MyModel
   name: My Model
   role: information architect
-  source_id: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1
+  source_id: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1
   space: my_space
   updated: '2025-03-12T14:42:00.631000'
   version: v1
@@ -178,14 +178,14 @@ properties:
   description: An automatically updated list of activities related to the asset.
   max_count: null
   name: Activities
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/activities
   property_: activities
   value_type: cdf_cdm:CogniteActivity(version=v1)
 - class_: PowerGeneratingUnit
   description: Alternative names for the node
   max_count: 1000.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/aliases
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/aliases
   property_: aliases
   value_type: string
 - class_: PowerGeneratingUnit
@@ -193,49 +193,49 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Asset class
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/assetClass
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/assetClass
   property_: assetClass
   value_type: cdf_cdm:CogniteAssetClass(version=v1)
 - class_: PowerGeneratingUnit
   description: An automatically updated list of assets with this asset as their parent.
   max_count: null
   name: Children
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/children
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/children
   property_: children
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: PowerGeneratingUnit
   description: Description of the instance
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/description
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/description
   property_: description
   value_type: string
 - class_: PowerGeneratingUnit
   description: An automatically updated list of equipment related to the asset.
   max_count: null
   name: Equipment
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/equipment
   property_: equipment
   value_type: cdf_cdm:CogniteEquipment(version=v1)
 - class_: PowerGeneratingUnit
   description: An automatically updated list of files related to the asset.
   max_count: null
   name: Files
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/files
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/files
   property_: files
   value_type: cdf_cdm:CogniteFile(version=v1)
 - class_: PowerGeneratingUnit
   description: Name of the instance
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/name
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/name
   property_: name
   value_type: string
 - class_: PowerGeneratingUnit
   description: Direct relation to an Object3D instance representing the 3D resource
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/object3D
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/object3D
   property_: object3D
   value_type: cdf_cdm:Cognite3DObject(version=v1)
 - class_: PowerGeneratingUnit
@@ -243,7 +243,7 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Parent
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/parent
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/parent
   property_: parent
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: PowerGeneratingUnit
@@ -252,7 +252,7 @@ properties:
   max_count: 100.0
   min_count: 0
   name: Path
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/path
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/path
   property_: path
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: PowerGeneratingUnit
@@ -260,13 +260,13 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Path last updated time
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/pathLastUpdatedTime
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/pathLastUpdatedTime
   property_: pathLastUpdatedTime
   value_type: dateTime
 - class_: PowerGeneratingUnit
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/powerGeneratingUnitGUID
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/powerGeneratingUnitGUID
   property_: powerGeneratingUnitGUID
   value_type: string
 - class_: PowerGeneratingUnit
@@ -274,14 +274,14 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Root
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/root
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/root
   property_: root
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: PowerGeneratingUnit
   description: Direct relation to a source system
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/source
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/source
   property_: source
   value_type: cdf_cdm:CogniteSourceSystem(version=v1)
 - class_: PowerGeneratingUnit
@@ -289,14 +289,14 @@ properties:
     unique, the sourceContext is expected to not be set.
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/sourceContext
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/sourceContext
   property_: sourceContext
   value_type: string
 - class_: PowerGeneratingUnit
   description: When the instance was created in source system (if available)
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/sourceCreatedTime
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/sourceCreatedTime
   property_: sourceCreatedTime
   value_type: dateTime
 - class_: PowerGeneratingUnit
@@ -304,21 +304,21 @@ properties:
     This identifier is not guaranteed to match the user identifiers in CDF
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/sourceCreatedUser
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/sourceCreatedUser
   property_: sourceCreatedUser
   value_type: string
 - class_: PowerGeneratingUnit
   description: Identifier from the source system
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/sourceId
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/sourceId
   property_: sourceId
   value_type: string
 - class_: PowerGeneratingUnit
   description: When the instance was last updated in the source system (if available)
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/sourceUpdatedTime
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/sourceUpdatedTime
   property_: sourceUpdatedTime
   value_type: dateTime
 - class_: PowerGeneratingUnit
@@ -326,21 +326,21 @@ properties:
     data. This identifier is not guaranteed to match the user identifiers in CDF
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/sourceUpdatedUser
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/sourceUpdatedUser
   property_: sourceUpdatedUser
   value_type: string
 - class_: PowerGeneratingUnit
   description: Text based labels for generic use, limited to 1000
   max_count: 1000.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/tags
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/tags
   property_: tags
   value_type: string
 - class_: PowerGeneratingUnit
   description: An automatically updated list of time series related to the asset.
   max_count: null
   name: Time series
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/timeSeries
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/timeSeries
   property_: timeSeries
   value_type: cdf_cdm:CogniteTimeSeries(version=v1)
 - class_: PowerGeneratingUnit
@@ -348,21 +348,21 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Asset type
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/PowerGeneratingUnit/type
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/PowerGeneratingUnit/type
   property_: type
   value_type: cdf_cdm:CogniteAssetType(version=v1)
 - class_: WindTurbine
   description: An automatically updated list of activities related to the asset.
   max_count: null
   name: Activities
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/activities
   property_: activities
   value_type: cdf_cdm:CogniteActivity(version=v1)
 - class_: WindTurbine
   description: Alternative names for the node
   max_count: 1000.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/aliases
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/aliases
   property_: aliases
   value_type: string
 - class_: WindTurbine
@@ -370,49 +370,49 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Asset class
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/assetClass
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/assetClass
   property_: assetClass
   value_type: cdf_cdm:CogniteAssetClass(version=v1)
 - class_: WindTurbine
   description: An automatically updated list of assets with this asset as their parent.
   max_count: null
   name: Children
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/children
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/children
   property_: children
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: WindTurbine
   description: Description of the instance
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/description
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/description
   property_: description
   value_type: string
 - class_: WindTurbine
   description: An automatically updated list of equipment related to the asset.
   max_count: null
   name: Equipment
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/equipment
   property_: equipment
   value_type: cdf_cdm:CogniteEquipment(version=v1)
 - class_: WindTurbine
   description: An automatically updated list of files related to the asset.
   max_count: null
   name: Files
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/files
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/files
   property_: files
   value_type: cdf_cdm:CogniteFile(version=v1)
 - class_: WindTurbine
   description: Name of the instance
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/name
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/name
   property_: name
   value_type: string
 - class_: WindTurbine
   description: Direct relation to an Object3D instance representing the 3D resource
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/object3D
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/object3D
   property_: object3D
   value_type: cdf_cdm:Cognite3DObject(version=v1)
 - class_: WindTurbine
@@ -420,7 +420,7 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Parent
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/parent
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/parent
   property_: parent
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: WindTurbine
@@ -429,7 +429,7 @@ properties:
   max_count: 100.0
   min_count: 0
   name: Path
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/path
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/path
   property_: path
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: WindTurbine
@@ -437,7 +437,7 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Path last updated time
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/pathLastUpdatedTime
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/pathLastUpdatedTime
   property_: pathLastUpdatedTime
   value_type: dateTime
 - class_: WindTurbine
@@ -445,14 +445,14 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Root
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/root
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/root
   property_: root
   value_type: cdf_cdm:CogniteAsset(version=v1)
 - class_: WindTurbine
   description: Direct relation to a source system
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/source
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/source
   property_: source
   value_type: cdf_cdm:CogniteSourceSystem(version=v1)
 - class_: WindTurbine
@@ -460,14 +460,14 @@ properties:
     unique, the sourceContext is expected to not be set.
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/sourceContext
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/sourceContext
   property_: sourceContext
   value_type: string
 - class_: WindTurbine
   description: When the instance was created in source system (if available)
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/sourceCreatedTime
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/sourceCreatedTime
   property_: sourceCreatedTime
   value_type: dateTime
 - class_: WindTurbine
@@ -475,21 +475,21 @@ properties:
     This identifier is not guaranteed to match the user identifiers in CDF
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/sourceCreatedUser
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/sourceCreatedUser
   property_: sourceCreatedUser
   value_type: string
 - class_: WindTurbine
   description: Identifier from the source system
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/sourceId
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/sourceId
   property_: sourceId
   value_type: string
 - class_: WindTurbine
   description: When the instance was last updated in the source system (if available)
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/sourceUpdatedTime
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/sourceUpdatedTime
   property_: sourceUpdatedTime
   value_type: dateTime
 - class_: WindTurbine
@@ -497,21 +497,21 @@ properties:
     data. This identifier is not guaranteed to match the user identifiers in CDF
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/sourceUpdatedUser
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/sourceUpdatedUser
   property_: sourceUpdatedUser
   value_type: string
 - class_: WindTurbine
   description: Text based labels for generic use, limited to 1000
   max_count: 1000.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/tags
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/tags
   property_: tags
   value_type: string
 - class_: WindTurbine
   description: An automatically updated list of time series related to the asset.
   max_count: null
   name: Time series
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/timeSeries
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/timeSeries
   property_: timeSeries
   value_type: cdf_cdm:CogniteTimeSeries(version=v1)
 - class_: WindTurbine
@@ -519,12 +519,12 @@ properties:
   max_count: 1.0
   min_count: 0
   name: Asset type
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/type
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/type
   property_: type
   value_type: cdf_cdm:CogniteAssetType(version=v1)
 - class_: WindTurbine
   max_count: 1.0
   min_count: 0
-  neatId: http://purl.org/cognite/neat/data-model/verified/logical/my_space/MyModel/v1/WindTurbine/windTurbineGUID
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/MyModel/v1/WindTurbine/windTurbineGUID
   property_: windTurbineGUID
   value_type: string

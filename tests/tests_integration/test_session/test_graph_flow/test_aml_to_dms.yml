@@ -11,7 +11,7 @@ rules:
     created: '2024-09-19T00:00:00Z'
     creator: NEAT
     external_id: AML
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1
     name: Aml
     role: DMS Architect
     source_id: http://purl.org/cognite/neat/data-model/verified/physical/aml_playground/AML/terminology_3.0
@@ -21,7 +21,7 @@ rules:
   properties:
   - container: ExternalInterface
     container_property: Description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/Description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Description
@@ -30,7 +30,7 @@ rules:
     view_property: Description
   - container: ExternalInterface
     container_property: Name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/Name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/Name
@@ -39,7 +39,7 @@ rules:
     view_property: Name
   - container: ExternalInterface
     container_property: RefBaseClassPath
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/RefBaseClassPath
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/RefBaseClassPath
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/RefBaseClassPath
@@ -48,7 +48,7 @@ rules:
     view_property: RefBaseClassPath
   - container: ExternalInterface
     container_property: active
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/active
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/active
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/active
@@ -57,7 +57,7 @@ rules:
     view_property: active
   - container: ExternalInterface
     container_property: communicationType
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/communicationType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/communicationType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/communicationType
@@ -66,7 +66,7 @@ rules:
     view_property: communicationType
   - container: ExternalInterface
     container_property: direction
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/direction
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/direction
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/direction
@@ -75,7 +75,7 @@ rules:
     view_property: direction
   - container: ExternalInterface
     container_property: invertSignal
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/invertSignal
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/invertSignal
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/invertSignal
@@ -84,7 +84,7 @@ rules:
     view_property: invertSignal
   - container: ExternalInterface
     container_property: signalClass
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface/signalClass
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface/signalClass
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface/signalClass
@@ -93,7 +93,7 @@ rules:
     view_property: signalClass
   - container: InternalElement
     container_property: Description
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/Description
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/Description
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/Description
@@ -102,7 +102,7 @@ rules:
     view_property: Description
   - container: InternalElement
     container_property: Name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/Name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/Name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/Name
@@ -111,7 +111,7 @@ rules:
     view_property: Name
   - container: InternalElement
     container_property: RefBaseSystemUnitPath
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/RefBaseSystemUnitPath
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/RefBaseSystemUnitPath
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/RefBaseSystemUnitPath
@@ -120,7 +120,7 @@ rules:
     view_property: RefBaseSystemUnitPath
   - container: InternalElement
     container_property: RoleRequirements
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/RoleRequirements
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/RoleRequirements
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/RoleRequirements
@@ -129,7 +129,7 @@ rules:
     view_property: RoleRequirements
   - container: InternalElement
     container_property: SISNotation
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/SISNotation
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/SISNotation
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/SISNotation
@@ -138,7 +138,7 @@ rules:
     view_property: SISNotation
   - container: InternalElement
     container_property: Version
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/Version
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/Version
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/Version
@@ -147,7 +147,7 @@ rules:
     view_property: Version
   - container: InternalElement
     container_property: additionalText
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/additionalText
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/additionalText
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/additionalText
@@ -156,7 +156,7 @@ rules:
     view_property: additionalText
   - container: InternalElement
     container_property: approvedBy
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/approvedBy
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/approvedBy
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/approvedBy
@@ -165,7 +165,7 @@ rules:
     view_property: approvedBy
   - container: InternalElement
     container_property: area
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/area
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/area
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/area
@@ -174,7 +174,7 @@ rules:
     view_property: area
   - container: InternalElement
     container_property: checkedBy
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/checkedBy
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/checkedBy
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/checkedBy
@@ -183,7 +183,7 @@ rules:
     view_property: checkedBy
   - container: InternalElement
     container_property: controlFunctionIntegration
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlFunctionIntegration
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/controlFunctionIntegration
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlFunctionIntegration
@@ -192,7 +192,7 @@ rules:
     view_property: controlFunctionIntegration
   - container: InternalElement
     container_property: controlMode
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlMode
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/controlMode
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlMode
@@ -201,7 +201,7 @@ rules:
     view_property: controlMode
   - container: InternalElement
     container_property: controlNode
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNode
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/controlNode
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNode
@@ -210,7 +210,7 @@ rules:
     view_property: controlNode
   - container: InternalElement
     container_property: controlNodeIN
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeIN
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeIN
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeIN
@@ -219,7 +219,7 @@ rules:
     view_property: controlNodeIN
   - container: InternalElement
     container_property: controlNodeOUT
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeOUT
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeOUT
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/controlNodeOUT
@@ -228,7 +228,7 @@ rules:
     view_property: controlNodeOUT
   - container: InternalElement
     container_property: coordinateSystem
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/coordinateSystem
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/coordinateSystem
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/coordinateSystem
@@ -237,7 +237,7 @@ rules:
     view_property: coordinateSystem
   - container: InternalElement
     container_property: createdBy
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/createdBy
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/createdBy
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/createdBy
@@ -246,7 +246,7 @@ rules:
     view_property: createdBy
   - container: InternalElement
     container_property: drawingOrigin
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingOrigin
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/drawingOrigin
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingOrigin
@@ -255,7 +255,7 @@ rules:
     view_property: drawingOrigin
   - container: InternalElement
     container_property: drawingReference
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingReference
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/drawingReference
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingReference
@@ -264,7 +264,7 @@ rules:
     view_property: drawingReference
   - container: InternalElement
     container_property: drawingSize
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingSize
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/drawingSize
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/drawingSize
@@ -272,7 +272,7 @@ rules:
     view: InternalElement
     view_property: drawingSize
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/externalInterface
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/externalInterface
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/externalInterface
@@ -280,7 +280,7 @@ rules:
     view: InternalElement
     view_property: externalInterface
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/internalElement
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/internalElement
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/internalElement
@@ -288,7 +288,7 @@ rules:
     view: InternalElement
     view_property: internalElement
   - connection: edge
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/internalLink
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/internalLink
     max_count: .inf
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/internalLink
@@ -297,7 +297,7 @@ rules:
     view_property: internalLink
   - container: InternalElement
     container_property: layer
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/layer
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/layer
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/layer
@@ -306,7 +306,7 @@ rules:
     view_property: layer
   - container: InternalElement
     container_property: notation
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/notation
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/notation
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/notation
@@ -315,7 +315,7 @@ rules:
     view_property: notation
   - container: InternalElement
     container_property: noteRef
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/noteRef
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/noteRef
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/noteRef
@@ -324,7 +324,7 @@ rules:
     view_property: noteRef
   - container: InternalElement
     container_property: orientation
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/orientation
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/orientation
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/orientation
@@ -333,7 +333,7 @@ rules:
     view_property: orientation
   - container: InternalElement
     container_property: reference
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/reference
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/reference
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/reference
@@ -342,7 +342,7 @@ rules:
     view_property: reference
   - container: InternalElement
     container_property: revisionDate
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/revisionDate
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/revisionDate
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/revisionDate
@@ -351,7 +351,7 @@ rules:
     view_property: revisionDate
   - container: InternalElement
     container_property: scale
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/scale
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/scale
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/scale
@@ -360,7 +360,7 @@ rules:
     view_property: scale
   - container: InternalElement
     container_property: symbolType
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/symbolType
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/symbolType
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/symbolType
@@ -369,7 +369,7 @@ rules:
     view_property: symbolType
   - container: InternalElement
     container_property: typical
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/typical
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/typical
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/typical
@@ -378,7 +378,7 @@ rules:
     view_property: typical
   - container: InternalElement
     container_property: x
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/x
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/x
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/x
@@ -387,7 +387,7 @@ rules:
     view_property: x
   - container: InternalElement
     container_property: y
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement/y
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement/y
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement/y
@@ -396,7 +396,7 @@ rules:
     view_property: y
   - container: InternalLink
     container_property: Name
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalLink/Name
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalLink/Name
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalLink/Name
@@ -406,7 +406,7 @@ rules:
   - connection: direct
     container: InternalLink
     container_property: RefPartnerSideA
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideA
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideA
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideA
@@ -416,7 +416,7 @@ rules:
   - connection: direct
     container: InternalLink
     container_property: RefPartnerSideB
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideB
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideB
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalLink/RefPartnerSideB
@@ -425,14 +425,14 @@ rules:
     view_property: RefPartnerSideB
   views:
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/ExternalInterface
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/ExternalInterface
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/ExternalInterface
     view: ExternalInterface
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalElement
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalElement
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalElement
     view: InternalElement
   - in_model: true
-    logical: http://purl.org/cognite/neat/data-model/verified/logical/neat_space/NeatInferredDataModel/v1/InternalLink
+    logical: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/NeatInferredDataModel/v1/InternalLink
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_space/NeatInferredDataModel/v1/InternalLink
     view: InternalLink

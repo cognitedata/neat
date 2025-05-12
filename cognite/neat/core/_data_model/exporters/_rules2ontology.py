@@ -11,14 +11,14 @@ from rdflib.collection import Collection as GraphCollection
 from cognite.neat.core._constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualClass,
+    ConceptualDataModel,
+    ConceptualMetadata,
+    ConceptualProperty,
+)
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.models.information import (
-    InformationClass,
-    InformationMetadata,
-    InformationProperty,
-    InformationRules,
-)
 from cognite.neat.core._issues import MultiValueError
 from cognite.neat.core._issues.errors import (
     PropertyDefinitionDuplicatedError,
@@ -35,15 +35,15 @@ else:
     from typing_extensions import Self
 
 
-class GraphExporter(BaseExporter[InformationRules, Graph], ABC):
-    def export_to_file(self, rules: InformationRules, filepath: Path) -> None:
+class GraphExporter(BaseExporter[ConceptualDataModel, Graph], ABC):
+    def export_to_file(self, rules: ConceptualDataModel, filepath: Path) -> None:
         self.export(rules).serialize(destination=filepath, encoding=self._encoding, newline=self._new_line)
 
 
 class OWLExporter(GraphExporter):
     """Exports verified information rules to an OWL ontology."""
 
-    def export(self, rules: InformationRules) -> Graph:
+    def export(self, rules: ConceptualDataModel) -> Graph:
         return Ontology.from_rules(rules).as_owl()
 
     @property
@@ -54,7 +54,7 @@ class OWLExporter(GraphExporter):
 class SHACLExporter(GraphExporter):
     """Exports rules to a SHACL graph."""
 
-    def export(self, rules: InformationRules) -> Graph:
+    def export(self, rules: ConceptualDataModel) -> Graph:
         return Ontology.from_rules(rules).as_shacl()
 
     @property
@@ -65,7 +65,7 @@ class SHACLExporter(GraphExporter):
 class SemanticDataModelExporter(GraphExporter):
     """Exports verified information model to a semantic data model."""
 
-    def export(self, rules: InformationRules) -> Graph:
+    def export(self, rules: ConceptualDataModel) -> Graph:
         return Ontology.from_rules(rules).as_semantic_data_model()
 
     @property
@@ -96,7 +96,7 @@ class Ontology(OntologyModel):
     prefixes: dict[str, Namespace]
 
     @classmethod
-    def from_rules(cls, rules: InformationRules) -> Self:
+    def from_rules(cls, rules: ConceptualDataModel) -> Self:
         """
         Generates an ontology from a set of transformation rules.
 
@@ -225,7 +225,7 @@ class Ontology(OntologyModel):
         return (self.as_owl() + self.as_shacl()).serialize()
 
 
-class OWLMetadata(InformationMetadata):
+class OWLMetadata(ConceptualMetadata):
     @property
     def triples(self) -> list[tuple]:
         # Mandatory triples originating from Metadata mandatory fields
@@ -259,7 +259,7 @@ class OWLClass(OntologyModel):
     namespace: Namespace
 
     @classmethod
-    def from_class(cls, definition: InformationClass, namespace: Namespace, prefixes: dict) -> Self:
+    def from_class(cls, definition: ConceptualClass, namespace: Namespace, prefixes: dict) -> Self:
         if definition.implements and isinstance(definition.implements, list):
             sub_class_of = []
             for parent_class in definition.implements:
@@ -333,7 +333,7 @@ class OWLProperty(OntologyModel):
     namespace: Namespace
 
     @classmethod
-    def from_list_of_properties(cls, definitions: list[InformationProperty], namespace: Namespace) -> "OWLProperty":
+    def from_list_of_properties(cls, definitions: list[ConceptualProperty], namespace: Namespace) -> "OWLProperty":
         """Here list of properties is a list of properties with the same id, but different definitions."""
         property_ids = {definition.property_ for definition in definitions}
         if len(property_ids) != 1:
@@ -573,7 +573,10 @@ class SHACLNodeShape(OntologyModel):
 
     @classmethod
     def from_rules(
-        cls, class_definition: InformationClass, property_definitions: list[InformationProperty], namespace: Namespace
+        cls,
+        class_definition: ConceptualClass,
+        property_definitions: list[ConceptualProperty],
+        namespace: Namespace,
     ) -> "SHACLNodeShape":
         if class_definition.implements:
             parent = [namespace[str(parent.suffix) + "Shape"] for parent in class_definition.implements]
@@ -628,7 +631,7 @@ class SHACLPropertyShape(OntologyModel):
         return self.path_triples + self.node_kind_triples + self.cardinality_triples
 
     @classmethod
-    def from_property(cls, definition: InformationProperty, namespace: Namespace) -> "SHACLPropertyShape":
+    def from_property(cls, definition: ConceptualProperty, namespace: Namespace) -> "SHACLPropertyShape":
         # TODO requires PR to fix MultiValueType and UnknownValueType
         if isinstance(definition.value_type, ClassEntity):
             expected_value_type = namespace[f"{definition.value_type.suffix}Shape"]
