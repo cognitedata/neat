@@ -35,7 +35,7 @@ from cognite.neat.core._data_model._shared import (
     ReadRules,
     VerifiedRules,
 )
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
@@ -162,10 +162,7 @@ class ToDMSCompliantEntities(
         for cls_ in copy.concepts:
             if cls_.implements:
                 for i, parent in enumerate(cls_.implements):
-                    if (
-                        isinstance(parent, ConceptEntity)
-                        and parent.suffix in new_by_old_class_suffix
-                    ):
+                    if isinstance(parent, ConceptEntity) and parent.suffix in new_by_old_class_suffix:
                         cls_.implements[i].suffix = new_by_old_class_suffix[parent.suffix]  # type: ignore[union-attr]
 
         for prop in copy.properties:
@@ -180,24 +177,15 @@ class ToDMSCompliantEntities(
                     )
                 prop.property_ = new_property
 
-            if (
-                isinstance(prop.class_, ConceptEntity)
-                and prop.class_.suffix in new_by_old_class_suffix
-            ):
+            if isinstance(prop.class_, ConceptEntity) and prop.class_.suffix in new_by_old_class_suffix:
                 prop.class_.suffix = new_by_old_class_suffix[prop.class_.suffix]
 
-            if (
-                isinstance(prop.value_type, ConceptEntity)
-                and prop.value_type.suffix in new_by_old_class_suffix
-            ):
+            if isinstance(prop.value_type, ConceptEntity) and prop.value_type.suffix in new_by_old_class_suffix:
                 prop.value_type.suffix = new_by_old_class_suffix[prop.value_type.suffix]
 
             if isinstance(prop.value_type, MultiValueTypeInfo):
                 for i, value_type in enumerate(prop.value_type.types):
-                    if (
-                        isinstance(value_type, ConceptEntity)
-                        and value_type.suffix in new_by_old_class_suffix
-                    ):
+                    if isinstance(value_type, ConceptEntity) and value_type.suffix in new_by_old_class_suffix:
                         prop.value_type.types[i].suffix = new_by_old_class_suffix[value_type.suffix]  # type: ignore[union-attr]
 
         return ReadRules(rules=copy, read_context=rules.read_context)
@@ -335,10 +323,7 @@ class ToCompliantEntities(VerifiedRulesTransformer[ConceptualDataModel, Conceptu
         # value type specified as MultiValueTypeInfo
         if isinstance(value_type, MultiValueTypeInfo):
             fixed_value_type = MultiValueTypeInfo(
-                types=[
-                    cast(DataType | ConceptEntity, cls._fix_value_type(type_))
-                    for type_ in value_type.types
-                ],
+                types=[cast(DataType | ConceptEntity, cls._fix_value_type(type_)) for type_ in value_type.types],
             )
 
         # value type specified as ClassEntity instance
@@ -352,9 +337,7 @@ class ToCompliantEntities(VerifiedRulesTransformer[ConceptualDataModel, Conceptu
         return fixed_value_type
 
     @classmethod
-    def _fix_classes(
-        cls, definitions: SheetList[ConceptualConcept]
-    ) -> SheetList[ConceptualConcept]:
+    def _fix_classes(cls, definitions: SheetList[ConceptualConcept]) -> SheetList[ConceptualConcept]:
         fixed_definitions = SheetList[ConceptualConcept]()
         for definition in definitions:
             definition.concept = cls._fix_class(definition.concept)
@@ -410,22 +393,12 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
 
                 # value type property is not multi and it is ClassEntity
 
-                if (
-                    isinstance(prop.value_type, ConceptEntity)
-                    and prop.value_type.prefix == copy.metadata.prefix
-                ):
-                    prop.value_type = self._with_prefix(
-                        cast(ConceptEntity, prop.value_type)
-                    )
+                if isinstance(prop.value_type, ConceptEntity) and prop.value_type.prefix == copy.metadata.prefix:
+                    prop.value_type = self._with_prefix(cast(ConceptEntity, prop.value_type))
                 elif isinstance(prop.value_type, MultiValueTypeInfo):
                     for i, value_type in enumerate(prop.value_type.types):
-                        if (
-                            isinstance(value_type, ConceptEntity)
-                            and value_type.prefix == copy.metadata.prefix
-                        ):
-                            prop.value_type.types[i] = self._with_prefix(
-                                cast(ConceptEntity, value_type)
-                            )
+                        if isinstance(value_type, ConceptEntity) and value_type.prefix == copy.metadata.prefix:
+                            prop.value_type.types[i] = self._with_prefix(cast(ConceptEntity, value_type))
             return copy
 
         # Case: Prefix DMS Rules
@@ -517,18 +490,12 @@ class StandardizeNaming(ConversionTransformer):
             if prop.concept.suffix in new_by_old_class_suffix:
                 prop.concept.suffix = new_by_old_class_suffix[prop.concept.suffix]
 
-            if (
-                isinstance(prop.value_type, ConceptEntity)
-                and prop.value_type.suffix in new_by_old_class_suffix
-            ):
+            if isinstance(prop.value_type, ConceptEntity) and prop.value_type.suffix in new_by_old_class_suffix:
                 prop.value_type.suffix = new_by_old_class_suffix[prop.value_type.suffix]
 
             if isinstance(prop.value_type, MultiValueTypeInfo):
                 for i, value_type in enumerate(prop.value_type.types):
-                    if (
-                        isinstance(value_type, ConceptEntity)
-                        and value_type.suffix in new_by_old_class_suffix
-                    ):
+                    if isinstance(value_type, ConceptEntity) and value_type.suffix in new_by_old_class_suffix:
                         prop.value_type.types[i].suffix = new_by_old_class_suffix[value_type.suffix]  # type: ignore[union-attr]
 
         return rules
@@ -909,7 +876,7 @@ class ToSolutionModel(ToExtensionModel):
 
     @staticmethod
     def _expand_properties(rules: PhysicalDataModel) -> PhysicalDataModel:
-        probe = RulesAnalysis(dms=rules)
+        probe = DataModelAnalysis(physical=rules)
         ancestor_properties_by_view = probe.properties_by_view(
             include_ancestors=True,
             include_different_space=True,
@@ -1175,7 +1142,7 @@ class DropModelViews(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataMod
             }
         new_model = rules.model_copy(deep=True)
 
-        properties_by_view = RulesAnalysis(dms=new_model).properties_by_view(include_ancestors=True)
+        properties_by_view = DataModelAnalysis(physical=new_model).properties_by_view(include_ancestors=True)
 
         new_model.views = SheetList[PhysicalView]([view for view in new_model.views if view.view not in exclude_views])
         new_properties = SheetList[PhysicalProperty]()
@@ -1271,9 +1238,7 @@ class AddClassImplements(VerifiedRulesTransformer[ConceptualDataModel, Conceptua
         output = info_rules.model_copy(deep=True)
         for class_ in output.concepts:
             if class_.concept.suffix.endswith(self.suffix):
-                class_.implements = [
-                    ConceptEntity(prefix=class_.concept.prefix, suffix=self.implements)
-                ]
+                class_.implements = [ConceptEntity(prefix=class_.concept.prefix, suffix=self.implements)]
         return output
 
     @property
@@ -1325,31 +1290,17 @@ class ClassicPrepareCore(VerifiedRulesTransformer[ConceptualDataModel, Conceptua
         )
         output.concepts.append(source_system_class)
         for prop in output.properties:
-            if (
-                prop.property_ == "source"
-                and prop.concept.suffix != "ClassicSourceSystem"
-            ):
-                prop.value_type = ConceptEntity(
-                    prefix=prefix, suffix="ClassicSourceSystem"
-                )
+            if prop.property_ == "source" and prop.concept.suffix != "ClassicSourceSystem":
+                prop.value_type = ConceptEntity(prefix=prefix, suffix="ClassicSourceSystem")
             elif prop.property_ == "externalId":
                 prop.property_ = "classicExternalId"
-                if (
-                    self.reference_timeseries
-                    and prop.concept.suffix == "ClassicTimeSeries"
-                ):
+                if self.reference_timeseries and prop.concept.suffix == "ClassicTimeSeries":
                     prop.value_type = Timeseries()
                 elif self.reference_files and prop.concept.suffix == "ClassicFile":
                     prop.value_type = File()
-            elif (
-                prop.property_ == "sourceExternalId"
-                and prop.concept.suffix == "ClassicRelationship"
-            ):
+            elif prop.property_ == "sourceExternalId" and prop.concept.suffix == "ClassicRelationship":
                 prop.property_ = "startNode"
-            elif (
-                prop.property_ == "targetExternalId"
-                and prop.concept.suffix == "ClassicRelationship"
-            ):
+            elif prop.property_ == "targetExternalId" and prop.concept.suffix == "ClassicRelationship":
                 prop.property_ = "endNode"
         instance_prefix = next(
             (prefix for prefix, namespace in output.prefixes.items() if namespace == self.instance_namespace), None
@@ -1447,9 +1398,7 @@ class MergeInformationRules(VerifiedRulesTransformer[ConceptualDataModel, Concep
         for cls in self.extra.concepts:
             if cls.concept not in existing_classes:
                 output.concepts.append(cls)
-        existing_properties = {
-            (prop.concept, prop.property_) for prop in output.properties
-        }
+        existing_properties = {(prop.concept, prop.property_) for prop in output.properties}
         for prop in self.extra.properties:
             if (prop.concept, prop.property_) not in existing_properties:
                 output.properties.append(prop)
@@ -1497,8 +1446,7 @@ class _InformationRulesConverter:
         edge_value_types_by_class_property_pair = {
             (prop.concept, prop.property_): prop.value_type
             for prop in self.rules.properties
-            if prop.value_type in edge_classes
-            and isinstance(prop.value_type, ConceptEntity)
+            if prop.value_type in edge_classes and isinstance(prop.value_type, ConceptEntity)
         }
         end_node_by_edge = {
             prop.concept: prop.value_type
@@ -1508,7 +1456,7 @@ class _InformationRulesConverter:
             and isinstance(prop.value_type, ConceptEntity)
         }
         ancestors_by_view: dict[ViewEntity, set[ViewEntity]] = {}
-        parents_by_class = RulesAnalysis(self.rules).parents_by_class(
+        parents_by_class = DataModelAnalysis(self.rules).parents_by_concept(
             include_ancestors=True, include_different_space=True
         )
         for cls_, parents in parents_by_class.items():
@@ -1526,21 +1474,14 @@ class _InformationRulesConverter:
             else:
                 ancestors_by_view[view] = cognite_views[view]
 
-        properties_by_class: dict[ConceptEntity, list[PhysicalProperty]] = defaultdict(
-            list
-        )
-        used_containers: dict[ContainerEntity, Counter[ConceptEntity]] = defaultdict(
-            Counter
-        )
+        properties_by_class: dict[ConceptEntity, list[PhysicalProperty]] = defaultdict(list)
+        used_containers: dict[ContainerEntity, Counter[ConceptEntity]] = defaultdict(Counter)
         used_cognite_containers: dict[ContainerEntity, PhysicalContainer] = {}
 
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
                 continue
-            if (
-                prop.concept in edge_classes
-                and prop.property_ in self._start_or_end_node
-            ):
+            if prop.concept in edge_classes and prop.property_ in self._start_or_end_node:
                 continue
             if prop.property_ in DMS_RESERVED_PROPERTIES:
                 msg = f"Property {prop.property_} is a reserved property in DMS."
@@ -1661,7 +1602,7 @@ class _InformationRulesConverter:
                 (dms_prop.view.as_class(), dms_prop.view_property): dms_prop for dms_prop in cognite_rules.properties
             }
             cognite_containers = {container.container: container for container in cognite_rules.containers or []}
-            cognite_views = RulesAnalysis(dms=cognite_rules).implements_by_view(
+            cognite_views = DataModelAnalysis(physical=cognite_rules).implements_by_view(
                 include_ancestors=True, include_different_space=True
             )
         return cognite_properties, cognite_containers, cognite_views
@@ -1707,9 +1648,7 @@ class _InformationRulesConverter:
         default_space: str,
         default_version: str,
         edge_classes: set[ConceptEntity],
-        edge_value_types_by_class_property_pair: dict[
-            tuple[ConceptEntity, str], ConceptEntity
-        ],
+        edge_value_types_by_class_property_pair: dict[tuple[ConceptEntity, str], ConceptEntity],
         end_node_by_edge: dict[ConceptEntity, ConceptEntity],
     ) -> "PhysicalProperty":
         from cognite.neat.core._data_model.models.dms._verified import PhysicalProperty
@@ -1797,9 +1736,7 @@ class _InformationRulesConverter:
         elif isinstance(prop.value_type, DataType):
             # User set the same value type as core concept.
             pass
-        elif isinstance(prop.value_type, ConceptEntity) and isinstance(
-            cognite_prop.value_type, ViewEntity
-        ):
+        elif isinstance(prop.value_type, ConceptEntity) and isinstance(cognite_prop.value_type, ViewEntity):
             view_type = prop.value_type.as_view_entity(default_space, default_version)
             ancestors = ancestors_by_view.get(view_type, set())
             if view_type == cognite_prop.value_type or cognite_prop.value_type in ancestors:
@@ -1836,20 +1773,15 @@ class _InformationRulesConverter:
     def _get_connection(
         prop: ConceptualProperty,
         value_type: DataType | ViewEntity | PhysicalUnknownEntity,
-        edge_value_types_by_class_property_pair: dict[
-            tuple[ConceptEntity, str], ConceptEntity
-        ],
+        edge_value_types_by_class_property_pair: dict[tuple[ConceptEntity, str], ConceptEntity],
         default_space: str,
         default_version: str,
     ) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
         if (
             isinstance(value_type, ViewEntity)
-            and (prop.concept, prop.property_)
-            in edge_value_types_by_class_property_pair
+            and (prop.concept, prop.property_) in edge_value_types_by_class_property_pair
         ):
-            edge_value_type = edge_value_types_by_class_property_pair[
-                (prop.concept, prop.property_)
-            ]
+            edge_value_type = edge_value_types_by_class_property_pair[(prop.concept, prop.property_)]
             return EdgeEntity(properties=edge_value_type.as_view_entity(default_space, default_version))
         if isinstance(value_type, ViewEntity) and (
             prop.max_count in {float("inf"), None} or (isinstance(prop.max_count, int | float) and prop.max_count > 1)
@@ -1878,9 +1810,7 @@ class _InformationRulesConverter:
         elif isinstance(prop.value_type, UnknownEntity):
             return PhysicalUnknownEntity()
 
-        elif isinstance(prop.value_type, ConceptEntity) and (
-            prop.value_type in edge_classes
-        ):
+        elif isinstance(prop.value_type, ConceptEntity) and (prop.value_type in edge_classes):
             if prop.value_type in end_node_by_edge:
                 return end_node_by_edge[prop.value_type].as_view_entity(default_space, default_version)
             # This occurs if the end node is not pointing to a class
@@ -1940,9 +1870,7 @@ class _InformationRulesConverter:
         self.property_count_by_container[container_entity] += 1
         return container_entity, prop.property_
 
-    def _get_view_implements(
-        self, cls_: ConceptualConcept, metadata: ConceptualMetadata
-    ) -> list[ViewEntity]:
+    def _get_view_implements(self, cls_: ConceptualConcept, metadata: ConceptualMetadata) -> list[ViewEntity]:
         implements = []
         for parent in cls_.implements or []:
             view_entity = parent.as_view_entity(metadata.prefix, metadata.version)
@@ -1982,11 +1910,7 @@ class _InformationRulesConverter:
         return data_types.String()
 
     def _get_cognite_concepts(self) -> set[ConceptEntity]:
-        return {
-            cls_.concept
-            for cls_ in self.rules.concepts
-            if str(cls_.concept.prefix) in COGNITE_SPACES
-        } | {
+        return {cls_.concept for cls_ in self.rules.concepts if str(cls_.concept.prefix) in COGNITE_SPACES} | {
             parent
             for cls_ in self.rules.concepts
             for parent in cls_.implements or []
@@ -1994,9 +1918,7 @@ class _InformationRulesConverter:
         }
 
     @staticmethod
-    def _get_cognite_dms_rules(
-        concepts: set[ConceptEntity], client: NeatClient
-    ) -> PhysicalDataModel:
+    def _get_cognite_dms_rules(concepts: set[ConceptEntity], client: NeatClient) -> PhysicalDataModel:
         view_ids = [dm.ViewId(str(cls_.prefix), cls_.suffix, cls_.version) for cls_ in concepts]
         views = client.loaders.views.retrieve(view_ids, format="read", include_connected=True, include_ancestor=True)
         spaces = Counter(view.space for view in views)
@@ -2093,9 +2015,7 @@ class _DMSRulesConverter:
 
             info_property = ConceptualProperty(
                 # Removing version
-                concept=ConceptEntity(
-                    suffix=property_.view.suffix, prefix=property_.view.prefix
-                ),
+                concept=ConceptEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
                 property_=property_.view_property,
                 name=property_.name,
                 value_type=value_type,
@@ -2213,7 +2133,7 @@ class SubsetDMSRules(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataMod
         self._views = views
 
     def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
-        analysis = RulesAnalysis(dms=rules)
+        analysis = DataModelAnalysis(physical=rules)
 
         views_by_view = analysis.view_by_view_entity
         implements_by_view = analysis.implements_by_view()
@@ -2285,12 +2205,12 @@ class SubsetInformationRules(VerifiedRulesTransformer[ConceptualDataModel, Conce
         self._classes = classes
 
     def transform(self, rules: ConceptualDataModel) -> ConceptualDataModel:
-        analysis = RulesAnalysis(information=rules)
+        analysis = DataModelAnalysis(conceptual=rules)
 
-        class_by_class_entity = analysis.class_by_class_entity
-        parent_entity_by_class_entity = analysis.parents_by_class()
+        class_by_class_entity = analysis.concept_by_concept_entity
+        parent_entity_by_class_entity = analysis.parents_by_concept()
 
-        available = analysis.defined_classes(include_ancestors=True)
+        available = analysis.defined_concepts(include_ancestors=True)
         subset = available.intersection(self._classes)
 
         # need to add all the parent classes of the desired classes to the possible classes
@@ -2321,17 +2241,14 @@ class SubsetInformationRules(VerifiedRulesTransformer[ConceptualDataModel, Conce
         for class_ in subset:
             subsetted_rules["classes"].append(class_by_class_entity[class_])
 
-        for class_, properties in analysis.properties_by_class(include_ancestors=False).items():
+        for class_, properties in analysis.properties_by_concepts(include_ancestors=False).items():
             if class_ not in subset:
                 continue
             for property_ in properties:
                 # datatype property can be added directly
                 if (
                     isinstance(property_.value_type, DataType)
-                    or (
-                        isinstance(property_.value_type, ConceptEntity)
-                        and property_.value_type in subset
-                    )
+                    or (isinstance(property_.value_type, ConceptEntity) and property_.value_type in subset)
                     or isinstance(property_.value_type, UnknownEntity)
                 ):
                     subsetted_rules["properties"].append(property_)
@@ -2384,9 +2301,7 @@ class AddCogniteProperties(
         default_space = input_.metadata.space
         default_version = input_.metadata.version
 
-        dependencies_by_class = self._get_dependencies_by_class(
-            input_.concepts, rules.read_context, default_space
-        )
+        dependencies_by_class = self._get_dependencies_by_class(input_.concepts, rules.read_context, default_space)
         properties_by_class = self._get_properties_by_class(input_.properties, rules.read_context, default_space)
         cognite_implements_concepts = self._get_cognite_concepts(dependencies_by_class)
         views_by_class_entity = self._get_views_by_class(cognite_implements_concepts, default_space, default_version)
@@ -2450,9 +2365,7 @@ class AddCogniteProperties(
         default_space: str,
     ) -> dict[ConceptEntity, dict[str, UnverifiedConceptualProperty]]:
         issues = IssueList()
-        properties_by_class: dict[
-            ConceptEntity, dict[str, UnverifiedConceptualProperty]
-        ] = defaultdict(dict)
+        properties_by_class: dict[ConceptEntity, dict[str, UnverifiedConceptualProperty]] = defaultdict(dict)
         for prop in properties:
             try:
                 dumped = prop.dump(default_prefix=default_space)
@@ -2505,9 +2418,4 @@ class AddCogniteProperties(
     ) -> dict[ConceptEntity, View]:
         view_ids = [class_.as_view_entity(default_space, default_version).as_id() for class_ in classes]
         views = self._client.loaders.views.retrieve(view_ids, include_ancestor=True, include_connected=True)
-        return {
-            ConceptEntity(
-                prefix=view.space, suffix=view.external_id, version=view.version
-            ): view
-            for view in views
-        }
+        return {ConceptEntity(prefix=view.space, suffix=view.external_id, version=view.version): view for view in views}

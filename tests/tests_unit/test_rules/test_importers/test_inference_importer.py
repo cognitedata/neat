@@ -5,7 +5,7 @@ from rdflib import RDF, Literal, Namespace
 
 from cognite.neat import NeatSession
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.importers import InferenceImporter
 from cognite.neat.core._data_model.models.data_types import DataType, Integer, Json, Long
 from cognite.neat.core._data_model.models.entities import MultiValueTypeInfo
@@ -37,8 +37,7 @@ def test_rdf_inference():
         (
             prop
             for prop in rules.properties
-            if prop.property_ == "OperatingShare.PowerSystemResource"
-            and prop.concept.suffix == "OperatingShare"
+            if prop.property_ == "OperatingShare.PowerSystemResource" and prop.concept.suffix == "OperatingShare"
         ),
         None,
     )
@@ -52,7 +51,7 @@ def test_rdf_inference():
     )
 
     # we should have 4 multi-value property
-    assert len(RulesAnalysis(rules).multi_value_properties) == 4
+    assert len(DataModelAnalysis(rules).multi_value_properties) == 4
 
 
 def test_rdf_inference_with_removal_of_unknown_type():

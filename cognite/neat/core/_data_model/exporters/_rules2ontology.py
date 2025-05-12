@@ -10,7 +10,7 @@ from rdflib.collection import Collection as GraphCollection
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE as NEAT_NAMESPACE
 from cognite.neat.core._data_model._constants import EntityTypes
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualConcept,
     ConceptualDataModel,
@@ -121,19 +121,15 @@ class Ontology(OntologyModel):
                 )
             raise MultiValueError(errors)
 
-        analysis = RulesAnalysis(rules)
-        class_dict = analysis.class_by_suffix()
+        analysis = DataModelAnalysis(rules)
+        class_dict = analysis.concept_by_suffix()
         return cls(
             properties=[
-                OWLProperty.from_list_of_properties(
-                    definition, rules.metadata.namespace
-                )
+                OWLProperty.from_list_of_properties(definition, rules.metadata.namespace)
                 for definition in analysis.property_by_id().values()
             ],
             classes=[
-                OWLClass.from_class(
-                    definition, rules.metadata.namespace, rules.prefixes
-                )
+                OWLClass.from_class(definition, rules.metadata.namespace, rules.prefixes)
                 for definition in rules.concepts
             ],
             shapes=[
@@ -142,7 +138,7 @@ class Ontology(OntologyModel):
                     list(properties.values()),
                     rules.metadata.namespace,
                 )
-                for class_, properties in analysis.properties_by_id_by_class().items()
+                for class_, properties in analysis.properties_by_id_by_concept().items()
             ]
             + [
                 SHACLNodeShape.from_rules(
@@ -263,9 +259,7 @@ class OWLClass(OntologyModel):
     namespace: Namespace
 
     @classmethod
-    def from_class(
-        cls, definition: ConceptualConcept, namespace: Namespace, prefixes: dict
-    ) -> Self:
+    def from_class(cls, definition: ConceptualConcept, namespace: Namespace, prefixes: dict) -> Self:
         if definition.implements and isinstance(definition.implements, list):
             sub_class_of = []
             for parent_class in definition.implements:
@@ -592,10 +586,7 @@ class SHACLNodeShape(OntologyModel):
             id_=namespace[f"{class_definition.concept.suffix!s}Shape"],
             target_class=namespace[str(class_definition.concept.suffix)],
             parent=parent,
-            property_shapes=[
-                SHACLPropertyShape.from_property(prop, namespace)
-                for prop in property_definitions
-            ],
+            property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
             namespace=namespace,
         )
 

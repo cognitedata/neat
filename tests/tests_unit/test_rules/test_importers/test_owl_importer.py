@@ -1,6 +1,6 @@
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model._constants import EntityTypes
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyRules
 from cognite.neat.core._issues import catch_issues
@@ -32,10 +32,8 @@ def test_ill_formed_owl_importer():
 
     # this is rdf:PlainLiteral edge case
     assert (
-        RulesAnalysis(rules)
-        .properties_by_id_by_class()[ConceptEntity.load("neat_space:LaureateAward")][
-            "motivation"
-        ]
+        DataModelAnalysis(rules)
+        .properties_by_id_by_concept()[ConceptEntity.load("neat_space:LaureateAward")]["motivation"]
         .type_
         == EntityTypes.data_property
     )

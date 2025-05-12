@@ -7,7 +7,7 @@ from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
 
 from cognite.neat.core._constants import IN_NOTEBOOK, IN_PYODIDE
-from cognite.neat.core._data_model.analysis._base import RulesAnalysis
+from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
 from cognite.neat.core._utils.io_ import to_directory_compatible
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_display_name
 from cognite.neat.session.exceptions import NeatSessionError
@@ -100,7 +100,7 @@ class ShowDataModelAPI(ShowBaseAPI):
 
         last_target = self._state.rule_store.provenance[-1].target_entity
         rules = last_target.dms or last_target.information
-        analysis = RulesAnalysis(dms=last_target.dms, information=last_target.information)
+        analysis = DataModelAnalysis(physical=last_target.dms, conceptual=last_target.information)
 
         if last_target.dms is not None:
             di_graph = analysis._dms_di_graph(format="data-model")
@@ -124,7 +124,7 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
 
         last_target = self._state.rule_store.provenance[-1].target_entity
         rules = last_target.dms or last_target.information
-        analysis = RulesAnalysis(dms=last_target.dms, information=last_target.information)
+        analysis = DataModelAnalysis(physical=last_target.dms, conceptual=last_target.information)
 
         if last_target.dms is not None:
             di_graph = analysis._dms_di_graph(format="implements")

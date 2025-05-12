@@ -1,4 +1,4 @@
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.importers import InferenceImporter
 from cognite.neat.core._instances.examples import nordic44_knowledge_graph
 from cognite.neat.core._instances.extractors import RdfFileExtractor
@@ -14,4 +14,4 @@ def test_split_multi_value_property():
     store.transform(SplitMultiValueProperty())
 
     rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
-    assert len(RulesAnalysis(rules).multi_value_properties) == 0
+    assert len(DataModelAnalysis(rules).multi_value_properties) == 0

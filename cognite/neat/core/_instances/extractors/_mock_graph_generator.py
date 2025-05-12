@@ -12,7 +12,7 @@ import pandas as pd
 from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.core._data_model._constants import EntityTypes
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
@@ -55,12 +55,11 @@ class MockGraphGenerator(BaseExtractor):
 
         if not class_count:
             self.class_count = {
-                class_: 1 for class_ in RulesAnalysis(self.rules).defined_classes(include_ancestors=True)
+                class_: 1 for class_ in DataModelAnalysis(self.rules).defined_concepts(include_ancestors=True)
             }
         elif all(isinstance(key, str) for key in class_count.keys()):
             self.class_count = {
-                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value
-                for key, value in class_count.items()
+                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
             }
         elif all(isinstance(key, ConceptEntity) for key in class_count.keys()):
             self.class_count = cast(dict[ConceptEntity, int], class_count)
@@ -106,8 +105,8 @@ def generate_triples(
     """
 
     namespace = rules.metadata.namespace
-    analysis = RulesAnalysis(rules)
-    defined_classes = analysis.defined_classes(include_ancestors=True)
+    analysis = DataModelAnalysis(rules)
+    defined_classes = analysis.defined_concepts(include_ancestors=True)
 
     if non_existing_classes := set(class_count.keys()) - defined_classes:
         msg = f"Class count contains classes {non_existing_classes} for which properties are not defined in Data Model!"
@@ -126,11 +125,11 @@ def generate_triples(
         else rules
     )
 
-    class_linkage = analysis.class_linkage().to_pandas()
+    class_linkage = analysis.concept_linkage().to_pandas()
 
     # Remove one of symmetric pairs from class linkage to maintain proper linking
     # among instances of symmetrically linked classes
-    if sym_pairs := analysis.symmetrically_connected_classes():
+    if sym_pairs := analysis.symmetrically_connected_concepts():
         class_linkage = _remove_higher_occurring_sym_pair(class_linkage, sym_pairs)
 
     # Remove any of symmetric pairs containing classes that are not present class count
@@ -140,7 +139,7 @@ def generate_triples(
     generation_order = _prettify_generation_order(_get_generation_order(class_linkage))
 
     # Generated simple view of data model
-    class_property_pairs = analysis.properties_by_class(include_ancestors=True)
+    class_property_pairs = analysis.properties_by_concepts(include_ancestors=True)
 
     # pregenerate instance ids for each remaining class
     instance_ids = {
@@ -318,9 +317,7 @@ def _generate_mock_object_property_triples(
     # Handling symmetric property
 
     if tuple((class_, property_definition.value_type)) in sym_pairs:
-        symmetric_class_properties = class_property_pairs[
-            cast(ConceptEntity, property_definition.value_type)
-        ]
+        symmetric_class_properties = class_property_pairs[cast(ConceptEntity, property_definition.value_type)]
         candidates = list(
             filter(
                 lambda instance: instance.value_type == class_,
@@ -361,9 +358,7 @@ def _generate_mock_object_property_triples(
             ]
 
     if symmetric_property:
-        class_property_pairs[
-            cast(ConceptEntity, property_definition.value_type)
-        ].remove(symmetric_property)
+        class_property_pairs[cast(ConceptEntity, property_definition.value_type)].remove(symmetric_property)
 
     return triples
 

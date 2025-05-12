@@ -25,7 +25,7 @@ from cognite.neat.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     is_readonly_property,
 )
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.analysis._base import ViewQuery, ViewQueryDict
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual._verified import (
@@ -209,7 +209,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield _END_OF_CLASS
 
     def _create_view_iterations(self) -> tuple[list[_ViewIterator], IssueList]:
-        view_query_by_id = RulesAnalysis(self.info_rules, self.dms_rules).view_query_by_id
+        view_query_by_id = DataModelAnalysis(self.info_rules, self.dms_rules).view_query_by_id
         iterations_by_view_id = self._select_views_with_instances(view_query_by_id)
         if self._client:
             issues = IssueList()
