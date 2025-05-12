@@ -5,7 +5,7 @@ from cognite.client.exceptions import CogniteAPIError
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat.core._graph.extractors import SequencesExtractor
+from cognite.neat.core._instances.extractors import SequencesExtractor
 from cognite.neat.core._issues import catch_warnings
 from cognite.neat.core._issues.warnings import CDFAuthWarning
 from cognite.neat.core._utils.rdf_ import Triple, remove_namespace_from_uri

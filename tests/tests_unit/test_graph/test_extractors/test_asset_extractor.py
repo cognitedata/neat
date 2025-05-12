@@ -2,7 +2,7 @@ from cognite.client.data_classes import AssetList
 from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._graph.extractors import AssetsExtractor
+from cognite.neat.core._instances.extractors import AssetsExtractor
 from cognite.neat.core._store import NeatGraphStore
 from tests.data import InstanceData
 

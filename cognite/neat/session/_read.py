@@ -17,15 +17,15 @@ from cognite.neat.core._data_model.transformers._converters import (
     ToEnterpriseModel,
     _SubsetEditableCDMRules,
 )
-from cognite.neat.core._graph import examples as instances_examples
-from cognite.neat.core._graph import extractors
-from cognite.neat.core._graph.extractors._classic_cdf._base import InstanceIdPrefix
-from cognite.neat.core._graph.transformers import (
+from cognite.neat.core._instances import examples as instances_examples
+from cognite.neat.core._instances import extractors
+from cognite.neat.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
+from cognite.neat.core._instances.transformers import (
     ConvertLiteral,
     LiteralToEntity,
     Transformers,
 )
-from cognite.neat.core._graph.transformers._prune_graph import (
+from cognite.neat.core._instances.transformers._prune_graph import (
     AttachPropertyFromTargetToSource,
     PruneDeadEndEdges,
     PruneInstancesOfUnknownType,

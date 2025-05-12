@@ -1,5 +1,5 @@
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._graph import extractors, transformers
+from cognite.neat.core._instances import extractors, transformers
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._store import NeatGraphStore
 from tests.data import InstanceData

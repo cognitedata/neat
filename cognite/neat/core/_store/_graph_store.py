@@ -12,10 +12,10 @@ from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
-from cognite.neat.core._graph._shared import quad_formats, rdflib_to_oxi_type
-from cognite.neat.core._graph.extractors import RdfFileExtractor, TripleExtractors
-from cognite.neat.core._graph.queries import Queries
-from cognite.neat.core._graph.transformers import Transformers
+from cognite.neat.core._instances._shared import quad_formats, rdflib_to_oxi_type
+from cognite.neat.core._instances.extractors import RdfFileExtractor, TripleExtractors
+from cognite.neat.core._instances.queries import Queries
+from cognite.neat.core._instances.transformers import Transformers
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._issues.errors import NeatValueError, OxigraphStorageLockedError
 from cognite.neat.core._shared import InstanceType, Triple
