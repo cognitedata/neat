@@ -22,7 +22,7 @@ def session_with_model() -> NeatSession:
         )
         view = dm.View(
             space=space.space,
-            external_id="MyView",
+            external_id="Asset",
             version="v1",
             name=None,
             description=None,
@@ -41,7 +41,15 @@ def session_with_model() -> NeatSession:
                     auto_increment=False,
                     nullable=True,
                     immutable=False,
-                )
+                ),
+                "parent": dm.MappedProperty(
+                    container=dm.ContainerId("my_space", "my_container"),
+                    container_property_identifier="parent",
+                    type=dm.data_types.DirectRelation(is_list=False),
+                    auto_increment=False,
+                    nullable=True,
+                    immutable=False,
+                ),
             },
         )
         client.data_modeling.data_models.retrieve.return_value = dm.DataModelList(
@@ -78,7 +86,13 @@ def session_with_model() -> NeatSession:
                             auto_increment=False,
                             nullable=True,
                             immutable=False,
-                        )
+                        ),
+                        "parent": dm.ContainerProperty(
+                            type=dm.data_types.DirectRelation(is_list=False),
+                            auto_increment=False,
+                            nullable=True,
+                            immutable=False,
+                        ),
                     },
                 )
             ]
@@ -92,7 +106,7 @@ def session_with_model() -> NeatSession:
 class TestConnectData:
     def test_connect_data_to_existing_model(self, session_with_model: NeatSession) -> None:
         neat = session_with_model
-        view_id = dm.ViewId("my_space", "MyView", "v1")
+        view_id = dm.ViewId("my_space", "Asset", "v1")
 
         instance_space = Namespace(DEFAULT_SPACE_URI.format(space="sp_instances"))
         schema_space = Namespace(DEFAULT_SPACE_URI.format(space="my_space"))
@@ -100,10 +114,10 @@ class TestConnectData:
         class SomeTriples(BaseExtractor):
             def extract(self) -> Iterable[Triple]:
                 my_thing = instance_space["my_thing"]
-                yield my_thing, RDF.type, schema_space["MyView"]
+                yield my_thing, RDF.type, schema_space["Asset"]
                 yield my_thing, schema_space["name"], Literal("My Thing")
                 my_other_thing = instance_space["my_other_thing"]
-                yield my_other_thing, RDF.type, schema_space["MyView"]
+                yield my_other_thing, RDF.type, schema_space["Asset"]
                 yield my_other_thing, schema_space["name"], Literal("My Other Thing")
 
         neat._state.instances.store.write(SomeTriples())
@@ -122,7 +136,7 @@ class TestConnectData:
                     sources=[
                         dm.NodeOrEdgeData(view_id, {"name": "My Other Thing"}),
                     ],
-                    type=dm.DirectRelationReference("my_space", "MyView"),
+                    type=dm.DirectRelationReference("my_space", "Asset"),
                 ),
                 dm.NodeApply(
                     "sp_instances",
@@ -130,7 +144,7 @@ class TestConnectData:
                     sources=[
                         dm.NodeOrEdgeData(view_id, {"name": "My Thing"}),
                     ],
-                    type=dm.DirectRelationReference("my_space", "MyView"),
+                    type=dm.DirectRelationReference("my_space", "Asset"),
                 ),
             ]
         )
