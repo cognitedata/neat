@@ -13,6 +13,7 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 )
 from cognite.neat.core._data_model.transformers import (
     InformationToDMS,
+    MergeConceptualDataModel,
     MergeDMSRules,
     MergeIdenticalProperties,
     MergeInformationRules,
@@ -286,13 +287,13 @@ class NeatSession:
             self._state.instances.store, last_entity.information.metadata.as_data_model_id()
         )
 
-        def action() -> tuple[InformationRules, DMSRules | None]:
+        def action() -> tuple[ConceptualDataModel, DMSRules | None]:
             data_schema = importer.to_rules()
             if data_schema.rules is None:
                 raise NeatValueError("Failed to infer the data model from the instances.")
-            conceptual = VerifyInformationRules().transform(data_schema)
+            conceptual = VerifyConceptualDataModel().transform(data_schema)
 
-            updated = MergeInformationRules(
+            updated = MergeConceptualDataModel(
                 conceptual, join="primary", priority="primary", conflict_resolution="priority"
             ).transform(last_entity.information)
 

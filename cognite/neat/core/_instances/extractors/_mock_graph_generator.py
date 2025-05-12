@@ -51,7 +51,7 @@ class MockGraphGenerator(BaseExtractor):
         elif isinstance(data_model, ConceptualDataModel):
             self.rules = data_model
         else:
-            raise ValueError("Rules must be of type InformationRules or DMSRules!")
+            raise ValueError("Rules must be of type ConceptualDataModel or DMSRules!")
 
         if not concept_count:
             self.concept_count = {

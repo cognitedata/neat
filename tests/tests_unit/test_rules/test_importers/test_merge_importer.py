@@ -5,25 +5,25 @@ import pytest
 from cognite.neat.core._data_model._shared import InputRules, ReadRules
 from cognite.neat.core._data_model.importers import DMSMergeImporter
 from cognite.neat.core._data_model.importers._base import BaseImporter
-from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, InformationInputRules
-from cognite.neat.core._data_model.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
+from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, UnverifiedConceptualDataModel
+from cognite.neat.core._data_model.models.conceptual import (
+    UnverifiedConceptualClass,
+    UnverifiedConceptualMetadata,
+    UnverifiedConceptualProperty,
 )
+from cognite.neat.core._data_model.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
 from cognite.neat.core._issues.errors import NeatError
 
 
 class ImportAdditional(BaseImporter):
-    def to_rules(self) -> ReadRules[InformationInputRules]:
+    def to_rules(self) -> ReadRules[UnverifiedConceptualDataModel]:
         return ReadRules(
-            rules=InformationInputRules(
-                metadata=InformationInputMetadata(
+            rules=UnverifiedConceptualDataModel(
+                metadata=UnverifiedConceptualMetadata(
                     external_id="my_model", version="1.0.0", space="neat", creator="doctrino"
                 ),
                 properties=[
-                    InformationInputProperty(
+                    UnverifiedConceptualProperty(
                         "MyAsset",
                         "location",
                         "text",
@@ -32,7 +32,7 @@ class ImportAdditional(BaseImporter):
                     )
                 ],
                 classes=[
-                    InformationInputClass(
+                    UnverifiedConceptualClass(
                         "MyAsset",
                         implements="CogniteAsset",
                     )
