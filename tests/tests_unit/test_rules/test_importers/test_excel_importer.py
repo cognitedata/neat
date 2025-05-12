@@ -207,7 +207,7 @@ class TestExcelImporter:
         deprecation_warning_count = sum(1 for issue in issues if isinstance(issue, DeprecatedWarning))
         assert deprecation_warning_count == 2 * len(dms_rules.properties)
         actual_properties = {
-            (prop.view.external_id, prop.property_): {
+            (prop.view.external_id, prop.view_property): {
                 "min_count": prop.min_count,
                 "max_count": prop.max_count,
             }

@@ -59,7 +59,7 @@ def test_metadata_as_json_filed():
 
     for prop in dms_rules.properties:
         prop.view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
-        prop.property_ = f"my_{prop.property_}"
+        prop.view_property = f"my_{prop.view_property}"
 
     # simulating update of the INFORMATION rules
 

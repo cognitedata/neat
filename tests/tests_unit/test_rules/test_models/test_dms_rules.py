@@ -1260,7 +1260,7 @@ class TestDMSRules:
             "power:Substation(version=0.1.0).mainTransformer",
         }
         missing = sample_expected_properties - {
-            f"{prop.view.versioned_id}.{prop.property_}" for prop in valid_rules.properties
+            f"{prop.view.versioned_id}.{prop.view_property}" for prop in valid_rules.properties
         }
         assert not missing, f"Missing properties: {missing}"
 

@@ -95,7 +95,9 @@ class PhysicalProperty(SheetRow):
     """
 
     view: ViewEntityType = Field(alias="View", description="The property identifier.")
-    property_: PhysicalPropertyType = Field(alias="View Property", description="The ViewId this property belongs to")
+    view_property: PhysicalPropertyType = Field(
+        alias="View Property", description="The ViewId this property belongs to"
+    )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the property")
     description: str | None = Field(alias="Description", default=None, description="Short description of the property")
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(
@@ -170,7 +172,7 @@ class PhysicalProperty(SheetRow):
         return self.max_count is float("inf") or (isinstance(self.max_count, int | float) and self.max_count > 1)
 
     def _identifier(self) -> tuple[Hashable, ...]:
-        return self.view, self.property_
+        return self.view, self.view_property
 
     @field_validator("min_count")
     def direct_relation_must_be_nullable(cls, value: Any, info: ValidationInfo) -> None:
@@ -276,7 +278,7 @@ class PhysicalProperty(SheetRow):
     @field_serializer("connection", when_used="unless-none")
     def remove_defaults(self, value: Any, info: SerializationInfo) -> str:
         if isinstance(value, ConceptualEntity) and (metadata := _metadata(info.context)):
-            default_type = f"{self.view.external_id}.{self.property_}"
+            default_type = f"{self.view.external_id}.{self.view_property}"
             if isinstance(value, EdgeEntity) and value.edge_type and value.edge_type.space != metadata.space:
                 default_type = f"{metadata.space}{default_type}"
             return value.dump(space=metadata.space, version=metadata.version, type=default_type)
@@ -288,7 +290,7 @@ class PhysicalProperty(SheetRow):
         return ContainerProperty(container=self.container, property_=self.container_property)
 
     def as_view_reference(self) -> ViewProperty:
-        return ViewProperty(view=self.view, property_=self.property_)
+        return ViewProperty(view=self.view, property_=self.view_property)
 
 
 class PhysicalContainer(SheetRow):
@@ -485,7 +487,7 @@ class PhysicalDataModel(BaseVerifiedDataModel):
 
         for property_ in self.properties:
             if not property_.neatId:
-                property_.neatId = namespace[f"{property_.view.suffix}/{property_.property_}"]
+                property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
 
         return self
 
@@ -498,7 +500,7 @@ class PhysicalDataModel(BaseVerifiedDataModel):
             view.neatId = namespace[view.view.suffix]
 
         for property_ in self.properties:
-            property_.neatId = namespace[f"{property_.view.suffix}/{property_.property_}"]
+            property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
 
     def sync_with_conceptual_data_model(self, conceptual_data_model: "ConceptualDataModel") -> None:
         # Sync at the metadata level

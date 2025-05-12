@@ -82,11 +82,11 @@ class MapOneToOne(MapOntoTransformers):
 
         properties_by_view_external_id: dict[str, dict[str, PhysicalProperty]] = defaultdict(dict)
         for prop in solution.properties:
-            properties_by_view_external_id[prop.view.external_id][prop.property_] = prop
+            properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
 
         ref_properties_by_view_external_id: dict[str, dict[str, PhysicalProperty]] = defaultdict(dict)
         for prop in self.reference.properties:
-            ref_properties_by_view_external_id[prop.view.external_id][prop.property_] = prop
+            ref_properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
 
         for view_external_id, view in view_by_external_id.items():
             if view_external_id in self.view_extension_mapping:
@@ -157,7 +157,9 @@ class RuleMapper(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel])
                 new_rules.views.append(mapping_view)
                 new_views.add(mapping_view.view)
 
-        properties_by_view_property = {(prop.view.external_id, prop.property_): prop for prop in new_rules.properties}
+        properties_by_view_property = {
+            (prop.view.external_id, prop.view_property): prop for prop in new_rules.properties
+        }
         existing_enum_collections = {item.collection for item in new_rules.enum or []}
         mapping_enums_by_collection: dict[ClassEntity, list[PhysicalEnum]] = defaultdict(list)
         for item in self.mapping.enum or []:
@@ -166,7 +168,7 @@ class RuleMapper(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel])
         mapping_containers_by_id = {container.container: container for container in self.mapping.containers or []}
         for mapping_prop in self.mapping.properties:
             if existing_prop := properties_by_view_property.get(
-                (mapping_prop.view.external_id, mapping_prop.property_)
+                (mapping_prop.view.external_id, mapping_prop.view_property)
             ):
                 to_overwrite, conflicts = self._find_overwrites(existing_prop, mapping_prop)
                 if conflicts and self.data_type_conflict == "overwrite":
@@ -174,14 +176,14 @@ class RuleMapper(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel])
                         PropertyOverwritingWarning(
                             existing_prop.view.as_id(),
                             "view",
-                            existing_prop.property_,
+                            existing_prop.view_property,
                             tuple(conflicts),
                         ),
                         stacklevel=2,
                     )
                 elif conflicts:
                     raise NeatValueError(
-                        f"Conflicting properties for {existing_prop.view}.{existing_prop.property_}: {conflicts}"
+                        f"Conflicting properties for {existing_prop.view}.{existing_prop.view_property}: {conflicts}"
                     )
 
                 for field_name, value in to_overwrite.items():
@@ -192,7 +194,7 @@ class RuleMapper(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel])
                 # All connections must be included in the rules. This is to update the
                 # ValueTypes of the implemented views.
                 new_rules.properties.append(mapping_prop)
-            elif "guid" in mapping_prop.property_.casefold():
+            elif "guid" in mapping_prop.view_property.casefold():
                 # All guid properties are included. Theses are necessary to get an appropriate
                 # filter on the resulting view.
                 new_rules.properties.append(mapping_prop)
@@ -278,7 +280,7 @@ class AsParentPropertyId(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDat
                 if parent_name := parent_view_property_by_container_property.get(
                     (prop.container, prop.container_property)
                 ):
-                    prop.property_ = parent_name
+                    prop.view_property = parent_name
 
         return new_rules
 
@@ -336,7 +338,7 @@ class AsParentPropertyId(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDat
             if not prop.container or not prop.container_property:
                 continue
             view_properties_by_container_properties[(prop.container, prop.container_property)].append(
-                (prop.view, prop.property_)
+                (prop.view, prop.view_property)
             )
             view_with_properties.add(prop.view)
 

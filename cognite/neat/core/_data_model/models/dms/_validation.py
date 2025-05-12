@@ -477,7 +477,7 @@ class DMSValidation:
                     UndefinedViewWarning(
                         str(prop_.view),
                         str(prop_.value_type),
-                        prop_.property_,
+                        prop_.view_property,
                     )
                 )
         return issue_list
@@ -508,7 +508,7 @@ class DMSValidation:
                             prop.container,
                             "container property",
                             prop.container_property,
-                            dm.PropertyId(prop.view.as_id(), prop.property_),
+                            dm.PropertyId(prop.view.as_id(), prop.view_property),
                             "view property",
                         )
                     )
@@ -518,7 +518,7 @@ class DMSValidation:
                     ResourceNotFoundError(
                         prop.view,
                         "view",
-                        prop.property_,
+                        prop.view_property,
                         "property",
                     )
                 )

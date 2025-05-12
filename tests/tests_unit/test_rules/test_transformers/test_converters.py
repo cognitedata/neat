@@ -58,7 +58,7 @@ class TestStandardizeNaming:
         transformed = StandardizeNaming().transform(dms.as_verified_rules())
 
         assert transformed.views[0].view.suffix == "MyPoorlyFormattedView"
-        assert transformed.properties[0].property_ == "andStrangelyNamedProperty"
+        assert transformed.properties[0].view_property == "andStrangelyNamedProperty"
         assert transformed.properties[0].view.suffix == "MyPoorlyFormattedView"
         assert transformed.properties[0].container.suffix == "MyContainer"
         assert transformed.containers[0].container.suffix == "MyContainer"

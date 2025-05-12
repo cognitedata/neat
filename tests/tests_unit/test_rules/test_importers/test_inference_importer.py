@@ -37,7 +37,7 @@ def test_rdf_inference():
         (
             prop
             for prop in rules.properties
-            if prop.property_ == "OperatingShare.PowerSystemResource" and prop.class_.suffix == "OperatingShare"
+            if prop.view_property == "OperatingShare.PowerSystemResource" and prop.class_.suffix == "OperatingShare"
         ),
         None,
     )
@@ -90,7 +90,7 @@ def test_rdf_inference_with_none_existing_node():
     assert len(rules.properties) == 14
     assert len(rules.classes) == 6
 
-    assert {prop.property_: prop.value_type for prop in rules.properties}[
+    assert {prop.view_property: prop.value_type for prop in rules.properties}[
         "Location.CoordinateSystem"
     ] == UnknownEntity()
 
@@ -106,7 +106,7 @@ def test_json_value_type_inference():
         importer = InferenceImporter.from_graph_store(store)
         rules = VerifyAnyRules().transform(importer.to_rules())
 
-    properties = {prop.property_: prop for prop in rules.properties}
+    properties = {prop.view_property: prop for prop in rules.properties}
 
     assert len(rules.properties) == 9
     assert len(rules.classes) == 1

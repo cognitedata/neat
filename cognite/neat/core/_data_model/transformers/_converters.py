@@ -534,9 +534,9 @@ class StandardizeNaming(ConversionTransformer):
         for prop in rules.properties:
             if prop.view.suffix in new_by_old_view:
                 prop.view.suffix = new_by_old_view[prop.view.suffix]
-            new_view_property = NamingStandardization.standardize_property_str(prop.property_)
-            new_property_by_view_by_old_property[prop.view][prop.property_] = new_view_property
-            prop.property_ = new_view_property
+            new_view_property = NamingStandardization.standardize_property_str(prop.view_property)
+            new_property_by_view_by_old_property[prop.view][prop.view_property] = new_view_property
+            prop.view_property = new_view_property
             if isinstance(prop.value_type, ViewEntity) and prop.value_type.suffix in new_by_old_view:
                 prop.value_type.suffix = new_by_old_view[prop.value_type.suffix]
             if (
@@ -769,7 +769,7 @@ class ToEnterpriseModel(ToExtensionModel):
             property_id = f"{to_camel_case(view_entity.suffix)}{self.dummy_property}"
             property_ = PhysicalProperty(
                 view=view_entity,
-                property_=property_id,
+                view_property=property_id,
                 value_type=String(),
                 min_count=0,
                 immutable=False,
@@ -882,7 +882,7 @@ class ToSolutionModel(ToExtensionModel):
             include_different_space=True,
         )
         property_ids_by_view = {
-            view: {prop.property_ for prop in properties}
+            view: {prop.view_property for prop in properties}
             for view, properties in probe.properties_by_view(
                 include_ancestors=False, include_different_space=True
             ).items()
@@ -894,9 +894,9 @@ class ToSolutionModel(ToExtensionModel):
                     # If you try to add a reverse direct relation of a parent, it will fail as the ValueType of the
                     # original property will point to the parent view, and not the child.
                     continue
-                if prop.property_ not in property_ids:
+                if prop.view_property not in property_ids:
                     rules.properties.append(prop)
-                    property_ids.add(prop.property_)
+                    property_ids.add(prop.view_property)
         return rules
 
     def _create_views(
@@ -983,7 +983,7 @@ class ToSolutionModel(ToExtensionModel):
                 if self.properties == "repeat" and self.dummy_property:
                     property_ = PhysicalProperty(
                         view=view.view,
-                        property_=f"{prefix}{self.dummy_property}",
+                        view_property=f"{prefix}{self.dummy_property}",
                         value_type=String(),
                         min_count=0,
                         max_count=1,
@@ -1002,7 +1002,7 @@ class ToSolutionModel(ToExtensionModel):
                 elif self.properties == "connection" and self.direct_property:
                     property_ = PhysicalProperty(
                         view=view.view,
-                        property_=self.direct_property,
+                        view_property=self.direct_property,
                         value_type=read_view,
                         min_count=0,
                         max_count=1,
@@ -1170,7 +1170,7 @@ class DropModelViews(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataMod
 
     @classmethod
     def _is_asset_3D_property(cls, prop: PhysicalProperty) -> bool:
-        return prop.view.as_id() == cls._ASSET_VIEW and prop.property_ == "object3D"
+        return prop.view.as_id() == cls._ASSET_VIEW and prop.view_property == "object3D"
 
     @property
     def description(self) -> str:
@@ -1216,9 +1216,9 @@ class IncludeReferenced(VerifiedRulesTransformer[PhysicalDataModel, PhysicalData
         existing_views = {v.view for v in copy_.views}
         copy_.views.extend([v for v in verified.views if v.view not in existing_views])
         if self.include_properties:
-            existing_properties = {(p.view, p.property_) for p in copy_.properties}
+            existing_properties = {(p.view, p.view_property) for p in copy_.properties}
             copy_.properties.extend(
-                [p for p in verified.properties if (p.view, p.property_) not in existing_properties]
+                [p for p in verified.properties if (p.view, p.view_property) not in existing_properties]
             )
 
         return copy_
@@ -1356,13 +1356,13 @@ class MergeDMSRules(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataMode
         for view in self.extra.views:
             if view.view not in existing_views:
                 output.views.append(view)
-        existing_properties = {(prop.view, prop.property_) for prop in output.properties}
+        existing_properties = {(prop.view, prop.view_property) for prop in output.properties}
         existing_containers = {container.container for container in output.containers or []}
         existing_enum_collections = {collection.collection for collection in output.enum or []}
         new_containers_by_entity = {container.container: container for container in self.extra.containers or []}
         new_enum_collections_by_entity = {collection.collection: collection for collection in self.extra.enum or []}
         for prop in self.extra.properties:
-            if (prop.view, prop.property_) in existing_properties:
+            if (prop.view, prop.view_property) in existing_properties:
                 continue
             output.properties.append(prop)
             if prop.container and prop.container not in existing_containers:
@@ -1599,7 +1599,7 @@ class _InformationRulesConverter:
             cognite_rules = self._get_cognite_dms_rules(cognite_concepts, self.client)
 
             cognite_properties = {
-                (dms_prop.view.as_class(), dms_prop.property_): dms_prop for dms_prop in cognite_rules.properties
+                (dms_prop.view.as_class(), dms_prop.view_property): dms_prop for dms_prop in cognite_rules.properties
             }
             cognite_containers = {container.container: container for container in cognite_rules.containers or []}
             cognite_views = RulesAnalysis(dms=cognite_rules).implements_by_view(
@@ -1693,7 +1693,7 @@ class _InformationRulesConverter:
             container=container,
             container_property=container_property,
             view=info_property.class_.as_view_entity(default_space, default_version),
-            property_=info_property.property_,
+            view_property=info_property.property_,
         )
 
         # linking
@@ -2016,7 +2016,7 @@ class _DMSRulesConverter:
             info_property = ConceptualProperty(
                 # Removing version
                 class_=ClassEntity(suffix=property_.view.suffix, prefix=property_.view.prefix),
-                property_=property_.property_,
+                property_=property_.view_property,
                 name=property_.name,
                 value_type=value_type,
                 description=property_.description,

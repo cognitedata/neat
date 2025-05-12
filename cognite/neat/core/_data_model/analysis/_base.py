@@ -243,13 +243,13 @@ class RulesAnalysis:
                 include_ancestors=include_ancestors, include_different_space=include_different_space
             )
             for view, parents in implements_by_view.items():
-                view_properties = {prop.property_ for prop in properties_by_views[view]}
+                view_properties = {prop.view_property for prop in properties_by_views[view]}
                 for parent in parents:
                     for parent_prop in properties_by_views[parent]:
-                        if parent_prop.property_ not in view_properties:
+                        if parent_prop.view_property not in view_properties:
                             child_prop = parent_prop.model_copy(update={"view": view})
                             properties_by_views[view].append(child_prop)
-                            view_properties.add(child_prop.property_)
+                            view_properties.add(child_prop.view_property)
 
         return properties_by_views
 
@@ -267,7 +267,7 @@ class RulesAnalysis:
         properties_by_view = self.properties_by_view(include_ancestors, include_different_space)
 
         return {
-            view: {prop.property_: prop.conceptual for prop in properties if prop.conceptual}
+            view: {prop.view_property: prop.conceptual for prop in properties if prop.conceptual}
             for view, properties in properties_by_view.items()
         }
 
@@ -525,7 +525,7 @@ class RulesAnalysis:
                     di_graph.add_edge(
                         prop_.view.suffix,
                         prop_.value_type.suffix,
-                        label=prop_.name or prop_.property_,
+                        label=prop_.name or prop_.view_property,
                     )
 
         return di_graph

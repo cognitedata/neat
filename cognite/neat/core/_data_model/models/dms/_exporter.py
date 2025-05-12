@@ -178,7 +178,7 @@ class _DMSExporter:
                     prop, view_properties_with_ancestors_by_id, edge_types_by_view_property_id
                 )
                 if view_property is not None:
-                    view.properties[prop.property_] = view_property
+                    view.properties[prop.view_property] = view_property
 
         return views
 
@@ -187,7 +187,7 @@ class _DMSExporter:
         if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
             return prop.connection.edge_type.as_reference()
         elif isinstance(prop.value_type, ViewEntity):
-            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.property_)
+            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
         else:
             raise NeatTypeError(f"Invalid valueType {prop.value_type!r}")
 
@@ -209,7 +209,7 @@ class _DMSExporter:
         for properties in view_properties_with_ancestors_by_id.values():
             for prop in properties:
                 if isinstance(prop.connection, EdgeEntity):
-                    view_property_id = (prop.view, prop.property_)
+                    view_property_id = (prop.view, prop.view_property)
                     edge_connection_property_by_view_property_id[view_property_id] = prop
 
         edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference] = {}
@@ -229,7 +229,7 @@ class _DMSExporter:
                 view, prop, view_by_id, edge_connection_property_by_view_property_id
             )
 
-            edge_types_by_view_property_id[(prop.view, prop.property_)] = edge_type
+            edge_types_by_view_property_id[(prop.view, prop.view_property)] = edge_type
 
             if isinstance(prop.value_type, ViewEntity):
                 outwards_type_by_view_value_type[(prop.value_type, prop.view)].append(edge_type)
@@ -251,7 +251,7 @@ class _DMSExporter:
                         f"Cannot infer edge type for {view_id}.{prop_id}, multiple candidates: {edge_type_candidates}."
                         "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
                     )
-                view_property_id = (prop.view, prop.property_)
+                view_property_id = (prop.view, prop.view_property)
                 edge_types_by_view_property_id[view_property_id] = edge_type
 
         return edge_types_by_view_property_id
@@ -273,25 +273,25 @@ class _DMSExporter:
             candidates = []
             for parent_id in view.implements:
                 if parent_view := view_by_id.get(parent_id):
-                    parent_prop = edge_connection_by_view_property_id.get((parent_view.view, prop.property_))
+                    parent_prop = edge_connection_by_view_property_id.get((parent_view.view, prop.view_property))
                     if parent_prop and isinstance(parent_prop.connection, EdgeEntity):
                         parent_edge_type = cls._get_edge_type_outwards_connection(
                             parent_view, parent_prop, view_by_id, edge_connection_by_view_property_id
                         )
                         candidates.append(parent_edge_type)
             if len(candidates) == 0:
-                return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.property_)
+                return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
             elif len(candidates) == 1:
                 return candidates[0]
             else:
                 raise NeatValueError(
-                    f"Cannot infer edge type for {prop.view.as_id()!r}.{prop.property_}, "
+                    f"Cannot infer edge type for {prop.view.as_id()!r}.{prop.view_property}, "
                     f"multiple candidates: {candidates}. "
                     "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
                 )
         else:
             # No parent view, use the default
-            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.property_)
+            return cls._default_edge_type_from_view_id(prop.view.as_id(), prop.view_property)
 
     def _create_containers(
         self,
@@ -478,8 +478,10 @@ class _DMSExporter:
 
         if view_properties_by_id:
             for view_id, properties in last_view_properties_by_id.items():
-                existing = {prop.property_ for prop in view_properties_by_id[view_id]}
-                view_properties_by_id[view_id].extend([prop for prop in properties if prop.property_ not in existing])
+                existing = {prop.view_property for prop in view_properties_by_id[view_id]}
+                view_properties_by_id[view_id].extend(
+                    [prop for prop in properties if prop.view_property not in existing]
+                )
 
     def _create_view_filter(
         self,
@@ -519,9 +521,9 @@ class _DMSExporter:
             return cls._create_edge_property(prop, edge_types_by_view_property_id)
         elif isinstance(prop.connection, ReverseConnectionEntity):
             return cls._create_reverse_direct_relation(prop, view_properties_with_ancestors_by_id)
-        elif prop.view and prop.property_ and prop.connection:
+        elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
-                NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.property_}"),
+                NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.view_property}"),
                 stacklevel=2,
             )
         return None
@@ -580,7 +582,7 @@ class _DMSExporter:
             edge_cls = SingleEdgeConnectionApply
 
         return edge_cls(
-            type=edge_types_by_view_property_id[(prop.view, prop.property_)],
+            type=edge_types_by_view_property_id[(prop.view, prop.view_property)],
             source=source_view_id,
             direction=connection.direction,
             name=prop.name,
@@ -608,7 +610,7 @@ class _DMSExporter:
             (
                 prop
                 for prop in view_properties_with_ancestors_by_id.get(source_view_id, [])
-                if prop.property_ == reverse_prop_id
+                if prop.view_property == reverse_prop_id
             ),
             None,
         )
@@ -618,7 +620,7 @@ class _DMSExporter:
                     source_view_id,
                     "view",
                     reverse_prop_id or "MISSING",
-                    dm.PropertyId(prop.view.as_id(), prop.property_),
+                    dm.PropertyId(prop.view.as_id(), prop.view_property),
                     "view property",
                 ),
                 stacklevel=2,
