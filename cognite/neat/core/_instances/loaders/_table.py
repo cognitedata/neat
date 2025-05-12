@@ -10,8 +10,9 @@ import pyarrow.parquet as pq
 from rdflib import RDF, URIRef
 
 from cognite.neat.core._data_model.importers import SubclassInferenceImporter
-from cognite.neat.core._data_model.models import InformationInputRules
+from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
 from cognite.neat.core._data_model.models import data_types as dt
+from cognite.neat.core._data_model.models.conceptual import UnverifiedConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
@@ -19,7 +20,6 @@ from cognite.neat.core._data_model.models.entities import (
     UnknownEntity,
     load_value_type,
 )
-from cognite.neat.core._data_model.models.information import InformationInputProperty
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._store import NeatGraphStore
@@ -37,9 +37,9 @@ class DictLoader(BaseLoader[dict[str, object]]):
         self.graph_store = graph_store
         self.file_format = file_format
         self.chunk_rows = chunk_rows
-        self._inferred_properties_by_class: dict[str, list[InformationInputProperty]] | None = None
+        self._inferred_properties_by_class: dict[str, list[UnverifiedConceptualProperty]] | None = None
 
-    def _get_properties_by_class(self) -> dict[str, list[InformationInputProperty]]:
+    def _get_properties_by_class(self) -> dict[str, list[UnverifiedConceptualProperty]]:
         if self._inferred_properties_by_class is None:
             importer = SubclassInferenceImporter(
                 IssueList(), self.graph_store.dataset, data_model_id=("neat_space", "TableSchema", "v1")
@@ -108,7 +108,7 @@ class DictLoader(BaseLoader[dict[str, object]]):
             yield _END_OF_CLASS
 
     def _clean_uris(
-        self, properties: dict[str | URIRef, list], properties_by_id: dict[str, InformationInputProperty]
+        self, properties: dict[str | URIRef, list], properties_by_id: dict[str, UnverifiedConceptualProperty]
     ) -> dict[str, object]:
         """Clean the URIs in the properties dictionary."""
         cleaned: dict[str, object] = {}
@@ -180,14 +180,14 @@ class DictLoader(BaseLoader[dict[str, object]]):
             self._close_writer(writer)
 
     @staticmethod
-    def _as_properties_by_class(info: InformationInputRules) -> dict[str, list[InformationInputProperty]]:
+    def _as_properties_by_class(info: UnverifiedConceptualDataModel) -> dict[str, list[UnverifiedConceptualProperty]]:
         properties_by_class = defaultdict(list)
         for prop in info.properties:
             key = prop.class_ if isinstance(prop.class_, str) else prop.class_.suffix
             properties_by_class[key].append(prop)
         return properties_by_class
 
-    def _create_schema(self, properties: list[InformationInputProperty]) -> pa.Schema:
+    def _create_schema(self, properties: list[UnverifiedConceptualProperty]) -> pa.Schema:
         fields: list[pa.Field] = [pa.field("externalId", pa.string(), nullable=False)]
         for prop in properties:
             value_type = typing.cast(DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity, prop.value_type)

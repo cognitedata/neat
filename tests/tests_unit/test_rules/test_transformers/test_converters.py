@@ -17,8 +17,6 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models import DMSInputRules, InformationRules
-from cognite.neat.core._data_model.models import data_types as dt
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.dms import (
     DMSInputContainer,

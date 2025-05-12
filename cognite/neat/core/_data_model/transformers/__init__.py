@@ -29,7 +29,7 @@ from ._converters import (
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
-from ._merge_conceptual import MergeInformationRules
+from ._merge_conceptual import MergeConceptualDataModel
 from ._merge_physical import MergeDMSRules
 from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 from ._mapping import AsParentPropertyId, MapOneToOne, PhysicalDataModelMapper
@@ -38,6 +38,7 @@ from ._verification import (
     VerifyConceptualDataModel,
     VerifyPhysicalDataModel,
 )
+from ._verification import VerifyAnyRules, VerifyConceptualDataModel, VerifyDMSRules
 
 __all__ = [
     "AddCogniteProperties",
@@ -52,6 +53,7 @@ __all__ = [
     "DropModelViews",
     "IncludeReferenced",
     "MapOneToOne",
+    "MergeConceptualDataModel",
     "MergeDMSRules",
     "MergeIdenticalProperties",
     "MergeInformationRules",
@@ -64,6 +66,8 @@ __all__ = [
     "StandardizeNaming",
     "StandardizeSpaceAndVersion",
     "SubsetConceptualDataModel",
+    "SubsetDMSRules",
+    "SubsetConceptualDataModel",
     "SubsetPhysicalDataModel",
     "ToCompliantEntities",
     "ToDMSCompliantEntities",
@@ -75,4 +79,8 @@ __all__ = [
     "VerifyAnyDataModel",
     "VerifyConceptualDataModel",
     "VerifyPhysicalDataModel",
+    "VerifiedRulesTransformer",
+    "VerifyAnyRules",
+    "VerifyConceptualDataModel",
+    "VerifyDMSRules",
 ]
