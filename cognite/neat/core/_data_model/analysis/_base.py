@@ -254,11 +254,11 @@ class RulesAnalysis:
         return properties_by_views
 
     @property
-    def logical_uri_by_view(self) -> dict[ViewEntity, URIRef]:
+    def conceptual_uri_by_view(self) -> dict[ViewEntity, URIRef]:
         """Get the logical URI by view."""
         return {view.view: view.conceptual for view in self.dms.views if view.conceptual}
 
-    def logical_uri_by_property_by_view(
+    def conceptual_uri_by_property_by_view(
         self,
         include_ancestors: bool = False,
         include_different_space: bool = False,
@@ -457,9 +457,9 @@ class RulesAnalysis:
         # caching results for faster access
         classes_by_neat_id = self._class_by_neat_id
         properties_by_class = self.properties_by_class(include_ancestors=True)
-        logical_uri_by_view = self.logical_uri_by_view
-        logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(include_ancestors=True)
-        information_properties_by_neat_id = self._properties_by_neat_id()
+        conceptual_uri_by_view = self.conceptual_uri_by_view
+        conceptual_uri_by_property_by_view = self.conceptual_uri_by_property_by_view(include_ancestors=True)
+        conceptual_properties_by_neat_id = self._properties_by_neat_id()
 
         query_configs = ViewQueryDict()
         for view in self.dms.views:
@@ -468,7 +468,7 @@ class RulesAnalysis:
             # 2. correct paring of information and dms rules
             # 3. connection of info rules to instances
             if (
-                (neat_id := logical_uri_by_view.get(view.view))
+                (neat_id := conceptual_uri_by_view.get(view.view))
                 and (class_ := classes_by_neat_id.get(neat_id))
                 and (uri := class_.instance_source)
             ):
@@ -484,9 +484,9 @@ class RulesAnalysis:
                     ),
                 )
 
-                if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
-                    for target_name, neat_id in logical_uri_by_property.items():
-                        if (property_ := information_properties_by_neat_id.get(neat_id)) and (
+                if conceptual_uri_by_property := conceptual_uri_by_property_by_view.get(view.view):
+                    for target_name, neat_id in conceptual_uri_by_property.items():
+                        if (property_ := conceptual_properties_by_neat_id.get(neat_id)) and (
                             uris := property_.instance_source
                         ):
                             for uri in uris:
