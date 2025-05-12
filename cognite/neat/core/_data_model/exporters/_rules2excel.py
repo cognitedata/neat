@@ -30,7 +30,7 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 from cognite.neat.core._data_model.models.data_types import (
     _DATA_TYPE_BY_DMS_TYPE,
 )
-from cognite.neat.core._data_model.models.dms._verified import PhysicalDataModel
+from cognite.neat.core._data_model.models.physical._verified import PhysicalDataModel
 from cognite.neat.core._utils.spreadsheet import (
     find_column_with_value,
     generate_data_validation,

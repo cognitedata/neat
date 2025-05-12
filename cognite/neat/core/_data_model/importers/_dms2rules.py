@@ -44,14 +44,6 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, Enum, String
-from cognite.neat.core._data_model.models.dms import (
-    UnverifiedPhysicalContainer,
-    UnverifiedPhysicalEnum,
-    UnverifiedPhysicalMetadata,
-    UnverifiedPhysicalNodeType,
-    UnverifiedPhysicalProperty,
-    UnverifiedPhysicalView,
-)
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -60,6 +52,14 @@ from cognite.neat.core._data_model.models.entities import (
     PhysicalUnknownEntity,
     ReverseConnectionEntity,
     ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalEnum,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalNodeType,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from cognite.neat.core._issues import (
     IssueList,

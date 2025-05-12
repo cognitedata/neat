@@ -17,17 +17,17 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ClassEntity,
+    ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.models.dms._verified import PhysicalDataModel
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
-    ViewEntity,
-)
+from cognite.neat.core._data_model.models.physical._verified import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,

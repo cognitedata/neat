@@ -12,17 +12,17 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.catalog import imf_attributes
 from cognite.neat.core._data_model.importers import ExcelImporter, SubclassInferenceImporter
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ClassEntity,
+    ContainerEntity,
+    ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
-)
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
-    ContainerEntity,
-    ViewEntity,
 )
 from cognite.neat.core._data_model.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.core._instances.extractors import (

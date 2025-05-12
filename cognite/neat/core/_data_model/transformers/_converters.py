@@ -60,17 +60,6 @@ from cognite.neat.core._data_model.models.data_types import (
     String,
     Timeseries,
 )
-from cognite.neat.core._data_model.models.dms import (
-    DMSValidation,
-    PhysicalMetadata,
-    PhysicalProperty,
-    PhysicalView,
-)
-from cognite.neat.core._data_model.models.dms._verified import (
-    PhysicalContainer,
-    PhysicalEnum,
-    PhysicalNodeType,
-)
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     ContainerEntity,
@@ -81,6 +70,17 @@ from cognite.neat.core._data_model.models.entities import (
     ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
+    DMSValidation,
+    PhysicalMetadata,
+    PhysicalProperty,
+    PhysicalView,
+)
+from cognite.neat.core._data_model.models.physical._verified import (
+    PhysicalContainer,
+    PhysicalEnum,
+    PhysicalNodeType,
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues._factory import from_pydantic_errors
@@ -1421,7 +1421,7 @@ class _InformationRulesConverter:
         ignore_undefined_value_types: bool = False,
         reserved_properties: Literal["error", "warning"] = "error",
     ) -> "PhysicalDataModel":
-        from cognite.neat.core._data_model.models.dms._verified import (
+        from cognite.neat.core._data_model.models.physical._verified import (
             PhysicalContainer,
             PhysicalDataModel,
             PhysicalProperty,
@@ -1625,7 +1625,7 @@ class _InformationRulesConverter:
 
     @classmethod
     def _convert_metadata_to_dms(cls, metadata: ConceptualMetadata) -> "PhysicalMetadata":
-        from cognite.neat.core._data_model.models.dms._verified import (
+        from cognite.neat.core._data_model.models.physical._verified import (
             PhysicalMetadata,
         )
 
@@ -1651,7 +1651,7 @@ class _InformationRulesConverter:
         edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         end_node_by_edge: dict[ClassEntity, ClassEntity],
     ) -> "PhysicalProperty":
-        from cognite.neat.core._data_model.models.dms._verified import PhysicalProperty
+        from cognite.neat.core._data_model.models.physical._verified import PhysicalProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
         value_type = self._get_value_type(

@@ -8,15 +8,15 @@ from cognite.client import data_modeling as dm
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.models import PhysicalDataModel, SheetList
 from cognite.neat.core._data_model.models.data_types import Enum
-from cognite.neat.core._data_model.models.dms import (
-    PhysicalContainer,
-    PhysicalEnum,
-    PhysicalProperty,
-)
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     ContainerEntity,
     ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
+    PhysicalContainer,
+    PhysicalEnum,
+    PhysicalProperty,
 )
 from cognite.neat.core._issues.errors import (
     CDFMissingClientError,

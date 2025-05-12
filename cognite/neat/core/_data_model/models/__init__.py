@@ -7,8 +7,8 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 )
 
 from ._base_verified import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetList, SheetRow
-from .dms._unverified import UnverifiedPhysicalDataModel
-from .dms._verified import PhysicalDataModel
+from .physical._unverified import UnverifiedPhysicalDataModel
+from .physical._verified import PhysicalDataModel
 
 INPUT_RULES_BY_ROLE: dict[RoleTypes, type[UnverifiedConceptualDataModel] | type[UnverifiedPhysicalDataModel]] = {
     RoleTypes.information: UnverifiedConceptualDataModel,

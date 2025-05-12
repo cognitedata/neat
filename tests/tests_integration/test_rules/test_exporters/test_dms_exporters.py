@@ -17,7 +17,7 @@ from cognite.neat.core._data_model.models.conceptual import (
     ConceptualMetadata,
     ConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
