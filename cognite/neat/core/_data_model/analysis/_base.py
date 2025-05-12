@@ -302,14 +302,14 @@ class DataModelAnalysis:
     @property
     def concept_by_concept_entity(self) -> dict[ConceptEntity, ConceptualConcept]:
         """Get a dictionary of concept entities to concept entities."""
-        rules = self.conceptual
-        return {cls.concept: cls for cls in rules.concepts}
+        data_model = self.conceptual
+        return {cls.concept: cls for cls in data_model.concepts}
 
     @property
     def view_by_view_entity(self) -> dict[ViewEntity, PhysicalView]:
         """Get a dictionary of views to view entities."""
-        rules = self.physical
-        return {view.view: view for view in rules.views}
+        data_model = self.physical
+        return {view.view: view for view in data_model.views}
 
     def property_by_id(self) -> dict[str, list[ConceptualProperty]]:
         """Get a dictionary of property IDs to property entities."""
@@ -467,9 +467,9 @@ class DataModelAnalysis:
         query_configs = ViewQueryDict()
         for view in self.physical.views:
             # this entire block of sequential if statements checks:
-            # 1. connection of dms to info rules
-            # 2. correct paring of information and dms rules
-            # 3. connection of info rules to instances
+            # 1. connection of physical and conceptual data model
+            # 2. correct paring of conceptual and physical data model
+            # 3. connection of conceptual data model to instances
             if (
                 (neat_id := conceptual_uri_by_view.get(view.view))
                 and (concept := concepts_by_neat_id.get(neat_id))
@@ -499,14 +499,14 @@ class DataModelAnalysis:
 
         return query_configs
 
-    def _dms_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
-        """Generate a MultiDiGraph from the DMS rules."""
+    def _physical_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
+        """Generate a MultiDiGraph from the Physical Data Model."""
         di_graph = nx.MultiDiGraph()
 
-        rules = self.physical
+        data_model = self.physical
 
         # Add nodes and edges from Views sheet
-        for view in rules.views:
+        for view in data_model.views:
             di_graph.add_node(view.view.suffix, label=view.view.suffix)
 
             if format == "implements" and view.implements:
@@ -521,7 +521,7 @@ class DataModelAnalysis:
 
         if format == "data-model":
             # Add nodes and edges from Properties sheet
-            for prop_ in rules.properties:
+            for prop_ in data_model.properties:
                 if prop_.connection and isinstance(prop_.value_type, ViewEntity):
                     di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
                     di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
@@ -533,14 +533,14 @@ class DataModelAnalysis:
 
         return di_graph
 
-    def _info_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
-        """Generate MultiDiGraph representing information data model."""
+    def _conceptual_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
+        """Generate MultiDiGraph representing conceptual data model."""
 
-        rules = self.conceptual
+        data_model = self.conceptual
         di_graph = nx.MultiDiGraph()
 
         # Add nodes and edges from Views sheet
-        for concept in rules.concepts:
+        for concept in data_model.concepts:
             # if possible use human readable label coming from the view name
 
             di_graph.add_node(
@@ -560,7 +560,7 @@ class DataModelAnalysis:
 
         if format == "data-model":
             # Add nodes and edges from Properties sheet
-            for prop_ in rules.properties:
+            for prop_ in data_model.properties:
                 if isinstance(prop_.value_type, ConceptEntity) and not isinstance(prop_.value_type, UnknownEntity):
                     di_graph.add_node(prop_.concept.suffix, label=prop_.concept.suffix)
                     di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)

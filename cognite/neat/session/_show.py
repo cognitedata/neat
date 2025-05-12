@@ -103,9 +103,9 @@ class ShowDataModelAPI(ShowBaseAPI):
         analysis = DataModelAnalysis(physical=last_target.dms, conceptual=last_target.information)
 
         if last_target.dms is not None:
-            di_graph = analysis._dms_di_graph(format="data-model")
+            di_graph = analysis._physical_di_graph(format="data-model")
         else:
-            di_graph = analysis._info_di_graph(format="data-model")
+            di_graph = analysis._conceptual_di_graph(format="data-model")
 
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}.html"
@@ -127,9 +127,9 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
         analysis = DataModelAnalysis(physical=last_target.dms, conceptual=last_target.information)
 
         if last_target.dms is not None:
-            di_graph = analysis._dms_di_graph(format="implements")
+            di_graph = analysis._physical_di_graph(format="implements")
         else:
-            di_graph = analysis._info_di_graph(format="implements")
+            di_graph = analysis._conceptual_di_graph(format="implements")
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}_implements.html"
         return self._generate_visualization(di_graph, name)
