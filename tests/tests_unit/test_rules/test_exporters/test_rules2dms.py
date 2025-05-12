@@ -9,7 +9,7 @@ from cognite.client import data_modeling as dm
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.models import ConceptualDataModel
-from cognite.neat.core._data_model.models.dms import PhysicalDataModel
+from cognite.neat.core._data_model.models.physical import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import InformationToDMS, VerifyAnyRules
 from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData

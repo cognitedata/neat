@@ -444,9 +444,7 @@ class PhysicalNodeType(SheetRow):
 
 
 class PhysicalEnum(SheetRow):
-    collection: ConceptEntityType = Field(
-        alias="Collection", description="The collection this enum belongs to."
-    )
+    collection: ConceptEntityType = Field(alias="Collection", description="The collection this enum belongs to.")
     value: str = Field(alias="Value", description="The value of the enum.")
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the enum.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the enum.")

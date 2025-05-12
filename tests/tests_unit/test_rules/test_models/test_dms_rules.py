@@ -18,7 +18,12 @@ from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.data_types import String
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ContainerEntity,
+    UnknownEntity,
+    ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
     DMSSchema,
     DMSValidation,
     PhysicalMetadata,
@@ -30,12 +35,7 @@ from cognite.neat.core._data_model.models.dms import (
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.models.dms._exporter import _DMSExporter
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ContainerEntity,
-    UnknownEntity,
-    ViewEntity,
-)
+from cognite.neat.core._data_model.models.physical._exporter import _DMSExporter
 from cognite.neat.core._data_model.transformers import (
     DMSToInformation,
     InformationToDMS,

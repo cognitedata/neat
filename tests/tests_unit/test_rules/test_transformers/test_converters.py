@@ -17,17 +17,17 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.entities._single_value import (
+    ConceptEntity,
+    ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.models.dms._verified import PhysicalDataModel
-from cognite.neat.core._data_model.models.entities._single_value import (
-    ConceptEntity,
-    ViewEntity,
-)
+from cognite.neat.core._data_model.models.physical._verified import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
@@ -68,9 +68,7 @@ class TestStandardizeNaming:
         information = UnverifiedConceptualDataModel(
             metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                UnverifiedConceptualProperty(
-                    class_name, "TAG_NAME", "string", max_count=1
-                ),
+                UnverifiedConceptualProperty(class_name, "TAG_NAME", "string", max_count=1),
             ],
             concepts=[UnverifiedConceptualConcept(class_name)],
         )
@@ -88,12 +86,8 @@ class TestToInformationCompliantEntities:
         information = UnverifiedConceptualDataModel(
             metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "me", "v1"),
             properties=[
-                UnverifiedConceptualProperty(
-                    class_name, "TAG_NAME", "string", max_count=1
-                ),
-                UnverifiedConceptualProperty(
-                    class_name, "State(Previous)", "string", max_count=1
-                ),
+                UnverifiedConceptualProperty(class_name, "TAG_NAME", "string", max_count=1),
+                UnverifiedConceptualProperty(class_name, "State(Previous)", "string", max_count=1),
                 UnverifiedConceptualProperty(class_name, "P&ID", "string", max_count=1),
             ],
             concepts=[UnverifiedConceptualConcept(class_name)],
@@ -144,17 +138,11 @@ class TestRulesSubsetting:
 class TestAddCogniteProperties:
     def test_add_cognite_properties(self, cognite_core_schema: DMSSchema) -> None:
         input_rules = UnverifiedConceptualDataModel(
-            metadata=UnverifiedConceptualMetadata(
-                "my_space", "MyModel", "v1", "doctrino"
-            ),
+            metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "v1", "doctrino"),
             properties=[],
             concepts=[
-                UnverifiedConceptualConcept(
-                    "PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"
-                ),
-                UnverifiedConceptualConcept(
-                    "WindTurbine", implements="PowerGeneratingUnit"
-                ),
+                UnverifiedConceptualConcept("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
+                UnverifiedConceptualConcept("WindTurbine", implements="PowerGeneratingUnit"),
             ],
         )
         read_model = cognite_core_schema.as_read_model()

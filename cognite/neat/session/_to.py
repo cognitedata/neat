@@ -13,7 +13,7 @@ from cognite.neat.core._data_model._constants import PATTERNS
 from cognite.neat.core._data_model._shared import VerifiedRules
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
-from cognite.neat.core._data_model.models.dms import PhysicalMetadata
+from cognite.neat.core._data_model.models.physical import PhysicalMetadata
 from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat.core._utils.upload import UploadResultList

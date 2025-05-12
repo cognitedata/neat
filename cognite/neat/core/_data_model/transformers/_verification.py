@@ -14,7 +14,7 @@ from cognite.neat.core._data_model.models import (
     UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import InformationValidation
-from cognite.neat.core._data_model.models.dms import DMSValidation
+from cognite.neat.core._data_model.models.physical import DMSValidation
 from cognite.neat.core._issues import MultiValueError, catch_issues
 from cognite.neat.core._issues.errors import NeatTypeError, NeatValueError
 

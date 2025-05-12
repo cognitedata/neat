@@ -28,7 +28,7 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     ViewApplyDict,
 )
 from cognite.neat.core._client.data_classes.schema import DMSSchema
-from cognite.neat.core._data_model.models.dms import PhysicalDataModel
+from cognite.neat.core._data_model.models.physical import PhysicalDataModel
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.warnings import (
     PrincipleOneModelOneSpaceWarning,

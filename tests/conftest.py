@@ -10,7 +10,7 @@ from cognite.neat.core._data_model.models import (
     PhysicalDataModel,
     UnverifiedConceptualDataModel,
 )
-from cognite.neat.core._data_model.models.dms import UnverifiedPhysicalDataModel
+from cognite.neat.core._data_model.models.physical import UnverifiedPhysicalDataModel
 from cognite.neat.core._utils.spreadsheet import read_individual_sheet
 from tests.config import DOC_RULES
 from tests.data import SchemaData

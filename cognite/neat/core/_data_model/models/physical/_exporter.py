@@ -298,9 +298,7 @@ class _DMSExporter:
         container_properties_by_id: dict[dm.ContainerId, list[PhysicalProperty]],
         enum: Collection[PhysicalEnum] | None,
     ) -> ContainerApplyDict:
-        enum_values_by_collection: dict[ConceptEntity, list[PhysicalEnum]] = (
-            defaultdict(list)
-        )
+        enum_values_by_collection: dict[ConceptEntity, list[PhysicalEnum]] = defaultdict(list)
         for enum_value in enum or []:
             enum_values_by_collection[enum_value.collection].append(enum_value)
 

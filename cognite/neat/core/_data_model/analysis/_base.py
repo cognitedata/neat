@@ -16,8 +16,6 @@ from cognite.neat.core._data_model.models.conceptual import (
     ConceptualConcept,
     ConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import PhysicalProperty
-from cognite.neat.core._data_model.models.dms._verified import PhysicalView
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     MultiValueTypeInfo,
@@ -26,6 +24,8 @@ from cognite.neat.core._data_model.models.entities import (
 from cognite.neat.core._data_model.models.entities._single_value import (
     UnknownEntity,
 )
+from cognite.neat.core._data_model.models.physical import PhysicalProperty
+from cognite.neat.core._data_model.models.physical._verified import PhysicalView
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import NeatValueWarning
 

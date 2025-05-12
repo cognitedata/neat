@@ -4,7 +4,7 @@ from pathlib import Path
 import yaml
 
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models.dms import (
+from cognite.neat.core._data_model.models.physical import (
     PhysicalDataModel,
     UnverifiedPhysicalDataModel,
 )
