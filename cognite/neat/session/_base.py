@@ -12,6 +12,7 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
+    ConceptualPropertyRenaming,
     InformationToDMS,
     MergeConceptualDataModel,
     MergeDMSRules,
@@ -276,10 +277,16 @@ class NeatSession:
 
         return self._state.data_model_store.do_activity(action, importer)
 
-    def connect_data(self) -> IssueList:
+    def connect_data(self, data_to_model_mapping: dict[tuple[str, str], tuple[str, str]] | None = None) -> IssueList:
         """Connect the instances to the data model.
 
         This assumes that you have read in instances and a data model.
+
+        Args:
+            data_to_model_mapping: A mapping of the data to the model. The keys are tuples of (data_type, property_type)
+                and the values are tuples of (concept, property). This is used to connect the instances
+                to the data model.
+
         """
         self._state._raise_exception_if_condition_not_met(
             "Connect data to data model", has_information_rules=True, instances_required=True
@@ -296,6 +303,9 @@ class NeatSession:
             if data_schema.rules is None:
                 raise NeatValueError("Failed to infer the data model from the instances.")
             conceptual = VerifyConceptualDataModel().transform(data_schema)
+
+            if data_to_model_mapping:
+                conceptual = ConceptualPropertyRenaming(data_to_model_mapping).transform(conceptual)
 
             updated = MergeConceptualDataModel(
                 conceptual, join="primary", priority="primary", conflict_resolution="priority"
