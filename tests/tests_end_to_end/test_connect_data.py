@@ -104,9 +104,11 @@ class TestConnectData:
             space="sp_instances",
         )
 
-        neat.read.cdf.data_model(("my_space", "asset_equipment_model", "v1"))
+        neat.read.cdf.data_model(ASSET_EQUIPMENT_MODEL.data_model.as_id())
 
-        neat.connect_data()
+        neat.connect_data(
+            {("HeatExchanger", "parent"): ("HeatExchanger", "asset"), ("Pump", "parent"): ("Pump", "asset")}
+        )
 
         instances, issues = neat.to._python.instances(use_source_space=True)
 
@@ -116,13 +118,11 @@ class TestConnectData:
             [
                 dm.NodeApply(
                     "sp_instances",
-                    "pump",
+                    "root",
                     sources=[
-                        dm.NodeOrEdgeData(
-                            pump_id, {"name": "Pump", "asset": {"space": "sp_instances", "externalId": "root"}}
-                        ),
+                        dm.NodeOrEdgeData(asset_id, {"name": "Root Asset"}),
                     ],
-                    type=dm.DirectRelationReference("my_space", "Pump"),
+                    type=dm.DirectRelationReference("my_space", "Asset"),
                 ),
                 dm.NodeApply(
                     "sp_instances",
@@ -137,11 +137,13 @@ class TestConnectData:
                 ),
                 dm.NodeApply(
                     "sp_instances",
-                    "root",
+                    "pump",
                     sources=[
-                        dm.NodeOrEdgeData(asset_id, {"name": "Root Asset"}),
+                        dm.NodeOrEdgeData(
+                            pump_id, {"name": "Pump", "asset": {"space": "sp_instances", "externalId": "root"}}
+                        ),
                     ],
-                    type=dm.DirectRelationReference("my_space", "Asset"),
+                    type=dm.DirectRelationReference("my_space", "Pump"),
                 ),
             ]
         )

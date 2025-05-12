@@ -266,10 +266,16 @@ class NeatSession:
 
         return self._state.rule_store.do_activity(action, importer)
 
-    def connect_data(self) -> IssueList:
+    def connect_data(self, data_to_model_mapping: dict[tuple[str, str], tuple[str, str]]) -> IssueList:
         """Connect the instances to the data model.
 
         This assumes that you have read in instances and a data model.
+
+        Args:
+            data_to_model_mapping: A mapping of the data to the model. The keys are tuples of (data_type, property_type)
+                and the values are tuples of (concept, property). This is used to connect the instances
+                to the data model.
+
         """
         self._state._raise_exception_if_condition_not_met(
             "Connect data to data model", has_information_rules=True, instances_required=True
