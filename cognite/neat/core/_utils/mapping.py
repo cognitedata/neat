@@ -4,19 +4,19 @@ from typing import overload
 
 from rdflib import Namespace, URIRef
 
-from cognite.neat.core._data_model.models.information import InformationClass, InformationProperty
+from cognite.neat.core._data_model.models.conceptual import ConceptualClass, ConceptualProperty
 
 
 @overload
-def create_type_mapping(classes: Iterable[InformationClass], namespace: Namespace) -> dict[URIRef, URIRef]: ...
+def create_type_mapping(classes: Iterable[ConceptualClass], namespace: Namespace) -> dict[URIRef, URIRef]: ...
 
 
 @overload
-def create_type_mapping(classes: Iterable[InformationClass], namespace: None = None) -> dict[str, str]: ...
+def create_type_mapping(classes: Iterable[ConceptualClass], namespace: None = None) -> dict[str, str]: ...
 
 
 def create_type_mapping(
-    classes: Iterable[InformationClass], namespace: Namespace | None = None
+    classes: Iterable[ConceptualClass], namespace: Namespace | None = None
 ) -> dict[URIRef, URIRef] | dict[str, str]:
     """Creates a mapping of types to new types.
 
@@ -35,16 +35,16 @@ def create_type_mapping(
 
 @overload
 def create_predicate_mapping(
-    properties: Iterable[InformationProperty], namespace: Namespace
+    properties: Iterable[ConceptualProperty], namespace: Namespace
 ) -> dict[URIRef, URIRef]: ...
 
 
 @overload
-def create_predicate_mapping(properties: Iterable[InformationProperty], namespace: None = None) -> dict[str, str]: ...
+def create_predicate_mapping(properties: Iterable[ConceptualProperty], namespace: None = None) -> dict[str, str]: ...
 
 
 def create_predicate_mapping(
-    properties: Iterable[InformationProperty], namespace: Namespace | None = None
+    properties: Iterable[ConceptualProperty], namespace: Namespace | None = None
 ) -> dict[URIRef, URIRef] | dict[str, str]:
     """Creates a mapping of predicates to new predicates."""
     if namespace is None:

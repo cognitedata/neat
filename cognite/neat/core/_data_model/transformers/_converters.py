@@ -230,7 +230,9 @@ class ToDMSCompliantEntities(
         return property_
 
 
-class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules], ReadRules[InformationInputRules]]):
+class MergeIdenticalProperties(
+    RulesTransformer[ReadRules[UnverifiedConceptualDataModel], ReadRules[UnverifiedConceptualDataModel]]
+):
     """Merges identical properties in the rules
 
     This is typically used to ensure that all the properties are unique and do not have duplicates.
@@ -240,23 +242,25 @@ class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules]
     def description(self) -> str:
         return "Merges identical properties in the rules."
 
-    def transform(self, rules: ReadRules[InformationInputRules]) -> ReadRules[InformationInputRules]:
+    def transform(self, rules: ReadRules[UnverifiedConceptualDataModel]) -> ReadRules[UnverifiedConceptualDataModel]:
         if rules.rules is None:
             return rules
         # Doing dump to obtain a copy, and ensure that all entities are created. Input allows
         # string for entities, the dump call will convert these to entities.
         dumped = rules.rules.dump()
-        copy = InformationInputRules.load(dumped)
+        copy = UnverifiedConceptualDataModel.load(dumped)
         copy.properties = self._merge_identical_properties(copy.properties)
         return ReadRules(rules=copy, read_context=rules.read_context)
 
-    def _merge_identical_properties(self, properties: list[InformationInputProperty]) -> list[InformationInputProperty]:
-        counter: dict[tuple[ClassEntity, str], list[InformationInputProperty]] = defaultdict(list)
+    def _merge_identical_properties(
+        self, properties: list[UnverifiedConceptualProperty]
+    ) -> list[UnverifiedConceptualProperty]:
+        counter: dict[tuple[ClassEntity, str], list[UnverifiedConceptualProperty]] = defaultdict(list)
         for prop in properties:
             cls_ = cast(ClassEntity, prop.class_)  # Safe due to the dump above
             counter[(cls_, prop.property_)].append(prop)
 
-        merged_properties: list[InformationInputProperty] = []
+        merged_properties: list[UnverifiedConceptualProperty] = []
         for (cls_, prop_id), properties in counter.items():
             if len(properties) > 1:
                 warnings.warn(
@@ -272,9 +276,9 @@ class MergeIdenticalProperties(RulesTransformer[ReadRules[InformationInputRules]
 
         return merged_properties
 
-    def _as_one_property(self, properties: list[InformationInputProperty]) -> InformationInputProperty:
+    def _as_one_property(self, properties: list[UnverifiedConceptualProperty]) -> UnverifiedConceptualProperty:
         first = properties[0]
-        return InformationInputProperty(
+        return UnverifiedConceptualProperty(
             class_=first.class_,
             property_=first.property_,
             # We know that value_type cannot be str due to the dump above

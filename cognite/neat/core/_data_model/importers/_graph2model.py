@@ -14,13 +14,13 @@ from rdflib import Literal as RdfLiteral
 from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import InformationInputRules
-from cognite.neat.core._data_model.models.entities import UnknownEntity
-from cognite.neat.core._data_model.models.information import (
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
+from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
+from cognite.neat.core._data_model.models.conceptual import (
+    UnverifiedConceptualClass,
+    UnverifiedConceptualMetadata,
+    UnverifiedConceptualProperty,
 )
+from cognite.neat.core._data_model.models.entities import UnknownEntity
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._store import NeatGraphStore
@@ -41,7 +41,7 @@ class _ReadProperties:
     instance_count: int
 
 
-class GraphImporter(BaseImporter[InformationInputRules]):
+class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
     """Infers a data model from the triples in a Graph Store.
 
     Args:
@@ -93,11 +93,11 @@ class GraphImporter(BaseImporter[InformationInputRules]):
         if self.data_model_id.version is None:
             raise NeatValueError("Version is required when setting a Data Model ID")
 
-    def to_rules(self) -> ReadRules[InformationInputRules]:
+    def to_rules(self) -> ReadRules[UnverifiedConceptualDataModel]:
         metadata = self._create_default_metadata()
         if not self.store.queries.select.has_data():
             warnings.warn(NeatValueWarning("Cannot infer data model. No data found in the graph."), stacklevel=2)
-            return ReadRules(InformationInputRules(metadata, [], [], {}), {})
+            return ReadRules(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
 
         parent_by_child = self._read_parent_by_child_from_graph()
         count_by_type = self._read_types_with_counts_from_graph()
@@ -105,7 +105,7 @@ class GraphImporter(BaseImporter[InformationInputRules]):
             warnings.warn(
                 NeatValueWarning("Cannot infer data model. No RDF.type triples found in the graph."), stacklevel=2
             )
-            return ReadRules(InformationInputRules(metadata, [], [], {}), {})
+            return ReadRules(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
 
         read_properties = self._read_class_properties_from_graph(count_by_type, parent_by_child)
 
@@ -114,7 +114,7 @@ class GraphImporter(BaseImporter[InformationInputRules]):
         read_context: dict[str, object] = {"inferred_from": count_by_type}
 
         return ReadRules(
-            InformationInputRules(
+            UnverifiedConceptualDataModel(
                 metadata=metadata,
                 classes=classes,
                 properties=properties,
@@ -174,9 +174,9 @@ class GraphImporter(BaseImporter[InformationInputRules]):
 
     def _create_classes_properties(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
-    ) -> tuple[list[InformationInputClass], list[InformationInputProperty]]:
-        classes: list[InformationInputClass] = []
-        properties: list[InformationInputProperty] = []
+    ) -> tuple[list[UnverifiedConceptualClass], list[UnverifiedConceptualProperty]]:
+        classes: list[UnverifiedConceptualClass] = []
+        properties: list[UnverifiedConceptualProperty] = []
 
         # Help for IDE
         type_uri: URIRef
@@ -225,12 +225,12 @@ class GraphImporter(BaseImporter[InformationInputRules]):
     @staticmethod
     def _create_class(
         type_uri: URIRef, set_instance_source: bool, prefixes: dict[str, Namespace], implements: str | None = None
-    ) -> tuple[str, InformationInputClass]:
+    ) -> tuple[str, UnverifiedConceptualClass]:
         namespace, suffix = split_uri(type_uri)
         if namespace not in prefixes:
             prefixes[namespace] = Namespace(namespace)
         class_str = urllib.parse.unquote(suffix)
-        return class_str, InformationInputClass(
+        return class_str, UnverifiedConceptualClass(
             class_=class_str, implements=implements, instance_source=type_uri if set_instance_source else None
         )
 
@@ -241,10 +241,10 @@ class GraphImporter(BaseImporter[InformationInputRules]):
         property_uri: URIRef,
         property_id: str,
         prefixes: dict[str, Namespace],
-    ) -> InformationInputProperty:
+    ) -> UnverifiedConceptualProperty:
         first = read_properties[0]
         value_type = self._get_value_type(read_properties, prefixes)
-        return InformationInputProperty(
+        return UnverifiedConceptualProperty(
             class_=class_str,
             property_=property_id,
             max_count=first.max_occurrence,
@@ -276,10 +276,10 @@ class GraphImporter(BaseImporter[InformationInputRules]):
         # Sort the URIs to ensure deterministic output
         return ", ".join(sorted(uri_refs))
 
-    def _create_default_metadata(self) -> InformationInputMetadata:
+    def _create_default_metadata(self) -> UnverifiedConceptualMetadata:
         now = datetime.now(timezone.utc)
         name = self.data_model_id.external_id.replace("_", " ").title()
-        return InformationInputMetadata(
+        return UnverifiedConceptualMetadata(
             space=self.data_model_id.space,
             external_id=self.data_model_id.external_id,
             # Validated in the constructor

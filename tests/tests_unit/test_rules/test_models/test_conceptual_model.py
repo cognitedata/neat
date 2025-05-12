@@ -413,7 +413,7 @@ class TestInformationConverter:
         assert rules.properties[0].concept.suffix == "Generating_Unit"
 
 
-class TestInformationProperty:
+class TestConceptualProperty:
     @pytest.mark.parametrize(
         "raw",
         [
@@ -464,7 +464,7 @@ class TestInformationProperty:
         assert prop.concept == expected
 
 
-class TestInformationClass:
+class TestConceptualClass:
     @pytest.mark.parametrize(
         "raw, class_, implements",
         [

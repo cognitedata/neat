@@ -4,37 +4,37 @@ import pytest
 from rdflib import URIRef
 
 from cognite.neat.core._data_model.models import data_types as dt
-from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
-from cognite.neat.core._data_model.models.information import (
-    InformationClass,
-    InformationInputClass,
-    InformationInputMetadata,
-    InformationInputProperty,
-    InformationInputRules,
-    InformationProperty,
+from cognite.neat.core._data_model.models.conceptual import (
+    ConceptualClass,
+    ConceptualProperty,
+    UnverifiedConceptualClass,
+    UnverifiedConceptualDataModel,
+    UnverifiedConceptualMetadata,
+    UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.transformers import MergeInformationRules
+from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
+from cognite.neat.core._data_model.transformers import MergeConceptualDataModel
 
 
 def merge_model_test_cases() -> Iterable:
-    metadata = InformationInputMetadata("my_space", "my_model", "v1", "doctrino")
+    metadata = UnverifiedConceptualMetadata("my_space", "my_model", "v1", "doctrino")
 
-    single_cls1 = InformationInputRules(
+    single_cls1 = UnverifiedConceptualDataModel(
         metadata=metadata,
-        classes=[InformationInputClass("PrimaryClass")],
-        properties=[InformationInputProperty("PrimaryClass", "primary_property", "text")],
+        classes=[UnverifiedConceptualClass("PrimaryClass")],
+        properties=[UnverifiedConceptualProperty("PrimaryClass", "primary_property", "text")],
     )
-    single_cls2 = InformationInputRules(
+    single_cls2 = UnverifiedConceptualDataModel(
         metadata=metadata,
-        classes=[InformationInputClass("SecondaryClass")],
-        properties=[InformationInputProperty("SecondaryClass", "secondary_property", "text")],
+        classes=[UnverifiedConceptualClass("SecondaryClass")],
+        properties=[UnverifiedConceptualProperty("SecondaryClass", "secondary_property", "text")],
     )
-    combined = InformationInputRules(
+    combined = UnverifiedConceptualDataModel(
         metadata=metadata,
-        classes=[InformationInputClass("PrimaryClass"), InformationInputClass("SecondaryClass")],
+        classes=[UnverifiedConceptualClass("PrimaryClass"), UnverifiedConceptualClass("SecondaryClass")],
         properties=[
-            InformationInputProperty("PrimaryClass", "primary_property", "text"),
-            InformationInputProperty("SecondaryClass", "secondary_property", "text"),
+            UnverifiedConceptualProperty("PrimaryClass", "primary_property", "text"),
+            UnverifiedConceptualProperty("SecondaryClass", "secondary_property", "text"),
         ],
     )
 
@@ -63,8 +63,8 @@ def merge_model_test_cases() -> Iterable:
 
 def merge_properties_test_cases() -> Iterable:
     cls_ = ClassEntity.load("my_space:Car")
-    first = InformationProperty(class_=cls_, property_="my_property", value_type=dt.String(), min_count=0, max_count=1)
-    second = InformationProperty(
+    first = ConceptualProperty(class_=cls_, property_="my_property", value_type=dt.String(), min_count=0, max_count=1)
+    second = ConceptualProperty(
         class_=cls_,
         property_="my_property",
         value_type=dt.Integer(),
@@ -76,7 +76,7 @@ def merge_properties_test_cases() -> Iterable:
         first,
         second,
         {"conflict_resolution": "priority"},
-        InformationProperty(
+        ConceptualProperty(
             class_=cls_,
             property_="my_property",
             value_type=dt.String(),
@@ -90,7 +90,7 @@ def merge_properties_test_cases() -> Iterable:
         first,
         second,
         {"conflict_resolution": "combined"},
-        InformationProperty(
+        ConceptualProperty(
             class_=cls_,
             property_="my_property",
             value_type=MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
@@ -104,15 +104,15 @@ def merge_properties_test_cases() -> Iterable:
 
 def merge_classes_test_cases() -> Iterable:
     cls_ = ClassEntity.load("my_space:Car")
-    first = InformationClass(class_=cls_, implements=[ClassEntity.load("my_space:Vehicle")])
-    second = InformationClass(
+    first = ConceptualClass(class_=cls_, implements=[ClassEntity.load("my_space:Vehicle")])
+    second = ConceptualClass(
         class_=cls_, implements=[ClassEntity.load("my_space:Thing")], instance_source=URIRef("my_source")
     )
     yield pytest.param(
         first,
         second,
         {"conflict_resolution": "priority"},
-        InformationClass(
+        ConceptualClass(
             class_=cls_, implements=[ClassEntity.load("my_space:Vehicle")], instance_source=URIRef("my_source")
         ),
         id="Merge with priority",
@@ -121,7 +121,7 @@ def merge_classes_test_cases() -> Iterable:
         first,
         second,
         {"conflict_resolution": "combined"},
-        InformationClass(
+        ConceptualClass(
             class_=cls_,
             implements=[ClassEntity.load("my_space:Vehicle"), ClassEntity.load("my_space:Thing")],
             instance_source=URIRef("my_source"),
@@ -134,16 +134,16 @@ class TestMergeConceptual:
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_model_test_cases()))
     def test_merge_models(
         self,
-        primary: InformationInputRules,
-        secondary: InformationInputRules,
+        primary: UnverifiedConceptualDataModel,
+        secondary: UnverifiedConceptualDataModel,
         args: dict[str, object],
-        expected: InformationInputRules,
+        expected: UnverifiedConceptualDataModel,
     ):
         primary_model = primary.as_verified_rules()
         secondary_model = secondary.as_verified_rules()
         expected_model = expected.as_verified_rules()
 
-        transformer = MergeInformationRules(secondary_model, **args)
+        transformer = MergeConceptualDataModel(secondary_model, **args)
         merged = transformer.transform(primary_model)
 
         exclude = {"metadata": {"created", "updated"}}
@@ -152,23 +152,23 @@ class TestMergeConceptual:
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_properties_test_cases()))
     def test_merge_properties(
         self,
-        primary: InformationProperty,
-        secondary: InformationProperty,
+        primary: ConceptualProperty,
+        secondary: ConceptualProperty,
         args: dict[str, object],
-        expected: InformationProperty,
+        expected: ConceptualProperty,
     ) -> None:
-        actual = MergeInformationRules.merge_properties(primary, secondary, **args)
+        actual = MergeConceptualDataModel.merge_properties(primary, secondary, **args)
 
         assert actual.model_dump() == expected.model_dump()
 
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_classes_test_cases()))
     def test_merge_classes(
         self,
-        primary: InformationClass,
-        secondary: InformationClass,
+        primary: ConceptualClass,
+        secondary: ConceptualClass,
         args: dict[str, object],
-        expected: InformationClass,
+        expected: ConceptualClass,
     ) -> None:
-        actual = MergeInformationRules.merge_classes(primary, secondary, **args)
+        actual = MergeConceptualDataModel.merge_classes(primary, secondary, **args)
 
         assert actual.model_dump() == expected.model_dump()
