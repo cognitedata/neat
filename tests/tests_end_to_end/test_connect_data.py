@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 
+import pytest
 from cognite.client import data_modeling as dm
 from rdflib import RDF, Literal, Namespace
 
@@ -10,83 +11,88 @@ from cognite.neat.core._instances.extractors import BaseExtractor
 from cognite.neat.core._shared import Triple
 
 
-class TestConnectData:
-    def test_connect_data_to_existing_model(self) -> None:
-        with monkeypatch_neat_client() as client:
-            space = dm.Space(
-                "my_space",
-                False,
-                1,
-                1,
-            )
-            view = dm.View(
-                space=space.space,
-                external_id="MyView",
-                version="v1",
-                name=None,
-                description=None,
-                created_time=1234567890,
-                last_updated_time=1234567890,
-                filter=None,
-                implements=None,
-                writable=True,
-                is_global=False,
-                used_for="node",
-                properties={
-                    "name": dm.MappedProperty(
-                        container=dm.ContainerId("my_space", "my_container"),
-                        container_property_identifier="name",
-                        type=dm.data_types.Text(),
-                        auto_increment=False,
-                        nullable=True,
-                        immutable=False,
-                    )
-                },
-            )
-            view_id = view.as_id()
+@pytest.fixture()
+def session_with_model() -> NeatSession:
+    with monkeypatch_neat_client() as client:
+        space = dm.Space(
+            "my_space",
+            False,
+            1,
+            1,
+        )
+        view = dm.View(
+            space=space.space,
+            external_id="MyView",
+            version="v1",
+            name=None,
+            description=None,
+            created_time=1234567890,
+            last_updated_time=1234567890,
+            filter=None,
+            implements=None,
+            writable=True,
+            is_global=False,
+            used_for="node",
+            properties={
+                "name": dm.MappedProperty(
+                    container=dm.ContainerId("my_space", "my_container"),
+                    container_property_identifier="name",
+                    type=dm.data_types.Text(),
+                    auto_increment=False,
+                    nullable=True,
+                    immutable=False,
+                )
+            },
+        )
+        client.data_modeling.data_models.retrieve.return_value = dm.DataModelList(
+            [
+                dm.DataModel(
+                    space="my_space",
+                    external_id="my_model",
+                    version="v1",
+                    created_time=1234567890,
+                    last_updated_time=1234567890,
+                    is_global=False,
+                    name=None,
+                    description=None,
+                    views=[view],
+                )
+            ]
+        )
+        client.data_modeling.containers.retrieve.return_value = dm.ContainerList(
+            [
+                dm.Container(
+                    space="my_space",
+                    external_id="my_container",
+                    name=None,
+                    description=None,
+                    created_time=1234567890,
+                    last_updated_time=1234567890,
+                    is_global=False,
+                    used_for="node",
+                    constraints=None,
+                    indexes=None,
+                    properties={
+                        "name": dm.ContainerProperty(
+                            type=dm.data_types.Text(),
+                            auto_increment=False,
+                            nullable=True,
+                            immutable=False,
+                        )
+                    },
+                )
+            ]
+        )
+        client.data_modeling.spaces.retrieve.return_value = dm.SpaceList([space])
+        client.data_modeling.views.retrieve.return_value = dm.ViewList([view])
+        neat = NeatSession(client=client)
+    return neat
 
-            client.data_modeling.data_models.retrieve.return_value = dm.DataModelList(
-                [
-                    dm.DataModel(
-                        space="my_space",
-                        external_id="my_model",
-                        version="v1",
-                        created_time=1234567890,
-                        last_updated_time=1234567890,
-                        is_global=False,
-                        name=None,
-                        description=None,
-                        views=[view],
-                    )
-                ]
-            )
-            client.data_modeling.containers.retrieve.return_value = dm.ContainerList(
-                [
-                    dm.Container(
-                        space="my_space",
-                        external_id="my_container",
-                        name=None,
-                        description=None,
-                        created_time=1234567890,
-                        last_updated_time=1234567890,
-                        is_global=False,
-                        used_for="node",
-                        constraints=None,
-                        indexes=None,
-                        properties={
-                            "name": dm.ContainerProperty(
-                                type=dm.data_types.Text(),
-                                auto_increment=False,
-                                nullable=True,
-                                immutable=False,
-                            )
-                        },
-                    )
-                ]
-            )
-            client.data_modeling.spaces.retrieve.return_value = dm.SpaceList([space])
-            client.data_modeling.views.retrieve.return_value = dm.ViewList([view])
-            neat: NeatSession = NeatSession(client=client)
+
+class TestConnectData:
+    def test_connect_data_to_existing_model(self, session_with_model: NeatSession) -> None:
+        neat = session_with_model
+        view_id = dm.ViewId("my_space", "MyView", "v1")
 
         instance_space = Namespace(DEFAULT_SPACE_URI.format(space="sp_instances"))
         schema_space = Namespace(DEFAULT_SPACE_URI.format(space="my_space"))
