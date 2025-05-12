@@ -39,10 +39,10 @@ from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSInputRules,
     DMSRules,
     SheetList,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
     data_types,
 )
 from cognite.neat.core._data_model.models.conceptual import (
@@ -624,7 +624,7 @@ class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
         dump["metadata"]["name"] = self.name or self._generate_name()
         # Serialize and deserialize to set the new space and external_id
         # as the default values for the new model.
-        return DMSRules.model_validate(DMSInputRules.load(dump).dump())
+        return DMSRules.model_validate(UnverifiedPhysicalDataModel.load(dump).dump())
 
     def _generate_name(self) -> str:
         return title(to_words(self.new_id.external_id))

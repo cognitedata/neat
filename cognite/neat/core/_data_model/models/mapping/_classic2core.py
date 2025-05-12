@@ -4,7 +4,10 @@ from pathlib import Path
 import yaml
 
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models.dms import DMSInputRules, DMSRules
+from cognite.neat.core._data_model.models.dms import (
+    DMSRules,
+    UnverifiedPhysicalDataModel,
+)
 from cognite.neat.core._issues.errors import NeatValueError
 
 _CLASSIC_TO_CORE_MAPPING = Path(__file__).resolve().parent / "_classic2core.yaml"
@@ -27,8 +30,8 @@ def load_classic_to_core_mapping(org_name: str | None, source_space: str, source
     loaded["metadata"]["space"] = source_space
     loaded["metadata"]["version"] = source_version
 
-    read: ReadRules[DMSInputRules] = YAMLImporter(loaded).to_rules()
-    if not isinstance(read.rules, DMSInputRules):
+    read: ReadRules[UnverifiedPhysicalDataModel] = YAMLImporter(loaded).to_rules()
+    if not isinstance(read.rules, UnverifiedPhysicalDataModel):
         raise NeatValueError(f"Expected DMS rules, but got {type(read.rules).__name__}")
 
     verified = VerifyDMSRules(validate=False).transform(read)

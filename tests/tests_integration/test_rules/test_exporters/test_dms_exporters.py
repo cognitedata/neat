@@ -18,11 +18,11 @@ from cognite.neat.core._data_model.models.conceptual import (
     ConceptualProperty,
 )
 from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from tests.config import DOC_RULES
 
@@ -192,20 +192,24 @@ def existing_data_model(neat_client: NeatClient) -> Iterable[dm.DataModel]:
 class TestDMSExporter:
     def test_export_model_merge_with_existing(self, existing_data_model: dm.DataModel, neat_client: NeatClient):
         space = existing_data_model.space
-        rules = DMSInputRules(
-            DMSInputMetadata(
+        rules = UnverifiedPhysicalDataModel(
+            UnverifiedPhysicalMetadata(
                 space=space,
                 external_id=existing_data_model.external_id,
                 version=existing_data_model.version,
                 creator="doctrino",
             ),
             properties=[
-                DMSInputProperty(
-                    "NewView", "newProp", "text", container="ExistingContainer", container_property="newProp"
+                UnverifiedPhysicalProperty(
+                    "NewView",
+                    "newProp",
+                    "text",
+                    container="ExistingContainer",
+                    container_property="newProp",
                 ),
             ],
-            views=[DMSInputView("NewView")],
-            containers=[DMSInputContainer("ExistingContainer", used_for="node")],
+            views=[UnverifiedPhysicalView("NewView")],
+            containers=[UnverifiedPhysicalContainer("ExistingContainer", used_for="node")],
         ).as_verified_rules()
 
         try:

@@ -7,9 +7,9 @@ from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSInputRules,
     DMSRules,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
     AddClassImplements,
@@ -55,7 +55,7 @@ class TestRuleTransformer:
             DMSRules,
             ConceptualDataModel,
             ReadRules[UnverifiedConceptualDataModel],
-            ReadRules[DMSInputRules],
+            ReadRules[UnverifiedPhysicalDataModel],
         }
 
         type_hint = transformer_cls.transform_type_hint()

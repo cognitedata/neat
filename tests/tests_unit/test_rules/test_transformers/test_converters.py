@@ -7,7 +7,10 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSInputRules
+from cognite.neat.core._data_model.models import (
+    ConceptualDataModel,
+    UnverifiedPhysicalDataModel,
+)
 from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualClass,
     UnverifiedConceptualDataModel,
@@ -15,10 +18,10 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputView,
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from cognite.neat.core._data_model.models.dms._rules import DMSRules
 from cognite.neat.core._data_model.models.entities._single_value import (
@@ -37,10 +40,10 @@ from cognite.neat.core._issues.errors._general import NeatValueError
 
 class TestStandardizeNaming:
     def test_transform_dms(self) -> None:
-        dms = DMSInputRules(
-            metadata=DMSInputMetadata("my_spac", "MyModel", "me", "v1"),
+        dms = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata("my_spac", "MyModel", "me", "v1"),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "my_poorly_formatted_view",
                     "and_strangely_named_property",
                     "text",
@@ -48,8 +51,8 @@ class TestStandardizeNaming:
                     container_property="my_property",
                 )
             ],
-            views=[DMSInputView("my_poorly_formatted_view")],
-            containers=[DMSInputContainer("my_container")],
+            views=[UnverifiedPhysicalView("my_poorly_formatted_view")],
+            containers=[UnverifiedPhysicalContainer("my_container")],
         )
 
         transformed = StandardizeNaming().transform(dms.as_verified_rules())

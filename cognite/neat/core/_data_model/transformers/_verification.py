@@ -9,9 +9,9 @@ from cognite.neat.core._data_model._shared import (
 )
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSInputRules,
     DMSRules,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import InformationValidation
 from cognite.neat.core._data_model.models.dms import DMSValidation
@@ -71,13 +71,13 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
         return "Verify rules"
 
 
-class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]):
+class VerifyDMSRules(VerificationTransformer[ReadRules[UnverifiedPhysicalDataModel], DMSRules]):
     """Class to verify DMS rules."""
 
     _rules_cls = DMSRules
     _validation_cls = DMSValidation
 
-    def transform(self, rules: ReadRules[DMSInputRules]) -> DMSRules:
+    def transform(self, rules: ReadRules[UnverifiedPhysicalDataModel]) -> DMSRules:
         return super().transform(rules)
 
 
@@ -97,7 +97,7 @@ class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
     def _get_rules_cls(self, in_: T_ReadInputRules) -> type[VerifiedRules]:
         if isinstance(in_.rules, UnverifiedConceptualDataModel):
             return ConceptualDataModel
-        elif isinstance(in_.rules, DMSInputRules):
+        elif isinstance(in_.rules, UnverifiedPhysicalDataModel):
             return DMSRules
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")

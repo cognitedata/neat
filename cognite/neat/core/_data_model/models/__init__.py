@@ -8,11 +8,11 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 
 from ._base_verified import DataModelType, ExtensionCategory, RoleTypes, SchemaCompleteness, SheetList, SheetRow
 from .dms._rules import DMSRules
-from .dms._rules_input import DMSInputRules
+from .dms._unverified import UnverifiedPhysicalDataModel
 
-INPUT_RULES_BY_ROLE: dict[RoleTypes, type[UnverifiedConceptualDataModel] | type[DMSInputRules]] = {
+INPUT_RULES_BY_ROLE: dict[RoleTypes, type[UnverifiedConceptualDataModel] | type[UnverifiedPhysicalDataModel]] = {
     RoleTypes.information: UnverifiedConceptualDataModel,
-    RoleTypes.dms: DMSInputRules,
+    RoleTypes.dms: UnverifiedPhysicalDataModel,
 }
 VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[DMSRules]] = {
     RoleTypes.information: ConceptualDataModel,
@@ -23,7 +23,6 @@ VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[DMSRule
 __all__ = [
     "INPUT_RULES_BY_ROLE",
     "ConceptualDataModel",
-    "DMSInputRules",
     "DMSRules",
     "DMSSchema",
     "DataModelType",
@@ -33,4 +32,5 @@ __all__ = [
     "SheetList",
     "SheetRow",
     "UnverifiedConceptualDataModel",
+    "UnverifiedPhysicalDataModel",
 ]

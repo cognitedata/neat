@@ -42,7 +42,7 @@ else:
 
 
 @dataclass
-class DMSInputMetadata(UnverifiedComponent[DMSMetadata]):
+class UnverifiedPhysicalMetadata(UnverifiedComponent[DMSMetadata]):
     space: str
     external_id: str
     creator: str
@@ -67,7 +67,7 @@ class DMSInputMetadata(UnverifiedComponent[DMSMetadata]):
         return output
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSInputMetadata":
+    def from_data_model(cls, data_model: dm.DataModelApply) -> "UnverifiedPhysicalMetadata":
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             space=data_model.space,
@@ -113,7 +113,7 @@ class DMSInputMetadata(UnverifiedComponent[DMSMetadata]):
 
 
 @dataclass
-class DMSInputProperty(UnverifiedComponent[DMSProperty]):
+class UnverifiedPhysicalProperty(UnverifiedComponent[DMSProperty]):
     view: str
     view_property: str | None
     value_type: str | DataType | ViewEntity | DMSUnknownEntity
@@ -206,7 +206,7 @@ class DMSInputProperty(UnverifiedComponent[DMSProperty]):
 
 
 @dataclass
-class DMSInputContainer(UnverifiedComponent[DMSContainer]):
+class UnverifiedPhysicalContainer(UnverifiedComponent[DMSContainer]):
     container: str
     name: str | None = None
     description: str | None = None
@@ -232,7 +232,7 @@ class DMSInputContainer(UnverifiedComponent[DMSContainer]):
         return ContainerEntity.load(self.container, strict=True, space=default_space)
 
     @classmethod
-    def from_container(cls, container: dm.ContainerApply) -> "DMSInputContainer":
+    def from_container(cls, container: dm.ContainerApply) -> "UnverifiedPhysicalContainer":
         constraints: list[str] = []
         for _, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
@@ -249,7 +249,7 @@ class DMSInputContainer(UnverifiedComponent[DMSContainer]):
 
 
 @dataclass
-class DMSInputView(UnverifiedComponent[DMSView]):
+class UnverifiedPhysicalView(UnverifiedComponent[DMSView]):
     view: str
     name: str | None = None
     description: str | None = None
@@ -292,7 +292,7 @@ class DMSInputView(UnverifiedComponent[DMSView]):
         return self._load_implements(default_space, default_version) or []
 
     @classmethod
-    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSInputView":
+    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "UnverifiedPhysicalView":
         view_entity = ViewEntity.from_id(view.as_id())
 
         return cls(
@@ -307,7 +307,7 @@ class DMSInputView(UnverifiedComponent[DMSView]):
 
 
 @dataclass
-class DMSInputNode(UnverifiedComponent[DMSNode]):
+class UnverifiedPhysicalNodeType(UnverifiedComponent[DMSNode]):
     node: str
     usage: Literal["type", "collocation"]
     name: str | None = None
@@ -319,7 +319,7 @@ class DMSInputNode(UnverifiedComponent[DMSNode]):
         return DMSNode
 
     @classmethod
-    def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNode":
+    def from_node_type(cls, node_type: dm.NodeApply) -> "UnverifiedPhysicalNodeType":
         return cls(node=f"{node_type.space}:{node_type.external_id}", usage="type")
 
     def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore
@@ -329,7 +329,7 @@ class DMSInputNode(UnverifiedComponent[DMSNode]):
 
 
 @dataclass
-class DMSInputEnum(UnverifiedComponent[DMSEnum]):
+class UnverifiedPhysicalEnum(UnverifiedComponent[DMSEnum]):
     collection: str
     value: str
     name: str | None = None
@@ -342,13 +342,13 @@ class DMSInputEnum(UnverifiedComponent[DMSEnum]):
 
 
 @dataclass
-class DMSInputRules(UnverifiedDataModel[DMSRules]):
-    metadata: DMSInputMetadata
-    properties: list[DMSInputProperty]
-    views: list[DMSInputView]
-    containers: list[DMSInputContainer] | None = None
-    enum: list[DMSInputEnum] | None = None
-    nodes: list[DMSInputNode] | None = None
+class UnverifiedPhysicalDataModel(UnverifiedDataModel[DMSRules]):
+    metadata: UnverifiedPhysicalMetadata
+    properties: list[UnverifiedPhysicalProperty]
+    views: list[UnverifiedPhysicalView]
+    containers: list[UnverifiedPhysicalContainer] | None = None
+    enum: list[UnverifiedPhysicalEnum] | None = None
+    nodes: list[UnverifiedPhysicalNodeType] | None = None
 
     @classmethod
     def _get_verified_cls(cls) -> type[DMSRules]:
@@ -369,7 +369,7 @@ class DMSInputRules(UnverifiedDataModel[DMSRules]):
 
     @classmethod
     def display_type_name(cls) -> str:
-        return "UnverifiedDMSModel"
+        return "UnverifiedPhysicalModel"
 
     @property
     def display_name(self) -> str:

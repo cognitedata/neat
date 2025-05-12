@@ -8,13 +8,15 @@ from cognite.neat.core._data_model.models import (
 from cognite.neat.core._data_model.models.conceptual._unverified import (
     UnverifiedConceptualDataModel,
 )
-from cognite.neat.core._data_model.models.dms._rules_input import DMSInputRules
+from cognite.neat.core._data_model.models.dms._unverified import (
+    UnverifiedPhysicalDataModel,
+)
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 VerifiedRules: TypeAlias = ConceptualDataModel | DMSRules
 
 T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
-InputRules: TypeAlias = DMSInputRules | UnverifiedConceptualDataModel
+InputRules: TypeAlias = UnverifiedPhysicalDataModel | UnverifiedConceptualDataModel
 T_InputRules = TypeVar("T_InputRules", bound=InputRules)
 
 
@@ -36,8 +38,10 @@ class ReadRules(Generic[T_InputRules]):
         return self.rules.display_name
 
 
-ReadInputRules: TypeAlias = ReadRules[DMSInputRules] | ReadRules[UnverifiedConceptualDataModel]
+ReadInputRules: TypeAlias = ReadRules[UnverifiedPhysicalDataModel] | ReadRules[UnverifiedConceptualDataModel]
 T_ReadInputRules = TypeVar("T_ReadInputRules", bound=ReadInputRules)
 
-Rules: TypeAlias = ConceptualDataModel | DMSRules | ReadRules[DMSInputRules] | ReadRules[UnverifiedConceptualDataModel]
+Rules: TypeAlias = (
+    ConceptualDataModel | DMSRules | ReadRules[UnverifiedPhysicalDataModel] | ReadRules[UnverifiedConceptualDataModel]
+)
 T_Rules = TypeVar("T_Rules", bound=Rules)

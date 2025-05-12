@@ -9,11 +9,11 @@ from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
 from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from cognite.neat.core._data_model.transformers import VerifyInformationRules
 
@@ -177,17 +177,17 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     ],
 )
 
-BASE_MODEL: DMSRules = DMSInputRules(
-    metadata=DMSInputMetadata(
+BASE_MODEL: DMSRules = UnverifiedPhysicalDataModel(
+    metadata=UnverifiedPhysicalMetadata(
         space="sp_base",
         external_id="Base",
         version="1",
         creator="Anders",
     ),
-    views=[DMSInputView(view="Entity")],
-    containers=[DMSInputContainer(container="Entity")],
+    views=[UnverifiedPhysicalView(view="Entity")],
+    containers=[UnverifiedPhysicalContainer(container="Entity")],
     properties=[
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             view="Entity",
             view_property="name",
             value_type="text",
