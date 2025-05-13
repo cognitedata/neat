@@ -34,9 +34,9 @@ class StatisticsAPI(APIClient):
         Examples:
             Fetch project statistics (and limits) and check the current number of data models vs.
             and how many more can be created:
-                >>> from cognite.client import CogniteClient
-                >>> client = CogniteClient()
-                >>> stats = client.data_modeling.statistics.project()
+                >>> from cognite.neat.core._client import NeatClient
+                >>> client = NeatClient()
+                >>> stats = client.instance_statistics.project()
                 >>> num_dm = stats.data_models.current
                 >>> num_dm_left = stats.data_models.limit - num_dm
         """
