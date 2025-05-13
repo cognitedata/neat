@@ -19,7 +19,7 @@ def _read_source_file() -> str:
 
 
 def load_classic_to_core_mapping(org_name: str | None, source_space: str, source_version: str) -> PhysicalDataModel:
-    from cognite.neat.core._data_model.importers import YAMLImporter
+    from cognite.neat.core._data_model.importers import DictImporter
     from cognite.neat.core._data_model.transformers import VerifyDMSRules
 
     raw_str = _read_source_file()
@@ -30,7 +30,7 @@ def load_classic_to_core_mapping(org_name: str | None, source_space: str, source
     loaded["metadata"]["space"] = source_space
     loaded["metadata"]["version"] = source_version
 
-    read: ReadRules[UnverifiedPhysicalDataModel] = YAMLImporter(loaded).to_rules()
+    read: ReadRules[UnverifiedPhysicalDataModel] = DictImporter(loaded).to_rules()
     if not isinstance(read.rules, UnverifiedPhysicalDataModel):
         raise NeatValueError(f"Expected DMS rules, but got {type(read.rules).__name__}")
 
