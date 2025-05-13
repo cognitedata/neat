@@ -547,5 +547,5 @@ class ReferenceEntity(ConceptEntity):
     def as_node_entity(self) -> DMSNodeEntity:
         return DMSNodeEntity(space=self.prefix, externalId=self.suffix)
 
-    def as_class_entity(self) -> ConceptEntity:
+    def as_concept_entity(self) -> ConceptEntity:
         return ConceptEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
