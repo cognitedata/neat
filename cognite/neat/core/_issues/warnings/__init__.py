@@ -40,6 +40,7 @@ from ._properties import (
     PropertyOverwritingWarning,
     PropertyTypeNotSupportedWarning,
     PropertyValueTypeUndefinedWarning,
+    ReversedConnectionNotFeasibleWarning,
 )
 from ._resources import (
     ResourceNeatWarning,
@@ -85,6 +86,7 @@ __all__ = [
     "ResourceTypeNotSupportedWarning",
     "ResourceUnknownWarning",
     "ResourcesDuplicatedWarning",
+    "ReversedConnectionNotFeasibleWarning",
     "UndefinedViewWarning",
     "UserModelingWarning",
     "user_modeling",
