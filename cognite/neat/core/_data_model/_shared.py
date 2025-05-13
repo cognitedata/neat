@@ -13,19 +13,26 @@ from cognite.neat.core._data_model.models.physical._unverified import (
 )
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
-VerifiedRules: TypeAlias = ConceptualDataModel | PhysicalDataModel
+VerifiedDataModel: TypeAlias = ConceptualDataModel | PhysicalDataModel
 
-T_VerifiedRules = TypeVar("T_VerifiedRules", bound=VerifiedRules)
-InputRules: TypeAlias = UnverifiedPhysicalDataModel | UnverifiedConceptualDataModel
-T_InputRules = TypeVar("T_InputRules", bound=InputRules)
+T_VerifiedDataModel = TypeVar("T_VerifiedDataModel", bound=VerifiedDataModel)
+UnverifiedDataModel: TypeAlias = UnverifiedPhysicalDataModel | UnverifiedConceptualDataModel
+T_UnverifiedDataModel = TypeVar("T_UnverifiedDataModel", bound=UnverifiedDataModel)
 
 
 @dataclass
-class ReadRules(Generic[T_InputRules]):
-    """This represents a rules that has been read."""
+class ImportedDataModel(Generic[T_UnverifiedDataModel]):
+    """This class is used to store results of data model import from a source prior to
+    verification and validation.
 
-    rules: T_InputRules | None
-    read_context: dict[str, SpreadsheetRead]
+    Attributes:
+        unverified_data_model: The unverified data model.
+        context: The context of the import, including warnings, errors and any other
+                 relevant information.
+    """
+
+    unverified_data_model: T_UnverifiedDataModel | None
+    context: dict[str, SpreadsheetRead]
 
     @classmethod
     def display_type_name(cls) -> str:
@@ -33,18 +40,20 @@ class ReadRules(Generic[T_InputRules]):
 
     @property
     def display_name(self) -> str:
-        if self.rules is None:
-            return "FailedRead"
-        return self.rules.display_name
+        if self.unverified_data_model is None:
+            return "Failed to load data model"
+        return self.unverified_data_model.display_name
 
 
-ReadInputRules: TypeAlias = ReadRules[UnverifiedPhysicalDataModel] | ReadRules[UnverifiedConceptualDataModel]
-T_ReadInputRules = TypeVar("T_ReadInputRules", bound=ReadInputRules)
+ImportedUnverifiedDataModel: TypeAlias = (
+    ImportedDataModel[UnverifiedPhysicalDataModel] | ImportedDataModel[UnverifiedConceptualDataModel]
+)
+T_ImportedUnverifiedDataModel = TypeVar("T_ImportedUnverifiedDataModel", bound=ImportedUnverifiedDataModel)
 
-Rules: TypeAlias = (
+DataModel: TypeAlias = (
     ConceptualDataModel
     | PhysicalDataModel
-    | ReadRules[UnverifiedPhysicalDataModel]
-    | ReadRules[UnverifiedConceptualDataModel]
+    | ImportedDataModel[UnverifiedPhysicalDataModel]
+    | ImportedDataModel[UnverifiedConceptualDataModel]
 )
-T_Rules = TypeVar("T_Rules", bound=Rules)
+T_DataModel = TypeVar("T_DataModel", bound=DataModel)

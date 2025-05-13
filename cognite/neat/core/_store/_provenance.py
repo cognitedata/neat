@@ -10,9 +10,9 @@ where in case of neat when dealing with instances we have:
 
  and in case of data models we have:
 
- * Agent: Rules importers, exporters, transformers, etc.
+ * Agent: Data Model importers, exporters, transformers, etc.
  * Activity: convert, verify, etc.
- * Entity: data model (aka Rules)
+ * Entity: data model (aka Data Model)
 
 """
 

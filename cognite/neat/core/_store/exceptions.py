@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 
 from cognite.neat.core._data_model.importers import BaseImporter
-from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
+from cognite.neat.core._data_model.transformers import VerifiedDataModelTransformer
 from cognite.neat.core._instances.extractors import KnowledgeGraphExtractor
 from cognite.neat.core._issues import IssueList
 
@@ -24,7 +24,7 @@ class ActivityFailed(NeatStoreError):
         self,
         activity: Activity,
         issue_list: IssueList,
-        tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
+        tool: BaseImporter | VerifiedDataModelTransformer | KnowledgeGraphExtractor,
     ) -> None:
         self.activity = activity
         self.issue_list = issue_list

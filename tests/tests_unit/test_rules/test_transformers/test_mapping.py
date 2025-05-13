@@ -6,7 +6,7 @@ from cognite.neat.core._data_model.models.physical import (
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.transformers import RuleMapper
+from cognite.neat.core._data_model.transformers import PhysicalDataModelMapper
 
 
 class TestClassicToCoreMapper:
@@ -31,7 +31,7 @@ class TestClassicToCoreMapper:
             ],
             views=[UnverifiedPhysicalView(view="MyAsset")],
             containers=[UnverifiedPhysicalContainer(container="Asset")],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
         input_rules = input_
 
@@ -54,9 +54,9 @@ class TestClassicToCoreMapper:
             views=[
                 UnverifiedPhysicalView(view="MyAsset", implements="cdf_cdm:CogniteAsset(version=v1)"),
             ],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
-        transformed = RuleMapper(mapping).transform(input_rules)
+        transformed = PhysicalDataModelMapper(mapping).transform(input_rules)
 
         assert len(transformed.properties) == 1
         prop = transformed.properties[0]

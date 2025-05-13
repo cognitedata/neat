@@ -105,7 +105,7 @@ class TestRulesStoreProvenanceSyncing:
             )
 
         assert (
-            "Imported rules are detached from the provenance chain."
+            "Imported data model is detached from the provenance chain."
             " Import will be skipped. Start a new NEAT session and "
             "import the data model there."
         ) in e.value.raw_message
@@ -120,7 +120,7 @@ class TestRulesStoreProvenanceSyncing:
                 enable_manual_edit=True,
             )
 
-        assert "The source of the imported rules is unknown" in e.value.raw_message
+        assert "The source of the imported data model is unknown" in e.value.raw_message
 
     def test_source_not_in_store(self, tmp_path: Path, neat_client: NeatClient) -> None:
         neat = NeatSession(neat_client)
@@ -137,7 +137,7 @@ class TestRulesStoreProvenanceSyncing:
                 enable_manual_edit=True,
             )
 
-        assert "The source of the imported rules is not in the provenance" in e.value.raw_message
+        assert "The source of the imported data model is not in the provenance" in e.value.raw_message
 
     def test_external_mod_allowed_provenance(self, tmp_path: Path) -> None:
         neat = NeatSession()
@@ -151,13 +151,15 @@ class TestRulesStoreProvenanceSyncing:
         )
 
         assert len(neat._state.rule_store.provenance) == 3
-        assert neat._state.rule_store.provenance[-1].description == "Manual transformation of rules outside of NEAT"
+        assert (
+            neat._state.rule_store.provenance[-1].description == "Manual transformation of data model outside of NEAT"
+        )
 
     def test_raw_filter(self, neat_client: NeatClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(neat_client)
         neat.read.excel(SchemaData.Physical.dm_raw_filter_xlsx)
 
-        rules = neat._state.rule_store.last_verified_dms_rules
+        rules = neat._state.rule_store.last_verified_physical_data_model
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         neat.to.cdf.data_model(existing="recreate")
@@ -165,7 +167,7 @@ class TestRulesStoreProvenanceSyncing:
         neat = NeatSession(neat_client)
         neat.read.cdf.data_model(("nikola_space", "nikola_external_id", "v1"))
 
-        rules = neat._state.rule_store.last_verified_dms_rules
+        rules = neat._state.rule_store.last_verified_physical_data_model
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 

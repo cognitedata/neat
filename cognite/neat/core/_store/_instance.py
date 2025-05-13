@@ -34,13 +34,12 @@ else:
     from typing import Self
 
 
-class NeatGraphStore:
-    """NeatGraphStore is a class that stores the graph and provides methods to read/write data it contains
+class NeatInstanceStore:
+    """NeatInstanceStore is a class that stores instances as triples and provides methods to read/write data it contains
 
 
     Args:
-        graph : Instance of rdflib.Graph class for graph storage
-        rules:
+        dataset : Instance of rdflib.Dataset class for instance storage
 
     !!! note "Dataset"
         The store leverages a RDF dataset which is defined as a collection of RDF graphs

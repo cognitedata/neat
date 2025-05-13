@@ -1,7 +1,7 @@
 from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualConcept,
+    UnverifiedConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
@@ -46,13 +46,13 @@ class TestAnalysis:
                 UnverifiedConceptualProperty("grandparent", "grandparentProp", "string"),
             ],
             concepts=[
-                UnverifiedConceptualConcept("child", implements="parent"),
-                UnverifiedConceptualConcept("parent", implements="grandparent"),
-                UnverifiedConceptualConcept("grandparent", implements=None),
+                UnverifiedConcept("child", implements="parent"),
+                UnverifiedConcept("parent", implements="grandparent"),
+                UnverifiedConcept("grandparent", implements=None),
             ],
         )
 
-        explore = DataModelAnalysis(generation.as_verified_rules(), None)
+        explore = DataModelAnalysis(generation.as_verified_data_model(), None)
 
         parents_by_class = explore.parents_by_concept(include_ancestors=True)
         assert {

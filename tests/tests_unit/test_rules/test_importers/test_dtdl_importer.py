@@ -1,9 +1,12 @@
 import pytest
 
 from cognite.neat.core._data_model.importers import DTDLImporter
-from cognite.neat.core._data_model.importers._dtdl2rules.spec import DTMI, Interface
+from cognite.neat.core._data_model.importers._dtdl2data_model.spec import (
+    DTMI,
+    Interface,
+)
 from cognite.neat.core._data_model.models import ConceptualDataModel
-from cognite.neat.core._data_model.transformers import VerifyInformationRules
+from cognite.neat.core._data_model.transformers import VerifyConceptualDataModel
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._issues.errors import (
     ResourceMissingIdentifierError,
@@ -22,8 +25,8 @@ class TestDTDLImporter:
         expected_issues = IssueList([ResourceMissingIdentifierError("Object")])
 
         with catch_issues() as issues:
-            read_rules = DTDLImporter.from_directory(SchemaData.NonNeatFormats.DTDL.energy_grid).to_rules()
-            _ = VerifyInformationRules().transform(read_rules)
+            read_rules = DTDLImporter.from_directory(SchemaData.NonNeatFormats.DTDL.energy_grid).to_data_model()
+            _ = VerifyConceptualDataModel().transform(read_rules)
 
         assert issues == expected_issues
 
@@ -40,8 +43,8 @@ class TestDTDLImporter:
             ]
         )
         with catch_issues() as issues:
-            read_rules = DTDLImporter.from_zip(SchemaData.NonNeatFormats.DTDL.temperature_controller).to_rules()
-            rules = VerifyInformationRules().transform(read_rules)
+            read_rules = DTDLImporter.from_zip(SchemaData.NonNeatFormats.DTDL.temperature_controller).to_data_model()
+            rules = VerifyConceptualDataModel().transform(read_rules)
 
         assert issues == expected_issues
         assert isinstance(rules, ConceptualDataModel)
@@ -63,9 +66,9 @@ class TestDTDLImporter:
             ],
         )
 
-        read_rules = dtdl_importer.to_rules()
+        read_rules = dtdl_importer.to_data_model()
         with catch_issues() as issues:
-            rules = VerifyInformationRules().transform(read_rules)
+            rules = VerifyConceptualDataModel().transform(read_rules)
 
         assert rules is None
         assert len(issues) == 1

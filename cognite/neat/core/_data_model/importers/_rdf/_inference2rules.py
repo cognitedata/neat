@@ -15,16 +15,16 @@ from cognite.neat.core._constants import NEAT, get_default_prefixes_and_namespac
 from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models import ConceptualDataModel, data_types
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualConcept,
+    Concept,
     ConceptualMetadata,
-    UnverifiedConceptualConcept,
+    UnverifiedConcept,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import AnyURI
 from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.warnings import PropertyValueTypeUndefinedWarning
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._store._provenance import INSTANCES_ENTITY
 from cognite.neat.core._utils.collection_ import iterate_progress_bar
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
@@ -83,8 +83,8 @@ class InferenceImporter(BaseRDFImporter):
     @classmethod
     def from_graph_store(
         cls,
-        store: NeatGraphStore,
-        data_model_id: dm.DataModelId | tuple[str, str, str] = DEFAULT_INFERENCE_DATA_MODEL_ID,
+        store: NeatInstanceStore,
+        data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
         language: str = "en",
@@ -145,7 +145,7 @@ class InferenceImporter(BaseRDFImporter):
     ) -> "InferenceImporter":
         raise NotImplementedError("JSON file format is not supported yet.")
 
-    def _to_rules_components(
+    def _to_data_model_components(
         self,
     ) -> dict:
         """Convert RDF graph to dictionary defining data model and prefixes of the graph
@@ -372,7 +372,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
         super().__init__(issue_list, graph, identifier, -1, non_existing_node_type, language="en")
         self._rules = rules
 
-    def _to_rules_components(
+    def _to_data_model_components(
         self,
     ) -> dict:
         if self._rules:
@@ -399,12 +399,12 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
     def _create_classes_properties(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
-    ) -> tuple[list[UnverifiedConceptualConcept], list[UnverifiedConceptualProperty]]:
+    ) -> tuple[list[UnverifiedConcept], list[UnverifiedConceptualProperty]]:
         if self._rules:
             existing_classes = {class_.concept.suffix: class_ for class_ in self._rules.concepts}
         else:
             existing_classes = {}
-        classes: list[UnverifiedConceptualConcept] = []
+        classes: list[UnverifiedConcept] = []
         properties_by_class_suffix_by_property_id: dict[str, dict[str, UnverifiedConceptualProperty]] = {}
 
         # Help for IDE
@@ -429,9 +429,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 parent_suffix = remove_namespace_from_uri(parent_uri)
                 self._add_uri_namespace_to_prefixes(parent_uri, prefixes)
                 if parent_suffix not in existing_classes:
-                    classes.append(UnverifiedConceptualConcept(concept=parent_suffix))
+                    classes.append(UnverifiedConcept(concept=parent_suffix))
                 else:
-                    classes.append(UnverifiedConceptualConcept.load(existing_classes[parent_suffix].model_dump()))
+                    classes.append(UnverifiedConcept.load(existing_classes[parent_suffix].model_dump()))
             else:
                 shared_property_uris = set()
             shared_properties: dict[URIRef, list[_ReadProperties]] = defaultdict(list)
@@ -441,14 +441,14 @@ class SubclassInferenceImporter(BaseRDFImporter):
 
                 if class_suffix not in existing_classes:
                     classes.append(
-                        UnverifiedConceptualConcept(
+                        UnverifiedConcept(
                             concept=class_suffix,
                             implements=parent_suffix,
                             instance_source=type_uri,
                         )
                     )
                 else:
-                    classes.append(UnverifiedConceptualConcept.load(existing_classes[class_suffix].model_dump()))
+                    classes.append(UnverifiedConcept.load(existing_classes[class_suffix].model_dump()))
 
                 properties_by_id: dict[str, UnverifiedConceptualProperty] = {}
                 for property_uri, read_properties in properties_by_property_uri.items():
@@ -523,7 +523,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
             existing_class_properties = {}
             existing_classes = {}
         properties_by_class_by_subclass: list[_ReadProperties] = []
-        existing_class: ConceptualConcept | None
+        existing_class: Concept | None
         total_instance_count = sum(count_by_type.values())
         iterable = count_by_type.items()
         if GLOBAL_CONFIG.use_iterate_bar_threshold and total_instance_count > GLOBAL_CONFIG.use_iterate_bar_threshold:

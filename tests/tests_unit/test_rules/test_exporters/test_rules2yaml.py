@@ -11,7 +11,7 @@ class TestYAMLExporter:
         exporter.export_to_file(alice_rules, tmp_path / "tmp.yaml")
         importer = YAMLImporter.from_file(tmp_path / "tmp.yaml")
 
-        recreated_rules = importer.to_rules().rules.as_verified_rules()
+        recreated_rules = importer.to_data_model().unverified_data_model.as_verified_data_model()
 
         assert alice_rules.dump() == recreated_rules.dump()
 
@@ -20,6 +20,6 @@ class TestYAMLExporter:
         exporter.export_to_file(david_rules, tmp_path / "tmp.yaml")
         importer = YAMLImporter.from_file(tmp_path / "tmp.yaml")
 
-        recreated_rules = importer.to_rules().rules.as_verified_rules()
+        recreated_rules = importer.to_data_model().unverified_data_model.as_verified_data_model()
 
         assert david_rules.dump() == recreated_rules.dump()

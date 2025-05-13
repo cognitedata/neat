@@ -21,7 +21,7 @@ from cognite.neat.core._data_model.models.entities import (
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
 from ._verified import (
-    ConceptualConcept,
+    Concept,
     ConceptualDataModel,
     ConceptualMetadata,
     ConceptualProperty,
@@ -112,7 +112,7 @@ class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
 
 
 @dataclass
-class UnverifiedConceptualConcept(UnverifiedComponent[ConceptualConcept]):
+class UnverifiedConcept(UnverifiedComponent[Concept]):
     concept: ConceptEntity | str
     name: str | None = None
     description: str | None = None
@@ -123,8 +123,8 @@ class UnverifiedConceptualConcept(UnverifiedComponent[ConceptualConcept]):
     physical: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[ConceptualConcept]:
-        return ConceptualConcept
+    def _get_verified_cls(cls) -> type[Concept]:
+        return Concept
 
     @property
     def concept_str(self) -> str:
@@ -147,7 +147,7 @@ class UnverifiedConceptualConcept(UnverifiedComponent[ConceptualConcept]):
 class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
     metadata: UnverifiedConceptualMetadata
     properties: list[UnverifiedConceptualProperty] = field(default_factory=list)
-    concepts: list[UnverifiedConceptualConcept] = field(default_factory=list)
+    concepts: list[UnverifiedConcept] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
 
     @classmethod
@@ -160,7 +160,7 @@ class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
-            Concepts=[class_.dump(default_prefix) for class_ in self.concepts],
+            Concepts=[concept.dump(default_prefix) for concept in self.concepts],
             Prefixes=self.prefixes,
         )
 

@@ -6,13 +6,13 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
     UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualConcept,
+    UnverifiedConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
@@ -32,7 +32,7 @@ from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
     SubsetConceptualDataModel,
-    SubsetDMSRules,
+    SubsetPhysicalDataModel,
     ToDMSCompliantEntities,
 )
 from cognite.neat.core._issues.errors._general import NeatValueError
@@ -55,7 +55,7 @@ class TestStandardizeNaming:
             containers=[UnverifiedPhysicalContainer("my_container")],
         )
 
-        transformed = StandardizeNaming().transform(dms.as_verified_rules())
+        transformed = StandardizeNaming().transform(dms.as_verified_data_model())
 
         assert transformed.views[0].view.suffix == "MyPoorlyFormattedView"
         assert transformed.properties[0].view_property == "andStrangelyNamedProperty"
@@ -70,10 +70,10 @@ class TestStandardizeNaming:
             properties=[
                 UnverifiedConceptualProperty(class_name, "TAG_NAME", "string", max_count=1),
             ],
-            concepts=[UnverifiedConceptualConcept(class_name)],
+            concepts=[UnverifiedConcept(class_name)],
         )
 
-        res: ConceptualDataModel = StandardizeNaming().transform(information.as_verified_rules())
+        res: ConceptualDataModel = StandardizeNaming().transform(information.as_verified_data_model())
 
         assert res.properties[0].property_ == "tagName"
         assert res.properties[0].concept.suffix == "NotAGoodCLassNAME"
@@ -90,13 +90,13 @@ class TestToInformationCompliantEntities:
                 UnverifiedConceptualProperty(class_name, "State(Previous)", "string", max_count=1),
                 UnverifiedConceptualProperty(class_name, "P&ID", "string", max_count=1),
             ],
-            concepts=[UnverifiedConceptualConcept(class_name)],
+            concepts=[UnverifiedConcept(class_name)],
         )
 
         res: ConceptualDataModel = (
             ToDMSCompliantEntities(rename_warning="raise")
-            .transform(ReadRules(information, {}))
-            .rules.as_verified_rules()
+            .transform(ImportedDataModel(information, {}))
+            .unverified_data_model.as_verified_data_model()
         )
 
         assert res.properties[0].property_ == "TAG_NAME"
@@ -123,7 +123,7 @@ class TestDataModelSubsetting:
 
     def test_subset_dms_rules(self, alice_rules: PhysicalDataModel) -> None:
         view = ViewEntity.load("power:GeoLocation(version=0.1.0)")
-        subset = SubsetDMSRules({view}).transform(alice_rules)
+        subset = SubsetPhysicalDataModel({view}).transform(alice_rules)
 
         assert subset.views[0].view == view
         assert len(subset.views) == 1
@@ -132,7 +132,7 @@ class TestDataModelSubsetting:
         view = ViewEntity.load("power:GeoLooocation(version=0.1.0)")
 
         with pytest.raises(NeatValueError):
-            _ = SubsetDMSRules({view}).transform(alice_rules)
+            _ = SubsetPhysicalDataModel({view}).transform(alice_rules)
 
 
 class TestAddCogniteProperties:
@@ -141,8 +141,8 @@ class TestAddCogniteProperties:
             metadata=UnverifiedConceptualMetadata("my_space", "MyModel", "v1", "doctrino"),
             properties=[],
             concepts=[
-                UnverifiedConceptualConcept("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
-                UnverifiedConceptualConcept("WindTurbine", implements="PowerGeneratingUnit"),
+                UnverifiedConcept("PowerGeneratingUnit", implements="cdf_cdm:CogniteAsset(version=v1)"),
+                UnverifiedConcept("WindTurbine", implements="PowerGeneratingUnit"),
             ],
         )
         read_model = cognite_core_schema.as_read_model()
@@ -157,9 +157,9 @@ class TestAddCogniteProperties:
         with monkeypatch_neat_client() as client:
             client.data_modeling.views.retrieve.side_effect = cognite_core
 
-            result = AddCogniteProperties(client).transform(ReadRules(unverified_conceptual_dm, {}))
-        assert result.rules is not None
-        actual_concepts = {str(c.concept) for c in result.rules.concepts}
+            result = AddCogniteProperties(client).transform(ImportedDataModel(unverified_conceptual_dm, {}))
+        assert result.unverified_data_model is not None
+        actual_concepts = {str(c.concept) for c in result.unverified_data_model.concepts}
         expected_concepts = (
             {"PowerGeneratingUnit", "WindTurbine"}
             | {
@@ -182,7 +182,7 @@ class TestAddCogniteProperties:
         }
 
         properties_by_concept = defaultdict(set)
-        for prop in result.rules.properties:
+        for prop in result.unverified_data_model.properties:
             properties_by_concept[prop.concept.dump(prefix="my_space")].add(prop.property_)
 
         assert set(properties_by_concept.keys()) == {"PowerGeneratingUnit", "WindTurbine"}

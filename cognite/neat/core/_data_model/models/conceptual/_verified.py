@@ -52,7 +52,7 @@ def _get_metadata(context: Any) -> ConceptualMetadata | None:
     return None
 
 
-class ConceptualConcept(SheetRow):
+class Concept(SheetRow):
     """
     Concept is a category of things that share a common set of attributes and relationships.
 
@@ -242,7 +242,7 @@ class ConceptualProperty(SheetRow):
 class ConceptualDataModel(BaseVerifiedDataModel):
     metadata: ConceptualMetadata = Field(alias="Metadata", description="Metadata for the conceptual data model")
     properties: SheetList[ConceptualProperty] = Field(alias="Properties", description="List of properties")
-    concepts: SheetList[ConceptualConcept] = Field(alias="Concepts", description="List of concepts")
+    concepts: SheetList[Concept] = Field(alias="Concepts", description="List of concepts")
     prefixes: dict[str, Namespace] = Field(
         alias="Prefixes",
         default_factory=get_default_prefixes_and_namespaces,
@@ -302,10 +302,10 @@ class ConceptualDataModel(BaseVerifiedDataModel):
 
     def as_dms_rules(self) -> "PhysicalDataModel":
         from cognite.neat.core._data_model.transformers._converters import (
-            _InformationRulesConverter,
+            _ConceptualDataModelConverter,
         )
 
-        return _InformationRulesConverter(self).as_dms_rules()
+        return _ConceptualDataModelConverter(self).as_physical_data_model()
 
     @classmethod
     def display_type_name(cls) -> str:

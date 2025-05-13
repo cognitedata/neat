@@ -7,7 +7,7 @@ import yaml
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.importers import YAMLImporter
-from cognite.neat.core._data_model.transformers import VerifyDMSRules
+from cognite.neat.core._data_model.transformers import VerifyPhysicalDataModel
 from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData
 
@@ -21,8 +21,8 @@ class TestValidate:
         self, rule_filepath: Path, expected_issues: Path | None, neat_client: NeatClient
     ) -> None:
         with catch_issues() as issues:
-            rules = YAMLImporter.from_file(rule_filepath, source_name=rule_filepath.name).to_rules()
-            _ = VerifyDMSRules(validate=True, client=neat_client).transform(rules)
+            rules = YAMLImporter.from_file(rule_filepath, source_name=rule_filepath.name).to_data_model()
+            _ = VerifyPhysicalDataModel(validate=True, client=neat_client).transform(rules)
 
         if expected_issues is None:
             # If there are no issues, then this model should read without any errors or warnings.

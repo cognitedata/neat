@@ -45,9 +45,9 @@ class MockGraphGenerator(BaseExtractor):
     ):
         if isinstance(rules, PhysicalDataModel):
             # fixes potential issues with circular dependencies
-            from cognite.neat.core._data_model.transformers import DMSToInformation
+            from cognite.neat.core._data_model.transformers import PhysicalToConceptual
 
-            self.rules = DMSToInformation().transform(rules)
+            self.rules = PhysicalToConceptual().transform(rules)
         elif isinstance(rules, ConceptualDataModel):
             self.rules = rules
         else:

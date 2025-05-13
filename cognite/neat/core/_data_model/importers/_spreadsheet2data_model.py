@@ -1,6 +1,6 @@
 """This module performs importing of graph to TransformationRules pydantic class.
 In more details, it traverses the graph and abstracts class and properties, basically
-generating a list of rules based on which nodes that form the graph are made.
+generating a list of data_model based on which nodes that form the graph are made.
 """
 
 import tempfile
@@ -15,7 +15,10 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pandas import ExcelFile
 from rdflib import Namespace, URIRef
 
-from cognite.neat.core._data_model._shared import ReadRules, T_InputRules
+from cognite.neat.core._data_model._shared import (
+    ImportedDataModel,
+    T_UnverifiedDataModel,
+)
 from cognite.neat.core._data_model.models import (
     INPUT_RULES_BY_ROLE,
     VERIFIED_RULES_BY_ROLE,
@@ -245,8 +248,8 @@ class SpreadsheetReader:
         return sheets, read_info_by_sheet
 
 
-class ExcelImporter(BaseImporter[T_InputRules]):
-    """Import rules from an Excel file.
+class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
+    """Import data_model from an Excel file.
 
     Args:
         filepath (Path): The path to the Excel file.
@@ -255,7 +258,7 @@ class ExcelImporter(BaseImporter[T_InputRules]):
     def __init__(self, filepath: Path):
         self.filepath = filepath
 
-    def to_rules(self) -> ReadRules[T_InputRules]:
+    def to_data_model(self) -> ImportedDataModel[T_UnverifiedDataModel]:
         issue_list = IssueList(title=f"'{self.filepath.name}'")
         if not self.filepath.exists():
             raise FileNotFoundNeatError(self.filepath)
@@ -271,14 +274,14 @@ class ExcelImporter(BaseImporter[T_InputRules]):
             raise MultiValueError(issue_list.errors)
 
         if user_read is None:
-            return ReadRules(None, {})
+            return ImportedDataModel(None, {})
 
         sheets = user_read.sheets
         original_role = user_read.role
         read_info_by_sheet = user_read.read_info_by_sheet
 
-        rules_cls = INPUT_RULES_BY_ROLE[original_role]
-        rules = cast(T_InputRules, rules_cls.load(sheets))
+        data_model_cls = INPUT_RULES_BY_ROLE[original_role]
+        data_model = cast(T_UnverifiedDataModel, data_model_cls.load(sheets))
 
         # Delete the temporary file if it was created
         if "temp_neat_file" in self.filepath.name:
@@ -287,7 +290,7 @@ class ExcelImporter(BaseImporter[T_InputRules]):
             except Exception as e:
                 issue_list.append(FileReadError(self.filepath, f"Failed to delete temporary file: {e}"))
 
-        return ReadRules(rules, read_info_by_sheet)
+        return ImportedDataModel(data_model, read_info_by_sheet)
 
     @property
     def description(self) -> str:

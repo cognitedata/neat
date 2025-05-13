@@ -102,9 +102,7 @@ class TestDataTypes:
                 },
                 DemoProperty(
                     property="a_class_versioned",
-                    valueType=ConceptEntity(
-                        prefix="my_namespace", suffix="person", version="1"
-                    ),
+                    valueType=ConceptEntity(prefix="my_namespace", suffix="person", version="1"),
                 ),
             ),
         ],

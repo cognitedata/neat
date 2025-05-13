@@ -7,7 +7,7 @@ from rdflib import RDF
 from cognite.neat.core._constants import get_default_prefixes_and_namespaces
 from cognite.neat.core._instances.transformers import PruneDeadEndEdges
 from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 def generate_test_parameters_unknown_types() -> Iterable[ParameterSet]:
@@ -65,7 +65,7 @@ class TestPruneGraph:
     def test_prune_instances_of_unknown_type(
         self, original_triples: list[Triple], expected_triples: list[Triple], removed_triples: list[Triple]
     ):
-        store = NeatGraphStore.from_memory_store()
+        store = NeatInstanceStore.from_memory_store()
 
         store._add_triples(original_triples, store.default_named_graph)
 

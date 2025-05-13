@@ -5,7 +5,10 @@ from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
-from cognite.neat.core._data_model.transformers import VerifyAnyRules, VerifyDMSRules
+from cognite.neat.core._data_model.transformers import (
+    VerifyAnyDataModel,
+    VerifyPhysicalDataModel,
+)
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._issues.errors import (
     CDFMissingClientError,
@@ -162,7 +165,7 @@ class TestExcelImporter:
         with catch_issues():
             importer = ExcelImporter(filepath)
             # Cannot validate as we have no client
-            rules = VerifyAnyRules(validate=False).transform(importer.to_rules())
+            rules = VerifyAnyDataModel(validate=False).transform(importer.to_data_model())
 
         assert isinstance(rules, rule_type)
 
@@ -170,8 +173,8 @@ class TestExcelImporter:
     def test_import_invalid_rules(self, filepath: Path, expected_issues: IssueList):
         importer = ExcelImporter(filepath)
         with catch_issues() as issues:
-            read_rules = importer.to_rules()
-            _ = VerifyAnyRules().transform(read_rules)
+            read_rules = importer.to_data_model()
+            _ = VerifyAnyDataModel().transform(read_rules)
 
         issues = sorted(issues)
         expected_issues = sorted(expected_issues)
@@ -181,7 +184,7 @@ class TestExcelImporter:
 
     def test_import_dms_rules_missing_in_model(self):
         importer = ExcelImporter(SchemaData.Physical.missing_in_model_value_xlsx)
-        rules = VerifyAnyRules(validate=False).transform(importer.to_rules())
+        rules = VerifyAnyDataModel(validate=False).transform(importer.to_data_model())
 
         for views in rules.views:
             assert views.in_model
@@ -190,8 +193,8 @@ class TestExcelImporter:
         importer = ExcelImporter(SchemaData.Physical.pump_example_with_missing_cells_raise_issues)
 
         with catch_issues() as issues:
-            read_rules = importer.to_rules()
-            _ = VerifyAnyRules().transform(read_rules)
+            read_rules = importer.to_data_model()
+            _ = VerifyAnyDataModel().transform(read_rules)
 
         assert len(issues) == 1
         assert issues[0].row == 15
@@ -201,8 +204,8 @@ class TestExcelImporter:
         correctly translated into min and max count properties"""
         importer = ExcelImporter(SchemaData.Physical.car_dms_rules_deprecated_xlsx)
         with catch_issues() as issues:
-            read_rules = importer.to_rules()
-            dms_rules = VerifyDMSRules(validate=False).transform(read_rules)
+            read_rules = importer.to_data_model()
+            dms_rules = VerifyPhysicalDataModel(validate=False).transform(read_rules)
 
         deprecation_warning_count = sum(1 for issue in issues if isinstance(issue, DeprecatedWarning))
         assert deprecation_warning_count == 2 * len(dms_rules.properties)

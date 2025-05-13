@@ -110,7 +110,7 @@ class UnverifiedDataModel(Generic[T_BaseRules], ABC):
     def _dataclass_fields(self) -> list[Field]:
         return list(fields(self))
 
-    def as_verified_rules(self) -> T_BaseRules:
+    def as_verified_data_model(self) -> T_BaseRules:
         cls_ = self._get_verified_cls()
         return cls_.model_validate(self.dump())
 

@@ -10,23 +10,23 @@ from cognite.neat.core._data_model.importers import InferenceImporter
 from cognite.neat.core._data_model.models.data_types import DataType, Integer, Json, Long
 from cognite.neat.core._data_model.models.entities import MultiValueTypeInfo
 from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
-from cognite.neat.core._data_model.transformers import VerifyAnyRules
+from cognite.neat.core._data_model.transformers import VerifyAnyDataModel
 from cognite.neat.core._instances.examples import nordic44_knowledge_graph
 from cognite.neat.core._instances.extractors import AssetsExtractor, RdfFileExtractor
 from cognite.neat.core._instances.loaders import DMSLoader
 from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData, InstanceData
 
 
 def test_rdf_inference():
-    store = NeatGraphStore.from_oxi_local_store()
+    store = NeatInstanceStore.from_oxi_local_store()
     extractor = RdfFileExtractor(nordic44_knowledge_graph, base_uri="http://nordic44.com/")
     store.write(extractor)
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store, ("inferred", "nordic44_data_model", "rdf"))
-        rules = VerifyAnyRules().transform(importer.to_rules())
+        rules = VerifyAnyDataModel().transform(importer.to_data_model())
 
     assert len(rules.properties) == 332
     assert len(rules.concepts) == 59
@@ -58,7 +58,7 @@ def test_rdf_inference_with_removal_of_unknown_type():
     EX = Namespace("http://example.org/")
     SUBSTATION = Namespace("http://example.org/substation/")
     TERMINAL = Namespace("http://example.org/terminal/")
-    store = NeatGraphStore.from_oxi_local_store()
+    store = NeatInstanceStore.from_oxi_local_store()
 
     store.dataset.add((EX.substation1, RDF.type, SUBSTATION.Substation))
     store.dataset.add((EX.substation2, RDF.type, SUBSTATION.Substation))
@@ -72,20 +72,20 @@ def test_rdf_inference_with_removal_of_unknown_type():
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store, ("inferred", "drop_unknown", "rdf"))
-        rules = VerifyAnyRules().transform(importer.to_rules())
+        rules = VerifyAnyDataModel().transform(importer.to_data_model())
 
     for prop in rules.properties:
         assert not isinstance(prop.value_type, MultiValueTypeInfo)
 
 
 def test_rdf_inference_with_none_existing_node():
-    store = NeatGraphStore.from_oxi_local_store()
+    store = NeatInstanceStore.from_oxi_local_store()
     extractor = RdfFileExtractor(GraphData.low_quality_graph_ttl)
     store.write(extractor)
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store, non_existing_node_type=UnknownEntity())
-        rules = VerifyAnyRules().transform(importer.to_rules())
+        rules = VerifyAnyDataModel().transform(importer.to_data_model())
 
     assert len(rules.properties) == 14
     assert len(rules.concepts) == 6
@@ -96,7 +96,7 @@ def test_rdf_inference_with_none_existing_node():
 
 
 def test_json_value_type_inference():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
 
     extractor = AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml, unpack_metadata=False)
 
@@ -104,7 +104,7 @@ def test_json_value_type_inference():
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store)
-        rules = VerifyAnyRules().transform(importer.to_rules())
+        rules = VerifyAnyDataModel().transform(importer.to_data_model())
 
     properties = {prop.property_: prop for prop in rules.properties}
 
@@ -115,13 +115,13 @@ def test_json_value_type_inference():
 
 
 def test_integer_as_long():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
     for triple in GraphData.car.TRIPLES:
         store.dataset.add(triple)
 
     with catch_issues():
         importer = InferenceImporter.from_graph_store(store)
-        rules = VerifyAnyRules().transform(importer.to_rules())
+        rules = VerifyAnyDataModel().transform(importer.to_data_model())
 
     data_types = {prop.value_type for prop in rules.properties if isinstance(prop.value_type, DataType)}
 
@@ -144,7 +144,7 @@ def test_infer_with_bad_property_names() -> None:
     )
     neat.infer()
     assert neat._state.rule_store.provenance
-    info = neat._state.rule_store.last_verified_information_rules
+    info = neat._state.rule_store.last_verified_conceptual_data_model
 
     assert info is not None
     assert len(info.properties) == 1
@@ -164,7 +164,7 @@ def test_infer_importer_names_different_casing() -> None:
     )
     neat.infer()
     assert neat._state.rule_store.provenance
-    info = neat._state.rule_store.last_verified_information_rules
+    info = neat._state.rule_store.last_verified_conceptual_data_model
 
     assert info is not None
     assert len(info.properties) == 1
@@ -173,8 +173,8 @@ def test_infer_importer_names_different_casing() -> None:
 
     neat.convert()
 
-    dms_rules = neat._state.rule_store.last_verified_dms_rules
-    info_rules = neat._state.rule_store.last_verified_information_rules
+    dms_rules = neat._state.rule_store.last_verified_physical_data_model
+    info_rules = neat._state.rule_store.last_verified_conceptual_data_model
 
     store = neat._state.instances.store
     instances = [

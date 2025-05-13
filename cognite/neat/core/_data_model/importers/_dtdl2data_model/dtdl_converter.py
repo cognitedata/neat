@@ -1,7 +1,7 @@
 from collections import Counter
 from collections.abc import Callable, Sequence
 
-from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
+from cognite.neat.core._data_model.importers._dtdl2data_model.spec import (
     DTMI,
     Command,
     CommandV2,
@@ -19,7 +19,7 @@ from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
     TelemetryV2,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualConcept,
+    UnverifiedConcept,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import (
@@ -45,7 +45,7 @@ class _DTDLConverter:
     def __init__(self, issues: IssueList | None = None) -> None:
         self.issues = IssueList(issues or [])
         self.properties: list[UnverifiedConceptualProperty] = []
-        self.classes: list[UnverifiedConceptualConcept] = []
+        self.classes: list[UnverifiedConcept] = []
         self._item_by_id: dict[DTMI, DTDLBase] = {}
 
         self._method_by_type = {
@@ -103,11 +103,11 @@ class _DTDLConverter:
             )
 
     def convert_interface(self, item: Interface, _: str | None) -> None:
-        class_ = UnverifiedConceptualConcept(
-            concept=item.id_.as_class_id(),
+        class_ = UnverifiedConcept(
+            concept=item.id_.as_concept_entity(),
             name=item.display_name,
             description=item.description,
-            implements=[parent.as_class_id() for parent in item.extends or []] or None,
+            implements=[parent.as_concept_entity() for parent in item.extends or []] or None,
         )
         self.classes.append(class_)
         for sub_item_or_id in item.contents or []:
@@ -219,7 +219,7 @@ class _DTDLConverter:
         if item.target is not None:
             value_type: DataType | ConceptEntity
             if item.target in self._item_by_id:
-                value_type = item.target.as_class_id()
+                value_type = item.target.as_concept_entity()
             else:
                 # Falling back to json
                 self.issues.append(
@@ -254,8 +254,8 @@ class _DTDLConverter:
             )
             return None
 
-        class_ = UnverifiedConceptualConcept(
-            concept=item.id_.as_class_id(),
+        class_ = UnverifiedConcept(
+            concept=item.id_.as_concept_entity(),
             name=item.display_name,
             description=item.description,
         )
@@ -307,7 +307,7 @@ class _DTDLConverter:
             else:
                 if isinstance(input_type, Object):
                     self.convert_object(input_type, None)
-                return input_type.id_.as_class_id()
+                return input_type.id_.as_concept_entity()
         else:
             self.issues.append(
                 PropertyTypeNotSupportedWarning(

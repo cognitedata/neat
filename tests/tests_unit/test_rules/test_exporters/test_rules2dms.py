@@ -10,7 +10,10 @@ from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.models import ConceptualDataModel
 from cognite.neat.core._data_model.models.physical import PhysicalDataModel
-from cognite.neat.core._data_model.transformers import InformationToDMS, VerifyAnyRules
+from cognite.neat.core._data_model.transformers import (
+    ConceptualToPhysical,
+    VerifyAnyDataModel,
+)
 from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData
 
@@ -66,11 +69,11 @@ class TestImportExportDMS:
     def test_import_excel_export_dms(self, filepath: Path) -> None:
         with catch_issues() as issues:
             importer = importers.ExcelImporter(filepath)
-            rules = VerifyAnyRules().transform(importer.to_rules())
+            rules = VerifyAnyDataModel().transform(importer.to_data_model())
             if isinstance(rules, PhysicalDataModel):
                 dms_rules = rules
             elif isinstance(rules, ConceptualDataModel):
-                dms_rules = InformationToDMS().transform(rules)
+                dms_rules = ConceptualToPhysical().transform(rules)
             else:
                 raise ValueError(f"Unexpected rules type: {type(rules)}")
 

@@ -29,12 +29,16 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> PhysicalDataModel:
-    return UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
+    return UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
 def david_rules() -> ConceptualDataModel:
-    return ExcelImporter(DOC_RULES / "information-architect-david.xlsx").to_rules().rules.as_verified_rules()
+    return (
+        ExcelImporter(DOC_RULES / "information-architect-david.xlsx")
+        .to_data_model()
+        .unverified_data_model.as_verified_data_model()
+    )
 
 
 @pytest.fixture(scope="session")
@@ -44,12 +48,20 @@ def david_spreadsheet(david_rules) -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> PhysicalDataModel:
-    return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
+    return (
+        ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx")
+        .to_data_model()
+        .unverified_data_model.as_verified_data_model()
+    )
 
 
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> PhysicalDataModel:
-    return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_verified_rules()
+    return (
+        ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx")
+        .to_data_model()
+        .unverified_data_model.as_verified_data_model()
+    )
 
 
 @pytest.fixture(scope="session")

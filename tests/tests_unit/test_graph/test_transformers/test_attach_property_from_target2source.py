@@ -9,7 +9,7 @@ from cognite.neat.core._instances.transformers._prune_graph import (
     AttachPropertyFromTargetToSource,
 )
 from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 def generate_test_parameters_delete_target_node() -> Iterable[ParameterSet]:
@@ -307,7 +307,7 @@ class TestAttachPropertyFromTargetToSource:
         expected_triples: list[Triple],
         convert_literal_to_uri: bool,
     ):
-        store = NeatGraphStore.from_memory_store()
+        store = NeatInstanceStore.from_memory_store()
 
         store._add_triples(triples, named_graph=store.default_named_graph)
 
@@ -345,7 +345,7 @@ class TestAttachPropertyFromTargetToSource:
         expected_triples: list[Triple],
         convert_literal_to_uri: bool,
     ):
-        store = NeatGraphStore.from_memory_store()
+        store = NeatInstanceStore.from_memory_store()
 
         store._add_triples(triples, named_graph=store.default_named_graph)
 

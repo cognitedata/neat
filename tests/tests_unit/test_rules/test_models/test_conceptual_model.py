@@ -4,17 +4,17 @@ from typing import Any
 import pytest
 
 from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.models import PhysicalDataModel, data_types
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualConcept,
+    Concept,
     ConceptualDataModel,
     ConceptualProperty,
     ConceptualValidation,
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual._unverified import (
-    UnverifiedConceptualConcept,
+    UnverifiedConcept,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
@@ -24,11 +24,11 @@ from cognite.neat.core._data_model.models.entities import (
     MultiValueTypeInfo,
 )
 from cognite.neat.core._data_model.transformers._converters import (
-    InformationToDMS,
+    ConceptualToPhysical,
     ToCompliantEntities,
-    _InformationRulesConverter,
+    _ConceptualDataModelConverter,
 )
-from cognite.neat.core._data_model.transformers._verification import VerifyAnyRules
+from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.core._issues import NeatError
 from cognite.neat.core._issues._base import MultiValueError
 from cognite.neat.core._issues.errors import ResourceNotDefinedError
@@ -204,8 +204,11 @@ def incomplete_rules_case():
 class TestInformationRules:
     @pytest.mark.parametrize("duplicated_rules, expected_exception", list(duplicated_entries()))
     def test_duplicated_entries(self, duplicated_rules, expected_exception) -> None:
-        input_rules = ReadRules(rules=UnverifiedConceptualDataModel.load(duplicated_rules), read_context={})
-        transformer = VerifyAnyRules(validate=True)
+        input_rules = ImportedDataModel(
+            unverified_data_model=UnverifiedConceptualDataModel.load(duplicated_rules),
+            context={},
+        )
+        transformer = VerifyAnyDataModel(validate=True)
 
         with pytest.raises(MultiValueError) as e:
             _ = transformer.transform(input_rules)
@@ -241,7 +244,7 @@ class TestInformationRules:
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         info_rules = ConceptualDataModel.model_validate(david_spreadsheet)
 
-        dms_rules = InformationToDMS().transform(info_rules)
+        dms_rules = ConceptualToPhysical().transform(info_rules)
 
         assert isinstance(dms_rules, PhysicalDataModel)
 
@@ -270,7 +273,7 @@ class TestInformationRulesConverter:
         ],
     )
     def test_to_space(self, prefix: str, expected_space: str) -> None:
-        actual_space = _InformationRulesConverter._to_space(prefix)
+        actual_space = _ConceptualDataModelConverter._to_space(prefix)
 
         assert actual_space == expected_space
 
@@ -283,7 +286,7 @@ class TestInformationRulesConverter:
                 version="0.1.0",
                 creator="Anders",
             ),
-            concepts=[UnverifiedConceptualConcept(concept="MassiveClass")],
+            concepts=[UnverifiedConcept(concept="MassiveClass")],
             properties=[
                 UnverifiedConceptualProperty(
                     concept="MassiveClass",
@@ -293,9 +296,9 @@ class TestInformationRulesConverter:
                 )
                 for no in range(DMS_CONTAINER_PROPERTY_SIZE_LIMIT + 1)
             ],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
-        dms_rules = InformationToDMS().transform(info)
+        dms_rules = ConceptualToPhysical().transform(info)
 
         assert len(dms_rules.containers) == 2
 
@@ -355,7 +358,7 @@ class TestInformationConverter:
         ],
     )
     def test_bump_suffix(self, name: str, expected: str) -> None:
-        actual = _InformationRulesConverter._bump_suffix(name)
+        actual = _ConceptualDataModelConverter._bump_suffix(name)
 
         assert actual == expected
 
@@ -386,7 +389,7 @@ class TestInformationConverter:
         ],
     )
     def test_convert_multivalue_type(self, multi: MultiValueTypeInfo, expected: DataType) -> None:
-        actual = _InformationRulesConverter.convert_multi_data_type(multi)
+        actual = _ConceptualDataModelConverter.convert_multi_data_type(multi)
 
         assert actual == expected
 
@@ -395,8 +398,11 @@ class TestInformationConverter:
         self,
         rules_dict: dict[str, dict[str, Any]],
     ) -> None:
-        input_rules = ReadRules(rules=UnverifiedConceptualDataModel.load(rules_dict), read_context={})
-        transformer = VerifyAnyRules(validate=True)
+        input_rules = ImportedDataModel(
+            unverified_data_model=UnverifiedConceptualDataModel.load(rules_dict),
+            context={},
+        )
+        transformer = VerifyAnyDataModel(validate=True)
         rules = transformer.transform(input_rules)
 
         rules = ToCompliantEntities().transform(rules)
@@ -463,7 +469,7 @@ class TestInformationClass:
         "raw, class_, implements",
         [
             (
-                UnverifiedConceptualConcept(
+                UnverifiedConcept(
                     concept="WindTurbine",
                     description="Power generating unite",
                     implements="cdf_cdm:CogniteAsset(version=v1)",
@@ -475,11 +481,11 @@ class TestInformationClass:
     )
     def test_validate_class_entity(
         self,
-        raw: UnverifiedConceptualConcept,
+        raw: UnverifiedConcept,
         class_: ConceptEntity,
         implements: ConceptEntity,
     ) -> None:
-        info_class = ConceptualConcept.model_validate(raw.dump(default_prefix="my_space"))
+        info_class = Concept.model_validate(raw.dump(default_prefix="my_space"))
 
         assert info_class.concept == class_
         assert isinstance(info_class.implements, list)

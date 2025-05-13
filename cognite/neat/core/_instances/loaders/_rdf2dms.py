@@ -51,7 +51,7 @@ from cognite.neat.core._issues.warnings import (
     ResourceNeatWarning,
 )
 from cognite.neat.core._shared import InstanceType
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.auxiliary import create_sha256_hash
 from cognite.neat.core._utils.collection_ import (
     iterate_progress_bar_if_above_config_threshold,
@@ -117,7 +117,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         dms_rules: PhysicalDataModel,
         info_rules: ConceptualDataModel,
-        graph_store: NeatGraphStore,
+        graph_store: NeatInstanceStore,
         instance_space: str,
         space_property: str | None = None,
         use_source_space: bool = False,

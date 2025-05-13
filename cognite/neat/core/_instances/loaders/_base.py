@@ -8,7 +8,7 @@ from cognite.client.data_classes.capabilities import Capability
 
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import AuthorizationError
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.auxiliary import class_html_doc
 from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
@@ -29,7 +29,7 @@ class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
 
-    def __init__(self, graph_store: NeatGraphStore):
+    def __init__(self, graph_store: NeatInstanceStore):
         self.graph_store = graph_store
 
     @abstractmethod

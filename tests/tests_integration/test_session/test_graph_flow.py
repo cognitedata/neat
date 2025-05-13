@@ -159,7 +159,7 @@ class TestExtractToLoadFlow:
         issues = neat.convert()
         assert not issues.has_errors
 
-        dms = neat._state.rule_store.last_verified_dms_rules
+        dms = neat._state.rule_store.last_verified_physical_data_model
 
         expected_containers = {
             ContainerEntity(space="cdf_cdm", externalId="CogniteAsset"),
@@ -196,7 +196,7 @@ class TestExtractToLoadFlow:
         neat.infer()
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_verified_information_rules
+        rules = neat._state.rule_store.last_verified_conceptual_data_model
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
@@ -205,8 +205,8 @@ class TestExtractToLoadFlow:
 
         if True:
             # In progress, not yet supported.
-            dms_rules = neat._state.rule_store.last_verified_dms_rules
-            info_rules = neat._state.rule_store.last_verified_information_rules
+            dms_rules = neat._state.rule_store.last_verified_physical_data_model
+            info_rules = neat._state.rule_store.last_verified_conceptual_data_model
             store = neat._state.instances.store
             instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 
@@ -234,7 +234,7 @@ class TestExtractToLoadFlow:
         neat.infer()
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_verified_information_rules
+        rules = neat._state.rule_store.last_verified_conceptual_data_model
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
@@ -243,8 +243,8 @@ class TestExtractToLoadFlow:
 
         if True:
             # In progress, not yet supported.
-            dms_rules = neat._state.rule_store.last_verified_dms_rules
-            info_rules = neat._state.rule_store.last_verified_information_rules
+            dms_rules = neat._state.rule_store.last_verified_physical_data_model
+            info_rules = neat._state.rule_store.last_verified_conceptual_data_model
             store = neat._state.instances.store
             instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
 

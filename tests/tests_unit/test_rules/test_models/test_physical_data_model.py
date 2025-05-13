@@ -14,7 +14,7 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.data_types import String
@@ -37,10 +37,10 @@ from cognite.neat.core._data_model.models.physical import (
 )
 from cognite.neat.core._data_model.models.physical._exporter import _DMSExporter
 from cognite.neat.core._data_model.transformers import (
-    DMSToInformation,
-    InformationToDMS,
+    ConceptualToPhysical,
     MapOneToOne,
-    VerifyDMSRules,
+    PhysicalToConceptual,
+    VerifyPhysicalDataModel,
 )
 from cognite.neat.core._issues import NeatError, catch_issues
 from cognite.neat.core._issues.errors import PropertyDefinitionDuplicatedError
@@ -809,7 +809,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalView(view="sp_core:Asset(version=1)"),
                 UnverifiedPhysicalView(view="WindTurbine", implements="sp_core:Asset(version=1)"),
             ],
-        ).as_verified_rules(),
+        ).as_verified_data_model(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
@@ -902,7 +902,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalView(view="Generator", implements="Asset"),
                 UnverifiedPhysicalView(view="Reservoir", implements="Asset"),
             ],
-        ).as_verified_rules(),
+        ).as_verified_data_model(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
     )
 
@@ -1250,7 +1250,7 @@ def case_unknown_value_types():
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
+        valid_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_data_model()
 
         assert isinstance(valid_rules, PhysicalDataModel)
 
@@ -1267,12 +1267,12 @@ class TestDMSRules:
     @pytest.mark.parametrize("raw, no_properties", list(case_unknown_value_types()))
     def test_case_unknown_value_types(self, raw: dict[str, dict[str, Any]], no_properties: int) -> None:
         rules = ConceptualDataModel.model_validate(raw)
-        dms_rules = InformationToDMS(ignore_undefined_value_types=True).transform(rules)
+        dms_rules = ConceptualToPhysical(ignore_undefined_value_types=True).transform(rules)
         assert len(dms_rules.properties) == no_properties
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
     def test_load_valid_rules(self, raw: UnverifiedPhysicalDataModel, expected_rules: PhysicalDataModel) -> None:
-        valid_rules = raw.as_verified_rules()
+        valid_rules = raw.as_verified_data_model()
         normalize_neat_id_in_rules(valid_rules)
         normalize_neat_id_in_rules(expected_rules)
 
@@ -1286,7 +1286,7 @@ class TestDMSRules:
     def test_load_inconsistent_container_definitions(
         self, raw: UnverifiedPhysicalDataModel, expected_errors: list[NeatError]
     ) -> None:
-        rules = raw.as_verified_rules()
+        rules = raw.as_verified_data_model()
         issues = PhysicalValidation(rules).validate()
 
         assert len(issues.errors) == 2
@@ -1295,7 +1295,7 @@ class TestDMSRules:
 
     def test_alice_to_and_from_dms(self, alice_rules: PhysicalDataModel) -> None:
         schema = alice_rules.as_schema()
-        recreated_rules = DMSImporter(schema).to_rules().rules.as_verified_rules()
+        recreated_rules = DMSImporter(schema).to_data_model().unverified_data_model.as_verified_data_model()
 
         exclude = {
             # This information is lost in the conversion
@@ -1315,7 +1315,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
     def test_as_schema(self, input_rules: UnverifiedPhysicalDataModel, expected_schema: DMSSchema) -> None:
-        rules = input_rules.as_verified_rules()
+        rules = input_rules.as_verified_data_model()
         actual_schema = rules.as_schema()
 
         assert actual_schema.spaces.dump() == expected_schema.spaces.dump()
@@ -1335,8 +1335,8 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
-        info_rules = DMSToInformation().transform(alice_rules)
+        alice_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_data_model()
+        info_rules = PhysicalToConceptual().transform(alice_rules)
 
         assert isinstance(info_rules, ConceptualDataModel)
 
@@ -1368,7 +1368,7 @@ class TestDMSRules:
                 UnverifiedPhysicalView(view="cdf_cdm:Describable(version=v1)"),
             ],
             containers=[UnverifiedPhysicalContainer(container="Asset", constraint="Sourceable,Describable")],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
         normalize_neat_id_in_rules(dms_rules)
 
@@ -1422,7 +1422,7 @@ class TestDMSRules:
 
     def test_create_reference(self) -> None:
         info_rules = GraphData.car.get_care_rules()
-        dms_rules = InformationToDMS().transform(info_rules)
+        dms_rules = ConceptualToPhysical().transform(info_rules)
         dms_rules = MapOneToOne(GraphData.car.BASE_MODEL, {"Manufacturer": "Entity", "Color": "Entity"}).transform(
             dms_rules
         )
@@ -1486,7 +1486,7 @@ class TestDMSRules:
             ],
         )
         with catch_issues() as issue_list:
-            VerifyDMSRules().transform(ReadRules(sub_core, {}))
+            VerifyPhysicalDataModel().transform(ImportedDataModel(sub_core, {}))
 
         assert not issue_list
 
@@ -1525,7 +1525,7 @@ class TestDMSRules:
             ],
         )
         with catch_issues() as issues:
-            _ = VerifyDMSRules().transform(ReadRules(sub_core, {}))
+            _ = VerifyPhysicalDataModel().transform(ImportedDataModel(sub_core, {}))
 
         assert not issues
 
@@ -1565,7 +1565,7 @@ class TestDMSRules:
             ],
         )
         with catch_issues() as issues:
-            rules = VerifyDMSRules().transform(ReadRules(extended_core, {}))
+            rules = VerifyPhysicalDataModel().transform(ImportedDataModel(extended_core, {}))
 
         assert not issues
         assert rules is not None
@@ -1592,7 +1592,7 @@ class TestDMSRules:
             ],
             containers=[UnverifiedPhysicalContainer("cdf_cdm:CogniteDescribable")],
         )
-        verified = rules.as_verified_rules()
+        verified = rules.as_verified_data_model()
 
         assert isinstance(verified, PhysicalDataModel)
 
@@ -1773,7 +1773,7 @@ class TestDMSValidation:
         expected_views: set[ViewEntity],
         expected_containers: set[ContainerEntity],
     ) -> None:
-        validation = PhysicalValidation(input_rules.as_verified_rules())
+        validation = PhysicalValidation(input_rules.as_verified_data_model())
         actual_views, actual_containers = validation.imported_views_and_containers_ids()
 
         assert actual_views == expected_views

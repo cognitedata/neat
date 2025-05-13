@@ -44,9 +44,11 @@ class EntityTypes(StrEnum):
     space = "space"
 
 
-def get_reserved_words(key: Literal["class", "view", "property", "space"]) -> list[str]:
+def get_reserved_words(
+    key: Literal["concept", "view", "property", "space"],
+) -> list[str]:
     return {
-        "class": ["Class", "class"],
+        "concept": ["Concept", "concept"],
         "view": [
             "Query",
             "Mutation",
@@ -104,10 +106,14 @@ DATA_MODEL_COMPLIANCE_REGEX = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
 VIEW_ID_COMPLIANCE_REGEX = (
     rf"(?!^({'|'.join(get_reserved_words('view'))})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
-DMS_PROPERTY_ID_COMPLIANCE_REGEX = (
-    rf"(?!^({'|'.join(get_reserved_words('property'))})$)" r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
+PHYSICAL_PROPERTY_ID_COMPLIANCE_REGEX = (
+    rf"(?!^({'|'.join(get_reserved_words('property'))})$)"
+    r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
-CLASS_ID_COMPLIANCE_REGEX = rf"(?!^({'|'.join(get_reserved_words('class'))})$)" r"(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
+CONCEPT_ID_COMPLIANCE_REGEX = (
+    rf"(?!^({'|'.join(get_reserved_words('concept'))})$)"
+    r"(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
+)
 
 INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
@@ -140,15 +146,15 @@ class _Patterns:
         return re.compile(VIEW_ID_COMPLIANCE_REGEX)
 
     @cached_property
-    def dms_property_id_compliance(self) -> re.Pattern[str]:
-        return re.compile(DMS_PROPERTY_ID_COMPLIANCE_REGEX)
+    def physical_property_id_compliance(self) -> re.Pattern[str]:
+        return re.compile(PHYSICAL_PROPERTY_ID_COMPLIANCE_REGEX)
 
     @cached_property
-    def class_id_compliance(self) -> re.Pattern[str]:
-        return re.compile(CLASS_ID_COMPLIANCE_REGEX)
+    def concept_id_compliance(self) -> re.Pattern[str]:
+        return re.compile(CONCEPT_ID_COMPLIANCE_REGEX)
 
     @cached_property
-    def information_property_id_compliance(self) -> re.Pattern[str]:
+    def conceptual_property_id_compliance(self) -> re.Pattern[str]:
         return re.compile(INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX)
 
     @cached_property
@@ -159,11 +165,11 @@ class _Patterns:
         self,
         entity: EntityTypes,
     ) -> re.Pattern:
-        if entity == EntityTypes.class_:
-            return self.class_id_compliance
+        if entity == EntityTypes.concept:
+            return self.concept_id_compliance
 
         elif entity == EntityTypes.conceptual_property:
-            return self.information_property_id_compliance
+            return self.conceptual_property_id_compliance
 
         elif entity == EntityTypes.view:
             return self.view_id_compliance
@@ -173,7 +179,7 @@ class _Patterns:
             return self.view_id_compliance
 
         elif entity == EntityTypes.physical_property:
-            return self.dms_property_id_compliance
+            return self.physical_property_id_compliance
 
         elif entity == EntityTypes.version:
             return self.version_compliance

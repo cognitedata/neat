@@ -38,7 +38,7 @@ from cognite.neat.core._data_model.exporters import DMSExporter
 from pathlib import Path
 from rich import print
 
-from cognite.neat.core._data_model.transformers import DMSToInformation
+from cognite.neat.core._data_model.transformers import PhysicalToConceptual
 
 TMP_FOLDER = Path(__file__).parent / 'tmp'
 TMP_FOLDER.mkdir(exist_ok=True)
@@ -57,7 +57,7 @@ def main():
         print(Panel(f"Testing model: {model_id!r} from {client.config.project!r} CDF Project", expand=False))
         importer = DMSImporter.from_data_model_id(client, model_id)
         print("Successfully fetched model from CDF")
-        rules, issues = importer.to_rules()
+        rules, issues = importer.to_data_model()
         if issues.has_errors:
             print("[red]Errors[/red] found during conversion:")
             for issue in issues.errors:
@@ -75,7 +75,7 @@ def main():
             warning += 1
         assert isinstance(rules, PhysicalDataModel)
         try:
-            information = DMSToInformation().transform(rules)
+            information = PhysicalToConceptual().transform(rules)
         except Exception as e:
             print(f"[red]Failed[/red] to convert rules to information architect rules: {e}")
             print(Panel(traceback.format_exc(), expand=False))

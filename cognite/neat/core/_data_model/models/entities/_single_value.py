@@ -270,7 +270,7 @@ T_Entity = TypeVar("T_Entity", bound=ConceptualEntity)
 
 
 class ConceptEntity(ConceptualEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.class_
+    type_: ClassVar[EntityTypes] = EntityTypes.concept
     version: str | None = None
 
     def as_view_entity(self, default_space: str, default_version: str) -> "ViewEntity":
@@ -342,9 +342,7 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any
-    ) -> "T_DMSEntity": ...
+    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
 
     @classmethod
     @overload
@@ -384,7 +382,7 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
     def from_id(cls, id: T_ID) -> Self:
         raise NotImplementedError("Method from_id must be implemented in subclasses")
 
-    def as_class(self) -> ConceptEntity:
+    def as_concept_entity(self) -> ConceptEntity:
         return ConceptEntity(prefix=self.space, suffix=self.external_id)
 
     def as_dms_compliant_entity(self) -> "Self":
@@ -410,12 +408,10 @@ class ContainerEntity(PhysicalEntity[ContainerId]):
 class DMSVersionedEntity(PhysicalEntity[T_ID], ABC):
     version: str
 
-    def as_class(self, skip_version: bool = False) -> ConceptEntity:
+    def as_concept_entity(self, skip_version: bool = False) -> ConceptEntity:
         if skip_version:
             return ConceptEntity(prefix=self.space, suffix=self.external_id)
-        return ConceptEntity(
-            prefix=self.space, suffix=self.external_id, version=self.version
-        )
+        return ConceptEntity(prefix=self.space, suffix=self.external_id, version=self.version)
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -552,6 +548,4 @@ class ReferenceEntity(ConceptEntity):
         return DMSNodeEntity(space=self.prefix, externalId=self.suffix)
 
     def as_class_entity(self) -> ConceptEntity:
-        return ConceptEntity(
-            prefix=self.prefix, suffix=self.suffix, version=self.version
-        )
+        return ConceptEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)

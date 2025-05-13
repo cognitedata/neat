@@ -93,12 +93,12 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
 
 
 @dataclass(unsafe_hash=True)
-class UndefinedClassWarning(UserModelingWarning):
-    """Class {class_id} has no explicit properties defined neither implements other class"""
+class UndefinedConceptWarning(UserModelingWarning):
+    """Class {concept_id} has no explicit properties defined neither implements other concepts"""
 
-    fix = "Define properties for class or inherit properties by implementing another class."
+    fix = "Define properties for concept or inherit properties by implementing another concept."
 
-    class_id: str
+    concept_id: str
 
 
 @dataclass(unsafe_hash=True)

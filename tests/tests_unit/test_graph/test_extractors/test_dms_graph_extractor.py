@@ -53,8 +53,8 @@ class TestDMSGraphExtractor:
             extractor = DMSGraphExtractor(car.CAR_MODEL, client)
 
             triples = set(extractor.extract())
-            info_rules = extractor.get_information_rules()
-            dms_rules = extractor.get_dms_rules()
+            info_rules = extractor.get_conceptual_data_model()
+            dms_rules = extractor.get_physical_data_model()
 
         expected_info = car.get_care_rules()
         assert triples == set(car.TRIPLES)

@@ -6,7 +6,7 @@ from cognite.neat.core._data_model.models.entities._single_value import (
 )
 from cognite.neat.core._data_model.transformers import (
     SubsetConceptualDataModel,
-    SubsetDMSRules,
+    SubsetPhysicalDataModel,
 )
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.session._experimental import ExperimentalFlags
@@ -55,8 +55,8 @@ class SubsetAPI:
         warnings.filterwarnings("default")
         ExperimentalFlags.data_model_subsetting.warn()
 
-        dms = self._state.rule_store.provenance[-1].target_entity.dms
-        information = self._state.rule_store.provenance[-1].target_entity.information
+        dms = self._state.rule_store.provenance[-1].target_entity.physical
+        information = self._state.rule_store.provenance[-1].target_entity.conceptual
 
         if dms:
             views = {
@@ -68,16 +68,16 @@ class SubsetAPI:
                 for concept in concepts
             }
 
-            issues = self._state.rule_transform(SubsetDMSRules(views=views))
+            issues = self._state.rule_transform(SubsetPhysicalDataModel(views=views))
             if not issues:
-                after = len(self._state.rule_store.last_verified_dms_rules.views)
+                after = len(self._state.rule_store.last_verified_physical_data_model.views)
 
         elif information:
             classes = {ConceptEntity(prefix=information.metadata.space, suffix=concept) for concept in concepts}
 
             issues = self._state.rule_transform(SubsetConceptualDataModel(concepts=classes))
             if not issues:
-                after = len(self._state.rule_store.last_verified_information_rules.concepts)
+                after = len(self._state.rule_store.last_verified_conceptual_data_model.concepts)
 
         else:
             raise NeatSessionError("Something went terrible wrong. Please contact the neat team.")

@@ -4,13 +4,13 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat.core._data_model import catalog, exporters, importers, transformers
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
-from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
+from cognite.neat.core._data_model.transformers import VerifiedDataModelTransformer
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._store import NeatRulesStore
+from cognite.neat.core._store import NeatDataModelStore
 from cognite.neat.core._store.exceptions import InvalidActivityInput
 
 
-class FailingTransformer(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
+class FailingTransformer(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):
     def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         raise NeatValueError("This transformer always fails")
 
@@ -21,9 +21,9 @@ class FailingTransformer(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDat
 
 class TestRuleStore:
     def test_import_export(self, data_regression: DataRegressionFixture) -> None:
-        store = NeatRulesStore()
+        store = NeatDataModelStore()
 
-        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
+        import_issues = store.import_data_model(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 
@@ -34,9 +34,9 @@ class TestRuleStore:
         data_regression.check(yaml.safe_load(result))
 
     def test_import_fail_transform(self) -> None:
-        store = NeatRulesStore()
+        store = NeatDataModelStore()
 
-        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
+        import_issues = store.import_data_model(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 
@@ -48,9 +48,9 @@ class TestRuleStore:
         assert "This transformer always fails" in error.as_message()
 
     def test_import_invalid_transformer(self) -> None:
-        store = NeatRulesStore()
+        store = NeatDataModelStore()
 
-        import_issues = store.import_rules(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
+        import_issues = store.import_data_model(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
 
         assert not import_issues.errors
 

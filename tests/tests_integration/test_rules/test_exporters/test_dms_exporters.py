@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.models import (
     SheetList,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualConcept,
+    Concept,
     ConceptualMetadata,
     ConceptualProperty,
 )
@@ -33,7 +33,7 @@ def alice_rules() -> PhysicalDataModel:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
@@ -42,7 +42,7 @@ def olav_dms_rules() -> PhysicalDataModel:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
@@ -51,7 +51,7 @@ def olav_rebuilt_dms_rules() -> PhysicalDataModel:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
@@ -60,7 +60,7 @@ def svein_harald_dms_rules() -> PhysicalDataModel:
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
@@ -123,10 +123,10 @@ def table_example() -> ConceptualDataModel:
                 ),
             ]
         ),
-        concepts=SheetList[ConceptualConcept](
+        concepts=SheetList[Concept](
             [
-                ConceptualConcept(concept="Table", name="Table"),
-                ConceptualConcept(concept="Item", name="Item"),
+                Concept(concept="Table", name="Table"),
+                Concept(concept="Item", name="Item"),
             ]
         ),
     )
@@ -210,7 +210,7 @@ class TestDMSExporter:
             ],
             views=[UnverifiedPhysicalView("NewView")],
             containers=[UnverifiedPhysicalContainer("ExistingContainer", used_for="node")],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
         try:
             uploaded = DMSExporter(existing="update").export_to_cdf(rules, neat_client, dry_run=False)

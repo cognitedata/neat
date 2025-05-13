@@ -41,7 +41,7 @@ class SetAPI:
         """
         if self._state.rule_store.empty:
             raise NeatSessionError("No rules to set the data model ID.")
-        rules = self._state.rule_store.provenance[-1].target_entity.dms
+        rules = self._state.rule_store.provenance[-1].target_entity.physical
         if isinstance(rules, PhysicalDataModel):
             if rules.metadata.as_data_model_id() in COGNITE_MODELS:
                 raise NeatSessionError(

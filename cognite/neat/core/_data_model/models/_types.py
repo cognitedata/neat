@@ -152,9 +152,7 @@ def _entity_validation(value: Entities, location: str) -> Entities:
     return value
 
 
-ConceptEntityType = Annotated[
-    ConceptEntity, AfterValidator(lambda v: _entity_validation(v, "the Class column"))
-]
+ConceptEntityType = Annotated[ConceptEntity, AfterValidator(lambda v: _entity_validation(v, "the Class column"))]
 ViewEntityType = Annotated[ViewEntity, AfterValidator(lambda v: _entity_validation(v, "the View column"))]
 ContainerEntityType = Annotated[
     ContainerEntity, AfterValidator(lambda v: _entity_validation(v, "the Container column"))

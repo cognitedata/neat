@@ -13,7 +13,7 @@ from rdflib import URIRef
 
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualConcept,
+    Concept,
     ConceptualProperty,
 )
 from cognite.neat.core._data_model.models.entities import (
@@ -141,7 +141,7 @@ class DataModelAnalysis:
             include_different_space (bool, optional): Include parents from different spaces. Defaults to False.
 
         Returns:
-            dict[ClassEntity, set[ClassEntity]]: Values parents with class as key.
+            dict[ConceptEntity, set[ConceptEntity]]: Values parents with concept as key.
         """
         parents_by_concept: dict[ConceptEntity, set[ConceptEntity]] = {}
         for concept in self.conceptual.concepts:
@@ -275,16 +275,16 @@ class DataModelAnalysis:
         }
 
     @property
-    def _concept_by_neat_id(self) -> dict[URIRef, ConceptualConcept]:
+    def _concept_by_neat_id(self) -> dict[URIRef, Concept]:
         """Get a dictionary of concept neat IDs to
         concept entities."""
 
         return {cls.neatId: cls for cls in self.conceptual.concepts if cls.neatId}
 
-    def concept_by_suffix(self) -> dict[str, ConceptualConcept]:
+    def concept_by_suffix(self) -> dict[str, Concept]:
         """Get a dictionary of concept suffixes to concept entities."""
         # TODO: Remove this method
-        concept_dict: dict[str, ConceptualConcept] = {}
+        concept_dict: dict[str, Concept] = {}
         for definition in self.conceptual.concepts:
             entity = definition.concept
             if entity.suffix in concept_dict:
@@ -300,7 +300,7 @@ class DataModelAnalysis:
         return concept_dict
 
     @property
-    def concept_by_concept_entity(self) -> dict[ConceptEntity, ConceptualConcept]:
+    def concept_by_concept_entity(self) -> dict[ConceptEntity, Concept]:
         """Get a dictionary of concept entities to concept entities."""
         data_model = self.conceptual
         return {cls.concept: cls for cls in data_model.concepts}
@@ -442,7 +442,7 @@ class DataModelAnalysis:
             raise NeatValueError(f"Invalid format: {format}")
 
     @property
-    def concepts_by_neat_id(self) -> dict[URIRef, ConceptualConcept]:
+    def concepts_by_neat_id(self) -> dict[URIRef, Concept]:
         return {concept.neatId: concept for concept in self.conceptual.concepts if concept.neatId}
 
     @property

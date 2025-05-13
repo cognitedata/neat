@@ -12,15 +12,15 @@ from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model._shared import T_VerifiedRules, VerifiedRules
+from cognite.neat.core._data_model._shared import T_VerifiedDataModel, VerifiedDataModel
 from cognite.neat.core._data_model.exporters import BaseExporter
 from cognite.neat.core._data_model.exporters._base import CDFExporter, T_Export
 from cognite.neat.core._data_model.importers import BaseImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
-    DMSToInformation,
-    VerifiedRulesTransformer,
-    VerifyAnyRules,
+    PhysicalToConceptual,
+    VerifiedDataModelTransformer,
+    VerifyAnyDataModel,
 )
 from cognite.neat.core._instances.extractors import (
     DMSGraphExtractor,
@@ -42,19 +42,19 @@ from .exceptions import EmptyStore, InvalidActivityInput
 
 
 @dataclass(frozen=True)
-class RulesEntity(Entity):
-    information: ConceptualDataModel
-    dms: PhysicalDataModel | None = None
+class DataModelEntity(Entity):
+    conceptual: ConceptualDataModel
+    physical: PhysicalDataModel | None = None
 
     @property
-    def has_dms(self) -> bool:
-        return self.dms is not None
+    def has_physical(self) -> bool:
+        return self.physical is not None
 
     @property
     def display_name(self) -> str:
-        if self.dms is not None:
-            return self.dms.display_name
-        return self.information.display_name
+        if self.physical is not None:
+            return self.physical.display_name
+        return self.conceptual.display_name
 
 
 @dataclass(frozen=True)
@@ -62,9 +62,9 @@ class OutcomeEntity(Entity):
     result: UploadResultList | Path | str | URIRef
 
 
-class NeatRulesStore:
+class NeatDataModelStore:
     def __init__(self) -> None:
-        self.provenance = Provenance[RulesEntity]()
+        self.provenance = Provenance[DataModelEntity]()
         self.exports_by_source_entity_id: dict[rdflib.URIRef, list[Change[OutcomeEntity]]] = defaultdict(list)
         self._last_outcome: UploadResultList | None = None
         self._iteration_by_id: dict[Hashable, int] = {}
@@ -80,19 +80,19 @@ class NeatRulesStore:
             return calculated_hash[:8]
         return calculated_hash
 
-    def _rules_import_verify_convert(
+    def _data_model_import_verify_convert(
         self,
         importer: BaseImporter,
         validate: bool,
         client: NeatClient | None = None,
     ) -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
-        """Action that imports rules, verifies them and optionally converts them."""
-        read_rules = importer.to_rules()
-        verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
+        """Action that imports data model, verifies them and optionally converts them."""
+        imported_data_model = importer.to_data_model()
+        verified = VerifyAnyDataModel(validate, client).transform(imported_data_model)  # type: ignore[arg-type]
         if isinstance(verified, ConceptualDataModel):
             return verified, None
         elif isinstance(verified, PhysicalDataModel):
-            return DMSToInformation().transform(verified), verified
+            return PhysicalToConceptual().transform(verified), verified
         else:
             # Bug in the code
             raise ValueError(f"Invalid output from importer: {type(verified)}")
@@ -101,23 +101,23 @@ class NeatRulesStore:
         self,
         extractor: KnowledgeGraphExtractor,
     ) -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
-        info = extractor.get_information_rules()
-        dms: PhysicalDataModel | None = None
+        conceptual = extractor.get_conceptual_data_model()
+        physical: PhysicalDataModel | None = None
         if isinstance(extractor, DMSGraphExtractor):
-            dms = extractor.get_dms_rules()
-        return info, dms
+            physical = extractor.get_physical_data_model()
+        return conceptual, physical
 
     def _manual_transform(
         self, importer: BaseImporter, validate: bool = True, client: NeatClient | None = None
     ) -> IssueList:
         result, issue_list, start, end = self._do_activity(
-            partial(self._rules_import_verify_convert, importer, validate, client)
+            partial(self._data_model_import_verify_convert, importer, validate, client)
         )
 
         if not result:
             return issue_list
 
-        info, dms = result
+        conceptual, physical = result
         last_change = self.provenance[-1]
 
         outside_agent = EXTERNAL_AGENT
@@ -128,67 +128,67 @@ class NeatRulesStore:
             used=last_change.target_entity,
         )
 
-        # Case 1: Source of imported rules is not known
+        # Case 1: Source of imported data model is not known
         if not (source_id := self._get_source_id(result)):
             raise NeatValueError(
-                "The source of the imported rules is unknown."
+                "The source of the imported data model is unknown."
                 " Import will be skipped. Start a new NEAT session and import the data model there."
             )
 
-        # Case 2: Source of imported rules not in rules_store
+        # Case 2: Source of imported data model not in data_model_store
         if not (source_entity := self.provenance.target_entity(source_id)) or not isinstance(
-            source_entity, RulesEntity
+            source_entity, DataModelEntity
         ):
             raise NeatValueError(
-                "The source of the imported rules is not in the provenance."
+                "The source of the imported data model is not in the provenance."
                 " Import will be skipped. Start a new NEAT session and import the data model there."
             )
 
         # Case 3: Source is not the latest source entity in the provenance change
         if source_entity.id_ != last_change.target_entity.id_:
             raise NeatValueError(
-                "Imported rules are detached from the provenance chain."
+                "Imported data model is detached from the provenance chain."
                 " Import will be skipped. Start a new NEAT session and import the data model there."
             )
 
         # Case 4: Provenance is already at the physical state of the data model, going back to logical not possible
-        if not dms and source_entity.dms:
+        if not physical and source_entity.physical:
             raise NeatValueError(
-                "Rules are already in physical state, import of logical model not possible."
+                "Data model is already in physical state, import of conceptual model not possible."
                 " Import will be skipped. Start a new NEAT session and import the data model there."
             )
 
-        # modification took place on information rules
-        if not dms and not source_entity.dms:
-            outside_target_entity = RulesEntity(
+        # modification took place on conceptual data model
+        if not physical and not source_entity.physical:
+            outside_target_entity = DataModelEntity(
                 was_attributed_to=outside_agent,
                 was_generated_by=outside_activity,
-                information=info,
-                dms=dms,
+                conceptual=conceptual,
+                physical=physical,
                 issues=issue_list,
-                id_=self._create_id(info, dms),
+                id_=self._create_id(conceptual, physical),
             )
 
-        # modification took place on dms rules, keep latest information rules
-        elif dms and source_entity.dms:
-            outside_target_entity = RulesEntity(
+        # modification took place on physical data model, keep latest conceptual data model
+        elif physical and source_entity.physical:
+            outside_target_entity = DataModelEntity(
                 was_attributed_to=outside_agent,
                 was_generated_by=outside_activity,
-                information=last_change.target_entity.information,
-                dms=dms,
+                conceptual=last_change.target_entity.conceptual,
+                physical=physical,
                 issues=issue_list,
-                id_=self._create_id(info, dms),
+                id_=self._create_id(conceptual, physical),
             )
 
         else:
-            raise NeatValueError("Invalid state of rules for manual transformation")
+            raise NeatValueError("Invalid state of data model for manual transformation")
 
         outside_change = Change(
             source_entity=last_change.target_entity,
             agent=outside_agent,
             activity=outside_activity,
             target_entity=outside_target_entity,
-            description="Manual transformation of rules outside of NEAT",
+            description="Manual transformation of data model outside of NEAT",
         )
 
         self._last_issues = issue_list
@@ -203,7 +203,7 @@ class NeatRulesStore:
         else:
             return self.do_activity(partial(self._graph_import_verify_convert, extractor), extractor)
 
-    def import_rules(
+    def import_data_model(
         self,
         importer: BaseImporter,
         validate: bool = True,
@@ -212,15 +212,15 @@ class NeatRulesStore:
     ) -> IssueList:
         if self.empty:
             return self.do_activity(
-                partial(self._rules_import_verify_convert, importer, validate, client),
+                partial(self._data_model_import_verify_convert, importer, validate, client),
                 importer,
             )
         elif enable_manual_edit:
             return self._manual_transform(importer, validate, client)
         else:
-            raise NeatValueError("Re-importing rules in the rules store is not allowed.")
+            raise NeatValueError("Re-importing data model in the data model store is not allowed.")
 
-    def transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
+    def transform(self, *transformer: VerifiedDataModelTransformer) -> IssueList:
         if not self.provenance:
             raise EmptyStore()
 
@@ -228,7 +228,7 @@ class NeatRulesStore:
         for agent_tool in transformer:
 
             def action(
-                transformer_item: VerifiedRulesTransformer = agent_tool,
+                transformer_item: VerifiedDataModelTransformer = agent_tool,
             ) -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
                 last_change = self.provenance[-1]
                 source_entity = last_change.target_entity
@@ -236,18 +236,18 @@ class NeatRulesStore:
                 transformer_output = transformer_item.transform(transformer_input)
                 if isinstance(transformer_output, ConceptualDataModel):
                     return transformer_output, None
-                return last_change.target_entity.information, transformer_output
+                return last_change.target_entity.conceptual, transformer_output
 
             issues = self.do_activity(action, agent_tool)
             all_issues.extend(issues)
 
         return all_issues
 
-    def export(self, exporter: BaseExporter[T_VerifiedRules, T_Export]) -> T_Export:
+    def export(self, exporter: BaseExporter[T_VerifiedDataModel, T_Export]) -> T_Export:
         return self._export_activity(exporter.export, exporter, DEFAULT_NAMESPACE["export-result"])
 
     def export_to_file(self, exporter: BaseExporter, path: Path) -> None:
-        def export_action(input_: VerifiedRules) -> Path:
+        def export_action(input_: VerifiedDataModel) -> Path:
             exporter.export_to_file(input_, path)
             return path
 
@@ -261,7 +261,7 @@ class NeatRulesStore:
     def do_activity(
         self,
         action: Callable[[], tuple[ConceptualDataModel, PhysicalDataModel | None]],
-        agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
+        agent_tool: (BaseImporter | VerifiedDataModelTransformer | KnowledgeGraphExtractor),
     ) -> IssueList:
         result, issue_list, start, end = self._do_activity(action)
         self._last_issues = issue_list
@@ -272,7 +272,7 @@ class NeatRulesStore:
 
     def _update_provenance(
         self,
-        agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
+        agent_tool: (BaseImporter | VerifiedDataModelTransformer | KnowledgeGraphExtractor),
         result: tuple[ConceptualDataModel, PhysicalDataModel | None],
         issue_list: IssueList,
         activity_start: datetime,
@@ -288,7 +288,7 @@ class NeatRulesStore:
             source_entity = self.provenance[-1].target_entity
 
         # setting the rest of provenance components
-        info, dms = result
+        conceptual, physical = result
         agent = agent_tool.agent
         activity = Activity(
             was_associated_with=agent,
@@ -297,14 +297,14 @@ class NeatRulesStore:
             used=source_entity,
         )
 
-        target_entity = RulesEntity(
+        target_entity = DataModelEntity(
             was_attributed_to=agent,
             was_generated_by=activity,
-            information=info,
-            dms=dms,
+            conceptual=conceptual,
+            physical=physical,
             issues=issue_list,
             # here id can be bumped in case id already exists
-            id_=self._create_id(info, dms),
+            id_=self._create_id(conceptual, physical),
         )
         change = Change(
             agent=agent,
@@ -340,13 +340,13 @@ class NeatRulesStore:
         source_entity = last_change.target_entity
         expected_types = exporter.source_types()
 
-        if source_entity.dms is not None and isinstance(source_entity.dms, expected_types):
-            input_ = cast(VerifiedRules, source_entity.dms).model_copy(deep=True)
-        elif isinstance(source_entity.information, expected_types):
-            input_ = cast(VerifiedRules, source_entity.information).model_copy(deep=True)
+        if source_entity.physical is not None and isinstance(source_entity.physical, expected_types):
+            input_ = cast(VerifiedDataModel, source_entity.physical).model_copy(deep=True)
+        elif isinstance(source_entity.conceptual, expected_types):
+            input_ = cast(VerifiedDataModel, source_entity.conceptual).model_copy(deep=True)
         else:
             available: list[type] = [ConceptualDataModel]
-            if source_entity.dms is not None:
+            if source_entity.physical is not None:
                 available.append(PhysicalDataModel)
             raise InvalidActivityInput(expected=expected_types, have=tuple(available))
 
@@ -394,33 +394,35 @@ class NeatRulesStore:
 
     @staticmethod
     def _get_transformer_input(
-        source_entity: RulesEntity, transformer: VerifiedRulesTransformer
+        source_entity: DataModelEntity, transformer: VerifiedDataModelTransformer
     ) -> ConceptualDataModel | PhysicalDataModel:
-        # Case 1: We only have information rules
-        if source_entity.dms is None:
-            if transformer.is_valid_input(source_entity.information):
-                return source_entity.information
+        # Case 1: We only have conceptual data model
+        if source_entity.physical is None:
+            if transformer.is_valid_input(source_entity.conceptual):
+                return source_entity.conceptual
             raise InvalidActivityInput(expected=(PhysicalDataModel,), have=(ConceptualDataModel,))
-        # Case 2: We have both information and dms rules and the transformer is compatible with dms rules
-        elif isinstance(source_entity.dms, PhysicalDataModel) and transformer.is_valid_input(source_entity.dms):
-            return source_entity.dms
-        # Case 3: We have both information and dms rules and the transformer is compatible with information rules
+        # Case 2: We have both data model levels and the transformer is compatible with physical data model
+        elif isinstance(source_entity.physical, PhysicalDataModel) and transformer.is_valid_input(
+            source_entity.physical
+        ):
+            return source_entity.physical
+        # Case 3: We have both data model levels and the transformer is compatible with conceptual data model
         raise InvalidActivityInput(expected=(ConceptualDataModel,), have=(PhysicalDataModel,))
 
     def _get_source_id(self, result: tuple[ConceptualDataModel, PhysicalDataModel | None]) -> rdflib.URIRef | None:
         """Return the source of the result.
 
         !!! note
-            This method prioritizes the source_id of the DMS rules
+            This method prioritizes the source_id of the physical data model
         """
-        info, dms = result
-        return dms.metadata.source_id if dms else info.metadata.source_id
+        conceptual, physical = result
+        return physical.metadata.source_id if physical else conceptual.metadata.source_id
 
-    def _create_id(self, info: ConceptualDataModel, dms: PhysicalDataModel | None) -> rdflib.URIRef:
-        if dms is None:
-            identifier = info.metadata.identifier
+    def _create_id(self, conceptual: ConceptualDataModel, physical: PhysicalDataModel | None) -> rdflib.URIRef:
+        if physical is None:
+            identifier = conceptual.metadata.identifier
         else:
-            identifier = dms.metadata.identifier
+            identifier = physical.metadata.identifier
 
         # Here we check if the identifier is already in the iteration dictionary
         # to track specific changes to the same entity, if it is we increment the iteration
@@ -434,39 +436,39 @@ class NeatRulesStore:
         return identifier + f"/Iteration_{self._iteration_by_id[identifier]}"
 
     @property
-    def try_get_last_dms_rules(self) -> PhysicalDataModel | None:
+    def try_get_last_physical_data_model(self) -> PhysicalDataModel | None:
         if not self.provenance:
             return None
-        if self.provenance[-1].target_entity.dms is None:
+        if self.provenance[-1].target_entity.physical is None:
             return None
-        return self.provenance[-1].target_entity.dms
+        return self.provenance[-1].target_entity.physical
 
     @property
-    def try_get_last_information_rules(self) -> ConceptualDataModel | None:
+    def try_get_last_conceptual_data_model(self) -> ConceptualDataModel | None:
         if not self.provenance:
             return None
-        return self.provenance[-1].target_entity.information
+        return self.provenance[-1].target_entity.conceptual
 
     @property
-    def last_verified_dms_rules(self) -> PhysicalDataModel:
+    def last_verified_physical_data_model(self) -> PhysicalDataModel:
         if not self.provenance:
             raise EmptyStore()
-        if self.provenance[-1].target_entity.dms is None:
-            raise NeatValueError("No verified DMS rules found in the provenance.")
-        return self.provenance[-1].target_entity.dms
+        if self.provenance[-1].target_entity.physical is None:
+            raise NeatValueError("No verified physical data model found in the provenance.")
+        return self.provenance[-1].target_entity.physical
 
     @property
-    def last_verified_information_rules(self) -> ConceptualDataModel:
+    def last_verified_conceptual_data_model(self) -> ConceptualDataModel:
         if not self.provenance:
             raise EmptyStore()
-        return self.provenance[-1].target_entity.information
+        return self.provenance[-1].target_entity.conceptual
 
     @property
-    def last_verified_rules(self) -> ConceptualDataModel | PhysicalDataModel | None:
+    def last_verified_data_model(self) -> ConceptualDataModel | PhysicalDataModel | None:
         if not self.provenance:
             return None
         last_entity = self.provenance[-1].target_entity
-        return last_entity.dms or last_entity.information
+        return last_entity.physical or last_entity.conceptual
 
     @property
     def last_issues(self) -> IssueList | None:

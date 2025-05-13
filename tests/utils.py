@@ -16,7 +16,7 @@ from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import (
     ConceptualDataModel,
     PhysicalDataModel,
-    VerifiedRules,
+    VerifiedDataModel,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, String
 from cognite.neat.core._data_model.models.entities import ConceptEntity
@@ -107,7 +107,7 @@ def get_all_subclasses(cls: T_Type, only_concrete: bool = False) -> list[T_Type]
     ]
 
 
-def normalize_neat_id_in_rules(rules: VerifiedRules) -> VerifiedRules:
+def normalize_neat_id_in_rules(rules: VerifiedDataModel) -> VerifiedDataModel:
     if isinstance(rules, ConceptualDataModel):
         for i, class_ in enumerate(rules.concepts):
             class_.neatId = DEFAULT_NAMESPACE[f"Class_{i}"]

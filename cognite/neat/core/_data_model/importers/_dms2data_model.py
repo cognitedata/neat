@@ -33,14 +33,14 @@ from cognite.neat.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._data_model.models import (
     DMSSchema,
     UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualConcept,
+    UnverifiedConcept,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, Enum, String
@@ -127,7 +127,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         client: NeatClient,
         data_model_id: DataModelIdentifier,
     ) -> "DMSImporter":
-        """Create a DMSImporter ready to convert the given data model to rules.
+        """Create a DMSImporter ready to convert the given DMS data model to neat representation.
 
         Args:
             client: Instantiated CogniteClient to retrieve data model.
@@ -213,7 +213,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
     def from_directory(cls, directory: str | Path, client: NeatClient | None = None) -> "DMSImporter":
         with catch_issues() as issue_list:
             schema = DMSSchema.from_directory(directory)
-        # If there were errors during the import, the to_rules will raise them.
+        # If there were errors during the import, the to_data_model will raise them.
         return cls(
             schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, issue_list, client)
         )
@@ -255,9 +255,9 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
 
-    def to_rules(self) -> ReadRules[UnverifiedPhysicalDataModel]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedPhysicalDataModel]:
         if self.issue_list.has_errors:
-            # In case there were errors during the import, the to_rules method will return None
+            # In case there were errors during the import, the to_data_model method will return None
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
@@ -268,12 +268,12 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
 
         model = self.schema.data_model
 
-        user_rules = self._create_rule_components(model, self.schema, self.metadata)
+        user_data_model = self._create_rule_components(model, self.schema, self.metadata)
 
         self.issue_list.trigger_warnings()
         if self.issue_list.has_errors:
             raise MultiValueError(self.issue_list.errors)
-        return ReadRules(user_rules, {})
+        return ImportedDataModel(user_data_model, {})
 
     def _create_rule_components(
         self,
@@ -645,7 +645,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         return enum_by_container_property
 
     @classmethod
-    def as_information_input_property(
+    def as_unverified_conceptual_property(
         cls, entity: ConceptEntity, prop_id: str, view_property: ViewProperty
     ) -> UnverifiedConceptualProperty:
         if not isinstance(view_property, dm.MappedProperty | dm.EdgeConnection | ReverseDirectRelation):
@@ -672,8 +672,8 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         )
 
     @classmethod
-    def as_information_input_class(cls, view: View) -> UnverifiedConceptualConcept:
-        return UnverifiedConceptualConcept(
+    def as_unverified_concept(cls, view: View) -> UnverifiedConcept:
+        return UnverifiedConcept(
             concept=ConceptEntity(prefix=view.space, suffix=view.external_id, version=view.version),
             name=view.name,
             description=view.description,

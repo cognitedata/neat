@@ -81,7 +81,7 @@ class IMFImporter(BaseRDFImporter):
     def description(self) -> str:
         return f"IMF Types {self.source_name} read as unverified data model"
 
-    def _to_rules_components(
+    def _to_data_model_components(
         self,
     ) -> dict:
         classes, issue_list = parse_concepts(self.graph, CLASSES_QUERY, self.language, self.issue_list)

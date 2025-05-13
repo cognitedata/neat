@@ -4,7 +4,7 @@ from collections.abc import Iterable
 import pytest
 
 from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
     PhysicalDataModel,
@@ -12,22 +12,22 @@ from cognite.neat.core._data_model.models import (
     UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
-    AddClassImplements,
     AddCogniteProperties,
+    AddConceptImplements,
     ClassicPrepareCore,
+    DataModelTransformer,
     DropModelViews,
     IncludeReferenced,
+    PhysicalDataModelMapper,
     PrefixEntities,
-    RuleMapper,
-    RulesTransformer,
     SetIDDMSModel,
     ToExtensionModel,
 )
 
-TRANSFORMATION_CLASSES = list(RulesTransformer.__subclasses__())
+TRANSFORMATION_CLASSES = list(DataModelTransformer.__subclasses__())
 
 
-def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
+def instantiated_transformers_cls() -> Iterable[DataModelTransformer]:
     for transformation_cls in TRANSFORMATION_CLASSES:
         if ABC in transformation_cls.__bases__:
             continue
@@ -37,9 +37,12 @@ def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
             yield transformation_cls(("my_space", "my_id", "v1"))
         elif issubclass(transformation_cls, DropModelViews):
             yield transformation_cls("3D")
-        elif issubclass(transformation_cls, AddClassImplements):
+        elif issubclass(transformation_cls, AddConceptImplements):
             yield transformation_cls("Edge", "Edge")
-        elif issubclass(transformation_cls, RuleMapper | IncludeReferenced | AddCogniteProperties):
+        elif issubclass(
+            transformation_cls,
+            PhysicalDataModelMapper | IncludeReferenced | AddCogniteProperties,
+        ):
             # Manually checked as these require NeatClient or DMSRules in the setup
             continue
         elif issubclass(transformation_cls, ClassicPrepareCore):
@@ -50,12 +53,12 @@ def instantiated_transformers_cls() -> Iterable[RulesTransformer]:
 
 class TestRuleTransformer:
     @pytest.mark.parametrize("transformer_cls", TRANSFORMATION_CLASSES)
-    def test_transform_method_valid_signature(self, transformer_cls: type[RulesTransformer]) -> None:
+    def test_transform_method_valid_signature(self, transformer_cls: type[DataModelTransformer]) -> None:
         valid_type_hints = {
             PhysicalDataModel,
             ConceptualDataModel,
-            ReadRules[UnverifiedConceptualDataModel],
-            ReadRules[UnverifiedPhysicalDataModel],
+            ImportedDataModel[UnverifiedConceptualDataModel],
+            ImportedDataModel[UnverifiedPhysicalDataModel],
         }
 
         type_hint = transformer_cls.transform_type_hint()
@@ -67,5 +70,5 @@ class TestRuleTransformer:
     @pytest.mark.parametrize(
         "transformer", [pytest.param(v, id=type(v).__name__) for v in instantiated_transformers_cls()]
     )
-    def test_has_description(self, transformer: RulesTransformer) -> None:
+    def test_has_description(self, transformer: DataModelTransformer) -> None:
         assert transformer.description != "MISSING DESCRIPTION", f"Missing description for {transformer}"

@@ -64,7 +64,7 @@ class OWLImporter(BaseRDFImporter):
 
     """
 
-    def _to_rules_components(
+    def _to_data_model_components(
         self,
     ) -> dict:
         concepts, issue_list = parse_concepts(self.graph, CLASSES_QUERY, self.language, self.issue_list)

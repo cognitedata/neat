@@ -99,10 +99,10 @@ class ShowDataModelAPI(ShowBaseAPI):
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a data model.")
 
         last_target = self._state.rule_store.provenance[-1].target_entity
-        rules = last_target.dms or last_target.information
-        analysis = DataModelAnalysis(physical=last_target.dms, conceptual=last_target.information)
+        rules = last_target.physical or last_target.conceptual
+        analysis = DataModelAnalysis(physical=last_target.physical, conceptual=last_target.conceptual)
 
-        if last_target.dms is not None:
+        if last_target.physical is not None:
             di_graph = analysis._physical_di_graph(format="data-model")
         else:
             di_graph = analysis._conceptual_di_graph(format="data-model")
@@ -123,10 +123,10 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a data model.")
 
         last_target = self._state.rule_store.provenance[-1].target_entity
-        rules = last_target.dms or last_target.information
-        analysis = DataModelAnalysis(physical=last_target.dms, conceptual=last_target.information)
+        rules = last_target.physical or last_target.conceptual
+        analysis = DataModelAnalysis(physical=last_target.physical, conceptual=last_target.conceptual)
 
-        if last_target.dms is not None:
+        if last_target.physical is not None:
             di_graph = analysis._physical_di_graph(format="implements")
         else:
             di_graph = analysis._conceptual_di_graph(format="implements")

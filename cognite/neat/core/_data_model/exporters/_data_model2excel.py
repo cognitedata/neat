@@ -16,7 +16,7 @@ from rdflib import Namespace
 
 from cognite.neat.core._constants import BASE_MODEL, get_base_concepts
 from cognite.neat.core._data_model._constants import get_internal_properties
-from cognite.neat.core._data_model._shared import VerifiedRules
+from cognite.neat.core._data_model._shared import VerifiedDataModel
 from cognite.neat.core._data_model.models import (
     SheetRow,
 )
@@ -41,16 +41,16 @@ from ._base import BaseExporter
 MAX_COLUMN_WIDTH = 70.0
 
 
-class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
-    """Export rules to Excel.
+class ExcelExporter(BaseExporter[VerifiedDataModel, Workbook]):
+    """Export data_model to Excel.
 
     Args:
         styling: The styling to use for the Excel file. Defaults to "default". See below for details
             on the different styles.
         new_model_id: The new model ID to use for the exported spreadsheet. This is only applicable if the input
-            rules have 'is_reference' set. If provided, the model ID will be used to automatically create the
+            data_model have 'is_reference' set. If provided, the model ID will be used to automatically create the
             new metadata sheet in the Excel file. The model id is expected to be a tuple of (prefix, title)
-            (space, external_id) for InformationRules and DMSRules respectively.
+            (space, external_id) for Conceptual and Physical Data Model respectively.
 
         sheet_prefix: The prefix to use for the sheet names in the Excel file. Defaults to an empty string.
 
@@ -92,7 +92,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         styling: Style = "default",
         new_model_id: tuple[str, str] | None = None,
         sheet_prefix: str | None = None,
-        reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None,
+        reference_data_model_with_prefix: tuple[VerifiedDataModel, str] | None = None,
         add_empty_rows: bool = False,
         hide_internal_columns: bool = True,
         include_properties: Literal["same-space", "all"] = "all",
@@ -106,7 +106,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         self.styling = styling
         self._styling_level = self.style_options.index(styling)
         self.new_model_id = new_model_id
-        self.reference_rules_with_prefix = reference_rules_with_prefix
+        self.reference_data_model_with_prefix = reference_data_model_with_prefix
         self.add_empty_rows = add_empty_rows
         self.hide_internal_columns = hide_internal_columns
         self.include_properties = include_properties
@@ -118,9 +118,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     def description(self) -> str:
         return "Export verified model to Excel."
 
-    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
-        """Exports transformation rules to excel file."""
-        data = self.export(rules)
+    def export_to_file(self, data_model: VerifiedDataModel, filepath: Path) -> None:
+        """Exports transformation data_model to excel file."""
+        data = self.export(data_model)
         try:
             data.save(filepath)
         finally:
@@ -145,14 +145,14 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        rules_model = PhysicalDataModel if role == RoleTypes.dms else ConceptualDataModel
+        data_model_model = PhysicalDataModel if role == RoleTypes.dms else ConceptualDataModel
 
-        headers_by_sheet = rules_model.headers_by_sheet(by_alias=True)
+        headers_by_sheet = data_model_model.headers_by_sheet(by_alias=True)
         headers_by_sheet.pop("Metadata")
 
         self._write_metadata_sheet(
             workbook,
-            cast(BaseVerifiedMetadata, rules_model.model_fields["metadata"].annotation).default().model_dump(),
+            cast(BaseVerifiedMetadata, data_model_model.model_fields["metadata"].annotation).default().model_dump(),
         )
 
         for sheet_name, headers in headers_by_sheet.items():
@@ -175,23 +175,23 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         return workbook
 
-    def export(self, rules: VerifiedRules) -> Workbook:
+    def export(self, data_model: VerifiedDataModel) -> Workbook:
         workbook = Workbook()
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        dumped_user_rules: dict[str, Any] = rules.dump(by_alias=True)
+        dumped_user_data_model: dict[str, Any] = data_model.dump(by_alias=True)
 
-        self._write_metadata_sheet(workbook, dumped_user_rules["Metadata"], sheet_prefix=self.sheet_prefix)
-        self._write_sheets(workbook, dumped_user_rules, rules, sheet_prefix=self.sheet_prefix)
-        if self.reference_rules_with_prefix:
-            reference_rules, prefix = self.reference_rules_with_prefix
-            dumped_reference_rules = reference_rules.dump(entities_exclude_defaults=False, by_alias=True)
-            self._write_sheets(workbook, dumped_reference_rules, reference_rules, sheet_prefix=prefix)
-            self._write_metadata_sheet(workbook, dumped_reference_rules["Metadata"], sheet_prefix=prefix)
+        self._write_metadata_sheet(workbook, dumped_user_data_model["Metadata"], sheet_prefix=self.sheet_prefix)
+        self._write_sheets(workbook, dumped_user_data_model, data_model, sheet_prefix=self.sheet_prefix)
+        if self.reference_data_model_with_prefix:
+            reference_data_model, prefix = self.reference_data_model_with_prefix
+            dumped_reference_data_model = reference_data_model.dump(entities_exclude_defaults=False, by_alias=True)
+            self._write_sheets(workbook, dumped_reference_data_model, reference_data_model, sheet_prefix=prefix)
+            self._write_metadata_sheet(workbook, dumped_reference_data_model["Metadata"], sheet_prefix=prefix)
 
-        if isinstance(rules, ConceptualDataModel) and rules.prefixes:
-            self._write_prefixes_sheet(workbook, rules.prefixes)
+        if isinstance(data_model, ConceptualDataModel) and data_model.prefixes:
+            self._write_prefixes_sheet(workbook, data_model.prefixes)
 
         if self._styling_level > 0:
             self._adjust_column_widths(workbook)
@@ -199,9 +199,9 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         if self.hide_internal_columns:
             self._hide_internal_columns(workbook)
 
-        # Only add drop downs if the rules are DMSRules
+        # Only add drop downs if the data_model are Physical Data Model
         if self.add_drop_downs:
-            self._add_drop_downs(rules.metadata.role, workbook)
+            self._add_drop_downs(data_model.metadata.role, workbook)
 
         return workbook
 
@@ -227,7 +227,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
         workbook: Workbook,
     ) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry
-        for both DMS and Information rules.
+        for both Conceptual and Physical Data Model.
 
         Args:
             role: The role for which the drop downs are created. Can be either "dms" or "information".
@@ -241,8 +241,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
         !!! note "Why 100*100 rows?"
             This is due to the fact that we need to add drop down menus for all properties
-            in the sheet. The maximum number of properties per view/class is 100. So considering
-            maximum number of views/classes is 100, we need to add 100*100 rows.
+            in the sheet. The maximum number of properties per view/concept is 100. So considering
+            maximum number of views/concepts is 100, we need to add 100*100 rows.
         """
 
         self._make_helper_sheet(role, workbook, 100)
@@ -507,11 +507,11 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
     def _write_sheets(
         self,
         workbook: Workbook,
-        dumped_rules: dict[str, Any],
-        rules: VerifiedRules,
+        dumped_data_model: dict[str, Any],
+        data_model: VerifiedDataModel,
         sheet_prefix: str = "",
     ) -> None:
-        for sheet_name, headers in rules.headers_by_sheet(by_alias=True).items():
+        for sheet_name, headers in data_model.headers_by_sheet(by_alias=True).items():
             if sheet_name in ("Metadata", "Prefixes", "Reference", "Last"):
                 continue
 
@@ -519,17 +519,17 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
 
             fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
             fill_color = next(fill_colors)
-            last_class: str | None = None
+            last_concept: str | None = None
             item: dict[str, Any]
-            for item in dumped_rules.get(sheet_name) or []:
+            for item in dumped_data_model.get(sheet_name) or []:
                 if "Neat ID" in item:
                     # Move the Neat ID to the end of the columns
                     item["Neat ID"] = item.pop("Neat ID")
                 row = list(item.values())
-                class_ = row[0]
+                concept = row[0]
 
                 is_properties = sheet_name == "Properties"
-                is_new_class = class_ != last_class and last_class is not None
+                is_new_class = concept != last_concept and last_concept is not None
                 if self._styling_level > 2 and is_new_class and is_properties:
                     if self.add_empty_rows:
                         sheet.append([""] * len(headers))
@@ -540,8 +540,8 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                     fill_color = next(fill_colors)
 
                 if is_properties and self.include_properties == "same-space":
-                    space = class_.split(":")[0] if ":" in class_ else rules.metadata.space
-                    if space != rules.metadata.space:
+                    space = concept.split(":")[0] if ":" in concept else data_model.metadata.space
+                    if space != data_model.metadata.space:
                         continue
 
                 sheet.append(row)
@@ -550,7 +550,7 @@ class ExcelExporter(BaseExporter[VerifiedRules, Workbook]):
                         cell.fill = PatternFill(fgColor=fill_color, patternType="solid")
                         side = Side(style="thin", color="000000")
                         cell.border = Border(left=side, right=side, top=side, bottom=side)
-                last_class = class_
+                last_concept = concept
 
             self._style_sheet_header(sheet, headers)
 
