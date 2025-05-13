@@ -170,8 +170,10 @@ def build_views_from_containers(containers: list[data_modeling.ContainerApply], 
     lst_views = []
     for container in containers:
         cdm_implements = (
-            [view_id["external_id"] for view_id in container["Container"][EntityStructure.IMPLEMENTS_CORE_MODEL]]
-            if entities.get(container["Container"], {}).get(EntityStructure.IMPLEMENTS_CORE_MODEL, None) is not None
+            [view_id["external_id"] for view_id in entities[container["Container"].replace("_", "-")][
+                        EntityStructure.IMPLEMENTS_CORE_MODEL
+                    ]]         
+            if entities.get(container["Container"].replace("_", "-"), {}).get(EntityStructure.IMPLEMENTS_CORE_MODEL, None) is not None
             else None
         )
 

@@ -6,7 +6,7 @@ CFIHOS-00000004,comissioning unit,"CogniteDescribable","cdf_cdm","v1","name and 
 CFIHOS-00000006,maintenance unit,"CogniteDescribable","cdf_cdm","v1","name and description of the maintenance unit"
 CFIHOS-00000007,maintenance system,"CogniteDescribable","cdf_cdm","v1","name and description of the maintenance system"
 CFIHOS-00000008,model part,"CogniteDescribable","cdf_cdm","v1","name and description of the model part"
-CFIHOS-00000009,company,"CogniteDescribable","cdf_cdm","v1","name and description of the company"
+CFIHOS-00000009,company,"CogniteDescribable","cdf_cdm","v1","name and description of the company"ß
 CFIHOS-00000010,corrosion loop,"CogniteDescribable","cdf_cdm","v1","name and description of the corrosion loop"
 CFIHOS-00000011,corrosion loop type,"CogniteDescribable","cdf_cdm","v1","name and description of the corrosion loop type"
 CFIHOS-00000012,equipment,"CogniteEquipment","cdf_cdm","v1","equipment instance extension representing CFIHOS equipment "
@@ -18,7 +18,6 @@ CFIHOS-00000024,transmittal,"CogniteDescribable","cdf_cdm","v1","name and descri
 CFIHOS-00000026,construction assembly,"CogniteDescribable","cdf_cdm","v1","name and description of the construction assembly"
 CFIHOS-00000027,discipline document type,"CogniteDescribable","cdf_cdm","v1","name and description of the discipline document type"
 CFIHOS-00000028,tag,"CogniteAsset","cdf_cdm","v1","asset instance representing a tag"
-CFIHOS-00000028,tag,"Cdf3dEntity","cdf_3d_schema","1","3D model of the tag"
 CFIHOS-00000030,project,"CogniteAsset","cdf_cdm","v1","asset instance representing a project"
 CFIHOS-00000031,plant,"CogniteAsset","cdf_cdm","v1","asset instance representing a plant"
 CFIHOS-00000032,document type,"CogniteDescribable","cdf_cdm","v1","name and description of the document type"

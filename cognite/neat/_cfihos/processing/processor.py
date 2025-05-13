@@ -3,12 +3,13 @@ import re
 from dataclasses import dataclass, field
 
 import pandas as pd
-
+from typing import ClassVar
 from cognite.neat._cfihos.common.constants import CONTAINER_PROPERTY_LIMIT
 from cognite.neat._cfihos.common.generic_classes import (
     DataSource,
     EntityStructure,
     PropertyStructure,
+    Relations,
 )
 from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.processing.cfihos.cfihos import CfihosProcessor
@@ -18,8 +19,7 @@ logging = log_init(f"{__name__}", "i")
 
 @dataclass
 class Processor:
-    """
-    Processor class for handling model processing.
+    """Processor class for handling model processing.
 
     Attributes:
         model_processors_config (List[dict]): Configuration for model processors.
@@ -34,23 +34,23 @@ class Processor:
     )  # Will become a List[Union[]] when/if new processor types are created
 
     # Dataframes containing all entities and properties of a given project model
-    _df_entities: pd.DataFrame = field(default=None, init=False)
+    _df_entities: pd.DataFrame = field(default_factory=pd.DataFrame, init=False)
     _df_entity_properties: pd.DataFrame = field(
-        default=None, init=False
+        default_factory=pd.DataFrame, init=False
     )  # will hold all the FCC properties in the FCC containers and single property per attribute in wide containers
-    _df_properties_metadata: pd.DataFrame = field(default=None, init=False)
+    _df_properties_metadata: pd.DataFrame = field(default_factory=pd.DataFrame, init=False)
 
     # Model entities
-    _model_entities: dict = field(default_factory=dict)
-    _model_properties: dict = field(default_factory=dict)
-    _model_property_groups: dict = field(default_factory=dict)
+    _model_entities: dict = field(default_factory=dict, init=False)
+    _model_properties: dict = field(default_factory=dict, init=False)
+    _model_property_groups: dict = field(default_factory=dict, init=False)
 
-    _id_prefix_replace_filters = {"CFIHOS-": "_", "XOM-": "_"}
+    _id_prefix_replace_filters: ClassVar[dict[str, str]] = {"CFIHOS-": "_", "XOM-": "_"}
 
-    _property_groupings: list = field(default_factory=list)
+    _property_groupings: list[str] = field(default_factory=list, init=False)
 
     # Available processors
-    map_model_processor_type_to_processor_class = {"CFIHOS": CfihosProcessor}
+    map_model_processor_type_to_processor_class: ClassVar[dict] = {"CFIHOS": CfihosProcessor}
 
     # Source of input data (CSVs, Github, CDF)
     source: DataSource = field(default=DataSource.default(), init=False)
@@ -62,26 +62,32 @@ class Processor:
     _map_entity_id_to_dms_name: dict = field(default_factory=dict, init=False)
 
     @property
-    def model_entities(self):
+    def model_entities(self) -> dict:
+        """Model entities."""
         return self._model_entities
 
     @property
-    def model_properties(self):
+    def model_properties(self) -> dict:
+        """Model properties."""
         return self._model_properties
 
     @property
-    def model_property_groups(self):
+    def model_property_groups(self) -> dict:
+        """Model property groups."""
         return self._model_property_groups
 
     @property
-    def map_entity_id_to_dms_id(self):
+    def map_entity_id_to_dms_id(self) -> dict:
+        """Mapping of entity IDs to DMS IDs."""
         return self._map_entity_id_to_dms_id
 
     @property
-    def map_dms_id_to_entity_id(self):
+    def map_dms_id_to_entity_id(self) -> dict:
+        """Mapping of DMS IDs to entity IDs."""
         return self._map_dms_id_to_entity_id
 
     def __post_init__(self):
+        """Setups the model processors and property groups, and sync mapping tables."""
         self._setup_model_processors()
         self._setup_property_groups()
         self._sync_processor_mapping_tables()
@@ -105,10 +111,11 @@ class Processor:
 
     def _sync_processor_mapping_tables(self):
         """Synchronizes mapping tables across the processor to ensure global mapping between models.
+
         Updated mapping tables are:
          - map_entity_id_to_dms_id
          - map_dms_id_to_entity_id
-         - map_entity_name_to_entity_id
+         - map_entity_name_to_entity_id.
         """
         if len(self.model_processors) == 0:
             self._loggingWarning("Processor received no models")
@@ -134,10 +141,10 @@ class Processor:
         is_custom_property=False,
         is_first_class_citzen=False,
         is_edge_property=False,
+        is_reverse_relation=False,
         target_type="String",
     ):
-        """
-        Unified method to handle property row creation with variations for UOM, relationship, and default properties.
+        """Unified method to handle property row creation with variations for UOM, relationship, and default properties.
 
         Parameters:
         - property_item: The property data (dictionary).
@@ -155,10 +162,12 @@ class Processor:
             PropertyStructure.NAME: property_item.get(PropertyStructure.NAME, None),
             PropertyStructure.DESCRIPTION: property_item.get(PropertyStructure.DESCRIPTION, None),
             PropertyStructure.PROPERTY_TYPE: property_item.get(PropertyStructure.PROPERTY_TYPE, None),
-            PropertyStructure.TARGET_TYPE: property_item[PropertyStructure.TARGET_TYPE]
-            if PropertyStructure.TARGET_TYPE in property_item.keys()
-            and property_item[PropertyStructure.TARGET_TYPE] != None
-            else target_type,
+            PropertyStructure.TARGET_TYPE: (
+                property_item[PropertyStructure.TARGET_TYPE]
+                if PropertyStructure.TARGET_TYPE in property_item
+                and property_item[PropertyStructure.TARGET_TYPE] is not None
+                else target_type
+            ),
             PropertyStructure.MULTI_VALUED: property_item.get(PropertyStructure.MULTI_VALUED, None),
             PropertyStructure.IS_REQUIRED: False,
             PropertyStructure.IS_UNIQUE: False,
@@ -167,13 +176,13 @@ class Processor:
             PropertyStructure.INHERITED: False,
             PropertyStructure.PROPERTY_GROUP: property_group,
             PropertyStructure.CUSTOM_PROPERTY: is_custom_property,
-            PropertyStructure.FIRSTCLASSCITIZEN: is_first_class_citzen,  # lable the property if it is first class citizen
+            PropertyStructure.FIRSTCLASSCITIZEN: is_first_class_citzen,  # label the first class citizen
             EntityStructure.ID: property_item.get(EntityStructure.ID, None),
-            PropertyStructure.UNIQUE_VALIDATION_ID: property_item[PropertyStructure.UNIQUE_VALIDATION_ID].replace(
-                "-", "_"
-            )
-            if PropertyStructure.UNIQUE_VALIDATION_ID in property_item.keys()
-            else None,
+            PropertyStructure.UNIQUE_VALIDATION_ID: (
+                property_item[PropertyStructure.UNIQUE_VALIDATION_ID].replace("-", "_")
+                if PropertyStructure.UNIQUE_VALIDATION_ID in property_item
+                else None
+            ),
             "cfihosId": property_item[PropertyStructure.ID],
         }
 
@@ -194,13 +203,27 @@ class Processor:
         if is_relationship_variant:
             property_row.update(
                 {
-                    PropertyStructure.ID: property_item[PropertyStructure.ID].rstrip("_rel"),
+                    PropertyStructure.ID: property_item[PropertyStructure.ID].replace("_rel", ""),
                     PropertyStructure.UNIQUE_VALIDATION_ID: property_item[
                         PropertyStructure.UNIQUE_VALIDATION_ID
-                    ].rstrip("_rel"),
+                    ].replace("_rel", ""),
                     PropertyStructure.PROPERTY_TYPE: "BASIC_DATA_TYPE",
                     PropertyStructure.TARGET_TYPE: "String",
-                    "cfihosId": property_item[PropertyStructure.ID].rstrip("_rel"),
+                    "cfihosId": property_item[PropertyStructure.ID].replace("_rel", ""),
+                }
+            )
+
+        # Adjustments for reverse relation variant
+        if is_reverse_relation:
+            property_row.update(
+                {
+                    PropertyStructure.REV_THROUGH_PROPERTY: property_item[
+                        PropertyStructure.REV_THROUGH_PROPERTY
+                    ].replace("-", "_"),
+                    PropertyStructure.REV_PROPERTY_NAME: property_item[PropertyStructure.REV_PROPERTY_NAME],
+                    PropertyStructure.REV_PROPERTY_DESCRIPTION: property_item[
+                        PropertyStructure.REV_PROPERTY_DESCRIPTION
+                    ],
                 }
             )
 
@@ -220,8 +243,9 @@ class Processor:
         return property_row
 
     def process_and_collect_models(self):
-        """
-        Processes and collects data models from multiple model processors. This function aggregates entities, properties,
+        """Processes and collects data models from multiple model processors.
+
+        This function aggregates entities, properties,
         and properties metadata from different processors, validates them for uniqueness, and prepares them for further
         processing.
 
@@ -230,7 +254,7 @@ class Processor:
         - Ensures the uniqueness of entity IDs and property validation IDs.
         - Filters and combines metadata with entity properties.
         - Adds string properties for remaining `_rel` properties.
-        - Prepares the final data model by creating model properties and entities, and extending first-class citizen properties.
+        - Prepares the final data model by creating properties, entities, and extending first-class citizen properties.
 
         Returns:
             None
@@ -261,23 +285,24 @@ class Processor:
 
         self._df_entity_properties.loc[
             self._df_entity_properties[EntityStructure.ID].isin(
-                self._df_entities.loc[self._df_entities[EntityStructure.FIRSTCLASSCITIZEN] == True, EntityStructure.ID]
+                self._df_entities.loc[self._df_entities[EntityStructure.FIRSTCLASSCITIZEN], EntityStructure.ID]
             ),
             EntityStructure.FIRSTCLASSCITIZEN,
         ] = True
 
-        if self._df_entities[EntityStructure.ID].is_unique is False:
+        if not self._df_entities[EntityStructure.ID].is_unique:
             duplicated_entities = self._df_entities[self._df_entities.duplicated([EntityStructure.ID], keep=False)][
                 EntityStructure.ID
             ].values
             raise ValueError(f"Processed Entities has overlapping ids. Duplicated entity ids {duplicated_entities}")
 
-        if self._df_entity_properties[PropertyStructure.UNIQUE_VALIDATION_ID].is_unique is False:
+        if not self._df_entity_properties[PropertyStructure.UNIQUE_VALIDATION_ID].is_unique:
             duplicated_entities_props = self._df_entity_properties[
                 self._df_entity_properties.duplicated([PropertyStructure.UNIQUE_VALIDATION_ID], keep=False)
             ][PropertyStructure.UNIQUE_VALIDATION_ID].values
             raise ValueError(
-                f"Processed Properties has overlapping entity-property-ids. Duplicated entity ids {duplicated_entities_props}"
+                "Processed Properties has overlapping entity-property-ids. "
+                f"Duplicated entity ids {duplicated_entities_props}"
             )
 
         # Keep only properties metadata rows that do not exist in entity properties
@@ -292,15 +317,19 @@ class Processor:
 
         # set FIRSTCLASSCITIZEN column to False where value is NaN
         self._df_entity_properties[PropertyStructure.FIRSTCLASSCITIZEN] = (
-            self._df_entity_properties[PropertyStructure.FIRSTCLASSCITIZEN].fillna(False).astype(bool)
+            self._df_entity_properties[PropertyStructure.FIRSTCLASSCITIZEN].astype("boolean").fillna(False)
         )
 
         # Add string property for remaining _rel properties
+        # If requested, we may do the same for the lists of relations (suffix _list)
         list_new_rows = []
         for _, prop_rel in self._df_entity_properties.loc[
-            (self._df_entity_properties[PropertyStructure.ID].str.endswith("_rel"))
+            (self._df_entity_properties[PropertyStructure.ID].str.endswith(("_rel", "_list")))
         ].iterrows():
-            if prop_rel[PropertyStructure.ID].rstrip("_rel") not in self._df_entity_properties[PropertyStructure.ID]:
+            if (
+                prop_rel[PropertyStructure.ID].replace("_rel", "")
+                not in self._df_entity_properties[PropertyStructure.ID]
+            ):
                 new_row = self._create_property_row(
                     prop_rel,
                     is_first_class_citzen=prop_rel[PropertyStructure.FIRSTCLASSCITIZEN],
@@ -316,12 +345,21 @@ class Processor:
         self._extend_first_class_citizens_model_properties()
 
     def get_property_group_from_id(self, property: dict):
+        """Returns the property group from the property ID.
+
+        Args:
+            property (dict): The property dictionary.
+
+        Returns:
+            The property group.
+        """
         property_id = property[PropertyStructure.ID].replace("-", "_")
         return self._model_properties[property_id][PropertyStructure.PROPERTY_GROUP]
 
     def _create_model_properties(self):
-        """
-        Creates and validates model properties from the collected entity properties. This function processes the entity
+        """Creates and validates model properties from the collected entity properties.
+
+        This function processes the entity
         properties DataFrame, checks for consistency, and constructs a DataFrame of unique model properties.
 
         This method performs the following steps:
@@ -339,7 +377,7 @@ class Processor:
         for prop in unique_properties:
             df_property_subset = self._df_entity_properties.loc[
                 (self._df_entity_properties[PropertyStructure.ID] == prop)
-                & (self._df_entity_properties[PropertyStructure.FIRSTCLASSCITIZEN] == False)
+                & (~self._df_entity_properties[PropertyStructure.FIRSTCLASSCITIZEN])
             ]
             df_property_subset_groups = df_property_subset.groupby(
                 PropertyStructure.PROPERTY_TYPE
@@ -348,9 +386,9 @@ class Processor:
                 if len(df_subset) > 0:
                     columns_to_check = {
                         PropertyStructure.NAME: df_subset[PropertyStructure.NAME].unique(),
-                        PropertyStructure.TARGET_TYPE: df_subset[PropertyStructure.TARGET_TYPE].unique()
-                        if idx == "BASIC_DATA_TYPE"
-                        else [None],
+                        PropertyStructure.TARGET_TYPE: (
+                            df_subset[PropertyStructure.TARGET_TYPE].unique() if idx == "BASIC_DATA_TYPE" else [None]
+                        ),
                         PropertyStructure.PROPERTY_TYPE: df_subset[PropertyStructure.PROPERTY_TYPE].unique(),
                         PropertyStructure.MULTI_VALUED: df_subset[PropertyStructure.MULTI_VALUED].unique(),
                     }
@@ -372,9 +410,10 @@ class Processor:
         self._model_properties.update(self._df_properties.to_dict("index"))
 
     def _extend_first_class_citizens_model_properties(self):
-        """
-        Extends the model properties with first-class citizen properties. This function processes the first-class citizen
-        properties from the entity properties DataFrame, validates them for consistency, and appends them to the model properties.
+        """Extends the model properties with first-class citizen properties.
+
+        This function processes the first-class citizen properties from the entity properties DataFrame,
+        validates them for consistency, and appends them to the model properties.
 
         This method performs the following steps:
         - Identifies first-class citizen properties from the entity properties DataFrame.
@@ -386,9 +425,7 @@ class Processor:
             None
         """
         properties = []
-        fcc_properties = self._df_entity_properties.loc[
-            self._df_entity_properties[PropertyStructure.FIRSTCLASSCITIZEN] == True
-        ]
+        fcc_properties = self._df_entity_properties.loc[self._df_entity_properties[PropertyStructure.FIRSTCLASSCITIZEN]]
         # Check that all target types are present
         for _, prop in fcc_properties.iterrows():
             df_property_subset = self._df_entity_properties.loc[
@@ -404,18 +441,27 @@ class Processor:
                 if len(df_subset) > 0:
                     columns_to_check = {
                         PropertyStructure.NAME: df_subset[PropertyStructure.NAME].unique(),
-                        PropertyStructure.TARGET_TYPE: df_subset.loc[
-                            df_subset[PropertyStructure.FIRSTCLASSCITIZEN] == True
-                        ][PropertyStructure.TARGET_TYPE].unique()
-                        if idx == "BASIC_DATA_TYPE"
-                        else [None],
+                        PropertyStructure.TARGET_TYPE: (
+                            df_subset.loc[df_subset[PropertyStructure.FIRSTCLASSCITIZEN]][
+                                PropertyStructure.TARGET_TYPE
+                            ].unique()
+                            if idx == "BASIC_DATA_TYPE"
+                            else [None]
+                        ),
                         PropertyStructure.PROPERTY_TYPE: df_subset[PropertyStructure.PROPERTY_TYPE].unique(),
                         PropertyStructure.MULTI_VALUED: df_subset[PropertyStructure.MULTI_VALUED].unique(),
                         PropertyStructure.UNIQUE_VALIDATION_ID: df_subset[PropertyStructure.UNIQUE_VALIDATION_ID],
+                        # Add validation for checking the reverse direct relations
+                        # Break with error if the reverse relation is not found
                     }
                     for col_name, data in columns_to_check.items():
                         if len(data) != 1:
                             raise ValueError(f"Found properties '{col_name}' with lacking or multiple values: {data}")
+                    prop_row = {PropertyStructure.ID: prop.replace("-", "_")}
+                    if columns_to_check:
+                        for key, value in columns_to_check.items():
+                            if key not in [PropertyStructure.FIRSTCLASSCITIZEN, PropertyStructure.UNIQUE_VALIDATION_ID]:
+                                prop_row[key] = value[0]
 
                 if columns_to_check:
                     for key, value in columns_to_check.items():
@@ -435,8 +481,9 @@ class Processor:
         self._model_properties.update(pd_frist_class_properties.to_dict("index"))
 
     def _create_model_entities(self):
-        """
-        Creates model entities from the collected entity data. This function processes the entity DataFrame, validates them for
+        """Creates model entities from the collected entity data.
+
+        This function processes the entity DataFrame, validates them for
         uniqueness, maps entity IDs, and constructs a dictionary of entities with their properties.
 
         This method performs the following steps:
@@ -462,144 +509,22 @@ class Processor:
                 EntityStructure.ID: self._map_entity_id_to_dms_id[row[EntityStructure.ID]],
                 EntityStructure.NAME: row[EntityStructure.NAME],
                 EntityStructure.DESCRIPTION: row[EntityStructure.DESCRIPTION],
-                EntityStructure.INHERITS_FROM_ID: [
-                    self._map_entity_id_to_dms_id[parent_id] for parent_id in row[EntityStructure.INHERITS_FROM_ID]
-                ]
-                if row[EntityStructure.INHERITS_FROM_ID] is not None
-                else None,
+                EntityStructure.INHERITS_FROM_ID: (
+                    [self._map_entity_id_to_dms_id[parent_id] for parent_id in row[EntityStructure.INHERITS_FROM_ID]]
+                    if row[EntityStructure.INHERITS_FROM_ID] is not None
+                    else None
+                ),
                 EntityStructure.INHERITS_FROM_NAME: row[EntityStructure.INHERITS_FROM_NAME],
                 EntityStructure.FULL_INHERITANCE: {},
                 "cfihosType": row["type"],
                 "cfihosId": row[EntityStructure.ID],
                 EntityStructure.PROPERTIES: [],
-                EntityStructure.FIRSTCLASSCITIZEN: True if row[EntityStructure.FIRSTCLASSCITIZEN] else False,
-            }
-
-            cur_entity_prop_ids = {}
-            cur_fcc_entity_prop_ids = {}
-            for _, prop_row in self._df_entity_properties[
-                (self._df_entity_properties[EntityStructure.ID] == row[EntityStructure.ID])
-            ].iterrows():
-                # Check for duplicates
-                if (
-                    not prop_row[PropertyStructure.FIRSTCLASSCITIZEN]
-                    and prop_row[PropertyStructure.ID] in cur_entity_prop_ids
-                ):
-                    raise ValueError(
-                        f"Found duplicate property id '{prop_row[PropertyStructure.ID]}' in {unique_entity_id}"
-                    )
-                if (
-                    prop_row[PropertyStructure.FIRSTCLASSCITIZEN]
-                    and prop_row[PropertyStructure.ID] in cur_fcc_entity_prop_ids
-                ):
-                    raise ValueError(
-                        f"Found duplicate property id '{prop_row[PropertyStructure.ID]}' in FCC {unique_entity_id}"
-                    )
-                if prop_row[PropertyStructure.FIRSTCLASSCITIZEN]:
-                    cur_fcc_entity_prop_ids[prop_row[PropertyStructure.ID]] = 1
-                else:
-                    cur_entity_prop_ids[prop_row[PropertyStructure.ID]] = 1
-
-                if prop_row[PropertyStructure.PROPERTY_TYPE] == "ENTITY_RELATION":
-                    if self._map_dms_id_to_entity_id.get(prop_row[PropertyStructure.TARGET_TYPE], False) is False:
-                        logging.warning(
-                            f"[WARNING] Could not map target property "
-                            f"{prop_row[PropertyStructure.TARGET_TYPE]} for {row[EntityStructure.ID]}"
-                        )
-                        continue
-
-                property_group = ""
-                if row[EntityStructure.FIRSTCLASSCITIZEN]:
-                    property_group = prop_row[EntityStructure.ID].replace("-", "_")
-                else:
-                    # Generate dms friendly property name, while ensuring that the CFIHOS ID is preserved
-                    property_group = self.get_property_group_from_id(prop_row)
-
-                # NOTE: We are simplifying UOM for now in CFIHOS by having propertyId holding value and propertyIdUoM holding the corresponding UOM value
-                if prop_row[PropertyStructure.UOM]:
-                    property_row_uom = self._create_property_row(
-                        prop_row,
-                        property_group=property_group,
-                        is_first_class_citzen=row[EntityStructure.FIRSTCLASSCITIZEN],
-                        is_uom_variant=True,
-                    )
-
-                    self._model_properties[f"{prop_row[PropertyStructure.ID].replace('-', '_')}_UOM"] = property_row_uom
-                    self._model_property_groups.setdefault(property_group, []).append(property_row_uom)
-
-                    # # check if the UOM property is a UOM (This is a rare or none existing case as enities don't have UOMs)
-                    # if prop_row[PropertyStructure.FIRSTCLASSCITIZEN]:
-                    #     property_row_uom[PropertyStructure.PROPERTY_GROUP] = prop_row[EntityStructure.ID]
-                    # entities[unique_entity_id][EntityStructure.PROPERTIES].append(property_row_uom)
-
-                target_type = self._map_entity_id_to_dms_name.get(
-                    prop_row[PropertyStructure.TARGET_TYPE],
-                    prop_row[PropertyStructure.TARGET_TYPE],
-                )
-                property_row = self._create_property_row(
-                    prop_row,
-                    property_group=property_group,
-                    is_first_class_citzen=row[EntityStructure.FIRSTCLASSCITIZEN],
-                    is_edge_property=True
-                    if prop_row[PropertyStructure.PROPERTY_TYPE] == PropertyStructure.ENTITY_EDGE
-                    else False,
-                    target_type=target_type,
-                )
-
-                self._model_property_groups.setdefault(property_group, []).append(property_row)
-                entities[unique_entity_id][EntityStructure.PROPERTIES].append(property_row)
-
-        self._add_inherited_properties(entities)
-        self._model_entities = entities
-
-        # Regroup model and entity properties after adding UOM properties
-        self._df_properties = pd.DataFrame(
-            data=self._model_properties.values(), columns=list(self._model_properties.values())[0].keys()
-        )
-        self._add_property_groups(CONTAINER_PROPERTY_LIMIT)
-        self._regroup_properties(CONTAINER_PROPERTY_LIMIT)
-        self._model_properties.update(self._df_properties.to_dict("index"))
-
-    def _create_model_entities_2(self):
-        # Update model entities with new property groups def _create_model_entities(self):
-        """
-        Creates model entities from the collected entity data. This function processes the entity DataFrame, validates them for
-        uniqueness, maps entity IDs, and constructs a dictionary of entities with their properties.
-
-        This method performs the following steps:
-        - Iterates through the entities DataFrame and constructs a dictionary of entities.
-        - Validates that each entity and its properties have unique IDs.
-        - Maps entity IDs from _map_entity_id_to_dms_id and constructs property rows for each entity.
-        - Adds custom extended search properties from the configuration file (if enabled).
-        - Adds inherited properties to the entities.
-        - Regroups and updates model properties after adding UOM properties.
-
-        Returns:
-            None
-        """
-        entities = {}
-
-        for _, row in self._df_entities.iterrows():
-            unique_entity_id = row[EntityStructure.ID]
-            # Check for duplicates
-            if unique_entity_id in entities:
-                raise ValueError(f"Found duplicate cfihos entity id: {unique_entity_id}")
-
-            entities[unique_entity_id] = {
-                EntityStructure.ID: self._map_entity_id_to_dms_id[row[EntityStructure.ID]],
-                EntityStructure.NAME: row[EntityStructure.NAME],
-                EntityStructure.DESCRIPTION: row[EntityStructure.DESCRIPTION],
-                EntityStructure.INHERITS_FROM_ID: [
-                    self._map_entity_id_to_dms_id[parent_id] for parent_id in row[EntityStructure.INHERITS_FROM_ID]
-                ]
-                if row[EntityStructure.INHERITS_FROM_ID] is not None
-                else None,
-                EntityStructure.INHERITS_FROM_NAME: row[EntityStructure.INHERITS_FROM_NAME],
-                EntityStructure.FULL_INHERITANCE: {},
-                "cfihosType": row["type"],
-                "cfihosId": row[EntityStructure.ID],
-                EntityStructure.PROPERTIES: [],
-                EntityStructure.FIRSTCLASSCITIZEN: True if row[EntityStructure.FIRSTCLASSCITIZEN] else False,
+                EntityStructure.FIRSTCLASSCITIZEN: bool(row[EntityStructure.FIRSTCLASSCITIZEN]),
+                EntityStructure.IMPLEMENTS_CORE_MODEL: (
+                    row[EntityStructure.IMPLEMENTS_CORE_MODEL]
+                    if isinstance(row[EntityStructure.IMPLEMENTS_CORE_MODEL], list)
+                    else None
+                ),
             }
 
             cur_entity_prop_ids = {}
@@ -628,13 +553,16 @@ class Processor:
                 else:
                     cur_entity_prop_ids[prop_row[PropertyStructure.ID]] = 1
 
-                if prop_row[PropertyStructure.PROPERTY_TYPE] == "ENTITY_RELATION":
-                    if self._map_dms_id_to_entity_id.get(prop_row[PropertyStructure.TARGET_TYPE], False) is False:
-                        logging.warning(
-                            f"[WARNING] Could not map target property "
-                            f"{prop_row[PropertyStructure.TARGET_TYPE]} for {row[EntityStructure.ID]}"
-                        )
-                        continue
+                if prop_row[
+                    PropertyStructure.PROPERTY_TYPE
+                ] == "ENTITY_RELATION" and not self._map_dms_id_to_entity_id.get(
+                    prop_row[PropertyStructure.TARGET_TYPE], False
+                ):
+                    logging.warning(
+                        f"[WARNING] Could not map target property "
+                        f"{prop_row[PropertyStructure.TARGET_TYPE]} for {row[EntityStructure.ID]}"
+                    )
+                    continue
 
                 property_group = ""
                 if row[EntityStructure.FIRSTCLASSCITIZEN]:
@@ -643,7 +571,8 @@ class Processor:
                     # Generate dms friendly property name, while ensuring that the CFIHOS ID is preserved
                     property_group = self.get_property_group_from_id(prop_row)
 
-                # NOTE: We are simplifying UOM for now in CFIHOS by having propertyId holding value and propertyIdUoM holding the corresponding UOM value
+                # NOTE: We are simplifying UOM for now in CFIHOS by having propertyId holding value
+                # and propertyIdUoM holding the corresponding UOM value
                 if prop_row[PropertyStructure.UOM]:
                     property_row_uom = self._create_property_row(
                         prop_row,
@@ -655,7 +584,7 @@ class Processor:
                     self._model_properties[f"{prop_row[PropertyStructure.ID].replace('-', '_')}_UOM"] = property_row_uom
                     self._model_property_groups.setdefault(property_group, []).append(property_row_uom)
 
-                    # # check if the UOM property is a UOM (This is a rare or none existing case as enities don't have UOMs)
+                    # check if UOM property is a UOM (This is a rare or non-existing case as enities don't have UOMs)
                     # if prop_row[PropertyStructure.FIRSTCLASSCITIZEN]:
                     #     property_row_uom[PropertyStructure.PROPERTY_GROUP] = prop_row[EntityStructure.ID]
                     # entities[unique_entity_id][EntityStructure.PROPERTIES].append(property_row_uom)
@@ -668,21 +597,21 @@ class Processor:
                     prop_row,
                     property_group=property_group,
                     is_first_class_citzen=row[EntityStructure.FIRSTCLASSCITIZEN],
-                    is_edge_property=True
-                    if prop_row[PropertyStructure.PROPERTY_TYPE] == PropertyStructure.ENTITY_EDGE
-                    else False,
+                    is_edge_property=prop_row[PropertyStructure.PROPERTY_TYPE] == PropertyStructure.ENTITY_EDGE,
+                    is_reverse_relation=prop_row[PropertyStructure.PROPERTY_TYPE] == Relations.REVERSE,
                     target_type=target_type,
                 )
 
                 self._model_property_groups.setdefault(property_group, []).append(property_row)
                 entities[unique_entity_id][EntityStructure.PROPERTIES].append(property_row)
+              
 
         self._add_inherited_properties(entities)
         self._model_entities = entities
 
         # Regroup model and entity properties after adding UOM properties
         self._df_properties = pd.DataFrame(
-            data=self._model_properties.values(), columns=list(self._model_properties.values())[0].keys()
+            data=self._model_properties.values(), columns=next(iter(self._model_properties.values())).keys()
         )
         self._add_property_groups(CONTAINER_PROPERTY_LIMIT)
         self._regroup_properties(CONTAINER_PROPERTY_LIMIT)
@@ -698,14 +627,14 @@ class Processor:
             return 0  # Return 0 if no number is found
 
     def _add_property_groups(self, container_property_limit: int = 100) -> None:
-        """
-        Group none FCC properties into groups of 100
+        """Group non-FCC properties into groups of 100.
+
         Example: CFIHOS_1_10000001_10000101, CFIHOS_4_40000001_40000101, etc.
         """
         for property_group_prefix in self._property_groupings:
             df_property_group = self._df_properties.loc[
                 (self._df_properties[PropertyStructure.ID].str.startswith(property_group_prefix))
-                & (self._df_properties[PropertyStructure.FIRSTCLASSCITIZEN] == False)
+                & (~self._df_properties[PropertyStructure.FIRSTCLASSCITIZEN])
             ].copy(deep=True)
             # Not all potential groups will necessarily exist, if so we simply continue
             if len(df_property_group) == 0:
@@ -723,9 +652,15 @@ class Processor:
             for prop_id in df_property_group[PropertyStructure.ID]:
                 id_number = int(self._get_property_id_number(prop_id))
                 if id_number % container_property_limit == 0:
-                    property_group_suffix = f"{id_number - (id_number - 1) % container_property_limit}_{id_number - (id_number - 1) % container_property_limit + container_property_limit}"
+                    property_group_suffix = property_group_suffix = (
+                        f"{id_number - (id_number - 1) % container_property_limit}_"
+                        f"{id_number - (id_number - 1) % container_property_limit + container_property_limit}"
+                    )
                 else:
-                    property_group_suffix = f"{id_number - id_number % container_property_limit + 1}_{id_number - id_number % container_property_limit + container_property_limit + 1}"
+                    property_group_suffix = (
+                        f"{id_number - id_number % container_property_limit + 1}_"
+                        f"{id_number - id_number % container_property_limit + container_property_limit + 1}"
+                    )
 
                 property_group_suffix += (
                     "_ext" if any(prop_id.lower().endswith(ext) for ext in property_extention_suffix_list) else ""
@@ -739,17 +674,16 @@ class Processor:
                 )
 
     def _regroup_properties(self, container_property_limit: int = 100) -> None:
-        """
-        Regroup properties into groups of CONTAINER_PROPERTY_LIMIT
+        """Regroup properties into groups of CONTAINER_PROPERTY_LIMIT.
+
         Property group names are suffixed with _1, _2, _3, etc.
         :param container_property_limit: Number of properties per group. Default is 100.
         """
-
         self._df_properties.set_index(PropertyStructure.ID, drop=False, inplace=True)
         property_groups = (
             self._df_properties.loc[
-                (self._df_properties[PropertyStructure.FIRSTCLASSCITIZEN] == False)
-                & (self._df_properties[PropertyStructure.CUSTOM_PROPERTY] == False)
+                (~self._df_properties[PropertyStructure.FIRSTCLASSCITIZEN])
+                & (~self._df_properties[PropertyStructure.CUSTOM_PROPERTY])
             ]
             .groupby(PropertyStructure.PROPERTY_GROUP)
             .groups
@@ -770,10 +704,7 @@ class Processor:
         # Update model entities with new property groups
         for entity in self._model_entities.values():
             for prop in entity[EntityStructure.PROPERTIES]:
-                if (
-                    prop[PropertyStructure.FIRSTCLASSCITIZEN] == False
-                    and prop[PropertyStructure.CUSTOM_PROPERTY] == False
-                ):
+                if not prop[PropertyStructure.FIRSTCLASSCITIZEN] and not prop[PropertyStructure.CUSTOM_PROPERTY]:
                     prop[PropertyStructure.PROPERTY_GROUP] = self._df_properties.loc[
                         prop[PropertyStructure.ID], PropertyStructure.PROPERTY_GROUP
                     ]
@@ -782,7 +713,7 @@ class Processor:
         property_id_number = re.findall(r"\d+", property_id)[0]
         return property_id_number
 
-    def _dfs(self, parent_ids, entities, property_dict, entity, level):
+    def _dfs(self, parent_ids: list[str], entities: dict, property_dict: dict, entity: dict, level: int):
         for parent_entity_id in parent_ids:
             entity[EntityStructure.FULL_INHERITANCE].setdefault(level, []).append(parent_entity_id)
             parent_properties = {
@@ -802,8 +733,9 @@ class Processor:
                 self._dfs(parents, entities, property_dict, entity, level=level + 1)
 
     def _add_inherited_properties(self, entities: dict):
-        """
-        Adds inherited properties to the entities. This function recursively traverses the inheritance hierarchy using depth-first search (DFS) and
+        """Adds inherited properties to the entities.
+
+        This function recursively traverses the inheritance hierarchy using depth-first search (DFS) and
         collects properties from parent entities, adding them to the child entities.
 
         Args:
@@ -827,7 +759,7 @@ class Processor:
             return {"type": "ENTITY_RELATION", "pointsTo": s}
 
     def _replace_id_prefix_func(self, s: str) -> str:
-        """raplaces id_prefixes with defined replacements strings from a string according to 'id_prefix_replace_filters'
+        """Raplaces id_prefixes with defined replacements strings according to 'id_prefix_replace_filters'.
 
         Args:
             s (str): String to be filtered
