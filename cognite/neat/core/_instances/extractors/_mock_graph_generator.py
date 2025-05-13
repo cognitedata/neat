@@ -38,31 +38,31 @@ class MockGraphGenerator(BaseExtractor):
 
     def __init__(
         self,
-        rules: ConceptualDataModel | PhysicalDataModel,
-        class_count: dict[str | ConceptEntity, int] | None = None,
+        data_model: ConceptualDataModel | PhysicalDataModel,
+        concept_count: dict[str | ConceptEntity, int] | None = None,
         stop_on_exception: bool = False,
         allow_isolated_classes: bool = True,
     ):
-        if isinstance(rules, PhysicalDataModel):
+        if isinstance(data_model, PhysicalDataModel):
             # fixes potential issues with circular dependencies
             from cognite.neat.core._data_model.transformers import PhysicalToConceptual
 
-            self.rules = PhysicalToConceptual().transform(rules)
-        elif isinstance(rules, ConceptualDataModel):
-            self.rules = rules
+            self.rules = PhysicalToConceptual().transform(data_model)
+        elif isinstance(data_model, ConceptualDataModel):
+            self.rules = data_model
         else:
             raise ValueError("Rules must be of type InformationRules or DMSRules!")
 
-        if not class_count:
-            self.class_count = {
-                class_: 1 for class_ in DataModelAnalysis(self.rules).defined_concepts(include_ancestors=True)
+        if not concept_count:
+            self.concept_count = {
+                concept: 1 for concept in DataModelAnalysis(self.rules).defined_concepts(include_ancestors=True)
             }
-        elif all(isinstance(key, str) for key in class_count.keys()):
-            self.class_count = {
-                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in class_count.items()
+        elif all(isinstance(key, str) for key in concept_count.keys()):
+            self.concept_count = {
+                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in concept_count.items()
             }
-        elif all(isinstance(key, ConceptEntity) for key in class_count.keys()):
-            self.class_count = cast(dict[ConceptEntity, int], class_count)
+        elif all(isinstance(key, ConceptEntity) for key in concept_count.keys()):
+            self.concept_count = cast(dict[ConceptEntity, int], concept_count)
         else:
             raise ValueError("Class count keys must be of type str! or ClassEntity! or empty dict!")
 
@@ -78,87 +78,90 @@ class MockGraphGenerator(BaseExtractor):
         """
         return generate_triples(
             self.rules,
-            self.class_count,
+            self.concept_count,
             stop_on_exception=self.stop_on_exception,
-            allow_isolated_classes=self.allow_isolated_classes,
+            allow_isolated_concepts=self.allow_isolated_classes,
         )
 
 
 def generate_triples(
-    rules: ConceptualDataModel,
-    class_count: dict[ConceptEntity, int],
+    data_model: ConceptualDataModel,
+    concept_count: dict[ConceptEntity, int],
     stop_on_exception: bool = False,
-    allow_isolated_classes: bool = True,
+    allow_isolated_concepts: bool = True,
 ) -> list[Triple]:
-    """Generate mock triples based on data model defined in rules and desired number
+    """Generate mock triples based on the conceptual data model defined and desired number
     of class instances
 
     Args:
         rules : Rules defining the data model
-        class_count: Target class count for each class in the ontology
+        concept_count: Target class count for each class in the ontology
         stop_on_exception: To stop if exception is encountered or not, default is False
-        allow_isolated_classes: To allow generation of instances for classes that are not
+        allow_isolated_concepts: To allow generation of instances for classes that are not
                                  connected to any other class, default is True
 
     Returns:
         List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
     """
 
-    namespace = rules.metadata.namespace
-    analysis = DataModelAnalysis(rules)
-    defined_classes = analysis.defined_concepts(include_ancestors=True)
+    namespace = data_model.metadata.namespace
+    analysis = DataModelAnalysis(data_model)
+    defined_concepts = analysis.defined_concepts(include_ancestors=True)
 
-    if non_existing_classes := set(class_count.keys()) - defined_classes:
-        msg = f"Class count contains classes {non_existing_classes} for which properties are not defined in Data Model!"
+    if non_existing_concepts := set(concept_count.keys()) - defined_concepts:
+        msg = (
+            f"Concept count contains concepts {non_existing_concepts} for which"
+            " properties are not defined in Data Model!"
+        )
         if stop_on_exception:
             raise ValueError(msg)
         else:
             msg += " These classes will be ignored."
             warnings.warn(msg, stacklevel=2)
-            for class_ in non_existing_classes:
-                class_count.pop(class_)
+            for concept in non_existing_concepts:
+                concept_count.pop(concept)
 
     # Subset data model to only classes that are defined in class count
-    rules = (
-        SubsetConceptualDataModel(concepts=set(class_count.keys())).transform(rules)
-        if defined_classes != set(class_count.keys())
-        else rules
+    data_model = (
+        SubsetConceptualDataModel(concepts=set(concept_count.keys())).transform(data_model)
+        if defined_concepts != set(concept_count.keys())
+        else data_model
     )
 
-    class_linkage = analysis.concept_linkage().to_pandas()
+    concept_linkage = analysis.concept_linkage().to_pandas()
 
     # Remove one of symmetric pairs from class linkage to maintain proper linking
     # among instances of symmetrically linked classes
     if sym_pairs := analysis.symmetrically_connected_concepts():
-        class_linkage = _remove_higher_occurring_sym_pair(class_linkage, sym_pairs)
+        concept_linkage = _remove_higher_occurring_sym_pair(concept_linkage, sym_pairs)
 
     # Remove any of symmetric pairs containing classes that are not present class count
-    class_linkage = _remove_non_requested_sym_pairs(class_linkage, class_count)
+    concept_linkage = _remove_non_requested_sym_pairs(concept_linkage, concept_count)
 
     # Generate generation order for classes instances
-    generation_order = _prettify_generation_order(_get_generation_order(class_linkage))
+    generation_order = _prettify_generation_order(_get_generation_order(concept_linkage))
 
     # Generated simple view of data model
-    class_property_pairs = analysis.properties_by_concepts(include_ancestors=True)
+    properties_by_concepts = analysis.properties_by_concepts(include_ancestors=True)
 
     # pregenerate instance ids for each remaining class
     instance_ids = {
-        key: [URIRef(namespace[f"{key.suffix}-{i + 1}"]) for i in range(value)] for key, value in class_count.items()
+        key: [URIRef(namespace[f"{key.suffix}-{i + 1}"]) for i in range(value)] for key, value in concept_count.items()
     }
 
     # create triple for each class instance defining its type
     triples: list[Triple] = []
-    for class_ in class_count:
+    for concept in concept_count:
         triples += [
-            (class_instance_id, RDF.type, URIRef(namespace[str(class_.suffix)]))
-            for class_instance_id in instance_ids[class_]
+            (concept_instance_id, RDF.type, URIRef(namespace[str(concept.suffix)]))
+            for concept_instance_id in instance_ids[concept]
         ]
 
     # generate triples for connected classes
-    for class_ in generation_order:
+    for concept in generation_order:
         triples += _generate_triples_per_class(
-            class_,
-            class_property_pairs,
+            concept,
+            properties_by_concepts,
             sym_pairs,
             instance_ids,
             namespace,
@@ -166,11 +169,11 @@ def generate_triples(
         )
 
     # generate triples for isolated classes
-    if allow_isolated_classes:
-        for class_ in set(class_count.keys()) - set(generation_order):
+    if allow_isolated_concepts:
+        for concept in set(concept_count.keys()) - set(generation_order):
             triples += _generate_triples_per_class(
-                class_,
-                class_property_pairs,
+                concept,
+                properties_by_concepts,
                 sym_pairs,
                 instance_ids,
                 namespace,
@@ -181,11 +184,11 @@ def generate_triples(
 
 
 def _get_generation_order(
-    class_linkage: pd.DataFrame,
+    concept_linkage: pd.DataFrame,
     parent_col: str = "source_class",
     child_col: str = "target_class",
 ) -> dict:
-    parent_child_list: list[list[str]] = class_linkage[[parent_col, child_col]].values.tolist()  # type: ignore[assignment]
+    parent_child_list: list[list[str]] = concept_linkage[[parent_col, child_col]].values.tolist()  # type: ignore[assignment]
     # Build a directed graph and a list of all names that have no parent
     graph: dict[str, set] = {name: set() for tup in parent_child_list for name in tup}
     has_parent: dict[str, bool] = {name: False for tup in parent_child_list for name in tup}
@@ -217,44 +220,44 @@ def _prettify_generation_order(generation_order: dict, depth: dict | None = None
 
 
 def _remove_higher_occurring_sym_pair(
-    class_linkage: pd.DataFrame, sym_pairs: set[tuple[ConceptEntity, ConceptEntity]]
+    concept_linkage: pd.DataFrame, sym_pairs: set[tuple[ConceptEntity, ConceptEntity]]
 ) -> pd.DataFrame:
     """Remove symmetric pair which is higher in occurrence."""
     rows_to_remove = set()
     for source, target in sym_pairs:
-        first_sym_property_occurrence = class_linkage[
-            (class_linkage.source_class == source) & (class_linkage.target_class == target)
+        first_sym_property_occurrence = concept_linkage[
+            (concept_linkage.source_class == source) & (concept_linkage.target_class == target)
         ].max_occurrence.values[0]
-        second_sym_property_occurrence = class_linkage[
-            (class_linkage.source_class == target) & (class_linkage.target_class == source)
+        second_sym_property_occurrence = concept_linkage[
+            (concept_linkage.source_class == target) & (concept_linkage.target_class == source)
         ].max_occurrence.values[0]
 
         if first_sym_property_occurrence is None:
             # this means that source occurrence is unbounded
-            index = class_linkage[
-                (class_linkage.source_class == source) & (class_linkage.target_class == target)
+            index = concept_linkage[
+                (concept_linkage.source_class == source) & (concept_linkage.target_class == target)
             ].index.values[0]
         elif second_sym_property_occurrence is None or (
             first_sym_property_occurrence <= second_sym_property_occurrence
             and second_sym_property_occurrence > first_sym_property_occurrence
         ):
             # this means that target occurrence is unbounded
-            index = class_linkage[
-                (class_linkage.source_class == target) & (class_linkage.target_class == source)
+            index = concept_linkage[
+                (concept_linkage.source_class == target) & (concept_linkage.target_class == source)
             ].index.values[0]
         else:
-            index = class_linkage[
-                (class_linkage.source_class == source) & (class_linkage.target_class == target)
+            index = concept_linkage[
+                (concept_linkage.source_class == source) & (concept_linkage.target_class == target)
             ].index.values[0]
         rows_to_remove.add(index)
 
-    return class_linkage.drop(list(rows_to_remove))
+    return concept_linkage.drop(list(rows_to_remove))
 
 
-def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, class_count: dict) -> pd.DataFrame:
+def _remove_non_requested_sym_pairs(class_linkage: pd.DataFrame, concept_count: dict) -> pd.DataFrame:
     """Remove symmetric pairs which classes are not found in class count."""
-    rows_to_remove = set(class_linkage[~(class_linkage["source_class"].isin(set(class_count.keys())))].index.values)
-    rows_to_remove |= set(class_linkage[~(class_linkage["target_class"].isin(set(class_count.keys())))].index.values)
+    rows_to_remove = set(class_linkage[~(class_linkage["source_class"].isin(set(concept_count.keys())))].index.values)
+    rows_to_remove |= set(class_linkage[~(class_linkage["target_class"].isin(set(concept_count.keys())))].index.values)
 
     return class_linkage.drop(list(rows_to_remove))
 
@@ -293,9 +296,9 @@ def _generate_mock_data_property_triples(
 
 
 def _generate_mock_object_property_triples(
-    class_: ConceptEntity,
+    concept: ConceptEntity,
     property_definition: ConceptualProperty,
-    class_property_pairs: dict[ConceptEntity, list[ConceptualProperty]],
+    concept_property_pairs: dict[ConceptEntity, list[ConceptualProperty]],
     sym_pairs: set[tuple[ConceptEntity, ConceptEntity]],
     instance_ids: dict[ConceptEntity, list[URIRef]],
     namespace: Namespace,
@@ -303,31 +306,31 @@ def _generate_mock_object_property_triples(
 ) -> list[tuple[URIRef, URIRef, URIRef]]:
     """Generates triples for object properties."""
     if property_definition.value_type not in instance_ids:
-        msg = f"Class {property_definition.value_type} not found in class count! "
+        msg = f"Concept {property_definition.value_type} not found in concept count! "
         if stop_on_exception:
             raise ValueError(msg)
         else:
             msg += (
                 f"Skipping creating triples for property {property_definition.name} "
-                f"of class {class_.suffix} which expects values of this type!"
+                f"of concept {concept.suffix} which expects values of this type!"
             )
             warnings.warn(msg, stacklevel=2)
             return []
 
     # Handling symmetric property
 
-    if tuple((class_, property_definition.value_type)) in sym_pairs:
-        symmetric_class_properties = class_property_pairs[cast(ConceptEntity, property_definition.value_type)]
+    if tuple((concept, property_definition.value_type)) in sym_pairs:
+        symmetric_concept_properties = concept_property_pairs[cast(ConceptEntity, property_definition.value_type)]
         candidates = list(
             filter(
-                lambda instance: instance.value_type == class_,
-                symmetric_class_properties,
+                lambda instance: instance.value_type == concept,
+                symmetric_concept_properties,
             )
         )
         symmetric_property = candidates[0]
         if len(candidates) > 1:
             warnings.warn(
-                f"Multiple symmetric properties found for class {property_definition.value_type}! "
+                f"Multiple symmetric properties found for concept {property_definition.value_type}! "
                 f"Only one will be used for creating symmetric triples.",
                 stacklevel=2,
             )
@@ -336,7 +339,7 @@ def _generate_mock_object_property_triples(
 
     triples = []
 
-    for i, source in enumerate(instance_ids[class_]):
+    for i, source in enumerate(instance_ids[concept]):
         target = instance_ids[cast(ConceptEntity, property_definition.value_type)][
             i % len(instance_ids[cast(ConceptEntity, property_definition.value_type)])
         ]
@@ -358,14 +361,14 @@ def _generate_mock_object_property_triples(
             ]
 
     if symmetric_property:
-        class_property_pairs[cast(ConceptEntity, property_definition.value_type)].remove(symmetric_property)
+        concept_property_pairs[cast(ConceptEntity, property_definition.value_type)].remove(symmetric_property)
 
     return triples
 
 
 def _generate_triples_per_class(
-    class_: ConceptEntity,
-    class_properties_pairs: dict[ConceptEntity, list[ConceptualProperty]],
+    concept: ConceptEntity,
+    concept_properties_pairs: dict[ConceptEntity, list[ConceptualProperty]],
     sym_pairs: set[tuple[ConceptEntity, ConceptEntity]],
     instance_ids: dict[ConceptEntity, list[URIRef]],
     namespace: Namespace,
@@ -374,10 +377,10 @@ def _generate_triples_per_class(
     """Generate triples for a given class."""
     triples: list[Triple] = []
 
-    for property_ in class_properties_pairs[class_]:
+    for property_ in concept_properties_pairs[concept]:
         if property_.type_ == EntityTypes.data_property:
             triples += _generate_mock_data_property_triples(
-                instance_ids[class_],
+                instance_ids[concept],
                 property_.property_,
                 namespace,
                 cast(DataType, property_.value_type),
@@ -385,9 +388,9 @@ def _generate_triples_per_class(
 
         elif property_.type_ == EntityTypes.object_property:
             triples += _generate_mock_object_property_triples(
-                class_,
+                concept,
                 property_,
-                class_properties_pairs,
+                concept_properties_pairs,
                 sym_pairs,
                 instance_ids,
                 namespace,
