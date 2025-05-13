@@ -64,15 +64,15 @@ class StatisticsAPI(APIClient):
 
         Examples:
             Fetch statistics for a single space:
-                >>> from cognite.client import CogniteClient
-                >>> client = CogniteClient()
-                >>> res = client.data_modeling.statistics.per_space("my-space")
+                >>> from cognite.neat.core._client import NeatClient
+                >>> client = NeatClient()
+                >>> res = client.instance_statistics.list("my-space")
             Fetch statistics for multiple spaces:
-                >>> res = client.data_modeling.statistics.per_space(
+                >>> res = client.instance_statistics.list(
                 ...     ["my-space1", "my-space2"]
                 ... )
             Fetch statistics for all spaces (ignores the 'space' argument):
-                >>> res = client.data_modeling.statistics.per_space(return_all=True)
+                >>> res = client.instance_statistics.list(return_all=True)
         """
         if space is None:
             return SpaceInstanceCountsList._load(self._get(self._RESOURCE_PATH + "/spaces").json()["items"])
