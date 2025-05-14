@@ -40,6 +40,7 @@ from cognite.neat.core._issues.errors._external import CDFMissingResourcesError
 from cognite.neat.core._issues.warnings import (
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
+    ReversedConnectionNotFeasibleWarning,
     UndefinedViewWarning,
     user_modeling,
 )
@@ -591,7 +592,7 @@ class PhysicalValidation:
                 )
             ):
                 issue_list.append(
-                    ReversedConnectionNotFeasibleError(
+                    ReversedConnectionNotFeasibleWarning(
                         view_id,
                         "reversed connection",
                         prop_id,

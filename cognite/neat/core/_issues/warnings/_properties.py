@@ -88,3 +88,10 @@ class PropertyMultipleValueWarning(PropertyWarning[T_Identifier]):
     Selecting the first value {value}, the rest will be ignored."""
 
     value: str
+
+
+@dataclass(unsafe_hash=True)
+class ReversedConnectionNotFeasibleWarning(PropertyWarning[T_Identifier]):
+    """The {resource_type} {identifier}.{property_name} cannot be created: {reason}"""
+
+    reason: str

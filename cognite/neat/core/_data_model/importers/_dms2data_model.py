@@ -198,6 +198,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
             now = datetime.now().replace(microsecond=0)
             created = now
             updated = now
+
         return UnverifiedPhysicalMetadata(
             space=model.space,
             external_id=model.external_id,

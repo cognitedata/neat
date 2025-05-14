@@ -4,7 +4,7 @@ import pytest
 import yaml
 
 from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model.importers import YAMLImporter
+from cognite.neat.core._data_model.importers import DictImporter
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
     ConceptualToPhysical,
@@ -27,7 +27,9 @@ class TestValidate:
     ) -> None:
         dms_rules: PhysicalDataModel | None = None
         with catch_issues() as issues:
-            rules = YAMLImporter.from_file(conceptual_filepath, source_name=conceptual_filepath.name).to_data_model()
+            rules = DictImporter.from_yaml_file(
+                conceptual_filepath, source_name=conceptual_filepath.name
+            ).to_data_model()
             info_rules = VerifyConceptualDataModel(validate=True, client=neat_client).transform(rules)
             dms_rules = ConceptualToPhysical().transform(info_rules)
 

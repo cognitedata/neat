@@ -11,17 +11,39 @@ from cognite.neat.core._data_model.models import INPUT_RULES_BY_ROLE, RoleTypes
 from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat.core._issues.errors import (
     FileMissingRequiredFieldError,
-    FileNotAFileError,
-    FileNotFoundNeatError,
     FileReadError,
-    FileTypeUnexpectedError,
 )
 from cognite.neat.core._issues.warnings import NeatValueWarning
 
 from ._base import BaseImporter
+from ._base_file_reader import BaseFileReader
 
 
-class YAMLImporter(BaseImporter[T_UnverifiedDataModel]):
+class YAMLReader:
+    """Handles reading and parsing YAML files with error handling."""
+
+    @staticmethod
+    def read_file(
+        filepath: Path, allowed_extensions: frozenset[str] = frozenset([".yaml", ".yml"])
+    ) -> tuple[dict[str, Any], list[NeatIssue]]:
+        """Read a YAML file and return the data with any issues encountered."""
+        issues = BaseFileReader.validate_file(filepath, allowed_extensions)
+        if issues:
+            return {}, issues
+        # Try to load the YAML
+        try:
+            data = yaml.safe_load(filepath.read_text())
+            if not isinstance(data, dict):
+                issues.append(FileReadError(filepath, "YAML content is not a dictionary"))
+                return {}, issues
+            return data, issues
+        except yaml.YAMLError as exc:
+            return {}, [FileReadError(filepath, f"Invalid YAML: {exc!s}")]
+        except Exception as exc:
+            return {}, [FileReadError(filepath, f"Error reading file: {exc!s}")]
+
+
+class DictImporter(BaseImporter[T_UnverifiedDataModel]):
     """Imports the rules from a YAML file.
 
     Args:
@@ -52,17 +74,12 @@ class YAMLImporter(BaseImporter[T_UnverifiedDataModel]):
         return f"YAML file {self._source_name} read as unverified data model"
 
     @classmethod
-    def from_file(cls, filepath: Path, source_name: str = "Unknown") -> "YAMLImporter":
-        if not filepath.exists():
-            return cls({}, [FileNotFoundNeatError(filepath)])
-        elif not filepath.is_file():
-            return cls({}, [FileNotAFileError(filepath)])
-        elif filepath.suffix not in [".yaml", ".yml"]:
-            return cls({}, [FileTypeUnexpectedError(filepath, frozenset([".yaml", ".yml"]))])
-        try:
-            data = yaml.safe_load(filepath.read_text())
-        except yaml.YAMLError as exc:
-            return cls({}, [FileReadError(filepath, f"Invalid YAML: {exc!s}")])
+    def from_yaml_file(cls, filepath: Path, source_name: str = "Unknown") -> "DictImporter":
+        """Create a DictImporter from a YAML file."""
+        data, issues = YAMLReader.read_file(filepath)
+
+        if issues:
+            return cls({}, issues)
 
         return cls(data, filepaths=[filepath], source_name=source_name)
 
