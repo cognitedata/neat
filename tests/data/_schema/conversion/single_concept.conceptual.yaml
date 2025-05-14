@@ -1,5 +1,5 @@
-classes:
-- class_: Sensor
+concepts:
+- concept: Sensor
   neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor
   physical: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor
 metadata:
@@ -28,13 +28,13 @@ prefixes:
   skos: http://www.w3.org/2004/02/skos/core#
   xsd: http://www.w3.org/2001/XMLSchema#
 properties:
-- class_: Sensor
+- concept: Sensor
   max_count: null
   neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/maxTemperature
   physical: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/maxTemperature
   property_: maxTemperature
   value_type: double
-- class_: Sensor
+- concept: Sensor
   max_count: null
   neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/minTemperature
   physical: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/minTemperature

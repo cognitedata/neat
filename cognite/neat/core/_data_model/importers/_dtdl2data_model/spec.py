@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal, TypeAlias
 from pydantic import BaseModel, Field, field_validator, model_serializer, model_validator
 from pydantic.fields import FieldInfo
 
-from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity
 
 if TYPE_CHECKING:
     from pydantic.type_adapter import IncEx
@@ -35,8 +35,8 @@ class DTMI(BaseModel):
     path: list[str]
     version: str
 
-    def as_class_id(self) -> ClassEntity:
-        return ClassEntity(prefix="_".join(self.path[:-1]), suffix=self.path[-1], version=self.version)
+    def as_concept_entity(self) -> ConceptEntity:
+        return ConceptEntity(prefix="_".join(self.path[:-1]), suffix=self.path[-1], version=self.version)
 
     def __hash__(self) -> int:
         return hash(self.to_string())

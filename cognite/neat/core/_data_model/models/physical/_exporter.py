@@ -27,7 +27,7 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.models.data_types import DataType, Double, Enum, Float
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     DMSFilter,
     DMSNodeEntity,
@@ -77,32 +77,32 @@ class _DMSExporter:
 
     def __init__(
         self,
-        rules: PhysicalDataModel,
+        data_model: PhysicalDataModel,
         instance_space: str | None = None,
         remove_cdf_spaces: bool = False,
     ):
         self.instance_space = instance_space
-        self.rules = rules
+        self.data_model = data_model
         self.remove_cdf_spaces = remove_cdf_spaces
 
     def to_schema(self) -> DMSSchema:
-        rules = self.rules
-        container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.rules.properties))
+        data_model = self.data_model
+        container_properties_by_id, view_properties_by_id = self._gather_properties(list(self.data_model.properties))
 
-        containers = self._create_containers(container_properties_by_id, rules.enum)  # type: ignore[arg-type]
+        containers = self._create_containers(container_properties_by_id, data_model.enum)  # type: ignore[arg-type]
 
         view_properties_with_ancestors_by_id = self._gather_properties_with_ancestors(
-            view_properties_by_id, rules.views
+            view_properties_by_id, data_model.views
         )
 
         views = self._create_views(view_properties_by_id, view_properties_with_ancestors_by_id)
         view_node_type_filters: set[dm.NodeId] = set()
-        for dms_view in rules.views:
+        for dms_view in data_model.views:
             if isinstance(dms_view.filter_, NodeTypeFilter):
                 view_node_type_filters.update(node.as_id() for node in dms_view.filter_.inner or [])
-        if rules.nodes:
+        if data_model.nodes:
             node_types = NodeApplyDict(
-                [node.as_node() for node in rules.nodes]
+                [node.as_node() for node in data_model.nodes]
                 + [dm.NodeApply(node.space, node.external_id) for node in view_node_type_filters]
             )
         else:
@@ -114,17 +114,17 @@ class _DMSExporter:
                 ]
             )
 
-        data_model = rules.metadata.as_data_model()
+        dms_data_model = data_model.metadata.as_data_model()
         # Sorting to ensure deterministic order
-        data_model.views = sorted(
-            [dms_view.view.as_id() for dms_view in rules.views if dms_view.in_model],
+        dms_data_model.views = sorted(
+            [dms_view.view.as_id() for dms_view in data_model.views if dms_view.in_model],
             key=lambda x: x.as_tuple(),  # type: ignore[union-attr]
         )
-        spaces = self._create_spaces(rules.metadata, containers, views, data_model)
+        spaces = self._create_spaces(data_model.metadata, containers, views, dms_data_model)
 
         return DMSSchema(
             spaces=spaces,
-            data_model=data_model,
+            data_model=dms_data_model,
             views=views,
             containers=containers,
             node_types=node_types,
@@ -154,7 +154,7 @@ class _DMSExporter:
         view_properties_by_id: dict[dm.ViewId, list[PhysicalProperty]],
         view_properties_with_ancestors_by_id: dict[dm.ViewId, list[PhysicalProperty]],
     ) -> ViewApplyDict:
-        input_views = list(self.rules.views)
+        input_views = list(self.data_model.views)
 
         views = ViewApplyDict(
             [
@@ -298,11 +298,11 @@ class _DMSExporter:
         container_properties_by_id: dict[dm.ContainerId, list[PhysicalProperty]],
         enum: Collection[PhysicalEnum] | None,
     ) -> ContainerApplyDict:
-        enum_values_by_collection: dict[ClassEntity, list[PhysicalEnum]] = defaultdict(list)
+        enum_values_by_collection: dict[ConceptEntity, list[PhysicalEnum]] = defaultdict(list)
         for enum_value in enum or []:
             enum_values_by_collection[enum_value.collection].append(enum_value)
 
-        containers = list(self.rules.containers or [])
+        containers = list(self.data_model.containers or [])
 
         containers = dm.ContainerApplyList(
             [

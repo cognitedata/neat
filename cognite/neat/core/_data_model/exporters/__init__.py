@@ -1,9 +1,9 @@
 from ._base import BaseExporter, CDFExporter
-from ._rules2dms import DMSExporter
-from ._rules2excel import ExcelExporter
-from ._rules2instance_template import InstanceTemplateExporter
-from ._rules2ontology import GraphExporter, OWLExporter, SemanticDataModelExporter, SHACLExporter
-from ._rules2yaml import YAMLExporter
+from ._data_model2dms import DMSExporter
+from ._data_model2excel import ExcelExporter
+from ._data_model2instance_template import InstanceTemplateExporter
+from ._data_model2ontology import GraphExporter, OWLExporter, SemanticDataModelExporter, SHACLExporter
+from ._data_model2yaml import YAMLExporter
 
 __all__ = [
     "BaseExporter",

@@ -55,22 +55,22 @@ from cognite.neat.core._utils.text import humanize_collection
 from ._verified import PhysicalDataModel, PhysicalProperty
 
 
-class DMSValidation:
-    """This class does all the validation of the DMS rules that have dependencies between
-    components."""
+class PhysicalValidation:
+    """This class does all the validation of the physical data model that
+    have dependencies between components."""
 
     def __init__(
         self,
-        rules: PhysicalDataModel,
+        data_model: PhysicalDataModel,
         client: NeatClient | None = None,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ) -> None:
-        self._rules = rules
+        self._rules = data_model
         self._client = client
-        self._metadata = rules.metadata
-        self._properties = rules.properties
-        self._containers = rules.containers
-        self._views = rules.views
+        self._metadata = data_model.metadata
+        self._properties = data_model.properties
+        self._containers = data_model.containers
+        self._views = data_model.views
         self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
 
     def imported_views_and_containers_ids(

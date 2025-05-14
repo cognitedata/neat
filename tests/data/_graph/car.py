@@ -6,7 +6,9 @@ from rdflib.term import Literal
 
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._data_model import importers
-from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImporter
+from cognite.neat.core._data_model.importers._spreadsheet2data_model import (
+    ExcelImporter,
+)
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
@@ -15,7 +17,7 @@ from cognite.neat.core._data_model.models.physical import (
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.transformers import VerifyInformationRules
+from cognite.neat.core._data_model.transformers import VerifyConceptualDataModel
 
 INSTANCE_SPACE = "sp_cars"
 MODEL_SPACE = "sp_example_car"
@@ -71,8 +73,8 @@ def get_care_rules() -> ConceptualDataModel:
     # To avoid circular import
     from tests.data import SchemaData
 
-    read_rules = importers.ExcelImporter(SchemaData.Conceptual.info_arch_car_rules_xlsx).to_rules()
-    return VerifyInformationRules().transform(read_rules)
+    read_rules = importers.ExcelImporter(SchemaData.Conceptual.info_arch_car_rules_xlsx).to_data_model()
+    return VerifyConceptualDataModel().transform(read_rules)
 
 
 CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
@@ -195,7 +197,7 @@ BASE_MODEL: PhysicalDataModel = UnverifiedPhysicalDataModel(
             container_property="name",
         )
     ],
-).as_verified_rules()
+).as_verified_data_model()
 
 NODE_TYPES = dm.NodeApplyList(
     [
@@ -275,4 +277,8 @@ def get_car_dms_rules() -> PhysicalDataModel:
     # Local import to avoid circular import
     from tests.data import SchemaData
 
-    return ExcelImporter(SchemaData.Physical.car_dms_rules_xlsx).to_rules().rules.as_verified_rules()
+    return (
+        ExcelImporter(SchemaData.Physical.car_dms_rules_xlsx)
+        .to_data_model()
+        .unverified_data_model.as_verified_data_model()
+    )

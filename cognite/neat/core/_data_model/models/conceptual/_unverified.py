@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.models._base_unverified import (
 )
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     MultiValueTypeInfo,
     UnknownEntity,
     load_value_type,
@@ -21,7 +21,7 @@ from cognite.neat.core._data_model.models.entities import (
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
 from ._verified import (
-    ConceptualClass,
+    Concept,
     ConceptualDataModel,
     ConceptualMetadata,
     ConceptualProperty,
@@ -68,7 +68,7 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[ConceptualMetadata]):
             Unlike namespace, the identifier does not end with "/" or "#".
 
         """
-        return DEFAULT_NAMESPACE[f"data-model/unverified/logical/{self.space}/{self.external_id}/{self.version}"]
+        return DEFAULT_NAMESPACE[f"data-model/unverified/conceptual/{self.space}/{self.external_id}/{self.version}"]
 
     @property
     def namespace(self) -> Namespace:
@@ -78,9 +78,9 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[ConceptualMetadata]):
 
 @dataclass
 class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
-    class_: ClassEntity | str
+    concept: ConceptEntity | str
     property_: str
-    value_type: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity | str
+    value_type: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity | str
     name: str | None = None
     description: str | None = None
     min_count: int | None = None
@@ -100,7 +100,7 @@ class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Value Type"] = load_value_type(self.value_type, default_prefix)
         return output
 
@@ -112,33 +112,33 @@ class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
 
 
 @dataclass
-class UnverifiedConceptualClass(UnverifiedComponent[ConceptualClass]):
-    class_: ClassEntity | str
+class UnverifiedConcept(UnverifiedComponent[Concept]):
+    concept: ConceptEntity | str
     name: str | None = None
     description: str | None = None
-    implements: str | list[ClassEntity] | None = None
+    implements: str | list[ConceptEntity] | None = None
     instance_source: str | None = None
     neatId: str | URIRef | None = None
     # linking
     physical: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[ConceptualClass]:
-        return ConceptualClass
+    def _get_verified_cls(cls) -> type[Concept]:
+        return Concept
 
     @property
-    def class_str(self) -> str:
-        return str(self.class_)
+    def concept_str(self) -> str:
+        return str(self.concept)
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        parent: list[ClassEntity] | None = None
+        parent: list[ConceptEntity] | None = None
         if isinstance(self.implements, str):
             self.implements = self.implements.strip()
-            parent = [ClassEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
+            parent = [ConceptEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
         elif isinstance(self.implements, list):
-            parent = [ClassEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
-        output["Class"] = ClassEntity.load(self.class_, prefix=default_prefix)
+            parent = [ConceptEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Implements"] = parent
         return output
 
@@ -147,7 +147,7 @@ class UnverifiedConceptualClass(UnverifiedComponent[ConceptualClass]):
 class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
     metadata: UnverifiedConceptualMetadata
     properties: list[UnverifiedConceptualProperty] = field(default_factory=list)
-    classes: list[UnverifiedConceptualClass] = field(default_factory=list)
+    concepts: list[UnverifiedConcept] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
 
     @classmethod
@@ -160,7 +160,7 @@ class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
         return dict(
             Metadata=self.metadata.dump(),
             Properties=[prop.dump(default_prefix) for prop in self.properties],
-            Classes=[class_.dump(default_prefix) for class_ in self.classes],
+            Concepts=[concept.dump(default_prefix) for concept in self.concepts],
             Prefixes=self.prefixes,
         )
 
@@ -180,7 +180,7 @@ class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
             "external_id": self.metadata.external_id,
             "space": self.metadata.space,
             "version": self.metadata.version,
-            "classes": len(self.classes),
+            "concepts": len(self.concepts),
             "properties": len(self.properties),
         }
 

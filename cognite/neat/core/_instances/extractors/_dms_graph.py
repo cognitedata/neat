@@ -12,7 +12,10 @@ from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDa
 from cognite.neat.core._data_model.models.conceptual import ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import Json
 from cognite.neat.core._data_model.models.entities import UnknownEntity
-from cognite.neat.core._data_model.transformers import DMSToInformation, VerifyDMSRules
+from cognite.neat.core._data_model.transformers import (
+    PhysicalToConceptual,
+    VerifyPhysicalDataModel,
+)
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_warnings
 from cognite.neat.core._issues.warnings import (
     CDFAuthWarning,
@@ -47,8 +50,8 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._str_to_ideal_type = str_to_ideal_type
 
         self._views: list[dm.View] | None = None
-        self._information_rules: ConceptualDataModel | None = None
-        self._dms_rules: PhysicalDataModel | None = None
+        self._conceptual_data_model: ConceptualDataModel | None = None
+        self._physical_data_model: PhysicalDataModel | None = None
 
     @classmethod
     def from_data_model_id(
@@ -164,32 +167,32 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                     self._issues.append(ResourceNotFoundWarning(dm_view, "view", data_model_id, "data model"))
         return views
 
-    def get_information_rules(self) -> ConceptualDataModel:
-        """Returns the information rules that the extractor uses."""
-        if self._information_rules is None:
-            self._information_rules, self._dms_rules = self._create_rules()
-        return self._information_rules
+    def get_conceptual_data_model(self) -> ConceptualDataModel:
+        """Returns the conceptual data model that the extractor uses."""
+        if self._conceptual_data_model is None:
+            self._conceptual_data_model, self._physical_data_model = self._create_data_models()
+        return self._conceptual_data_model
 
-    def get_dms_rules(self) -> PhysicalDataModel:
-        """Returns the DMS rules that the extractor uses."""
-        if self._dms_rules is None:
-            self._information_rules, self._dms_rules = self._create_rules()
-        return self._dms_rules
+    def get_physical_data_model(self) -> PhysicalDataModel:
+        """Returns the physical data model that the extractor uses."""
+        if self._physical_data_model is None:
+            self._conceptual_data_model, self._physical_data_model = self._create_data_models()
+        return self._physical_data_model
 
     def get_issues(self) -> IssueList:
         """Returns the issues that occurred during the extraction."""
         return self._issues
 
-    def _create_rules(self) -> tuple[ConceptualDataModel, PhysicalDataModel]:
-        # The DMS and Information rules must be created together to link them property.
+    def _create_data_models(self) -> tuple[ConceptualDataModel, PhysicalDataModel]:
+        # The physical and conceptual data model must be created together to link them property.
         importer = DMSImporter.from_data_model(self._client, self._data_model)
-        unverified_dms = importer.to_rules()
-        if self._unpack_json and (dms_rules := unverified_dms.rules):
-            # Drop the JSON properties from the DMS rules as these are no longer valid.
+        imported_physical_data_model = importer.to_data_model()
+        if self._unpack_json and (unverified_physical_data_model := imported_physical_data_model.unverified_data_model):
+            # Drop the JSON properties from the physical data model as these are no longer valid.
             json_name = Json().name  # To avoid instantiating Json multiple times.
-            dms_rules.properties = [
+            unverified_physical_data_model.properties = [
                 prop
-                for prop in dms_rules.properties
+                for prop in unverified_physical_data_model.properties
                 if not (
                     (
                         isinstance(prop.value_type, Json)
@@ -202,23 +205,28 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
 
         with catch_warnings() as issues:
             # Any errors occur will be raised and caught outside the extractor.
-            verified_dms = VerifyDMSRules(client=self._client).transform(unverified_dms)
-            information_rules = DMSToInformation(self._namespace).transform(verified_dms)
+            verified_physical_data_model = VerifyPhysicalDataModel(client=self._client).transform(
+                imported_physical_data_model
+            )
+            verified_conceptual_data_model = PhysicalToConceptual(self._namespace).transform(
+                verified_physical_data_model
+            )
 
-        # We need to sync the metadata between the two rules, such that the `.sync_with_info_rules` method works.
-        information_rules.metadata.physical = verified_dms.metadata.identifier
-        verified_dms.metadata.conceptual = information_rules.metadata.identifier
-        verified_dms.sync_with_conceptual_data_model(information_rules)
+        # We need to sync the metadata between the two data model, such that the
+        # `.sync_with_conceptual_data_model` method works.
+        verified_conceptual_data_model.metadata.physical = verified_physical_data_model.metadata.identifier
+        verified_physical_data_model.metadata.conceptual = verified_conceptual_data_model.metadata.identifier
+        verified_physical_data_model.sync_with_conceptual_data_model(verified_conceptual_data_model)
 
-        # Adding startNode and endNode to the information rules for views that are used for edges.
-        classes_by_prefix = {cls_.class_.prefix: cls_ for cls_ in information_rules.classes}
+        # Adding startNode and endNode to the conceptual data model for views that are used for edges.
+        concepts_by_prefix = {concept.concept.prefix: concept for concept in verified_conceptual_data_model.concepts}
         for view in self._model_views:
-            if view.used_for == "edge" and view.external_id in classes_by_prefix:
-                cls_ = classes_by_prefix[view.external_id]
+            if view.used_for == "edge" and view.external_id in concepts_by_prefix:
+                cls_ = concepts_by_prefix[view.external_id]
                 for property_ in ("startNode", "endNode"):
-                    information_rules.properties.append(
+                    verified_conceptual_data_model.properties.append(
                         ConceptualProperty(
-                            class_=cls_.class_,
+                            concept=cls_.concept,
                             property_=property_,
                             value_type=UnknownEntity(),
                             min_count=0,
@@ -227,4 +235,4 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                     )
 
         self._issues.extend(issues)
-        return information_rules, verified_dms
+        return verified_conceptual_data_model, verified_physical_data_model

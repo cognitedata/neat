@@ -67,8 +67,8 @@ class PropertyValueError(SpreadsheetListError):
 
 
 @dataclass(unsafe_hash=True)
-class ClassValueError(SpreadsheetListError):
-    _name = "Classes"
+class ConceptValueError(SpreadsheetListError):
+    _name = "Concepts"
 
 
 @dataclass(unsafe_hash=True)

@@ -3,7 +3,7 @@ from cognite.client.testing import monkeypatch_cognite_client
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._instances.extractors import AssetsExtractor
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import InstanceData
 
 
@@ -13,7 +13,7 @@ def test_asset_extractor():
         client_mock.assets.aggregate_count.return_value = len(assets)
         client_mock.assets.return_value = assets
 
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
 
     extractor = AssetsExtractor.from_dataset(client_mock, data_set_external_id="nordic44", unpack_metadata=True)
     store.write(extractor)

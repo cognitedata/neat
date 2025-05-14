@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar, Union, get_args, get_origin
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model._shared import T_VerifiedRules
+from cognite.neat.core._data_model._shared import T_VerifiedDataModel
 from cognite.neat.core._utils.auxiliary import class_html_doc
 from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
@@ -17,16 +17,16 @@ if TYPE_CHECKING:
 T_Export = TypeVar("T_Export")
 
 
-class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
+class BaseExporter(ABC, Generic[T_VerifiedDataModel, T_Export]):
     _new_line = "\n"
     _encoding = "utf-8"
 
     @abstractmethod
-    def export_to_file(self, rules: T_VerifiedRules, filepath: Path) -> None:
+    def export_to_file(self, data_model: T_VerifiedDataModel, filepath: Path) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def export(self, rules: T_VerifiedRules) -> T_Export:
+    def export(self, data_model: T_VerifiedDataModel) -> T_Export:
         raise NotImplementedError
 
     @classmethod
@@ -54,12 +54,14 @@ class BaseExporter(ABC, Generic[T_VerifiedRules, T_Export]):
         return (source_type,)
 
 
-class CDFExporter(BaseExporter[T_VerifiedRules, T_Export], ABC):
+class CDFExporter(BaseExporter[T_VerifiedDataModel, T_Export], ABC):
     @abstractmethod
     def export_to_cdf_iterable(
-        self, rules: T_VerifiedRules, client: NeatClient, dry_run: bool = False
+        self, data_model: T_VerifiedDataModel, client: NeatClient, dry_run: bool = False
     ) -> Iterable[UploadResult]:
         raise NotImplementedError
 
-    def export_to_cdf(self, rules: T_VerifiedRules, client: NeatClient, dry_run: bool = False) -> UploadResultList:
-        return UploadResultList(self.export_to_cdf_iterable(rules, client, dry_run))
+    def export_to_cdf(
+        self, data_model: T_VerifiedDataModel, client: NeatClient, dry_run: bool = False
+    ) -> UploadResultList:
+        return UploadResultList(self.export_to_cdf_iterable(data_model, client, dry_run))

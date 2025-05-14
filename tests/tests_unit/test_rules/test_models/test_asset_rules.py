@@ -4,7 +4,7 @@ import pytest
 
 from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
-    ClassEntity,
+    ConceptEntity,
     RelationshipEntity,
 )
 from cognite.neat.core._issues.errors import NeatValueError, PropertyDefinitionError
@@ -26,16 +26,16 @@ def case_asset_relationship():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
@@ -44,7 +44,7 @@ def case_asset_relationship():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "ACLineSegment",
@@ -82,16 +82,16 @@ def case_circular_dependency():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
@@ -100,7 +100,7 @@ def case_circular_dependency():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "ACLineSegment",
@@ -113,7 +113,7 @@ def case_circular_dependency():
                     "Implementation": "Asset(property=parentExternalId)",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "GeneratingUnit",
@@ -152,16 +152,16 @@ def parent_property_points_to_data_type():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#ACLineSegment",
@@ -170,7 +170,7 @@ def parent_property_points_to_data_type():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "ACLineSegment",
@@ -183,7 +183,7 @@ def parent_property_points_to_data_type():
                     "Implementation": "Asset(property=parentExternalId)",
                 },
                 {
-                    "Class": "ACLineSegment",
+                    "Concept": "ACLineSegment",
                     "Property": "line",
                     "Description": None,
                     "Value Type": "string",
@@ -198,7 +198,7 @@ def parent_property_points_to_data_type():
             ],
         },
         PropertyDefinitionError(
-            ClassEntity(prefix="power", suffix="ACLineSegment"),
+            ConceptEntity(prefix="power", suffix="ACLineSegment"),
             "class",
             "line",
             "parentExternalId is only allowed to point to a Class not String",

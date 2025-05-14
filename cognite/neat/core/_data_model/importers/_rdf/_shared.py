@@ -13,18 +13,18 @@ from cognite.neat.core._issues.warnings._resources import (
 from cognite.neat.core._utils.rdf_ import convert_rdflib_content
 
 
-def parse_classes(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:
-    """Parse classes from graph
+def parse_concepts(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:
+    """Parse concepts from graph
 
     Args:
-        graph: Graph containing classes definitions
+        graph: Graph containing concept definitions
         language: Language to use for parsing, by default "en"
 
     Returns:
         Dataframe containing owl classes
     """
 
-    classes: dict[str, dict] = {}
+    concepts: dict[str, dict] = {}
 
     query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
     expected_keys = [str(v) for v in query.algebra._vars]
@@ -33,42 +33,42 @@ def parse_classes(graph: Graph, query: str, language: str, issue_list: IssueList
         res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
         res = {key: res.get(key, None) for key in expected_keys}
 
-        class_id = res["class_"]
+        concept_id = res["concept"]
 
         # Safeguarding against incomplete semantic definitions
         if res["implements"] and isinstance(res["implements"], BNode):
             issue_list.append(
                 ResourceRetrievalWarning(
-                    class_id,
+                    concept_id,
                     "implements",
-                    error=("Unable to determine class that is being implemented"),
+                    error=("Unable to determine concept that is being implemented"),
                 )
             )
             continue
 
-        if class_id not in classes:
-            classes[class_id] = res
+        if concept_id not in concepts:
+            concepts[concept_id] = res
         else:
             # Handling implements
-            if classes[class_id]["implements"] and isinstance(classes[class_id]["implements"], list):
-                if res["implements"] not in classes[class_id]["implements"]:
-                    classes[class_id]["implements"].append(res["implements"])
+            if concepts[concept_id]["implements"] and isinstance(concepts[concept_id]["implements"], list):
+                if res["implements"] not in concepts[concept_id]["implements"]:
+                    concepts[concept_id]["implements"].append(res["implements"])
 
-            elif classes[class_id]["implements"] and isinstance(classes[class_id]["implements"], str):
-                classes[class_id]["implements"] = [classes[class_id]["implements"]]
+            elif concepts[concept_id]["implements"] and isinstance(concepts[concept_id]["implements"], str):
+                concepts[concept_id]["implements"] = [concepts[concept_id]["implements"]]
 
-                if res["implements"] not in classes[class_id]["implements"]:
-                    classes[class_id]["implements"].append(res["implements"])
+                if res["implements"] not in concepts[concept_id]["implements"]:
+                    concepts[concept_id]["implements"].append(res["implements"])
             elif res["implements"]:
-                classes[class_id]["implements"] = [res["implements"]]
+                concepts[concept_id]["implements"] = [res["implements"]]
 
-            handle_meta("class_", classes, class_id, res, "name", issue_list)
-            handle_meta("class_", classes, class_id, res, "description", issue_list)
+            handle_meta("concept", concepts, concept_id, res, "name", issue_list)
+            handle_meta("concept", concepts, concept_id, res, "description", issue_list)
 
-    if not classes:
-        issue_list.append(NeatValueError("Unable to parse classes"))
+    if not concepts:
+        issue_list.append(NeatValueError("Unable to parse concepts"))
 
-    return classes, issue_list
+    return concepts, issue_list
 
 
 def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:
@@ -94,12 +94,12 @@ def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueL
         property_id = res["property_"]
 
         # Safeguarding against incomplete semantic definitions
-        if not res["class_"] or isinstance(res["class_"], BNode):
+        if not res["concept"] or isinstance(res["concept"], BNode):
             issue_list.append(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=("Unable to determine to what class property is being defined"),
+                    error=("Unable to determine to what concept property is being defined"),
                 )
             )
             continue
@@ -115,7 +115,7 @@ def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueL
             )
             continue
 
-        id_ = f"{res['class_']}.{res['property_']}"
+        id_ = f"{res['concept']}.{res['property_']}"
 
         if id_ not in properties:
             properties[id_] = res

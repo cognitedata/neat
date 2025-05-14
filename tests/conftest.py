@@ -8,7 +8,6 @@ from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
     PhysicalDataModel,
-    UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.physical import UnverifiedPhysicalDataModel
 from cognite.neat.core._utils.spreadsheet import read_individual_sheet
@@ -30,33 +29,39 @@ def alice_spreadsheet() -> dict[str, dict[str, Any]]:
 
 @pytest.fixture(scope="session")
 def alice_rules(alice_spreadsheet: dict[str, dict[str, Any]]) -> PhysicalDataModel:
-    return UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
+    return UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
-def david_spreadsheet() -> dict[str, dict[str, Any]]:
-    filepath = DOC_RULES / "information-architect-david.xlsx"
-    excel_file = pd.ExcelFile(filepath)
-    return {
-        "Metadata": dict(pd.read_excel(excel_file, "Metadata", header=None).values),
-        "Properties": read_individual_sheet(excel_file, "Properties", expected_headers=["Property"]),
-        "Classes": read_individual_sheet(excel_file, "Classes", expected_headers=["Class"]),
-    }
+def david_rules() -> ConceptualDataModel:
+    return (
+        ExcelImporter(DOC_RULES / "information-architect-david.xlsx")
+        .to_data_model()
+        .unverified_data_model.as_verified_data_model()
+    )
 
 
 @pytest.fixture(scope="session")
-def david_rules(david_spreadsheet: dict[str, dict[str, Any]]) -> ConceptualDataModel:
-    return ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())
+def david_spreadsheet(david_rules) -> dict[str, dict[str, Any]]:
+    return david_rules.dump()
 
 
 @pytest.fixture(scope="session")
 def svein_harald_dms_rules() -> PhysicalDataModel:
-    return ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx").to_rules().rules.as_verified_rules()
+    return (
+        ExcelImporter(DOC_RULES / "dms-addition-svein-harald.xlsx")
+        .to_data_model()
+        .unverified_data_model.as_verified_data_model()
+    )
 
 
 @pytest.fixture(scope="session")
 def olav_rebuild_dms_rules() -> PhysicalDataModel:
-    return ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx").to_rules().rules.as_verified_rules()
+    return (
+        ExcelImporter(DOC_RULES / "dms-rebuild-olav.xlsx")
+        .to_data_model()
+        .unverified_data_model.as_verified_data_model()
+    )
 
 
 @pytest.fixture(scope="session")

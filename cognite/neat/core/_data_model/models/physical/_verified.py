@@ -22,7 +22,7 @@ from cognite.neat.core._data_model.models._base_verified import (
     ViewRef,
 )
 from cognite.neat.core._data_model.models._types import (
-    ClassEntityType,
+    ConceptEntityType,
     ContainerEntityType,
     PhysicalPropertyType,
     StrListType,
@@ -444,7 +444,7 @@ class PhysicalNodeType(SheetRow):
 
 
 class PhysicalEnum(SheetRow):
-    collection: ClassEntityType = Field(alias="Collection", description="The collection this enum belongs to.")
+    collection: ConceptEntityType = Field(alias="Collection", description="The collection this enum belongs to.")
     value: str = Field(alias="Value", description="The value of the enum.")
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the enum.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the enum.")
@@ -516,7 +516,7 @@ class PhysicalDataModel(BaseVerifiedDataModel):
             if prop.physical in physical_properties_by_neat_id:
                 physical_properties_by_neat_id[prop.physical].conceptual = neat_id
 
-        classes_by_neat_id = {cls.neatId: cls for cls in conceptual_data_model.classes}
+        classes_by_neat_id = {cls.neatId: cls for cls in conceptual_data_model.concepts}
         views_by_neat_id = {view.neatId: view for view in self.views}
         for neat_id, class_ in classes_by_neat_id.items():
             if class_.physical in views_by_neat_id:

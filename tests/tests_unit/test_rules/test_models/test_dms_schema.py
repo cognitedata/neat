@@ -12,7 +12,7 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     ViewApplyDict,
 )
 from cognite.neat.core._data_model.models import DMSSchema
-from cognite.neat.core._data_model.models.physical import DMSValidation
+from cognite.neat.core._data_model.models.physical import PhysicalValidation
 from cognite.neat.core._issues import NeatError, NeatIssue, NeatWarning
 from cognite.neat.core._issues.errors import (
     PropertyNotFoundError,
@@ -333,7 +333,7 @@ class TestDMSSchema:
         expected_errors = [error for error in expected if isinstance(error, NeatError)]
         expected_warnings = [warning for warning in expected if isinstance(warning, NeatWarning)]
         with warnings.catch_warnings(record=True) as warning_logger:
-            errors = DMSValidation._validate_schema(schema, dict(schema.views), dict(schema.containers))
+            errors = PhysicalValidation._validate_schema(schema, dict(schema.views), dict(schema.containers))
         assert set(errors) == set(expected_errors)
         actual_warnings = [warning.message for warning in warning_logger]
         assert set(actual_warnings) == set(expected_warnings)

@@ -4,7 +4,7 @@ from cognite.client.data_classes.data_modeling import DataModelId
 from cognite.neat.core._data_model._constants import ENTITY_PATTERN
 from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
-    ClassEntity,
+    ConceptEntity,
     ConceptualEntity,
     DataModelEntity,
     DMSNodeEntity,
@@ -35,14 +35,14 @@ TEST_CASES = [
         UnitEntity(prefix="length", suffix="m"),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "person",
-        ClassEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
+        ConceptEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "cdf_cdm:CogniteAsset(version=v1)",
-        ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+        ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
     ),
     (
         ViewEntity,
@@ -61,7 +61,7 @@ TEST_CASES = [
         PhysicalUnknownEntity.from_id(None),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "#N/A",
         UnknownEntity(),
     ),

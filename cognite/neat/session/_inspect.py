@@ -65,10 +65,10 @@ class InspectAPI:
         if self._state.rule_store.empty:
             return pd.DataFrame()
         last_entity = self._state.rule_store.provenance[-1].target_entity
-        if last_entity.dms:
-            df = last_entity.dms.properties.to_pandas()
+        if last_entity.physical:
+            df = last_entity.physical.properties.to_pandas()
         else:
-            df = last_entity.information.properties.to_pandas()
+            df = last_entity.conceptual.properties.to_pandas()
         df.drop(columns=["neatId"], errors="ignore", inplace=True)
         return df
 
@@ -76,9 +76,9 @@ class InspectAPI:
         if self._state.rule_store.empty:
             return pd.DataFrame()
         last_entity = self._state.rule_store.provenance[-1].target_entity
-        if last_entity.dms is None:
+        if last_entity.physical is None:
             return pd.DataFrame()
-        df = last_entity.dms.views.to_pandas()
+        df = last_entity.physical.views.to_pandas()
         df.drop(columns=["neatId"], errors="ignore", inplace=True)
         return df
 

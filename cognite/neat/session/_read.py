@@ -164,7 +164,7 @@ class CDFReadAPI(BaseReadAPI):
         if issues.has_errors:
             return issues
 
-        cdm_rules = self._state.rule_store.last_verified_rules
+        cdm_rules = self._state.rule_store.last_verified_data_model
 
         issues.extend(
             self._state.rule_transform(

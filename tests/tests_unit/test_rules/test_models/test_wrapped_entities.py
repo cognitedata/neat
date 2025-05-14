@@ -14,7 +14,7 @@ from cognite.neat.core._data_model.models.entities import (
     ViewEntity,
     WrappedEntity,
 )
-from cognite.neat.core._data_model.transformers import VerifyDMSRules
+from cognite.neat.core._data_model.transformers import VerifyPhysicalDataModel
 from tests import config
 
 RAW_FILTER_EXAMPLE = """{"and": [
@@ -167,8 +167,8 @@ class TestWrappedEntities:
     def test_raw_filter_in_sheet(self) -> None:
         read_rules = importers.ExcelImporter(
             config.DOC_RULES / "dms-architect-rules-raw-filter-example.xlsx"
-        ).to_rules()
-        rules = VerifyDMSRules().transform(read_rules)
+        ).to_data_model()
+        rules = VerifyPhysicalDataModel().transform(read_rules)
 
         assert rules.views[0].filter_ == RawFilter.load(
             """rawFilter({"equals": {"property": ["node", "type"],

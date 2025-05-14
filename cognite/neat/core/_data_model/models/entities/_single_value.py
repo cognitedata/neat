@@ -269,8 +269,8 @@ class ConceptualEntity(BaseModel, extra="ignore"):
 T_Entity = TypeVar("T_Entity", bound=ConceptualEntity)
 
 
-class ClassEntity(ConceptualEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.class_
+class ConceptEntity(ConceptualEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.concept
     version: str | None = None
 
     def as_view_entity(self, default_space: str, default_version: str) -> "ViewEntity":
@@ -286,7 +286,7 @@ class ClassEntity(ConceptualEntity):
         return ContainerEntity(space=space, externalId=str(self.suffix))
 
 
-class UnknownEntity(ClassEntity):
+class UnknownEntity(ConceptEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: _UndefinedType = Undefined
     suffix: _UnknownType = Unknown  # type: ignore[assignment]
@@ -342,28 +342,26 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(
-        cls: "type[T_PhysicalEntity]", data: Any, strict: Literal[True], **defaults: Any
-    ) -> "T_PhysicalEntity": ...
+    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
 
     @classmethod
     @overload
     def load(
-        cls: "type[T_PhysicalEntity]",
+        cls: "type[T_DMSEntity]",
         data: Any,
         strict: Literal[False] = False,
         **defaults: Any,
-    ) -> "T_PhysicalEntity | PhysicalUnknownEntity": ...
+    ) -> "T_DMSEntity | PhysicalUnknownEntity": ...
 
     @classmethod
     def load(
-        cls: "type[T_PhysicalEntity]", data: Any, strict: bool = False, **defaults: Any
-    ) -> "T_PhysicalEntity | PhysicalUnknownEntity":  # type: ignore
+        cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults: Any
+    ) -> "T_DMSEntity | PhysicalUnknownEntity":  # type: ignore
         if isinstance(data, str) and data == str(Unknown):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
             return PhysicalUnknownEntity.from_id(None)
-        return cast(T_PhysicalEntity, super().load(data, **defaults))
+        return cast(T_DMSEntity, super().load(data, **defaults))
 
     @property
     def space(self) -> str:
@@ -384,8 +382,8 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
     def from_id(cls, id: T_ID) -> Self:
         raise NotImplementedError("Method from_id must be implemented in subclasses")
 
-    def as_class(self) -> ClassEntity:
-        return ClassEntity(prefix=self.space, suffix=self.external_id)
+    def as_concept_entity(self) -> ConceptEntity:
+        return ConceptEntity(prefix=self.space, suffix=self.external_id)
 
     def as_dms_compliant_entity(self) -> "Self":
         new_entity = self.model_copy(deep=True)
@@ -393,7 +391,7 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
         return new_entity
 
 
-T_PhysicalEntity = TypeVar("T_PhysicalEntity", bound=PhysicalEntity)
+T_DMSEntity = TypeVar("T_DMSEntity", bound=PhysicalEntity)
 
 
 class ContainerEntity(PhysicalEntity[ContainerId]):
@@ -410,10 +408,10 @@ class ContainerEntity(PhysicalEntity[ContainerId]):
 class DMSVersionedEntity(PhysicalEntity[T_ID], ABC):
     version: str
 
-    def as_class(self, skip_version: bool = False) -> ClassEntity:
+    def as_concept_entity(self, skip_version: bool = False) -> ConceptEntity:
         if skip_version:
-            return ClassEntity(prefix=self.space, suffix=self.external_id)
-        return ClassEntity(prefix=self.space, suffix=self.external_id, version=self.version)
+            return ConceptEntity(prefix=self.space, suffix=self.external_id)
+        return ConceptEntity(prefix=self.space, suffix=self.external_id, version=self.version)
 
 
 class ViewEntity(DMSVersionedEntity[ViewId]):
@@ -516,14 +514,14 @@ class ReverseConnectionEntity(ConceptualEntity):
     property_: str = Field(alias="property")
 
 
-class ReferenceEntity(ClassEntity):
+class ReferenceEntity(ConceptEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reference_entity
     prefix: str
     property_: str | None = Field(None, alias="property")
 
     @classmethod
     def from_entity(cls, entity: ConceptualEntity, property_: str) -> "ReferenceEntity":
-        if isinstance(entity, ClassEntity):
+        if isinstance(entity, ConceptEntity):
             return cls(
                 prefix=str(entity.prefix),
                 suffix=entity.suffix,
@@ -549,5 +547,5 @@ class ReferenceEntity(ClassEntity):
     def as_node_entity(self) -> DMSNodeEntity:
         return DMSNodeEntity(space=self.prefix, externalId=self.suffix)
 
-    def as_class_entity(self) -> ClassEntity:
-        return ClassEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
+    def as_concept_entity(self) -> ConceptEntity:
+        return ConceptEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)

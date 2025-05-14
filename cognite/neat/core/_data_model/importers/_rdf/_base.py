@@ -7,7 +7,7 @@ from rdflib import Graph, Namespace, URIRef
 from typing_extensions import Self
 
 from cognite.neat.core._constants import get_default_prefixes_and_namespaces
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._data_model.models._base_verified import RoleTypes
 from cognite.neat.core._data_model.models.conceptual import (
@@ -18,7 +18,7 @@ from cognite.neat.core._data_model.models.entities import UnknownEntity
 from cognite.neat.core._issues import IssueList, MultiValueError
 from cognite.neat.core._issues.errors import FileReadError
 from cognite.neat.core._issues.errors._general import NeatValueError
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.rdf_ import get_namespace
 
 DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
@@ -68,7 +68,7 @@ class BaseRDFImporter(BaseImporter[UnverifiedConceptualDataModel]):
     @classmethod
     def from_graph_store(
         cls,
-        store: NeatGraphStore,
+        store: NeatInstanceStore,
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_RDF_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
@@ -115,24 +115,24 @@ class BaseRDFImporter(BaseImporter[UnverifiedConceptualDataModel]):
             source_name=source_name,
         )
 
-    def to_rules(
+    def to_data_model(
         self,
-    ) -> ReadRules[UnverifiedConceptualDataModel]:
+    ) -> ImportedDataModel[UnverifiedConceptualDataModel]:
         """
         Creates `Rules` object from the data for target role.
         """
         if self.issue_list.has_errors:
-            # In case there were errors during the import, the to_rules method will return None
+            # In case there were errors during the import, the to_data_model method will return None
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
-        rules_dict = self._to_rules_components()
+        rules_dict = self._to_data_model_components()
 
         rules = UnverifiedConceptualDataModel.load(rules_dict)
         self.issue_list.trigger_warnings()
-        return ReadRules(rules, {})
+        return ImportedDataModel(rules, {})
 
-    def _to_rules_components(self) -> dict:
+    def _to_data_model_components(self) -> dict:
         raise NotImplementedError()
 
     @classmethod

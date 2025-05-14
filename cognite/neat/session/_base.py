@@ -12,16 +12,16 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
-    InformationToDMS,
-    MergeDMSRules,
-    MergeInformationRules,
+    ConceptualToPhysical,
+    MergeConceptualDataModels,
+    MergePhysicalDataModels,
     ToDMSCompliantEntities,
-    VerifyInformationRules,
+    VerifyConceptualDataModel,
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import RegexViolationError
 from cognite.neat.core._issues.errors._general import NeatImportError
-from cognite.neat.core._store._rules_store import RulesEntity
+from cognite.neat.core._store._data_model import DataModelEntity
 from cognite.neat.core._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
@@ -170,7 +170,7 @@ class NeatSession:
         self._state._raise_exception_if_condition_not_met(
             "Convert to physical", has_dms_rules=False, has_information_rules=True
         )
-        converter = InformationToDMS(reserved_properties=reserved_properties, client=self._state.client)
+        converter = ConceptualToPhysical(reserved_properties=reserved_properties, client=self._state.client)
 
         issues = self._state.rule_transform(converter)
 
@@ -231,7 +231,7 @@ class NeatSession:
         ),
     ) -> IssueList:
         """Infer data model from instances."""
-        last_entity: RulesEntity | None = None
+        last_entity: DataModelEntity | None = None
         if self._state.rule_store.provenance:
             last_entity = self._state.rule_store.provenance[-1].target_entity
 
@@ -240,24 +240,26 @@ class NeatSession:
         importer = importers.SubclassInferenceImporter(
             issue_list=IssueList(),
             graph=self._state.instances.store.graph(),
-            rules=last_entity.information if last_entity is not None else None,
-            data_model_id=dm.DataModelId.load(model_id) if last_entity is None else None,
+            rules=last_entity.conceptual if last_entity is not None else None,
+            data_model_id=(dm.DataModelId.load(model_id) if last_entity is None else None),
         )
 
         def action() -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
-            unverified_information = importer.to_rules()
+            unverified_information = importer.to_data_model()
             unverified_information = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_information)
 
-            extra_info = VerifyInformationRules().transform(unverified_information)
+            extra_info = VerifyConceptualDataModel().transform(unverified_information)
             if not last_entity:
                 return extra_info, None
-            merged_info = MergeInformationRules(extra_info).transform(last_entity.information)
-            if not last_entity.dms:
+            merged_info = MergeConceptualDataModels(extra_info).transform(last_entity.conceptual)
+            if not last_entity.physical:
                 return merged_info, None
 
-            extra_dms = InformationToDMS(reserved_properties="warning", client=self._state.client).transform(extra_info)
+            extra_dms = ConceptualToPhysical(reserved_properties="warning", client=self._state.client).transform(
+                extra_info
+            )
 
-            merged_dms = MergeDMSRules(extra_dms).transform(last_entity.dms)
+            merged_dms = MergePhysicalDataModels(extra_dms).transform(last_entity.physical)
             return merged_info, merged_dms
 
         return self._state.rule_store.do_activity(action, importer)
@@ -271,10 +273,10 @@ class NeatSession:
 
         if state.rule_store.provenance:
             last_entity = state.rule_store.provenance[-1].target_entity
-            if last_entity.dms:
-                html = last_entity.dms._repr_html_()
+            if last_entity.physical:
+                html = last_entity.physical._repr_html_()
             else:
-                html = last_entity.information._repr_html_()
+                html = last_entity.conceptual._repr_html_()
             output.append(f"<H2>Data Model</H2><br />{html}")  # type: ignore
 
         if not state.instances.empty:

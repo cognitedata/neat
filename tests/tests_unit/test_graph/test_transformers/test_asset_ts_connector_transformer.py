@@ -1,12 +1,12 @@
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._instances import extractors, transformers
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import InstanceData
 
 
 def test_asset_ts_connector_transformer():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
 
     # Extract assets
     store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
@@ -30,7 +30,7 @@ def test_asset_ts_connector_transformer():
 
 
 def test_asset_ts_connector_transformer_warning():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
 
     issues1 = store.transform(transformers.AssetTimeSeriesConnector())
     assert len(issues1) == 1

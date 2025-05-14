@@ -236,7 +236,7 @@ class NamingStandardization:
     _start_letter_pattern = re.compile(r"^[a-zA-Z]")
 
     @classmethod
-    def standardize_class_str(cls, raw: str) -> str:
+    def standardize_concept_str(cls, raw: str) -> str:
         clean = cls._clean_string(raw)
         if not cls._start_letter_pattern.match(clean):
             # Underscore ensure that 'Class' it treated as a separate word

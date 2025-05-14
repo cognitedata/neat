@@ -1,11 +1,12 @@
 from abc import ABC
+from typing import cast
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model._shared import (
-    ReadRules,
-    T_ReadInputRules,
-    T_VerifiedRules,
-    VerifiedRules,
+    ImportedDataModel,
+    T_ImportedUnverifiedDataModel,
+    T_VerifiedDataModel,
+    VerifiedDataModel,
 )
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
@@ -13,41 +14,45 @@ from cognite.neat.core._data_model.models import (
     UnverifiedConceptualDataModel,
     UnverifiedPhysicalDataModel,
 )
-from cognite.neat.core._data_model.models.conceptual import InformationValidation
-from cognite.neat.core._data_model.models.physical import DMSValidation
+from cognite.neat.core._data_model.models.conceptual import ConceptualValidation
+from cognite.neat.core._data_model.models.physical import PhysicalValidation
 from cognite.neat.core._issues import MultiValueError, catch_issues
 from cognite.neat.core._issues.errors import NeatTypeError, NeatValueError
 
-from ._base import RulesTransformer
+from ._base import DataModelTransformer
 
 
-class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules], ABC):
+class VerificationTransformer(DataModelTransformer[T_ImportedUnverifiedDataModel, T_VerifiedDataModel], ABC):
     """Base class for all verification transformers."""
 
-    _rules_cls: type[T_VerifiedRules]
+    _data_model_cls: type[T_VerifiedDataModel]
     _validation_cls: type
 
     def __init__(self, validate: bool = True, client: NeatClient | None = None) -> None:
         self.validate = validate
         self._client = client
 
-    def transform(self, rules: T_ReadInputRules) -> T_VerifiedRules:
-        in_ = rules.rules
+    def transform(self, data_model: T_ImportedUnverifiedDataModel) -> T_VerifiedDataModel:
+        in_ = data_model.unverified_data_model
         if in_ is None:
             raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
-        verified_rules: T_VerifiedRules | None = None
+        verified_data_model: T_VerifiedDataModel | None = None
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
         # For example, which row in the spreadsheet the error occurred.
-        with catch_issues(rules.read_context) as issues:
-            rules_cls = self._get_rules_cls(rules)
+        with catch_issues(data_model.context) as issues:
+            data_model_cls = self._get_data_model_cls(data_model)
             dumped = in_.dump()
-            verified_rules = rules_cls.model_validate(dumped)  # type: ignore[assignment]
+            verified_data_model = data_model_cls.model_validate(dumped)  # type: ignore[assignment]
             if self.validate:
-                validation_cls = self._get_validation_cls(verified_rules)  # type: ignore[arg-type]
-                if issubclass(validation_cls, DMSValidation):
-                    validation_issues = DMSValidation(verified_rules, self._client, rules.read_context).validate()  # type: ignore[arg-type]
-                elif issubclass(validation_cls, InformationValidation):
-                    validation_issues = InformationValidation(verified_rules, rules.read_context).validate()  # type: ignore[arg-type]
+                validation_cls = self._get_validation_cls(verified_data_model)  # type: ignore[arg-type]
+                if issubclass(validation_cls, PhysicalValidation):
+                    validation_issues = PhysicalValidation(
+                        cast(PhysicalDataModel, verified_data_model),
+                        self._client,
+                        data_model.context,
+                    ).validate()  # type: ignore[arg-type]
+                elif issubclass(validation_cls, ConceptualValidation):
+                    validation_issues = ConceptualValidation(verified_data_model, data_model.context).validate()  # type: ignore[arg-type]
                 else:
                     raise NeatValueError("Unsupported rule type")
                 issues.extend(validation_issues)
@@ -56,56 +61,60 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
         issues.trigger_warnings()
         if issues.has_errors:
             raise MultiValueError(issues.errors)
-        if verified_rules is None:
-            raise NeatValueError("Rules were not verified")
-        return verified_rules
+        if verified_data_model is None:
+            raise NeatValueError("Data model was not verified")
+        return verified_data_model
 
-    def _get_rules_cls(self, in_: T_ReadInputRules) -> type[T_VerifiedRules]:
-        return self._rules_cls
+    def _get_data_model_cls(self, in_: T_ImportedUnverifiedDataModel) -> type[T_VerifiedDataModel]:
+        return self._data_model_cls
 
-    def _get_validation_cls(self, rules: T_VerifiedRules) -> type:
+    def _get_validation_cls(self, data_model: T_VerifiedDataModel) -> type:
         return self._validation_cls
 
     @property
     def description(self) -> str:
-        return "Verify rules"
+        return "Verify data model"
 
 
-class VerifyDMSRules(VerificationTransformer[ReadRules[UnverifiedPhysicalDataModel], PhysicalDataModel]):
-    """Class to verify DMS rules."""
+class VerifyPhysicalDataModel(
+    VerificationTransformer[ImportedDataModel[UnverifiedPhysicalDataModel], PhysicalDataModel]
+):
+    """Class to verify physical data model."""
 
-    _rules_cls = PhysicalDataModel
-    _validation_cls = DMSValidation
+    _data_model_cls = PhysicalDataModel
+    _validation_cls = PhysicalValidation
 
-    def transform(self, rules: ReadRules[UnverifiedPhysicalDataModel]) -> PhysicalDataModel:
-        return super().transform(rules)
-
-
-class VerifyInformationRules(VerificationTransformer[ReadRules[UnverifiedConceptualDataModel], ConceptualDataModel]):
-    """Class to verify Information rules."""
-
-    _rules_cls = ConceptualDataModel
-    _validation_cls = InformationValidation
-
-    def transform(self, rules: ReadRules[UnverifiedConceptualDataModel]) -> ConceptualDataModel:
-        return super().transform(rules)
+    def transform(self, data_model: ImportedDataModel[UnverifiedPhysicalDataModel]) -> PhysicalDataModel:
+        return super().transform(data_model)
 
 
-class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
-    """Class to verify arbitrary rules"""
+class VerifyConceptualDataModel(
+    VerificationTransformer[ImportedDataModel[UnverifiedConceptualDataModel], ConceptualDataModel]
+):
+    """Class to verify conceptual data model."""
 
-    def _get_rules_cls(self, in_: T_ReadInputRules) -> type[VerifiedRules]:
-        if isinstance(in_.rules, UnverifiedConceptualDataModel):
+    _data_model_cls = ConceptualDataModel
+    _validation_cls = ConceptualValidation
+
+    def transform(self, data_model: ImportedDataModel[UnverifiedConceptualDataModel]) -> ConceptualDataModel:
+        return super().transform(data_model)
+
+
+class VerifyAnyDataModel(VerificationTransformer[T_ImportedUnverifiedDataModel, VerifiedDataModel]):
+    """Class to verify arbitrary data model"""
+
+    def _get_data_model_cls(self, in_: T_ImportedUnverifiedDataModel) -> type[VerifiedDataModel]:
+        if isinstance(in_.unverified_data_model, UnverifiedConceptualDataModel):
             return ConceptualDataModel
-        elif isinstance(in_.rules, UnverifiedPhysicalDataModel):
+        elif isinstance(in_.unverified_data_model, UnverifiedPhysicalDataModel):
             return PhysicalDataModel
         else:
-            raise NeatTypeError(f"Unsupported rules type: {type(in_)}")
+            raise NeatTypeError(f"Unsupported data model type: {type(in_)}")
 
-    def _get_validation_cls(self, rules: VerifiedRules) -> type:
-        if isinstance(rules, ConceptualDataModel):
-            return InformationValidation
-        elif isinstance(rules, PhysicalDataModel):
-            return DMSValidation
+    def _get_validation_cls(self, data_model: VerifiedDataModel) -> type:
+        if isinstance(data_model, ConceptualDataModel):
+            return ConceptualValidation
+        elif isinstance(data_model, PhysicalDataModel):
+            return PhysicalValidation
         else:
-            raise NeatTypeError(f"Unsupported rules type: {type(rules)}")
+            raise NeatTypeError(f"Unsupported data model type: {type(data_model)}")

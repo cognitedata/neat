@@ -25,7 +25,7 @@ from cognite.neat.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     is_readonly_property,
 )
-from cognite.neat.core._data_model.analysis import RulesAnalysis
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.analysis._base import ViewQuery, ViewQueryDict
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual._verified import (
@@ -51,7 +51,7 @@ from cognite.neat.core._issues.warnings import (
     ResourceNeatWarning,
 )
 from cognite.neat.core._shared import InstanceType
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.auxiliary import create_sha256_hash
 from cognite.neat.core._utils.collection_ import (
     iterate_progress_bar_if_above_config_threshold,
@@ -117,7 +117,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         self,
         dms_rules: PhysicalDataModel,
         info_rules: ConceptualDataModel,
-        graph_store: NeatGraphStore,
+        graph_store: NeatInstanceStore,
         instance_space: str,
         space_property: str | None = None,
         use_source_space: bool = False,
@@ -209,7 +209,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield _END_OF_CLASS
 
     def _create_view_iterations(self) -> tuple[list[_ViewIterator], IssueList]:
-        view_query_by_id = RulesAnalysis(self.info_rules, self.dms_rules).view_query_by_id
+        view_query_by_id = DataModelAnalysis(self.info_rules, self.dms_rules).view_query_by_id
         iterations_by_view_id = self._select_views_with_instances(view_query_by_id)
         if self._client:
             issues = IssueList()
