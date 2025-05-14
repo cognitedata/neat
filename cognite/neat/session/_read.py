@@ -609,6 +609,35 @@ class YamlReadAPI(BaseReadAPI):
 
 
 @session_class_wrapper
+class JSONReadAPI(BaseReadAPI):
+    def __call__(self, io: Any, format: Literal["neat"] = "neat") -> IssueList:
+        """Reads a json file into rule store.
+        Args:
+            io: File path to the JSON file.
+            format: The format of the yaml file(s). Currently only "neat" is supported.
+
+        Example:
+            ```python
+            neat.read.yaml("path_to_toolkit_json")
+            ```
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Read YAML data model",
+            empty_rules_store_required=True,
+        )
+
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
+        importer: BaseImporter
+
+        if format == "neat":
+            importer = importers.DictImporter.from_json_file(path, source_name=f"{reader!s}")
+        else:
+            raise NeatValueError(f"Unsupported JSON format: {format}")
+        return self._state.rule_import(importer)
+
+
+@session_class_wrapper
 class CSVReadAPI(BaseReadAPI):
     """Reads a csv that contains a column to use as primary key which will be the unique identifier for the type of
     data you want to read in. Ex. a csv can hold information about assets, and their identifiers are specified in
