@@ -146,7 +146,7 @@ class base_starter_class:
             "Metadata": container_model_dict,
         }
 
-    def build_scoped_views_models(self, scope) -> cfihosReadResult:
+    def build_scoped_views_models(self, scope, client: NeatClient) -> cfihosReadResult:
         views_scope = ""
         for sub_scope in self.domain_model_config["scopes"]:
             if sub_scope["scope_name"] == scope:
@@ -160,16 +160,18 @@ class base_starter_class:
             map_dms_id_to_model_id=self.map_dms_id_to_entity_id,
         )
         lst_entity_views, lst_entity_properties = build_views_from_entities(
-            version=self.model_version,
+            containers_space=self.container_space,
             entities=scoped_model,
         )
+
+        lst_cdm_views, lst_cdm_properties = add_core_views(client, lst_entity_views, lst_entity_properties)
 
         logging.info(f"STEP 4: Started building {len(scoped_model)} scoped entity views")
 
         return {
-            "Properties": lst_entity_properties,
+            "Properties": lst_cdm_properties,
             "Containers": [],
-            "Views": lst_entity_views,
+            "Views": lst_cdm_views,
             "Metadata": {
                 "role": "DMS Architect",
                 "dataModelType": "enterprise",

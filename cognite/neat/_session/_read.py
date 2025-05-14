@@ -127,7 +127,7 @@ class CFIHOSReadAPI(BaseReadAPI):
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
-        my_importer = importers.CFIHOSImporter(path, model_type="views", scope=scope)
+        my_importer = importers.CFIHOSImporter(path, state= self._state, model_type="views", scope=scope)
 
         return self._state.rule_import(my_importer)
 

@@ -9,6 +9,7 @@ from cognite.neat._cfihos.common.constants import (
     EntityStructure,
     PropertyStructure,
 )
+from cognite.neat._cfihos.common.generic_classes import Relations
 from cognite.neat._cfihos.common.log import log_init
 from cognite.neat._cfihos.common.utils import get_relation_target_if_eligible
 
@@ -308,37 +309,61 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
         ]
 
         # add views for those entities that implements core models
-        parents_ext_ids.extend = (
-            [view_id["version"] for view_id in entity_data[EntityStructure.IMPLEMENTS_CORE_MODEL]]
+        parents_ext_ids.extend(
+            [view_id["external_id"] for view_id in entity_data[EntityStructure.IMPLEMENTS_CORE_MODEL]]
             if entity_data[EntityStructure.IMPLEMENTS_CORE_MODEL] is not None
             else []
-        )
-
+        )   
+       
         view_filter = (
             create_has_data_filter(containers_space, entity_id)
             if entity_data[EntityStructure.FIRSTCLASSCITIZEN]
             else _create_view_filter(containers_space, entity_id, inheritance_tree.get(entity_id, []))
         )
-
         prop_data_dict = {}
         for prop_data in entity_data[EntityStructure.PROPERTIES]:
             # if prop_data[PropertyStructure.INHERITED] is False:
-            if prop_data[PropertyStructure.PROPERTY_TYPE] == "ENTITY_RELATION":
+            if prop_data[PropertyStructure.PROPERTY_TYPE] in  [Relations.DIRECT,Relations.REVERSE,PropertyStructure.ENTITY_EDGE]: #TODO: check if PropertyStructure.ENTITY_EDGE is correct
+                match prop_data[PropertyStructure.PROPERTY_TYPE]:
+                    case PropertyStructure.ENTITY_EDGE:
+                        container_reference = None
+                        container_property = None
+                        connection_property = f"edge(properties={prop_data[PropertyStructure.EDGE_TARGET]},type={prop_data[PropertyStructure.EDGE_EXTERNAL_ID]})"
+                        value_type_property = prop_data[PropertyStructure.TARGET_TYPE]
+                        is_list_property = True
+                    case Relations.REVERSE:
+                        container_reference = None
+                        container_property = None
+                        connection_property = f"reverse(property={prop_data[PropertyStructure.REV_THROUGH_PROPERTY]})"
+                        value_type_property = prop_data[PropertyStructure.TARGET_TYPE]
+                        is_list_property = False
+                    case Relations.DIRECT:
+                        container_reference = containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP]
+                        container_property = prop_data[PropertyStructure.ID]
+                        connection_property = "direct"
+                        value_type_property = prop_data[PropertyStructure.TARGET_TYPE]
+                        is_list_property = False
+                    case _:
+                        logging.warning(
+                            f"Unknown property type: {prop_data[PropertyStructure.PROPERTY_TYPE]} for property {prop_data[PropertyStructure.ID]}"
+                        )
+                        continue
+             
                 lst_properties.append(
                     {
                         "View": entity_data[EntityStructure.ID],
                         "View Property": prop_data[PropertyStructure.ID],
                         "Name": prop_data[PropertyStructure.NAME],
                         "Description": prop_data[PropertyStructure.DESCRIPTION],
-                        "Connection": "direct",
-                        "Value Type": prop_data[PropertyStructure.TARGET_TYPE],
+                        "Connection": connection_property,
+                        "Value Type": value_type_property,
                         "Nullable": True,
                         "Immutable": False,
-                        "Is List": False,
+                        "Is List": is_list_property,
                         "Default": None,
                         "Reference": None,
-                        "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Container Property": prop_data[PropertyStructure.ID],
+                        "Container": container_reference,
+                        "Container Property": container_property,
                         "Index": None,
                         "Constraint": None,
                         "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
@@ -451,7 +476,6 @@ def add_core_views(
         # core_views_dict_list = cdf_client.data_modeling.views.list(space="cdf_cdm", include_global=True, limit=-1).as_apply()
         core_views_list = cdf_client.data_modeling.views.list(space="cdf_cdm", include_global=True, limit=-1)
         for original_cdm_view in core_views_list:
-            print(original_cdm_view.external_id)
             lst_original_views.append(
                 {
                     "View": original_cdm_view.external_id,
@@ -465,8 +489,6 @@ def add_core_views(
                 }
             )
             for propertyName, propertyObject in original_cdm_view.properties.items():
-                print(propertyName)
-
                 match type(propertyObject):
                     case data_modeling.MappedProperty:
                         container_property = propertyObject.container.space + ":" + propertyObject.container.external_id
@@ -497,7 +519,7 @@ def add_core_views(
                             connection_property = f"reverse(property={propertyObject.through.property})"
                             value_type_property = propertyObject.source.external_id
                         else:
-                            print(f"Unknown property type: {type(propertyObject)}")
+                            logging.info(f"Unknown property type: {type(propertyObject)}")
                             continue
                 lst_original_properties.append(
                     {

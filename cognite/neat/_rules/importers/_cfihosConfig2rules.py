@@ -119,7 +119,7 @@ class CFIHOSReader:
         filePath = str(filepath)  # TODO: this is a temp solution. path should be a path object and pass to processor
         cfihos_starter = base_starter_class(filePath)
         cfihos_starter.process_model()
-        cfihos_rules = cfihos_starter.build_scoped_views_models(scope)
+        cfihos_rules = cfihos_starter.build_scoped_views_models(scope,self.client)
 
         # cfihosResult = ReadResult(Properties=sheets["Properties"], Containers=sheets["Containers"], Views=sheets["Views"], Metadata=sheets["Metadata"])
 

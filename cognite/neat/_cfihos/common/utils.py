@@ -215,19 +215,20 @@ def get_entity_relation_target(Property_id, entity_id, entities) -> str | None:
         ):
             return property[PropertyStructure.TARGET_TYPE]
 
-    return "undefined"  # None
+    return "#N/A" #"undefined"  # None
 
 
 # TODO: add data types to the parameters in the below function
 def get_relation_target_if_eligible(key, container_external_id, entities, property_type) -> str | None:
-    """
-    Determine the target only if the container meets the criteria.
-    """
+    """Determine the target only if the container meets the criteria."""
     if (
-        container_external_id in entities.keys()
+        container_external_id in entities
         and entities[container_external_id][EntityStructure.FIRSTCLASSCITIZEN]
         and container_external_id != "EntityTypeGroup"
-        and property_type == data_modeling.DirectRelation()
+        and (
+            property_type == data_modeling.DirectRelation()
+            or property_type == data_modeling.DirectRelation(is_list=True)
+        )
     ):
         return get_entity_relation_target(key, container_external_id, entities)
     return "#N/A"  # None
