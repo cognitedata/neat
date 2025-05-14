@@ -342,26 +342,28 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
+    def load(
+        cls: "type[T_PhysicalEntity]", data: Any, strict: Literal[True], **defaults: Any
+    ) -> "T_PhysicalEntity": ...
 
     @classmethod
     @overload
     def load(
-        cls: "type[T_DMSEntity]",
+        cls: "type[T_PhysicalEntity]",
         data: Any,
         strict: Literal[False] = False,
         **defaults: Any,
-    ) -> "T_DMSEntity | PhysicalUnknownEntity": ...
+    ) -> "T_PhysicalEntity | PhysicalUnknownEntity": ...
 
     @classmethod
     def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults: Any
-    ) -> "T_DMSEntity | PhysicalUnknownEntity":  # type: ignore
+        cls: "type[T_PhysicalEntity]", data: Any, strict: bool = False, **defaults: Any
+    ) -> "T_PhysicalEntity | PhysicalUnknownEntity":  # type: ignore
         if isinstance(data, str) and data == str(Unknown):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
             return PhysicalUnknownEntity.from_id(None)
-        return cast(T_DMSEntity, super().load(data, **defaults))
+        return cast(T_PhysicalEntity, super().load(data, **defaults))
 
     @property
     def space(self) -> str:
@@ -391,7 +393,7 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
         return new_entity
 
 
-T_DMSEntity = TypeVar("T_DMSEntity", bound=PhysicalEntity)
+T_PhysicalEntity = TypeVar("T_PhysicalEntity", bound=PhysicalEntity)
 
 
 class ContainerEntity(PhysicalEntity[ContainerId]):
