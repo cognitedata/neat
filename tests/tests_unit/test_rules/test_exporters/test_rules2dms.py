@@ -9,14 +9,14 @@ from cognite.client import data_modeling as dm
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.models import ConceptualDataModel
-from cognite.neat.core._data_model.models.dms import DMSRules
+from cognite.neat.core._data_model.models.physical import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import InformationToDMS, VerifyAnyRules
 from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData
 
 
 class TestDMSExporter:
-    def test_export_dms_schema_has_names_description(self, alice_rules: DMSRules) -> None:
+    def test_export_dms_schema_has_names_description(self, alice_rules: PhysicalDataModel) -> None:
         rules = alice_rules.model_copy(deep=True)
 
         # purposely setting default value for connection that should not be
@@ -35,7 +35,7 @@ class TestDMSExporter:
         first_container = next(iter(schema.containers.values()))
         assert first_container.properties["geoLocation"].default_value is None
 
-    def test_export_dms_schema_to_zip(self, alice_rules: DMSRules, tmp_path: Path) -> None:
+    def test_export_dms_schema_to_zip(self, alice_rules: PhysicalDataModel, tmp_path: Path) -> None:
         exporter = DMSExporter()
         schema = exporter.export(alice_rules)
         zipfile_path = tmp_path / "test.zip"
@@ -67,7 +67,7 @@ class TestImportExportDMS:
         with catch_issues() as issues:
             importer = importers.ExcelImporter(filepath)
             rules = VerifyAnyRules().transform(importer.to_rules())
-            if isinstance(rules, DMSRules):
+            if isinstance(rules, PhysicalDataModel):
                 dms_rules = rules
             elif isinstance(rules, ConceptualDataModel):
                 dms_rules = InformationToDMS().transform(rules)

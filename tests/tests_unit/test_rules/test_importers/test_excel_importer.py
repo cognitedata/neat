@@ -4,7 +4,7 @@ import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
 from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.transformers import VerifyAnyRules, VerifyDMSRules
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._issues.errors import (
@@ -118,7 +118,7 @@ class TestExcelImporter:
         [
             pytest.param(
                 DOC_RULES / "cdf-dms-architect-alice.xlsx",
-                DMSRules,
+                PhysicalDataModel,
                 id="Alice rules",
             ),
             pytest.param(
@@ -133,7 +133,7 @@ class TestExcelImporter:
             ),
             pytest.param(
                 DOC_RULES / "dms-analytics-olav.xlsx",
-                DMSRules,
+                PhysicalDataModel,
                 id="dms-analytics-olav",
             ),
             pytest.param(
@@ -143,12 +143,12 @@ class TestExcelImporter:
             ),
             pytest.param(
                 DOC_RULES / "dms-addition-svein-harald.xlsx",
-                DMSRules,
+                PhysicalDataModel,
                 id="Svein Harald Enterprise Extension DMS",
             ),
             pytest.param(
                 SchemaData.Physical.pump_example_with_missing_cells_xlsx,
-                DMSRules,
+                PhysicalDataModel,
                 id="Missing expected cell entire row drop",
             ),
         ],
@@ -156,7 +156,7 @@ class TestExcelImporter:
     def test_import_valid_rules(
         self,
         filepath: Path,
-        rule_type: type[DMSRules] | type[ConceptualDataModel],
+        rule_type: type[PhysicalDataModel] | type[ConceptualDataModel],
     ):
         rules = None
         with catch_issues():
@@ -207,7 +207,10 @@ class TestExcelImporter:
         deprecation_warning_count = sum(1 for issue in issues if isinstance(issue, DeprecatedWarning))
         assert deprecation_warning_count == 2 * len(dms_rules.properties)
         actual_properties = {
-            (prop.view.external_id, prop.view_property): {"min_count": prop.min_count, "max_count": prop.max_count}
+            (prop.view.external_id, prop.view_property): {
+                "min_count": prop.min_count,
+                "max_count": prop.max_count,
+            }
             for prop in dms_rules.properties
         }
         assert actual_properties == {

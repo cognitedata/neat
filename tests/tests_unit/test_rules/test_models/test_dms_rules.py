@@ -16,26 +16,26 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.data_types import String
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputNode,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
-    DMSMetadata,
-    DMSProperty,
-    DMSSchema,
-    DMSValidation,
-)
-from cognite.neat.core._data_model.models.dms._exporter import _DMSExporter
 from cognite.neat.core._data_model.models.entities._single_value import (
     ContainerEntity,
     UnknownEntity,
     ViewEntity,
 )
+from cognite.neat.core._data_model.models.physical import (
+    DMSSchema,
+    DMSValidation,
+    PhysicalMetadata,
+    PhysicalProperty,
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalNodeType,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
+)
+from cognite.neat.core._data_model.models.physical._exporter import _DMSExporter
 from cognite.neat.core._data_model.transformers import (
     DMSToInformation,
     InformationToDMS,
@@ -54,8 +54,8 @@ from tests.utils import normalize_neat_id_in_rules
 
 def rules_schema_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 description="DMS data model",
@@ -65,21 +65,21 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="Asset",
                     container_property="name",
                     view="Asset",
                     view_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     container="GeneratingUnit",
                     container_property="ratedPower",
                     view="WindTurbine",
                     view_property="ratedPower",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="WindTurbine",
                     connection="edge",
                     view="WindFarm",
@@ -87,15 +87,15 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSInputContainer(
+                UnverifiedPhysicalContainer(
                     container="Asset",
                 ),
-                DMSInputContainer(container="GeneratingUnit", constraint="Asset"),
+                UnverifiedPhysicalContainer(container="GeneratingUnit", constraint="Asset"),
             ],
             views=[
-                DMSInputView("Asset"),
-                DMSInputView(view="WindTurbine", implements="Asset"),
-                DMSInputView(view="WindFarm"),
+                UnverifiedPhysicalView("Asset"),
+                UnverifiedPhysicalView(view="WindTurbine", implements="Asset"),
+                UnverifiedPhysicalView(view="WindFarm"),
             ],
         ),
         DMSSchema(
@@ -185,8 +185,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Two properties, one container, one view",
     )
 
-    dms_rules = DMSInputRules(
-        metadata=DMSInputMetadata(
+    dms_rules = UnverifiedPhysicalDataModel(
+        metadata=UnverifiedPhysicalMetadata(
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -195,14 +195,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-16T23:00:00",
         ),
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="text",
                 container="Asset",
                 container_property="name",
                 view="WindFarm",
                 view_property="name",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="WindTurbine",
                 connection="direct",
                 max_count=100,
@@ -211,7 +211,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="WindFarm",
                 view_property="windTurbines",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="text",
                 container="Asset",
                 container_property="name",
@@ -220,12 +220,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSInputView(view="WindFarm"),
-            DMSInputView(view="WindTurbine"),
+            UnverifiedPhysicalView(view="WindFarm"),
+            UnverifiedPhysicalView(view="WindTurbine"),
         ],
         containers=[
-            DMSInputContainer(container="Asset"),
-            DMSInputContainer(container="WindFarm", constraint="Asset"),
+            UnverifiedPhysicalContainer(container="Asset"),
+            UnverifiedPhysicalContainer(container="WindFarm", constraint="Asset"),
         ],
     )
     expected_schema = DMSSchema(
@@ -300,8 +300,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Property with list of direct relations",
     )
 
-    dms_rules = DMSInputRules(
-        metadata=DMSInputMetadata(
+    dms_rules = UnverifiedPhysicalDataModel(
+        metadata=UnverifiedPhysicalMetadata(
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -310,14 +310,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T08:30:00",
         ),
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="text",
                 container="Asset",
                 container_property="name",
                 view="Asset",
                 view_property="name",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="float64",
                 container="WindTurbine",
                 container_property="maxPower",
@@ -326,12 +326,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSInputView(view="Asset", in_model=False),
-            DMSInputView(view="WindTurbine", implements="Asset"),
+            UnverifiedPhysicalView(view="Asset", in_model=False),
+            UnverifiedPhysicalView(view="WindTurbine", implements="Asset"),
         ],
         containers=[
-            DMSInputContainer(container="Asset"),
-            DMSInputContainer(container="WindTurbine", constraint="Asset"),
+            UnverifiedPhysicalContainer(container="Asset"),
+            UnverifiedPhysicalContainer(container="WindTurbine", constraint="Asset"),
         ],
     )
     expected_schema = DMSSchema(
@@ -396,8 +396,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="View not in model",
     )
 
-    dms_rules = DMSInputRules(
-        metadata=DMSInputMetadata(
+    dms_rules = UnverifiedPhysicalDataModel(
+        metadata=UnverifiedPhysicalMetadata(
             # This is a complete schema, but we do not want to trigger the full validation
             space="my_space",
             external_id="my_data_model",
@@ -407,21 +407,21 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T11:00:00",
         ),
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="text",
                 container="Asset",
                 container_property="name",
                 view="Asset",
                 view_property="name",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="CogniteTimeseries",
                 connection="reverse(property=asset)",
                 max_count=float("inf"),
                 view="Asset",
                 view_property="timeseries",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="Asset",
                 connection="direct",
                 container="Asset",
@@ -430,14 +430,14 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view_property="root",
                 max_count=1,
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="Asset",
                 connection="reverse(property=root)",
                 max_count=float("inf"),
                 view="Asset",
                 view_property="children",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="text",
                 container="CogniteTimeseries",
                 container_property="name",
@@ -445,7 +445,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view_property="name",
                 max_count=1,
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="Asset",
                 connection="direct",
                 container="CogniteTimeseries",
@@ -454,7 +454,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view_property="asset",
                 max_count=1,
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="Activity",
                 connection="direct",
                 max_count=100,
@@ -463,7 +463,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 view="CogniteTimeseries",
                 view_property="activities",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="CogniteTimeseries",
                 max_count=float("inf"),
                 connection="reverse(property=activities)",
@@ -472,16 +472,16 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSInputView(
+            UnverifiedPhysicalView(
                 view="Asset",
             ),
-            DMSInputView(view="CogniteTimeseries"),
-            DMSInputView(view="Activity"),
+            UnverifiedPhysicalView(view="CogniteTimeseries"),
+            UnverifiedPhysicalView(view="Activity"),
         ],
         containers=[
-            DMSInputContainer(container="Asset"),
-            DMSInputContainer(container="CogniteTimeseries"),
-            DMSInputContainer(container="Activity"),
+            UnverifiedPhysicalContainer(container="Asset"),
+            UnverifiedPhysicalContainer(container="CogniteTimeseries"),
+            UnverifiedPhysicalContainer(container="Activity"),
         ],
     )
 
@@ -596,8 +596,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Multiple relations and reverse relations",
     )
 
-    dms_rules = DMSInputRules(
-        metadata=DMSInputMetadata(
+    dms_rules = UnverifiedPhysicalDataModel(
+        metadata=UnverifiedPhysicalMetadata(
             space="my_space",
             external_id="my_data_model",
             version="1",
@@ -606,7 +606,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2024-03-17T11:00:00",
         ),
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="text",
                 container="generating_unit",
                 container_property="display_name",
@@ -615,12 +615,12 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             )
         ],
         views=[
-            DMSInputView(view="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
+            UnverifiedPhysicalView(view="generating_unit", filter_="NodeType(sp_other:wind_turbine)"),
         ],
         containers=[
-            DMSInputContainer(container="generating_unit"),
+            UnverifiedPhysicalContainer(container="generating_unit"),
         ],
-        nodes=[DMSInputNode(node="sp_other:wind_turbine", usage="type")],
+        nodes=[UnverifiedPhysicalNodeType(node="sp_other:wind_turbine", usage="type")],
     )
 
     expected_schema = DMSSchema(
@@ -667,8 +667,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         id="Explict set NodeType Filter",
     )
 
-    dms_rules = DMSInputRules(
-        metadata=DMSInputMetadata(
+    dms_rules = UnverifiedPhysicalDataModel(
+        metadata=UnverifiedPhysicalMetadata(
             space="sp_solution",
             external_id="solution_model",
             version="1",
@@ -677,7 +677,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             updated="2021-01-01T00:00:00",
         ),
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 value_type="Asset",
                 connection="edge(type=sp_enterprise:Asset)",
                 view="Asset",
@@ -685,7 +685,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
             ),
         ],
         views=[
-            DMSInputView(view="Asset"),
+            UnverifiedPhysicalView(view="Asset"),
         ],
     )
 
@@ -735,8 +735,8 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
 
 def valid_rules_tests_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -745,14 +745,14 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="tEXt",
                     container="sp_core:Asset",
                     container_property="name",
                     view="sp_core:Asset",
                     view_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     container="GeneratingUnit",
                     container_property="ratedPower",
@@ -761,21 +761,21 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSInputContainer(
+                UnverifiedPhysicalContainer(
                     container="sp_core:Asset",
                 ),
-                DMSInputContainer(
+                UnverifiedPhysicalContainer(
                     container="GeneratingUnit",
                     constraint="sp_core:Asset",
                 ),
             ],
             views=[
-                DMSInputView(view="sp_core:Asset"),
-                DMSInputView(view="WindTurbine", implements="sp_core:Asset"),
+                UnverifiedPhysicalView(view="sp_core:Asset"),
+                UnverifiedPhysicalView(view="WindTurbine", implements="sp_core:Asset"),
             ],
         ),
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -784,14 +784,14 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="sp_core:Asset",
                     container_property="name",
                     view="sp_core:Asset(version=1)",
                     view_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     container="GeneratingUnit",
                     container_property="ratedPower",
@@ -800,22 +800,22 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSInputContainer(
+                UnverifiedPhysicalContainer(
                     container="sp_core:Asset",
                 ),
-                DMSInputContainer(container="GeneratingUnit", constraint="sp_core:Asset"),
+                UnverifiedPhysicalContainer(container="GeneratingUnit", constraint="sp_core:Asset"),
             ],
             views=[
-                DMSInputView(view="sp_core:Asset(version=1)"),
-                DMSInputView(view="WindTurbine", implements="sp_core:Asset(version=1)"),
+                UnverifiedPhysicalView(view="sp_core:Asset(version=1)"),
+                UnverifiedPhysicalView(view="WindTurbine", implements="sp_core:Asset(version=1)"),
             ],
         ).as_verified_rules(),
         id="Two properties, two containers, two views. Primary data types, no relations.",
     )
 
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -824,20 +824,20 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="Asset",
                     container_property="name",
                     view="Asset",
                     view_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     connection="edge",
                     value_type="Generator",
                     view="Plant",
                     view_property="generators",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     connection="direct",
                     value_type="Reservoir",
                     container="Asset",
@@ -847,21 +847,21 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSInputContainer(container="Asset"),
-                DMSInputContainer(
+                UnverifiedPhysicalContainer(container="Asset"),
+                UnverifiedPhysicalContainer(
                     container="Plant",
                     constraint="Asset",
                 ),
             ],
             views=[
-                DMSInputView(view="Asset"),
-                DMSInputView(view="Plant", implements="Asset"),
-                DMSInputView(view="Generator", implements="Asset"),
-                DMSInputView(view="Reservoir", implements="Asset"),
+                UnverifiedPhysicalView(view="Asset"),
+                UnverifiedPhysicalView(view="Plant", implements="Asset"),
+                UnverifiedPhysicalView(view="Generator", implements="Asset"),
+                UnverifiedPhysicalView(view="Reservoir", implements="Asset"),
             ],
         ),
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -870,20 +870,20 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="Asset",
                     container_property="name",
                     view="Asset",
                     view_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="Generator",
                     connection="edge",
                     view="Plant",
                     view_property="generators",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="Reservoir",
                     connection="direct",
                     container="Asset",
@@ -893,14 +893,14 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             containers=[
-                DMSInputContainer(container="Asset"),
-                DMSInputContainer(container="Plant", constraint="Asset"),
+                UnverifiedPhysicalContainer(container="Asset"),
+                UnverifiedPhysicalContainer(container="Plant", constraint="Asset"),
             ],
             views=[
-                DMSInputView(view="Asset"),
-                DMSInputView(view="Plant", implements="Asset"),
-                DMSInputView(view="Generator", implements="Asset"),
-                DMSInputView(view="Reservoir", implements="Asset"),
+                UnverifiedPhysicalView(view="Asset"),
+                UnverifiedPhysicalView(view="Plant", implements="Asset"),
+                UnverifiedPhysicalView(view="Generator", implements="Asset"),
+                UnverifiedPhysicalView(view="Reservoir", implements="Asset"),
             ],
         ).as_verified_rules(),
         id="Five properties, two containers, four views. Direct relations and Multiedge.",
@@ -910,8 +910,8 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
 def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     container_id = dm.ContainerId("my_space", "GeneratingUnit")
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -920,7 +920,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     max_count=1,
                     container="GeneratingUnit",
@@ -928,7 +928,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     view="sp_core:Asset",
                     view_property="maxPower",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float32",
                     container="GeneratingUnit",
                     container_property="maxPower",
@@ -937,10 +937,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="sp_core:Asset"),
+                UnverifiedPhysicalView(view="sp_core:Asset"),
             ],
             containers=[
-                DMSInputContainer(container="GeneratingUnit"),
+                UnverifiedPhysicalContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -966,8 +966,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
     )
 
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -976,7 +976,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     max_count=1000,
                     container="GeneratingUnit",
@@ -984,7 +984,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     view="sp_core:Asset",
                     view_property="maxPower",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     max_count=1,
                     container="GeneratingUnit",
@@ -994,10 +994,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="sp_core:Asset"),
+                UnverifiedPhysicalView(view="sp_core:Asset"),
             ],
             containers=[
-                DMSInputContainer(container="GeneratingUnit"),
+                UnverifiedPhysicalContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1022,8 +1022,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         id="Inconsistent container definition isList",
     )
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1032,7 +1032,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     min_count=0,
                     container="GeneratingUnit",
@@ -1040,7 +1040,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     view="sp_core:Asset",
                     view_property="maxPower",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="float64",
                     min_count=1,
                     container="GeneratingUnit",
@@ -1050,10 +1050,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="sp_core:Asset"),
+                UnverifiedPhysicalView(view="sp_core:Asset"),
             ],
             containers=[
-                DMSInputContainer(container="GeneratingUnit"),
+                UnverifiedPhysicalContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1078,8 +1078,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         id="Inconsistent container definition nullable",
     )
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1088,7 +1088,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="GeneratingUnit",
                     container_property="name",
@@ -1096,7 +1096,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     view_property="maxPower",
                     index="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="GeneratingUnit",
                     container_property="name",
@@ -1106,10 +1106,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="sp_core:Asset"),
+                UnverifiedPhysicalView(view="sp_core:Asset"),
             ],
             containers=[
-                DMSInputContainer(container="GeneratingUnit"),
+                UnverifiedPhysicalContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1134,8 +1134,8 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
         id="Inconsistent container definition index",
     )
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1144,7 +1144,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 updated="2021-01-01T00:00:00",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="GeneratingUnit",
                     container_property="name",
@@ -1152,7 +1152,7 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                     view_property="maxPower",
                     constraint="unique_name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="GeneratingUnit",
                     container_property="name",
@@ -1162,10 +1162,10 @@ def invalid_container_definitions_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="sp_core:Asset"),
+                UnverifiedPhysicalView(view="sp_core:Asset"),
             ],
             containers=[
-                DMSInputContainer(container="GeneratingUnit"),
+                UnverifiedPhysicalContainer(container="GeneratingUnit"),
             ],
         ),
         [
@@ -1250,9 +1250,9 @@ def case_unknown_value_types():
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = DMSInputRules.load(alice_spreadsheet).as_verified_rules()
+        valid_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
 
-        assert isinstance(valid_rules, DMSRules)
+        assert isinstance(valid_rules, PhysicalDataModel)
 
         sample_expected_properties = {
             "power:GeneratingUnit(version=0.1.0).name",
@@ -1271,7 +1271,7 @@ class TestDMSRules:
         assert len(dms_rules.properties) == no_properties
 
     @pytest.mark.parametrize("raw, expected_rules", list(valid_rules_tests_cases()))
-    def test_load_valid_rules(self, raw: DMSInputRules, expected_rules: DMSRules) -> None:
+    def test_load_valid_rules(self, raw: UnverifiedPhysicalDataModel, expected_rules: PhysicalDataModel) -> None:
         valid_rules = raw.as_verified_rules()
         normalize_neat_id_in_rules(valid_rules)
         normalize_neat_id_in_rules(expected_rules)
@@ -1284,7 +1284,7 @@ class TestDMSRules:
 
     @pytest.mark.parametrize("raw, expected_errors", list(invalid_container_definitions_test_cases()))
     def test_load_inconsistent_container_definitions(
-        self, raw: DMSInputRules, expected_errors: list[NeatError]
+        self, raw: UnverifiedPhysicalDataModel, expected_errors: list[NeatError]
     ) -> None:
         rules = raw.as_verified_rules()
         issues = DMSValidation(rules).validate()
@@ -1293,7 +1293,7 @@ class TestDMSRules:
 
         assert sorted(issues) == sorted(expected_errors)
 
-    def test_alice_to_and_from_dms(self, alice_rules: DMSRules) -> None:
+    def test_alice_to_and_from_dms(self, alice_rules: PhysicalDataModel) -> None:
         schema = alice_rules.as_schema()
         recreated_rules = DMSImporter(schema).to_rules().rules.as_verified_rules()
 
@@ -1314,7 +1314,7 @@ class TestDMSRules:
         assert dumped == alice_rules.dump(**args)
 
     @pytest.mark.parametrize("input_rules, expected_schema", rules_schema_tests_cases())
-    def test_as_schema(self, input_rules: DMSInputRules, expected_schema: DMSSchema) -> None:
+    def test_as_schema(self, input_rules: UnverifiedPhysicalDataModel, expected_schema: DMSSchema) -> None:
         rules = input_rules.as_verified_rules()
         actual_schema = rules.as_schema()
 
@@ -1335,14 +1335,14 @@ class TestDMSRules:
         assert actual_schema.node_types.dump() == expected_schema.node_types.dump()
 
     def test_alice_as_information(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        alice_rules = DMSInputRules.load(alice_spreadsheet).as_verified_rules()
+        alice_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_rules()
         info_rules = DMSToInformation().transform(alice_rules)
 
         assert isinstance(info_rules, ConceptualDataModel)
 
     def test_dump_skip_default_space_and_version(self) -> None:
-        dms_rules = DMSInputRules(
-            metadata=DMSInputMetadata(
+        dms_rules = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="1",
@@ -1351,7 +1351,7 @@ class TestDMSRules:
                 updated="2024-03-16",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     value_type="text",
                     container="Asset",
                     container_property="name",
@@ -1360,13 +1360,14 @@ class TestDMSRules:
                 ),
             ],
             views=[
-                DMSInputView(
-                    view="WindFarm", implements="cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)"
+                UnverifiedPhysicalView(
+                    view="WindFarm",
+                    implements="cdf_cdm:Sourceable(version=v1),cdf_cdm:Describable(version=v1)",
                 ),
-                DMSInputView(view="cdf_cdm:Sourceable(version=v1)"),
-                DMSInputView(view="cdf_cdm:Describable(version=v1)"),
+                UnverifiedPhysicalView(view="cdf_cdm:Sourceable(version=v1)"),
+                UnverifiedPhysicalView(view="cdf_cdm:Describable(version=v1)"),
             ],
-            containers=[DMSInputContainer(container="Asset", constraint="Sourceable,Describable")],
+            containers=[UnverifiedPhysicalContainer(container="Asset", constraint="Sourceable,Describable")],
         ).as_verified_rules()
 
         normalize_neat_id_in_rules(dms_rules)
@@ -1447,20 +1448,20 @@ class TestDMSRules:
             updated="2024-03-16",
         )
 
-        metadata = DMSMetadata.model_validate(raw_metadata)
+        metadata = PhysicalMetadata.model_validate(raw_metadata)
 
         assert metadata.version == "14"
 
     def test_reverse_property(self) -> None:
-        sub_core = DMSInputRules(
-            DMSInputMetadata(
+        sub_core = UnverifiedPhysicalDataModel(
+            UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
                 version="v42",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="CogniteVisualizable",
                     view_property="object3D",
                     value_type="Cognite3DObject",
@@ -1469,7 +1470,7 @@ class TestDMSRules:
                     container="CogniteVisualizable",
                     container_property="object3D",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="Cognite3DObject",
                     view_property="asset",
                     value_type="CogniteVisualizable",
@@ -1477,11 +1478,11 @@ class TestDMSRules:
                 ),
             ],
             views=[
-                DMSInputView(view="CogniteVisualizable"),
-                DMSInputView(view="Cognite3DObject"),
+                UnverifiedPhysicalView(view="CogniteVisualizable"),
+                UnverifiedPhysicalView(view="Cognite3DObject"),
             ],
             containers=[
-                DMSInputContainer("CogniteVisualizable"),
+                UnverifiedPhysicalContainer("CogniteVisualizable"),
             ],
         )
         with catch_issues() as issue_list:
@@ -1490,15 +1491,15 @@ class TestDMSRules:
         assert not issue_list
 
     def test_reverse_property_in_parent(self) -> None:
-        sub_core = DMSInputRules(
-            DMSInputMetadata(
+        sub_core = UnverifiedPhysicalDataModel(
+            UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
                 version="v42",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="CogniteVisualizable",
                     view_property="object3D",
                     value_type="Cognite3DObject",
@@ -1507,7 +1508,7 @@ class TestDMSRules:
                     container="CogniteVisualizable",
                     container_property="object3D",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="Cognite3DObject",
                     view_property="asset",
                     value_type="CogniteAsset",
@@ -1515,12 +1516,12 @@ class TestDMSRules:
                 ),
             ],
             views=[
-                DMSInputView(view="CogniteVisualizable"),
-                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
-                DMSInputView(view="Cognite3DObject"),
+                UnverifiedPhysicalView(view="CogniteVisualizable"),
+                UnverifiedPhysicalView(view="CogniteAsset", implements="CogniteVisualizable"),
+                UnverifiedPhysicalView(view="Cognite3DObject"),
             ],
             containers=[
-                DMSInputContainer("CogniteVisualizable"),
+                UnverifiedPhysicalContainer("CogniteVisualizable"),
             ],
         )
         with catch_issues() as issues:
@@ -1529,15 +1530,15 @@ class TestDMSRules:
         assert not issues
 
     def test_subclass_parent_with_reverse_property(self) -> None:
-        extended_core = DMSInputRules(
-            DMSInputMetadata(
+        extended_core = UnverifiedPhysicalDataModel(
+            UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
                 version="v42",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="CogniteVisualizable",
                     view_property="object3D",
                     value_type="Cognite3DObject",
@@ -1546,7 +1547,7 @@ class TestDMSRules:
                     container="CogniteVisualizable",
                     container_property="object3D",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="Cognite3DObject",
                     view_property="asset",
                     value_type="CogniteAsset",
@@ -1554,13 +1555,13 @@ class TestDMSRules:
                 ),
             ],
             views=[
-                DMSInputView(view="CogniteVisualizable"),
-                DMSInputView(view="CogniteAsset", implements="CogniteVisualizable"),
-                DMSInputView(view="Cognite3DObject"),
-                DMSInputView(view="My3DObject", implements="Cognite3DObject"),
+                UnverifiedPhysicalView(view="CogniteVisualizable"),
+                UnverifiedPhysicalView(view="CogniteAsset", implements="CogniteVisualizable"),
+                UnverifiedPhysicalView(view="Cognite3DObject"),
+                UnverifiedPhysicalView(view="My3DObject", implements="Cognite3DObject"),
             ],
             containers=[
-                DMSInputContainer("CogniteVisualizable"),
+                UnverifiedPhysicalContainer("CogniteVisualizable"),
             ],
         )
         with catch_issues() as issues:
@@ -1570,15 +1571,15 @@ class TestDMSRules:
         assert rules is not None
 
     def test_dump_dms_rules_keep_version(self) -> None:
-        rules = DMSInputRules(
-            metadata=DMSInputMetadata(
+        rules = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 version="v1",
                 creator="Anders",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="MyView",
                     view_property="name",
                     value_type="text",
@@ -1586,14 +1587,14 @@ class TestDMSRules:
                 )
             ],
             views=[
-                DMSInputView(view="MyView", implements="cdf_cdm:CogniteDescribable(version=v1)"),
-                DMSInputView("cdf_cdm:CogniteDescribable(version=v1)"),
+                UnverifiedPhysicalView(view="MyView", implements="cdf_cdm:CogniteDescribable(version=v1)"),
+                UnverifiedPhysicalView("cdf_cdm:CogniteDescribable(version=v1)"),
             ],
-            containers=[DMSInputContainer("cdf_cdm:CogniteDescribable")],
+            containers=[UnverifiedPhysicalContainer("cdf_cdm:CogniteDescribable")],
         )
         verified = rules.as_verified_rules()
 
-        assert isinstance(verified, DMSRules)
+        assert isinstance(verified, PhysicalDataModel)
 
         dumped = verified.dump(entities_exclude_defaults=True)
 
@@ -1603,22 +1604,22 @@ class TestDMSRules:
 
 def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
                 version="v42",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="WindTurbine",
                     view_property="windFarm",
                     value_type="WindFarm",
                     connection="edge",
                     max_count=1,
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="WindFarm",
                     view_property="windTurbines",
                     value_type="WindTurbine",
@@ -1626,8 +1627,8 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="WindTurbine"),
-                DMSInputView(view="WindFarm"),
+                UnverifiedPhysicalView(view="WindTurbine"),
+                UnverifiedPhysicalView(view="WindFarm"),
             ],
         ),
         {
@@ -1644,22 +1645,22 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
     )
 
     yield pytest.param(
-        DMSInputRules(
-            metadata=DMSInputMetadata(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
                 creator="Anders",
                 version="v42",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="EnergyArea",
                     view_property="units",
                     value_type="GeneratingUnit",
                     connection="edge",
                     max_count=1,
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="WindFarm",
                     view_property="units",
                     value_type="WindTurbine",
@@ -1667,24 +1668,26 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
                 ),
             ],
             views=[
-                DMSInputView(view="EnergyArea"),
-                DMSInputView(view="WindFarm", implements="EnergyArea"),
+                UnverifiedPhysicalView(view="EnergyArea"),
+                UnverifiedPhysicalView(view="WindFarm", implements="EnergyArea"),
             ],
         ),
         {
-            (ViewEntity(space="my_space", externalId="EnergyArea", version="v42"), "units"): dm.DirectRelationReference(
-                space="my_space", external_id="EnergyArea.units"
-            ),
-            (ViewEntity(space="my_space", externalId="WindFarm", version="v42"), "units"): dm.DirectRelationReference(
-                space="my_space", external_id="EnergyArea.units"
-            ),
+            (
+                ViewEntity(space="my_space", externalId="EnergyArea", version="v42"),
+                "units",
+            ): dm.DirectRelationReference(space="my_space", external_id="EnergyArea.units"),
+            (
+                ViewEntity(space="my_space", externalId="WindFarm", version="v42"),
+                "units",
+            ): dm.DirectRelationReference(space="my_space", external_id="EnergyArea.units"),
         },
         id="Child uses parent edge",
     )
 
 
 class TestDMSExporter:
-    def test_svein_harald_as_schema(self, svein_harald_dms_rules: DMSRules) -> None:
+    def test_svein_harald_as_schema(self, svein_harald_dms_rules: PhysicalDataModel) -> None:
         expected_views = {"GeneratingUnit", "EnergyArea", "TimeseriesForecastProduct"}
         expected_model_views = expected_views
 
@@ -1695,7 +1698,7 @@ class TestDMSExporter:
         actual_model_views = {view.external_id for view in schema.data_model.views}
         assert actual_model_views == expected_model_views
 
-    def test_olav_rebuild_as_schema(self, olav_rebuild_dms_rules: DMSRules) -> None:
+    def test_olav_rebuild_as_schema(self, olav_rebuild_dms_rules: PhysicalDataModel) -> None:
         expected_views = {
             "Point",
             "Polygon",
@@ -1723,12 +1726,12 @@ class TestDMSExporter:
     )
     def test_edge_types_by_view_property_id(
         self,
-        raw: DMSInputRules,
+        raw: UnverifiedPhysicalDataModel,
         expected_edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
     ) -> None:
-        dms_rules = DMSRules.model_validate(raw.dump())
+        dms_rules = PhysicalDataModel.model_validate(raw.dump())
         view_by_id = {view.view: view for view in dms_rules.views}
-        properties_by_view_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
+        properties_by_view_id: dict[dm.ViewId, list[PhysicalProperty]] = defaultdict(list)
         for prop in dms_rules.properties:
             properties_by_view_id[prop.view.as_id()].append(prop)
 
@@ -1744,13 +1747,19 @@ class TestDMSValidation:
         "input_rules, expected_views, expected_containers",
         [
             pytest.param(
-                DMSInputRules(
-                    DMSInputMetadata("my_space", "MyModel", "Me", "v1"),
+                UnverifiedPhysicalDataModel(
+                    UnverifiedPhysicalMetadata("my_space", "MyModel", "Me", "v1"),
                     properties=[
-                        DMSInputProperty("MyView", "name", "text", container="MyContainer", container_property="name"),
+                        UnverifiedPhysicalProperty(
+                            "MyView",
+                            "name",
+                            "text",
+                            container="MyContainer",
+                            container_property="name",
+                        ),
                     ],
-                    views=[DMSInputView("MyView")],
-                    containers=[DMSInputContainer("MyContainer", constraint="cdf_cdm:CogniteDescribable")],
+                    views=[UnverifiedPhysicalView("MyView")],
+                    containers=[UnverifiedPhysicalContainer("MyContainer", constraint="cdf_cdm:CogniteDescribable")],
                 ),
                 set(),
                 {ContainerEntity(space="cdf_cdm", externalId="CogniteDescribable")},
@@ -1759,7 +1768,10 @@ class TestDMSValidation:
         ],
     )
     def test_imported_views_and_containers_ids(
-        self, input_rules: DMSInputRules, expected_views: set[ViewEntity], expected_containers: set[ContainerEntity]
+        self,
+        input_rules: UnverifiedPhysicalDataModel,
+        expected_views: set[ViewEntity],
+        expected_containers: set[ContainerEntity],
     ) -> None:
         validation = DMSValidation(input_rules.as_verified_rules())
         actual_views, actual_containers = validation.imported_views_and_containers_ids()
@@ -1773,7 +1785,7 @@ class TestDMSProperty:
         "raw",
         [
             pytest.param(
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "sp:MyView(version=v1)",
                     "isOn",
                     "boolean",
@@ -1783,15 +1795,15 @@ class TestDMSProperty:
             )
         ],
     )
-    def test_model_validate(self, raw: DMSInputProperty):
-        prop = DMSProperty.model_validate(raw.dump("sp", "v1"))
+    def test_model_validate(self, raw: UnverifiedPhysicalProperty):
+        prop = PhysicalProperty.model_validate(raw.dump("sp", "v1"))
         assert prop.model_dump(exclude_unset=True)
 
     @pytest.mark.parametrize(
         "raw, expected_msg",
         [
             pytest.param(
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "sp:MyView(version=v1)",
                     "enterprise",
                     value_type="sp:OtherView(version=v1)",
@@ -1803,9 +1815,9 @@ class TestDMSProperty:
             )
         ],
     )
-    def test_model_validate_invalid(self, raw: DMSInputProperty, expected_msg: str):
+    def test_model_validate_invalid(self, raw: UnverifiedPhysicalProperty, expected_msg: str):
         with pytest.raises(ValidationError) as e:
-            _ = DMSProperty.model_validate(raw.dump("sp", "v1"))
+            _ = PhysicalProperty.model_validate(raw.dump("sp", "v1"))
 
         errors = e.value.errors()
         assert len(errors) == 1

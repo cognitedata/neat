@@ -50,8 +50,8 @@ from ._constants import (
 
 
 @total_ordering
-class Entity(BaseModel, extra="ignore"):
-    """Entity is a class or property in OWL/RDF sense."""
+class ConceptualEntity(BaseModel, extra="ignore"):
+    """Conceptual Entity is a concept, class or property in semantics sense."""
 
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str | _UndefinedType = Undefined
@@ -64,7 +64,10 @@ class Entity(BaseModel, extra="ignore"):
     @classmethod
     @overload
     def load(
-        cls: "type[T_Entity]", data: Any, strict: Literal[False] = False, **defaults: Any
+        cls: "type[T_Entity]",
+        data: Any,
+        strict: Literal[False] = False,
+        **defaults: Any,
     ) -> "T_Entity | UnknownEntity": ...
 
     @classmethod
@@ -85,7 +88,7 @@ class Entity(BaseModel, extra="ignore"):
             return cls.model_validate(data)
 
     @model_validator(mode="before")
-    def _load(cls, data: Any) -> "dict | Entity":
+    def _load(cls, data: Any) -> "dict | ConceptualEntity":
         defaults = {}
         if isinstance(data, dict) and _PARSE in data:
             defaults = data.get("defaults", {})
@@ -157,7 +160,7 @@ class Entity(BaseModel, extra="ignore"):
             if isinstance(annotation, UnionType) or get_origin(annotation) is Union:
                 annotation = get_args(annotation)[0]
 
-            if inspect.isclass(annotation) and issubclass(annotation, Entity):  # type: ignore[arg-type]
+            if inspect.isclass(annotation) and issubclass(annotation, ConceptualEntity):  # type: ignore[arg-type]
                 extra_args[key] = annotation.load(extra_args[key], **defaults)  # type: ignore[union-attr, assignment]
         return dict(prefix=prefix, suffix=suffix, **extra_args)
 
@@ -179,12 +182,12 @@ class Entity(BaseModel, extra="ignore"):
             return self.prefix, str(self.suffix), *extra
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, Entity):
+        if not isinstance(other, ConceptualEntity):
             return NotImplemented
         return self.as_tuple() < other.as_tuple()
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Entity):
+        if not isinstance(other, ConceptualEntity):
             return NotImplemented
         return self.as_tuple() == other.as_tuple()
 
@@ -207,7 +210,7 @@ class Entity(BaseModel, extra="ignore"):
     def _as_str(self, **defaults: Any) -> str:
         # We have overwritten the serialization to str, so we need to do it manually
         model_dump = {
-            field.alias or field_name: v.dump(**defaults) if isinstance(v, Entity) else v
+            field.alias or field_name: v.dump(**defaults) if isinstance(v, ConceptualEntity) else v
             for field_name, field in self.model_fields.items()
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
         }
@@ -263,10 +266,10 @@ class Entity(BaseModel, extra="ignore"):
         return new_entity
 
 
-T_Entity = TypeVar("T_Entity", bound=Entity)
+T_Entity = TypeVar("T_Entity", bound=ConceptualEntity)
 
 
-class ClassEntity(Entity):
+class ClassEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.class_
     version: str | None = None
 
@@ -293,7 +296,7 @@ class UnknownEntity(ClassEntity):
         return str(Unknown)
 
 
-class UnitEntity(Entity):
+class UnitEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.unit
     prefix: str
     suffix: str
@@ -310,14 +313,14 @@ class AssetFields(StrEnum):
     metadata = "metadata"
 
 
-class AssetEntity(Entity):
+class AssetEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.asset
     suffix: str = "Asset"
     prefix: _UndefinedType = Undefined
     property_: AssetFields = Field(alias="property")
 
 
-class RelationshipEntity(Entity):
+class RelationshipEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.relationship
     suffix: str = "Relationship"
     prefix: _UndefinedType = Undefined
@@ -327,7 +330,7 @@ class RelationshipEntity(Entity):
 T_ID = TypeVar("T_ID", bound=ContainerId | ViewId | DataModelId | PropertyId | NodeId | None)
 
 
-class DMSEntity(Entity, Generic[T_ID], ABC):
+class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
     type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str = Field(alias="space")
     suffix: str = Field(alias="externalId")
@@ -339,23 +342,28 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
+    def load(
+        cls: "type[T_PhysicalEntity]", data: Any, strict: Literal[True], **defaults: Any
+    ) -> "T_PhysicalEntity": ...
 
     @classmethod
     @overload
     def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: Literal[False] = False, **defaults: Any
-    ) -> "T_DMSEntity | DMSUnknownEntity": ...
+        cls: "type[T_PhysicalEntity]",
+        data: Any,
+        strict: Literal[False] = False,
+        **defaults: Any,
+    ) -> "T_PhysicalEntity | PhysicalUnknownEntity": ...
 
     @classmethod
     def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults: Any
-    ) -> "T_DMSEntity | DMSUnknownEntity":  # type: ignore
+        cls: "type[T_PhysicalEntity]", data: Any, strict: bool = False, **defaults: Any
+    ) -> "T_PhysicalEntity | PhysicalUnknownEntity":  # type: ignore
         if isinstance(data, str) and data == str(Unknown):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
-            return DMSUnknownEntity.from_id(None)
-        return cast(T_DMSEntity, super().load(data, **defaults))
+            return PhysicalUnknownEntity.from_id(None)
+        return cast(T_PhysicalEntity, super().load(data, **defaults))
 
     @property
     def space(self) -> str:
@@ -385,10 +393,10 @@ class DMSEntity(Entity, Generic[T_ID], ABC):
         return new_entity
 
 
-T_DMSEntity = TypeVar("T_DMSEntity", bound=DMSEntity)
+T_PhysicalEntity = TypeVar("T_PhysicalEntity", bound=PhysicalEntity)
 
 
-class ContainerEntity(DMSEntity[ContainerId]):
+class ContainerEntity(PhysicalEntity[ContainerId]):
     type_: ClassVar[EntityTypes] = EntityTypes.container
 
     def as_id(self) -> ContainerId:
@@ -399,7 +407,7 @@ class ContainerEntity(DMSEntity[ContainerId]):
         return cls(space=id.space, externalId=id.external_id)
 
 
-class DMSVersionedEntity(DMSEntity[T_ID], ABC):
+class DMSVersionedEntity(PhysicalEntity[T_ID], ABC):
     version: str
 
     def as_class(self, skip_version: bool = False) -> ClassEntity:
@@ -429,7 +437,7 @@ class ViewEntity(DMSVersionedEntity[ViewId]):
             raise ValueError("Version must be specified")
 
 
-class DMSUnknownEntity(DMSEntity[None]):
+class PhysicalUnknownEntity(PhysicalEntity[None]):
     """This is a special entity that represents an unknown entity.
 
     The use case is for direct relations where the source is not known."""
@@ -442,7 +450,7 @@ class DMSUnknownEntity(DMSEntity[None]):
         return None
 
     @classmethod
-    def from_id(cls, id: None) -> "DMSUnknownEntity":
+    def from_id(cls, id: None) -> "PhysicalUnknownEntity":
         return cls(space=Undefined, externalId=Unknown)
 
     @property
@@ -463,7 +471,7 @@ class DataModelEntity(DMSVersionedEntity[DataModelId]):
         return cls(space=id.space, externalId=id.external_id, version=id.version)
 
 
-class DMSNodeEntity(DMSEntity[NodeId]):
+class DMSNodeEntity(PhysicalEntity[NodeId]):
     type_: ClassVar[EntityTypes] = EntityTypes.dms_node
 
     def as_id(self) -> NodeId:
@@ -481,7 +489,7 @@ class DMSNodeEntity(DMSEntity[NodeId]):
         return cls(space=ref.space, externalId=ref.external_id)
 
 
-class EdgeEntity(DMSEntity[None]):
+class EdgeEntity(PhysicalEntity[None]):
     type_: ClassVar[EntityTypes] = EntityTypes.edge
     prefix: _UndefinedType = Undefined  # type: ignore[assignment]
     suffix: Literal["edge"] = "edge"
@@ -501,7 +509,7 @@ class EdgeEntity(DMSEntity[None]):
         return cls()
 
 
-class ReverseConnectionEntity(Entity):
+class ReverseConnectionEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.reverse
     prefix: _UndefinedType = Undefined
     suffix: Literal["reverse"] = "reverse"
@@ -514,7 +522,7 @@ class ReferenceEntity(ClassEntity):
     property_: str | None = Field(None, alias="property")
 
     @classmethod
-    def from_entity(cls, entity: Entity, property_: str) -> "ReferenceEntity":
+    def from_entity(cls, entity: ConceptualEntity, property_: str) -> "ReferenceEntity":
         if isinstance(entity, ClassEntity):
             return cls(
                 prefix=str(entity.prefix),

@@ -1,19 +1,19 @@
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
-)
 from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
+)
 from cognite.neat.core._data_model.transformers import RuleMapper
 
 
 class TestClassicToCoreMapper:
     def test_map_single_property(self) -> None:
         classic = "classic"
-        input_ = DMSInputRules(
-            metadata=DMSInputMetadata(
+        input_ = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space=classic,
                 external_id=classic,
                 version="1.0",
@@ -21,7 +21,7 @@ class TestClassicToCoreMapper:
                 name="TheClassic",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="MyAsset",
                     view_property="name",
                     value_type="text",
@@ -29,21 +29,21 @@ class TestClassicToCoreMapper:
                     container_property="name",
                 )
             ],
-            views=[DMSInputView(view="MyAsset")],
-            containers=[DMSInputContainer(container="Asset")],
+            views=[UnverifiedPhysicalView(view="MyAsset")],
+            containers=[UnverifiedPhysicalContainer(container="Asset")],
         ).as_verified_rules()
 
         input_rules = input_
 
-        mapping = DMSInputRules(
-            metadata=DMSInputMetadata(
+        mapping = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
                 space="mapping",
                 external_id="mapping",
                 version="1.0",
                 creator="me",
             ),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     view="MyAsset",
                     view_property="name",
                     value_type="text",
@@ -52,7 +52,7 @@ class TestClassicToCoreMapper:
                 )
             ],
             views=[
-                DMSInputView(view="MyAsset", implements="cdf_cdm:CogniteAsset(version=v1)"),
+                UnverifiedPhysicalView(view="MyAsset", implements="cdf_cdm:CogniteAsset(version=v1)"),
             ],
         ).as_verified_rules()
 

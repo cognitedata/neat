@@ -7,13 +7,13 @@ from rdflib.term import Literal
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.importers._spreadsheet2rules import ExcelImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from cognite.neat.core._data_model.transformers import VerifyInformationRules
 
@@ -177,17 +177,17 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
     ],
 )
 
-BASE_MODEL: DMSRules = DMSInputRules(
-    metadata=DMSInputMetadata(
+BASE_MODEL: PhysicalDataModel = UnverifiedPhysicalDataModel(
+    metadata=UnverifiedPhysicalMetadata(
         space="sp_base",
         external_id="Base",
         version="1",
         creator="Anders",
     ),
-    views=[DMSInputView(view="Entity")],
-    containers=[DMSInputContainer(container="Entity")],
+    views=[UnverifiedPhysicalView(view="Entity")],
+    containers=[UnverifiedPhysicalContainer(container="Entity")],
     properties=[
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             view="Entity",
             view_property="name",
             value_type="text",
@@ -271,7 +271,7 @@ INSTANCES = [
 
 
 @lru_cache(maxsize=1)
-def get_car_dms_rules() -> DMSRules:
+def get_car_dms_rules() -> PhysicalDataModel:
     # Local import to avoid circular import
     from tests.data import SchemaData
 

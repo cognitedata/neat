@@ -7,8 +7,8 @@ from typing import Generic, TypeVar, Union, get_args, get_origin
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import ReadRules, Rules, VerifiedRules
 from cognite.neat.core._data_model.models import (
-    DMSInputRules,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
@@ -64,7 +64,10 @@ class RulesTransformer(ABC, Generic[T_RulesIn, T_RulesOut]):
 
         if get_origin(annotation) is ReadRules and isinstance(get_args(annotation)[0], TypeVar):
             # Hardcoded for now, as we only have two types of ReadRules
-            return ReadRules[DMSInputRules], ReadRules[UnverifiedConceptualDataModel]
+            return (
+                ReadRules[UnverifiedPhysicalDataModel],
+                ReadRules[UnverifiedConceptualDataModel],
+            )
 
         return (annotation,)
 

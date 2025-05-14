@@ -64,7 +64,7 @@ class TestDMSLoader:
         dms_rules = neat._state.rule_store.last_verified_dms_rules
         info_rules = neat._state.rule_store.last_verified_information_rules
         info_rules.metadata.physical = dms_rules.metadata.identifier
-        dms_rules.sync_with_info_rules(info_rules)
+        dms_rules.sync_with_conceptual_data_model(info_rules)
 
         # Adding some triples to
         namespace = DEFAULT_NAMESPACE

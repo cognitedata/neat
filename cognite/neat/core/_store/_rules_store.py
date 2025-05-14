@@ -16,7 +16,7 @@ from cognite.neat.core._data_model._shared import T_VerifiedRules, VerifiedRules
 from cognite.neat.core._data_model.exporters import BaseExporter
 from cognite.neat.core._data_model.exporters._base import CDFExporter, T_Export
 from cognite.neat.core._data_model.importers import BaseImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
     DMSToInformation,
     VerifiedRulesTransformer,
@@ -44,7 +44,7 @@ from .exceptions import EmptyStore, InvalidActivityInput
 @dataclass(frozen=True)
 class RulesEntity(Entity):
     information: ConceptualDataModel
-    dms: DMSRules | None = None
+    dms: PhysicalDataModel | None = None
 
     @property
     def has_dms(self) -> bool:
@@ -85,13 +85,13 @@ class NeatRulesStore:
         importer: BaseImporter,
         validate: bool,
         client: NeatClient | None = None,
-    ) -> tuple[ConceptualDataModel, DMSRules | None]:
+    ) -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
         """Action that imports rules, verifies them and optionally converts them."""
         read_rules = importer.to_rules()
         verified = VerifyAnyRules(validate, client).transform(read_rules)  # type: ignore[arg-type]
         if isinstance(verified, ConceptualDataModel):
             return verified, None
-        elif isinstance(verified, DMSRules):
+        elif isinstance(verified, PhysicalDataModel):
             return DMSToInformation().transform(verified), verified
         else:
             # Bug in the code
@@ -100,9 +100,9 @@ class NeatRulesStore:
     def _graph_import_verify_convert(
         self,
         extractor: KnowledgeGraphExtractor,
-    ) -> tuple[ConceptualDataModel, DMSRules | None]:
+    ) -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
         info = extractor.get_information_rules()
-        dms: DMSRules | None = None
+        dms: PhysicalDataModel | None = None
         if isinstance(extractor, DMSGraphExtractor):
             dms = extractor.get_dms_rules()
         return info, dms
@@ -229,7 +229,7 @@ class NeatRulesStore:
 
             def action(
                 transformer_item: VerifiedRulesTransformer = agent_tool,
-            ) -> tuple[ConceptualDataModel, DMSRules | None]:
+            ) -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
                 last_change = self.provenance[-1]
                 source_entity = last_change.target_entity
                 transformer_input = self._get_transformer_input(source_entity, transformer_item)
@@ -260,7 +260,7 @@ class NeatRulesStore:
 
     def do_activity(
         self,
-        action: Callable[[], tuple[ConceptualDataModel, DMSRules | None]],
+        action: Callable[[], tuple[ConceptualDataModel, PhysicalDataModel | None]],
         agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
     ) -> IssueList:
         result, issue_list, start, end = self._do_activity(action)
@@ -273,7 +273,7 @@ class NeatRulesStore:
     def _update_provenance(
         self,
         agent_tool: BaseImporter | VerifiedRulesTransformer | KnowledgeGraphExtractor,
-        result: tuple[ConceptualDataModel, DMSRules | None],
+        result: tuple[ConceptualDataModel, PhysicalDataModel | None],
         issue_list: IssueList,
         activity_start: datetime,
         activity_end: datetime,
@@ -318,11 +318,16 @@ class NeatRulesStore:
 
     def _do_activity(
         self,
-        action: Callable[[], tuple[ConceptualDataModel, DMSRules | None]],
-    ) -> tuple[tuple[ConceptualDataModel, DMSRules | None], IssueList, datetime, datetime]:
+        action: Callable[[], tuple[ConceptualDataModel, PhysicalDataModel | None]],
+    ) -> tuple[
+        tuple[ConceptualDataModel, PhysicalDataModel | None],
+        IssueList,
+        datetime,
+        datetime,
+    ]:
         """This private method is used to execute an activity and return the result and issues."""
         start = datetime.now(timezone.utc)
-        result: tuple[ConceptualDataModel, DMSRules | None] | None = None
+        result: tuple[ConceptualDataModel, PhysicalDataModel | None] | None = None
         with catch_issues() as issue_list:
             result = action()
         end = datetime.now(timezone.utc)
@@ -342,7 +347,7 @@ class NeatRulesStore:
         else:
             available: list[type] = [ConceptualDataModel]
             if source_entity.dms is not None:
-                available.append(DMSRules)
+                available.append(PhysicalDataModel)
             raise InvalidActivityInput(expected=expected_types, have=tuple(available))
 
         # need to write source prior the export
@@ -390,19 +395,19 @@ class NeatRulesStore:
     @staticmethod
     def _get_transformer_input(
         source_entity: RulesEntity, transformer: VerifiedRulesTransformer
-    ) -> ConceptualDataModel | DMSRules:
+    ) -> ConceptualDataModel | PhysicalDataModel:
         # Case 1: We only have information rules
         if source_entity.dms is None:
             if transformer.is_valid_input(source_entity.information):
                 return source_entity.information
-            raise InvalidActivityInput(expected=(DMSRules,), have=(ConceptualDataModel,))
+            raise InvalidActivityInput(expected=(PhysicalDataModel,), have=(ConceptualDataModel,))
         # Case 2: We have both information and dms rules and the transformer is compatible with dms rules
-        elif isinstance(source_entity.dms, DMSRules) and transformer.is_valid_input(source_entity.dms):
+        elif isinstance(source_entity.dms, PhysicalDataModel) and transformer.is_valid_input(source_entity.dms):
             return source_entity.dms
         # Case 3: We have both information and dms rules and the transformer is compatible with information rules
-        raise InvalidActivityInput(expected=(ConceptualDataModel,), have=(DMSRules,))
+        raise InvalidActivityInput(expected=(ConceptualDataModel,), have=(PhysicalDataModel,))
 
-    def _get_source_id(self, result: tuple[ConceptualDataModel, DMSRules | None]) -> rdflib.URIRef | None:
+    def _get_source_id(self, result: tuple[ConceptualDataModel, PhysicalDataModel | None]) -> rdflib.URIRef | None:
         """Return the source of the result.
 
         !!! note
@@ -411,7 +416,7 @@ class NeatRulesStore:
         info, dms = result
         return dms.metadata.source_id if dms else info.metadata.source_id
 
-    def _create_id(self, info: ConceptualDataModel, dms: DMSRules | None) -> rdflib.URIRef:
+    def _create_id(self, info: ConceptualDataModel, dms: PhysicalDataModel | None) -> rdflib.URIRef:
         if dms is None:
             identifier = info.metadata.identifier
         else:
@@ -429,7 +434,7 @@ class NeatRulesStore:
         return identifier + f"/Iteration_{self._iteration_by_id[identifier]}"
 
     @property
-    def try_get_last_dms_rules(self) -> DMSRules | None:
+    def try_get_last_dms_rules(self) -> PhysicalDataModel | None:
         if not self.provenance:
             return None
         if self.provenance[-1].target_entity.dms is None:
@@ -443,7 +448,7 @@ class NeatRulesStore:
         return self.provenance[-1].target_entity.information
 
     @property
-    def last_verified_dms_rules(self) -> DMSRules:
+    def last_verified_dms_rules(self) -> PhysicalDataModel:
         if not self.provenance:
             raise EmptyStore()
         if self.provenance[-1].target_entity.dms is None:
@@ -457,7 +462,7 @@ class NeatRulesStore:
         return self.provenance[-1].target_entity.information
 
     @property
-    def last_verified_rules(self) -> ConceptualDataModel | DMSRules | None:
+    def last_verified_rules(self) -> ConceptualDataModel | PhysicalDataModel | None:
         if not self.provenance:
             return None
         last_entity = self.provenance[-1].target_entity

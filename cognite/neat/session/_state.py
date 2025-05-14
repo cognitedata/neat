@@ -5,7 +5,7 @@ from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.importers import BaseImporter, InferenceImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
     VerifiedRulesTransformer,
 )
@@ -26,7 +26,7 @@ class SessionState:
     ) -> None:
         self.instances = InstancesState(store_type, storage_path=storage_path)
         self.rule_store = NeatRulesStore()
-        self.last_reference: DMSRules | ConceptualDataModel | None = None
+        self.last_reference: PhysicalDataModel | ConceptualDataModel | None = None
         self.client = client
         self.quoted_source_identifiers = False
 

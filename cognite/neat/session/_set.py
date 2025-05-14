@@ -3,7 +3,7 @@ from cognite.client import data_modeling as dm
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS
-from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import SetIDDMSModel
 from cognite.neat.core._instances.transformers import SetType
 from cognite.neat.core._issues import IssueList
@@ -42,7 +42,7 @@ class SetAPI:
         if self._state.rule_store.empty:
             raise NeatSessionError("No rules to set the data model ID.")
         rules = self._state.rule_store.provenance[-1].target_entity.dms
-        if isinstance(rules, DMSRules):
+        if isinstance(rules, PhysicalDataModel):
             if rules.metadata.as_data_model_id() in COGNITE_MODELS:
                 raise NeatSessionError(
                     "Cannot change the data model ID of a Cognite Data Model in NeatSession"

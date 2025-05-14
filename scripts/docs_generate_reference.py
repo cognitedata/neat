@@ -6,7 +6,7 @@ from typing import get_args, get_origin
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
-from cognite.neat.core._data_model.models import DMSRules, ConceptualDataModel
+from cognite.neat.core._data_model.models import PhysicalDataModel, ConceptualDataModel
 from cognite.neat.core._data_model.models._base_verified import BaseVerifiedDataModel
 
 DMS_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'physical' / 'reference.md'
@@ -99,5 +99,5 @@ def get_field_cls_type(field: FieldInfo) -> type[BaseModel]:
 
 
 if __name__ == "__main__":
-    generate_reference("physical", DMSRules, DMS_REFERENCE_MD)
+    generate_reference("physical", PhysicalDataModel, DMS_REFERENCE_MD)
     generate_reference("logical", ConceptualDataModel, INFO_REFERENCE_MD)

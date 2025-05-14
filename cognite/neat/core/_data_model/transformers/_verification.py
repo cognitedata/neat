@@ -9,12 +9,12 @@ from cognite.neat.core._data_model._shared import (
 )
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSInputRules,
-    DMSRules,
+    PhysicalDataModel,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import InformationValidation
-from cognite.neat.core._data_model.models.dms import DMSValidation
+from cognite.neat.core._data_model.models.physical import DMSValidation
 from cognite.neat.core._issues import MultiValueError, catch_issues
 from cognite.neat.core._issues.errors import NeatTypeError, NeatValueError
 
@@ -71,13 +71,13 @@ class VerificationTransformer(RulesTransformer[T_ReadInputRules, T_VerifiedRules
         return "Verify rules"
 
 
-class VerifyDMSRules(VerificationTransformer[ReadRules[DMSInputRules], DMSRules]):
+class VerifyDMSRules(VerificationTransformer[ReadRules[UnverifiedPhysicalDataModel], PhysicalDataModel]):
     """Class to verify DMS rules."""
 
-    _rules_cls = DMSRules
+    _rules_cls = PhysicalDataModel
     _validation_cls = DMSValidation
 
-    def transform(self, rules: ReadRules[DMSInputRules]) -> DMSRules:
+    def transform(self, rules: ReadRules[UnverifiedPhysicalDataModel]) -> PhysicalDataModel:
         return super().transform(rules)
 
 
@@ -97,15 +97,15 @@ class VerifyAnyRules(VerificationTransformer[T_ReadInputRules, VerifiedRules]):
     def _get_rules_cls(self, in_: T_ReadInputRules) -> type[VerifiedRules]:
         if isinstance(in_.rules, UnverifiedConceptualDataModel):
             return ConceptualDataModel
-        elif isinstance(in_.rules, DMSInputRules):
-            return DMSRules
+        elif isinstance(in_.rules, UnverifiedPhysicalDataModel):
+            return PhysicalDataModel
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(in_)}")
 
     def _get_validation_cls(self, rules: VerifiedRules) -> type:
         if isinstance(rules, ConceptualDataModel):
             return InformationValidation
-        elif isinstance(rules, DMSRules):
+        elif isinstance(rules, PhysicalDataModel):
             return DMSValidation
         else:
             raise NeatTypeError(f"Unsupported rules type: {type(rules)}")

@@ -31,10 +31,10 @@ from cognite.neat.core._data_model.models.entities import (
     ContainerEntity,
     DMSFilter,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
     HasDataFilter,
     NodeTypeFilter,
+    PhysicalUnknownEntity,
     ReverseConnectionEntity,
     UnitEntity,
     ViewEntity,
@@ -53,7 +53,13 @@ from cognite.neat.core._issues.warnings.user_modeling import (
     HasDataFilterOnNoPropertiesViewWarning,
 )
 
-from ._rules import DMSEnum, DMSMetadata, DMSProperty, DMSRules, DMSView
+from ._verified import (
+    PhysicalDataModel,
+    PhysicalEnum,
+    PhysicalMetadata,
+    PhysicalProperty,
+    PhysicalView,
+)
 
 
 class _DMSExporter:
@@ -69,7 +75,12 @@ class _DMSExporter:
         remove_cdf_spaces(bool): The
     """
 
-    def __init__(self, rules: DMSRules, instance_space: str | None = None, remove_cdf_spaces: bool = False):
+    def __init__(
+        self,
+        rules: PhysicalDataModel,
+        instance_space: str | None = None,
+        remove_cdf_spaces: bool = False,
+    ):
         self.instance_space = instance_space
         self.rules = rules
         self.remove_cdf_spaces = remove_cdf_spaces
@@ -121,7 +132,7 @@ class _DMSExporter:
 
     def _create_spaces(
         self,
-        metadata: DMSMetadata,
+        metadata: PhysicalMetadata,
         containers: ContainerApplyDict,
         views: ViewApplyDict,
         data_model: dm.DataModelApply,
@@ -140,8 +151,8 @@ class _DMSExporter:
 
     def _create_views(
         self,
-        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
+        view_properties_by_id: dict[dm.ViewId, list[PhysicalProperty]],
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[PhysicalProperty]],
     ) -> ViewApplyDict:
         input_views = list(self.rules.views)
 
@@ -172,7 +183,7 @@ class _DMSExporter:
         return views
 
     @classmethod
-    def _create_edge_type_from_prop(cls, prop: DMSProperty) -> dm.DirectRelationReference:
+    def _create_edge_type_from_prop(cls, prop: PhysicalProperty) -> dm.DirectRelationReference:
         if isinstance(prop.connection, EdgeEntity) and prop.connection.edge_type is not None:
             return prop.connection.edge_type.as_reference()
         elif isinstance(prop.value_type, ViewEntity):
@@ -191,10 +202,10 @@ class _DMSExporter:
     @classmethod
     def _edge_types_by_view_property_id(
         cls,
-        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
-        view_by_id: dict[ViewEntity, DMSView],
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[PhysicalProperty]],
+        view_by_id: dict[ViewEntity, PhysicalView],
     ) -> dict[tuple[ViewEntity, str], dm.DirectRelationReference]:
-        edge_connection_property_by_view_property_id: dict[tuple[ViewEntity, str], DMSProperty] = {}
+        edge_connection_property_by_view_property_id: dict[tuple[ViewEntity, str], PhysicalProperty] = {}
         for properties in view_properties_with_ancestors_by_id.values():
             for prop in properties:
                 if isinstance(prop.connection, EdgeEntity):
@@ -248,10 +259,10 @@ class _DMSExporter:
     @classmethod
     def _get_edge_type_outwards_connection(
         cls,
-        view: DMSView,
-        prop: DMSProperty,
-        view_by_id: dict[ViewEntity, DMSView],
-        edge_connection_by_view_property_id: dict[tuple[ViewEntity, str], DMSProperty],
+        view: PhysicalView,
+        prop: PhysicalProperty,
+        view_by_id: dict[ViewEntity, PhysicalView],
+        edge_connection_by_view_property_id: dict[tuple[ViewEntity, str], PhysicalProperty],
     ) -> dm.DirectRelationReference:
         connection = cast(EdgeEntity, prop.connection)
         if connection.edge_type is not None:
@@ -284,10 +295,10 @@ class _DMSExporter:
 
     def _create_containers(
         self,
-        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
-        enum: Collection[DMSEnum] | None,
+        container_properties_by_id: dict[dm.ContainerId, list[PhysicalProperty]],
+        enum: Collection[PhysicalEnum] | None,
     ) -> ContainerApplyDict:
-        enum_values_by_collection: dict[ClassEntity, list[DMSEnum]] = defaultdict(list)
+        enum_values_by_collection: dict[ClassEntity, list[PhysicalEnum]] = defaultdict(list)
         for enum_value in enum or []:
             enum_values_by_collection[enum_value.collection].append(enum_value)
 
@@ -390,10 +401,13 @@ class _DMSExporter:
 
     @staticmethod
     def _gather_properties(
-        properties: Sequence[DMSProperty],
-    ) -> tuple[dict[dm.ContainerId, list[DMSProperty]], dict[dm.ViewId, list[DMSProperty]]]:
-        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]] = defaultdict(list)
-        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
+        properties: Sequence[PhysicalProperty],
+    ) -> tuple[
+        dict[dm.ContainerId, list[PhysicalProperty]],
+        dict[dm.ViewId, list[PhysicalProperty]],
+    ]:
+        container_properties_by_id: dict[dm.ContainerId, list[PhysicalProperty]] = defaultdict(list)
+        view_properties_by_id: dict[dm.ViewId, list[PhysicalProperty]] = defaultdict(list)
         for prop in properties:
             view_id = prop.view.as_id()
             view_properties_by_id[view_id].append(prop)
@@ -406,12 +420,12 @@ class _DMSExporter:
 
     def _gather_properties_with_ancestors(
         self,
-        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]],
-        views: Sequence[DMSView],
-    ) -> dict[dm.ViewId, list[DMSProperty]]:
+        view_properties_by_id: dict[dm.ViewId, list[PhysicalProperty]],
+        views: Sequence[PhysicalView],
+    ) -> dict[dm.ViewId, list[PhysicalProperty]]:
         all_view_properties_by_id = view_properties_by_id.copy()
 
-        view_properties_with_parents_by_id: dict[dm.ViewId, list[DMSProperty]] = defaultdict(list)
+        view_properties_with_parents_by_id: dict[dm.ViewId, list[PhysicalProperty]] = defaultdict(list)
         view_by_view_id = {view.view.as_id(): view for view in views}
         for view in views:
             view_id = view.view.as_id()
@@ -446,9 +460,9 @@ class _DMSExporter:
     @classmethod
     def _update_with_properties(
         cls,
-        selected_properties: Sequence[DMSProperty],
-        container_properties_by_id: dict[dm.ContainerId, list[DMSProperty]],
-        view_properties_by_id: dict[dm.ViewId, list[DMSProperty]] | None,
+        selected_properties: Sequence[PhysicalProperty],
+        container_properties_by_id: dict[dm.ContainerId, list[PhysicalProperty]],
+        view_properties_by_id: dict[dm.ViewId, list[PhysicalProperty]] | None,
         include_new_containers: bool = False,
     ) -> None:
         view_properties_by_id = view_properties_by_id or {}
@@ -472,7 +486,7 @@ class _DMSExporter:
     def _create_view_filter(
         self,
         view: dm.ViewApply,
-        dms_view: DMSView | None,
+        dms_view: PhysicalView | None,
     ) -> DMSFilter | None:
         selected_filter_name = (dms_view and dms_view.filter_ and dms_view.filter_.name) or ""
 
@@ -497,8 +511,8 @@ class _DMSExporter:
     @classmethod
     def _create_view_property(
         cls,
-        prop: DMSProperty,
-        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]],
+        prop: PhysicalProperty,
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[PhysicalProperty]],
         edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
     ) -> ViewPropertyApply | None:
         if prop.container and prop.container_property:
@@ -509,19 +523,20 @@ class _DMSExporter:
             return cls._create_reverse_direct_relation(prop, view_properties_with_ancestors_by_id)
         elif prop.view and prop.view_property and prop.connection:
             warnings.warn(
-                NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.view_property}"), stacklevel=2
+                NotSupportedWarning(f"{prop.connection} in {prop.view.as_id()!r}.{prop.view_property}"),
+                stacklevel=2,
             )
         return None
 
     @classmethod
-    def _create_mapped_property(cls, prop: DMSProperty) -> dm.MappedPropertyApply:
+    def _create_mapped_property(cls, prop: PhysicalProperty) -> dm.MappedPropertyApply:
         container = cast(ContainerEntity, prop.container)
         container_prop_identifier = cast(str, prop.container_property)
         extra_args: dict[str, Any] = {}
         if prop.connection == "direct":
             if isinstance(prop.value_type, ViewEntity):
                 extra_args["source"] = prop.value_type.as_id()
-            elif isinstance(prop.value_type, DMSUnknownEntity):
+            elif isinstance(prop.value_type, PhysicalUnknownEntity):
                 extra_args["source"] = None
             else:
                 # Should have been validated.
@@ -545,7 +560,9 @@ class _DMSExporter:
 
     @classmethod
     def _create_edge_property(
-        cls, prop: DMSProperty, edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference]
+        cls,
+        prop: PhysicalProperty,
+        edge_types_by_view_property_id: dict[tuple[ViewEntity, str], dm.DirectRelationReference],
     ) -> dm.EdgeConnectionApply:
         connection = cast(EdgeEntity, prop.connection)
         if isinstance(prop.value_type, ViewEntity):
@@ -575,7 +592,9 @@ class _DMSExporter:
 
     @classmethod
     def _create_reverse_direct_relation(
-        cls, prop: DMSProperty, view_properties_with_ancestors_by_id: dict[dm.ViewId, list[DMSProperty]]
+        cls,
+        prop: PhysicalProperty,
+        view_properties_with_ancestors_by_id: dict[dm.ViewId, list[PhysicalProperty]],
     ) -> dm.MultiReverseDirectRelationApply | SingleReverseDirectRelationApply | None:
         connection = cast(ReverseConnectionEntity, prop.connection)
         reverse_prop_id = connection.property_

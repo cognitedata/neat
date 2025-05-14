@@ -30,7 +30,7 @@ from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.models._types import (
     ContainerEntityType,
     DataModelExternalIdType,
-    DmsPropertyType,
+    PhysicalPropertyType,
     SpaceType,
     StrListType,
     URIRefType,
@@ -438,7 +438,7 @@ ExtensionCategoryType = Annotated[
 # Immutable such that this can be used as a key in a dictionary
 class ContainerProperty(BaseModel, frozen=True):
     container: ContainerEntityType
-    property_: DmsPropertyType
+    property_: PhysicalPropertyType
 
 
 class ContainerDestinationProperty(ContainerProperty, frozen=True):
@@ -451,4 +451,4 @@ class ViewRef(BaseModel, frozen=True):
 
 
 class ViewProperty(ViewRef, frozen=True):
-    property_: DmsPropertyType
+    property_: PhysicalPropertyType

@@ -8,14 +8,14 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerId, NodeId
 from pydantic import BaseModel, model_serializer, model_validator
 
-from ._single_value import ContainerEntity, DMSNodeEntity, Entity, ViewEntity
+from ._single_value import ConceptualEntity, ContainerEntity, DMSNodeEntity, ViewEntity
 
 
 @total_ordering
 class WrappedEntity(BaseModel, ABC):
     name: ClassVar[str]
-    _inner_cls: ClassVar[type[Entity]]
-    inner: list[Entity] | None
+    _inner_cls: ClassVar[type[ConceptualEntity]]
+    inner: list[ConceptualEntity] | None
 
     @classmethod
     def load(cls: "type[T_WrappedEntity]", data: Any) -> "T_WrappedEntity":

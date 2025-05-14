@@ -12,7 +12,7 @@ from cognite import neat
 from cognite.neat.core._issues.errors._general import NeatValueError
 
 if TYPE_CHECKING:
-    from cognite.neat.core._data_model.models.dms import DMSProperty
+    from cognite.neat.core._data_model.models.physical import PhysicalProperty
 
 
 def _is_in_notebook() -> bool:
@@ -196,11 +196,11 @@ _ASSET_PATH_PROPERTY = {
 BASE_MODEL = Literal["CogniteCore"]
 
 
-def get_asset_read_only_properties_with_connection() -> "list[DMSProperty]":
+def get_asset_read_only_properties_with_connection() -> "list[PhysicalProperty]":
     """Gets the asset read-only properties with connection, i.e. Root and Path."""
-    from cognite.neat.core._data_model.models.dms import DMSProperty
+    from cognite.neat.core._data_model.models.physical import PhysicalProperty
 
-    return [DMSProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
+    return [PhysicalProperty.model_validate(item) for item in (_ASSET_ROOT_PROPERTY, _ASSET_PATH_PROPERTY)]
 
 
 def get_base_concepts(

@@ -24,21 +24,21 @@ from cognite.neat.core._data_model.models._base_verified import (
 from cognite.neat.core._data_model.models._types import (
     ClassEntityType,
     ContainerEntityType,
-    DmsPropertyType,
+    PhysicalPropertyType,
     StrListType,
     URIRefType,
     ViewEntityType,
 )
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
+    ConceptualEntity,
     ContainerEntityList,
-    DMSEntity,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
-    Entity,
     HasDataFilter,
     NodeTypeFilter,
+    PhysicalEntity,
+    PhysicalUnknownEntity,
     RawFilter,
     ReverseConnectionEntity,
     ViewEntity,
@@ -53,10 +53,10 @@ if TYPE_CHECKING:
 _DEFAULT_VERSION = "1"
 
 
-class DMSMetadata(BaseVerifiedMetadata):
+class PhysicalMetadata(BaseVerifiedMetadata):
     role: ClassVar[RoleTypes] = RoleTypes.dms
     level: ClassVar[DataModelLevel] = DataModelLevel.physical
-    logical: URIRefType | None = None
+    conceptual: URIRefType | None = None
 
     def as_space(self) -> dm.SpaceApply:
         return dm.SpaceApply(
@@ -83,15 +83,21 @@ class DMSMetadata(BaseVerifiedMetadata):
         return self.space
 
 
-def _metadata(context: Any) -> DMSMetadata | None:
-    if isinstance(context, dict) and isinstance(context.get("metadata"), DMSMetadata):
+def _metadata(context: Any) -> PhysicalMetadata | None:
+    if isinstance(context, dict) and isinstance(context.get("metadata"), PhysicalMetadata):
         return context["metadata"]
     return None
 
 
-class DMSProperty(SheetRow):
+class PhysicalProperty(SheetRow):
+    """Physical property provides a complete definition of a property in the data model in a physical data model.
+    This includes view to which the property belongs as well mapping between the view and container property.
+    """
+
     view: ViewEntityType = Field(alias="View", description="The property identifier.")
-    view_property: DmsPropertyType = Field(alias="View Property", description="The ViewId this property belongs to")
+    view_property: PhysicalPropertyType = Field(
+        alias="View Property", description="The ViewId this property belongs to"
+    )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the property")
     description: str | None = Field(alias="Description", default=None, description="Short description of the property")
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None = Field(
@@ -100,7 +106,7 @@ class DMSProperty(SheetRow):
         description="nly applies to connection between views. "
         "It specify how the connection should be implemented in CDF.",
     )
-    value_type: DataType | ViewEntity | DMSUnknownEntity = Field(
+    value_type: DataType | ViewEntity | PhysicalUnknownEntity = Field(
         alias="Value Type",
         description="Value type that the property can hold. It takes either subset of CDF primitive types or a View id",
     )
@@ -131,7 +137,7 @@ class DMSProperty(SheetRow):
         alias="Container",
         description="Specifies container where the property is stored. Only applies to primitive type.",
     )
-    container_property: DmsPropertyType | None = Field(
+    container_property: PhysicalPropertyType | None = Field(
         None,
         alias="Container Property",
         description="Specifies property in the container where the property is stored. Only applies to primitive type.",
@@ -146,10 +152,10 @@ class DMSProperty(SheetRow):
         alias="Constraint",
         description="The names of the uniquness (comma separated) that should be created for the property.",
     )
-    logical: URIRefType | None = Field(
+    conceptual: URIRefType | None = Field(
         None,
-        alias="Logical",
-        description="Used to make connection between physical and logical data model aspect",
+        alias="Conceptual",
+        description="Used to make connection between physical and conceptual data model aspect",
     )
 
     @property
@@ -193,8 +199,8 @@ class DMSProperty(SheetRow):
 
     @field_validator("value_type", mode="after")
     def connections_value_type(
-        cls, value: EdgeEntity | ViewEntity | DMSUnknownEntity, info: ValidationInfo
-    ) -> DataType | EdgeEntity | ViewEntity | DMSUnknownEntity:
+        cls, value: EdgeEntity | ViewEntity | PhysicalUnknownEntity, info: ValidationInfo
+    ) -> DataType | EdgeEntity | ViewEntity | PhysicalUnknownEntity:
         if (connection := info.data.get("connection")) is None:
             if isinstance(value, ViewEntity):
                 raise ValueError(
@@ -202,7 +208,7 @@ class DMSProperty(SheetRow):
                     f"is required with value type pointing to another view."
                 )
             return value
-        if connection == "direct" and not isinstance(value, ViewEntity | DMSUnknownEntity):
+        if connection == "direct" and not isinstance(value, ViewEntity | PhysicalUnknownEntity):
             raise ValueError(f"Direct relation must have a value type that points to a view, got {value}")
         elif isinstance(connection, EdgeEntity) and not isinstance(value, ViewEntity):
             raise ValueError(f"Edge connection must have a value type that points to a view, got {value}")
@@ -261,7 +267,7 @@ class DMSProperty(SheetRow):
 
     @field_serializer("view", "container", when_used="unless-none")
     def remove_default_space(self, value: str, info: SerializationInfo) -> str:
-        if (metadata := _metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _metadata(info.context)) and isinstance(value, ConceptualEntity):
             if info.field_name == "container" and info.context.get("as_reference") is True:
                 # When dumping as reference, the container should keep the default space for easy copying
                 # over to user sheets.
@@ -271,7 +277,7 @@ class DMSProperty(SheetRow):
 
     @field_serializer("connection", when_used="unless-none")
     def remove_defaults(self, value: Any, info: SerializationInfo) -> str:
-        if isinstance(value, Entity) and (metadata := _metadata(info.context)):
+        if isinstance(value, ConceptualEntity) and (metadata := _metadata(info.context)):
             default_type = f"{self.view.external_id}.{self.view_property}"
             if isinstance(value, EdgeEntity) and value.edge_type and value.edge_type.space != metadata.space:
                 default_type = f"{metadata.space}{default_type}"
@@ -287,7 +293,7 @@ class DMSProperty(SheetRow):
         return ViewProperty(view=self.view, property_=self.view_property)
 
 
-class DMSContainer(SheetRow):
+class PhysicalContainer(SheetRow):
     container: ContainerEntityType = Field(
         alias="Container", description="Container id, strongly advised to PascalCase usage."
     )
@@ -327,9 +333,9 @@ class DMSContainer(SheetRow):
     @field_serializer("container", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
         if metadata := _metadata(info.context):
-            if isinstance(value, DMSEntity):
+            if isinstance(value, PhysicalEntity):
                 return value.dump(space=metadata.space, version=metadata.version)
-            elif isinstance(value, Entity):
+            elif isinstance(value, ConceptualEntity):
                 return value.dump(prefix=metadata.space, version=metadata.version)
         return str(value)
 
@@ -338,14 +344,14 @@ class DMSContainer(SheetRow):
         if isinstance(value, list) and (metadata := _metadata(info.context)):
             return ",".join(
                 constraint.dump(space=metadata.space, version=metadata.version)
-                if isinstance(constraint, DMSEntity)
+                if isinstance(constraint, PhysicalEntity)
                 else str(constraint)
                 for constraint in value
             )
         return ",".join(str(value) for value in value)
 
 
-class DMSView(SheetRow):
+class PhysicalView(SheetRow):
     view: ViewEntityType = Field(alias="View", description="View id, strongly advised to PascalCase usage.")
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the view being defined.")
     description: str | None = Field(
@@ -364,10 +370,10 @@ class DMSView(SheetRow):
         alias="In Model",
         description="Indicates whether the view being defined is a part of the data model.",
     )
-    logical: URIRefType | None = Field(
+    conceptual: URIRefType | None = Field(
         None,
-        alias="Logical",
-        description="Used to make connection between physical and logical data model aspect",
+        alias="Conceptual",
+        description="Used to make connection between physical and conceptual data model level",
     )
 
     def _identifier(self) -> tuple[Hashable, ...]:
@@ -375,7 +381,7 @@ class DMSView(SheetRow):
 
     @field_serializer("view", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
-        if (metadata := _metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _metadata(info.context)) and isinstance(value, ConceptualEntity):
             return value.dump(prefix=metadata.space, version=metadata.version)
         return str(value)
 
@@ -384,7 +390,7 @@ class DMSView(SheetRow):
         if isinstance(value, list) and (metadata := _metadata(info.context)):
             return ",".join(
                 parent.dump(space=metadata.space, version=metadata.version)
-                if isinstance(parent, DMSEntity)
+                if isinstance(parent, PhysicalEntity)
                 else str(parent)
                 for parent in value
             )
@@ -409,7 +415,7 @@ class DMSView(SheetRow):
         return ViewRef(view=self.view)
 
 
-class DMSNode(SheetRow):
+class PhysicalNodeType(SheetRow):
     node: DMSNodeEntity = Field(alias="Node", description="The type definition of the node.")
     usage: Literal["type", "collection"] = Field(
         alias="Usage", description="What the usage of the node is in the data model."
@@ -432,12 +438,12 @@ class DMSNode(SheetRow):
 
     @field_serializer("node", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
-        if isinstance(value, DMSEntity) and (metadata := _metadata(info.context)):
+        if isinstance(value, PhysicalEntity) and (metadata := _metadata(info.context)):
             return value.dump(space=metadata.space, version=metadata.version)
         return str(value)
 
 
-class DMSEnum(SheetRow):
+class PhysicalEnum(SheetRow):
     collection: ClassEntityType = Field(alias="Collection", description="The collection this enum belongs to.")
     value: str = Field(alias="Value", description="The value of the enum.")
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the enum.")
@@ -448,29 +454,31 @@ class DMSEnum(SheetRow):
 
     @field_serializer("collection", when_used="unless-none")
     def remove_default_space(self, value: Any, info: SerializationInfo) -> str:
-        if isinstance(value, DMSEntity) and (metadata := _metadata(info.context)):
+        if isinstance(value, PhysicalEntity) and (metadata := _metadata(info.context)):
             return value.dump(space=metadata.space, version=metadata.version)
         return str(value)
 
 
-class DMSRules(BaseVerifiedDataModel):
-    metadata: DMSMetadata = Field(alias="Metadata", description="Contains information about the data model.")
-    properties: SheetList[DMSProperty] = Field(
+class PhysicalDataModel(BaseVerifiedDataModel):
+    metadata: PhysicalMetadata = Field(alias="Metadata", description="Contains information about the data model.")
+    properties: SheetList[PhysicalProperty] = Field(
         alias="Properties", description="Contains the properties of the data model."
     )
-    views: SheetList[DMSView] = Field(alias="Views", description="Contains the views of the data model.")
-    containers: SheetList[DMSContainer] | None = Field(
+    views: SheetList[PhysicalView] = Field(alias="Views", description="Contains the views of the data model.")
+    containers: SheetList[PhysicalContainer] | None = Field(
         None,
         alias="Containers",
         description="Contains the definition containers that are the physical storage of the data model.",
     )
-    enum: SheetList[DMSEnum] | None = Field(None, alias="Enum", description="Contains the definition of enum values.")
-    nodes: SheetList[DMSNode] | None = Field(
+    enum: SheetList[PhysicalEnum] | None = Field(
+        None, alias="Enum", description="Contains the definition of enum values."
+    )
+    nodes: SheetList[PhysicalNodeType] | None = Field(
         None, alias="Nodes", description="Contains the definition of the node types."
     )
 
     @model_validator(mode="after")
-    def set_neat_id(self) -> "DMSRules":
+    def set_neat_id(self) -> "PhysicalDataModel":
         namespace = self.metadata.namespace
 
         for view in self.views:
@@ -494,25 +502,25 @@ class DMSRules(BaseVerifiedDataModel):
         for property_ in self.properties:
             property_.neatId = namespace[f"{property_.view.suffix}/{property_.view_property}"]
 
-    def sync_with_info_rules(self, info_rules: "ConceptualDataModel") -> None:
+    def sync_with_conceptual_data_model(self, conceptual_data_model: "ConceptualDataModel") -> None:
         # Sync at the metadata level
-        if info_rules.metadata.physical == self.metadata.identifier:
-            self.metadata.logical = info_rules.metadata.identifier
+        if conceptual_data_model.metadata.physical == self.metadata.identifier:
+            self.metadata.conceptual = conceptual_data_model.metadata.identifier
         else:
             # if models are not linked to start with, we skip
             return None
 
-        info_properties_by_neat_id = {prop.neatId: prop for prop in info_rules.properties}
-        dms_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
-        for neat_id, prop in info_properties_by_neat_id.items():
-            if prop.physical in dms_properties_by_neat_id:
-                dms_properties_by_neat_id[prop.physical].logical = neat_id
+        conceptual_properties_by_neat_id = {prop.neatId: prop for prop in conceptual_data_model.properties}
+        physical_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
+        for neat_id, prop in conceptual_properties_by_neat_id.items():
+            if prop.physical in physical_properties_by_neat_id:
+                physical_properties_by_neat_id[prop.physical].conceptual = neat_id
 
-        info_classes_by_neat_id = {cls.neatId: cls for cls in info_rules.classes}
-        dms_views_by_neat_id = {view.neatId: view for view in self.views}
-        for neat_id, class_ in info_classes_by_neat_id.items():
-            if class_.physical in dms_views_by_neat_id:
-                dms_views_by_neat_id[class_.physical].logical = neat_id
+        classes_by_neat_id = {cls.neatId: cls for cls in conceptual_data_model.classes}
+        views_by_neat_id = {view.neatId: view for view in self.views}
+        for neat_id, class_ in classes_by_neat_id.items():
+            if class_.physical in views_by_neat_id:
+                views_by_neat_id[class_.physical].conceptual = neat_id
 
     def as_schema(self, instance_space: str | None = None, remove_cdf_spaces: bool = False) -> DMSSchema:
         from ._exporter import _DMSExporter
@@ -521,12 +529,12 @@ class DMSRules(BaseVerifiedDataModel):
 
     @classmethod
     def display_type_name(cls) -> str:
-        return "VerifiedDMSModel"
+        return "VerifiedPhysicalModel"
 
     def _repr_html_(self) -> str:
         summary = {
-            "aspect": self.metadata.level,
-            "intended for": "DMS Architect",
+            "level": self.metadata.level,
+            "intended for": "Data Engineer",
             "name": self.metadata.name,
             "space": self.metadata.space,
             "external_id": self.metadata.external_id,

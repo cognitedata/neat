@@ -5,7 +5,7 @@ import pytest
 
 from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import DMSRules, data_types
+from cognite.neat.core._data_model.models import PhysicalDataModel, data_types
 from cognite.neat.core._data_model.models.conceptual import (
     ConceptualClass,
     ConceptualDataModel,
@@ -240,19 +240,19 @@ class TestInformationRules:
 
         dms_rules = InformationToDMS().transform(info_rules)
 
-        assert isinstance(dms_rules, DMSRules)
+        assert isinstance(dms_rules, PhysicalDataModel)
 
         # making sure linking is done on metadata level
-        assert dms_rules.metadata.logical == info_rules.metadata.identifier
+        assert dms_rules.metadata.conceptual == info_rules.metadata.identifier
 
         info_props = {prop.neatId: prop for prop in info_rules.properties}
         dms_props = {prop.neatId: prop for prop in dms_rules.properties}
 
         for dms_id in dms_props.keys():
-            assert info_props[dms_props[dms_id].logical].physical == dms_id
+            assert info_props[dms_props[dms_id].conceptual].physical == dms_id
 
         for info_id in info_props.keys():
-            assert dms_props[info_props[info_id].physical].logical == info_id
+            assert dms_props[info_props[info_id].physical].conceptual == info_id
 
 
 class TestInformationRulesConverter:

@@ -39,10 +39,10 @@ from cognite.neat.core._data_model.analysis import RulesAnalysis
 from cognite.neat.core._data_model.importers import DMSImporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSInputRules,
-    DMSRules,
+    PhysicalDataModel,
     SheetList,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
     data_types,
 )
 from cognite.neat.core._data_model.models.conceptual import (
@@ -60,23 +60,27 @@ from cognite.neat.core._data_model.models.data_types import (
     String,
     Timeseries,
 )
-from cognite.neat.core._data_model.models.dms import (
-    DMSMetadata,
-    DMSProperty,
-    DMSValidation,
-    DMSView,
-)
-from cognite.neat.core._data_model.models.dms._rules import DMSContainer, DMSEnum, DMSNode
 from cognite.neat.core._data_model.models.entities import (
     ClassEntity,
     ContainerEntity,
-    DMSUnknownEntity,
     EdgeEntity,
     HasDataFilter,
     MultiValueTypeInfo,
+    PhysicalUnknownEntity,
     ReverseConnectionEntity,
     UnknownEntity,
     ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
+    DMSValidation,
+    PhysicalMetadata,
+    PhysicalProperty,
+    PhysicalView,
+)
+from cognite.neat.core._data_model.models.physical._verified import (
+    PhysicalContainer,
+    PhysicalEnum,
+    PhysicalNodeType,
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues._factory import from_pydantic_errors
@@ -213,7 +217,7 @@ class ToDMSCompliantEntities(
         return property_
 
 
-class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]):  # type: ignore[misc]
+class StandardizeSpaceAndVersion(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):  # type: ignore[misc]
     """This transformer standardizes the space and version of the DMSRules.
 
     typically used to ensure all the views are moved to the same version as the data model.
@@ -224,7 +228,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
     def description(self) -> str:
         return "Ensures uniform version and space of the views belonging to the data model."
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         copy = rules.model_copy(deep=True)
 
         space = copy.metadata.space
@@ -234,7 +238,7 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
         copy.properties = self._standardize_properties(copy.properties, space, version)
         return copy
 
-    def _standardize_views(self, views: SheetList[DMSView], space: str, version: str) -> SheetList[DMSView]:
+    def _standardize_views(self, views: SheetList[PhysicalView], space: str, version: str) -> SheetList[PhysicalView]:
         for view in views:
             if view.view.space not in COGNITE_SPACES:
                 view.view.version = version
@@ -248,8 +252,8 @@ class StandardizeSpaceAndVersion(VerifiedRulesTransformer[DMSRules, DMSRules]): 
         return views
 
     def _standardize_properties(
-        self, properties: SheetList[DMSProperty], space: str, version: str
-    ) -> SheetList[DMSProperty]:
+        self, properties: SheetList[PhysicalProperty], space: str, version: str
+    ) -> SheetList[PhysicalProperty]:
         for property_ in properties:
             if property_.view.space not in COGNITE_SPACES:
                 property_.view.version = version
@@ -362,13 +366,13 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
         return f"Prefixes all entities with {self._prefix!r} prefix if they are in the same space as data model."
 
     @overload
-    def transform(self, rules: DMSRules) -> DMSRules: ...
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel: ...
 
     @overload
     def transform(self, rules: ConceptualDataModel) -> ConceptualDataModel: ...
 
-    def transform(self, rules: ConceptualDataModel | DMSRules) -> ConceptualDataModel | DMSRules:
-        copy: ConceptualDataModel | DMSRules = rules.model_copy(deep=True)
+    def transform(self, rules: ConceptualDataModel | PhysicalDataModel) -> ConceptualDataModel | PhysicalDataModel:
+        copy: ConceptualDataModel | PhysicalDataModel = rules.model_copy(deep=True)
 
         # Case: Prefix Information Rules
         if isinstance(copy, ConceptualDataModel):
@@ -398,7 +402,7 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
             return copy
 
         # Case: Prefix DMS Rules
-        elif isinstance(copy, DMSRules):
+        elif isinstance(copy, PhysicalDataModel):
             for view in copy.views:
                 if view.view.space == copy.metadata.space:
                     view.view = self._with_prefix(view.view)
@@ -455,16 +459,16 @@ class StandardizeNaming(ConversionTransformer):
         return "Sets views/classes/containers names to PascalCase and properties to camelCase."
 
     @overload
-    def transform(self, rules: DMSRules) -> DMSRules: ...
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel: ...
 
     @overload
     def transform(self, rules: ConceptualDataModel) -> ConceptualDataModel: ...
 
-    def transform(self, rules: ConceptualDataModel | DMSRules) -> ConceptualDataModel | DMSRules:
+    def transform(self, rules: ConceptualDataModel | PhysicalDataModel) -> ConceptualDataModel | PhysicalDataModel:
         output = rules.model_copy(deep=True)
         if isinstance(output, ConceptualDataModel):
             return self._standardize_information_rules(output)
-        elif isinstance(output, DMSRules):
+        elif isinstance(output, PhysicalDataModel):
             return self._standardize_dms_rules(output)
         raise NeatValueError(f"Unsupported rules type: {type(output)}")
 
@@ -496,7 +500,7 @@ class StandardizeNaming(ConversionTransformer):
 
         return rules
 
-    def _standardize_dms_rules(self, rules: DMSRules) -> DMSRules:
+    def _standardize_dms_rules(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         new_by_old_view: dict[str, str] = {}
         for view in rules.views:
             new_suffix = NamingStandardization.standardize_class_str(view.view.suffix)
@@ -557,7 +561,7 @@ class StandardizeNaming(ConversionTransformer):
         return rules
 
 
-class InformationToDMS(ConversionTransformer[ConceptualDataModel, DMSRules]):
+class InformationToDMS(ConversionTransformer[ConceptualDataModel, PhysicalDataModel]):
     """Converts InformationRules to DMSRules."""
 
     def __init__(
@@ -570,19 +574,19 @@ class InformationToDMS(ConversionTransformer[ConceptualDataModel, DMSRules]):
         self.reserved_properties = reserved_properties
         self.client = client
 
-    def transform(self, rules: ConceptualDataModel) -> DMSRules:
+    def transform(self, rules: ConceptualDataModel) -> PhysicalDataModel:
         return _InformationRulesConverter(rules, self.client).as_dms_rules(
             self.ignore_undefined_value_types, self.reserved_properties
         )
 
 
-class DMSToInformation(ConversionTransformer[DMSRules, ConceptualDataModel]):
+class DMSToInformation(ConversionTransformer[PhysicalDataModel, ConceptualDataModel]):
     """Converts DMSRules to InformationRules."""
 
     def __init__(self, instance_namespace: Namespace | None = None):
         self.instance_namespace = instance_namespace
 
-    def transform(self, rules: DMSRules) -> ConceptualDataModel:
+    def transform(self, rules: PhysicalDataModel) -> ConceptualDataModel:
         return _DMSRulesConverter(rules, self.instance_namespace).as_information_rules()
 
 
@@ -595,9 +599,9 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
     def transform(self, rules: VerifiedRules) -> VerifiedRules:
         if isinstance(rules, self._out_cls):
             return rules
-        if isinstance(rules, ConceptualDataModel) and self._out_cls is DMSRules:
+        if isinstance(rules, ConceptualDataModel) and self._out_cls is PhysicalDataModel:
             return InformationToDMS().transform(rules)
-        if isinstance(rules, DMSRules) and self._out_cls is ConceptualDataModel:
+        if isinstance(rules, PhysicalDataModel) and self._out_cls is ConceptualDataModel:
             return DMSToInformation().transform(rules)
         raise ValueError(f"Unsupported conversion from {type(rules)} to {self._out_cls}")
 
@@ -605,7 +609,7 @@ class ConvertToRules(ConversionTransformer[VerifiedRules, VerifiedRules]):
 _T_Entity = TypeVar("_T_Entity", bound=ClassEntity | ViewEntity)
 
 
-class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class SetIDDMSModel(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
     def __init__(self, new_id: DataModelId | tuple[str, str, str], name: str | None = None):
         self.new_id = DataModelId.load(new_id)
         self.name = name
@@ -614,7 +618,7 @@ class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def description(self) -> str:
         return f"Sets the Data Model ID to {self.new_id.as_tuple()}"
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         if self.new_id.version is None:
             raise NeatValueError("Version is required when setting a new Data Model ID")
         dump = rules.dump()
@@ -624,13 +628,13 @@ class SetIDDMSModel(VerifiedRulesTransformer[DMSRules, DMSRules]):
         dump["metadata"]["name"] = self.name or self._generate_name()
         # Serialize and deserialize to set the new space and external_id
         # as the default values for the new model.
-        return DMSRules.model_validate(DMSInputRules.load(dump).dump())
+        return PhysicalDataModel.model_validate(UnverifiedPhysicalDataModel.load(dump).dump())
 
     def _generate_name(self) -> str:
         return title(to_words(self.new_id.external_id))
 
 
-class ToExtensionModel(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
+class ToExtensionModel(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel], ABC):
     type_: ClassVar[str]
 
     def __init__(self, new_model_id: DataModelIdentifier) -> None:
@@ -658,10 +662,10 @@ class ToEnterpriseModel(ToExtensionModel):
         self.org_name = org_name
         self.move_connections = move_connections
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         return self._to_enterprise(rules)
 
-    def _to_enterprise(self, reference_model: DMSRules) -> DMSRules:
+    def _to_enterprise(self, reference_model: PhysicalDataModel) -> PhysicalDataModel:
         enterprise_model = reference_model.model_copy(deep=True)
 
         enterprise_model.metadata.name = f"{self.org_name} {self.type_} data model"
@@ -702,7 +706,9 @@ class ToEnterpriseModel(ToExtensionModel):
         return enterprise_model
 
     @staticmethod
-    def _create_connection_properties(rules: DMSRules, new_views: SheetList[DMSView]) -> SheetList[DMSProperty]:
+    def _create_connection_properties(
+        rules: PhysicalDataModel, new_views: SheetList[PhysicalView]
+    ) -> SheetList[PhysicalProperty]:
         """Creates a new connection property for each connection property in the reference model.
 
         This is for example when you create an enterprise model from CogniteCore, you ensure that your
@@ -710,7 +716,7 @@ class ToEnterpriseModel(ToExtensionModel):
         """
         # Note all new news have an implements attribute that points to the original view
         previous_by_new_view = {view.implements[0]: view.view for view in new_views if view.implements}
-        connection_properties = SheetList[DMSProperty]()
+        connection_properties = SheetList[PhysicalProperty]()
         for prop in rules.properties:
             if (
                 isinstance(prop.value_type, ViewEntity)
@@ -725,23 +731,27 @@ class ToEnterpriseModel(ToExtensionModel):
         return connection_properties
 
     def _create_new_views(
-        self, rules: DMSRules
-    ) -> tuple[SheetList[DMSView], SheetList[DMSContainer], SheetList[DMSProperty]]:
+        self, rules: PhysicalDataModel
+    ) -> tuple[
+        SheetList[PhysicalView],
+        SheetList[PhysicalContainer],
+        SheetList[PhysicalProperty],
+    ]:
         """Creates new views for the new model.
 
         If the dummy property is provided, it will also create a new container for each view
         with a single property that is the dummy property.
         """
-        new_views = SheetList[DMSView]()
-        new_containers = SheetList[DMSContainer]()
-        new_properties = SheetList[DMSProperty]()
+        new_views = SheetList[PhysicalView]()
+        new_containers = SheetList[PhysicalContainer]()
+        new_properties = SheetList[PhysicalProperty]()
 
         for definition in rules.views:
             view_entity = self._remove_cognite_affix(definition.view)
             view_entity.version = cast(str, self.new_model_id.version)
             view_entity.prefix = self.new_model_id.space
             new_views.append(
-                DMSView(
+                PhysicalView(
                     view=view_entity,
                     implements=[definition.view],
                     in_model=True,
@@ -754,10 +764,10 @@ class ToEnterpriseModel(ToExtensionModel):
 
             container_entity = ContainerEntity(space=view_entity.prefix, externalId=view_entity.external_id)
 
-            container = DMSContainer(container=container_entity)
+            container = PhysicalContainer(container=container_entity)
 
             property_id = f"{to_camel_case(view_entity.suffix)}{self.dummy_property}"
-            property_ = DMSProperty(
+            property_ = PhysicalProperty(
                 view=view_entity,
                 view_property=property_id,
                 value_type=String(),
@@ -815,7 +825,7 @@ class ToSolutionModel(ToExtensionModel):
         self.exclude_views_in_other_spaces = exclude_views_in_other_spaces
         self.skip_cognite_views = skip_cognite_views
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         reference_model = rules
         reference_model_id = reference_model.metadata.as_data_model_id()
         if reference_model_id in COGNITE_MODELS:
@@ -825,7 +835,7 @@ class ToSolutionModel(ToExtensionModel):
             )
         return self._to_solution(reference_model)
 
-    def _to_solution(self, reference_rules: DMSRules) -> DMSRules:
+    def _to_solution(self, reference_rules: PhysicalDataModel) -> PhysicalDataModel:
         """For creation of solution data model / rules specifically for mapping over existing containers."""
         reference_rules = self._expand_properties(reference_rules.model_copy(deep=True))
 
@@ -855,7 +865,7 @@ class ToSolutionModel(ToExtensionModel):
                 "name": f"{self.type_} data model",
             },
         )
-        return DMSRules(
+        return PhysicalDataModel(
             metadata=metadata,
             properties=new_properties,
             views=new_views,
@@ -865,7 +875,7 @@ class ToSolutionModel(ToExtensionModel):
         )
 
     @staticmethod
-    def _expand_properties(rules: DMSRules) -> DMSRules:
+    def _expand_properties(rules: PhysicalDataModel) -> PhysicalDataModel:
         probe = RulesAnalysis(dms=rules)
         ancestor_properties_by_view = probe.properties_by_view(
             include_ancestors=True,
@@ -890,10 +900,14 @@ class ToSolutionModel(ToExtensionModel):
         return rules
 
     def _create_views(
-        self, reference: DMSRules
-    ) -> tuple[SheetList[DMSView], SheetList[DMSProperty], dict[ViewEntity, ViewEntity]]:
+        self, reference: PhysicalDataModel
+    ) -> tuple[
+        SheetList[PhysicalView],
+        SheetList[PhysicalProperty],
+        dict[ViewEntity, ViewEntity],
+    ]:
         renaming: dict[ViewEntity, ViewEntity] = {}
-        new_views = SheetList[DMSView]()
+        new_views = SheetList[PhysicalView]()
         read_view_by_new_view: dict[ViewEntity, ViewEntity] = {}
         for ref_view in reference.views:
             if (self.skip_cognite_views and ref_view.view.space in COGNITE_SPACES) or (
@@ -911,7 +925,7 @@ class ToSolutionModel(ToExtensionModel):
                 # This will be used to point to the one view in the Enterprise model,
                 # while the new view will to be written to.
                 new_entity.suffix = f"{self.view_prefix}{ref_view.view.suffix}"
-                new_view = DMSView(
+                new_view = PhysicalView(
                     view=ViewEntity(
                         # MyPy we validate that version is string in the constructor
                         space=self.new_model_id.space,
@@ -930,7 +944,7 @@ class ToSolutionModel(ToExtensionModel):
             renaming[ref_view.view] = new_entity
             new_views.append(ref_view.model_copy(deep=True, update={"implements": None, "view": new_entity}))
 
-        new_properties = SheetList[DMSProperty]()
+        new_properties = SheetList[PhysicalProperty]()
         new_view_entities = {view.view for view in new_views}
         for prop in reference.properties:
             new_property = prop.model_copy(deep=True)
@@ -945,10 +959,13 @@ class ToSolutionModel(ToExtensionModel):
         return new_views, new_properties, read_view_by_new_view
 
     def _create_containers_update_view_filter(
-        self, new_views: SheetList[DMSView], reference: DMSRules, read_view_by_new_view: dict[ViewEntity, ViewEntity]
-    ) -> tuple[SheetList[DMSContainer], SheetList[DMSProperty]]:
-        new_containers = SheetList[DMSContainer]()
-        container_properties: SheetList[DMSProperty] = SheetList[DMSProperty]()
+        self,
+        new_views: SheetList[PhysicalView],
+        reference: PhysicalDataModel,
+        read_view_by_new_view: dict[ViewEntity, ViewEntity],
+    ) -> tuple[SheetList[PhysicalContainer], SheetList[PhysicalProperty]]:
+        new_containers = SheetList[PhysicalContainer]()
+        container_properties: SheetList[PhysicalProperty] = SheetList[PhysicalProperty]()
         ref_containers_by_ref_view: dict[ViewEntity, set[ContainerEntity]] = defaultdict(set)
         ref_views_by_external_id = {
             view.view.external_id: view for view in reference.views if view.view.space == reference.metadata.space
@@ -964,7 +981,7 @@ class ToSolutionModel(ToExtensionModel):
                 container_entity = ContainerEntity(space=self.new_model_id.space, externalId=view.view.external_id)
                 prefix = to_camel_case(view.view.suffix)
                 if self.properties == "repeat" and self.dummy_property:
-                    property_ = DMSProperty(
+                    property_ = PhysicalProperty(
                         view=view.view,
                         view_property=f"{prefix}{self.dummy_property}",
                         value_type=String(),
@@ -974,7 +991,7 @@ class ToSolutionModel(ToExtensionModel):
                         container=container_entity,
                         container_property=f"{prefix}{self.dummy_property}",
                     )
-                    new_containers.append(DMSContainer(container=container_entity))
+                    new_containers.append(PhysicalContainer(container=container_entity))
                     container_properties.append(property_)
                 elif self.properties == "repeat" and self.dummy_property is None:
                     # For this case we set the filter. This is used by the DataProductModel.
@@ -983,7 +1000,7 @@ class ToSolutionModel(ToExtensionModel):
                     if ref_view := ref_views_by_external_id.get(view.view.external_id):
                         self._set_view_filter(view, ref_containers_by_ref_view, ref_view)
                 elif self.properties == "connection" and self.direct_property:
-                    property_ = DMSProperty(
+                    property_ = PhysicalProperty(
                         view=view.view,
                         view_property=self.direct_property,
                         value_type=read_view,
@@ -994,7 +1011,7 @@ class ToSolutionModel(ToExtensionModel):
                         container_property=self.direct_property,
                         connection="direct",
                     )
-                    new_containers.append(DMSContainer(container=container_entity))
+                    new_containers.append(PhysicalContainer(container=container_entity))
                     container_properties.append(property_)
                 else:
                     raise NeatValueError(f"Unsupported properties mode: {self.properties}")
@@ -1007,7 +1024,10 @@ class ToSolutionModel(ToExtensionModel):
         return new_containers, container_properties
 
     def _set_view_filter(
-        self, view: DMSView, ref_containers_by_ref_view: dict[ViewEntity, set[ContainerEntity]], ref_view: DMSView
+        self,
+        view: PhysicalView,
+        ref_containers_by_ref_view: dict[ViewEntity, set[ContainerEntity]],
+        ref_view: PhysicalView,
     ) -> None:
         if self.filter_type == "view":
             view.filter_ = HasDataFilter(inner=[ref_view.view])
@@ -1047,12 +1067,12 @@ class ToDataProductModel(ToSolutionModel):
         )
         self.include = include
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         # Overwrite transform to avoid the warning.
         return self._to_solution(rules)
 
 
-class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class DropModelViews(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
     _ASSET_VIEW = ViewId("cdf_cdm", "CogniteAsset", "v1")
     _VIEW_BY_COLLECTION: Mapping[Literal["3D", "Annotation", "BaseViews"], frozenset[ViewId]] = {
         "3D": frozenset(
@@ -1110,7 +1130,7 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
             )
         )
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         exclude_views: set[ViewEntity] = {
             view.view for view in rules.views if view.view.suffix in self.drop_external_ids
         }
@@ -1124,8 +1144,8 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
         properties_by_view = RulesAnalysis(dms=new_model).properties_by_view(include_ancestors=True)
 
-        new_model.views = SheetList[DMSView]([view for view in new_model.views if view.view not in exclude_views])
-        new_properties = SheetList[DMSProperty]()
+        new_model.views = SheetList[PhysicalView]([view for view in new_model.views if view.view not in exclude_views])
+        new_properties = SheetList[PhysicalProperty]()
         mapped_containers: set[ContainerEntity] = set()
         for view in new_model.views:
             for prop in properties_by_view[view.view]:
@@ -1140,7 +1160,7 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
         new_model.properties = new_properties
         new_model.containers = (
-            SheetList[DMSContainer](
+            SheetList[PhysicalContainer](
                 [container for container in new_model.containers or [] if container.container in mapped_containers]
             )
             or None
@@ -1149,7 +1169,7 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return new_model
 
     @classmethod
-    def _is_asset_3D_property(cls, prop: DMSProperty) -> bool:
+    def _is_asset_3D_property(cls, prop: PhysicalProperty) -> bool:
         return prop.view.as_id() == cls._ASSET_VIEW and prop.view_property == "object3D"
 
     @property
@@ -1157,12 +1177,12 @@ class DropModelViews(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return f"Removed {len(self.drop_external_ids) + len(self.drop_collection)} views from data model"
 
 
-class IncludeReferenced(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class IncludeReferenced(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
     def __init__(self, client: NeatClient, include_properties: bool = False) -> None:
         self._client = client
         self.include_properties = include_properties
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         dms_rules = rules
         view_ids, container_ids = DMSValidation(dms_rules).imported_views_and_containers_ids()
         if not (view_ids or container_ids):
@@ -1301,12 +1321,12 @@ class ClassicPrepareCore(VerifiedRulesTransformer[ConceptualDataModel, Conceptua
         return output
 
 
-class ChangeViewPrefix(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class ChangeViewPrefix(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
     def __init__(self, old: str, new: str) -> None:
         self.old = old
         self.new = new
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         output = rules.model_copy(deep=True)
         new_by_old: dict[ViewEntity, ViewEntity] = {}
         for view in output.views:
@@ -1326,11 +1346,11 @@ class ChangeViewPrefix(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return output
 
 
-class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
-    def __init__(self, extra: DMSRules) -> None:
+class MergeDMSRules(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
+    def __init__(self, extra: PhysicalDataModel) -> None:
         self.extra = extra
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         output = rules.model_copy(deep=True)
         existing_views = {view.view for view in output.views}
         for view in self.extra.views:
@@ -1347,18 +1367,18 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
             output.properties.append(prop)
             if prop.container and prop.container not in existing_containers:
                 if output.containers is None:
-                    output.containers = SheetList[DMSContainer]()
+                    output.containers = SheetList[PhysicalContainer]()
                 output.containers.append(new_containers_by_entity[prop.container])
             if isinstance(prop.value_type, Enum) and prop.value_type.collection not in existing_enum_collections:
                 if output.enum is None:
-                    output.enum = SheetList[DMSEnum]()
+                    output.enum = SheetList[PhysicalEnum]()
                 output.enum.append(new_enum_collections_by_entity[prop.value_type.collection])
 
         existing_nodes = {node.node for node in output.nodes or []}
         for node in self.extra.nodes or []:
             if node.node not in existing_nodes:
                 if output.nodes is None:
-                    output.nodes = SheetList[DMSNode]()
+                    output.nodes = SheetList[PhysicalNodeType]()
                 output.nodes.append(node)
 
         return output
@@ -1397,13 +1417,15 @@ class _InformationRulesConverter:
         self.client = client
 
     def as_dms_rules(
-        self, ignore_undefined_value_types: bool = False, reserved_properties: Literal["error", "warning"] = "error"
-    ) -> "DMSRules":
-        from cognite.neat.core._data_model.models.dms._rules import (
-            DMSContainer,
-            DMSProperty,
-            DMSRules,
-            DMSView,
+        self,
+        ignore_undefined_value_types: bool = False,
+        reserved_properties: Literal["error", "warning"] = "error",
+    ) -> "PhysicalDataModel":
+        from cognite.neat.core._data_model.models.physical._verified import (
+            PhysicalContainer,
+            PhysicalDataModel,
+            PhysicalProperty,
+            PhysicalView,
         )
 
         info_metadata = self.rules.metadata
@@ -1452,9 +1474,9 @@ class _InformationRulesConverter:
             else:
                 ancestors_by_view[view] = cognite_views[view]
 
-        properties_by_class: dict[ClassEntity, list[DMSProperty]] = defaultdict(list)
+        properties_by_class: dict[ClassEntity, list[PhysicalProperty]] = defaultdict(list)
         used_containers: dict[ContainerEntity, Counter[ClassEntity]] = defaultdict(Counter)
-        used_cognite_containers: dict[ContainerEntity, DMSContainer] = {}
+        used_cognite_containers: dict[ContainerEntity, PhysicalContainer] = {}
 
         for prop in self.rules.properties:
             if ignore_undefined_value_types and isinstance(prop.value_type, UnknownEntity):
@@ -1497,24 +1519,24 @@ class _InformationRulesConverter:
 
             properties_by_class[prop.class_].append(dms_property)
 
-        views: list[DMSView] = []
+        views: list[PhysicalView] = []
 
         for cls_ in self.rules.classes:
-            dms_view = DMSView(
+            dms_view = PhysicalView(
                 name=cls_.name,
                 view=cls_.class_.as_view_entity(default_space, default_version),
                 description=cls_.description,
                 implements=self._get_view_implements(cls_, info_metadata),
             )
 
-            dms_view.logical = cls_.neatId
+            dms_view.conceptual = cls_.neatId
             views.append(dms_view)
 
         class_by_entity = {cls_.class_: cls_ for cls_ in self.rules.classes}
 
         existing_containers: set[ContainerEntity] = set()
 
-        containers: list[DMSContainer] = []
+        containers: list[PhysicalContainer] = []
         for container_entity, class_entities in used_containers.items():
             if container_entity in existing_containers:
                 continue
@@ -1531,7 +1553,7 @@ class _InformationRulesConverter:
             else:
                 used_for = "all"
 
-            container = DMSContainer(
+            container = PhysicalContainer(
                 container=container_entity,
                 name=class_.name,
                 description=class_.description,
@@ -1543,11 +1565,13 @@ class _InformationRulesConverter:
         if used_cognite_containers:
             containers.extend(used_cognite_containers.values())
 
-        dms_rules = DMSRules(
+        dms_rules = PhysicalDataModel(
             metadata=dms_metadata,
-            properties=SheetList[DMSProperty]([prop for prop_set in properties_by_class.values() for prop in prop_set]),
-            views=SheetList[DMSView](views),
-            containers=SheetList[DMSContainer](containers),
+            properties=SheetList[PhysicalProperty](
+                [prop for prop_set in properties_by_class.values() for prop in prop_set]
+            ),
+            views=SheetList[PhysicalView](views),
+            containers=SheetList[PhysicalContainer](containers),
         )
 
         self.rules.sync_with_physical_data_model(dms_rules)
@@ -1557,13 +1581,13 @@ class _InformationRulesConverter:
     def _get_cognite_components(
         self,
     ) -> tuple[
-        dict[tuple[ClassEntity, str], DMSProperty],
-        dict[ContainerEntity, DMSContainer],
+        dict[tuple[ClassEntity, str], PhysicalProperty],
+        dict[ContainerEntity, PhysicalContainer],
         dict[ViewEntity, set[ViewEntity]],
     ]:
         cognite_concepts = self._get_cognite_concepts()
-        cognite_properties: dict[tuple[ClassEntity, str], DMSProperty] = {}
-        cognite_containers: dict[ContainerEntity, DMSContainer] = {}
+        cognite_properties: dict[tuple[ClassEntity, str], PhysicalProperty] = {}
+        cognite_containers: dict[ContainerEntity, PhysicalContainer] = {}
         cognite_views: dict[ViewEntity, set[ViewEntity]] = {}
         if cognite_concepts:
             if self.client is None:
@@ -1600,12 +1624,12 @@ class _InformationRulesConverter:
         return constrains
 
     @classmethod
-    def _convert_metadata_to_dms(cls, metadata: ConceptualMetadata) -> "DMSMetadata":
-        from cognite.neat.core._data_model.models.dms._rules import (
-            DMSMetadata,
+    def _convert_metadata_to_dms(cls, metadata: ConceptualMetadata) -> "PhysicalMetadata":
+        from cognite.neat.core._data_model.models.physical._verified import (
+            PhysicalMetadata,
         )
 
-        dms_metadata = DMSMetadata(
+        dms_metadata = PhysicalMetadata(
             space=metadata.space,
             version=metadata.version,
             external_id=metadata.external_id,
@@ -1615,7 +1639,7 @@ class _InformationRulesConverter:
             updated=metadata.updated,
         )
 
-        dms_metadata.logical = metadata.identifier
+        dms_metadata.conceptual = metadata.identifier
         return dms_metadata
 
     def _as_dms_property(
@@ -1626,8 +1650,8 @@ class _InformationRulesConverter:
         edge_classes: set[ClassEntity],
         edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         end_node_by_edge: dict[ClassEntity, ClassEntity],
-    ) -> "DMSProperty":
-        from cognite.neat.core._data_model.models.dms._rules import DMSProperty
+    ) -> "PhysicalProperty":
+        from cognite.neat.core._data_model.models.physical._verified import PhysicalProperty
 
         # returns property type, which can be ObjectProperty or DatatypeProperty
         value_type = self._get_value_type(
@@ -1659,7 +1683,7 @@ class _InformationRulesConverter:
         else:
             container, container_property = self._get_container(info_property, default_space)
 
-        dms_property = DMSProperty(
+        dms_property = PhysicalProperty(
             name=info_property.name,
             value_type=value_type,
             min_count=min_count,
@@ -1673,19 +1697,19 @@ class _InformationRulesConverter:
         )
 
         # linking
-        dms_property.logical = info_property.neatId
+        dms_property.conceptual = info_property.neatId
 
         return dms_property
 
     @staticmethod
     def _customize_cognite_property(
         prop: ConceptualProperty,
-        cognite_prop: DMSProperty,
+        cognite_prop: PhysicalProperty,
         class_: ClassEntity,
         default_space: str,
         default_version: str,
         ancestors_by_view: dict[ViewEntity, set[ViewEntity]],
-    ) -> DMSProperty:
+    ) -> PhysicalProperty:
         """Customize the cognite property to match the information property.
         This means updating the name and description of the cognite property with the information property.
         In addition, the value type can be updated given that the value type is matches the cognite property value
@@ -1703,7 +1727,7 @@ class _InformationRulesConverter:
             DMSProperty: The customized cognite property
 
         """
-        value_type: DataType | ViewEntity | DMSUnknownEntity = cognite_prop.value_type
+        value_type: DataType | ViewEntity | PhysicalUnknownEntity = cognite_prop.value_type
         if isinstance(prop.value_type, DataType) and prop.value_type != value_type:
             warnings.warn(
                 PropertyOverwritingWarning(prop.property_, "property", "value type", (str(prop.value_type),)),
@@ -1748,7 +1772,7 @@ class _InformationRulesConverter:
     @staticmethod
     def _get_connection(
         prop: ConceptualProperty,
-        value_type: DataType | ViewEntity | DMSUnknownEntity,
+        value_type: DataType | ViewEntity | PhysicalUnknownEntity,
         edge_value_types_by_class_property_pair: dict[tuple[ClassEntity, str], ClassEntity],
         default_space: str,
         default_version: str,
@@ -1766,7 +1790,7 @@ class _InformationRulesConverter:
         elif isinstance(value_type, ViewEntity):
             return "direct"
         # defaulting to direct connection
-        elif isinstance(value_type, DMSUnknownEntity):
+        elif isinstance(value_type, PhysicalUnknownEntity):
             return "direct"
         return None
 
@@ -1777,14 +1801,14 @@ class _InformationRulesConverter:
         default_version: str,
         edge_classes: set[ClassEntity],
         end_node_by_edge: dict[ClassEntity, ClassEntity],
-    ) -> DataType | ViewEntity | DMSUnknownEntity:
+    ) -> DataType | ViewEntity | PhysicalUnknownEntity:
         if isinstance(prop.value_type, DataType):
             return prop.value_type
 
         # UnknownEntity should  resolve to DMSUnknownEntity
         # meaning end node type is unknown
         elif isinstance(prop.value_type, UnknownEntity):
-            return DMSUnknownEntity()
+            return PhysicalUnknownEntity()
 
         elif isinstance(prop.value_type, ClassEntity) and (prop.value_type in edge_classes):
             if prop.value_type in end_node_by_edge:
@@ -1796,7 +1820,7 @@ class _InformationRulesConverter:
                 ),
                 stacklevel=2,
             )
-            return DMSUnknownEntity()
+            return PhysicalUnknownEntity()
         elif isinstance(prop.value_type, ClassEntity):
             return prop.value_type.as_view_entity(default_space, default_version)
 
@@ -1808,7 +1832,7 @@ class _InformationRulesConverter:
                 if list(non_unknown) == 1:
                     #
                     return non_unknown[0].as_view_entity(default_space, default_version)
-                return DMSUnknownEntity()
+                return PhysicalUnknownEntity()
 
             # Multi Data type should resolve to a single data type, or it should
             elif prop.value_type.is_multi_data_type():
@@ -1894,7 +1918,7 @@ class _InformationRulesConverter:
         }
 
     @staticmethod
-    def _get_cognite_dms_rules(concepts: set[ClassEntity], client: NeatClient) -> DMSRules:
+    def _get_cognite_dms_rules(concepts: set[ClassEntity], client: NeatClient) -> PhysicalDataModel:
         view_ids = [dm.ViewId(str(cls_.prefix), cls_.suffix, cls_.version) for cls_ in concepts]
         views = client.loaders.views.retrieve(view_ids, format="read", include_connected=True, include_ancestor=True)
         spaces = Counter(view.space for view in views)
@@ -1919,8 +1943,10 @@ class _InformationRulesConverter:
 
     @staticmethod
     def _find_cognite_property(
-        property_: str, parents: set[ClassEntity], cognite_properties: dict[tuple[ClassEntity, str], DMSProperty]
-    ) -> DMSProperty | None:
+        property_: str,
+        parents: set[ClassEntity],
+        cognite_properties: dict[tuple[ClassEntity, str], PhysicalProperty],
+    ) -> PhysicalProperty | None:
         """Find the parent class that has the property in the cognite properties"""
         for parent in parents:
             if (parent, property_) in cognite_properties:
@@ -1929,7 +1955,7 @@ class _InformationRulesConverter:
 
 
 class _DMSRulesConverter:
-    def __init__(self, dms: DMSRules, instance_namespace: Namespace | None = None) -> None:
+    def __init__(self, dms: PhysicalDataModel, instance_namespace: Namespace | None = None) -> None:
         self.dms = dms
         self.instance_namespace = instance_namespace
 
@@ -1982,7 +2008,7 @@ class _DMSRulesConverter:
                     prefix=property_.value_type.prefix,
                     suffix=property_.value_type.suffix,
                 )
-            elif isinstance(property_.value_type, DMSUnknownEntity):
+            elif isinstance(property_.value_type, PhysicalUnknownEntity):
                 value_type = UnknownEntity()
             else:
                 raise ValueError(f"Unsupported value type: {property_.value_type.type_}")
@@ -2010,12 +2036,12 @@ class _DMSRulesConverter:
             prefixes=prefixes,
         )
 
-        self.dms.sync_with_info_rules(info_rules)
+        self.dms.sync_with_conceptual_data_model(info_rules)
 
         return info_rules
 
     @classmethod
-    def _convert_metadata_to_info(cls, metadata: DMSMetadata) -> "ConceptualMetadata":
+    def _convert_metadata_to_info(cls, metadata: PhysicalMetadata) -> "ConceptualMetadata":
         from cognite.neat.core._data_model.models.conceptual._verified import (
             ConceptualMetadata,
         )
@@ -2032,7 +2058,7 @@ class _DMSRulesConverter:
         )
 
 
-class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class _SubsetEditableCDMRules(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
     """Subsets editable CDM rules to only include desired set of CDM concepts.
 
     !!! note "Platypus UI limitations"
@@ -2049,15 +2075,15 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
         self._views = views
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         # should check to make sure data model is based on the editable CDM
         # if not raise an error
 
         subsetted_rules: dict[str, Any] = {
             "metadata": rules.metadata.model_copy(),
-            "views": SheetList[DMSView](),
-            "properties": SheetList[DMSProperty](),
-            "containers": SheetList[DMSContainer](),
+            "views": SheetList[PhysicalView](),
+            "properties": SheetList[PhysicalProperty](),
+            "containers": SheetList[PhysicalContainer](),
             "enum": rules.enum,
             "nodes": rules.nodes,
         }
@@ -2072,7 +2098,7 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
             for property_ in rules.properties:
                 if property_.view in editable_views_to_keep and (
                     isinstance(property_.value_type, DataType)
-                    or isinstance(property_.value_type, DMSUnknownEntity)
+                    or isinstance(property_.value_type, PhysicalUnknownEntity)
                     or (isinstance(property_.value_type, ViewEntity) and property_.value_type in editable_views_to_keep)
                 ):
                     subsetted_rules["properties"].append(property_)
@@ -2084,13 +2110,13 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
                     if container.container in containers_to_keep:
                         subsetted_rules["containers"].append(container)
             try:
-                return DMSRules.model_validate(subsetted_rules)
+                return PhysicalDataModel.model_validate(subsetted_rules)
             except ValidationError as e:
                 raise NeatValueError(f"Cannot subset rules: {e}") from e
         else:
             raise NeatValueError("Cannot subset rules: provided data model is not based on Core Data Model")
 
-    def _editable_views_to_keep(self, rules: DMSRules) -> set[ViewEntity]:
+    def _editable_views_to_keep(self, rules: PhysicalDataModel) -> set[ViewEntity]:
         return {
             view.view
             for view in rules.views
@@ -2100,13 +2126,13 @@ class _SubsetEditableCDMRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         }
 
 
-class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class SubsetDMSRules(VerifiedRulesTransformer[PhysicalDataModel, PhysicalDataModel]):
     """Subsets DMSRules to only include the specified views."""
 
     def __init__(self, views: set[ViewEntity]):
         self._views = views
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         analysis = RulesAnalysis(dms=rules)
 
         views_by_view = analysis.view_by_view_entity
@@ -2131,9 +2157,9 @@ class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
         subsetted_rules: dict[str, Any] = {
             "metadata": rules.metadata.model_copy(),
-            "views": SheetList[DMSView](),
-            "properties": SheetList[DMSProperty](),
-            "containers": SheetList[DMSContainer](),
+            "views": SheetList[PhysicalView](),
+            "properties": SheetList[PhysicalProperty](),
+            "containers": SheetList[PhysicalContainer](),
             "enum": rules.enum,
             "nodes": rules.nodes,
         }
@@ -2152,7 +2178,7 @@ class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
             for property_ in properties:
                 if (
                     isinstance(property_.value_type, DataType)
-                    or isinstance(property_.value_type, DMSUnknownEntity)
+                    or isinstance(property_.value_type, PhysicalUnknownEntity)
                     or (isinstance(property_.value_type, ViewEntity) and property_.value_type in subset)
                 ):
                     subsetted_rules["properties"].append(property_)
@@ -2167,7 +2193,7 @@ class SubsetDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
                     subsetted_rules["containers"].append(container)
 
         try:
-            return DMSRules.model_validate(subsetted_rules)
+            return PhysicalDataModel.model_validate(subsetted_rules)
         except ValidationError as e:
             raise NeatValueError(f"Cannot subset rules: {e}") from e
 

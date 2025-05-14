@@ -3,12 +3,12 @@ from pathlib import Path
 from cognite.neat import NeatSession
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.importers import BaseImporter
-from cognite.neat.core._data_model.models import DMSInputRules
+from cognite.neat.core._data_model.models import UnverifiedPhysicalDataModel
 from tests.data import SchemaData
 
 
 class RuleImporter(BaseImporter):
-    def to_rules(self) -> ReadRules[DMSInputRules]:
+    def to_rules(self) -> ReadRules[UnverifiedPhysicalDataModel]:
         return ReadRules(SchemaData.NonNeatFormats.windturbine.INPUT_RULES, {})
 
 

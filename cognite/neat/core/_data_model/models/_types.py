@@ -139,9 +139,9 @@ ConceptualPropertyType = Annotated[
     str,
     AfterValidator(_external_id_validation_factory(EntityTypes.conceptual_property, "Property column in properties")),
 ]
-DmsPropertyType = Annotated[
+PhysicalPropertyType = Annotated[
     str,
-    AfterValidator(_external_id_validation_factory(EntityTypes.dms_property, "Property column in properties")),
+    AfterValidator(_external_id_validation_factory(EntityTypes.physical_property, "Property column in properties")),
 ]
 
 

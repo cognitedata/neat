@@ -7,24 +7,27 @@ from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, Vi
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSInputRules
+from cognite.neat.core._data_model.models import (
+    ConceptualDataModel,
+    UnverifiedPhysicalDataModel,
+)
 from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualClass,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputView,
-)
-from cognite.neat.core._data_model.models.dms._rules import DMSRules
 from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ViewEntity,
 )
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
+)
+from cognite.neat.core._data_model.models.physical._verified import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
@@ -37,10 +40,10 @@ from cognite.neat.core._issues.errors._general import NeatValueError
 
 class TestStandardizeNaming:
     def test_transform_dms(self) -> None:
-        dms = DMSInputRules(
-            metadata=DMSInputMetadata("my_spac", "MyModel", "me", "v1"),
+        dms = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata("my_spac", "MyModel", "me", "v1"),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "my_poorly_formatted_view",
                     "and_strangely_named_property",
                     "text",
@@ -48,8 +51,8 @@ class TestStandardizeNaming:
                     container_property="my_property",
                 )
             ],
-            views=[DMSInputView("my_poorly_formatted_view")],
-            containers=[DMSInputContainer("my_container")],
+            views=[UnverifiedPhysicalView("my_poorly_formatted_view")],
+            containers=[UnverifiedPhysicalContainer("my_container")],
         )
 
         transformed = StandardizeNaming().transform(dms.as_verified_rules())
@@ -112,20 +115,20 @@ class TestRulesSubsetting:
         assert subset.classes[0].class_ == class_
         assert len(subset.classes) == 1
 
-    def test_subset_information_rules_fails(self, david_rules: DMSRules) -> None:
+    def test_subset_information_rules_fails(self, david_rules: PhysicalDataModel) -> None:
         class_ = ClassEntity.load("power:GeoLooocation")
 
         with pytest.raises(NeatValueError):
             _ = SubsetInformationRules({class_}).transform(david_rules)
 
-    def test_subset_dms_rules(self, alice_rules: DMSRules) -> None:
+    def test_subset_dms_rules(self, alice_rules: PhysicalDataModel) -> None:
         view = ViewEntity.load("power:GeoLocation(version=0.1.0)")
         subset = SubsetDMSRules({view}).transform(alice_rules)
 
         assert subset.views[0].view == view
         assert len(subset.views) == 1
 
-    def test_subset_dms_rules_fails(self, alice_rules: DMSRules) -> None:
+    def test_subset_dms_rules_fails(self, alice_rules: PhysicalDataModel) -> None:
         view = ViewEntity.load("power:GeoLooocation(version=0.1.0)")
 
         with pytest.raises(NeatValueError):

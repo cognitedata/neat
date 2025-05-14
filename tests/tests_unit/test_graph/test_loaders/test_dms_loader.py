@@ -12,17 +12,17 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.catalog import imf_attributes
 from cognite.neat.core._data_model.importers import ExcelImporter, SubclassInferenceImporter
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
-)
 from cognite.neat.core._data_model.models.entities._single_value import (
     ClassEntity,
     ContainerEntity,
     ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from cognite.neat.core._data_model.transformers import DMSToInformation, InformationToDMS
 from cognite.neat.core._instances.extractors import (
@@ -138,8 +138,8 @@ def test_extract_above_direct_relation_limit() -> None:
 
 
 def test_dms_load_respect_container_cardinality() -> None:
-    dms = DMSInputRules(
-        metadata=DMSInputMetadata(
+    dms = UnverifiedPhysicalDataModel(
+        metadata=UnverifiedPhysicalMetadata(
             space="sp_schema_space",
             external_id="MyModel",
             creator="doctrino",
@@ -147,7 +147,7 @@ def test_dms_load_respect_container_cardinality() -> None:
         ),
         properties=[
             # Adding two connections to ensure the correct limit is used for each of them.
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "MyView",
                 "toOther2",
                 "MyOtherView",
@@ -156,7 +156,7 @@ def test_dms_load_respect_container_cardinality() -> None:
                 container="MyContainer",
                 container_property="toOther2",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "MyView",
                 "toOther3",
                 "MyOtherView",
@@ -165,22 +165,27 @@ def test_dms_load_respect_container_cardinality() -> None:
                 container="MyContainer",
                 container_property="toOther3",
             ),
-            DMSInputProperty(
-                "MyOtherView", "name", "text", max_count=1, container="MyOtherContainer", container_property="name"
+            UnverifiedPhysicalProperty(
+                "MyOtherView",
+                "name",
+                "text",
+                max_count=1,
+                container="MyOtherContainer",
+                container_property="name",
             ),
         ],
         views=[
-            DMSInputView("MyView"),
-            DMSInputView("MyOtherView"),
+            UnverifiedPhysicalView("MyView"),
+            UnverifiedPhysicalView("MyOtherView"),
         ],
         containers=[
-            DMSInputContainer("MyContainer"),
-            DMSInputContainer("MyOtherContainer"),
+            UnverifiedPhysicalContainer("MyContainer"),
+            UnverifiedPhysicalContainer("MyOtherContainer"),
         ],
     ).as_verified_rules()
     info = DMSToInformation().transform(dms)
     info.metadata.physical = dms.metadata.identifier
-    dms.sync_with_info_rules(info)
+    dms.sync_with_conceptual_data_model(info)
 
     store = NeatGraphStore.from_memory_store()
     namespace = DEFAULT_NAMESPACE

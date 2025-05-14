@@ -7,9 +7,9 @@ from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
 from cognite.neat.core._data_model._shared import ReadRules
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSInputRules,
-    DMSRules,
+    PhysicalDataModel,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
     AddClassImplements,
@@ -52,10 +52,10 @@ class TestRuleTransformer:
     @pytest.mark.parametrize("transformer_cls", TRANSFORMATION_CLASSES)
     def test_transform_method_valid_signature(self, transformer_cls: type[RulesTransformer]) -> None:
         valid_type_hints = {
-            DMSRules,
+            PhysicalDataModel,
             ConceptualDataModel,
             ReadRules[UnverifiedConceptualDataModel],
-            ReadRules[DMSInputRules],
+            ReadRules[UnverifiedPhysicalDataModel],
         }
 
         type_hint = transformer_cls.transform_type_hint()
