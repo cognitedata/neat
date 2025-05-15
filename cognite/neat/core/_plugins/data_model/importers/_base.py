@@ -1,16 +1,14 @@
-from abc import abstractmethod
-from typing import Any, Generic
+from typing import Any
 
-from cognite.neat.core._data_model._shared import T_UnverifiedDataModel
+from cognite.neat.core._data_model.importers._base import BaseImporter
 
 
-class DataModelImporterPlugin(Generic[T_UnverifiedDataModel]):
+class DataModelImporterPlugin:
     __slots__ = ()
 
     def __init__(self) -> None:
         pass
 
-    @abstractmethod
-    def import_data_model(self, source: Any, *args: Any, **kwargs: Any) -> T_UnverifiedDataModel:
+    def configure(self, source: Any, *args: Any, **kwargs: Any) -> BaseImporter:
         """Return a dictionary representation of the object."""
         raise NotImplementedError()

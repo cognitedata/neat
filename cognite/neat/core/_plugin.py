@@ -58,6 +58,7 @@ class Plugin(Generic[T_Plugin]):
 
     def get_class(self) -> type[T_Plugin]:
         if self._class is None:
+            print(self.module_path)
             module = __import__(self.module_path, globals(), locals(), [""])
             self._class = getattr(module, self.class_name)
         return self._class
@@ -150,12 +151,12 @@ if hasattr(all_entry_points, "select"):
 register(
     "excel",
     DataModelImporterPlugin,
-    "cognite.neat.core.plugins.conceptual_data_model.extractors.excel",
-    "ExcelExtractor",
+    "cognite.neat.core._plugins.data_model.importers._excel",
+    "ExcelDataModelImporterPlugin",
 )
 
 
 def data_model_import(
     source: Any, format: str, *args: Any, **kwargs: Any
 ) -> UnverifiedPhysicalDataModel | UnverifiedConceptualDataModel:
-    return get(format, DataModelImporterPlugin)().import_data_model(source=source, **kwargs)  # type: ignore
+    return get(format, DataModelImporterPlugin)().configure(source=source, **kwargs)  # type: ignore
