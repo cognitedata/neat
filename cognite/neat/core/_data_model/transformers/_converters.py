@@ -110,8 +110,8 @@ from ._base import (
 )
 from ._verification import VerifyPhysicalDataModel
 
-T_InputInRules = TypeVar("T_InputInRules", bound=ImportedUnverifiedDataModel)
-T_InputOutRules = TypeVar("T_InputOutRules", bound=ImportedUnverifiedDataModel)
+T_UnverifiedInDataModel = TypeVar("T_UnverifiedInDataModel", bound=ImportedUnverifiedDataModel)
+T_UnverifiedOutDataModel = TypeVar("T_UnverifiedOutDataModel", bound=ImportedUnverifiedDataModel)
 
 
 class ConversionTransformer(VerifiedDataModelTransformer[T_VerifiedIn, T_VerifiedOut], ABC):
@@ -225,7 +225,7 @@ class ToDMSCompliantEntities(
 
 
 class StandardizeSpaceAndVersion(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):  # type: ignore[misc]
-    """This transformer standardizes the space and version of the DMSRules.
+    """This transformer standardizes the space and version of the physical data model.
 
     typically used to ensure all the views are moved to the same version as the data model.
 
@@ -381,7 +381,7 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
     def transform(self, data_model: ConceptualDataModel | PhysicalDataModel) -> ConceptualDataModel | PhysicalDataModel:
         copy: ConceptualDataModel | PhysicalDataModel = data_model.model_copy(deep=True)
 
-        # Case: Prefix Information Rules
+        # Case: Prefix Conceptual Data Model
         if isinstance(copy, ConceptualDataModel):
             # prefix classes
             for cls in copy.concepts:
@@ -408,7 +408,7 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
                             prop.value_type.types[i] = self._with_prefix(cast(ConceptEntity, value_type))
             return copy
 
-        # Case: Prefix DMS Rules
+        # Case: Prefix Physical Data Model
         elif isinstance(copy, PhysicalDataModel):
             for view in copy.views:
                 if view.view.space == copy.metadata.space:
@@ -600,10 +600,10 @@ class PhysicalToConceptual(ConversionTransformer[PhysicalDataModel, ConceptualDa
         self.instance_namespace = instance_namespace
 
     def transform(self, data_model: PhysicalDataModel) -> ConceptualDataModel:
-        return _DMSRulesConverter(data_model, self.instance_namespace).as_conceptual_data_model()
+        return _PhysicalDataModelConverter(data_model, self.instance_namespace).as_conceptual_data_model()
 
 
-class ConvertToRules(ConversionTransformer[VerifiedDataModel, VerifiedDataModel]):
+class ConvertToDataModel(ConversionTransformer[VerifiedDataModel, VerifiedDataModel]):
     """Converts any data_model to any data_model."""
 
     def __init__(self, out_cls: type[VerifiedDataModel]):
@@ -2004,7 +2004,7 @@ class _ConceptualDataModelConverter:
         return None
 
 
-class _DMSRulesConverter:
+class _PhysicalDataModelConverter:
     def __init__(self, data_model: PhysicalDataModel, instance_namespace: Namespace | None = None) -> None:
         self.physical_data_model = data_model
         self.instance_namespace = instance_namespace
@@ -2106,7 +2106,7 @@ class _DMSRulesConverter:
         )
 
 
-class _SubsetEditableCDMRules(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):
+class _SubsetEditableCDMPhysicalDataModel(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):
     """Subsets editable CDM data model to only include desired set of CDM concepts.
 
     !!! note "Platypus UI limitations"

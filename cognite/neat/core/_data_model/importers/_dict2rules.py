@@ -7,10 +7,7 @@ from cognite.neat.core._data_model._shared import (
     ImportedDataModel,
     T_UnverifiedDataModel,
 )
-from cognite.neat.core._data_model.models import (
-    UNVERIFIED_DATA_MODEL_BY_ROLE,
-    RoleTypes,
-)
+from cognite.neat.core._data_model.models import UNVERIFIED_DATA_MODEL_BY_ROLE, RoleTypes
 from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat.core._issues.errors import (
     FileMissingRequiredFieldError,
@@ -54,10 +51,10 @@ class DictImporter(BaseImporter[T_UnverifiedDataModel]):
 
     .. note::
 
-        YAML files are typically used for storing data model when checked into version
-        control systems, e.g., git-history.
-        The advantage of using YAML files over Excel is that tools like git can
-        show the differences between different
+        YAML files are typically used for storing data model when checked into version control
+        systems, e.g., git-history.
+        The advantage of using YAML files over Excel is that tools like git can show
+        the differences between different
         versions of the data model.
 
     """

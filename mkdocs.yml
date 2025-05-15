@@ -24,7 +24,7 @@ nav:
         - My First Data Model: tutorials/data-modeling/cold_start.ipynb
         - From Conceptual to Physical Data Modeling: tutorials/data-modeling/from-conceptual-to-physical-via-CDM.ipynb
   - Data Model in Spreadsheet:
-      - Overview: excel_data_modeling/rules.md
+      - Overview: excel_data_modeling/data_model.md
       - Conceptual Data Model:
           - Overview: excel_data_modeling/conceptual/overview.md
           - Reference: excel_data_modeling/conceptual/reference.md

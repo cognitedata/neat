@@ -24,7 +24,7 @@ Contains information about the data model.
 | creator | List of creators (comma separated) to the data model. | Yes |
 | created | Date of the data model creation | Yes |
 | updated | Date of the data model update | Yes |
-| sourceId | Id of source that produced this rules | No |
+| sourceId | Id of source that produced this data model | No |
 | conceptual | None | No |
 
 ## Properties Sheet

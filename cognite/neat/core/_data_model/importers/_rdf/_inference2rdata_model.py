@@ -56,10 +56,10 @@ INSTANCE_PROPERTIES_DEFINITION = """SELECT ?property (count(?property) as ?occur
 
 
 class InferenceImporter(BaseRDFImporter):
-    """Infers rules from a triple store.
+    """Infers data model from instances stored as triples.
 
-    Rules inference through analysis of knowledge graph provided in various formats.
-    Use the factory methods to create a triple store from sources such as
+    Data model inference through analysis of knowledge graph provided in various formats.
+    Use the factory methods to create triples from sources such as
     RDF files, JSON files, YAML files, XML files, or directly from a graph store.
 
     ClassVars:
@@ -151,7 +151,7 @@ class InferenceImporter(BaseRDFImporter):
         """Convert RDF graph to dictionary defining data model and prefixes of the graph
 
         Args:
-            graph: RDF graph to be converted to TransformationRules object
+            graph: RDF graph to be converted to data model
             max_number_of_instance: Max number of instances to be considered for each class
 
         Returns:
@@ -218,7 +218,7 @@ class InferenceImporter(BaseRDFImporter):
                             resource_type="Property",
                             identifier=f"{concept_id}:{property_id}",
                             property_name=property_id,
-                            default_action="Remove the property from the rules",
+                            default_action="Remove the property from the data model",
                             recommended_action="Make sure that graph is complete",
                         )
 
@@ -300,11 +300,11 @@ class _ReadProperties:
 
 
 class SubclassInferenceImporter(BaseRDFImporter):
-    """Infer subclasses from a triple store.
+    """Infer subclasses from instances stored in a triple store.
 
-    Assumes that the graph already is connected to a schema. The classes should
-    match the RDF.type of the instances in the graph, while the subclasses should
-    match the NEAT.type of the instances in the graph.
+    Assumes that the instances already are connected to a schema. The classes should
+    match the RDF.type of the instances, while the subclasses should match the NEAT.type
+    of the instances.
 
     ClassVars:
         overwrite_data_types: Mapping of data types to be overwritten. The InferenceImporter will overwrite
@@ -357,26 +357,26 @@ class SubclassInferenceImporter(BaseRDFImporter):
         self,
         issue_list: IssueList,
         graph: Graph,
-        rules: ConceptualDataModel | None = None,
+        data_model: ConceptualDataModel | None = None,
         data_model_id: dm.DataModelId | tuple[str, str, str] | None = None,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,
     ) -> None:
-        if sum([1 for v in [rules, data_model_id] if v is not None]) != 1:
-            raise ValueError("Exactly one of rules or data_model_id must be provided.")
+        if sum([1 for v in [data_model, data_model_id] if v is not None]) != 1:
+            raise ValueError("Exactly one of data model or data_model_id must be provided.")
         if data_model_id is not None:
             identifier = data_model_id
-        elif rules is not None:
-            identifier = rules.metadata.as_data_model_id().as_tuple()  # type: ignore[assignment]
+        elif data_model is not None:
+            identifier = data_model.metadata.as_data_model_id().as_tuple()  # type: ignore[assignment]
         else:
-            raise ValueError("Exactly one of rules or data_model_id must be provided.")
+            raise ValueError("Exactly one of data model or data_model_id must be provided.")
         super().__init__(issue_list, graph, identifier, -1, non_existing_node_type, language="en")
-        self._rules = rules
+        self._data_model = data_model
 
     def _to_data_model_components(
         self,
     ) -> dict:
-        if self._rules:
-            prefixes = self._rules.prefixes.copy()
+        if self._data_model:
+            prefixes = self._data_model.prefixes.copy()
         else:
             prefixes = get_default_prefixes_and_namespaces()
 
@@ -384,9 +384,9 @@ class SubclassInferenceImporter(BaseRDFImporter):
         read_properties = self._read_class_properties_from_graph(parent_by_child)
         classes, properties = self._create_classes_properties(read_properties, prefixes)
 
-        if self._rules:
-            metadata = self._rules.metadata.model_dump()
-            default_space = self._rules.metadata.prefix
+        if self._data_model:
+            metadata = self._data_model.metadata.model_dump()
+            default_space = self._data_model.metadata.prefix
         else:
             metadata = self._default_metadata()
             default_space = metadata["space"]
@@ -400,8 +400,8 @@ class SubclassInferenceImporter(BaseRDFImporter):
     def _create_classes_properties(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
     ) -> tuple[list[UnverifiedConcept], list[UnverifiedConceptualProperty]]:
-        if self._rules:
-            existing_classes = {class_.concept.suffix: class_ for class_ in self._rules.concepts}
+        if self._data_model:
+            existing_classes = {class_.concept.suffix: class_ for class_ in self._data_model.concepts}
         else:
             existing_classes = {}
         classes: list[UnverifiedConcept] = []
@@ -509,8 +509,8 @@ class SubclassInferenceImporter(BaseRDFImporter):
         for result_row in self.graph.query(self._ordered_class_query):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
-        if self._rules:
-            analysis = DataModelAnalysis(self._rules)
+        if self._data_model:
+            analysis = DataModelAnalysis(self._data_model)
             existing_class_properties = {
                 (class_entity.suffix, prop.property_): prop
                 for class_entity, properties in analysis.properties_by_concepts(
@@ -518,7 +518,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                 ).items()
                 for prop in properties
             }
-            existing_classes = {cls_.concept.suffix: cls_ for cls_ in self._rules.concepts}
+            existing_classes = {cls_.concept.suffix: cls_ for cls_ in self._data_model.concepts}
         else:
             existing_class_properties = {}
             existing_classes = {}

@@ -1,4 +1,4 @@
-"""This module contains the definition of `TransformationRules` pydantic model and all
+"""This module contains the definition of `DataModel` pydantic model and all
 its sub-models and validators.
 """
 
@@ -160,7 +160,7 @@ class BaseVerifiedMetadata(SchemaModel):
 
     creator: StrListType = Field(
         description=(
-            "List of contributors (comma seperated) to the data model creation, "
+            "List of contributors (comma separated) to the data model creation, "
             "typically information architects are considered as contributors."
         ),
     )
@@ -175,7 +175,7 @@ class BaseVerifiedMetadata(SchemaModel):
 
     source_id: URIRefType | None = Field(
         None,
-        description="Id of source that produced this rules",
+        description="Id of source that produced this data model",
         alias="sourceId",
     )
 
@@ -254,12 +254,7 @@ class BaseVerifiedMetadata(SchemaModel):
 
 class BaseVerifiedDataModel(SchemaModel, ABC):
     """
-    Rules is a core concept in `neat`. This represents fusion of data model
-    definitions and (optionally) the transformation rules used to transform the data/graph
-    from the source representation to the target representation defined by the data model.
-    The rules are defined in an Excel sheet and then parsed into a `Rules` object. The
-    `Rules` object is then used to generate data model and the `RDF` graph made of data
-    model instances.
+    Data Model is a core concept in `neat`.
 
     Args:
         metadata: Data model metadata
@@ -317,11 +312,11 @@ class BaseVerifiedDataModel(SchemaModel, ABC):
     ) -> dict[str, Any]:
         """Dump the model to a dictionary.
 
-        This is used in the Exporters to dump rules in the required format.
+        This is used in the Exporters to the dump data model in the required format.
 
         Args:
             entities_exclude_defaults: Whether to exclude default prefix (and version) for entities.
-                For example, given a class that is dumped as 'my_prefix:MyClass', if the prefix for the rules
+                For example, given a class that is dumped as 'my_prefix:MyClass', if the prefix for the data model
                 set in metadata.prefix = 'my_prefix', then this class will be dumped as 'MyClass' when this flag is set.
                 Defaults to True.
             sort: Whether to sort the entities in the output.
