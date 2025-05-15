@@ -6,14 +6,14 @@ from rdflib import RDF, RDFS, Literal, Namespace
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import GraphImporter
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._issues.warnings import NeatValueWarning
 from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData
 
 
@@ -38,9 +38,9 @@ def graph_importer_test_cases() -> Iterable:
                 "Car", "weight", "integer, text", max_count=1, instance_source=schema_space["weight"]
             ),
         ],
-        classes=[
-            UnverifiedConceptualClass("Vehicle"),
-            UnverifiedConceptualClass("Car", implements="Vehicle", instance_source=schema_space["Car"]),
+        concepts=[
+            UnverifiedConcept("Vehicle"),
+            UnverifiedConcept("Car", implements="Vehicle", instance_source=schema_space["Car"]),
         ],
         prefixes={},
     )
@@ -66,7 +66,7 @@ def graph_importer_warning_test_cases() -> Iterable:
     empty_model = UnverifiedConceptualDataModel(
         metadata=UnverifiedConceptualMetadata("my_space", "my_model", "v1", "doctrino"),
         properties=[],
-        classes=[],
+        concepts=[],
         prefixes={},
     )
     yield pytest.param(
@@ -91,36 +91,36 @@ def graph_importer_warning_test_cases() -> Iterable:
 class TestGraphImporter:
     @pytest.mark.parametrize("triples, expected", list(graph_importer_test_cases()))
     def test_graph_importer(self, triples: list[Triple], expected: UnverifiedConceptualDataModel) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
         store._add_triples(triples, store.default_named_graph)
         metadata = expected.metadata
         data_model_id = (metadata.space, metadata.external_id, metadata.version)
         importer = GraphImporter(store, data_model_id)
 
-        rules = importer.to_rules()
-        actual = rules.rules
+        rules = importer.to_data_model()
+        actual = rules.unverified_data_model
         assert actual is not None, "Failed to convert graph to rules"
 
         # Prefixes are set to defaults upon loading a data model
         # while the GraphImporter uses the prefixes from the graph
         exclude = {"metadata": {"creator", "created", "updated", "description", "name"}, "prefixes": True}
-        assert actual.as_verified_rules().dump(exclude=exclude) == expected.as_verified_rules().dump(exclude=exclude), (
-            "The rules generated from the graph do not match the expected rules."
-        )
+        assert actual.as_verified_data_model().dump(exclude=exclude) == expected.as_verified_data_model().dump(
+            exclude=exclude
+        ), "The rules generated from the graph do not match the expected rules."
 
     @pytest.mark.parametrize("triples, expected_model, expected_warning", list(graph_importer_warning_test_cases()))
     def test_graph_importer_warnings(
         self, triples: list[Triple], expected_model: UnverifiedConceptualDataModel, expected_warning: NeatValueWarning
     ) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
         store._add_triples(triples, store.default_named_graph)
         metadata = expected_model.metadata
         data_model_id = (metadata.space, metadata.external_id, metadata.version)
         importer = GraphImporter(store, data_model_id)
 
         with pytest.warns(NeatValueWarning) as record:
-            rules = importer.to_rules()
-            actual = rules.rules
+            rules = importer.to_data_model()
+            actual = rules.unverified_data_model
             assert actual is not None, "Failed to convert graph to rules"
             assert len(record) == 1
             assert str(record[0].message) == str(expected_warning)

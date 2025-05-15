@@ -2,19 +2,19 @@ import urllib.parse
 
 from rdflib import Namespace
 
-from cognite.neat.core._data_model.models.conceptual import UnverifiedConceptualClass, UnverifiedConceptualProperty
+from cognite.neat.core._data_model.models.conceptual import UnverifiedConcept, UnverifiedConceptualProperty
 from cognite.neat.core._utils.mapping import create_predicate_mapping, create_type_mapping
 
 
 class TestCreateTypeMapping:
     def test_create_predicate_mapping(self) -> None:
         namespace = Namespace("http://example.org/")
-        classes = [UnverifiedConceptualClass("MyType", name="my$$$Type").as_verified(default_prefix="my_space")]
+        classes = [UnverifiedConcept("MyType", name="my$$$Type").as_verified(default_prefix="my_space")]
         mapping = create_type_mapping(classes, namespace)
         assert mapping == {namespace[urllib.parse.quote("my$$$Type")]: namespace["MyType"]}
 
     def test_create_predicate_mapping_no_namespace(self) -> None:
-        classes = [UnverifiedConceptualClass("MyType", name="my$$$Type").as_verified(default_prefix="my_space")]
+        classes = [UnverifiedConcept("MyType", name="my$$$Type").as_verified(default_prefix="my_space")]
         mapping = create_type_mapping(classes)
         assert mapping == {urllib.parse.quote("my$$$Type"): "MyType"}
 

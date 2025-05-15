@@ -2,7 +2,7 @@ from rdflib import Literal, Namespace
 
 from cognite.neat.core._instances.extractors import DictExtractor
 from cognite.neat.core._instances.extractors._dict import DEFAULT_EMPTY_VALUES, IGNORED_BY_TRIPLE_STORE
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 class TestDictExtractor:
@@ -19,7 +19,7 @@ class TestDictExtractor:
             empty_values=set(),
         )
 
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
         store.write(extractor)
 
         _, properties = store.queries.select.describe(id_)

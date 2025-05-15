@@ -1,11 +1,11 @@
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 class TestPropertiesWithCount:
     def test_properties_with_count(self) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
 
         ns = Namespace("http://example.org/")
         car = ns["MyCar"]

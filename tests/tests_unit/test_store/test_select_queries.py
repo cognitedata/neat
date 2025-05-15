@@ -1,12 +1,12 @@
 from rdflib import RDF, Literal
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 class TestListInstanceObjectIds:
     def test_list_instance_object_ids(self) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
         my_entity = DEFAULT_NAMESPACE["my_entity"]
         my_other_entity = DEFAULT_NAMESPACE["my_other_entity"]
         store._add_triples(

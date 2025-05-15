@@ -2,12 +2,12 @@ from rdflib import RDF, Namespace
 
 from cognite.neat.core._instances.transformers import SetRDFTypeById
 from cognite.neat.core._issues.warnings import NeatValueWarning
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 class TestSetRDFTypeById:
     def test_set_rdf_type_by_id(self) -> None:
-        store = NeatGraphStore.from_memory_store()
+        store = NeatInstanceStore.from_memory_store()
         namespace = Namespace("http://example.com/")
         id1 = namespace["Asset1"]
         id2 = namespace["Asset2"]
