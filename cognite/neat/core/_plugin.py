@@ -49,7 +49,6 @@ class Plugin(Generic[T_Plugin]):
 
     def get_class(self) -> type[T_Plugin]:
         if self._class is None:
-            print(self.module_path)
             module = __import__(self.module_path, globals(), locals(), [""])
             self._class = getattr(module, self.class_name)
         return self._class
