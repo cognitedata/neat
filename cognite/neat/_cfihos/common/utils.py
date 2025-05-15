@@ -250,3 +250,25 @@ def generate_neat_rules_sheet(
     logging.info(
         f"Rules sheet for {df_metadata.loc[df_metadata['Key'] == 'name', 'Value'].item()} has been generated successfully"
     )
+
+
+def sanitize_dms_string(input_string, case_style="snake_case"):
+    # Step 0: Replace spaces with underscores
+    sanitized = input_string.replace(" ", "_")
+    # Step 1: Replace specified special characters with underscores
+    sanitized = re.sub(r"[-#()/\\]+", "_", sanitized)
+    # Step 2: Collapse multiple underscores into one
+    sanitized = re.sub(r"_+", "_", sanitized)
+    # Step 3: Remove trailing underscore
+    sanitized = re.sub(r"_$", "", sanitized)
+    
+    # Step 4: Capitalize words
+    words = [word.capitalize() for word in sanitized.split("_") if word]
+
+    # Step 5: Format based on desired case style
+    if case_style == "PascalCase":
+        return "".join(words)
+    elif case_style == "snake_case":
+        return "_".join(word.lower() for word in words)
+    else:
+        raise ValueError("case_style must be 'snake_case' or 'PascalCase'")

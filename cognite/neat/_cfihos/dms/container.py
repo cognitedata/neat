@@ -6,6 +6,7 @@ from cognite.neat._cfihos.common.generic_classes import (
     PropertyStructure,
 )
 from cognite.neat._cfihos.common.log import log_init
+from cognite.neat._cfihos.common.utils import sanitize_dms_string
 
 logging = log_init(f"{__name__}", "i")
 

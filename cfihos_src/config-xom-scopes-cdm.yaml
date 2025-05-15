@@ -1,9 +1,9 @@
 {
-  data_model_name: "NEAT CFIHOS Model",
-  data_model_external_id: "NEAT_CFIHOS_CDM_1",  
-  data_model_description: "Generated NEAT Domain Model based on CFIHOS",
-  container_data_model_space: "xom_cfihos_cdm_domain_model_containers",
-  views_data_model_space: "xom_cfihos_cdm_domain_model_views",
+  data_model_name: "Human_Readable NEAT CFIHOS Model",
+  data_model_external_id: "NEAT_CFIHOS_Human_Readable_1",  
+  data_model_description: "Generated NEAT Domain Model based on CFIHOS with Human_Readable definitions",
+  container_data_model_space: "cfihos_names_cdm_domain_model_containers",
+  views_data_model_space: "cfihos_names_cdm_domain_model_views",
   model_version: "1",
   model_creator: "Ali",
   model_processors_config:

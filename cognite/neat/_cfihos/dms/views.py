@@ -1,5 +1,4 @@
 import json
-
 from cognite.client import CogniteClient
 from cognite.client.data_classes import data_modeling
 from cognite.client.data_classes.data_modeling import data_types
@@ -11,7 +10,7 @@ from cognite.neat._cfihos.common.constants import (
 )
 from cognite.neat._cfihos.common.generic_classes import Relations
 from cognite.neat._cfihos.common.log import log_init
-from cognite.neat._cfihos.common.utils import get_relation_target_if_eligible
+from cognite.neat._cfihos.common.utils import get_relation_target_if_eligible, sanitize_dms_string
 
 logging = log_init(f"{__name__}", "i")
 
@@ -146,6 +145,9 @@ def create_has_data_filter(container_space: str, container_external_id: str) -> 
     return None
 
 
+
+
+
 def build_views_from_containers(containers: list[data_modeling.ContainerApply], entities: dict) -> any:
     """
     Creates a set of views that are one-to-one with the given containers. This function constructs views based on the
@@ -156,7 +158,7 @@ def build_views_from_containers(containers: list[data_modeling.ContainerApply], 
         containers (list[data_modeling.ContainerApply]): A list of container objects to create views for.
         entities (dict): A dictionary containing entity information, keyed by entity external ID with underscores replaced by hyphens.
 
-    Returns:
+    Returns:  
         list of created ViewApply objects.
     """
     map_property_type = {
@@ -190,7 +192,7 @@ def build_views_from_containers(containers: list[data_modeling.ContainerApply], 
                 "Implements": ",".join(cdm_implements) if cdm_implements else None,
                 "Filter": None,
                 "In Model": True,
-                "Class (linage)": container["Container"],
+                # "Class (linage)": container["Container"],
             }
         )
 
@@ -198,11 +200,12 @@ def build_views_from_containers(containers: list[data_modeling.ContainerApply], 
             relation_target = get_relation_target_if_eligible(
                 key, container["Container"].replace("_", "-"), entities, data.type
             )
+            propert_name = sanitize_dms_string(data.name.strip().replace(" ","_"))
             lst_properties.append(
                 {
                     "View": container["Container"],
-                    "View Property": key,
-                    "Name": "",
+                    "View Property": propert_name + "_rel" if type(data.type) in [data_types.DirectRelation, data_modeling.MultiEdgeConnection, data_modeling.MultiReverseDirectRelation] else propert_name,
+                    "Name": key,
                     "Description": data.description.strip() if data.description else "",
                     "Connection": "direct"
                     if type(data.type) == data_types.DirectRelation
@@ -218,11 +221,11 @@ def build_views_from_containers(containers: list[data_modeling.ContainerApply], 
                     "Default": None,
                     "Reference": None,
                     "Container": container["Container"],
-                    "Container Property": key,
+                    "Container Property": propert_name + "_rel" if type(data.type) in [data_types.DirectRelation, data_modeling.MultiEdgeConnection, data_modeling.MultiReverseDirectRelation] else propert_name,
                     "Index": None,
                     "Constraint": None,
-                    "Class (linage)": container["Container"],
-                    "Property (linage)": key,
+                    # "Class (linage)": container["Container"],
+                    # "Property (linage)": key,
                 }
             )
 
@@ -269,8 +272,8 @@ def build_views_from_containers(containers: list[data_modeling.ContainerApply], 
                     "Container Property": "entityType",
                     "Index": None,
                     "Constraint": None,
-                    "Class (linage)": container["Container"],
-                    "Property (linage)": "entityType",
+                    # "Class (linage)": container["Container"],
+                    # "Property (linage)": "entityType",
                 }
             )
 
@@ -303,7 +306,7 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
     for _, entity_data in entities.items():
         entity_id = entity_data[EntityStructure.ID]
         parents_ext_ids = [
-            parent_id
+            sanitize_dms_string(entities[parent_id.replace("_","-")][EntityStructure.NAME], "PascalCase") #NOTE: this is a workaround to get the name of the parent entity. It should be done properly in the entities objec while processed in the processor
             for parent_ids in entity_data[EntityStructure.FULL_INHERITANCE].values()
             for parent_id in parent_ids
         ]
@@ -323,37 +326,36 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
         prop_data_dict = {}
         for prop_data in entity_data[EntityStructure.PROPERTIES]:
             # if prop_data[PropertyStructure.INHERITED] is False:
+            propert_name = sanitize_dms_string(prop_data[PropertyStructure.NAME])
             if prop_data[PropertyStructure.PROPERTY_TYPE] in  [Relations.DIRECT,Relations.REVERSE,PropertyStructure.ENTITY_EDGE]: #TODO: check if PropertyStructure.ENTITY_EDGE is correct
+                value_type_property = sanitize_dms_string(entities[prop_data[PropertyStructure.TARGET_TYPE].replace("_","-")][EntityStructure.NAME], "PascalCase")
                 match prop_data[PropertyStructure.PROPERTY_TYPE]:
                     case PropertyStructure.ENTITY_EDGE:
                         container_reference = None
                         container_property = None
-                        connection_property = f"edge(properties={prop_data[PropertyStructure.EDGE_TARGET]},type={prop_data[PropertyStructure.EDGE_EXTERNAL_ID]})"
-                        value_type_property = prop_data[PropertyStructure.TARGET_TYPE]
+                        connection_property = f"edge(properties={prop_data[PropertyStructure.EDGE_TARGET]},type={prop_data[PropertyStructure.EDGE_EXTERNAL_ID]})" #TODO: convert to FrindlyName
                         is_list_property = True
                     case Relations.REVERSE:
                         container_reference = None
                         container_property = None
-                        connection_property = f"reverse(property={prop_data[PropertyStructure.REV_THROUGH_PROPERTY]})"
-                        value_type_property = prop_data[PropertyStructure.TARGET_TYPE]
+                        connection_property = f"reverse(property={prop_data[PropertyStructure.REV_THROUGH_PROPERTY]})" #TODO: convert to FrindlyName
                         is_list_property = False
                     case Relations.DIRECT:
                         container_reference = containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP]
-                        container_property = prop_data[PropertyStructure.ID]
+                        container_property = propert_name + "_rel"
                         connection_property = "direct"
-                        value_type_property = prop_data[PropertyStructure.TARGET_TYPE]
                         is_list_property = False
                     case _:
                         logging.warning(
                             f"Unknown property type: {prop_data[PropertyStructure.PROPERTY_TYPE]} for property {prop_data[PropertyStructure.ID]}"
                         )
                         continue
-             
+                
                 lst_properties.append(
                     {
-                        "View": entity_data[EntityStructure.ID],
-                        "View Property": prop_data[PropertyStructure.ID],
-                        "Name": prop_data[PropertyStructure.NAME],
+                        "View": sanitize_dms_string(entity_data[EntityStructure.NAME], "PascalCase"),
+                        "View Property": propert_name + "_rel",
+                        "Name": prop_data[PropertyStructure.ID],
                         "Description": prop_data[PropertyStructure.DESCRIPTION],
                         "Connection": connection_property,
                         "Value Type": value_type_property,
@@ -366,8 +368,8 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
                         "Container Property": container_property,
                         "Index": None,
                         "Constraint": None,
-                        "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Property (linage)": prop_data[PropertyStructure.ID],
+                        # "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                        # "Property (linage)": prop_data[PropertyStructure.ID],
                     }
                 )
 
@@ -391,9 +393,9 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
             else:
                 lst_properties.append(
                     {
-                        "View": entity_data[EntityStructure.ID],
-                        "View Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
-                        "Name": prop_data[PropertyStructure.NAME],
+                        "View": sanitize_dms_string(entity_data[EntityStructure.NAME], "PascalCase"),
+                        "View Property": propert_name.replace("_rel", ""),
+                        "Name": prop_data[PropertyStructure.ID].replace("_rel", ""),
                         "Description": prop_data[PropertyStructure.DESCRIPTION],
                         "Connection": None,
                         "Value Type": "text",
@@ -403,11 +405,11 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
                         "Default": None,
                         "Reference": None,
                         "Container": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Container Property": prop_data[PropertyStructure.ID].replace("_rel", ""),
+                        "Container Property": propert_name.replace("_rel", ""),
                         "Index": None,
                         "Constraint": None,
-                        "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
-                        "Property (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
+                        # "Class (linage)": containers_space + ":" + prop_data[PropertyStructure.PROPERTY_GROUP],
+                        # "Property (linage)": prop_data[PropertyStructure.PROPERTY_GROUP],
                     }
                 )
 
@@ -415,7 +417,7 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
         if view_filter and not entity_data[EntityStructure.FIRSTCLASSCITIZEN]:
             lst_properties.append(
                 {
-                    "View": entity_data[EntityStructure.ID],
+                    "View": sanitize_dms_string(entity_data[EntityStructure.NAME], "PascalCase"),
                     "View Property": "entityType",
                     "Name": "Entity Type",
                     "Description": "",
@@ -430,8 +432,8 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
                     "Container Property": "entityType",
                     "Index": None,
                     "Constraint": None,
-                    "Class (linage)": containers_space + ":EntityTypeGroup",
-                    "Property (linage)": "entityType",
+                    # "Class (linage)": containers_space + ":EntityTypeGroup",
+                    # "Property (linage)": "entityType",
                 }
             )
 
@@ -439,13 +441,13 @@ def build_views_from_entities(containers_space: str, entities: dict) -> tuple[li
         if len(entity_data[EntityStructure.PROPERTIES]) > 0:
             lst_views.append(
                 {
-                    "View": entity_data[EntityStructure.ID],
-                    "Name": entity_data[EntityStructure.NAME],
+                    "View": sanitize_dms_string(entity_data[EntityStructure.NAME], "PascalCase"),
+                    "Name": entity_data[EntityStructure.ID],
                     "Description": entity_data[EntityStructure.DESCRIPTION],
                     "Implements": ",".join(parents_ext_ids) if parents_ext_ids else None,
                     "Filter": view_filter if view_filter else None,
                     "In Model": True,
-                    "Class (linage)": entity_data[EntityStructure.ID],
+                    # "Class (linage)": entity_data[EntityStructure.ID],
                 }
             )
         else:
@@ -547,8 +549,8 @@ def add_core_views(
                         else None,
                         "Index": None,
                         "Constraint": None,
-                        "Class (linage)": propertyName,
-                        "Property (linage)": propertyName,
+                        # "Class (linage)": propertyName,
+                        # "Property (linage)": propertyName,
                     }
                 )
 
