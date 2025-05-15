@@ -4,13 +4,13 @@ from cognite.client.data_classes.data_modeling import DataModelId
 from cognite.neat.core._data_model._constants import ENTITY_PATTERN
 from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
-    ClassEntity,
+    ConceptEntity,
+    ConceptualEntity,
     DataModelEntity,
-    DMSEntity,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
-    Entity,
+    PhysicalEntity,
+    PhysicalUnknownEntity,
     ReferenceEntity,
     RelationshipEntity,
     UnitEntity,
@@ -35,14 +35,14 @@ TEST_CASES = [
         UnitEntity(prefix="length", suffix="m"),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "person",
-        ClassEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
+        ConceptEntity(prefix=DEFAULT_SPACE, suffix="person", version=DEFAULT_VERSION),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "cdf_cdm:CogniteAsset(version=v1)",
-        ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+        ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
     ),
     (
         ViewEntity,
@@ -58,10 +58,10 @@ TEST_CASES = [
     (
         ViewEntity,
         "#N/A",
-        DMSUnknownEntity.from_id(None),
+        PhysicalUnknownEntity.from_id(None),
     ),
     (
-        ClassEntity,
+        ConceptEntity,
         "#N/A",
         UnknownEntity(),
     ),
@@ -120,8 +120,8 @@ class TestEntities:
     @pytest.mark.parametrize(
         "cls_, raw, expected", TEST_CASES, ids=[f"{cls_.__name__} {raw}" for cls_, raw, _ in TEST_CASES]
     )
-    def test_load_dump(self, cls_: type[Entity], raw: str, expected: Entity) -> None:
-        if issubclass(cls_, DMSEntity):
+    def test_load_dump(self, cls_: type[ConceptualEntity], raw: str, expected: ConceptualEntity) -> None:
+        if issubclass(cls_, PhysicalEntity):
             defaults = {"space": DEFAULT_SPACE, "version": DEFAULT_VERSION}
         elif issubclass(cls_, AssetEntity | RelationshipEntity):
             defaults = {}

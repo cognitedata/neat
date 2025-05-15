@@ -11,8 +11,11 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.importers import DMSImporter, ExcelImporter
-from cognite.neat.core._data_model.models import DMSRules, DMSSchema
-from cognite.neat.core._data_model.transformers import DMSToInformation, VerifyDMSRules
+from cognite.neat.core._data_model.models import DMSSchema, PhysicalDataModel
+from cognite.neat.core._data_model.transformers import (
+    PhysicalToConceptual,
+    VerifyPhysicalDataModel,
+)
 from cognite.neat.core._issues import catch_issues
 from cognite.neat.core._issues.warnings.user_modeling import (
     DirectRelationMissingSourceWarning,
@@ -26,9 +29,9 @@ class TestDMSImporter:
         importer = DMSImporter(SCHEMA_WITH_DIRECT_RELATION_NONE)
 
         with catch_issues() as issues:
-            rules = VerifyDMSRules().transform(importer.to_rules())
+            rules = VerifyPhysicalDataModel().transform(importer.to_data_model())
         assert len(issues) == 1
-        dms_rules = cast(DMSRules, rules)
+        dms_rules = cast(PhysicalDataModel, rules)
         dump_dms = dms_rules.dump()
         assert dump_dms["properties"][0]["value_type"] == "#N/A"
         assert dump_dms["properties"][0]["name"] == "direct"
@@ -36,7 +39,7 @@ class TestDMSImporter:
         assert dump_dms["views"][0]["name"] == "OneView"
         assert dump_dms["views"][0]["description"] == "One View"
 
-        info_rules = DMSToInformation().transform(rules)
+        info_rules = PhysicalToConceptual().transform(rules)
         dump_info = info_rules.dump()
         assert dump_info["properties"][0]["value_type"] == "#N/A"
 
@@ -47,17 +50,17 @@ class TestDMSImporter:
         ],
     )
     def test_import_rules_from_tutorials(self, filepath: Path) -> None:
-        dms_rules = ExcelImporter(filepath).to_rules().rules.as_verified_rules()
+        dms_rules = ExcelImporter(filepath).to_data_model().unverified_data_model.as_verified_data_model()
         # We must have the reference to be able to convert back to schema
         schema = dms_rules.as_schema()
         dms_importer = DMSImporter(schema)
 
         with catch_issues() as issues:
-            rules = VerifyDMSRules().transform(dms_importer.to_rules())
+            rules = VerifyPhysicalDataModel().transform(dms_importer.to_data_model())
 
         issue_str = "\n".join([issue.as_message() for issue in issues])
         assert rules is not None, f"Failed to import rules {issue_str}"
-        assert isinstance(rules, DMSRules)
+        assert isinstance(rules, PhysicalDataModel)
         # This information is lost in the conversion to schema
         exclude = {
             "metadata": {"created", "updated"},
@@ -79,13 +82,13 @@ class TestDMSImporter:
         windturbine = SchemaData.NonNeatFormats.windturbine
         exporter = DMSImporter(windturbine.SCHEMA, metadata=windturbine.INPUT_RULES.metadata)
 
-        result = exporter.to_rules()
+        result = exporter.to_data_model()
 
-        assert result.rules is not None
-        assert result.rules.dump() == windturbine.INPUT_RULES.dump()
+        assert result.unverified_data_model is not None
+        assert result.unverified_data_model.dump() == windturbine.INPUT_RULES.dump()
 
-        rules = VerifyDMSRules().transform(result)
-        assert isinstance(rules, DMSRules)
+        rules = VerifyPhysicalDataModel().transform(result)
+        assert isinstance(rules, PhysicalDataModel)
 
         dms_recreated = DMSExporter().export(rules)
         # We cannot compare the whole schema, as the DMS Exporter makes things like
@@ -109,7 +112,7 @@ class TestDMSImporter:
     def test_import_export_schema_with_inwards_edge_with_properties(self) -> None:
         importer = DMSImporter(SCHEMA_INWARDS_EDGE_WITH_PROPERTIES)
 
-        rules = importer.to_rules().rules.as_verified_rules()
+        rules = importer.to_data_model().unverified_data_model.as_verified_data_model()
 
         dms_recreated = DMSExporter().export(rules)
 
@@ -137,22 +140,22 @@ class TestDMSImporter:
         )
 
         with catch_issues() as issues:
-            _ = importer.to_rules()
+            _ = importer.to_data_model()
 
         assert len(issues) == 0
 
     def test_import_schema_with_multi_value_hack(self) -> None:
         importer = DMSImporter(SCHEMA_WITH_MULTI_VALUE_HACK)
 
-        dms_rules: DMSRules | None = None
+        dms_rules: PhysicalDataModel | None = None
         with catch_issues() as issues:
-            input_rules = importer.to_rules()
-            dms_rules = VerifyDMSRules(validate=True, client=None).transform(input_rules)
+            input_rules = importer.to_data_model()
+            dms_rules = VerifyPhysicalDataModel(validate=True, client=None).transform(input_rules)
 
         assert sorted(issues) == [
             DirectRelationMissingSourceWarning(dm.ViewId("neat", "DirectRelationView", "1"), "direct")
         ]
-        assert isinstance(dms_rules, DMSRules)
+        assert isinstance(dms_rules, PhysicalDataModel)
 
 
 SCHEMA_WITH_DIRECT_RELATION_NONE = DMSSchema(

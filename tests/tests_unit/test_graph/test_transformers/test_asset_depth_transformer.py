@@ -1,12 +1,12 @@
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._instances import extractors, transformers
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import InstanceData
 
 
 def test_asset_depth_transformer_without_typing():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
     store.write(extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml))
 
     transformer = transformers.AddAssetDepth()
@@ -23,7 +23,7 @@ def test_asset_depth_transformer_without_typing():
 
 
 def test_asset_depth_transformer_with_typing():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
     extractor = extractors.AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml)
     store.write(extractor)
 
@@ -47,7 +47,7 @@ def test_asset_depth_transformer_with_typing():
 
 
 def test_asset_depth_transformer_warning():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
 
     transformer = transformers.AddAssetDepth()
     issues1 = store.transform(transformer)

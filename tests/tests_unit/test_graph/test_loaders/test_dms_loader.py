@@ -12,19 +12,22 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model.catalog import imf_attributes
 from cognite.neat.core._data_model.importers import ExcelImporter, SubclassInferenceImporter
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
-)
 from cognite.neat.core._data_model.models.entities._single_value import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     ViewEntity,
 )
-from cognite.neat.core._data_model.transformers import DMSToInformation, InformationToDMS
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
+)
+from cognite.neat.core._data_model.transformers import (
+    ConceptualToPhysical,
+    PhysicalToConceptual,
+)
 from cognite.neat.core._instances.extractors import (
     AssetsExtractor,
     FilesExtractor,
@@ -34,25 +37,25 @@ from cognite.neat.core._instances.loaders import DMSLoader
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.warnings import PropertyDirectRelationLimitWarning
 from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData, InstanceData
 
 
 def test_metadata_as_json_filed():
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
     store.write(
         AssetsExtractor.from_file(InstanceData.AssetCentricCDF.assets_yaml, unpack_metadata=False, as_write=True)
     )
 
     importer = SubclassInferenceImporter(IssueList(), store.dataset, data_model_id=("neat_space", "MyAsset", "1"))
 
-    info_rules = importer.to_rules().rules.as_verified_rules()
+    info_rules = importer.to_data_model().unverified_data_model.as_verified_data_model()
     # Need to change externalId as it is not allowed in DMS
     for prop in info_rules.properties:
         if prop.property_ == "externalId":
             prop.property_ = "classicExternalId"
 
-    dms_rules = InformationToDMS().transform(info_rules)
+    dms_rules = ConceptualToPhysical().transform(info_rules)
 
     # simulating update of the DMS rules
     dms_rules.views[0].view = ViewEntity.load("neat_space:MyAsset(version=inferred)")
@@ -63,9 +66,9 @@ def test_metadata_as_json_filed():
 
     # simulating update of the INFORMATION rules
 
-    info_rules.classes[0].class_ = ClassEntity.load("neat_space:YourAsset")
+    info_rules.concepts[0].concept = ConceptEntity.load("neat_space:YourAsset")
     for prop in info_rules.properties:
-        prop.class_ = ClassEntity.load("neat_space:YourAsset")
+        prop.concept = ConceptEntity.load("neat_space:YourAsset")
         prop.property_ = f"your_{prop.property_}"
 
     loader = DMSLoader(dms_rules, info_rules, store, dms_rules.metadata.space)
@@ -86,11 +89,11 @@ def test_imf_attribute_nodes():
     # as well omitting to remove namespace from values if
     # properties are not specified to be object properties
 
-    info_rules = ExcelImporter(imf_attributes).to_rules().rules.as_verified_rules()
+    info_rules = ExcelImporter(imf_attributes).to_data_model().unverified_data_model.as_verified_data_model()
 
-    dms_rules = InformationToDMS().transform(info_rules)
+    dms_rules = ConceptualToPhysical().transform(info_rules)
 
-    store = NeatGraphStore.from_oxi_local_store()
+    store = NeatInstanceStore.from_oxi_local_store()
     store.write(RdfFileExtractor(GraphData.imf_temp_transmitter_complete_ttl))
 
     loader = DMSLoader(dms_rules, info_rules, store, instance_space="knowledge")
@@ -115,7 +118,7 @@ def test_extract_above_direct_relation_limit() -> None:
         neat.infer()
         neat.prepare.data_model.prefix("Classic")
         neat.convert()
-        dms_rules = neat._state.rule_store.last_verified_dms_rules
+        dms_rules = neat._state.rule_store.last_verified_physical_data_model
         # Default conversion uses edges for connections. We need to change it to direct relations
         asset_ids = next(prop for prop in dms_rules.properties if prop.view_property == "assetIds")
         asset_ids.connection = "direct"
@@ -138,8 +141,8 @@ def test_extract_above_direct_relation_limit() -> None:
 
 
 def test_dms_load_respect_container_cardinality() -> None:
-    dms = DMSInputRules(
-        metadata=DMSInputMetadata(
+    dms = UnverifiedPhysicalDataModel(
+        metadata=UnverifiedPhysicalMetadata(
             space="sp_schema_space",
             external_id="MyModel",
             creator="doctrino",
@@ -147,7 +150,7 @@ def test_dms_load_respect_container_cardinality() -> None:
         ),
         properties=[
             # Adding two connections to ensure the correct limit is used for each of them.
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "MyView",
                 "toOther2",
                 "MyOtherView",
@@ -156,7 +159,7 @@ def test_dms_load_respect_container_cardinality() -> None:
                 container="MyContainer",
                 container_property="toOther2",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "MyView",
                 "toOther3",
                 "MyOtherView",
@@ -165,24 +168,29 @@ def test_dms_load_respect_container_cardinality() -> None:
                 container="MyContainer",
                 container_property="toOther3",
             ),
-            DMSInputProperty(
-                "MyOtherView", "name", "text", max_count=1, container="MyOtherContainer", container_property="name"
+            UnverifiedPhysicalProperty(
+                "MyOtherView",
+                "name",
+                "text",
+                max_count=1,
+                container="MyOtherContainer",
+                container_property="name",
             ),
         ],
         views=[
-            DMSInputView("MyView"),
-            DMSInputView("MyOtherView"),
+            UnverifiedPhysicalView("MyView"),
+            UnverifiedPhysicalView("MyOtherView"),
         ],
         containers=[
-            DMSInputContainer("MyContainer"),
-            DMSInputContainer("MyOtherContainer"),
+            UnverifiedPhysicalContainer("MyContainer"),
+            UnverifiedPhysicalContainer("MyOtherContainer"),
         ],
-    ).as_verified_rules()
-    info = DMSToInformation().transform(dms)
+    ).as_verified_data_model()
+    info = PhysicalToConceptual().transform(dms)
     info.metadata.physical = dms.metadata.identifier
-    dms.sync_with_info_rules(info)
+    dms.sync_with_conceptual_data_model(info)
 
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
     namespace = DEFAULT_NAMESPACE
     my_type = namespace["MyView"]
     my_other_type = namespace["MyOtherView"]
@@ -205,8 +213,8 @@ def test_dms_load_respect_container_cardinality() -> None:
         store.dataset.add(triple)
 
     # Link the schema to the triples
-    info.classes[0].instance_source = my_type
-    info.classes[1].instance_source = my_other_type
+    info.concepts[0].instance_source = my_type
+    info.concepts[1].instance_source = my_other_type
     info.properties[0].instance_source = [to_other_prop2]
     info.properties[1].instance_source = [to_other_prop3]
     info.properties[2].instance_source = [name_prop]

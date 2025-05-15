@@ -5,10 +5,10 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.importers._base import BaseImporter
-from cognite.neat.core._data_model.importers._dtdl2rules.dtdl_converter import _DTDLConverter
-from cognite.neat.core._data_model.importers._dtdl2rules.spec import (
+from cognite.neat.core._data_model.importers._dtdl2data_model.dtdl_converter import _DTDLConverter
+from cognite.neat.core._data_model.importers._dtdl2data_model.spec import (
     DTDL_CLS_BY_TYPE_BY_SPEC,
     DTDLBase,
     Interface,
@@ -126,7 +126,7 @@ class DTDLImporter(BaseImporter[UnverifiedConceptualDataModel]):
                             items.append(item)
         return cls(items, zip_file.stem, read_issues=issues)
 
-    def to_rules(self) -> ReadRules[UnverifiedConceptualDataModel]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
         converter = _DTDLConverter(self._read_issues)
 
         converter.convert(self._items)
@@ -143,13 +143,13 @@ class DTDLImporter(BaseImporter[UnverifiedConceptualDataModel]):
         else:
             metadata["space"] = most_common_prefix
 
-        rules = UnverifiedConceptualDataModel(
+        data_model = UnverifiedConceptualDataModel(
             metadata=UnverifiedConceptualMetadata.load(metadata),
             properties=converter.properties,
-            classes=converter.classes,
+            concepts=converter.classes,
         )
         converter.issues.trigger_warnings()
         if converter.issues.has_errors:
             raise MultiValueError(converter.issues.errors)
 
-        return ReadRules(rules, {})
+        return ImportedDataModel(data_model, {})

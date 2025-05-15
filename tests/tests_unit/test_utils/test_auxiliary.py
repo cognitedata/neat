@@ -15,8 +15,8 @@ from cognite.neat.core._utils.auxiliary import (
         (
             DMSImporter,
             [
-                DMSImporter.as_information_input_class,
-                DMSImporter.as_information_input_property,
+                DMSImporter.as_unverified_concept,
+                DMSImporter.as_unverified_conceptual_property,
                 DMSImporter.from_data_model,
                 DMSImporter.from_data_model_id,
                 DMSImporter.from_directory,

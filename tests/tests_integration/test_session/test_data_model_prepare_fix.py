@@ -18,7 +18,7 @@ class TestDataModelPrepare:
         neat.read.examples.pump_example()
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_verified_dms_rules
+        rules = neat._state.rule_store.last_verified_physical_data_model
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
@@ -37,7 +37,7 @@ class TestDataModelPrepare:
         neat.read.excel(classic_model)
 
         # Hack to ensure deterministic output
-        rules = neat._state.rule_store.last_verified_information_rules
+        rules = neat._state.rule_store.last_verified_conceptual_data_model
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
@@ -70,7 +70,7 @@ class TestDataModelPrepare:
             }
         )
 
-        rules = neat._state.rule_store.last_verified_dms_rules
+        rules = neat._state.rule_store.last_verified_physical_data_model
 
         for view in rules.views:
             assert view.view.space == rules.metadata.space

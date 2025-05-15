@@ -33,7 +33,7 @@ from ._resources import (
     ResourceRetrievalError,
 )
 from ._wrapper import (
-    ClassValueError,
+    ConceptValueError,
     ContainerValueError,
     EnumValueError,
     MetadataValueError,
@@ -47,7 +47,7 @@ __all__ = [
     "AuthorizationError",
     "CDFMissingClientError",
     "CDFMissingResourcesError",
-    "ClassValueError",
+    "ConceptValueError",
     "ContainerValueError",
     "EnumValueError",
     "FileMissingRequiredFieldError",

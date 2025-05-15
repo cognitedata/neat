@@ -33,33 +33,33 @@ from cognite.neat.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._data_model.models import (
-    DMSInputRules,
     DMSSchema,
+    UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConcept,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, Enum, String
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputEnum,
-    DMSInputMetadata,
-    DMSInputNode,
-    DMSInputProperty,
-    DMSInputView,
-)
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
+    PhysicalUnknownEntity,
     ReverseConnectionEntity,
     ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalEnum,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalNodeType,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from cognite.neat.core._issues import (
     IssueList,
@@ -85,7 +85,7 @@ from cognite.neat.core._issues.warnings import (
 )
 
 
-class DMSImporter(BaseImporter[DMSInputRules]):
+class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
     """Imports a Data Model from Cognite Data Fusion.
 
     Args:
@@ -99,7 +99,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         self,
         schema: DMSSchema,
         read_issues: Sequence[NeatIssue] | None = None,
-        metadata: DMSInputMetadata | None = None,
+        metadata: UnverifiedPhysicalMetadata | None = None,
         referenced_containers: Iterable[dm.ContainerApply] | None = None,
     ):
         self.schema = schema
@@ -127,7 +127,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         client: NeatClient,
         data_model_id: DataModelIdentifier,
     ) -> "DMSImporter":
-        """Create a DMSImporter ready to convert the given data model to rules.
+        """Create a DMSImporter ready to convert the given DMS data model to neat representation.
 
         Args:
             client: Instantiated CogniteClient to retrieve data model.
@@ -188,8 +188,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def _create_metadata_from_model(
         cls,
         model: dm.DataModel[dm.View] | dm.DataModelApply,
-    ) -> DMSInputMetadata:
-        description, creator = DMSInputMetadata._get_description_and_creator(model.description)
+    ) -> UnverifiedPhysicalMetadata:
+        description, creator = UnverifiedPhysicalMetadata._get_description_and_creator(model.description)
 
         if isinstance(model, dm.DataModel):
             created = ms_to_datetime(model.created_time)
@@ -198,7 +198,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             now = datetime.now().replace(microsecond=0)
             created = now
             updated = now
-        return DMSInputMetadata(
+
+        return UnverifiedPhysicalMetadata(
             space=model.space,
             external_id=model.external_id,
             name=model.name or model.external_id,
@@ -213,7 +214,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     def from_directory(cls, directory: str | Path, client: NeatClient | None = None) -> "DMSImporter":
         with catch_issues() as issue_list:
             schema = DMSSchema.from_directory(directory)
-        # If there were errors during the import, the to_rules will raise them.
+        # If there were errors during the import, the to_data_model will raise them.
         return cls(
             schema, issue_list, referenced_containers=cls._lookup_referenced_containers(schema, issue_list, client)
         )
@@ -255,9 +256,9 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
 
-    def to_rules(self) -> ReadRules[DMSInputRules]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedPhysicalDataModel]:
         if self.issue_list.has_errors:
-            # In case there were errors during the import, the to_rules method will return None
+            # In case there were errors during the import, the to_data_model method will return None
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
@@ -268,25 +269,25 @@ class DMSImporter(BaseImporter[DMSInputRules]):
 
         model = self.schema.data_model
 
-        user_rules = self._create_rule_components(model, self.schema, self.metadata)
+        user_data_model = self._create_rule_components(model, self.schema, self.metadata)
 
         self.issue_list.trigger_warnings()
         if self.issue_list.has_errors:
             raise MultiValueError(self.issue_list.errors)
-        return ReadRules(user_rules, {})
+        return ImportedDataModel(user_data_model, {})
 
     def _create_rule_components(
         self,
         data_model: dm.DataModelApply,
         schema: DMSSchema,
-        metadata: DMSInputMetadata | None = None,
-    ) -> DMSInputRules:
+        metadata: UnverifiedPhysicalMetadata | None = None,
+    ) -> UnverifiedPhysicalDataModel:
         enum_by_container_property = self._create_enum_collections(self._all_containers_by_id.values())
         enum_collection_by_container_property = {
             key: enum_list[0].collection for key, enum_list in enum_by_container_property.items() if enum_list
         }
 
-        properties: list[DMSInputProperty] = []
+        properties: list[UnverifiedPhysicalProperty] = []
         for view_id, view in schema.views.items():
             view_entity = ViewEntity.from_id(view_id)
             for prop_id, prop in (view.properties or {}).items():
@@ -300,17 +301,19 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             view.as_id() if isinstance(view, dm.View | dm.ViewApply) else view for view in data_model.views or []
         }
 
-        metadata = metadata or DMSInputMetadata.from_data_model(data_model)
+        metadata = metadata or UnverifiedPhysicalMetadata.from_data_model(data_model)
 
-        return DMSInputRules(
+        return UnverifiedPhysicalDataModel(
             metadata=metadata,
             properties=properties,
-            containers=[DMSInputContainer.from_container(container) for container in schema.containers.values()],
+            containers=[
+                UnverifiedPhysicalContainer.from_container(container) for container in schema.containers.values()
+            ],
             views=[
-                DMSInputView.from_view(view, in_model=view_id in data_model_view_ids)
+                UnverifiedPhysicalView.from_view(view, in_model=view_id in data_model_view_ids)
                 for view_id, view in schema.views.items()
             ],
-            nodes=[DMSInputNode.from_node_type(node_type) for node_type in schema.node_types.values()],
+            nodes=[UnverifiedPhysicalNodeType.from_node_type(node_type) for node_type in schema.node_types.values()],
             enum=[enum for enum_list in enum_by_container_property.values() for enum in enum_list] or None,
         )
 
@@ -320,7 +323,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         prop: ViewPropertyApply,
         view_entity: ViewEntity,
         enum_collection_by_container_property: dict[tuple[dm.ContainerId, str], str],
-    ) -> DMSInputProperty | None:
+    ) -> UnverifiedPhysicalProperty | None:
         if isinstance(prop, dm.MappedPropertyApply) and prop.container not in self._all_containers_by_id:
             self.issue_list.append(
                 ResourceNotFoundWarning[dm.ContainerId, dm.PropertyId](
@@ -364,7 +367,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         if isinstance(value_type, ViewEntity) and value_type.as_id() not in self._all_views_by_id:
             self.issue_list.append(ResourceUnknownWarning(prop.source, "view", view_entity.as_id(), "view"))
 
-        return DMSInputProperty(
+        return UnverifiedPhysicalProperty(
             description=prop.description,
             name=prop.name,
             connection=self._get_connection_type(prop),
@@ -411,8 +414,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         cls,
         prop: ViewPropertyApply | ViewProperty,
         container_property: dm.ContainerProperty | None = None,
-        enum_collection_by_container_property: dict[tuple[dm.ContainerId, str], str] | None = None,
-    ) -> DataType | ViewEntity | DMSUnknownEntity | None:
+        enum_collection_by_container_property: (dict[tuple[dm.ContainerId, str], str] | None) = None,
+    ) -> DataType | ViewEntity | PhysicalUnknownEntity | None:
         if isinstance(
             prop,
             SingleEdgeConnectionApply
@@ -434,7 +437,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                 prop_type = prop.type
             if isinstance(prop_type, dm.DirectRelation):
                 if prop.source is None:
-                    return DMSUnknownEntity()
+                    return PhysicalUnknownEntity()
                 else:
                     return ViewEntity.from_id(prop.source)
             elif isinstance(prop_type, PropertyTypeWithUnit) and prop_type.unit:
@@ -451,7 +454,10 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                         f"BUG in Neat: Enum for {prop.container}.{prop.container_property_identifier} not found."
                     )
 
-                return Enum(collection=ClassEntity(suffix=collection), unknownValue=prop_type.unknown_value)
+                return Enum(
+                    collection=ConceptEntity(suffix=collection),
+                    unknownValue=prop_type.unknown_value,
+                )
             else:
                 return DataType.load(prop_type._type)
         else:
@@ -614,8 +620,8 @@ class DMSImporter(BaseImporter[DMSInputRules]):
     @staticmethod
     def _create_enum_collections(
         containers: Collection[dm.ContainerApply],
-    ) -> dict[tuple[dm.ContainerId, str], list[DMSInputEnum]]:
-        enum_by_container_property: dict[tuple[dm.ContainerId, str], list[DMSInputEnum]] = defaultdict(list)
+    ) -> dict[tuple[dm.ContainerId, str], list[UnverifiedPhysicalEnum]]:
+        enum_by_container_property: dict[tuple[dm.ContainerId, str], list[UnverifiedPhysicalEnum]] = defaultdict(list)
 
         is_external_id_unique = len({container.external_id for container in containers}) == len(containers)
 
@@ -630,15 +636,18 @@ class DMSImporter(BaseImporter[DMSInputRules]):
                     collection = f"{container.space}:{container.external_id}.{prop_id}"
                 for identifier, value in prop.type.values.items():
                     enum_by_container_property[(container_id, prop_id)].append(
-                        DMSInputEnum(
-                            collection=collection, value=identifier, name=value.name, description=value.description
+                        UnverifiedPhysicalEnum(
+                            collection=collection,
+                            value=identifier,
+                            name=value.name,
+                            description=value.description,
                         )
                     )
         return enum_by_container_property
 
     @classmethod
-    def as_information_input_property(
-        cls, entity: ClassEntity, prop_id: str, view_property: ViewProperty
+    def as_unverified_conceptual_property(
+        cls, entity: ConceptEntity, prop_id: str, view_property: ViewProperty
     ) -> UnverifiedConceptualProperty:
         if not isinstance(view_property, dm.MappedProperty | dm.EdgeConnection | ReverseDirectRelation):
             raise PropertyTypeNotSupportedError(
@@ -653,7 +662,7 @@ class DMSImporter(BaseImporter[DMSInputRules]):
             raise NeatValueError(f"Failed to get value type for {entity} property {prop_id}")
 
         return UnverifiedConceptualProperty(
-            class_=entity,
+            concept=entity,
             property_=prop_id,
             value_type=str(value_type),
             name=view_property.name,
@@ -664,13 +673,13 @@ class DMSImporter(BaseImporter[DMSInputRules]):
         )
 
     @classmethod
-    def as_information_input_class(cls, view: View) -> UnverifiedConceptualClass:
-        return UnverifiedConceptualClass(
-            class_=ClassEntity(prefix=view.space, suffix=view.external_id, version=view.version),
+    def as_unverified_concept(cls, view: View) -> UnverifiedConcept:
+        return UnverifiedConcept(
+            concept=ConceptEntity(prefix=view.space, suffix=view.external_id, version=view.version),
             name=view.name,
             description=view.description,
             implements=[
-                ClassEntity(
+                ConceptEntity(
                     prefix=parent.space,
                     suffix=parent.external_id,
                     version=parent.version,

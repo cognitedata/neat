@@ -3,20 +3,20 @@ there are loaders to TransformationRules pydantic class."""
 
 from cognite.neat.core._data_model.importers._rdf._base import BaseRDFImporter
 from cognite.neat.core._data_model.importers._rdf._shared import (
-    parse_classes,
+    parse_concepts,
     parse_properties,
 )
 
-CLASSES_QUERY = """SELECT ?class_ ?name ?description ?implements
+CLASSES_QUERY = """SELECT ?concept  ?name ?description ?implements
         WHERE {{
 
-        ?class_ a owl:Class .
-        OPTIONAL {{?class_ rdfs:subClassOf ?implements }}.
-        OPTIONAL {{?class_ rdfs:label|skos:prefLabel ?name }}.
-        OPTIONAL {{?class_ rdfs:comment|skos:definition ?description}} .
+        ?concept  a owl:Class .
+        OPTIONAL {{?concept  rdfs:subClassOf ?implements }}.
+        OPTIONAL {{?concept  rdfs:label|skos:prefLabel ?name }}.
+        OPTIONAL {{?concept  rdfs:comment|skos:definition ?description}} .
 
 
-        FILTER (!isBlank(?class_))
+        FILTER (!isBlank(?concept ))
         FILTER (!bound(?implements) || !isBlank(?implements))
 
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "{language}"))
@@ -27,11 +27,11 @@ CLASSES_QUERY = """SELECT ?class_ ?name ?description ?implements
 
 PROPERTIES_QUERY = """
 
-    SELECT ?class_ ?property_ ?name ?description ?value_type ?minCount ?maxCount ?default
+    SELECT ?concept  ?property_ ?name ?description ?value_type ?minCount ?maxCount ?default
     WHERE {{
         ?property_ a ?property_Type.
         FILTER (?property_Type IN (owl:ObjectProperty, owl:DatatypeProperty ) )
-        OPTIONAL {{?property_ rdfs:domain ?class_ }}.
+        OPTIONAL {{?property_ rdfs:domain ?concept  }}.
         OPTIONAL {{?property_ rdfs:range ?value_type }}.
         OPTIONAL {{?property_ rdfs:label|skos:prefLabel ?name }}.
         OPTIONAL {{?property_ rdfs:comment|skos:definition ?description}}.
@@ -64,10 +64,10 @@ class OWLImporter(BaseRDFImporter):
 
     """
 
-    def _to_rules_components(
+    def _to_data_model_components(
         self,
     ) -> dict:
-        classes, issue_list = parse_classes(self.graph, CLASSES_QUERY, self.language, self.issue_list)
+        concepts, issue_list = parse_concepts(self.graph, CLASSES_QUERY, self.language, self.issue_list)
         self.issue_list = issue_list
 
         # NeatError
@@ -76,7 +76,7 @@ class OWLImporter(BaseRDFImporter):
 
         components = {
             "Metadata": self._metadata,
-            "Classes": list(classes.values()) if classes else [],
+            "Concepts": list(concepts.values()) if concepts else [],
             "Properties": list(properties.values()) if properties else [],
         }
 

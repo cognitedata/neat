@@ -3,7 +3,10 @@ from typing import Any, cast
 
 import yaml
 
-from cognite.neat.core._data_model._shared import ReadRules, T_InputRules
+from cognite.neat.core._data_model._shared import (
+    ImportedDataModel,
+    T_UnverifiedDataModel,
+)
 from cognite.neat.core._data_model.models import INPUT_RULES_BY_ROLE, RoleTypes
 from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat.core._issues.errors import (
@@ -40,7 +43,7 @@ class YAMLReader:
             return {}, [FileReadError(filepath, f"Error reading file: {exc!s}")]
 
 
-class DictImporter(BaseImporter[T_InputRules]):
+class DictImporter(BaseImporter[T_UnverifiedDataModel]):
     """Imports the rules from a YAML file.
 
     Args:
@@ -80,7 +83,7 @@ class DictImporter(BaseImporter[T_InputRules]):
 
         return cls(data, filepaths=[filepath], source_name=source_name)
 
-    def to_rules(self) -> ReadRules[T_InputRules]:
+    def to_data_model(self) -> ImportedDataModel[T_UnverifiedDataModel]:
         if self._read_issues.has_errors or not self.raw_data:
             self._read_issues.trigger_warnings()
             raise MultiValueError(self._read_issues.errors)
@@ -112,12 +115,12 @@ class DictImporter(BaseImporter[T_InputRules]):
 
         role_input = RoleTypes(metadata["role"])
         role_enum = RoleTypes(role_input)
-        rules_cls = INPUT_RULES_BY_ROLE[role_enum]
+        data_model_cls = INPUT_RULES_BY_ROLE[role_enum]
 
-        rules = cast(T_InputRules, rules_cls.load(self.raw_data))
+        data_model = cast(T_UnverifiedDataModel, data_model_cls.load(self.raw_data))
 
         issue_list.trigger_warnings()
         if self._read_issues.has_errors:
             raise MultiValueError(self._read_issues.errors)
 
-        return ReadRules[T_InputRules](rules, {})
+        return ImportedDataModel[T_UnverifiedDataModel](data_model, {})

@@ -52,25 +52,25 @@ from cognite.neat.core._issues.warnings.user_modeling import (
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from cognite.neat.core._utils.text import humanize_collection
 
-from ._rules import DMSProperty, DMSRules
+from ._verified import PhysicalDataModel, PhysicalProperty
 
 
-class DMSValidation:
-    """This class does all the validation of the DMS rules that have dependencies between
-    components."""
+class PhysicalValidation:
+    """This class does all the validation of the physical data model that
+    have dependencies between components."""
 
     def __init__(
         self,
-        rules: DMSRules,
+        data_model: PhysicalDataModel,
         client: NeatClient | None = None,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ) -> None:
-        self._rules = rules
+        self._rules = data_model
         self._client = client
-        self._metadata = rules.metadata
-        self._properties = rules.properties
-        self._containers = rules.containers
-        self._views = rules.views
+        self._metadata = data_model.metadata
+        self._properties = data_model.properties
+        self._containers = data_model.containers
+        self._views = data_model.views
         self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
 
     def imported_views_and_containers_ids(
@@ -321,7 +321,9 @@ class DMSValidation:
         return parents_by_view
 
     def _consistent_container_properties(self) -> IssueList:
-        container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, DMSProperty]]] = defaultdict(list)
+        container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]] = defaultdict(
+            list
+        )
         for prop_no, prop in enumerate(self._properties):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))

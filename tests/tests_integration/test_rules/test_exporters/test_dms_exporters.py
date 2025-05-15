@@ -9,58 +9,58 @@ from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSRules,
+    PhysicalDataModel,
     SheetList,
 )
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    Concept,
     ConceptualMetadata,
     ConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 from tests.config import DOC_RULES
 
 
 @pytest.fixture(scope="session")
-def alice_rules() -> DMSRules:
+def alice_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "cdf-dms-architect-alice.xlsx"
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
-def olav_dms_rules() -> DMSRules:
+def olav_dms_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "dms-analytics-olav.xlsx"
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
-def olav_rebuilt_dms_rules() -> DMSRules:
+def olav_rebuilt_dms_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "dms-rebuild-olav.xlsx"
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
-def svein_harald_dms_rules() -> DMSRules:
+def svein_harald_dms_rules() -> PhysicalDataModel:
     filepath = DOC_RULES / "dms-addition-svein-harald.xlsx"
 
     excel_importer = ExcelImporter(filepath)
 
-    return excel_importer.to_rules().rules.as_verified_rules()
+    return excel_importer.to_data_model().unverified_data_model.as_verified_data_model()
 
 
 @pytest.fixture(scope="session")
@@ -80,42 +80,42 @@ def table_example() -> ConceptualDataModel:
         properties=SheetList[ConceptualProperty](
             [
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="color",
                     value_type="string",
                     min_count=0,
                     max_count=1.0,
                 ),
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="height",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="width",
                     value_type="float",
                     min_count=1,
                     max_count=1,
                 ),
                 ConceptualProperty(
-                    class_="Table",
+                    concept="Table",
                     property_="on",
                     value_type="Item",
                     min_count=0,
                     max_count=float("inf"),
                 ),
                 ConceptualProperty(
-                    class_="Item",
+                    concept="Item",
                     property_="name",
                     value_type="string",
                     min_count=1,
                     max_count=1,
                 ),
                 ConceptualProperty(
-                    class_="Item",
+                    concept="Item",
                     property_="category",
                     value_type="string",
                     min_count=0,
@@ -123,10 +123,10 @@ def table_example() -> ConceptualDataModel:
                 ),
             ]
         ),
-        classes=SheetList[ConceptualClass](
+        concepts=SheetList[Concept](
             [
-                ConceptualClass(class_="Table", name="Table"),
-                ConceptualClass(class_="Item", name="Item"),
+                Concept(concept="Table", name="Table"),
+                Concept(concept="Item", name="Item"),
             ]
         ),
     )
@@ -192,21 +192,25 @@ def existing_data_model(neat_client: NeatClient) -> Iterable[dm.DataModel]:
 class TestDMSExporter:
     def test_export_model_merge_with_existing(self, existing_data_model: dm.DataModel, neat_client: NeatClient):
         space = existing_data_model.space
-        rules = DMSInputRules(
-            DMSInputMetadata(
+        rules = UnverifiedPhysicalDataModel(
+            UnverifiedPhysicalMetadata(
                 space=space,
                 external_id=existing_data_model.external_id,
                 version=existing_data_model.version,
                 creator="doctrino",
             ),
             properties=[
-                DMSInputProperty(
-                    "NewView", "newProp", "text", container="ExistingContainer", container_property="newProp"
+                UnverifiedPhysicalProperty(
+                    "NewView",
+                    "newProp",
+                    "text",
+                    container="ExistingContainer",
+                    container_property="newProp",
                 ),
             ],
-            views=[DMSInputView("NewView")],
-            containers=[DMSInputContainer("ExistingContainer", used_for="node")],
-        ).as_verified_rules()
+            views=[UnverifiedPhysicalView("NewView")],
+            containers=[UnverifiedPhysicalContainer("ExistingContainer", used_for="node")],
+        ).as_verified_data_model()
 
         try:
             uploaded = DMSExporter(existing="update").export_to_cdf(rules, neat_client, dry_run=False)

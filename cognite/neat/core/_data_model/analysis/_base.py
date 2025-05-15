@@ -11,21 +11,21 @@ import pandas as pd
 from cognite.client import data_modeling as dm
 from rdflib import URIRef
 
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    Concept,
     ConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import DMSProperty
-from cognite.neat.core._data_model.models.dms._rules import DMSView
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     MultiValueTypeInfo,
     ViewEntity,
 )
 from cognite.neat.core._data_model.models.entities._single_value import (
     UnknownEntity,
 )
+from cognite.neat.core._data_model.models.physical import PhysicalProperty
+from cognite.neat.core._data_model.models.physical._verified import PhysicalView
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import NeatValueWarning
 
@@ -34,35 +34,35 @@ T_Hashable = TypeVar("T_Hashable", bound=Hashable)
 
 @dataclass(frozen=True)
 class Linkage:
-    source_class: ClassEntity
+    source_concept: ConceptEntity
     connecting_property: str
-    target_class: ClassEntity
+    target_concept: ConceptEntity
     max_occurrence: int | float | None
 
 
 class LinkageSet(set, Set[Linkage]):
     @property
-    def source_class(self) -> set[ClassEntity]:
-        return {link.source_class for link in self}
+    def source_concept(self) -> set[ConceptEntity]:
+        return {link.source_concept for link in self}
 
     @property
-    def target_class(self) -> set[ClassEntity]:
-        return {link.target_class for link in self}
+    def target_concept(self) -> set[ConceptEntity]:
+        return {link.target_concept for link in self}
 
-    def get_target_classes_by_source(self) -> dict[ClassEntity, set[ClassEntity]]:
-        target_classes_by_source: dict[ClassEntity, set[ClassEntity]] = defaultdict(set)
+    def get_target_concepts_by_source(self) -> dict[ConceptEntity, set[ConceptEntity]]:
+        target_concepts_by_source: dict[ConceptEntity, set[ConceptEntity]] = defaultdict(set)
         for link in self:
-            target_classes_by_source[link.source_class].add(link.target_class)
-        return target_classes_by_source
+            target_concepts_by_source[link.source_concept].add(link.target_concept)
+        return target_concepts_by_source
 
     def to_pandas(self) -> pd.DataFrame:
         # Todo: Remove this method
         return pd.DataFrame(
             [
                 {
-                    "source_class": link.source_class,
+                    "source_concept": link.source_concept,
                     "connecting_property": link.connecting_property,
-                    "target_class": link.target_class,
+                    "target_concept": link.target_concept,
                     "max_occurrence": link.max_occurrence,
                 }
                 for link in self
@@ -110,109 +110,112 @@ class ViewQueryDict(dict, MutableMapping[dm.ViewId, ViewQuery]):
         return super().popitem()
 
 
-class RulesAnalysis:
+class DataModelAnalysis:
     def __init__(
         self,
-        information: ConceptualDataModel | None = None,
-        dms: DMSRules | None = None,
+        conceptual: ConceptualDataModel | None = None,
+        physical: PhysicalDataModel | None = None,
     ) -> None:
-        self._information = information
-        self._dms = dms
+        self._conceptual = conceptual
+        self._physical = physical
 
     @property
-    def information(self) -> ConceptualDataModel:
-        if self._information is None:
-            raise NeatValueError("Information rules are required for this analysis")
-        return self._information
+    def conceptual(self) -> ConceptualDataModel:
+        if self._conceptual is None:
+            raise NeatValueError("Conceptual Data Model is required for this analysis")
+        return self._conceptual
 
     @property
-    def dms(self) -> DMSRules:
-        if self._dms is None:
-            raise NeatValueError("DMS rules are required for this analysis")
-        return self._dms
+    def physical(self) -> PhysicalDataModel:
+        if self._physical is None:
+            raise NeatValueError("Physical Data Model is required for this analysis")
+        return self._physical
 
-    def parents_by_class(
+    def parents_by_concept(
         self, include_ancestors: bool = False, include_different_space: bool = False
-    ) -> dict[ClassEntity, set[ClassEntity]]:
-        """Get a dictionary of classes and their parents.
+    ) -> dict[ConceptEntity, set[ConceptEntity]]:
+        """Get a dictionary of concepts and their parents.
 
         Args:
             include_ancestors (bool, optional): Include ancestors of the parents. Defaults to False.
             include_different_space (bool, optional): Include parents from different spaces. Defaults to False.
 
         Returns:
-            dict[ClassEntity, set[ClassEntity]]: Values parents with class as key.
+            dict[ConceptEntity, set[ConceptEntity]]: Values parents with concept as key.
         """
-        parents_by_class: dict[ClassEntity, set[ClassEntity]] = {}
-        for class_ in self.information.classes:
-            parents_by_class[class_.class_] = set()
-            for parent in class_.implements or []:
-                if include_different_space or parent.prefix == class_.class_.prefix:
-                    parents_by_class[class_.class_].add(parent)
+        parents_by_concept: dict[ConceptEntity, set[ConceptEntity]] = {}
+        for concept in self.conceptual.concepts:
+            parents_by_concept[concept.concept] = set()
+            for parent in concept.implements or []:
+                if include_different_space or parent.prefix == concept.concept.prefix:
+                    parents_by_concept[concept.concept].add(parent)
                 else:
                     warnings.warn(
                         NeatValueWarning(
-                            f"Parent class {parent} of class {class_} is not in the same namespace, skipping!"
+                            f"Parent concept {parent} of concept {concept} is not in the same namespace, skipping!"
                         ),
                         stacklevel=2,
                     )
         if include_ancestors:
-            self._include_ancestors(parents_by_class)
+            self._include_ancestors(parents_by_concept)
 
-        return parents_by_class
+        return parents_by_concept
 
     @staticmethod
-    def _include_ancestors(parents_by_class: dict[T_Hashable, set[T_Hashable]]) -> None:
-        # Topological sort to ensure that classes include all ancestors
-        for class_entity in list(TopologicalSorter(parents_by_class).static_order()):
-            if class_entity not in parents_by_class:
+    def _include_ancestors(
+        parents_by_concept: dict[T_Hashable, set[T_Hashable]],
+    ) -> None:
+        # Topological sort to ensure that concepts include all ancestors
+        for concept_entity in list(TopologicalSorter(parents_by_concept).static_order()):
+            if concept_entity not in parents_by_concept:
                 continue
-            parents_by_class[class_entity] |= {
+            parents_by_concept[concept_entity] |= {
                 grand_parent
-                for parent in parents_by_class[class_entity]
-                for grand_parent in parents_by_class.get(parent, set())
+                for parent in parents_by_concept[concept_entity]
+                for grand_parent in parents_by_concept.get(parent, set())
             }
 
-    def properties_by_class(
+    def properties_by_concepts(
         self, include_ancestors: bool = False, include_different_space: bool = False
-    ) -> dict[ClassEntity, list[ConceptualProperty]]:
-        """Get a dictionary of classes and their properties.
+    ) -> dict[ConceptEntity, list[ConceptualProperty]]:
+        """Get a dictionary of concepts and their properties.
 
         Args:
-            include_ancestors: Whether to include properties from parent classes.
-            include_different_space: Whether to include properties from parent classes in different spaces.
+            include_ancestors: Whether to include properties from parent concepts.
+            include_different_space: Whether to include properties from parent concepts in different spaces.
 
         Returns:
-            dict[ClassEntity, list[InformationProperty]]: Values properties with class as key.
+            dict[ConceptEntity, list[ConceptualProperty]]: Values properties with concept as key.
 
         """
-        properties_by_classes: dict[ClassEntity, list[ConceptualProperty]] = defaultdict(list)
-        for prop in self.information.properties:
-            properties_by_classes[prop.class_].append(prop)
+        properties_by_concepts: dict[ConceptEntity, list[ConceptualProperty]] = defaultdict(list)
+        for prop in self.conceptual.properties:
+            properties_by_concepts[prop.concept].append(prop)
 
         if include_ancestors:
-            parents_by_classes = self.parents_by_class(
-                include_ancestors=include_ancestors, include_different_space=include_different_space
+            parents_by_concepts = self.parents_by_concept(
+                include_ancestors=include_ancestors,
+                include_different_space=include_different_space,
             )
-            for class_, parents in parents_by_classes.items():
-                class_properties = {prop.property_ for prop in properties_by_classes[class_]}
+            for concept, parents in parents_by_concepts.items():
+                concept_properties = {prop.property_ for prop in properties_by_concepts[concept]}
                 for parent in parents:
-                    for parent_prop in properties_by_classes[parent]:
-                        if parent_prop.property_ not in class_properties:
-                            child_prop = parent_prop.model_copy(update={"class_": class_})
-                            properties_by_classes[class_].append(child_prop)
-                            class_properties.add(child_prop.property_)
+                    for parent_prop in properties_by_concepts[parent]:
+                        if parent_prop.property_ not in concept_properties:
+                            child_prop = parent_prop.model_copy(update={"concept": concept})
+                            properties_by_concepts[concept].append(child_prop)
+                            concept_properties.add(child_prop.property_)
 
-        return properties_by_classes
+        return properties_by_concepts
 
     def implements_by_view(
         self, include_ancestors: bool = False, include_different_space: bool = False
     ) -> dict[ViewEntity, set[ViewEntity]]:
         """Get a dictionary of views and their implemented views."""
-        # This is a duplicate fo the parent_by_class method, but for views
+        # This is a duplicate fo the parent_by_concept method, but for views
         # The choice to duplicate the code is to avoid generics which will make the code less readable
         implements_by_view: dict[ViewEntity, set[ViewEntity]] = {}
-        for view in self.dms.views:
+        for view in self.physical.views:
             implements_by_view[view.view] = set()
             for implements in view.implements or []:
                 if include_different_space or implements.space == view.view.space:
@@ -230,12 +233,12 @@ class RulesAnalysis:
 
     def properties_by_view(
         self, include_ancestors: bool = False, include_different_space: bool = False
-    ) -> dict[ViewEntity, list[DMSProperty]]:
+    ) -> dict[ViewEntity, list[PhysicalProperty]]:
         """Get a dictionary of views and their properties."""
-        # This is a duplicate fo the properties_by_class method, but for views
+        # This is a duplicate fo the properties_by_concept method, but for views
         # The choice to duplicate the code is to avoid generics which will make the code less readable.
-        properties_by_views: dict[ViewEntity, list[DMSProperty]] = defaultdict(list)
-        for prop in self.dms.properties:
+        properties_by_views: dict[ViewEntity, list[PhysicalProperty]] = defaultdict(list)
+        for prop in self.physical.properties:
             properties_by_views[prop.view].append(prop)
 
         if include_ancestors:
@@ -254,11 +257,11 @@ class RulesAnalysis:
         return properties_by_views
 
     @property
-    def logical_uri_by_view(self) -> dict[ViewEntity, URIRef]:
+    def conceptual_uri_by_view(self) -> dict[ViewEntity, URIRef]:
         """Get the logical URI by view."""
-        return {view.view: view.logical for view in self.dms.views if view.logical}
+        return {view.view: view.conceptual for view in self.physical.views if view.conceptual}
 
-    def logical_uri_by_property_by_view(
+    def conceptual_uri_by_property_by_view(
         self,
         include_ancestors: bool = False,
         include_different_space: bool = False,
@@ -267,68 +270,68 @@ class RulesAnalysis:
         properties_by_view = self.properties_by_view(include_ancestors, include_different_space)
 
         return {
-            view: {prop.view_property: prop.logical for prop in properties if prop.logical}
+            view: {prop.view_property: prop.conceptual for prop in properties if prop.conceptual}
             for view, properties in properties_by_view.items()
         }
 
     @property
-    def _class_by_neat_id(self) -> dict[URIRef, ConceptualClass]:
-        """Get a dictionary of class neat IDs to
-        class entities."""
+    def _concept_by_neat_id(self) -> dict[URIRef, Concept]:
+        """Get a dictionary of concept neat IDs to
+        concept entities."""
 
-        return {cls.neatId: cls for cls in self.information.classes if cls.neatId}
+        return {cls.neatId: cls for cls in self.conceptual.concepts if cls.neatId}
 
-    def class_by_suffix(self) -> dict[str, ConceptualClass]:
-        """Get a dictionary of class suffixes to class entities."""
+    def concept_by_suffix(self) -> dict[str, Concept]:
+        """Get a dictionary of concept suffixes to concept entities."""
         # TODO: Remove this method
-        class_dict: dict[str, ConceptualClass] = {}
-        for definition in self.information.classes:
-            entity = definition.class_
-            if entity.suffix in class_dict:
+        concept_dict: dict[str, Concept] = {}
+        for definition in self.conceptual.concepts:
+            entity = definition.concept
+            if entity.suffix in concept_dict:
                 warnings.warn(
                     NeatValueWarning(
-                        f"Class {entity} has been defined more than once! Only the first definition "
+                        f"Concept {entity} has been defined more than once! Only the first definition "
                         "will be considered, skipping the rest.."
                     ),
                     stacklevel=2,
                 )
                 continue
-            class_dict[entity.suffix] = definition
-        return class_dict
+            concept_dict[entity.suffix] = definition
+        return concept_dict
 
     @property
-    def class_by_class_entity(self) -> dict[ClassEntity, ConceptualClass]:
-        """Get a dictionary of class entities to class entities."""
-        rules = self.information
-        return {cls.class_: cls for cls in rules.classes}
+    def concept_by_concept_entity(self) -> dict[ConceptEntity, Concept]:
+        """Get a dictionary of concept entities to concept entities."""
+        data_model = self.conceptual
+        return {cls.concept: cls for cls in data_model.concepts}
 
     @property
-    def view_by_view_entity(self) -> dict[ViewEntity, DMSView]:
-        """Get a dictionary of class entities to class entities."""
-        rules = self.dms
-        return {view.view: view for view in rules.views}
+    def view_by_view_entity(self) -> dict[ViewEntity, PhysicalView]:
+        """Get a dictionary of views to view entities."""
+        data_model = self.physical
+        return {view.view: view for view in data_model.views}
 
     def property_by_id(self) -> dict[str, list[ConceptualProperty]]:
         """Get a dictionary of property IDs to property entities."""
         property_dict: dict[str, list[ConceptualProperty]] = defaultdict(list)
-        for prop in self.information.properties:
+        for prop in self.conceptual.properties:
             property_dict[prop.property_].append(prop)
         return property_dict
 
-    def properties_by_id_by_class(
+    def properties_by_id_by_concept(
         self,
         has_instance_source: bool = False,
         include_ancestors: bool = False,
-    ) -> dict[ClassEntity, dict[str, ConceptualProperty]]:
-        """Get a dictionary of class entities to dictionaries of property IDs to property entities."""
-        class_property_pairs: dict[ClassEntity, dict[str, ConceptualProperty]] = {}
-        for class_, properties in self.properties_by_class(include_ancestors).items():
+    ) -> dict[ConceptEntity, dict[str, ConceptualProperty]]:
+        """Get a dictionary of concept entities to dictionaries of property IDs to property entities."""
+        concept_property_pairs: dict[ConceptEntity, dict[str, ConceptualProperty]] = {}
+        for concept, properties in self.properties_by_concepts(include_ancestors).items():
             processed_properties: dict[str, ConceptualProperty] = {}
             for prop in properties:
                 if prop.property_ in processed_properties:
                     warnings.warn(
                         NeatValueWarning(
-                            f"Property {processed_properties} for {class_} has been defined more than once!"
+                            f"Property {processed_properties} for {concept} has been defined more than once!"
                             " Only the first definition will be considered, skipping the rest.."
                         ),
                         stacklevel=2,
@@ -337,34 +340,34 @@ class RulesAnalysis:
                 if has_instance_source and prop.instance_source is None:
                     continue
                 processed_properties[prop.property_] = prop
-            class_property_pairs[class_] = processed_properties
+            concept_property_pairs[concept] = processed_properties
 
-        return class_property_pairs
+        return concept_property_pairs
 
     def defined_views(self, include_ancestors: bool = False) -> set[ViewEntity]:
         properties_by_view = self.properties_by_view(include_ancestors)
         return {prop.view for prop in itertools.chain.from_iterable(properties_by_view.values())}
 
-    def defined_classes(
+    def defined_concepts(
         self,
         include_ancestors: bool = False,
-    ) -> set[ClassEntity]:
-        """Returns classes that have properties defined for them in the data model.
+    ) -> set[ConceptEntity]:
+        """Returns concepts that have properties defined for them in the data model.
 
         Args:
             include_ancestors: Whether to consider inheritance or not. Defaults False
 
         Returns:
-            Set of classes that have been defined in the data model
+            Set of concepts that have been defined in the data model
         """
-        properties_by_class = self.properties_by_class(include_ancestors)
-        return {prop.class_ for prop in itertools.chain.from_iterable(properties_by_class.values())}
+        properties_by_concept = self.properties_by_concepts(include_ancestors)
+        return {prop.concept for prop in itertools.chain.from_iterable(properties_by_concept.values())}
 
-    def class_linkage(
+    def concept_linkage(
         self,
         include_ancestors: bool = False,
     ) -> LinkageSet:
-        """Returns a set of class linkages in the data model.
+        """Returns a set of concept linkages in the data model.
 
         Args:
             include_ancestors: Whether to consider inheritance or not. Defaults False
@@ -372,51 +375,51 @@ class RulesAnalysis:
         Returns:
 
         """
-        class_linkage = LinkageSet()
+        concept_linkage = LinkageSet()
 
-        properties_by_class = self.properties_by_class(include_ancestors)
+        properties_by_concept = self.properties_by_concepts(include_ancestors)
 
         prop: ConceptualProperty
-        for prop in itertools.chain.from_iterable(properties_by_class.values()):
-            if not isinstance(prop.value_type, ClassEntity):
+        for prop in itertools.chain.from_iterable(properties_by_concept.values()):
+            if not isinstance(prop.value_type, ConceptEntity):
                 continue
-            class_linkage.add(
+            concept_linkage.add(
                 Linkage(
-                    source_class=prop.class_,
+                    source_concept=prop.concept,
                     connecting_property=prop.property_,
-                    target_class=prop.value_type,
+                    target_concept=prop.value_type,
                     max_occurrence=prop.max_count,
                 )
             )
 
-        return class_linkage
+        return concept_linkage
 
-    def symmetrically_connected_classes(
+    def symmetrically_connected_concepts(
         self,
         include_ancestors: bool = False,
-    ) -> set[tuple[ClassEntity, ClassEntity]]:
-        """Returns a set of pairs of symmetrically linked classes.
+    ) -> set[tuple[ConceptEntity, ConceptEntity]]:
+        """Returns a set of pairs of symmetrically linked concepts.
 
         Args:
             include_ancestors: Whether to consider inheritance or not. Defaults False
 
         Returns:
-            Set of pairs of symmetrically linked classes
+            Set of pairs of symmetrically linked concepts
 
-        !!! note "Symmetrically Connected Classes"
-            Symmetrically connected classes are classes that are connected to each other
-            in both directions. For example, if class A is connected to class B, and class B
-            is connected to class A, then classes A and B are symmetrically connected.
+        !!! note "Symmetrically Connected Concepts"
+            Symmetrically connected concepts are concepts that are connected to each other
+            in both directions. For example, if concept A is connected to concept B, and concept B
+            is connected to concept A, then concepts A and B are symmetrically connected.
         """
-        sym_pairs: set[tuple[ClassEntity, ClassEntity]] = set()
-        class_linkage = self.class_linkage(include_ancestors)
-        if not class_linkage:
+        sym_pairs: set[tuple[ConceptEntity, ConceptEntity]] = set()
+        concept_linkage = self.concept_linkage(include_ancestors)
+        if not concept_linkage:
             return sym_pairs
 
-        targets_by_source = class_linkage.get_target_classes_by_source()
-        for link in class_linkage:
-            source = link.source_class
-            target = link.target_class
+        targets_by_source = concept_linkage.get_target_concepts_by_source()
+        for link in concept_linkage:
+            source = link.source_concept
+            target = link.target_concept
 
             if source in targets_by_source[source] and (source, target) not in sym_pairs:
                 sym_pairs.add((source, target))
@@ -426,51 +429,51 @@ class RulesAnalysis:
     def _properties_by_neat_id(self, format: Literal["info"] = "info") -> dict[URIRef, ConceptualProperty]: ...
 
     @overload
-    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, DMSProperty]: ...
+    def _properties_by_neat_id(self, format: Literal["dms"] = "dms") -> dict[URIRef, PhysicalProperty]: ...
 
     def _properties_by_neat_id(
         self, format: Literal["info", "dms"] = "info"
-    ) -> dict[URIRef, ConceptualProperty] | dict[URIRef, DMSProperty]:
+    ) -> dict[URIRef, ConceptualProperty] | dict[URIRef, PhysicalProperty]:
         if format == "info":
-            return {prop.neatId: prop for prop in self.information.properties if prop.neatId}
+            return {prop.neatId: prop for prop in self.conceptual.properties if prop.neatId}
         elif format == "dms":
-            return {prop.neatId: prop for prop in self.dms.properties if prop.neatId}
+            return {prop.neatId: prop for prop in self.physical.properties if prop.neatId}
         else:
             raise NeatValueError(f"Invalid format: {format}")
 
     @property
-    def classes_by_neat_id(self) -> dict[URIRef, ConceptualClass]:
-        return {class_.neatId: class_ for class_ in self.information.classes if class_.neatId}
+    def concepts_by_neat_id(self) -> dict[URIRef, Concept]:
+        return {concept.neatId: concept for concept in self.conceptual.concepts if concept.neatId}
 
     @property
     def multi_value_properties(self) -> list[ConceptualProperty]:
-        return [prop_ for prop_ in self.information.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
+        return [prop_ for prop_ in self.conceptual.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
 
     @property
     def view_query_by_id(
         self,
     ) -> "ViewQueryDict":
         # Trigger error if any of these are missing
-        _ = self.information
-        _ = self.dms
+        _ = self.conceptual
+        _ = self.physical
 
         # caching results for faster access
-        classes_by_neat_id = self._class_by_neat_id
-        properties_by_class = self.properties_by_class(include_ancestors=True)
-        logical_uri_by_view = self.logical_uri_by_view
-        logical_uri_by_property_by_view = self.logical_uri_by_property_by_view(include_ancestors=True)
-        information_properties_by_neat_id = self._properties_by_neat_id()
+        concepts_by_neat_id = self._concept_by_neat_id
+        properties_by_concept = self.properties_by_concepts(include_ancestors=True)
+        conceptual_uri_by_view = self.conceptual_uri_by_view
+        conceptual_uri_by_property_by_view = self.conceptual_uri_by_property_by_view(include_ancestors=True)
+        conceptual_properties_by_neat_id = self._properties_by_neat_id()
 
         query_configs = ViewQueryDict()
-        for view in self.dms.views:
+        for view in self.physical.views:
             # this entire block of sequential if statements checks:
-            # 1. connection of dms to info rules
-            # 2. correct paring of information and dms rules
-            # 3. connection of info rules to instances
+            # 1. connection of physical and conceptual data model
+            # 2. correct paring of conceptual and physical data model
+            # 3. connection of conceptual data model to instances
             if (
-                (neat_id := logical_uri_by_view.get(view.view))
-                and (class_ := classes_by_neat_id.get(neat_id))
-                and (uri := class_.instance_source)
+                (neat_id := conceptual_uri_by_view.get(view.view))
+                and (concept := concepts_by_neat_id.get(neat_id))
+                and (uri := concept.instance_source)
             ):
                 view_query = ViewQuery(
                     view_id=view.view.as_id(),
@@ -479,14 +482,14 @@ class RulesAnalysis:
                     # this is to encounter for special cases of e.g. space, startNode and endNode
                     property_renaming_config=(
                         {uri: prop_.property_ for prop_ in info_properties for uri in prop_.instance_source or []}
-                        if (info_properties := properties_by_class.get(class_.class_))
+                        if (info_properties := properties_by_concept.get(concept.concept))
                         else {}
                     ),
                 )
 
-                if logical_uri_by_property := logical_uri_by_property_by_view.get(view.view):
-                    for target_name, neat_id in logical_uri_by_property.items():
-                        if (property_ := information_properties_by_neat_id.get(neat_id)) and (
+                if conceptual_uri_by_property := conceptual_uri_by_property_by_view.get(view.view):
+                    for target_name, neat_id in conceptual_uri_by_property.items():
+                        if (property_ := conceptual_properties_by_neat_id.get(neat_id)) and (
                             uris := property_.instance_source
                         ):
                             for uri in uris:
@@ -496,14 +499,14 @@ class RulesAnalysis:
 
         return query_configs
 
-    def _dms_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
-        """Generate a MultiDiGraph from the DMS rules."""
+    def _physical_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
+        """Generate a MultiDiGraph from the Physical Data Model."""
         di_graph = nx.MultiDiGraph()
 
-        rules = self.dms
+        data_model = self.physical
 
         # Add nodes and edges from Views sheet
-        for view in rules.views:
+        for view in data_model.views:
             di_graph.add_node(view.view.suffix, label=view.view.suffix)
 
             if format == "implements" and view.implements:
@@ -518,7 +521,7 @@ class RulesAnalysis:
 
         if format == "data-model":
             # Add nodes and edges from Properties sheet
-            for prop_ in rules.properties:
+            for prop_ in data_model.properties:
                 if prop_.connection and isinstance(prop_.value_type, ViewEntity):
                     di_graph.add_node(prop_.view.suffix, label=prop_.view.suffix)
                     di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
@@ -530,26 +533,26 @@ class RulesAnalysis:
 
         return di_graph
 
-    def _info_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
-        """Generate MultiDiGraph representing information data model."""
+    def _conceptual_di_graph(self, format: Literal["data-model", "implements"] = "data-model") -> nx.MultiDiGraph:
+        """Generate MultiDiGraph representing conceptual data model."""
 
-        rules = self.information
+        data_model = self.conceptual
         di_graph = nx.MultiDiGraph()
 
         # Add nodes and edges from Views sheet
-        for class_ in rules.classes:
+        for concept in data_model.concepts:
             # if possible use human readable label coming from the view name
 
             di_graph.add_node(
-                class_.class_.suffix,
-                label=class_.name or class_.class_.suffix,
+                concept.concept.suffix,
+                label=concept.name or concept.concept.suffix,
             )
 
-            if format == "implements" and class_.implements:
-                for parent in class_.implements:
+            if format == "implements" and concept.implements:
+                for parent in concept.implements:
                     di_graph.add_node(parent.suffix, label=parent.suffix)
                     di_graph.add_edge(
-                        class_.class_.suffix,
+                        concept.concept.suffix,
                         parent.suffix,
                         label="implements",
                         dashes=True,
@@ -557,13 +560,13 @@ class RulesAnalysis:
 
         if format == "data-model":
             # Add nodes and edges from Properties sheet
-            for prop_ in rules.properties:
-                if isinstance(prop_.value_type, ClassEntity) and not isinstance(prop_.value_type, UnknownEntity):
-                    di_graph.add_node(prop_.class_.suffix, label=prop_.class_.suffix)
+            for prop_ in data_model.properties:
+                if isinstance(prop_.value_type, ConceptEntity) and not isinstance(prop_.value_type, UnknownEntity):
+                    di_graph.add_node(prop_.concept.suffix, label=prop_.concept.suffix)
                     di_graph.add_node(prop_.value_type.suffix, label=prop_.value_type.suffix)
 
                     di_graph.add_edge(
-                        prop_.class_.suffix,
+                        prop_.concept.suffix,
                         prop_.value_type.suffix,
                         label=prop_.name or prop_.property_,
                     )

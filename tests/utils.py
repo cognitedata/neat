@@ -15,11 +15,11 @@ from rdflib import Namespace
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import (
     ConceptualDataModel,
-    DMSRules,
-    VerifiedRules,
+    PhysicalDataModel,
+    VerifiedDataModel,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, String
-from cognite.neat.core._data_model.models.entities import ClassEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity
 
 
 class DataClassCreator:
@@ -72,8 +72,8 @@ class DataClassCreator:
             return datetime.datetime.now()
         elif type_ is datetime.date:
             return datetime.date.today()
-        elif type_ is ClassEntity:
-            return ClassEntity(prefix="namespace", suffix="class", version="version")
+        elif type_ is ConceptEntity:
+            return ConceptEntity(prefix="namespace", suffix="class", version="version")
         elif type_ is DataType:
             return String()
         else:
@@ -107,14 +107,14 @@ def get_all_subclasses(cls: T_Type, only_concrete: bool = False) -> list[T_Type]
     ]
 
 
-def normalize_neat_id_in_rules(rules: VerifiedRules) -> VerifiedRules:
+def normalize_neat_id_in_rules(rules: VerifiedDataModel) -> VerifiedDataModel:
     if isinstance(rules, ConceptualDataModel):
-        for i, class_ in enumerate(rules.classes):
+        for i, class_ in enumerate(rules.concepts):
             class_.neatId = DEFAULT_NAMESPACE[f"Class_{i}"]
         for i, property_ in enumerate(rules.properties):
             property_.neatId = DEFAULT_NAMESPACE[f"Property_{i}"]
 
-    elif isinstance(rules, DMSRules):
+    elif isinstance(rules, PhysicalDataModel):
         for i, view in enumerate(rules.views):
             view.neatId = DEFAULT_NAMESPACE[f"View_{i}"]
         for i, property_ in enumerate(rules.properties):

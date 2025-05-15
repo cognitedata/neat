@@ -7,7 +7,7 @@ from openpyxl import Workbook, load_workbook
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSRules,
+    PhysicalDataModel,
 )
 from cognite.neat.core._data_model.models._base_verified import RoleTypes
 from cognite.neat.core._issues.errors._general import NeatValueError
@@ -41,7 +41,7 @@ def compare_data_validators(expected: Workbook, resulted: Workbook) -> list[bool
 
 
 class TestExcelExporter:
-    def test_export_dms_rules(self, alice_rules: DMSRules):
+    def test_export_dms_rules(self, alice_rules: PhysicalDataModel):
         exporter = ExcelExporter(styling="maximal")
         workbook = exporter.export(alice_rules)
         assert "Metadata" in workbook.sheetnames
@@ -54,7 +54,7 @@ class TestExcelExporter:
         workbook = exporter.export(david_rules)
 
         assert "Metadata" in workbook.sheetnames
-        assert "Classes" in workbook.sheetnames
+        assert "Concepts" in workbook.sheetnames
         assert "Properties" in workbook.sheetnames
 
     def test_conceptual_data_model_template(self, tmp_path: Path):
@@ -94,21 +94,21 @@ class TestExcelExporter:
             resulted["Properties"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
-        assert expected["Classes"].data_validations.count == 1
-        assert resulted["Classes"].data_validations.count == 1
+        assert expected["Concepts"].data_validations.count == 1
+        assert resulted["Concepts"].data_validations.count == 1
 
         assert f"<formula1>={exporter._helper_sheet_name}!B$1:B$201</formula1>" in etree.tostring(
-            resulted["Classes"].data_validations.to_tree(), pretty_print=True
+            resulted["Concepts"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
         assert 'dataValidation sqref="D3:D103"' in etree.tostring(
-            resulted["Classes"].data_validations.to_tree(), pretty_print=True
+            resulted["Concepts"].data_validations.to_tree(), pretty_print=True
         ).decode("utf-8")
 
         # check if only 10 Cognite concepts are present in the dropdown
         # by checking if 11th row contains a formula
-        assert expected["_helper"]["B11"].value == '=IF(ISBLANK(Classes!A3), "", Classes!A3)'
-        assert resulted["_helper"]["B11"].value == '=IF(ISBLANK(Classes!A3), "", Classes!A3)'
+        assert expected["_helper"]["B11"].value == '=IF(ISBLANK(Concepts!A3), "", Concepts!A3)'
+        assert resulted["_helper"]["B11"].value == '=IF(ISBLANK(Concepts!A3), "", Concepts!A3)'
 
     def test_conceptual_data_model_template_fail(self):
         exporter = ExcelExporter(base_model="NeatModel")

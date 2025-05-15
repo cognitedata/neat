@@ -1,4 +1,4 @@
-from ._graph_store import NeatGraphStore
-from ._rules_store import NeatRulesStore
+from ._data_model import NeatDataModelStore
+from ._instance import NeatInstanceStore
 
-__all__ = ["NeatGraphStore", "NeatRulesStore"]
+__all__ = ["NeatDataModelStore", "NeatInstanceStore"]

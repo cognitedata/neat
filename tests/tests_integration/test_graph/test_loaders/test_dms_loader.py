@@ -9,7 +9,7 @@ from cognite.neat.core._client import NeatClient
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model.importers import InferenceImporter
 from cognite.neat.core._instances.loaders import DMSLoader
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData
 
 
@@ -25,15 +25,15 @@ def deployed_car_model(cognite_client: CogniteClient) -> dm.DataModelId:
 
 
 @pytest.fixture()
-def car_store() -> NeatGraphStore:
+def car_store() -> NeatInstanceStore:
     car = GraphData.car
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
     store.add_rules(car.get_care_rules())
 
     for triple in car.TRIPLES:
         store.dataset.add(triple)
 
-    rules = InferenceImporter.from_graph_store(store).to_rules().rules.as_verified_rules()
+    rules = InferenceImporter.from_graph_store(store).to_data_model().unverified_data_model.as_verified_data_model()
     store.add_rules(rules)
 
     return store
@@ -42,7 +42,10 @@ def car_store() -> NeatGraphStore:
 class TestDMSLoader:
     @pytest.mark.skip("This test needs to be rewritten and test data updated!")
     def test_load_car_example(
-        self, neat_client: NeatClient, deployed_car_model: dm.DataModelId, car_store: NeatGraphStore
+        self,
+        neat_client: NeatClient,
+        deployed_car_model: dm.DataModelId,
+        car_store: NeatInstanceStore,
     ) -> None:
         loader = DMSLoader.from_data_model_id(neat_client, deployed_car_model, car_store, GraphData.car.INSTANCE_SPACE)
 
@@ -61,26 +64,30 @@ class TestDMSLoader:
         }
         neat = NeatSession(neat_client)
         neat.read.examples.core_data_model()
-        dms_rules = neat._state.rule_store.last_verified_dms_rules
-        info_rules = neat._state.rule_store.last_verified_information_rules
-        info_rules.metadata.physical = dms_rules.metadata.identifier
-        dms_rules.sync_with_info_rules(info_rules)
+        physical_data_model = neat._state.rule_store.last_verified_physical_data_model
+        conceptual_data_model = neat._state.rule_store.last_verified_conceptual_data_model
+        conceptual_data_model.metadata.physical = physical_data_model.metadata.identifier
+        physical_data_model.sync_with_conceptual_data_model(conceptual_data_model)
 
         # Adding some triples to
         namespace = DEFAULT_NAMESPACE
         triples = [
-            (namespace[f"My{view.view.external_id}"], RDF.type, namespace[view.view.external_id])
-            for view in dms_rules.views
+            (
+                namespace[f"My{view.view.external_id}"],
+                RDF.type,
+                namespace[view.view.external_id],
+            )
+            for view in physical_data_model.views
         ]
         for triple in triples:
             neat._state.instances.store.dataset.add(triple)
         # Link triples to schema.
-        for cls_ in info_rules.classes:
-            cls_.instance_source = namespace[cls_.class_.suffix]
+        for concept in conceptual_data_model.concepts:
+            concept.instance_source = namespace[concept.concept.suffix]
 
         loader = DMSLoader(
-            dms_rules,
-            info_rules,
+            physical_data_model,
+            conceptual_data_model,
             neat._state.instances.store,
             "sp_instance_space",
             client=neat_client,

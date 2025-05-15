@@ -6,21 +6,24 @@ from typing import TYPE_CHECKING, Any, Generic
 from rdflib import URIRef
 
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model._shared import ReadRules, T_InputRules
+from cognite.neat.core._data_model._shared import (
+    ImportedDataModel,
+    T_UnverifiedDataModel,
+)
 from cognite.neat.core._utils.auxiliary import class_html_doc
 
 if TYPE_CHECKING:
     from cognite.neat.core._store._provenance import Agent as ProvenanceAgent
 
 
-class BaseImporter(ABC, Generic[T_InputRules]):
+class BaseImporter(ABC, Generic[T_UnverifiedDataModel]):
     """
-    BaseImporter class which all importers inherit from.
+    BaseImporter class which all data model importers inherit from.
     """
 
     @abstractmethod
-    def to_rules(self) -> ReadRules[T_InputRules]:
-        """Creates `Rules` object from the data for target role."""
+    def to_data_model(self) -> ImportedDataModel[T_UnverifiedDataModel]:
+        """Creates `DataModel` object from the data for target role."""
         raise NotImplementedError()
 
     def _default_metadata(self) -> dict[str, Any]:
@@ -31,7 +34,6 @@ class BaseImporter(ABC, Generic[T_InputRules]):
             creator = getpass.getuser()
 
         return {
-            "schema": "partial",
             "space": "neat",
             "external_id": "NeatImportedDataModel",
             "version": "0.1.0",

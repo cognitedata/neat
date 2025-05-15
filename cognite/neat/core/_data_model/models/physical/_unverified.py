@@ -22,8 +22,8 @@ from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ContainerEntity,
     DMSNodeEntity,
-    DMSUnknownEntity,
     EdgeEntity,
+    PhysicalUnknownEntity,
     ReverseConnectionEntity,
     ViewEntity,
     load_connection,
@@ -33,7 +33,16 @@ from cognite.neat.core._data_model.models.entities._wrapped import DMSFilter
 from cognite.neat.core._issues.warnings import DeprecatedWarning
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
-from ._rules import _DEFAULT_VERSION, DMSContainer, DMSEnum, DMSMetadata, DMSNode, DMSProperty, DMSRules, DMSView
+from ._verified import (
+    _DEFAULT_VERSION,
+    PhysicalContainer,
+    PhysicalDataModel,
+    PhysicalEnum,
+    PhysicalMetadata,
+    PhysicalNodeType,
+    PhysicalProperty,
+    PhysicalView,
+)
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -42,7 +51,7 @@ else:
 
 
 @dataclass
-class DMSInputMetadata(UnverifiedComponent[DMSMetadata]):
+class UnverifiedPhysicalMetadata(UnverifiedComponent[PhysicalMetadata]):
     space: str
     external_id: str
     creator: str
@@ -51,12 +60,12 @@ class DMSInputMetadata(UnverifiedComponent[DMSMetadata]):
     description: str | None = None
     created: datetime | str | None = None
     updated: datetime | str | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
     source_id: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSMetadata]:
-        return DMSMetadata
+    def _get_verified_cls(cls) -> type[PhysicalMetadata]:
+        return PhysicalMetadata
 
     def dump(self) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -67,7 +76,7 @@ class DMSInputMetadata(UnverifiedComponent[DMSMetadata]):
         return output
 
     @classmethod
-    def from_data_model(cls, data_model: dm.DataModelApply) -> "DMSInputMetadata":
+    def from_data_model(cls, data_model: dm.DataModelApply) -> "UnverifiedPhysicalMetadata":
         description, creator = cls._get_description_and_creator(data_model.description)
         return cls(
             space=data_model.space,
@@ -113,10 +122,10 @@ class DMSInputMetadata(UnverifiedComponent[DMSMetadata]):
 
 
 @dataclass
-class DMSInputProperty(UnverifiedComponent[DMSProperty]):
+class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     view: str
     view_property: str | None
-    value_type: str | DataType | ViewEntity | DMSUnknownEntity
+    value_type: str | DataType | ViewEntity | PhysicalUnknownEntity
     name: str | None = None
     description: str | None = None
     connection: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None = None
@@ -129,7 +138,7 @@ class DMSInputProperty(UnverifiedComponent[DMSProperty]):
     index: str | list[str] | None = None
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     @property
     def nullable(self) -> bool | None:
@@ -145,8 +154,8 @@ class DMSInputProperty(UnverifiedComponent[DMSProperty]):
         )
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSProperty]:
-        return DMSProperty
+    def _get_verified_cls(cls) -> type[PhysicalProperty]:
+        return PhysicalProperty
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -206,7 +215,7 @@ class DMSInputProperty(UnverifiedComponent[DMSProperty]):
 
 
 @dataclass
-class DMSInputContainer(UnverifiedComponent[DMSContainer]):
+class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     container: str
     name: str | None = None
     description: str | None = None
@@ -215,8 +224,8 @@ class DMSInputContainer(UnverifiedComponent[DMSContainer]):
     used_for: Literal["node", "edge", "all"] | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSContainer]:
-        return DMSContainer
+    def _get_verified_cls(cls) -> type[PhysicalContainer]:
+        return PhysicalContainer
 
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -232,7 +241,7 @@ class DMSInputContainer(UnverifiedComponent[DMSContainer]):
         return ContainerEntity.load(self.container, strict=True, space=default_space)
 
     @classmethod
-    def from_container(cls, container: dm.ContainerApply) -> "DMSInputContainer":
+    def from_container(cls, container: dm.ContainerApply) -> "UnverifiedPhysicalContainer":
         constraints: list[str] = []
         for _, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
@@ -249,7 +258,7 @@ class DMSInputContainer(UnverifiedComponent[DMSContainer]):
 
 
 @dataclass
-class DMSInputView(UnverifiedComponent[DMSView]):
+class UnverifiedPhysicalView(UnverifiedComponent[PhysicalView]):
     view: str
     name: str | None = None
     description: str | None = None
@@ -257,15 +266,15 @@ class DMSInputView(UnverifiedComponent[DMSView]):
     filter_: Literal["hasData", "nodeType", "rawFilter"] | str | None = None
     in_model: bool = True
     neatId: str | URIRef | None = None
-    logical: str | URIRef | None = None
+    conceptual: str | URIRef | None = None
 
     def __post_init__(self) -> None:
         if self.in_model is None:
             self.in_model = True
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSView]:
-        return DMSView
+    def _get_verified_cls(cls) -> type[PhysicalView]:
+        return PhysicalView
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
@@ -292,7 +301,7 @@ class DMSInputView(UnverifiedComponent[DMSView]):
         return self._load_implements(default_space, default_version) or []
 
     @classmethod
-    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "DMSInputView":
+    def from_view(cls, view: dm.ViewApply, in_model: bool) -> "UnverifiedPhysicalView":
         view_entity = ViewEntity.from_id(view.as_id())
 
         return cls(
@@ -307,7 +316,7 @@ class DMSInputView(UnverifiedComponent[DMSView]):
 
 
 @dataclass
-class DMSInputNode(UnverifiedComponent[DMSNode]):
+class UnverifiedPhysicalNodeType(UnverifiedComponent[PhysicalNodeType]):
     node: str
     usage: Literal["type", "collocation"]
     name: str | None = None
@@ -315,11 +324,11 @@ class DMSInputNode(UnverifiedComponent[DMSNode]):
     neatId: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSNode]:
-        return DMSNode
+    def _get_verified_cls(cls) -> type[PhysicalNodeType]:
+        return PhysicalNodeType
 
     @classmethod
-    def from_node_type(cls, node_type: dm.NodeApply) -> "DMSInputNode":
+    def from_node_type(cls, node_type: dm.NodeApply) -> "UnverifiedPhysicalNodeType":
         return cls(node=f"{node_type.space}:{node_type.external_id}", usage="type")
 
     def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore
@@ -329,7 +338,7 @@ class DMSInputNode(UnverifiedComponent[DMSNode]):
 
 
 @dataclass
-class DMSInputEnum(UnverifiedComponent[DMSEnum]):
+class UnverifiedPhysicalEnum(UnverifiedComponent[PhysicalEnum]):
     collection: str
     value: str
     name: str | None = None
@@ -337,22 +346,22 @@ class DMSInputEnum(UnverifiedComponent[DMSEnum]):
     neatId: str | URIRef | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSEnum]:
-        return DMSEnum
+    def _get_verified_cls(cls) -> type[PhysicalEnum]:
+        return PhysicalEnum
 
 
 @dataclass
-class DMSInputRules(UnverifiedDataModel[DMSRules]):
-    metadata: DMSInputMetadata
-    properties: list[DMSInputProperty]
-    views: list[DMSInputView]
-    containers: list[DMSInputContainer] | None = None
-    enum: list[DMSInputEnum] | None = None
-    nodes: list[DMSInputNode] | None = None
+class UnverifiedPhysicalDataModel(UnverifiedDataModel[PhysicalDataModel]):
+    metadata: UnverifiedPhysicalMetadata
+    properties: list[UnverifiedPhysicalProperty]
+    views: list[UnverifiedPhysicalView]
+    containers: list[UnverifiedPhysicalContainer] | None = None
+    enum: list[UnverifiedPhysicalEnum] | None = None
+    nodes: list[UnverifiedPhysicalNodeType] | None = None
 
     @classmethod
-    def _get_verified_cls(cls) -> type[DMSRules]:
-        return DMSRules
+    def _get_verified_cls(cls) -> type[PhysicalDataModel]:
+        return PhysicalDataModel
 
     def dump(self) -> dict[str, Any]:
         default_space = self.metadata.space
@@ -369,7 +378,7 @@ class DMSInputRules(UnverifiedDataModel[DMSRules]):
 
     @classmethod
     def display_type_name(cls) -> str:
-        return "UnverifiedDMSModel"
+        return "UnverifiedPhysicalModel"
 
     @property
     def display_name(self) -> str:
@@ -378,7 +387,7 @@ class DMSInputRules(UnverifiedDataModel[DMSRules]):
     def _repr_html_(self) -> str:
         summary = {
             "type": "Physical Data Model",
-            "intended for": "DMS Architect",
+            "intended for": "Data Engineer",
             "name": self.metadata.name,
             "space": self.metadata.space,
             "external_id": self.metadata.external_id,

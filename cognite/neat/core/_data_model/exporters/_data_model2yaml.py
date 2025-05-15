@@ -5,27 +5,28 @@ from typing import Literal, get_args
 
 import yaml
 
-from cognite.neat.core._data_model._shared import VerifiedRules
+from cognite.neat.core._data_model._shared import VerifiedDataModel
 
 from ._base import BaseExporter
 
 
-class YAMLExporter(BaseExporter[VerifiedRules, str]):
-    """Export rules (Information, DMS or Domain) to YAML.
+class YAMLExporter(BaseExporter[VerifiedDataModel, str]):
+    """Export data_model (Information, DMS or Domain) to YAML.
 
     Args:
         files: The number of files to output. Defaults to "single".
-        output: The format to output the rules. Defaults to "yaml".
+        output: The format to output the data_model. Defaults to "yaml".
 
     The following formats are available:
 
-    - "single": A single YAML file will contain the entire rules.
+    - "single": A single YAML file will contain the entire data_model.
 
     .. note::
 
-        YAML files are typically used for storing rules when checked into version control systems, e.g., git-history.
-        The advantage of using YAML files over Excel is that tools like git can show the differences between different
-        versions of the rules.
+        YAML files are typically used for storing data_model when checked into version
+        control systems, e.g., git-history.The advantage of using YAML files over
+        Excel is that tools like git can show the differences between different
+        versions of the data_model.
 
     """
 
@@ -47,32 +48,34 @@ class YAMLExporter(BaseExporter[VerifiedRules, str]):
     def description(self) -> str:
         return "Export verified model to YAML."
 
-    def export_to_file(self, rules: VerifiedRules, filepath: Path) -> None:
-        """Exports transformation rules to YAML/JSON file(s)."""
+    def export_to_file(self, data_model: VerifiedDataModel, filepath: Path) -> None:
+        """Exports transformation data_model to YAML/JSON file(s)."""
         if self.files == "single":
             if filepath.suffix != f".{self.output}":
                 warnings.warn(f"File extension is not .{self.output}, adding it to the file name", stacklevel=2)
                 filepath = filepath.with_suffix(f".{self.output}")
-            filepath.write_text(self.export(rules), encoding=self._encoding, newline=self._new_line)
+            filepath.write_text(self.export(data_model), encoding=self._encoding, newline=self._new_line)
         else:
             raise NotImplementedError(f"Exporting to {self.files} files is not supported")
 
-    def export(self, rules: VerifiedRules) -> str:
-        """Export rules to YAML (or JSON) format.
+    def export(self, data_model: VerifiedDataModel) -> str:
+        """Export data_model to YAML (or JSON) format.
 
-        This will export the rules to YAML format if the output is set to "yaml" and JSON format if the output is set.
-        All None and Unset values are excluded from the output to keep the output clean, i.e., only the values the user
+        This will export the data_model to YAML format if the output is
+        set to "yaml" and JSON format if the output is set.
+        All None and Unset values are excluded from the output
+        to keep the output clean, i.e., only the values the user
         has set.
 
         Args:
-            rules: The rules to be exported.
+            data_model: The data_model to be exported.
 
         Returns:
-            str: The rules in YAML (or JSON) format.
+            str: The data_model in YAML (or JSON) format.
         """
         # model_dump_json ensures that the output is in JSON format,
         # if we don't do this, we will get Enums and other types that are not serializable to YAML
-        json_output = rules.dump(mode="json", sort=True, exclude_none=True, exclude_unset=True)
+        json_output = data_model.dump(mode="json", sort=True, exclude_none=True, exclude_unset=True)
         if self.output == "json":
             return json.dumps(json_output)
         elif self.output == "yaml":

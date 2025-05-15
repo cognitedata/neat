@@ -5,9 +5,9 @@ from cognite.neat.core._issues.errors import NeatTypeError
 
 from ._multi_value import MultiValueTypeInfo
 from ._single_value import (
-    ClassEntity,
-    DMSUnknownEntity,
+    ConceptEntity,
     EdgeEntity,
+    PhysicalUnknownEntity,
     ReverseConnectionEntity,
     Unknown,
     UnknownEntity,
@@ -16,9 +16,10 @@ from ._single_value import (
 
 
 def load_value_type(
-    raw: str | MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity, default_prefix: str
-) -> MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity:
-    if isinstance(raw, MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity):
+    raw: str | MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity,
+    default_prefix: str,
+) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity:
+    if isinstance(raw, MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity):
         return raw
     elif isinstance(raw, str):
         # property holding xsd data type
@@ -36,23 +37,23 @@ def load_value_type(
 
         # property holding link to class
         else:
-            return ClassEntity.load(raw, prefix=default_prefix)
+            return ConceptEntity.load(raw, prefix=default_prefix)
     else:
         raise NeatTypeError(f"Invalid value type: {type(raw)}")
 
 
 def load_dms_value_type(
-    raw: str | DataType | ViewEntity | DMSUnknownEntity,
+    raw: str | DataType | ViewEntity | PhysicalUnknownEntity,
     default_space: str,
     default_version: str,
-) -> DataType | ViewEntity | DMSUnknownEntity:
-    if isinstance(raw, DataType | ViewEntity | DMSUnknownEntity):
+) -> DataType | ViewEntity | PhysicalUnknownEntity:
+    if isinstance(raw, DataType | ViewEntity | PhysicalUnknownEntity):
         return raw
     elif isinstance(raw, str):
         if DataType.is_data_type(raw):
             return DataType.load(raw)
         elif raw == str(Unknown):
-            return DMSUnknownEntity()
+            return PhysicalUnknownEntity()
         else:
             return ViewEntity.load(raw, space=default_space, version=default_version)
     raise NeatTypeError(f"Invalid value type: {type(raw)}")

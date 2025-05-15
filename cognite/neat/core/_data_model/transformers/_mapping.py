@@ -6,13 +6,17 @@ from typing import Any, ClassVar, Literal
 from cognite.client import data_modeling as dm
 
 from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model.models import DMSRules, SheetList
+from cognite.neat.core._data_model.models import PhysicalDataModel, SheetList
 from cognite.neat.core._data_model.models.data_types import Enum
-from cognite.neat.core._data_model.models.dms import DMSContainer, DMSEnum, DMSProperty
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     ViewEntity,
+)
+from cognite.neat.core._data_model.models.physical import (
+    PhysicalContainer,
+    PhysicalEnum,
+    PhysicalProperty,
 )
 from cognite.neat.core._issues.errors import (
     CDFMissingClientError,
@@ -21,10 +25,10 @@ from cognite.neat.core._issues.errors import (
 )
 from cognite.neat.core._issues.warnings import PropertyOverwritingWarning
 
-from ._base import VerifiedRulesTransformer
+from ._base import VerifiedDataModelTransformer
 
 
-class MapOntoTransformers(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
+class MapOntoTransformers(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel], ABC):
     """Base class for transformers that map one rule onto another."""
 
     ...
@@ -33,7 +37,7 @@ class MapOntoTransformers(VerifiedRulesTransformer[DMSRules, DMSRules], ABC):
 class MapOneToOne(MapOntoTransformers):
     """Takes transform data models and makes it into an extension of the reference data model.
 
-    Note this transformer mutates the input rules.
+    Note this transformer mutates the input data model.
 
     The argument view_extension_mapping is a dictionary where the keys are views of this data model,
     and each value is the view of the reference data model that the view should extend. For example:
@@ -55,14 +59,17 @@ class MapOneToOne(MapOntoTransformers):
     """
 
     def __init__(
-        self, reference: DMSRules, view_extension_mapping: dict[str, str], default_extension: str | None = None
+        self,
+        reference: PhysicalDataModel,
+        view_extension_mapping: dict[str, str],
+        default_extension: str | None = None,
     ) -> None:
         self.reference = reference
         self.view_extension_mapping = view_extension_mapping
         self.default_extension = default_extension
 
-    def transform(self, rules: DMSRules) -> DMSRules:
-        solution: DMSRules = rules
+    def transform(self, data_model: PhysicalDataModel) -> PhysicalDataModel:
+        solution: PhysicalDataModel = data_model
         view_by_external_id = {view.view.external_id: view for view in solution.views}
         ref_view_by_external_id = {view.view.external_id: view for view in self.reference.views}
 
@@ -73,11 +80,11 @@ class MapOneToOne(MapOntoTransformers):
         if self.default_extension and self.default_extension not in ref_view_by_external_id:
             raise ValueError(f"Default extension view not in the reference data model {self.default_extension}")
 
-        properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
+        properties_by_view_external_id: dict[str, dict[str, PhysicalProperty]] = defaultdict(dict)
         for prop in solution.properties:
             properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
 
-        ref_properties_by_view_external_id: dict[str, dict[str, DMSProperty]] = defaultdict(dict)
+        ref_properties_by_view_external_id: dict[str, dict[str, PhysicalProperty]] = defaultdict(dict)
         for prop in self.reference.properties:
             ref_properties_by_view_external_id[prop.view.external_id][prop.view_property] = prop
 
@@ -108,14 +115,15 @@ class MapOneToOne(MapOntoTransformers):
         return solution
 
 
-class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class PhysicalDataModelMapper(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):
     """Maps properties and classes using the given mapping.
 
     Args:
-        mapping: The mapping to use represented as a DMSRules object.
+        mapping: The mapping to use represented as a physical data model object.
         data_type_conflict: How to handle data type conflicts. The default is "overwrite".
             A data type conflicts occurs when the data type of a property in the mapping is different from the
-            data type of the property in the input rules. If "overwrite" the data type in the input rules is overwritten
+            data type of the property in the input data model. If "overwrite" the data type
+            in the input data model is overwritten
             with the data type in the mapping.
     """
 
@@ -123,37 +131,41 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
         ["connection", "value_type", "min_count", "immutable", "max_count", "default", "index", "constraint"]
     )
 
-    def __init__(self, mapping: DMSRules, data_type_conflict: Literal["overwrite"] = "overwrite") -> None:
+    def __init__(
+        self,
+        mapping: PhysicalDataModel,
+        data_type_conflict: Literal["overwrite"] = "overwrite",
+    ) -> None:
         self.mapping = mapping
         self.data_type_conflict = data_type_conflict
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, data_model: PhysicalDataModel) -> PhysicalDataModel:
         if self.data_type_conflict != "overwrite":
             raise NeatValueError(f"Invalid data_type_conflict: {self.data_type_conflict}")
-        input_rules = rules
-        new_rules = input_rules.model_copy(deep=True)
+        input_data_model = data_model
+        new_data_model = input_data_model.model_copy(deep=True)
 
-        views_by_external_id = {view.view.external_id: view for view in new_rules.views}
+        views_by_external_id = {view.view.external_id: view for view in new_data_model.views}
         new_views: set[ViewEntity] = set()
         for mapping_view in self.mapping.views:
             if existing_view := views_by_external_id.get(mapping_view.view.external_id):
                 existing_view.implements = mapping_view.implements
             else:
-                # We need to add all the views in the mapping that are not in the input rules.
-                # This is to ensure that all ValueTypes are present in the resulting rules.
+                # We need to add all the views in the mapping that are not in the input data model.
+                # This is to ensure that all ValueTypes are present in the resulting data model.
                 # For example, if a property is a direct relation to an Equipment view, we need to add
-                # the Equipment view to the rules.
-                new_rules.views.append(mapping_view)
+                # the Equipment view to the data model.
+                new_data_model.views.append(mapping_view)
                 new_views.add(mapping_view.view)
 
         properties_by_view_property = {
-            (prop.view.external_id, prop.view_property): prop for prop in new_rules.properties
+            (prop.view.external_id, prop.view_property): prop for prop in new_data_model.properties
         }
-        existing_enum_collections = {item.collection for item in new_rules.enum or []}
-        mapping_enums_by_collection: dict[ClassEntity, list[DMSEnum]] = defaultdict(list)
+        existing_enum_collections = {item.collection for item in new_data_model.enum or []}
+        mapping_enums_by_collection: dict[ConceptEntity, list[PhysicalEnum]] = defaultdict(list)
         for item in self.mapping.enum or []:
             mapping_enums_by_collection[item.collection].append(item)
-        existing_containers = {container.container for container in new_rules.containers or []}
+        existing_containers = {container.container for container in new_data_model.containers or []}
         mapping_containers_by_id = {container.container: container for container in self.mapping.containers or []}
         for mapping_prop in self.mapping.properties:
             if existing_prop := properties_by_view_property.get(
@@ -163,7 +175,10 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
                 if conflicts and self.data_type_conflict == "overwrite":
                     warnings.warn(
                         PropertyOverwritingWarning(
-                            existing_prop.view.as_id(), "view", existing_prop.view_property, tuple(conflicts)
+                            existing_prop.view.as_id(),
+                            "view",
+                            existing_prop.view_property,
+                            tuple(conflicts),
                         ),
                         stacklevel=2,
                     )
@@ -177,24 +192,24 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
                 existing_prop.container = mapping_prop.container
                 existing_prop.container_property = mapping_prop.container_property
             elif isinstance(mapping_prop.value_type, ViewEntity):
-                # All connections must be included in the rules. This is to update the
+                # All connections must be included in the data model. This is to update the
                 # ValueTypes of the implemented views.
-                new_rules.properties.append(mapping_prop)
+                new_data_model.properties.append(mapping_prop)
             elif "guid" in mapping_prop.view_property.casefold():
                 # All guid properties are included. Theses are necessary to get an appropriate
                 # filter on the resulting view.
-                new_rules.properties.append(mapping_prop)
+                new_data_model.properties.append(mapping_prop)
             else:
-                # Skipping mapped properties that are not in the input rules.
+                # Skipping mapped properties that are not in the input data model.
                 continue
 
             if (
                 isinstance(mapping_prop.value_type, Enum)
                 and mapping_prop.value_type.collection not in existing_enum_collections
             ):
-                if not new_rules.enum:
-                    new_rules.enum = SheetList[DMSEnum]([])
-                new_rules.enum.extend(mapping_enums_by_collection[mapping_prop.value_type.collection])
+                if not new_data_model.enum:
+                    new_data_model.enum = SheetList[PhysicalEnum]([])
+                new_data_model.enum.extend(mapping_enums_by_collection[mapping_prop.value_type.collection])
 
             if (
                 mapping_prop.container
@@ -202,13 +217,15 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
                 and (new_container := mapping_containers_by_id.get(mapping_prop.container))
             ):
                 # Mapping can include new containers for GUID properties
-                if not new_rules.containers:
-                    new_rules.containers = SheetList[DMSContainer]([])
-                new_rules.containers.append(new_container)
+                if not new_data_model.containers:
+                    new_data_model.containers = SheetList[PhysicalContainer]([])
+                new_data_model.containers.append(new_container)
 
-        return new_rules
+        return new_data_model
 
-    def _find_overwrites(self, prop: DMSProperty, mapping_prop: DMSProperty) -> tuple[dict[str, Any], list[str]]:
+    def _find_overwrites(
+        self, prop: PhysicalProperty, mapping_prop: PhysicalProperty
+    ) -> tuple[dict[str, Any], list[str]]:
         """Finds the properties that need to be overwritten and returns them.
 
         In addition, conflicting properties are returned. Note that overwriting properties that are
@@ -240,7 +257,7 @@ class RuleMapper(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return f"Mapping to {self.mapping.metadata.as_data_model_id()!r}."
 
 
-class AsParentPropertyId(VerifiedRulesTransformer[DMSRules, DMSRules]):
+class AsParentPropertyId(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):
     """Looks up all view properties that map to the same container property,
     and changes the child view property id to match the parent property id.
     """
@@ -248,34 +265,36 @@ class AsParentPropertyId(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def __init__(self, client: NeatClient | None = None) -> None:
         self._client = client
 
-    def transform(self, rules: DMSRules) -> DMSRules:
-        input_rules = rules
-        new_rules = input_rules.model_copy(deep=True)
+    def transform(self, data_model: PhysicalDataModel) -> PhysicalDataModel:
+        input_data_model = data_model
+        new_data_model = input_data_model.model_copy(deep=True)
 
-        path_by_view = self._inheritance_path_by_view(new_rules)
-        view_by_container_property = self._view_by_container_properties(new_rules)
+        path_by_view = self._inheritance_path_by_view(new_data_model)
+        view_by_container_property = self._view_by_container_properties(new_data_model)
 
         parent_view_property_by_container_property = self._get_parent_view_property_by_container_property(
             path_by_view, view_by_container_property
         )
 
-        for prop in new_rules.properties:
+        for prop in new_data_model.properties:
             if prop.container and prop.container_property:
                 if parent_name := parent_view_property_by_container_property.get(
                     (prop.container, prop.container_property)
                 ):
                     prop.view_property = parent_name
 
-        return new_rules
+        return new_data_model
 
     # Todo: Move into Probe class. Note this means that the Probe class must take a NeatClient as an argument.
-    def _inheritance_path_by_view(self, rules: DMSRules) -> dict[ViewEntity, list[ViewEntity]]:
-        parents_by_view: dict[ViewEntity, list[ViewEntity]] = {view.view: view.implements or [] for view in rules.views}
+    def _inheritance_path_by_view(self, data_model: PhysicalDataModel) -> dict[ViewEntity, list[ViewEntity]]:
+        parents_by_view: dict[ViewEntity, list[ViewEntity]] = {
+            view.view: view.implements or [] for view in data_model.views
+        }
 
         path_by_view: dict[ViewEntity, list[ViewEntity]] = {}
-        for view in rules.views:
+        for view in data_model.views:
             path_by_view[view.view] = self._get_inheritance_path(
-                view.view, parents_by_view, rules.metadata.as_data_model_id()
+                view.view, parents_by_view, data_model.metadata.as_data_model_id()
             )
         return path_by_view
 
@@ -312,13 +331,13 @@ class AsParentPropertyId(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return inheritance_path
 
     def _view_by_container_properties(
-        self, rules: DMSRules
+        self, data_model: PhysicalDataModel
     ) -> dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]]:
         view_properties_by_container_properties: dict[tuple[ContainerEntity, str], list[tuple[ViewEntity, str]]] = (
             defaultdict(list)
         )
         view_with_properties: set[ViewEntity] = set()
-        for prop in rules.properties:
+        for prop in data_model.properties:
             if not prop.container or not prop.container_property:
                 continue
             view_properties_by_container_properties[(prop.container, prop.container_property)].append(
@@ -327,7 +346,7 @@ class AsParentPropertyId(VerifiedRulesTransformer[DMSRules, DMSRules]):
             view_with_properties.add(prop.view)
 
         # We need to look up all parent properties.
-        to_lookup = {view.view.as_id() for view in rules.views if view.view not in view_with_properties}
+        to_lookup = {view.view.as_id() for view in data_model.views if view.view not in view_with_properties}
         if to_lookup and self._client is None:
             raise CDFMissingClientError(
                 f"Views {to_lookup} are not in the data model. Please provide a client to lookup the views."

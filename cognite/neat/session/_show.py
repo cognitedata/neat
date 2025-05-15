@@ -7,7 +7,7 @@ from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
 
 from cognite.neat.core._constants import IN_NOTEBOOK, IN_PYODIDE
-from cognite.neat.core._data_model.analysis._base import RulesAnalysis
+from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
 from cognite.neat.core._utils.io_ import to_directory_compatible
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_display_name
 from cognite.neat.session.exceptions import NeatSessionError
@@ -99,13 +99,13 @@ class ShowDataModelAPI(ShowBaseAPI):
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a data model.")
 
         last_target = self._state.rule_store.provenance[-1].target_entity
-        rules = last_target.dms or last_target.information
-        analysis = RulesAnalysis(dms=last_target.dms, information=last_target.information)
+        rules = last_target.physical or last_target.conceptual
+        analysis = DataModelAnalysis(physical=last_target.physical, conceptual=last_target.conceptual)
 
-        if last_target.dms is not None:
-            di_graph = analysis._dms_di_graph(format="data-model")
+        if last_target.physical is not None:
+            di_graph = analysis._physical_di_graph(format="data-model")
         else:
-            di_graph = analysis._info_di_graph(format="data-model")
+            di_graph = analysis._conceptual_di_graph(format="data-model")
 
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}.html"
@@ -123,13 +123,13 @@ class ShowDataModelImplementsAPI(ShowBaseAPI):
             raise NeatSessionError("No data model available. Try using [bold].read[/bold] to read a data model.")
 
         last_target = self._state.rule_store.provenance[-1].target_entity
-        rules = last_target.dms or last_target.information
-        analysis = RulesAnalysis(dms=last_target.dms, information=last_target.information)
+        rules = last_target.physical or last_target.conceptual
+        analysis = DataModelAnalysis(physical=last_target.physical, conceptual=last_target.conceptual)
 
-        if last_target.dms is not None:
-            di_graph = analysis._dms_di_graph(format="implements")
+        if last_target.physical is not None:
+            di_graph = analysis._physical_di_graph(format="implements")
         else:
-            di_graph = analysis._info_di_graph(format="implements")
+            di_graph = analysis._conceptual_di_graph(format="implements")
         identifier = to_directory_compatible(str(rules.metadata.identifier))
         name = f"{identifier}_implements.html"
         return self._generate_visualization(di_graph, name)

@@ -10,10 +10,10 @@ from cognite.neat.core._client._api_client import NeatClient
 from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat.core._data_model import exporters
 from cognite.neat.core._data_model._constants import PATTERNS
-from cognite.neat.core._data_model._shared import VerifiedRules
+from cognite.neat.core._data_model._shared import VerifiedDataModel
 from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
-from cognite.neat.core._data_model.models.dms import DMSMetadata
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat.core._data_model.models.physical import PhysicalMetadata
 from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat.core._utils.upload import UploadResultList
@@ -113,12 +113,12 @@ class ToAPI:
             dms_rules_file_name = "dms_rules.xlsx"
             neat.to.excel(dms_rules_file_name, include_reference=("cdf_cdm", "CogniteCore", "v1"))
         """
-        reference_rules_with_prefix: tuple[VerifiedRules, str] | None = None
+        reference_data_model_with_prefix: tuple[VerifiedDataModel, str] | None = None
         include_properties = include_properties.strip().lower()
 
         if include_reference is not False:
             if include_reference is True and self._state.last_reference is not None:
-                ref_rules: ConceptualDataModel | DMSRules | None = self._state.last_reference
+                ref_rules: ConceptualDataModel | PhysicalDataModel | None = self._state.last_reference
             elif include_reference is True:
                 ref_rules = None
             else:
@@ -126,20 +126,20 @@ class ToAPI:
                     raise NeatSessionError("No client provided!")
                 ref_rules = None
                 with catch_issues() as issues:
-                    ref_read = DMSImporter.from_data_model_id(self._state.client, include_reference).to_rules()
-                    if ref_read.rules is not None:
-                        ref_rules = ref_read.rules.as_verified_rules()
+                    ref_read = DMSImporter.from_data_model_id(self._state.client, include_reference).to_data_model()
+                    if ref_read.unverified_data_model is not None:
+                        ref_rules = ref_read.unverified_data_model.as_verified_data_model()
                 if ref_rules is None or issues.has_errors:
                     issues.action = f"Read {include_reference}"
                     return issues
             if ref_rules is not None:
                 prefix = "Ref"
                 if (
-                    isinstance(ref_rules.metadata, DMSMetadata)
+                    isinstance(ref_rules.metadata, PhysicalMetadata)
                     and ref_rules.metadata.as_data_model_id() in COGNITE_MODELS
                 ):
                     prefix = "CDM"
-                reference_rules_with_prefix = ref_rules, prefix
+                reference_data_model_with_prefix = ref_rules, prefix
 
         if include_properties == "same-space":
             warnings.filterwarnings("default")
@@ -147,7 +147,7 @@ class ToAPI:
 
         exporter = exporters.ExcelExporter(
             styling="maximal",
-            reference_rules_with_prefix=reference_rules_with_prefix,
+            reference_data_model_with_prefix=reference_data_model_with_prefix,
             add_empty_rows=add_empty_rows,
             include_properties=include_properties,  # type: ignore
         )
@@ -310,7 +310,7 @@ class CDFToAPI:
         )
 
         client = cast(NeatClient, self._state.client)
-        dms_rules = self._state.rule_store.last_verified_dms_rules
+        dms_rules = self._state.rule_store.last_verified_physical_data_model
         instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
 
         if instance_space and instance_space == dms_rules.metadata.space:
@@ -322,8 +322,8 @@ class CDFToAPI:
             client.data_modeling.spaces.apply(dm.SpaceApply(space=instance_space))
 
         loader = loaders.DMSLoader(
-            self._state.rule_store.last_verified_dms_rules,
-            self._state.rule_store.last_verified_information_rules,
+            self._state.rule_store.last_verified_physical_data_model,
+            self._state.rule_store.last_verified_conceptual_data_model,
             self._state.instances.store,
             instance_space=instance_space,
             client=client,
@@ -418,7 +418,7 @@ class ToPythonAPI:
             instances = neat.to._python.instances(space_from_property="dataSetId")
             ```
         """
-        dms_rules = self._state.rule_store.last_verified_dms_rules
+        dms_rules = self._state.rule_store.last_verified_physical_data_model
         instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
 
         if instance_space and instance_space == dms_rules.metadata.space:
@@ -427,8 +427,8 @@ class ToPythonAPI:
             raise NeatSessionError(f"Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
         loader = loaders.DMSLoader(
-            self._state.rule_store.last_verified_dms_rules,
-            self._state.rule_store.last_verified_information_rules,
+            self._state.rule_store.last_verified_physical_data_model,
+            self._state.rule_store.last_verified_conceptual_data_model,
             self._state.instances.store,
             instance_space=instance_space,
             space_property=space_from_property,

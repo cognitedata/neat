@@ -4,28 +4,31 @@ from typing import Any
 import pytest
 
 from cognite.neat.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
-from cognite.neat.core._data_model._shared import ReadRules
-from cognite.neat.core._data_model.models import DMSRules, data_types
+from cognite.neat.core._data_model._shared import ImportedDataModel
+from cognite.neat.core._data_model.models import PhysicalDataModel, data_types
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    Concept,
     ConceptualDataModel,
     ConceptualProperty,
-    InformationValidation,
+    ConceptualValidation,
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.conceptual._unverified import (
-    UnverifiedConceptualClass,
+    UnverifiedConcept,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, String
-from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
-from cognite.neat.core._data_model.transformers._converters import (
-    InformationToDMS,
-    ToCompliantEntities,
-    _InformationRulesConverter,
+from cognite.neat.core._data_model.models.entities import (
+    ConceptEntity,
+    MultiValueTypeInfo,
 )
-from cognite.neat.core._data_model.transformers._verification import VerifyAnyRules
+from cognite.neat.core._data_model.transformers._converters import (
+    ConceptualToPhysical,
+    ToCompliantEntities,
+    _ConceptualDataModelConverter,
+)
+from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.core._issues import NeatError
 from cognite.neat.core._issues._base import MultiValueError
 from cognite.neat.core._issues.errors import ResourceNotDefinedError
@@ -46,9 +49,9 @@ def case_insensitive_value_types():
                 "version": "0.1.0",
                 "name": "Power to Consumer Data Model",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
@@ -57,7 +60,7 @@ def case_insensitive_value_types():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -89,16 +92,16 @@ def duplicated_entries():
                 "version": "0.1.0",
                 "name": "Power to Consumer Data Model",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
                     "Match": "exact",
                 },
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
@@ -107,7 +110,7 @@ def duplicated_entries():
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -119,7 +122,7 @@ def duplicated_entries():
                     "Transformation": None,
                 },
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -139,8 +142,8 @@ def duplicated_entries():
                 location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
             ResourceDuplicatedError(
-                identifier=ClassEntity(prefix="power", suffix="GeneratingUnit"),
-                resource_type="class",
+                identifier=ConceptEntity(prefix="power", suffix="GeneratingUnit"),
+                resource_type="concept",
                 location="the Classes sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         },
@@ -162,16 +165,16 @@ def incomplete_rules_case():
                 "version": "0.1.0",
                 "name": "Power to Consumer Data Model",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "GeneratingUnit",
+                    "Concept": "GeneratingUnit",
                     "Description": None,
                     "Implements": None,
                 }
             ],
             "Properties": [
                 {
-                    "Class": "GeneratingUnit2",
+                    "Concept": "GeneratingUnit2",
                     "Property": "name",
                     "Description": None,
                     "Value Type": "string",
@@ -183,14 +186,14 @@ def incomplete_rules_case():
             ],
         },
         [
-            ResourceNotDefinedError[ClassEntity](
-                ClassEntity(prefix="power", suffix="GeneratingUnit2"),
-                "class",
+            ResourceNotDefinedError[ConceptEntity](
+                ConceptEntity(prefix="power", suffix="GeneratingUnit2"),
+                "Concept",
                 "Classes sheet",
             ),
-            ResourceNotDefinedError[ClassEntity](
-                ClassEntity(prefix="power", suffix="GeneratingUnit"),
-                "class",
+            ResourceNotDefinedError[ConceptEntity](
+                ConceptEntity(prefix="power", suffix="GeneratingUnit"),
+                "Concept",
                 "Classes sheet",
             ),
         ],
@@ -201,8 +204,11 @@ def incomplete_rules_case():
 class TestInformationRules:
     @pytest.mark.parametrize("duplicated_rules, expected_exception", list(duplicated_entries()))
     def test_duplicated_entries(self, duplicated_rules, expected_exception) -> None:
-        input_rules = ReadRules(rules=UnverifiedConceptualDataModel.load(duplicated_rules), read_context={})
-        transformer = VerifyAnyRules(validate=True)
+        input_rules = ImportedDataModel(
+            unverified_data_model=UnverifiedConceptualDataModel.load(duplicated_rules),
+            context={},
+        )
+        transformer = VerifyAnyDataModel(validate=True)
 
         with pytest.raises(MultiValueError) as e:
             _ = transformer.transform(input_rules)
@@ -219,14 +225,14 @@ class TestInformationRules:
             "power:Substation.secondaryPowerLine",
             "power:WindFarm.exportCable",
         }
-        missing = sample_expected_properties - {f"{prop.class_}.{prop.property_}" for prop in valid_rules.properties}
+        missing = sample_expected_properties - {f"{prop.concept}.{prop.property_}" for prop in valid_rules.properties}
         assert not missing, f"Missing properties: {missing}"
 
     @pytest.mark.parametrize("incomplete_rules, expected_exception", list(incomplete_rules_case()))
     @pytest.mark.skip("Temp skipping: enabling in new PR")
     def test_incomplete_rules(self, incomplete_rules: dict[str, dict[str, Any]], expected_exception: NeatError) -> None:
         rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(incomplete_rules).dump())
-        issues = InformationValidation(rules).validate()
+        issues = ConceptualValidation(rules).validate()
 
         assert len(issues) == 2
         assert set(issues) == set(expected_exception)
@@ -238,21 +244,21 @@ class TestInformationRules:
     def test_david_as_dms(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         info_rules = ConceptualDataModel.model_validate(david_spreadsheet)
 
-        dms_rules = InformationToDMS().transform(info_rules)
+        dms_rules = ConceptualToPhysical().transform(info_rules)
 
-        assert isinstance(dms_rules, DMSRules)
+        assert isinstance(dms_rules, PhysicalDataModel)
 
         # making sure linking is done on metadata level
-        assert dms_rules.metadata.logical == info_rules.metadata.identifier
+        assert dms_rules.metadata.conceptual == info_rules.metadata.identifier
 
         info_props = {prop.neatId: prop for prop in info_rules.properties}
         dms_props = {prop.neatId: prop for prop in dms_rules.properties}
 
         for dms_id in dms_props.keys():
-            assert info_props[dms_props[dms_id].logical].physical == dms_id
+            assert info_props[dms_props[dms_id].conceptual].physical == dms_id
 
         for info_id in info_props.keys():
-            assert dms_props[info_props[info_id].physical].logical == info_id
+            assert dms_props[info_props[info_id].physical].conceptual == info_id
 
 
 class TestInformationRulesConverter:
@@ -267,7 +273,7 @@ class TestInformationRulesConverter:
         ],
     )
     def test_to_space(self, prefix: str, expected_space: str) -> None:
-        actual_space = _InformationRulesConverter._to_space(prefix)
+        actual_space = _ConceptualDataModelConverter._to_space(prefix)
 
         assert actual_space == expected_space
 
@@ -280,19 +286,19 @@ class TestInformationRulesConverter:
                 version="0.1.0",
                 creator="Anders",
             ),
-            classes=[UnverifiedConceptualClass(class_="MassiveClass")],
+            concepts=[UnverifiedConcept(concept="MassiveClass")],
             properties=[
                 UnverifiedConceptualProperty(
-                    class_="MassiveClass",
+                    concept="MassiveClass",
                     property_=f"property_{no}",
                     value_type="string",
                     max_count=1,
                 )
                 for no in range(DMS_CONTAINER_PROPERTY_SIZE_LIMIT + 1)
             ],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
-        dms_rules = InformationToDMS().transform(info)
+        dms_rules = ConceptualToPhysical().transform(info)
 
         assert len(dms_rules.containers) == 2
 
@@ -314,9 +320,9 @@ def non_compliant_entities():
                 "license": "CC-BY 4.0",
                 "rights": "Free for use",
             },
-            "Classes": [
+            "Concepts": [
                 {
-                    "Class": "Generating.Unit",
+                    "Concept": "Generating.Unit",
                     "Description": None,
                     "Parent Class": None,
                     "Source": "http://www.iec.ch/TC57/CIM#GeneratingUnit",
@@ -325,7 +331,7 @@ def non_compliant_entities():
             ],
             "Properties": [
                 {
-                    "Class": "Generating.Unit",
+                    "Concept": "Generating.Unit",
                     "Property": "IdentifiedObject.name",
                     "Description": None,
                     "Value Type": "StrING",
@@ -352,7 +358,7 @@ class TestInformationConverter:
         ],
     )
     def test_bump_suffix(self, name: str, expected: str) -> None:
-        actual = _InformationRulesConverter._bump_suffix(name)
+        actual = _ConceptualDataModelConverter._bump_suffix(name)
 
         assert actual == expected
 
@@ -383,7 +389,7 @@ class TestInformationConverter:
         ],
     )
     def test_convert_multivalue_type(self, multi: MultiValueTypeInfo, expected: DataType) -> None:
-        actual = _InformationRulesConverter.convert_multi_data_type(multi)
+        actual = _ConceptualDataModelConverter.convert_multi_data_type(multi)
 
         assert actual == expected
 
@@ -392,16 +398,19 @@ class TestInformationConverter:
         self,
         rules_dict: dict[str, dict[str, Any]],
     ) -> None:
-        input_rules = ReadRules(rules=UnverifiedConceptualDataModel.load(rules_dict), read_context={})
-        transformer = VerifyAnyRules(validate=True)
+        input_rules = ImportedDataModel(
+            unverified_data_model=UnverifiedConceptualDataModel.load(rules_dict),
+            context={},
+        )
+        transformer = VerifyAnyDataModel(validate=True)
         rules = transformer.transform(input_rules)
 
         rules = ToCompliantEntities().transform(rules)
 
-        assert rules.classes[0].class_.prefix == "power_or_not"
-        assert rules.classes[0].class_.suffix == "Generating_Unit"
+        assert rules.concepts[0].concept.prefix == "power_or_not"
+        assert rules.concepts[0].concept.suffix == "Generating_Unit"
         assert rules.properties[0].property_ == "IdentifiedObject_name"
-        assert rules.properties[0].class_.suffix == "Generating_Unit"
+        assert rules.properties[0].concept.suffix == "Generating_Unit"
 
 
 class TestInformationProperty:
@@ -410,7 +419,7 @@ class TestInformationProperty:
         [
             pytest.param(
                 UnverifiedConceptualProperty(
-                    class_="MyAsset",
+                    concept="MyAsset",
                     property_="name",
                     value_type="string",
                     max_count=1,
@@ -420,7 +429,7 @@ class TestInformationProperty:
             ),
             pytest.param(
                 UnverifiedConceptualProperty(
-                    class_="MyAsset",
+                    concept="MyAsset",
                     property_="name",
                     value_type="string",
                     max_count=1,
@@ -444,15 +453,15 @@ class TestInformationProperty:
                     "name",
                     "text",
                 ),
-                ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+                ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
                 id="CogniteAsset name",
             )
         ],
     )
-    def test_validate_class_entity(self, raw: UnverifiedConceptualProperty, expected: ClassEntity) -> None:
+    def test_validate_class_entity(self, raw: UnverifiedConceptualProperty, expected: ConceptEntity) -> None:
         prop = ConceptualProperty.model_validate(raw.dump(default_prefix="my_space"))
 
-        assert prop.class_ == expected
+        assert prop.concept == expected
 
 
 class TestInformationClass:
@@ -460,24 +469,24 @@ class TestInformationClass:
         "raw, class_, implements",
         [
             (
-                UnverifiedConceptualClass(
-                    class_="WindTurbine",
+                UnverifiedConcept(
+                    concept="WindTurbine",
                     description="Power generating unite",
                     implements="cdf_cdm:CogniteAsset(version=v1)",
                 ),
-                ClassEntity(prefix="my_space", suffix="WindTurbine"),
-                ClassEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+                ConceptEntity(prefix="my_space", suffix="WindTurbine"),
+                ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
             )
         ],
     )
     def test_validate_class_entity(
         self,
-        raw: UnverifiedConceptualClass,
-        class_: ClassEntity,
-        implements: ClassEntity,
+        raw: UnverifiedConcept,
+        class_: ConceptEntity,
+        implements: ConceptEntity,
     ) -> None:
-        info_class = ConceptualClass.model_validate(raw.dump(default_prefix="my_space"))
+        info_class = Concept.model_validate(raw.dump(default_prefix="my_space"))
 
-        assert info_class.class_ == class_
+        assert info_class.concept == class_
         assert isinstance(info_class.implements, list)
         assert info_class.implements[0] == implements

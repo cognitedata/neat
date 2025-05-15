@@ -5,13 +5,13 @@ from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.importers import BaseImporter, InferenceImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, DMSRules
+from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
-    VerifiedRulesTransformer,
+    VerifiedDataModelTransformer,
 )
 from cognite.neat.core._instances.extractors import KnowledgeGraphExtractor
 from cognite.neat.core._issues import IssueList
-from cognite.neat.core._store import NeatGraphStore, NeatRulesStore
+from cognite.neat.core._store import NeatDataModelStore, NeatInstanceStore
 from cognite.neat.core._utils.upload import UploadResultList
 
 from .exceptions import NeatSessionError, _session_method_wrapper
@@ -25,12 +25,12 @@ class SessionState:
         client: NeatClient | None = None,
     ) -> None:
         self.instances = InstancesState(store_type, storage_path=storage_path)
-        self.rule_store = NeatRulesStore()
-        self.last_reference: DMSRules | ConceptualDataModel | None = None
+        self.rule_store = NeatDataModelStore()
+        self.last_reference: PhysicalDataModel | ConceptualDataModel | None = None
         self.client = client
         self.quoted_source_identifiers = False
 
-    def rule_transform(self, *transformer: VerifiedRulesTransformer) -> IssueList:
+    def rule_transform(self, *transformer: VerifiedDataModelTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
         start = self.rule_store.provenance[-1].target_entity.display_name
@@ -41,7 +41,7 @@ class SessionState:
         return issues
 
     def rule_import(self, importer: BaseImporter, enable_manual_edit: bool = False) -> IssueList:
-        issues = self.rule_store.import_rules(
+        issues = self.rule_store.import_data_model(
             importer,
             client=self.client,
             enable_manual_edit=enable_manual_edit,
@@ -81,10 +81,10 @@ class SessionState:
         if client_required and not self.client:
             condition.add(f"{activity} expects a client in NEAT session")
             suggestion.add("Please provide a client")
-        if has_information_rules is True and self.rule_store.try_get_last_information_rules is None:
+        if has_information_rules is True and self.rule_store.try_get_last_conceptual_data_model is None:
             condition.add(f"{activity} expects information rules in NEAT session")
             suggestion.add("Read in information rules to neat session")
-        if has_dms_rules is False and self.rule_store.try_get_last_dms_rules is not None:
+        if has_dms_rules is False and self.rule_store.try_get_last_physical_data_model is not None:
             condition.add(f"{activity} expects no DMS data model in NEAT session")
             suggestion.add("You already have a DMS data model in the session")
             try_again = False
@@ -121,18 +121,18 @@ class InstancesState:
         self.neat_prefix_by_type_uri: dict[URIRef, str] = {}
 
         # Ensure that error handling is done in the constructor
-        self.store: NeatGraphStore = _session_method_wrapper(self._create_store, "NeatSession")()
+        self.store: NeatInstanceStore = _session_method_wrapper(self._create_store, "NeatSession")()
 
         if self.storage_path:
             print("Remember to close neat session .close() once you are done to avoid oxigraph lock.")
 
-    def _create_store(self) -> NeatGraphStore:
+    def _create_store(self) -> NeatInstanceStore:
         if self.store_type == "oxigraph":
             if self.storage_path:
                 self.storage_path.mkdir(parents=True, exist_ok=True)
-            return NeatGraphStore.from_oxi_local_store(storage_dir=self.storage_path)
+            return NeatInstanceStore.from_oxi_local_store(storage_dir=self.storage_path)
         else:
-            return NeatGraphStore.from_memory_store()
+            return NeatInstanceStore.from_memory_store()
 
     @property
     def empty(self) -> bool:

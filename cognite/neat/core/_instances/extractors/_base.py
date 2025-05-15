@@ -38,7 +38,7 @@ class KnowledgeGraphExtractor(BaseExtractor):
     """A knowledge graph extractor extracts triples with a schema"""
 
     @abstractmethod
-    def get_information_rules(self) -> ConceptualDataModel:
+    def get_conceptual_data_model(self) -> ConceptualDataModel:
         """Returns the information rules that the extractor uses."""
         raise NotImplementedError()
 

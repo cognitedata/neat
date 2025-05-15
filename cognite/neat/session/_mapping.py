@@ -3,8 +3,8 @@ from cognite.neat.core._data_model.transformers import (
     AsParentPropertyId,
     ChangeViewPrefix,
     IncludeReferenced,
-    RuleMapper,
-    VerifiedRulesTransformer,
+    PhysicalDataModelMapper,
+    VerifiedDataModelTransformer,
 )
 from cognite.neat.core._issues import IssueList
 
@@ -45,18 +45,20 @@ class DataModelMappingAPI:
         if self._state.rule_store.empty:
             raise NeatSessionError("No rules to map")
         last_entity = self._state.rule_store.provenance[-1].target_entity
-        if last_entity.dms is None:
+        if last_entity.physical is None:
             raise NeatSessionError("Data model not converted to DMS. Try running `neat.convert('dms')` first.")
-        rules = last_entity.dms
+        rules = last_entity.physical
         if self._state.client is None:
             raise NeatSessionError("Client is required to map classic to core")
 
-        transformers: list[VerifiedRulesTransformer] = []
+        transformers: list[VerifiedDataModelTransformer] = []
         if company_prefix:
             transformers.append(ChangeViewPrefix("Classic", company_prefix))
         transformers.extend(
             [
-                RuleMapper(load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)),
+                PhysicalDataModelMapper(
+                    load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)
+                ),
                 IncludeReferenced(self._state.client),
             ]
         )

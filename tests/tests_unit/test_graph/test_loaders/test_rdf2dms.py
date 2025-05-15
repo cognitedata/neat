@@ -1,7 +1,7 @@
 import pytest
 
 from cognite.neat.core._data_model.importers import SubclassInferenceImporter
-from cognite.neat.core._data_model.models import DMSRules
+from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
@@ -10,23 +10,27 @@ from cognite.neat.core._data_model.transformers._converters import (
 )
 from cognite.neat.core._instances.loaders import DMSLoader
 from cognite.neat.core._issues import IssueList
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData
 
 
 @pytest.fixture()
-def car_case() -> tuple[DMSRules, ConceptualDataModel, NeatGraphStore]:
-    store = NeatGraphStore.from_oxi_local_store()
+def car_case() -> tuple[PhysicalDataModel, ConceptualDataModel, NeatInstanceStore]:
+    store = NeatInstanceStore.from_oxi_local_store()
 
     for triple in GraphData.car.TRIPLES:
         store.dataset.add(triple)
     info_rules = (
-        SubclassInferenceImporter(IssueList(), store.dataset, data_model_id=("sp_example_car", "CarModel", "1"))
-        .to_rules()
-        .rules
+        SubclassInferenceImporter(
+            IssueList(),
+            store.dataset,
+            data_model_id=("sp_example_car", "CarModel", "1"),
+        )
+        .to_data_model()
+        .unverified_data_model
     )
 
-    info_rules = ToCompliantEntities().transform(info_rules.as_verified_rules())
+    info_rules = ToCompliantEntities().transform(info_rules.as_verified_data_model())
 
     dms_rules = GraphData.car.get_car_dms_rules()
 
@@ -35,7 +39,7 @@ def car_case() -> tuple[DMSRules, ConceptualDataModel, NeatGraphStore]:
 
 
 class TestDMSLoader:
-    def test_load_car_example(self, car_case: tuple[DMSRules, ConceptualDataModel, NeatGraphStore]) -> None:
+    def test_load_car_example(self, car_case: tuple[PhysicalDataModel, ConceptualDataModel, NeatInstanceStore]) -> None:
         dms_rules, info_rules, store = car_case
 
         loader = DMSLoader(dms_rules, info_rules, store, GraphData.car.INSTANCE_SPACE)

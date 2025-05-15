@@ -1,7 +1,7 @@
 from cognite.neat.core._data_model.models.conceptual import (
-    ConceptualClass,
+    Concept,
     ConceptualMetadata,
-    UnverifiedConceptualClass,
+    UnverifiedConcept,
 )
 
 
@@ -29,14 +29,14 @@ class TestBaseRules:
         assert meta.creator == ["Me", "Myself", "I"]
 
     def test_strip_whitespace_input_class(self) -> None:
-        row = UnverifiedConceptualClass(
-            class_="  MyClass  ",
+        row = UnverifiedConcept(
+            concept="  MyClass  ",
             name="  My Class Name  ",
             description="  My Class Description  ",
         )
 
-        class_ = ConceptualClass.model_validate(row.dump(default_prefix="neat"))
+        class_ = Concept.model_validate(row.dump(default_prefix="neat"))
 
-        assert class_.class_.suffix == "MyClass"
+        assert class_.concept.suffix == "MyClass"
         assert class_.name == "My Class Name"
         assert class_.description == "My Class Description"

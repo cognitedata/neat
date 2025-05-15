@@ -18,7 +18,7 @@ from cognite.neat.core._data_model.models._base_verified import (
     SheetRow,
 )
 from cognite.neat.core._data_model.models._types import (
-    ClassEntityType,
+    ConceptEntityType,
     ConceptualPropertyType,
     MultiValueTypeType,
     URIRefType,
@@ -27,15 +27,15 @@ from cognite.neat.core._data_model.models._types import (
 # NeatIdType,
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
     ClassEntityList,
-    Entity,
+    ConceptEntity,
+    ConceptualEntity,
     UnknownEntity,
 )
 from cognite.neat.core._issues.errors import PropertyDefinitionError
 
 if TYPE_CHECKING:
-    from cognite.neat.core._data_model.models import DMSRules
+    from cognite.neat.core._data_model.models import PhysicalDataModel
 
 
 class ConceptualMetadata(BaseVerifiedMetadata):
@@ -52,18 +52,19 @@ def _get_metadata(context: Any) -> ConceptualMetadata | None:
     return None
 
 
-class ConceptualClass(SheetRow):
+class Concept(SheetRow):
     """
-    Class is a category of things that share a common set of attributes and relationships.
+    Concept is a category of things that share a common set of attributes and relationships.
 
     Args:
-        class_: The class ID of the class.
+        concept: An ID of the concept.
         description: A description of the class.
         implements: Which classes the current class implements.
     """
 
-    class_: ClassEntityType = Field(
-        alias="Class", description="Class id being defined, use strongly advise `PascalCase` usage."
+    concept: ConceptEntityType = Field(
+        alias="Concept",
+        description="Concept id being defined, use strongly advise `PascalCase` usage.",
     )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the class.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the class.")
@@ -83,11 +84,11 @@ class ConceptualClass(SheetRow):
     )
 
     def _identifier(self) -> tuple[Hashable, ...]:
-        return (self.class_,)
+        return (self.concept,)
 
-    @field_serializer("class_", when_used="unless-none")
+    @field_serializer("concept", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
-        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _get_metadata(info.context)) and isinstance(value, ConceptualEntity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
@@ -96,22 +97,22 @@ class ConceptualClass(SheetRow):
         if isinstance(value, list) and (metadata := _get_metadata(info.context)):
             return ",".join(
                 (
-                    class_.dump(prefix=metadata.prefix, version=metadata.version)
-                    if isinstance(class_, Entity)
-                    else str(class_)
+                    concept.dump(prefix=metadata.prefix, version=metadata.version)
+                    if isinstance(concept, ConceptualEntity)
+                    else str(concept)
                 )
-                for class_ in value
+                for concept in value
             )
         return ",".join(str(value) for value in value)
 
 
 class ConceptualProperty(SheetRow):
     """
-    A property is a characteristic of a class. It is a named attribute of a class that describes a range of values
-    or a relationship to another class.
+    A property is a characteristic of a concept. It is a named attribute of a concept
+    that describes a range of values or a relationship to another concept.
 
     Args:
-        class_: Class ID to which property belongs
+        concept: Concept ID to which property belongs
         property_: Property ID of the property
         name: Property name.
         value_type: Type of value property will hold (data or link to another class)
@@ -122,8 +123,9 @@ class ConceptualProperty(SheetRow):
               knowledge graph. Defaults to None (no transformation)
     """
 
-    class_: ClassEntityType = Field(
-        alias="Class", description="Class id that the property is defined for, strongly advise `PascalCase` usage."
+    concept: ConceptEntityType = Field(
+        alias="Concept",
+        description="Concept id that the property is defined for, strongly advise `PascalCase` usage.",
     )
     property_: ConceptualPropertyType = Field(
         alias="Property",
@@ -131,7 +133,7 @@ class ConceptualProperty(SheetRow):
     )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the property.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the property.")
-    value_type: DataType | ClassEntityType | MultiValueTypeType | UnknownEntity = Field(
+    value_type: DataType | ConceptEntityType | MultiValueTypeType | UnknownEntity = Field(
         alias="Value Type",
         union_mode="left_to_right",
         description="Value type that the property can hold. It takes either subset of XSD type or a class defined.",
@@ -169,7 +171,7 @@ class ConceptualProperty(SheetRow):
     )
 
     def _identifier(self) -> tuple[Hashable, ...]:
-        return self.class_, self.property_
+        return self.concept, self.property_
 
     @field_validator("max_count", mode="before")
     def parse_max_count(cls, value: int | float | None) -> int | float | None:
@@ -201,7 +203,7 @@ class ConceptualProperty(SheetRow):
                 # this value_type.python does not seems correct. Need to check this further
                 except Exception:
                     raise PropertyDefinitionError(
-                        self.class_,
+                        self.concept,
                         "Class",
                         self.property_,
                         f"Default value {self.default} is not of type {self.value_type.python}",  # type: ignore
@@ -220,9 +222,9 @@ class ConceptualProperty(SheetRow):
             return None
         return value
 
-    @field_serializer("class_", "value_type", when_used="unless-none")
+    @field_serializer("concept", "value_type", when_used="unless-none")
     def remove_default_prefix(self, value: Any, info: SerializationInfo) -> str:
-        if (metadata := _get_metadata(info.context)) and isinstance(value, Entity):
+        if (metadata := _get_metadata(info.context)) and isinstance(value, ConceptualEntity):
             return value.dump(prefix=metadata.prefix, version=metadata.version)
         return str(value)
 
@@ -231,7 +233,7 @@ class ConceptualProperty(SheetRow):
         """Type of property based on value type. Either data (attribute) or object (edge) property."""
         if isinstance(self.value_type, DataType):
             return EntityTypes.data_property
-        elif isinstance(self.value_type, ClassEntity):
+        elif isinstance(self.value_type, ConceptEntity):
             return EntityTypes.object_property
         else:
             return EntityTypes.undefined
@@ -240,7 +242,7 @@ class ConceptualProperty(SheetRow):
 class ConceptualDataModel(BaseVerifiedDataModel):
     metadata: ConceptualMetadata = Field(alias="Metadata", description="Metadata for the conceptual data model")
     properties: SheetList[ConceptualProperty] = Field(alias="Properties", description="List of properties")
-    classes: SheetList[ConceptualClass] = Field(alias="Classes", description="List of classes")
+    concepts: SheetList[Concept] = Field(alias="Concepts", description="List of concepts")
     prefixes: dict[str, Namespace] = Field(
         alias="Prefixes",
         default_factory=get_default_prefixes_and_namespaces,
@@ -259,12 +261,12 @@ class ConceptualDataModel(BaseVerifiedDataModel):
     def set_neat_id(self) -> "ConceptualDataModel":
         namespace = self.metadata.namespace
 
-        for class_ in self.classes:
-            if not class_.neatId:
-                class_.neatId = namespace[class_.class_.suffix]
+        for concept in self.concepts:
+            if not concept.neatId:
+                concept.neatId = namespace[concept.concept.suffix]
         for property_ in self.properties:
             if not property_.neatId:
-                property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
+                property_.neatId = namespace[f"{property_.concept.suffix}/{property_.property_}"]
 
         return self
 
@@ -273,37 +275,37 @@ class ConceptualDataModel(BaseVerifiedDataModel):
 
         namespace = self.metadata.namespace
 
-        for class_ in self.classes:
-            class_.neatId = namespace[class_.class_.suffix]
+        for concept in self.concepts:
+            concept.neatId = namespace[concept.concept.suffix]
         for property_ in self.properties:
-            property_.neatId = namespace[f"{property_.class_.suffix}/{property_.property_}"]
+            property_.neatId = namespace[f"{property_.concept.suffix}/{property_.property_}"]
 
-    def sync_with_physical_data_model(self, dms_rules: "DMSRules") -> None:
+    def sync_with_physical_data_model(self, physical_data_model: "PhysicalDataModel") -> None:
         # Sync at the metadata level
-        if dms_rules.metadata.logical == self.metadata.identifier:
-            self.metadata.physical = dms_rules.metadata.identifier
+        if physical_data_model.metadata.conceptual == self.metadata.identifier:
+            self.metadata.physical = physical_data_model.metadata.identifier
         else:
             # if models are not linked to start with, we skip
             return None
 
         conceptual_properties_by_neat_id = {prop.neatId: prop for prop in self.properties}
-        physical_properties_by_neat_id = {prop.neatId: prop for prop in dms_rules.properties}
+        physical_properties_by_neat_id = {prop.neatId: prop for prop in physical_data_model.properties}
         for neat_id, prop in physical_properties_by_neat_id.items():
-            if prop.logical in conceptual_properties_by_neat_id:
-                conceptual_properties_by_neat_id[prop.logical].physical = neat_id
+            if prop.conceptual in conceptual_properties_by_neat_id:
+                conceptual_properties_by_neat_id[prop.conceptual].physical = neat_id
 
-        classes_by_neat_id = {cls.neatId: cls for cls in self.classes}
-        views_by_neat_id = {view.neatId: view for view in dms_rules.views}
+        classes_by_neat_id = {cls.neatId: cls for cls in self.concepts}
+        views_by_neat_id = {view.neatId: view for view in physical_data_model.views}
         for neat_id, view in views_by_neat_id.items():
-            if view.logical in classes_by_neat_id:
-                classes_by_neat_id[view.logical].physical = neat_id
+            if view.conceptual in classes_by_neat_id:
+                classes_by_neat_id[view.conceptual].physical = neat_id
 
-    def as_dms_rules(self) -> "DMSRules":
+    def as_dms_rules(self) -> "PhysicalDataModel":
         from cognite.neat.core._data_model.transformers._converters import (
-            _InformationRulesConverter,
+            _ConceptualDataModelConverter,
         )
 
-        return _InformationRulesConverter(self).as_dms_rules()
+        return _ConceptualDataModelConverter(self).as_physical_data_model()
 
     @classmethod
     def display_type_name(cls) -> str:
@@ -311,12 +313,12 @@ class ConceptualDataModel(BaseVerifiedDataModel):
 
     def _repr_html_(self) -> str:
         summary = {
-            "type": "Conceptual Data Model",
-            "intended for": "Information Architect",
+            "level": self.metadata.level,
+            "intended for": "Domain Expert and/or Information Architect",
             "name": self.metadata.name,
             "external_id": self.metadata.external_id,
             "version": self.metadata.version,
-            "classes": len(self.classes),
+            "concepts": len(self.concepts),
             "properties": len(self.properties),
         }
 

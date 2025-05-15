@@ -13,15 +13,15 @@ from cognite.neat.core._client.data_classes.data_modeling import (
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputEnum,
-    DMSInputMetadata,
-    DMSInputNode,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
+from cognite.neat.core._data_model.models.physical import (
     DMSSchema,
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalEnum,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalNodeType,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
 )
 
 _SPACE = "sp_windturbine"
@@ -141,8 +141,8 @@ _TODAY = datetime.datetime.now()
 _DEFAULTS: dict[str, Any] = dict(immutable=False, min_count=0, max_count=1)
 
 
-INPUT_RULES = DMSInputRules(
-    metadata=DMSInputMetadata(
+INPUT_RULES = UnverifiedPhysicalDataModel(
+    metadata=UnverifiedPhysicalMetadata(
         _SPACE,
         "WindTurbineModel",
         "MISSING",
@@ -151,7 +151,7 @@ INPUT_RULES = DMSInputRules(
         created=_TODAY,
     ),
     properties=[
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "WindTurbine",
             "name",
             "text",
@@ -159,7 +159,7 @@ INPUT_RULES = DMSInputRules(
             container_property="name",
             **_DEFAULTS,
         ),
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "WindTurbine",
             "capacity",
             "float64(unit=power:megaw)",
@@ -167,7 +167,7 @@ INPUT_RULES = DMSInputRules(
             container_property="capacity",
             **_DEFAULTS,
         ),
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "WindTurbine",
             "category",
             "enum(collection=WindTurbine.category, unknownValue=onshore)",
@@ -175,14 +175,14 @@ INPUT_RULES = DMSInputRules(
             container_property="category",
             **_DEFAULTS,
         ),
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "WindTurbine",
             "metmasts",
             "MetMast",
             connection="edge(properties=Distance, type=distance)",
             max_count=float("inf"),
         ),
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "MetMast",
             "name",
             "text",
@@ -190,7 +190,7 @@ INPUT_RULES = DMSInputRules(
             container_property="name",
             **_DEFAULTS,
         ),
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "MetMast",
             "windSpeed",
             "timeseries",
@@ -198,14 +198,14 @@ INPUT_RULES = DMSInputRules(
             container_property="windSpeed",
             **_DEFAULTS,
         ),
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "MetMast",
             "windTurbines",
             "WindTurbine",
             connection="edge(properties=Distance, type=distance, direction=inwards)",
             max_count=float("inf"),
         ),
-        DMSInputProperty(
+        UnverifiedPhysicalProperty(
             "Distance",
             "distance",
             "float64(unit=length:m)",
@@ -215,19 +215,19 @@ INPUT_RULES = DMSInputRules(
         ),
     ],
     views=[
-        DMSInputView("WindTurbine"),
-        DMSInputView("MetMast"),
-        DMSInputView("Distance"),
+        UnverifiedPhysicalView("WindTurbine"),
+        UnverifiedPhysicalView("MetMast"),
+        UnverifiedPhysicalView("Distance"),
     ],
     containers=[
-        DMSInputContainer("WindTurbine", used_for="node"),
-        DMSInputContainer("MetMast", used_for="node"),
-        DMSInputContainer("Distance", used_for="edge"),
+        UnverifiedPhysicalContainer("WindTurbine", used_for="node"),
+        UnverifiedPhysicalContainer("MetMast", used_for="node"),
+        UnverifiedPhysicalContainer("Distance", used_for="edge"),
     ],
-    nodes=[DMSInputNode("distance", "type")],
+    nodes=[UnverifiedPhysicalNodeType("distance", "type")],
     enum=[
-        DMSInputEnum("WindTurbine.category", "onshore", "Onshore"),
-        DMSInputEnum("WindTurbine.category", "offshore", "Offshore"),
+        UnverifiedPhysicalEnum("WindTurbine.category", "onshore", "Onshore"),
+        UnverifiedPhysicalEnum("WindTurbine.category", "offshore", "Offshore"),
     ],
 )
 

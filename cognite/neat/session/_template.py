@@ -4,18 +4,18 @@ from typing import Any, Literal
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
 from cognite.neat.core._constants import BASE_MODEL
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.exporters import ExcelExporter
 from cognite.neat.core._data_model.importers import ExcelImporter
 from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
 from cognite.neat.core._data_model.models._base_verified import RoleTypes
-from cognite.neat.core._data_model.models.dms import DMSValidation
+from cognite.neat.core._data_model.models.physical import PhysicalValidation
 from cognite.neat.core._data_model.transformers import (
     AddCogniteProperties,
     IncludeReferenced,
     ToDataProductModel,
     ToEnterpriseModel,
-    VerifiedRulesTransformer,
+    VerifiedDataModelTransformer,
 )
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._utils.reader import NeatReader, PathReader
@@ -69,7 +69,7 @@ class TemplateAPI:
                 - Charts
 
         """
-        last_rules = self._state.rule_store.last_verified_rules
+        last_rules = self._state.rule_store.last_verified_data_model
         issues = self._state.rule_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
@@ -105,11 +105,11 @@ class TemplateAPI:
                 If you set same-space, only the properties of the views in the same space as the data model
                 will be included.
         """
-        last_rules = self._state.rule_store.last_verified_rules
-        view_ids, container_ids = DMSValidation(
-            self._state.rule_store.last_verified_dms_rules
+        last_rules = self._state.rule_store.last_verified_data_model
+        view_ids, container_ids = PhysicalValidation(
+            self._state.rule_store.last_verified_physical_data_model
         ).imported_views_and_containers_ids()
-        transformers: list[VerifiedRulesTransformer] = []
+        transformers: list[VerifiedDataModelTransformer] = []
         client = self._state.client
         if (view_ids or container_ids) and client is None:
             raise NeatSessionError(
@@ -185,17 +185,17 @@ class TemplateAPI:
             output_path = Path(output)
 
         with catch_issues() as issues:
-            read: ReadRules[UnverifiedConceptualDataModel] = ExcelImporter(path).to_rules()
-            if read.rules is not None:
+            read: ImportedDataModel[UnverifiedConceptualDataModel] = ExcelImporter(path).to_data_model()
+            if read.unverified_data_model is not None:
                 # If rules are None there will be issues that are already caught.
-                if not isinstance(read.rules, UnverifiedConceptualDataModel):
+                if not isinstance(read.unverified_data_model, UnverifiedConceptualDataModel):
                     raise NeatSessionError(f"The input {reader.name} must contain an InformationInputRules object. ")
                 if self._state.client is None:
                     raise NeatSessionError("Client must be set in the session to run the extension.")
                 modified = AddCogniteProperties(self._state.client, dummy_property).transform(read)
-                if modified.rules is not None:
+                if modified.unverified_data_model is not None:
                     # If rules are None there will be issues that are already caught.
-                    info = modified.rules.as_verified_rules()
+                    info = modified.unverified_data_model.as_verified_data_model()
 
                     ExcelExporter(styling="maximal").export_to_file(info, output_path)
         issues.action = "Created extension template"
