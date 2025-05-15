@@ -1,13 +1,18 @@
+from typing import Any
+
 from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
+from rdflib import Namespace
 
 from cognite.neat.core._client import NeatClient
-from cognite.neat.core._constants import COGNITE_MODELS
+from cognite.neat.core._constants import COGNITE_MODELS, DEFAULT_NAMESPACE, DEFAULT_SPACE_URI
+from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.transformers import SetIDDMSModel
-from cognite.neat.core._instances.transformers import SetType
+from cognite.neat.core._instances.transformers import BestClassMatch, SetRDFTypeById, SetType
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import NeatValueError
+from cognite.neat.core._utils.read import read_conceptual_model
 from cognite.neat.core._utils.text import humanize_collection
 
 from ._state import SessionState
@@ -99,3 +104,60 @@ class SetInstances:
         self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))
 
         return None
+
+    def best_matching_class(self, conceptual_io: Any) -> IssueList:
+        """Sets the type of all instances to best matching class in the conceptual model.
+
+        This method works by comparing the properties of each instances with the properties of the classes and select
+        the class that minimizes the number of properties that are not overlapping. Tiebreakers are
+        resolved by selecting the class with the most properties overlapping the instance.
+
+        Args:
+            conceptual_io (Any): The conceptual model to use for the best matching class.
+
+        Returns:
+            IssueList: A list of issues that were found during the transformation.
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Set instance type based on best matching class",
+            instances_required=True,
+            has_dms_rules=False,
+            has_information_rules=False,
+        )
+        model = read_conceptual_model(conceptual_io)
+        analysis = DataModelAnalysis(model)
+
+        classes = {
+            DEFAULT_NAMESPACE[cls_.suffix]: frozenset({prop.property_ for prop in properties})
+            for cls_, properties in analysis.properties_by_concepts(include_ancestors=True).items()
+        }
+
+        transformer = BestClassMatch(classes)
+        issues = self._state.instances.store.transform(transformer)
+        return issues
+
+    def type_by_id(
+        self, mapping: dict[str, str], warn_missing_instances: bool = False, space: str | None = None
+    ) -> IssueList:
+        """Sets the type of all instances
+
+        Args:
+            mapping: A dictionary mapping the instance id to the type id.
+            warn_missing_instances: If True, a warning will be raised if an instance is not found in the mapping.
+            space: The space to use to create the namespace for the type URI. If None, the default namespace
+                will be used.
+
+        Returns:
+            IssueList: A list of issues that were found during the transformation.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Set instance type based ID",
+            instances_required=True,
+            has_dms_rules=False,
+            has_information_rules=False,
+        )
+        namespace = Namespace(DEFAULT_SPACE_URI.format(space=space)) if space else DEFAULT_NAMESPACE
+        type_by_id = {instance_id: namespace[type_id] for instance_id, type_id in mapping.items()}
+        transformer = SetRDFTypeById(type_by_id, warn_missing_instances=warn_missing_instances)
+        return self._state.instances.store.transform(transformer)

@@ -67,7 +67,7 @@ class DataModelTransformer(ABC, Generic[T_DataModelIn, T_DataModelOut]):
             return get_args(annotation)
 
         if get_origin(annotation) is ImportedDataModel and isinstance(get_args(annotation)[0], TypeVar):
-            # Hardcoded for now, as we only have two types of ReadRules
+            # Hardcoded for now, as we only have two types of ImportedDataModel
             return (
                 ImportedDataModel[UnverifiedPhysicalDataModel],
                 ImportedDataModel[UnverifiedConceptualDataModel],

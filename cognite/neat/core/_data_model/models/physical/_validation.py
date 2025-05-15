@@ -63,7 +63,7 @@ class PhysicalValidation:
         self,
         data_model: PhysicalDataModel,
         client: NeatClient | None = None,
-        read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+        read_context: Mapping[str, object] | None = None,
     ) -> None:
         self._rules = data_model
         self._client = client
@@ -71,7 +71,9 @@ class PhysicalValidation:
         self._properties = data_model.properties
         self._containers = data_model.containers
         self._views = data_model.views
-        self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
+        self._read_info_by_spreadsheet = {
+            k: v for k, v in (read_context or {}).items() if isinstance(v, SpreadsheetRead)
+        }
 
     def imported_views_and_containers_ids(
         self, include_views_with_no_properties: bool = True
@@ -134,7 +136,7 @@ class PhysicalValidation:
         dms_schema = self._rules.as_schema()
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
         ref_container_by_id = {container.as_id(): container for container in referenced_containers}
-        # All containers and views are the Containers/Views in the DMSRules + the referenced ones
+        # All containers and views are the Containers/Views in the PhysicalDataModel + the referenced ones
         all_containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container] = {
             **dict(dms_schema.containers.items()),
             **ref_container_by_id,

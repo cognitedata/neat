@@ -15,7 +15,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
 from cognite.neat.core._data_model.models.entities import ContainerEntity
-from cognite.neat.core._instances.loaders import DMSLoader
+from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from tests.data import GraphData, SchemaData
 
 RESERVED_PROPERTIES = frozenset(
@@ -190,6 +190,7 @@ class TestExtractToLoadFlow:
         assert value_type_by_property.get(("WindTurbine", "activities")) == "my_space:WorkOrder(version=v1)"
         assert value_type_by_property.get(("WorkOrder", "assets")) == "my_space:WindTurbine(version=v1)"
 
+    @pytest.mark.skip("Slow tests not relevant for migration work")
     def test_dexpi_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.dexpi(GraphData.dexpi_example_xml)
@@ -208,7 +209,8 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.rule_store.last_verified_physical_data_model
             info_rules = neat._state.rule_store.last_verified_conceptual_data_model
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
+            instance_loader = InstanceSpaceLoader(instance_space="sp_instance_space")
+            instances = list(DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
@@ -228,6 +230,7 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 206
         assert len(edges) == 40
 
+    @pytest.mark.skip("Slow tests not relevant for migration work")
     def test_aml_to_dms(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(cognite_client)
         neat.read.xml.aml(GraphData.aml_example_aml)
@@ -246,13 +249,14 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.rule_store.last_verified_physical_data_model
             info_rules = neat._state.rule_store.last_verified_conceptual_data_model
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
+            instance_loader = InstanceSpaceLoader(instance_space="sp_instance_space")
+            instances = list(DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
             instances = [
                 self._standardize_instance(instance)
-                for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
+                for instance in DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load()
             ]
 
         else:

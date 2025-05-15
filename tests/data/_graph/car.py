@@ -30,7 +30,7 @@ TRIPLES = tuple(
         (_instance_ns["Blue"], RDF.type, _model_ns["Color"]),
         (_instance_ns["Blue"], _model_ns["name"], Literal("blue")),
         (_instance_ns["Car1"], RDF.type, _model_ns["Car"]),
-        (_instance_ns["Car1"], _model_ns["Car.Manufacturer"], _instance_ns["Toyota"]),
+        (_instance_ns["Car1"], _model_ns["make"], _instance_ns["Toyota"]),
         (_instance_ns["Car1"], _model_ns["year"], Literal(2020)),
         (_instance_ns["Car1"], _model_ns["color"], _instance_ns["Blue"]),
         (_instance_ns["Ford"], RDF.type, _model_ns["Manufacturer"]),
@@ -38,7 +38,7 @@ TRIPLES = tuple(
         (_instance_ns["Red"], RDF.type, _model_ns["Color"]),
         (_instance_ns["Red"], _model_ns["name"], Literal("red")),
         (_instance_ns["Car2"], RDF.type, _model_ns["Car"]),
-        (_instance_ns["Car2"], _model_ns["Car.Manufacturer"], _instance_ns["Ford"]),
+        (_instance_ns["Car2"], _model_ns["make"], _instance_ns["Ford"]),
         (_instance_ns["Car2"], _model_ns["year"], Literal(2018)),
         (_instance_ns["Car2"], _model_ns["color"], _instance_ns["Red"]),
     ]
@@ -94,7 +94,7 @@ CAR_MODEL: dm.DataModel[dm.View] = dm.DataModel(
             properties={
                 "make": dm.MultiEdgeConnection(
                     source=dm.ViewId(MODEL_SPACE, "Manufacturer", "1"),
-                    type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
+                    type=dm.DirectRelationReference(MODEL_SPACE, "make"),
                     name=None,
                     description=None,
                     edge_source=None,
@@ -201,7 +201,7 @@ BASE_MODEL: PhysicalDataModel = UnverifiedPhysicalDataModel(
 
 NODE_TYPES = dm.NodeApplyList(
     [
-        dm.NodeApply(MODEL_SPACE, "Car.Manufacturer"),
+        dm.NodeApply(MODEL_SPACE, "make"),
     ]
 )
 
@@ -221,7 +221,7 @@ INSTANCES = [
         space=INSTANCE_SPACE,
         external_id="Car1.make.Toyota",
         start_node=dm.DirectRelationReference(INSTANCE_SPACE, "Car1"),
-        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
+        type=dm.DirectRelationReference(MODEL_SPACE, "make"),
         end_node=dm.DirectRelationReference(INSTANCE_SPACE, "Toyota"),
     ),
     dm.NodeApply(
@@ -242,7 +242,7 @@ INSTANCES = [
         space=INSTANCE_SPACE,
         external_id="Car2.make.Ford",
         start_node=dm.DirectRelationReference(INSTANCE_SPACE, "Car2"),
-        type=dm.DirectRelationReference(MODEL_SPACE, "Car.Manufacturer"),
+        type=dm.DirectRelationReference(MODEL_SPACE, "make"),
         end_node=dm.DirectRelationReference(INSTANCE_SPACE, "Ford"),
     ),
     dm.NodeApply(

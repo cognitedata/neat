@@ -384,7 +384,7 @@ class SheetList(list, MutableSequence[T_SheetRow]):
             item_type = args[0]
         else:
             # Someone use SheetList without specifying the type
-            raise TypeError("SheetList must be used with a type argument, e.g., SheetList[InformationProperty]")
+            raise TypeError("SheetList must be used with a type argument, e.g., SheetList[ConceptualProperty]")
 
         instance_schema = core_schema.is_instance_schema(cls)
         sequence_row_schema = handler.generate_schema(Sequence[item_type])  # type: ignore[valid-type]
