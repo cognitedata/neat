@@ -3,12 +3,12 @@ import urllib.parse
 from rdflib import RDF, Namespace
 
 from cognite.neat.core._instances.transformers import ConnectionToLiteral
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 class TestConnectionToLiteral:
     def test_connection_to_literal_non_alpha_numeric(self) -> None:
-        store = NeatGraphStore.from_memory_store()
+        store = NeatInstanceStore.from_memory_store()
         namespace = Namespace("http://example.com/")
         asset_id = namespace["MyAsset"]
         label_id = namespace[urllib.parse.quote("写ラミリヒ押報メ")]
