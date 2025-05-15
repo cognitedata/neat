@@ -439,8 +439,8 @@ class ToPythonAPI:
         )
 
         loader = loaders.DMSLoader(
-            self._state.rule_store.last_verified_dms_rules,
-            self._state.rule_store.last_verified_information_rules,
+            self._state.rule_store.last_verified_physical_data_model,
+            self._state.rule_store.last_verified_conceptual_data_model,
             self._state.instances.store,
             space_by_instance_uri=instance_loader.space_by_instance_uri,
             unquote_external_ids=True,

@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.models.entities._single_value import UnknownE
 from cognite.neat.core._data_model.transformers import VerifyAnyDataModel
 from cognite.neat.core._instances.examples import nordic44_knowledge_graph
 from cognite.neat.core._instances.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat.core._instances.loaders import DMSLoader
+from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._issues import catch_issues
 from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData, InstanceData
