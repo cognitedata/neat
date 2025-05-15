@@ -8,7 +8,6 @@ from cognite.client.data_classes.capabilities import Capability
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import AuthorizationError
-from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.auxiliary import class_html_doc
 from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
@@ -28,9 +27,6 @@ class _START_OF_CLASS:
 class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
-
-    def __init__(self, instance_store: NeatInstanceStore):
-        self.instance_store = instance_store
 
     @abstractmethod
     def write_to_file(self, filepath: Path) -> None:
