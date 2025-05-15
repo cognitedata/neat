@@ -63,9 +63,9 @@ from ._verified import (
 
 
 class _DMSExporter:
-    """The DMS Exporter is responsible for exporting the DMSRules to a DMSSchema.
+    """The DMS Exporter is responsible for exporting the PhysicalDataModel to a DMSSchema.
 
-    This kept in this location such that it can be used by the DMSRules to validate the schema.
+    This kept in this location such that it can be used by the PhysicalDataModel to validate the schema.
     (This module cannot have a dependency on the exporter module, as it would create a circular dependency.)
 
     Args

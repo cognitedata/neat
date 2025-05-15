@@ -13,17 +13,17 @@ from rdflib import Literal as RdfLiteral
 
 from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConcept,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.entities import UnknownEntity
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings import NeatValueWarning
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar
 from cognite.neat.core._utils.rdf_ import split_uri
 
@@ -85,7 +85,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
 
     def __init__(
         self,
-        store: NeatGraphStore,
+        store: NeatInstanceStore,
         data_model_id: DataModelIdentifier = ("neat_space", "NeatInferredDataModel", "v1"),
     ) -> None:
         self.store = store
@@ -93,11 +93,11 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         if self.data_model_id.version is None:
             raise NeatValueError("Version is required when setting a Data Model ID")
 
-    def to_rules(self) -> ReadRules[UnverifiedConceptualDataModel]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
         metadata = self._create_default_metadata()
         if not self.store.queries.select.has_data():
             warnings.warn(NeatValueWarning("Cannot infer data model. No data found in the graph."), stacklevel=2)
-            return ReadRules(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
+            return ImportedDataModel(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
 
         parent_by_child = self._read_parent_by_child_from_graph()
         count_by_type = self._read_types_with_counts_from_graph()
@@ -105,22 +105,22 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
             warnings.warn(
                 NeatValueWarning("Cannot infer data model. No RDF.type triples found in the graph."), stacklevel=2
             )
-            return ReadRules(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
+            return ImportedDataModel(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
 
         read_properties = self._read_class_properties_from_graph(count_by_type, parent_by_child)
 
         prefixes: dict[str, Namespace] = {}
-        classes, properties = self._create_classes_properties(read_properties, prefixes)
+        classes, properties = self._create_concepts_properties(read_properties, prefixes)
         read_context: dict[str, object] = {"inferred_from": count_by_type}
 
-        return ReadRules(
+        return ImportedDataModel(
             UnverifiedConceptualDataModel(
                 metadata=metadata,
-                classes=classes,
+                concepts=classes,
                 properties=properties,
                 prefixes=prefixes,
             ),
-            read_context=read_context,
+            context=read_context,
         )
 
     def _read_parent_by_child_from_graph(self) -> dict[URIRef, URIRef]:
@@ -172,10 +172,10 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                 )
         return read_properties
 
-    def _create_classes_properties(
+    def _create_concepts_properties(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
-    ) -> tuple[list[UnverifiedConceptualClass], list[UnverifiedConceptualProperty]]:
-        classes: list[UnverifiedConceptualClass] = []
+    ) -> tuple[list[UnverifiedConcept], list[UnverifiedConceptualProperty]]:
+        classes: list[UnverifiedConcept] = []
         properties: list[UnverifiedConceptualProperty] = []
 
         # Help for IDE
@@ -187,14 +187,14 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         ):
             parent_str: str | None = None
             if parent_uri != NEAT.EmptyType:
-                parent_str, parent_cls = self._create_class(parent_uri, set_instance_source=False, prefixes=prefixes)
+                parent_str, parent_cls = self._create_concept(parent_uri, set_instance_source=False, prefixes=prefixes)
                 classes.append(parent_cls)
 
             properties_by_class_by_property = self._get_properties_by_class_by_property(
                 parent_class_properties_iterable
             )
             for type_uri, properties_by_property_uri in properties_by_class_by_property.items():
-                class_str, class_ = self._create_class(
+                class_str, class_ = self._create_concept(
                     type_uri, set_instance_source=True, prefixes=prefixes, implements=parent_str
                 )
                 classes.append(class_)
@@ -223,15 +223,15 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         return properties_by_class_by_property
 
     @staticmethod
-    def _create_class(
+    def _create_concept(
         type_uri: URIRef, set_instance_source: bool, prefixes: dict[str, Namespace], implements: str | None = None
-    ) -> tuple[str, UnverifiedConceptualClass]:
+    ) -> tuple[str, UnverifiedConcept]:
         namespace, suffix = split_uri(type_uri)
         if namespace not in prefixes:
             prefixes[namespace] = Namespace(namespace)
         class_str = urllib.parse.unquote(suffix)
-        return class_str, UnverifiedConceptualClass(
-            class_=class_str, implements=implements, instance_source=type_uri if set_instance_source else None
+        return class_str, UnverifiedConcept(
+            concept=class_str, implements=implements, instance_source=type_uri if set_instance_source else None
         )
 
     def _create_property(
@@ -245,7 +245,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         first = read_properties[0]
         value_type = self._get_value_type(read_properties, prefixes)
         return UnverifiedConceptualProperty(
-            class_=class_str,
+            concept=class_str,
             property_=property_id,
             max_count=first.max_occurrence,
             value_type=value_type,

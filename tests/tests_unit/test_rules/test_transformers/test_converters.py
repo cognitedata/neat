@@ -18,13 +18,7 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import DataType
-from cognite.neat.core._data_model.models.dms import (
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputView,
-)
-from cognite.neat.core._data_model.models.dms._rules import DMSRules
+from cognite.neat.core._data_model.models.data_types import DataType as dt
 from cognite.neat.core._data_model.models.entities import MultiValueTypeInfo
 from cognite.neat.core._data_model.models.entities._single_value import (
     ConceptEntity,
@@ -128,9 +122,9 @@ class TestMergeIdenticalProperties:
                 UnverifiedConceptualProperty(class_name, "deletedTime", "timestamp", max_count=2),
                 UnverifiedConceptualProperty(class_name, "P&ID", "string", max_count=1),
             ],
-            classes=[UnverifiedConceptualClass(class_name)],
+            concepts=[UnverifiedConcept(class_name)],
         )
-        res = MergeIdenticalProperties().transform(ReadRules(information, {}))
+        res = MergeIdenticalProperties().transform(ImportedDataModel(information, {}))
 
         assert res.rules is not None
         assert len(res.rules.properties) == 2
@@ -173,24 +167,27 @@ class TestMergeIdenticalProperties:
                 id="Different types with duplicates",
             ),
             pytest.param(
-                [ClassEntity(prefix="space", suffix="Class1"), ClassEntity(prefix="space", suffix="Class2")],
+                [ConceptEntity(prefix="space", suffix="Class1"), ConceptEntity(prefix="space", suffix="Class2")],
                 MultiValueTypeInfo(
-                    types=[ClassEntity(prefix="space", suffix="Class1"), ClassEntity(prefix="space", suffix="Class2")]
+                    types=[
+                        ConceptEntity(prefix="space", suffix="Class1"),
+                        ConceptEntity(prefix="space", suffix="Class2"),
+                    ]
                 ),
                 id="Different classes",
             ),
             pytest.param(
-                [ClassEntity(prefix="space", suffix="Class1"), dt.String()],
-                MultiValueTypeInfo(types=[ClassEntity(prefix="space", suffix="Class1"), dt.String()]),
+                [ConceptEntity(prefix="space", suffix="Class1"), dt.String()],
+                MultiValueTypeInfo(types=[ConceptEntity(prefix="space", suffix="Class1"), dt.String()]),
                 id="Class and type",
             ),
             pytest.param(
                 [
                     MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
-                    MultiValueTypeInfo(types=[dt.Double(), ClassEntity(prefix="space", suffix="MyClass")]),
+                    MultiValueTypeInfo(types=[dt.Double(), ConceptEntity(prefix="space", suffix="MyClass")]),
                 ],
                 MultiValueTypeInfo(
-                    types=[dt.String(), dt.Integer(), dt.Double(), ClassEntity(prefix="space", suffix="MyClass")]
+                    types=[dt.String(), dt.Integer(), dt.Double(), ConceptEntity(prefix="space", suffix="MyClass")]
                 ),
                 id="MultiValueTypeInfo",
             ),
@@ -198,8 +195,8 @@ class TestMergeIdenticalProperties:
     )
     def test_merge_value_types(
         self,
-        value_types: list[DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity],
-        expected: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
+        value_types: list[DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity],
+        expected: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
     ):
         assert MergeIdenticalProperties._merge_value_types(value_types) == expected
 

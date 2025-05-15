@@ -8,7 +8,6 @@ from cognite.client.data_classes.capabilities import Capability
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import AuthorizationError
-from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.auxiliary import class_html_doc
 from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
@@ -22,15 +21,12 @@ class _END_OF_CLASS: ...
 
 class _START_OF_CLASS:
     def __init__(self, class_name: str | None = None):
-        self.class_name = class_name
+        self.conceptname = class_name
 
 
 class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
-
-    def __init__(self, graph_store: NeatInstanceStore):
-        self.graph_store = graph_store
 
     @abstractmethod
     def write_to_file(self, filepath: Path) -> None:
@@ -91,7 +87,7 @@ class CDFLoader(BaseLoader[T_Output]):
             elif result is _END_OF_CLASS:
                 ...
             elif isinstance(result, _START_OF_CLASS):
-                last_class_name = result.class_name
+                last_class_name = result.conceptname
                 continue
             else:
                 # MyPy does not understand that 'else' means the item will be of type T_Output

@@ -24,9 +24,9 @@ def read_conceptual_model(io: Any) -> ConceptualDataModel:
     reader = NeatReader.create(io)
     rules: ConceptualDataModel | None = None
     with catch_issues() as issues:
-        input_rules = importers.ExcelImporter(reader.materialize_path()).to_rules().rules
+        input_rules = importers.ExcelImporter(reader.materialize_path()).to_data_model().unverified_data_model
         if input_rules:
-            rules = input_rules.as_verified_rules()
+            rules = input_rules.as_verified_data_model()
     if rules is None:
         raise NeatValueError(f"Failed to read mapping file: {reader.name}. Found {len(issues)} issues")
     elif not isinstance(rules, ConceptualDataModel):

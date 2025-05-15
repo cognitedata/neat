@@ -155,7 +155,7 @@ class NeatInstanceStore:
         remote_url: str,
         autocommit: bool = False,
     ) -> "Self":
-        """Creates a NeatGraphStore from a remote Oxigraph store SPARQL endpoint."""
+        """Creates a NeatInstanceStore from a remote Oxigraph store SPARQL endpoint."""
 
         return cls(
             dataset=Dataset(
@@ -168,7 +168,7 @@ class NeatInstanceStore:
 
     @classmethod
     def from_oxi_local_store(cls, storage_dir: Path | None = None) -> "Self":
-        """Creates a NeatGraphStore from an Oxigraph store."""
+        """Creates a NeatInstanceStore from an Oxigraph store."""
         local_import("pyoxigraph", "oxi")
         local_import("oxrdflib", "oxi")
         import oxrdflib

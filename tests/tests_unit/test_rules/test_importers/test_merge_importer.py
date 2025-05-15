@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 import pytest
 
-from cognite.neat.core._data_model._shared import InputRules, ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel, InputRules
 from cognite.neat.core._data_model.importers import DMSMergeImporter
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, UnverifiedConceptualDataModel
@@ -16,8 +16,8 @@ from cognite.neat.core._issues.errors import NeatError
 
 
 class ImportAdditional(BaseImporter):
-    def to_rules(self) -> ReadRules[UnverifiedConceptualDataModel]:
-        return ReadRules(
+    def to_rules(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
+        return ImportedDataModel(
             rules=UnverifiedConceptualDataModel(
                 metadata=UnverifiedConceptualMetadata(
                     external_id="my_model", version="1.0.0", space="neat", creator="doctrino"
@@ -43,8 +43,8 @@ class ImportAdditional(BaseImporter):
 
 
 class ImportExisting(BaseImporter):
-    def to_rules(self) -> ReadRules[DMSInputRules]:
-        return ReadRules(
+    def to_rules(self) -> ImportedDataModel[DMSInputRules]:
+        return ImportedDataModel(
             rules=DMSInputRules(
                 metadata=DMSInputMetadata(external_id="my_model", version="1.0.0", space="neat", creator="doctrino"),
                 properties=[
@@ -87,19 +87,19 @@ class ImportExisting(BaseImporter):
 def merge_importer_unhappy_test_cases() -> Iterable:
     """Test cases for unhappy path of merge importer."""
     yield pytest.param(
-        ReadRules(None, {}),
-        ReadRules(None, {}),
+        ImportedDataModel(None, {}),
+        ImportedDataModel(None, {}),
         "NeatValueError: Cannot merge. Existing data model failed read.",
         id="Missing existing rules",
     )
     yield pytest.param(
-        ReadRules(
+        ImportedDataModel(
             DMSInputRules(
                 DMSInputMetadata(external_id="my_model", version="1.0.0", creator="doctrino", space="my_space"), [], []
             ),
             {},
         ),
-        ReadRules(None, {}),
+        ImportedDataModel(None, {}),
         "NeatValueError: Cannot merge. Additional data model failed read.",
         id="Missing additional rules",
     )
@@ -126,14 +126,14 @@ class TestMergeImporter:
 
     @pytest.mark.parametrize("existing, additional, expected", list(merge_importer_unhappy_test_cases()))
     def test_merge_importer_unhappy_path(
-        self, existing: ReadRules[InputRules], additional: ReadRules[InputRules], expected: str
+        self, existing: ImportedDataModel[InputRules], additional: ImportedDataModel[InputRules], expected: str
     ) -> None:
         class DummyExistingFailing(BaseImporter):
-            def to_rules(self) -> ReadRules[InputRules]:
+            def to_rules(self) -> ImportedDataModel[InputRules]:
                 return existing
 
         class DummyAdditionalFailing(BaseImporter):
-            def to_rules(self) -> ReadRules[InputRules]:
+            def to_rules(self) -> ImportedDataModel[InputRules]:
                 return additional
 
         # Test with existing rules as None

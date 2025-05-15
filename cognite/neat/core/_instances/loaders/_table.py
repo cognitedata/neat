@@ -15,14 +15,14 @@ from cognite.neat.core._data_model.models import data_types as dt
 from cognite.neat.core._data_model.models.conceptual import UnverifiedConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     MultiValueTypeInfo,
     UnknownEntity,
     load_value_type,
 )
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat.core._utils.io_ import to_directory_compatible
 from cognite.neat.core._utils.rdf_ import split_uri, uri_instance_to_display_name
@@ -32,7 +32,10 @@ from ._base import _END_OF_CLASS, _START_OF_CLASS, BaseLoader
 
 class DictLoader(BaseLoader[dict[str, object]]):
     def __init__(
-        self, graph_store: NeatGraphStore, file_format: typing.Literal["parquet"] = "parquet", chunk_rows: int = 10_000
+        self,
+        graph_store: NeatInstanceStore,
+        file_format: typing.Literal["parquet"] = "parquet",
+        chunk_rows: int = 10_000,
     ) -> None:
         self.graph_store = graph_store
         self.file_format = file_format
@@ -44,22 +47,22 @@ class DictLoader(BaseLoader[dict[str, object]]):
             importer = SubclassInferenceImporter(
                 IssueList(), self.graph_store.dataset, data_model_id=("neat_space", "TableSchema", "v1")
             )
-            inferred_rules = importer.to_rules()
-            if inferred_rules.rules is None:
+            inferred_rules = importer.to_data_model()
+            if inferred_rules.unverified_data_model is None:
                 raise NeatValueError("Failed to infer schema for tables.")
-            for prop in inferred_rules.rules.properties:
+            for prop in inferred_rules.unverified_data_model.properties:
                 # Ensure that the value type is loaded.
-                value_type = load_value_type(prop.value_type, inferred_rules.rules.metadata.space)
+                value_type = load_value_type(prop.value_type, inferred_rules.unverified_data_model.metadata.space)
                 if isinstance(value_type, MultiValueTypeInfo):
                     value_type = self._convert_multi_value_type(value_type)
                 prop.value_type = value_type
 
-            self._inferred_properties_by_class = self._as_properties_by_class(inferred_rules.rules)
+            self._inferred_properties_by_class = self._as_properties_by_class(inferred_rules.unverified_data_model)
         return self._inferred_properties_by_class
 
     @staticmethod
-    def _convert_multi_value_type(multi_value_type: MultiValueTypeInfo) -> DataType | ClassEntity:
-        if all(isinstance(item, ClassEntity) for item in multi_value_type.types):
+    def _convert_multi_value_type(multi_value_type: MultiValueTypeInfo) -> DataType | ConceptEntity:
+        if all(isinstance(item, ConceptEntity) for item in multi_value_type.types):
             return dt.String()
         elif all(isinstance(item, DataType) for item in multi_value_type.types):
             if len(multi_value_type.types) == 2 and dt.String() in multi_value_type.types:
@@ -123,7 +126,7 @@ class DictLoader(BaseLoader[dict[str, object]]):
                     item
                     for item in value_
                     if item
-                    if self._is_matching_schema(item, typing.cast(DataType | ClassEntity, prop.value_type))
+                    if self._is_matching_schema(item, typing.cast(DataType | ConceptEntity, prop.value_type))
                 ]
             else:
                 value = list(value_)
@@ -137,8 +140,8 @@ class DictLoader(BaseLoader[dict[str, object]]):
         return cleaned
 
     @staticmethod
-    def _is_matching_schema(value: object, value_type: DataType | ClassEntity) -> bool:
-        if isinstance(value_type, ClassEntity | UnknownEntity) and isinstance(value, str):
+    def _is_matching_schema(value: object, value_type: DataType | ConceptEntity) -> bool:
+        if isinstance(value_type, ConceptEntity | UnknownEntity) and isinstance(value, str):
             return True
         elif isinstance(value_type, DataType):
             if isinstance(value_type, dt.Double) and isinstance(value, int):
@@ -158,12 +161,12 @@ class DictLoader(BaseLoader[dict[str, object]]):
             for result in self._load():
                 if (
                     isinstance(result, _START_OF_CLASS)
-                    and result.class_name is not None
-                    and result.class_name in properties_by_class
+                    and result.conceptname is not None
+                    and result.conceptname in properties_by_class
                 ):
-                    properties = properties_by_class[result.class_name]
+                    properties = properties_by_class[result.conceptname]
                     schema = self._create_schema(properties)
-                    file_stem = to_directory_compatible(result.class_name)
+                    file_stem = to_directory_compatible(result.conceptname)
                     writer = pq.ParquetWriter(folder_path / f"{file_stem}.parquet", schema)
                 elif result is _END_OF_CLASS:
                     self._write_rows(writer, schema, rows)
@@ -183,14 +186,14 @@ class DictLoader(BaseLoader[dict[str, object]]):
     def _as_properties_by_class(info: UnverifiedConceptualDataModel) -> dict[str, list[UnverifiedConceptualProperty]]:
         properties_by_class = defaultdict(list)
         for prop in info.properties:
-            key = prop.class_ if isinstance(prop.class_, str) else prop.class_.suffix
+            key = prop.concept if isinstance(prop.concept, str) else prop.concept.suffix
             properties_by_class[key].append(prop)
         return properties_by_class
 
     def _create_schema(self, properties: list[UnverifiedConceptualProperty]) -> pa.Schema:
         fields: list[pa.Field] = [pa.field("externalId", pa.string(), nullable=False)]
         for prop in properties:
-            value_type = typing.cast(DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity, prop.value_type)
+            value_type = typing.cast(DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity, prop.value_type)
             pa_type = self._as_pa_type(value_type)
             if (isinstance(prop.max_count, float) and math.isinf(prop.max_count)) or (
                 isinstance(prop.max_count, int) and prop.max_count > 1
@@ -201,8 +204,8 @@ class DictLoader(BaseLoader[dict[str, object]]):
         return pa.schema(fields)
 
     @staticmethod
-    def _as_pa_type(value_type: MultiValueTypeInfo | DataType | ClassEntity | UnknownEntity) -> pa.DataType:
-        if isinstance(value_type, MultiValueTypeInfo | ClassEntity | UnknownEntity | dt.String):
+    def _as_pa_type(value_type: MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity) -> pa.DataType:
+        if isinstance(value_type, MultiValueTypeInfo | ConceptEntity | UnknownEntity | dt.String):
             return pa.string()
         elif isinstance(value_type, dt.Long | dt.Integer | dt.NonPositiveInteger):
             return pa.int64()

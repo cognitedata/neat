@@ -59,13 +59,6 @@ from cognite.neat.core._data_model.models.data_types import (
     String,
     Timeseries,
 )
-from cognite.neat.core._data_model.models.dms import (
-    DMSMetadata,
-    DMSProperty,
-    DMSValidation,
-    DMSView,
-)
-from cognite.neat.core._data_model.models.dms._rules import DMSContainer
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     ContainerEntity,
@@ -85,8 +78,6 @@ from cognite.neat.core._data_model.models.physical import (
 )
 from cognite.neat.core._data_model.models.physical._verified import (
     PhysicalContainer,
-    PhysicalEnum,
-    PhysicalNodeType,
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues._factory import from_pydantic_errors
@@ -184,8 +175,7 @@ class ToDMSCompliantEntities(
                 if self._renaming == "raise" and not self._always_standardize:
                     warnings.warn(
                         NeatValueWarning(
-                            f"Invalid property name {prop.concept.suffix}.{prop.property_!r}."
-                            f" Renaming to {new_property}"
+                            f"Invalid property name {prop.concept!s}.{prop.property_!r}. Renaming to {new_property}"
                             # type: ignore[union-attr]
                         ),
                         stacklevel=2,
@@ -231,7 +221,9 @@ class ToDMSCompliantEntities(
 
 
 class MergeIdenticalProperties(
-    RulesTransformer[ReadRules[UnverifiedConceptualDataModel], ReadRules[UnverifiedConceptualDataModel]]
+    DataModelTransformer[
+        ImportedDataModel[UnverifiedConceptualDataModel], ImportedDataModel[UnverifiedConceptualDataModel]
+    ]
 ):
     """Merges identical properties in the rules
 
@@ -242,22 +234,24 @@ class MergeIdenticalProperties(
     def description(self) -> str:
         return "Merges identical properties in the rules."
 
-    def transform(self, rules: ReadRules[UnverifiedConceptualDataModel]) -> ReadRules[UnverifiedConceptualDataModel]:
-        if rules.rules is None:
+    def transform(
+        self, rules: ImportedDataModel[UnverifiedConceptualDataModel]
+    ) -> ImportedDataModel[UnverifiedConceptualDataModel]:
+        if rules.unverified_data_model is None:
             return rules
         # Doing dump to obtain a copy, and ensure that all entities are created. Input allows
         # string for entities, the dump call will convert these to entities.
-        dumped = rules.rules.dump()
+        dumped = rules.unverified_data_model.dump()
         copy = UnverifiedConceptualDataModel.load(dumped)
         copy.properties = self._merge_identical_properties(copy.properties)
-        return ReadRules(rules=copy, read_context=rules.read_context)
+        return ImportedDataModel(unverified_data_model=copy, context=rules.context)
 
     def _merge_identical_properties(
         self, properties: list[UnverifiedConceptualProperty]
     ) -> list[UnverifiedConceptualProperty]:
-        counter: dict[tuple[ClassEntity, str], list[UnverifiedConceptualProperty]] = defaultdict(list)
+        counter: dict[tuple[ConceptEntity, str], list[UnverifiedConceptualProperty]] = defaultdict(list)
         for prop in properties:
-            cls_ = cast(ClassEntity, prop.class_)  # Safe due to the dump above
+            cls_ = cast(ConceptEntity, prop.concept)  # Safe due to the dump above
             counter[(cls_, prop.property_)].append(prop)
 
         merged_properties: list[UnverifiedConceptualProperty] = []
@@ -279,7 +273,7 @@ class MergeIdenticalProperties(
     def _as_one_property(self, properties: list[UnverifiedConceptualProperty]) -> UnverifiedConceptualProperty:
         first = properties[0]
         return UnverifiedConceptualProperty(
-            class_=first.class_,
+            concept=first.concept,
             property_=first.property_,
             # We know that value_type cannot be str due to the dump above
             value_type=self._merge_value_types([prop.value_type for prop in properties]),  # type: ignore[misc]
@@ -314,10 +308,10 @@ class MergeIdenticalProperties(
 
     @staticmethod
     def _merge_value_types(
-        value_types: list[DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity],
-    ) -> DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity:
-        seen: set[DataType | ClassEntity | UnknownEntity] = set()
-        new_types: list[DataType | ClassEntity | UnknownEntity] = []
+        value_types: list[DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity],
+    ) -> DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity:
+        seen: set[DataType | ConceptEntity | UnknownEntity] = set()
+        new_types: list[DataType | ConceptEntity | UnknownEntity] = []
         for type_ in value_types:
             if isinstance(type_, MultiValueTypeInfo):
                 for t in type_.types:
@@ -356,7 +350,7 @@ class MergeIdenticalProperties(
 
 
 class StandardizeSpaceAndVersion(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):  # type: ignore[misc]
-    """This transformer standardizes the space and version of the DMSRules.
+    """This transformer standardizes the space and version of the PhysicalDataModel.
 
     typically used to ensure all the views are moved to the same version as the data model.
 
@@ -464,7 +458,7 @@ class ToCompliantEntities(VerifiedDataModelTransformer[ConceptualDataModel, Conc
                 types=[cast(DataType | ConceptEntity, cls._fix_value_type(type_)) for type_ in value_type.types],
             )
 
-        # value type specified as ClassEntity instance
+        # value type specified as ConceptEntity instance
         elif isinstance(value_type, ConceptEntity):
             fixed_value_type = cls._fix_concept(value_type)
 
@@ -529,7 +523,7 @@ class PrefixEntities(ConversionTransformer):  # type: ignore[type-var]
                 if prop.concept.prefix == copy.metadata.prefix:
                     prop.concept = self._with_prefix(prop.concept)
 
-                # value type property is not multi and it is ClassEntity
+                # value type property is not multi and it is ConceptEntity
 
                 if isinstance(prop.value_type, ConceptEntity) and prop.value_type.prefix == copy.metadata.prefix:
                     prop.value_type = self._with_prefix(cast(ConceptEntity, prop.value_type))
@@ -731,7 +725,7 @@ class PhysicalToConceptual(ConversionTransformer[PhysicalDataModel, ConceptualDa
         self.instance_namespace = instance_namespace
 
     def transform(self, data_model: PhysicalDataModel) -> ConceptualDataModel:
-        return _DMSRulesConverter(data_model, self.instance_namespace).as_conceptual_data_model()
+        return _PhysicalDataModelConverter(data_model, self.instance_namespace).as_conceptual_data_model()
 
 
 class ConvertToRules(ConversionTransformer[VerifiedDataModel, VerifiedDataModel]):
@@ -2007,7 +2001,7 @@ class _ConceptualDataModelConverter:
     def convert_multi_data_type(value_type: MultiValueTypeInfo) -> DataType:
         if not value_type.is_multi_data_type():
             raise ValueError("Only MultiValueType with DataType types is supported")
-        # We check above that there are no ClassEntity types in the MultiValueType
+        # We check above that there are no ConceptEntity types in the MultiValueType
         py_types = {type_.python for type_ in value_type.types}  # type: ignore[union-attr]
 
         # JSON mixed with other types should resolve to string that is safe choice
@@ -2073,7 +2067,7 @@ class _ConceptualDataModelConverter:
         return None
 
 
-class _DMSRulesConverter:
+class _PhysicalDataModelConverter:
     def __init__(self, data_model: PhysicalDataModel, instance_namespace: Namespace | None = None) -> None:
         self.physical_data_model = data_model
         self.instance_namespace = instance_namespace
@@ -2504,9 +2498,9 @@ class AddCogniteProperties(
 
     @staticmethod
     def _get_dependencies_by_concepts(
-        classes: list[UnverifiedConcept], read_context: Mapping[str, object], default_space: str
+        concepts: list[UnverifiedConcept], read_context: Mapping[str, object], default_space: str
     ) -> dict[ConceptEntity, set[ConceptEntity]]:
-        dependencies_by_class: dict[ConceptEntity, set[ConceptEntity]] = {}
+        dependencies_by_concepts: dict[ConceptEntity, set[ConceptEntity]] = {}
         issues = IssueList()
         for raw in concepts:
             try:

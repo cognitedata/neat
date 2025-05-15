@@ -94,10 +94,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
     """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
 
     Args:
-        dms_rules (DMSRules): The DMS rules used by the data model.
+        dms_rules (PhysicalDataModel): The DMS rules used by the data model.
         info_rules (ConceptualDataModel): The information rules used by the data model, used to
             look+up the instances in the store.
-        graph_store (NeatGraphStore): The graph store to load the data from.
+        graph_store (NeatInstanceStore): The graph store to load the data from.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         client (NeatClient | None): This is used to lookup containers such that the loader
             creates instances in accordance with required constraints. Defaults to None.

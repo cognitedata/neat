@@ -15,7 +15,7 @@ from cognite.neat.core._client._api.data_modeling_loaders import MultiCogniteAPI
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import ResourceCreationError, ResourceNotFoundError
 from cognite.neat.core._issues.warnings import NeatValueWarning
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat.core._utils.rdf_ import namespace_as_space, split_uri
 from cognite.neat.core._utils.text import NamingStandardization
@@ -31,7 +31,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
     the DMSLoader to lookup space for each instance URI.
 
     Args:
-        graph_store (NeatGraphStore): The graph store to load the data from.
+        graph_store (NeatInstanceStore): The graph store to load the data from.
         instance_space (str): The instance space to load the data into.
         space_property (str): The property to use to determine the space for each instance.
         use_source_space (bool): If True, use the source space of the instances when extracted from CDF.
@@ -42,7 +42,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
 
     def __init__(
         self,
-        graph_store: NeatGraphStore | None = None,
+        graph_store: NeatInstanceStore | None = None,
         instance_space: str | None = None,
         space_property: str | None = None,
         use_source_space: bool = False,
@@ -184,7 +184,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
         else:
             raise ValueError("Either 'instance_space", "space_property', or 'use_source_space' must be provided. ")
 
-    def _lookup_instance_uris(self, graph_store: NeatGraphStore) -> None:
+    def _lookup_instance_uris(self, graph_store: NeatInstanceStore) -> None:
         instance_iterable = itertools.chain(
             (res[0] for res in graph_store.queries.select.list_instances_ids()),
             graph_store.queries.select.list_instance_object_ids(),
@@ -199,7 +199,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
             else:
                 self._space_by_instance_uri[instance_uri] = space
 
-    def _lookup_space_property(self, graph_store: NeatGraphStore, space_property: str) -> None:
+    def _lookup_space_property(self, graph_store: NeatInstanceStore, space_property: str) -> None:
         properties_by_uriref = graph_store.queries.select.properties()
         space_property_uri = next((k for k, v in properties_by_uriref.items() if v == space_property), None)
         if space_property_uri is None:

@@ -27,8 +27,8 @@ from cognite.neat.core._data_model.models._types import (
 # NeatIdType,
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntityList,
     ConceptEntity,
+    ConceptEntityList,
     ConceptualEntity,
     UnknownEntity,
 )
@@ -68,7 +68,7 @@ class Concept(SheetRow):
     )
     name: str | None = Field(alias="Name", default=None, description="Human readable name of the class.")
     description: str | None = Field(alias="Description", default=None, description="Short description of the class.")
-    implements: ClassEntityList | None = Field(
+    implements: ConceptEntityList | None = Field(
         alias="Implements",
         default=None,
         description="List of classes (comma separated) that the current class implements (parents).",

@@ -1,4 +1,5 @@
 from ._base import DataModelTransformer, VerifiedDataModelTransformer
+from ._conceptual_property_renaming import ConceptualPropertyRenaming
 from ._converters import (
     AddCogniteProperties,
     AddConceptImplements,
@@ -9,11 +10,7 @@ from ._converters import (
     ConvertToRules,
     DropModelViews,
     IncludeReferenced,
-    InformationToDMS,
     MergeIdenticalProperties,
-    MergeInformationRules,
-    MergeConceptualDataModels,
-    MergePhysicalDataModels,
     PhysicalToConceptual,
     PrefixEntities,
     SetIDDMSModel,
@@ -28,17 +25,14 @@ from ._converters import (
     ToExtensionModel,
     ToSolutionModel,
 )
-from ._mapping import AsParentPropertyId, MapOneToOne, RuleMapper
-from ._merge_conceptual import MergeConceptualDataModel
-from ._merge_physical import MergeDMSRules
-from ._verification import VerifyAnyRules, VerifyDMSRules, VerifyInformationRules
 from ._mapping import AsParentPropertyId, MapOneToOne, PhysicalDataModelMapper
+from ._merge_conceptual import MergeConceptualDataModel
+from ._merge_physical import MergePhysicalDataModel
 from ._verification import (
     VerifyAnyDataModel,
     VerifyConceptualDataModel,
     VerifyPhysicalDataModel,
 )
-from ._verification import VerifyAnyRules, VerifyConceptualDataModel, VerifyDMSRules
 
 __all__ = [
     "AddCogniteProperties",
@@ -46,6 +40,7 @@ __all__ = [
     "AsParentPropertyId",
     "ChangeViewPrefix",
     "ClassicPrepareCore",
+    "ConceptualPropertyRenaming",
     "ConceptualToPhysical",
     "ConversionTransformer",
     "ConvertToRules",
@@ -54,10 +49,10 @@ __all__ = [
     "IncludeReferenced",
     "MapOneToOne",
     "MergeConceptualDataModel",
-    "MergeDMSRules",
+    "MergeConceptualDataModels",
     "MergeIdenticalProperties",
     "MergeInformationRules",
-    "MergeConceptualDataModels",
+    "MergePhysicalDataModel",
     "MergePhysicalDataModels",
     "PhysicalDataModelMapper",
     "PhysicalToConceptual",
@@ -66,8 +61,8 @@ __all__ = [
     "StandardizeNaming",
     "StandardizeSpaceAndVersion",
     "SubsetConceptualDataModel",
-    "SubsetDMSRules",
     "SubsetConceptualDataModel",
+    "SubsetPhysicalDataModel",
     "SubsetPhysicalDataModel",
     "ToCompliantEntities",
     "ToDMSCompliantEntities",
@@ -76,11 +71,11 @@ __all__ = [
     "ToExtensionModel",
     "ToSolutionModel",
     "VerifiedDataModelTransformer",
+    "VerifiedDataModelTransformer",
     "VerifyAnyDataModel",
-    "VerifyConceptualDataModel",
-    "VerifyPhysicalDataModel",
-    "VerifiedRulesTransformer",
     "VerifyAnyRules",
     "VerifyConceptualDataModel",
-    "VerifyDMSRules",
+    "VerifyConceptualDataModel",
+    "VerifyPhysicalDataModel",
+    "VerifyPhysicalDataModel",
 ]
