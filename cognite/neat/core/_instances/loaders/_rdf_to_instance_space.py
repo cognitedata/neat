@@ -12,6 +12,7 @@ from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._client._api.data_modeling_loaders import MultiCogniteAPIError
+from cognite.neat.core._constants import COGNITE_SPACES
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import ResourceCreationError, ResourceNotFoundError
 from cognite.neat.core._issues.warnings import NeatValueWarning
@@ -156,7 +157,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
         yield from self._lookup_issues
         seen: set[str] = set()
         for space_str in self.space_by_instance_uri.values():
-            if space_str in seen:
+            if space_str in seen or space_str in COGNITE_SPACES:
                 continue
             yield dm.SpaceApply(space=space_str)
             seen.add(space_str)
