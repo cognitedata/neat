@@ -9,12 +9,12 @@ from cognite.neat.core._instances import extractors
 from cognite.neat.core._instances.examples import nordic44_knowledge_graph
 from cognite.neat.core._instances.loaders import DictLoader
 from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 class TestLocationFilterLoader:
     def test_write_parquet_table(self, tmp_path: Path) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
 
         class DummyExtractor:
             def extract(self) -> Iterable[Triple]:
@@ -53,7 +53,7 @@ class TestLocationFilterLoader:
         assert table.to_pylist() == expected_content
 
     def test_write_parquet_invalid_type(self, tmp_path: Path) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
 
         class DummyExtractor:
             def extract(self) -> Iterable[Triple]:
@@ -105,7 +105,7 @@ class TestLocationFilterLoader:
         assert table.to_pylist() == expected_content
 
     def test_write_parquet_tables_nordic44(self, tmp_path: Path) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
         store.write(extractors.RdfFileExtractor(nordic44_knowledge_graph))
 
         loader = DictLoader(store, "parquet")

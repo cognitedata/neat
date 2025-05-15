@@ -23,10 +23,10 @@ def input_rules_cls_iterator() -> Iterable[ParameterSet]:
         yield pytest.param(cls_, id=cls_.__name__)
 
 
-class TestInputRules:
+class TestUnverifiedDataModel:
     @pytest.mark.parametrize("input_rules_cls", input_rules_cls_iterator())
     def test_input_rules_match_verified_cls(self, input_rules_cls: type[UnverifiedDataModel]) -> None:
-        """Test that all classes that inherit from InputRules have a matching verified class."""
+        """Test that all classes that inherit from UnverifiedDataModel have a matching verified class."""
         verified_cls = input_rules_cls._get_verified_cls()
         input_parameters = dataclass_to_parameters(input_rules_cls)
         verified_parameters = pydantic_to_parameters(verified_cls)
@@ -35,7 +35,7 @@ class TestInputRules:
 
     @pytest.mark.parametrize("input_rules", input_rules_instances_iterator())
     def test_issues_dump_load(self, input_rules: UnverifiedDataModel) -> None:
-        """Test that all classes that inherit from InputRules can be dumped and loaded."""
+        """Test that all classes that inherit from UnverifiedDataModel can be dumped and loaded."""
         dumped = input_rules.dump()
         assert isinstance(dumped, dict)
         assert dumped != {}, f"Empty dump for {type(input_rules).__name__}"

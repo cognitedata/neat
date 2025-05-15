@@ -36,7 +36,7 @@ class ConceptualTransformImporter(BaseImporter[UnverifiedConceptualDataModel]):
     def description(self) -> str:
         return "Imports a data model and runs a set of transformations on it."
 
-    def to_rules(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
         rules = self.importer.to_data_model()
         if not isinstance(rules.unverified_data_model, UnverifiedConceptualDataModel | None):
             raise NeatValueError(f"Expected UnverifiedConceptualDataModel, got {type(rules.unverified_data_model)}")

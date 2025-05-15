@@ -11,6 +11,7 @@ from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
     UnverifiedPhysicalDataModel,
 )
+from cognite.neat.core._data_model.models import data_types as dt
 from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConcept,
     UnverifiedConceptualDataModel,
@@ -18,7 +19,6 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualProperty,
 )
 from cognite.neat.core._data_model.models.data_types import DataType
-from cognite.neat.core._data_model.models.data_types import DataType as dt
 from cognite.neat.core._data_model.models.entities import MultiValueTypeInfo
 from cognite.neat.core._data_model.models.entities._single_value import (
     ConceptEntity,
@@ -126,10 +126,10 @@ class TestMergeIdenticalProperties:
         )
         res = MergeIdenticalProperties().transform(ImportedDataModel(information, {}))
 
-        assert res.rules is not None
-        assert len(res.rules.properties) == 2
-        assert res.rules.properties[0].property_ == "deletedTime"
-        assert res.rules.properties[1].property_ == "P&ID"
+        assert res.unverified_data_model is not None
+        assert len(res.unverified_data_model.properties) == 2
+        assert res.unverified_data_model.properties[0].property_ == "deletedTime"
+        assert res.unverified_data_model.properties[1].property_ == "P&ID"
 
     @pytest.mark.parametrize(
         "min_counts, expected",

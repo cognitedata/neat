@@ -235,16 +235,16 @@ class MergeIdenticalProperties(
         return "Merges identical properties in the rules."
 
     def transform(
-        self, rules: ImportedDataModel[UnverifiedConceptualDataModel]
+        self, data_model: ImportedDataModel[UnverifiedConceptualDataModel]
     ) -> ImportedDataModel[UnverifiedConceptualDataModel]:
-        if rules.unverified_data_model is None:
-            return rules
+        if data_model.unverified_data_model is None:
+            return data_model
         # Doing dump to obtain a copy, and ensure that all entities are created. Input allows
         # string for entities, the dump call will convert these to entities.
-        dumped = rules.unverified_data_model.dump()
+        dumped = data_model.unverified_data_model.dump()
         copy = UnverifiedConceptualDataModel.load(dumped)
         copy.properties = self._merge_identical_properties(copy.properties)
-        return ImportedDataModel(unverified_data_model=copy, context=rules.context)
+        return ImportedDataModel(unverified_data_model=copy, context=data_model.context)
 
     def _merge_identical_properties(
         self, properties: list[UnverifiedConceptualProperty]
