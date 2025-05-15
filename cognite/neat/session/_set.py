@@ -125,11 +125,11 @@ class SetInstances:
             has_information_rules=False,
         )
         model = read_conceptual_model(conceptual_io)
-        analysis = RulesAnalysis(model)
+        analysis = DataModelAnalysis(model)
 
         classes = {
             DEFAULT_NAMESPACE[cls_.suffix]: frozenset({prop.property_ for prop in properties})
-            for cls_, properties in analysis.properties_by_class(include_ancestors=True).items()
+            for cls_, properties in analysis.properties_by_concepts(include_ancestors=True).items()
         }
 
         transformer = BestClassMatch(classes)

@@ -44,7 +44,7 @@ def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity
     return results  # type: ignore
 
 
-ClassEntityList = Annotated[
+ConceptEntityList = Annotated[
     list[ConceptEntity],
     BeforeValidator(_split_str),
 ]

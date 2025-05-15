@@ -166,7 +166,7 @@ class CDFReadAPI(BaseReadAPI):
             rules = read_conceptual_model(mapping)
             extractor = extractors.UnknownNamespaceExtractorMapper(
                 extractor,
-                type_mapping=create_type_mapping(rules.classes),
+                type_mapping=create_type_mapping(rules.concepts),
                 predicate_mapping=create_predicate_mapping(rules.properties),
             )
         if exclude_properties is not None:

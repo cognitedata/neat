@@ -1,12 +1,12 @@
 import warnings
 
 from cognite.neat.core._data_model.models import ConceptualDataModel
-from cognite.neat.core._data_model.models.entities import ClassEntity
-from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
+from cognite.neat.core._data_model.models.entities import ConceptEntity
+from cognite.neat.core._data_model.transformers import VerifiedDataModelTransformer
 from cognite.neat.core._issues.warnings import NeatValueWarning
 
 
-class ConceptualPropertyRenaming(VerifiedRulesTransformer[ConceptualDataModel, ConceptualDataModel]):
+class ConceptualPropertyRenaming(VerifiedDataModelTransformer[ConceptualDataModel, ConceptualDataModel]):
     """Maps properties and classes
 
     Args:
@@ -23,17 +23,19 @@ class ConceptualPropertyRenaming(VerifiedRulesTransformer[ConceptualDataModel, C
         mapping = self._prepare_mapping(output_rules)
 
         for prop in output_rules.properties:
-            identifier = prop.class_, prop.property_
+            identifier = prop.concept, prop.property_
             if identifier in mapping:
                 new_class, new_property = mapping[identifier]
-                prop.class_ = new_class
+                prop.concept = new_class
                 prop.property_ = new_property
         return output_rules
 
-    def _prepare_mapping(self, rules: ConceptualDataModel) -> dict[tuple[ClassEntity, str], tuple[ClassEntity, str]]:
-        mapping: dict[tuple[ClassEntity, str], tuple[ClassEntity, str]] = {}
-        available_properties = {(prop.class_.suffix, prop.property_) for prop in rules.properties}
-        class_entity_by_external_id = {cls_.class_.suffix: cls_.class_ for cls_ in rules.classes}
+    def _prepare_mapping(
+        self, rules: ConceptualDataModel
+    ) -> dict[tuple[ConceptEntity, str], tuple[ConceptEntity, str]]:
+        mapping: dict[tuple[ConceptEntity, str], tuple[ConceptEntity, str]] = {}
+        available_properties = {(prop.concept.suffix, prop.property_) for prop in rules.properties}
+        class_entity_by_external_id = {cls_.concept.suffix: cls_.concept for cls_ in rules.concepts}
         for (class_external_id, property_external_id), (
             new_class_external_id,
             new_property_external_id,

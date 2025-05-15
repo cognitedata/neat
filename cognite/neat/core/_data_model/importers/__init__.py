@@ -1,10 +1,10 @@
 from ._base import BaseImporter
+from ._dict2data_model import DictImporter
 from ._dms2data_model import DMSImporter
 from ._dtdl2data_model import DTDLImporter
 from ._graph2model import GraphImporter
 from ._import_transform import ConceptualTransformImporter
 from ._merge_importer import DMSMergeImporter
-from ._dict2data_model import DictImporter
 from ._rdf import IMFImporter, InferenceImporter, OWLImporter, SubclassInferenceImporter
 from ._spreadsheet2data_model import ExcelImporter
 
