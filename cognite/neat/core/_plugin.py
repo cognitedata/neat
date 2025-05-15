@@ -2,21 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from importlib.metadata import EntryPoint, entry_points
 from typing import (
     Any,
     Generic,
     TypeVar,
-    overload,
 )
 
-from cognite.neat.core._data_model.models.conceptual._unverified import (
-    UnverifiedConceptualDataModel,
-)
-from cognite.neat.core._data_model.models.physical._unverified import (
-    UnverifiedPhysicalDataModel,
-)
 from cognite.neat.core._issues._base import NeatError
 from cognite.neat.core._plugins.data_model.importers import (
     DataModelImporterPlugin,
@@ -28,7 +20,6 @@ __all__ = [
     "PluginException",
     "T_Plugin",
     "get",
-    "plugins",
     "register",
 ]
 
@@ -121,25 +112,6 @@ def get(name: str, kind: type[T_Plugin]) -> type[T_Plugin]:
     return p.get_class()
 
 
-@overload
-def plugins(name: str | None = ..., kind: type[T_Plugin] = ...) -> Iterator[Plugin[T_Plugin]]: ...
-
-
-@overload
-def plugins(name: str | None = ..., kind: None = ...) -> Iterator[Plugin]: ...
-
-
-def plugins(name: str | None = None, kind: type[T_Plugin] | None = None) -> Iterator[Plugin[T_Plugin]]:
-    """
-    A generator of the plugins.
-
-    Pass in name and kind to filter... else leave None to match all.
-    """
-    for p in _plugins.values():
-        if (name is None or name == p.name) and (kind is None or kind == p.kind):
-            yield p
-
-
 # This will register all the external plugins
 all_entry_points = entry_points()
 if hasattr(all_entry_points, "select"):
@@ -148,15 +120,10 @@ if hasattr(all_entry_points, "select"):
             _plugins[(ep.name, kind)] = NeatPlugin(ep.name, kind, ep)
 
 
+# Here we register internal plugins
 register(
     "excel",
     DataModelImporterPlugin,
     "cognite.neat.core._plugins.data_model.importers._excel",
     "ExcelDataModelImporterPlugin",
 )
-
-
-def data_model_import(
-    source: Any, format: str, *args: Any, **kwargs: Any
-) -> UnverifiedPhysicalDataModel | UnverifiedConceptualDataModel:
-    return get(format, DataModelImporterPlugin)().configure(source=source, **kwargs)  # type: ignore
