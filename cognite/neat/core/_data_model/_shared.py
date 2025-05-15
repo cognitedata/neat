@@ -57,13 +57,3 @@ DataModel: TypeAlias = (
     | ImportedDataModel[UnverifiedConceptualDataModel]
 )
 T_DataModel = TypeVar("T_DataModel", bound=DataModel)
-
-ConceptualDataModelUnion: TypeAlias = ConceptualDataModel | ImportedDataModel[UnverifiedConceptualDataModel]
-T_ConceptualDataModelUnion = TypeVar("T_ConceptualDataModelUnion", bound=ConceptualDataModelUnion)
-PhysicalDataModelConceptualDataModelUnion: TypeAlias = (
-    PhysicalDataModel | ImportedDataModel[UnverifiedPhysicalDataModel]
-)
-T_PhysicalDataModelConceptualDataModelUnion = TypeVar(
-    "T_PhysicalDataModelConceptualDataModelUnion",
-    bound=PhysicalDataModelConceptualDataModelUnion,
-)
