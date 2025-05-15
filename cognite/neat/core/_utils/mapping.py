@@ -4,19 +4,19 @@ from typing import overload
 
 from rdflib import Namespace, URIRef
 
-from cognite.neat.core._data_model.models.conceptual import ConceptualClass, ConceptualProperty
+from cognite.neat.core._data_model.models.conceptual import Concept, ConceptualProperty
 
 
 @overload
-def create_type_mapping(classes: Iterable[ConceptualClass], namespace: Namespace) -> dict[URIRef, URIRef]: ...
+def create_type_mapping(classes: Iterable[Concept], namespace: Namespace) -> dict[URIRef, URIRef]: ...
 
 
 @overload
-def create_type_mapping(classes: Iterable[ConceptualClass], namespace: None = None) -> dict[str, str]: ...
+def create_type_mapping(classes: Iterable[Concept], namespace: None = None) -> dict[str, str]: ...
 
 
 def create_type_mapping(
-    classes: Iterable[ConceptualClass], namespace: Namespace | None = None
+    classes: Iterable[Concept], namespace: Namespace | None = None
 ) -> dict[URIRef, URIRef] | dict[str, str]:
     """Creates a mapping of types to new types.
 
@@ -28,9 +28,9 @@ def create_type_mapping(
         A mapping of types to new types.
     """
     if namespace is None:
-        return {urllib.parse.quote(cls.name): cls.class_.suffix for cls in classes if cls.name}
+        return {urllib.parse.quote(cls.name): cls.concept.suffix for cls in classes if cls.name}
     else:
-        return {namespace[urllib.parse.quote(cls.name)]: namespace[cls.class_.suffix] for cls in classes if cls.name}
+        return {namespace[urllib.parse.quote(cls.name)]: namespace[cls.concept.suffix] for cls in classes if cls.name}
 
 
 @overload

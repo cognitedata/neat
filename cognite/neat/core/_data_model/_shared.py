@@ -12,7 +12,6 @@ from cognite.neat.core._data_model.models.conceptual._unverified import (
 from cognite.neat.core._data_model.models.physical._unverified import (
     UnverifiedPhysicalDataModel,
 )
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 VerifiedDataModel: TypeAlias = ConceptualDataModel | PhysicalDataModel
 

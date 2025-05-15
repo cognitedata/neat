@@ -1,10 +1,10 @@
 from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
-    DMSInputRules,
-    DMSRules,
+    PhysicalDataModel,
     UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
 )
 from cognite.neat.core._issues.errors import NeatValueError
 
@@ -27,34 +27,36 @@ class DMSMergeImporter(BaseImporter):
     def description(self) -> str:
         return "Merges two data models into one."
 
-    def to_rules(self) -> ReadRules[DMSInputRules]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedPhysicalDataModel]:
         # Local import to avoid circular import
-        from cognite.neat.core._data_model.transformers import MergeDMSRules
+        from cognite.neat.core._data_model.transformers import MergePhysicalDataModel
 
-        existing_input = self.existing.to_rules()
-        existing_dms = self._get_dms_model(existing_input.rules, "Existing")
-        additional_input = self.additional.to_rules()
-        additional_dms = self._get_dms_model(additional_input.rules, "Additional")
+        existing_input = self.existing.to_data_model()
+        existing_dms = self._get_dms_model(existing_input.unverified_data_model, "Existing")
+        additional_input = self.additional.to_data_model()
+        additional_dms = self._get_dms_model(additional_input.unverified_data_model, "Additional")
         if additional_dms.metadata.identifier != existing_dms.metadata.identifier:
             raise NeatValueError("Cannot merge. The identifiers of the two data models do not match.")
-        merged = MergeDMSRules(additional_dms).transform(existing_dms)
+        merged = MergePhysicalDataModel(additional_dms).transform(existing_dms)
 
-        return ReadRules(
-            rules=DMSInputRules.load(merged.dump()),
-            read_context=additional_input.read_context or existing_input.read_context,
+        return ImportedDataModel(
+            unverified_data_model=UnverifiedPhysicalDataModel.load(merged.dump()),
+            context=additional_input.context or existing_input.context,
         )
 
-    def _get_dms_model(self, input_model: UnverifiedConceptualDataModel | DMSInputRules | None, name: str) -> DMSRules:
+    def _get_dms_model(
+        self, input_model: UnverifiedConceptualDataModel | UnverifiedPhysicalDataModel | None, name: str
+    ) -> PhysicalDataModel:
         # Local import to avoid circular import
-        from cognite.neat.core._data_model.transformers import InformationToDMS
+        from cognite.neat.core._data_model.transformers import ConceptualToPhysical
 
         if input_model is None:
             raise NeatValueError(f"Cannot merge. {name} data model failed read.")
 
-        verified_model = input_model.as_verified_rules()
-        if isinstance(verified_model, DMSRules):
+        verified_model = input_model.as_verified_data_model()
+        if isinstance(verified_model, PhysicalDataModel):
             return verified_model
         elif isinstance(verified_model, ConceptualDataModel):
-            return InformationToDMS(client=self.client).transform(verified_model)
+            return ConceptualToPhysical(client=self.client).transform(verified_model)
         else:
             raise NeatValueError(f"Cannot merge. {name} data model is not a DMS or Information data model")

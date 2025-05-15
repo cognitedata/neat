@@ -2,18 +2,18 @@ from collections.abc import Iterable, Set
 from typing import Literal
 
 from cognite.neat.core._data_model.models import ConceptualDataModel, SheetList
-from cognite.neat.core._data_model.models.conceptual import ConceptualClass, ConceptualProperty
+from cognite.neat.core._data_model.models.conceptual import Concept, ConceptualProperty
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     MultiValueTypeInfo,
     UnknownEntity,
 )
-from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
+from cognite.neat.core._data_model.transformers import VerifiedDataModelTransformer
 from cognite.neat.core._issues.errors import NeatValueError
 
 
-class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, ConceptualDataModel]):
+class MergeConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel, ConceptualDataModel]):
     """Merges two conceptual models into one.
 
     Args:
@@ -43,31 +43,31 @@ class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, Con
     def transform(self, rules: ConceptualDataModel) -> ConceptualDataModel:
         if self.join in ["primary", "combined"]:
             output = rules.model_copy(deep=True)
-            secondary_classes = {cls.class_: cls for cls in self.secondary.classes}
-            secondary_properties = {(prop.class_, prop.property_): prop for prop in self.secondary.properties}
+            secondary_classes = {cls.concept: cls for cls in self.secondary.concepts}
+            secondary_properties = {(prop.concept, prop.property_): prop for prop in self.secondary.properties}
         elif self.join == "secondary":
             output = self.secondary.model_copy(deep=True)
-            secondary_classes = {cls.class_: cls for cls in rules.classes}
-            secondary_properties = {(prop.class_, prop.property_): prop for prop in rules.properties}
+            secondary_classes = {cls.concept: cls for cls in rules.concepts}
+            secondary_properties = {(prop.concept, prop.property_): prop for prop in rules.properties}
         else:
             raise NeatValueError(
                 f"Invalid join strategy: {self.join}. Must be one of ['primary', 'secondary', 'combined']"
             )
 
-        merged_class_by_id = self._merge_classes(output.classes, secondary_classes)
-        output.classes = SheetList[ConceptualClass](merged_class_by_id.values())
+        merged_concepts_by_id = self._merge_concepts(output.concepts, secondary_classes)
+        output.concepts = SheetList[Concept](merged_concepts_by_id.values())
 
         merged_properties = self._merge_properties(
-            output.properties, secondary_properties, set(merged_class_by_id.keys())
+            output.properties, secondary_properties, set(merged_concepts_by_id.keys())
         )
         output.properties = SheetList[ConceptualProperty](merged_properties.values())
 
         return output
 
-    def _merge_classes(
-        self, primary_classes: Iterable[ConceptualClass], new_classes: dict[ClassEntity, ConceptualClass]
-    ) -> dict[ClassEntity, ConceptualClass]:
-        merged_classes = {cls.class_: cls for cls in primary_classes}
+    def _merge_concepts(
+        self, primary_classes: Iterable[Concept], new_classes: dict[ConceptEntity, Concept]
+    ) -> dict[ConceptEntity, Concept]:
+        merged_classes = {cls.concept: cls for cls in primary_classes}
         for cls_, primary_cls in merged_classes.items():
             if cls_ not in new_classes:
                 continue
@@ -89,10 +89,10 @@ class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, Con
     def _merge_properties(
         self,
         primary_properties: Iterable[ConceptualProperty],
-        secondary_properties: dict[tuple[ClassEntity, str], ConceptualProperty],
-        used_classes: Set[ClassEntity],
-    ) -> dict[tuple[ClassEntity, str], ConceptualProperty]:
-        merged_properties = {(prop.class_, prop.property_): prop for prop in primary_properties}
+        secondary_properties: dict[tuple[ConceptEntity, str], ConceptualProperty],
+        used_classes: Set[ConceptEntity],
+    ) -> dict[tuple[ConceptEntity, str], ConceptualProperty]:
+        merged_properties = {(prop.concept, prop.property_): prop for prop in primary_properties}
         for (cls_, prop_id), primary_property in merged_properties.items():
             if (cls_ not in used_classes) or (cls_, prop_id) not in secondary_properties:
                 continue
@@ -125,10 +125,10 @@ class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, Con
     @classmethod
     def merge_classes(
         cls,
-        primary: ConceptualClass,
-        secondary: ConceptualClass,
+        primary: Concept,
+        secondary: Concept,
         conflict_resolution: Literal["priority", "combined"] = "priority",
-    ) -> ConceptualClass:
+    ) -> Concept:
         # Combined = merge implements for both classes
         # Priority = keep the primary with fallback to secondary
         implements = (primary.implements or secondary.implements or []).copy()
@@ -138,9 +138,9 @@ class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, Con
                 if cls_ not in seen:
                     seen.add(cls_)
                     implements.append(cls_)
-        return ConceptualClass(
+        return Concept(
             neatId=primary.neatId,
-            class_=primary.class_,
+            concept=primary.concept,
             name=primary.name or secondary.name,
             description=primary.description or secondary.description,
             implements=implements,
@@ -168,7 +168,7 @@ class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, Con
         use_primary = conflict_resolution == "priority"
         return ConceptualProperty(
             neatId=primary.neatId,
-            class_=primary.class_,
+            concept=primary.concept,
             property_=primary.property_,
             name=primary.name or secondary.name,
             description=primary.description or secondary.description,
@@ -210,20 +210,20 @@ class MergeConceptualDataModel(VerifiedRulesTransformer[ConceptualDataModel, Con
 
     @staticmethod
     def _merge_value_type(
-        primary: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
-        secondary: DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity,
-    ) -> DataType | ClassEntity | MultiValueTypeInfo | UnknownEntity:
+        primary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
+        secondary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
+    ) -> DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity:
         # We use a set and list to preserve the order of the types
         # and to avoid duplicates
-        seen_types: set[DataType | ClassEntity] = set()
-        ordered_types: list[DataType | ClassEntity] = []
+        seen_types: set[DataType | ConceptEntity] = set()
+        ordered_types: list[DataType | ConceptEntity] = []
         for type_ in (primary, secondary):
             if isinstance(type_, MultiValueTypeInfo):
                 for t in type_.types:
                     if t not in seen_types:
                         seen_types.add(t)
                         ordered_types.append(t)
-            elif isinstance(type_, ClassEntity):
+            elif isinstance(type_, ConceptEntity):
                 if type_ not in seen_types:
                     seen_types.add(type_)
                     ordered_types.append(type_)

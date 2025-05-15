@@ -51,7 +51,7 @@ class MockGraphGenerator(BaseExtractor):
         elif isinstance(data_model, ConceptualDataModel):
             self.rules = data_model
         else:
-            raise ValueError("Rules must be of type ConceptualDataModel or DMSRules!")
+            raise ValueError("Rules must be of type ConceptualDataModel or PhysicalDataModel!")
 
         if not concept_count:
             self.concept_count = {
@@ -64,7 +64,7 @@ class MockGraphGenerator(BaseExtractor):
         elif all(isinstance(key, ConceptEntity) for key in concept_count.keys()):
             self.concept_count = cast(dict[ConceptEntity, int], concept_count)
         else:
-            raise ValueError("Class count keys must be of type str! or ClassEntity! or empty dict!")
+            raise ValueError("Class count keys must be of type str! or ConceptEntity! or empty dict!")
 
         self.stop_on_exception = stop_on_exception
         self.allow_isolated_classes = allow_isolated_classes

@@ -1,8 +1,8 @@
 from collections.abc import Sequence
 
-from cognite.neat.core._data_model._shared import ReadRules
+from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
-from cognite.neat.core._data_model.transformers._base import RulesTransformer
+from cognite.neat.core._data_model.transformers._base import DataModelTransformer
 from cognite.neat.core._issues.errors import NeatValueError
 
 from ._base import BaseImporter
@@ -24,7 +24,9 @@ class ConceptualTransformImporter(BaseImporter[UnverifiedConceptualDataModel]):
         self,
         importer: BaseImporter[UnverifiedConceptualDataModel],
         transformations: Sequence[
-            RulesTransformer[ReadRules[UnverifiedConceptualDataModel], ReadRules[UnverifiedConceptualDataModel]]
+            DataModelTransformer[
+                ImportedDataModel[UnverifiedConceptualDataModel], ImportedDataModel[UnverifiedConceptualDataModel]
+            ]
         ],
     ) -> None:
         self.importer = importer
@@ -34,10 +36,10 @@ class ConceptualTransformImporter(BaseImporter[UnverifiedConceptualDataModel]):
     def description(self) -> str:
         return "Imports a data model and runs a set of transformations on it."
 
-    def to_rules(self) -> ReadRules[UnverifiedConceptualDataModel]:
-        rules = self.importer.to_rules()
-        if not isinstance(rules.rules, UnverifiedConceptualDataModel | None):
-            raise NeatValueError(f"Expected UnverifiedConceptualDataModel, got {type(rules.rules)}")
+    def to_rules(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
+        rules = self.importer.to_data_model()
+        if not isinstance(rules.unverified_data_model, UnverifiedConceptualDataModel | None):
+            raise NeatValueError(f"Expected UnverifiedConceptualDataModel, got {type(rules.unverified_data_model)}")
         for transformation in self.transformations:
             rules = transformation.transform(rules)
         return rules

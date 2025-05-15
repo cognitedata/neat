@@ -15,7 +15,7 @@ from cognite.neat.core._data_model.models.dms import (
     DMSProperty,
     DMSView,
 )
-from cognite.neat.core._data_model.models.entities import ClassEntity, ContainerEntity, DMSNodeEntity, ViewEntity
+from cognite.neat.core._data_model.models.entities import ConceptEntity, ContainerEntity, DMSNodeEntity, ViewEntity
 from cognite.neat.core._data_model.transformers import MergeDMSRules
 
 
@@ -204,7 +204,7 @@ def merge_node_test_cases() -> Iterable:
 
 
 def merge_enum_test_cases() -> Iterable:
-    collection = ClassEntity.load("my_space:MyCollection")
+    collection = ConceptEntity.load("my_space:MyCollection")
     primary = DMSEnum(
         collection=collection,
         value="my_value",

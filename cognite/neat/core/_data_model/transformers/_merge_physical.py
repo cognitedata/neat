@@ -1,23 +1,29 @@
 from collections.abc import Iterable
 from typing import Literal
 
-from cognite.neat.core._data_model.models import DMSRules, SheetList
+from cognite.neat.core._data_model.models import PhysicalDataModel, SheetList
 from cognite.neat.core._data_model.models.data_types import Enum
-from cognite.neat.core._data_model.models.dms import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView
 from cognite.neat.core._data_model.models.entities import (
-    ClassEntity,
+    ConceptEntity,
     ContainerEntity,
     DMSNodeEntity,
     EdgeEntity,
     NodeTypeFilter,
     ViewEntity,
 )
-from cognite.neat.core._data_model.transformers import VerifiedRulesTransformer
+from cognite.neat.core._data_model.models.physical import (
+    PhysicalContainer,
+    PhysicalEnum,
+    PhysicalNodeType,
+    PhysicalProperty,
+    PhysicalView,
+)
+from cognite.neat.core._data_model.transformers import VerifiedDataModelTransformer
 from cognite.neat.core._issues.errors import NeatValueError
 
 
-class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
-    """Merges two DMS rules into one.
+class MergePhysicalDataModel(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):
+    """Merges two Physical rules into one.
 
     Args:
         secondary: The secondary model. The primary model is the one that is passed to the transform method.
@@ -35,7 +41,7 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
     def __init__(
         self,
-        secondary: DMSRules,
+        secondary: PhysicalDataModel,
         join: Literal["primary", "secondary", "combined"] = "combined",
         priority: Literal["primary", "secondary"] = "primary",
         conflict_resolution: Literal["priority", "combine"] = "priority",
@@ -49,7 +55,7 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     def description(self) -> str:
         return f"Merged with {self.secondary.metadata.as_data_model_id()}"
 
-    def transform(self, rules: DMSRules) -> DMSRules:
+    def transform(self, rules: PhysicalDataModel) -> PhysicalDataModel:
         if self.join in ["primary", "combined"]:
             output = rules.model_copy(deep=True)
             secondary_views = {view.view: view for view in self.secondary.views}
@@ -69,24 +75,24 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
                 f"Invalid join strategy: {self.join}. Must be one of ['primary', 'secondary', 'combined']"
             )
         merged_views_by_id = self._merge_views(output.views, secondary_views)
-        output.views = SheetList[DMSView](merged_views_by_id.values())
+        output.views = SheetList[PhysicalView](merged_views_by_id.values())
 
         merged_properties = self._merge_properties(
             output.properties, secondary_properties, set(merged_views_by_id.keys())
         )
-        output.properties = SheetList[DMSProperty](merged_properties.values())
+        output.properties = SheetList[PhysicalProperty](merged_properties.values())
 
         used_containers = {prop.container for prop in output.properties if prop.container}
         merged_containers = self._merge_containers(output.containers or [], secondary_containers, used_containers)
-        output.containers = SheetList[DMSContainer](merged_containers.values()) or None
+        output.containers = SheetList[PhysicalContainer](merged_containers.values()) or None
 
         used_nodes = self._get_used_nodes(output.views, output.properties)
         merged_nodes = self._merge_nodes(output.nodes or [], secondary_nodes, used_nodes)
-        output.nodes = SheetList[DMSNode](merged_nodes.values()) or None
+        output.nodes = SheetList[PhysicalNodeType](merged_nodes.values()) or None
 
         used_enum_collections = self._get_used_enum_collections(output.properties)
         merged_enum = self._merge_enum(output.enum or [], secondary_enum, used_enum_collections)
-        output.enum = SheetList[DMSEnum](merged_enum.values()) or None
+        output.enum = SheetList[PhysicalEnum](merged_enum.values()) or None
 
         return output
 
@@ -103,9 +109,9 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
     def _merge_views(
         self,
-        primary_views: Iterable[DMSView],
-        secondary_views: dict[ViewEntity, DMSView],
-    ) -> dict[ViewEntity, DMSView]:
+        primary_views: Iterable[PhysicalView],
+        secondary_views: dict[ViewEntity, PhysicalView],
+    ) -> dict[ViewEntity, PhysicalView]:
         merged_views = {view.view: view for view in primary_views}
         for view, primary in merged_views.items():
             if view not in secondary_views:
@@ -124,10 +130,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
     def _merge_properties(
         self,
-        primary_properties: Iterable[DMSProperty],
-        secondary_properties: dict[tuple[ViewEntity, str], DMSProperty],
+        primary_properties: Iterable[PhysicalProperty],
+        secondary_properties: dict[tuple[ViewEntity, str], PhysicalProperty],
         used_views: set[ViewEntity],
-    ) -> dict[tuple[ViewEntity, str], DMSProperty]:
+    ) -> dict[tuple[ViewEntity, str], PhysicalProperty]:
         merged_properties = {(prop.view, prop.view_property): prop for prop in primary_properties}
         for (view, prop), primary in merged_properties.items():
             if ((view, prop) not in secondary_properties) or (view not in used_views):
@@ -145,10 +151,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
     def _merge_containers(
         self,
-        primary_containers: Iterable[DMSContainer],
-        secondary_containers: dict[ContainerEntity, DMSContainer],
+        primary_containers: Iterable[PhysicalContainer],
+        secondary_containers: dict[ContainerEntity, PhysicalContainer],
         used_containers: set[ContainerEntity],
-    ) -> dict[ContainerEntity, DMSContainer]:
+    ) -> dict[ContainerEntity, PhysicalContainer]:
         merged_containers = {container.container: container for container in primary_containers}
         for container, primary in merged_containers.items():
             if (container not in secondary_containers) or (container not in used_containers):
@@ -165,7 +171,7 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return merged_containers
 
     @staticmethod
-    def _get_used_nodes(views: SheetList[DMSView], properties: SheetList[DMSProperty]) -> set[DMSNodeEntity]:
+    def _get_used_nodes(views: SheetList[PhysicalView], properties: SheetList[PhysicalProperty]) -> set[DMSNodeEntity]:
         """Get the set of used nodes from views and properties."""
         used_nodes: set[DMSNodeEntity] = set()
         for view in views:
@@ -179,10 +185,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
     def _merge_nodes(
         self,
-        primary_nodes: Iterable[DMSNode],
-        secondary_nodes: dict[DMSNodeEntity, DMSNode],
+        primary_nodes: Iterable[PhysicalNodeType],
+        secondary_nodes: dict[DMSNodeEntity, PhysicalNodeType],
         used_nodes: set[DMSNodeEntity],
-    ) -> dict[DMSNodeEntity, DMSNode]:
+    ) -> dict[DMSNodeEntity, PhysicalNodeType]:
         merged_nodes = {node.node: node for node in primary_nodes}
         for node, primary in merged_nodes.items():
             if (node not in secondary_nodes) or (node not in used_nodes):
@@ -199,9 +205,9 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
         return merged_nodes
 
     @staticmethod
-    def _get_used_enum_collections(properties: SheetList[DMSProperty]) -> set[ClassEntity]:
+    def _get_used_enum_collections(properties: SheetList[PhysicalProperty]) -> set[ConceptEntity]:
         """Get the set of used enum collections from properties."""
-        used_enum_collections: set[ClassEntity] = set()
+        used_enum_collections: set[ConceptEntity] = set()
         for prop in properties:
             if isinstance(prop.value_type, Enum):
                 used_enum_collections.add(prop.value_type.collection)
@@ -209,10 +215,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
 
     def _merge_enum(
         self,
-        primary_enum: Iterable[DMSEnum],
-        secondary_enum: dict[tuple[ClassEntity, str], DMSEnum],
-        used_enum_collections: set[ClassEntity],
-    ) -> dict[tuple[ClassEntity, str], DMSEnum]:
+        primary_enum: Iterable[PhysicalEnum],
+        secondary_enum: dict[tuple[ConceptEntity, str], PhysicalEnum],
+        used_enum_collections: set[ConceptEntity],
+    ) -> dict[tuple[ConceptEntity, str], PhysicalEnum]:
         merged_enum = {(enum.collection, enum.value): enum for enum in primary_enum}
         for (collection, value), primary in merged_enum.items():
             if ((collection, value) not in secondary_enum) or (collection not in used_enum_collections):
@@ -231,10 +237,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     @classmethod
     def merge_properties(
         cls,
-        primary: DMSProperty,
-        secondary: DMSProperty,
-    ) -> DMSProperty:
-        return DMSProperty(
+        primary: PhysicalProperty,
+        secondary: PhysicalProperty,
+    ) -> PhysicalProperty:
+        return PhysicalProperty(
             view=primary.view,
             view_property=primary.view_property,
             name=primary.name or secondary.name,
@@ -249,16 +255,16 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
             container_property=primary.container_property,
             index=primary.index,
             constraint=primary.constraint,
-            logical=primary.logical,
+            conceptual=primary.conceptual,
         )
 
     @classmethod
     def merge_views(
         cls,
-        primary: DMSView,
-        secondary: DMSView,
+        primary: PhysicalView,
+        secondary: PhysicalView,
         conflict_resolution: Literal["priority", "combine"] = "priority",
-    ) -> DMSView:
+    ) -> PhysicalView:
         # Combined = merge implements for both classes
         # Priority = keep the primary with fallback to secondary
         implements = (primary.implements or secondary.implements or []).copy()
@@ -268,24 +274,24 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
                 if cls_ not in seen:
                     seen.add(cls_)
                     implements.append(cls_)
-        return DMSView(
+        return PhysicalView(
             neatId=primary.neatId,
             view=primary.view,
             implements=implements,
             filter_=primary.filter_,
             name=primary.name or secondary.name,
             description=primary.description or secondary.description,
-            logical=primary.logical,
             in_model=primary.in_model,
+            conceptual=primary.conceptual,
         )
 
     @classmethod
     def merge_containers(
         cls,
-        primary: DMSContainer,
-        secondary: DMSContainer,
-    ) -> DMSContainer:
-        return DMSContainer(
+        primary: PhysicalContainer,
+        secondary: PhysicalContainer,
+    ) -> PhysicalContainer:
+        return PhysicalContainer(
             neatId=primary.neatId,
             container=primary.container,
             constraint=primary.constraint,
@@ -297,10 +303,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     @classmethod
     def merge_nodes(
         cls,
-        primary: DMSNode,
-        secondary: DMSNode,
-    ) -> DMSNode:
-        return DMSNode(
+        primary: PhysicalNodeType,
+        secondary: PhysicalNodeType,
+    ) -> PhysicalNodeType:
+        return PhysicalNodeType(
             neatId=primary.neatId,
             node=primary.node,
             usage=primary.usage,
@@ -311,10 +317,10 @@ class MergeDMSRules(VerifiedRulesTransformer[DMSRules, DMSRules]):
     @classmethod
     def merge_enum(
         cls,
-        primary: DMSEnum,
-        secondary: DMSEnum,
-    ) -> DMSEnum:
-        return DMSEnum(
+        primary: PhysicalEnum,
+        secondary: PhysicalEnum,
+    ) -> PhysicalEnum:
+        return PhysicalEnum(
             neatId=primary.neatId,
             collection=primary.collection,
             value=primary.value,

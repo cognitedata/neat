@@ -434,7 +434,7 @@ class CDFToAPI:
             "Load location filter into CDF",
             client_required=True,
         )
-        data_model_id = self._state.rule_store.last_verified_dms_rules.metadata.as_data_model_id()
+        data_model_id = self._state.rule_store.last_verified_physical_data_model.metadata.as_data_model_id()
 
         if instance_spaces is not None:
             selected_instance_spaces = list(instance_spaces)
@@ -469,7 +469,7 @@ class CDFToAPI:
             "Export DMS instances to CDF",
             client_required=True,
         )
-        dms_rules = self._state.rule_store.last_verified_dms_rules
+        dms_rules = self._state.rule_store.last_verified_physical_data_model
         instance_space = self._get_instance_space(instance_space, dms_rules.metadata.space)
         return loaders.InstanceSpaceLoader(
             self._state.instances.store,
@@ -535,8 +535,8 @@ class ToPythonAPI:
         )
 
         loader = loaders.DMSLoader(
-            self._state.rule_store.last_verified_dms_rules,
-            self._state.rule_store.last_verified_information_rules,
+            self._state.rule_store.last_verified_physical_data_model,
+            self._state.rule_store.last_verified_conceptual_data_model,
             self._state.instances.store,
             space_by_instance_uri=instance_loader.space_by_instance_uri,
             unquote_external_ids=True,

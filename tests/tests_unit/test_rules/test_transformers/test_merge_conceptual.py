@@ -12,7 +12,7 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models.entities import ClassEntity, MultiValueTypeInfo
+from cognite.neat.core._data_model.models.entities import ConceptEntity, MultiValueTypeInfo
 from cognite.neat.core._data_model.transformers import MergeConceptualDataModel
 
 
@@ -62,7 +62,7 @@ def merge_model_test_cases() -> Iterable:
 
 
 def merge_properties_test_cases() -> Iterable:
-    cls_ = ClassEntity.load("my_space:Car")
+    cls_ = ConceptEntity.load("my_space:Car")
     first = ConceptualProperty(class_=cls_, property_="my_property", value_type=dt.String(), min_count=0, max_count=1)
     second = ConceptualProperty(
         class_=cls_,
@@ -103,17 +103,17 @@ def merge_properties_test_cases() -> Iterable:
 
 
 def merge_classes_test_cases() -> Iterable:
-    cls_ = ClassEntity.load("my_space:Car")
-    first = ConceptualClass(class_=cls_, implements=[ClassEntity.load("my_space:Vehicle")])
+    cls_ = ConceptEntity.load("my_space:Car")
+    first = ConceptualClass(class_=cls_, implements=[ConceptEntity.load("my_space:Vehicle")])
     second = ConceptualClass(
-        class_=cls_, implements=[ClassEntity.load("my_space:Thing")], instance_source=URIRef("my_source")
+        class_=cls_, implements=[ConceptEntity.load("my_space:Thing")], instance_source=URIRef("my_source")
     )
     yield pytest.param(
         first,
         second,
         {"conflict_resolution": "priority"},
         ConceptualClass(
-            class_=cls_, implements=[ClassEntity.load("my_space:Vehicle")], instance_source=URIRef("my_source")
+            class_=cls_, implements=[ConceptEntity.load("my_space:Vehicle")], instance_source=URIRef("my_source")
         ),
         id="Merge with priority",
     )
@@ -123,7 +123,7 @@ def merge_classes_test_cases() -> Iterable:
         {"conflict_resolution": "combined"},
         ConceptualClass(
             class_=cls_,
-            implements=[ClassEntity.load("my_space:Vehicle"), ClassEntity.load("my_space:Thing")],
+            implements=[ConceptEntity.load("my_space:Vehicle"), ConceptEntity.load("my_space:Thing")],
             instance_source=URIRef("my_source"),
         ),
         id="Merge with combined",
