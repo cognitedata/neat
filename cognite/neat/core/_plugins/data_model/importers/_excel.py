@@ -21,14 +21,11 @@ class ExcelDataModelImporterPlugin(DataModelImporterPlugin):
         self, source: str
     ) -> ImportedDataModel[UnverifiedPhysicalDataModel] | ImportedDataModel[UnverifiedConceptualDataModel]:
         """
-        Extracts the rules from the Excel file.
+        Imports data model from an Excel file.
 
         Args:
             source (str): Path to the Excel file.
             validate (bool): Whether to validate the rules.
-
-        Returns:
-            T_ImportedUnverifiedDataModel if validate is False, otherwise T_VerifiedDataModel.
         """
 
         return ExcelImporter(filepath=Path(source)).to_data_model()
