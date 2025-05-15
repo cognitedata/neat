@@ -9,7 +9,7 @@ from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._instances.extractors import AssetsExtractor, BaseExtractor
 from cognite.neat.core._instances.loaders import InstanceSpaceLoader
 from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.upload import UploadResult
 from tests.data import InstanceData
 
@@ -18,7 +18,7 @@ def load_instance_spaces_test_cases():
     """Test cases for instance space exporter."""
     yield pytest.param(InstanceSpaceLoader(instance_space="my_space"), {"my_space"}, id="Simple single space")
 
-    store = NeatGraphStore.from_memory_store()
+    store = NeatInstanceStore.from_memory_store()
 
     store.write(
         extractor=AssetsExtractor(
@@ -32,7 +32,7 @@ def load_instance_spaces_test_cases():
         id="Space from property",
     )
 
-    store_from_cdf = NeatGraphStore.from_memory_store()
+    store_from_cdf = NeatInstanceStore.from_memory_store()
 
     class CDFMockExtractor(BaseExtractor):
         def extract(self) -> Iterable[Triple]:
@@ -44,7 +44,7 @@ def load_instance_spaces_test_cases():
         InstanceSpaceLoader(graph_store=store_from_cdf, use_source_space=True), {"source_space"}, id="Space from source"
     )
 
-    store2 = NeatGraphStore.from_oxi_local_store()
+    store2 = NeatInstanceStore.from_oxi_local_store()
     namespace1 = Namespace(DEFAULT_SPACE_URI.format(space="space1"))
     namespace2 = Namespace(DEFAULT_SPACE_URI.format(space="space2"))
     schema_space = Namespace(DEFAULT_SPACE_URI.format(space="sp_schema"))

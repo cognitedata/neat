@@ -5,12 +5,12 @@ from rdflib import RDF, Literal, Namespace
 from cognite.neat.core._constants import DEFAULT_SPACE_URI
 from cognite.neat.core._instances.transformers import BestClassMatch
 from cognite.neat.core._issues.warnings import MultiClassFoundWarning, PartialClassFoundWarning
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.core._store import NeatInstanceStore
 
 
 class TestBestClassMatch:
     def test_find_best_class_match(self) -> None:
-        store = NeatGraphStore.from_memory_store()
+        store = NeatInstanceStore.from_memory_store()
         namespace = Namespace("http://example.com/")
         id_ = namespace["MyInstance"]
         # Write a car instance to the store.
@@ -44,7 +44,7 @@ class TestBestClassMatch:
         }
 
     def test_multi_classes_match(self) -> None:
-        store = NeatGraphStore.from_oxi_local_store()
+        store = NeatInstanceStore.from_oxi_local_store()
         namespace = Namespace(DEFAULT_SPACE_URI.format(space="sp_instance_space"))
         schema_ns = Namespace("http://example.com/schema/")
         id_ = namespace[urllib.parse.quote("MyInstanceッ差")]

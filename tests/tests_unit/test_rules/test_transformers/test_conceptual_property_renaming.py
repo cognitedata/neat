@@ -1,5 +1,5 @@
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
@@ -17,8 +17,8 @@ class TestConceptualPropertyRenaming:
                 UnverifiedConceptualProperty("Asset", "name", "text", min_count=0, max_count=1),
                 UnverifiedConceptualProperty("Asset", "tags", "text", min_count=0, max_count=100),
             ],
-            classes=[UnverifiedConceptualClass("Asset")],
-        ).as_verified_rules()
+            concepts=[UnverifiedConcept("Asset")],
+        ).as_verified_data_model()
 
         with catch_warnings() as issues:
             mapped = ConceptualPropertyRenaming(

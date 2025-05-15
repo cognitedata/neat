@@ -3,30 +3,30 @@ from collections.abc import Iterable
 import pytest
 
 from cognite.neat.core._data_model.models import data_types as dt
-from cognite.neat.core._data_model.models.dms import (
-    DMSContainer,
-    DMSEnum,
-    DMSInputContainer,
-    DMSInputMetadata,
-    DMSInputProperty,
-    DMSInputRules,
-    DMSInputView,
-    DMSNode,
-    DMSProperty,
-    DMSView,
-)
 from cognite.neat.core._data_model.models.entities import ConceptEntity, ContainerEntity, DMSNodeEntity, ViewEntity
-from cognite.neat.core._data_model.transformers import MergeDMSRules
+from cognite.neat.core._data_model.models.physical import (
+    PhysicalContainer,
+    PhysicalEnum,
+    PhysicalNodeType,
+    PhysicalProperty,
+    PhysicalView,
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
+)
+from cognite.neat.core._data_model.transformers import MergePhysicalDataModel
 
 
 def merge_model_test_cases() -> Iterable:
-    metadata = DMSInputMetadata("my_space", "my_model", "doctrino", "v1")
+    metadata = UnverifiedPhysicalMetadata("my_space", "my_model", "doctrino", "v1")
 
-    single_cls1 = DMSInputRules(
+    single_cls1 = UnverifiedPhysicalDataModel(
         metadata=metadata,
-        views=[DMSInputView("PrimaryView")],
+        views=[UnverifiedPhysicalView("PrimaryView")],
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "PrimaryView",
                 "primary_property",
                 "text",
@@ -34,13 +34,13 @@ def merge_model_test_cases() -> Iterable:
                 container_property="primary_property",
             )
         ],
-        containers=[DMSInputContainer("PrimaryContainer")],
+        containers=[UnverifiedPhysicalContainer("PrimaryContainer")],
     )
-    single_cls2 = DMSInputRules(
+    single_cls2 = UnverifiedPhysicalDataModel(
         metadata=metadata,
-        views=[DMSInputView("SecondaryView")],
+        views=[UnverifiedPhysicalView("SecondaryView")],
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "SecondaryView",
                 "secondary_property",
                 "text",
@@ -48,20 +48,20 @@ def merge_model_test_cases() -> Iterable:
                 container_property="secondary_property",
             )
         ],
-        containers=[DMSInputContainer("SecondaryContainer")],
+        containers=[UnverifiedPhysicalContainer("SecondaryContainer")],
     )
-    combined = DMSInputRules(
+    combined = UnverifiedPhysicalDataModel(
         metadata=metadata,
-        views=[DMSInputView("PrimaryView"), DMSInputView("SecondaryView")],
+        views=[UnverifiedPhysicalView("PrimaryView"), UnverifiedPhysicalView("SecondaryView")],
         properties=[
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "PrimaryView",
                 "primary_property",
                 "text",
                 container="PrimaryContainer",
                 container_property="primary_property",
             ),
-            DMSInputProperty(
+            UnverifiedPhysicalProperty(
                 "SecondaryView",
                 "secondary_property",
                 "text",
@@ -69,7 +69,7 @@ def merge_model_test_cases() -> Iterable:
                 container_property="secondary_property",
             ),
         ],
-        containers=[DMSInputContainer("PrimaryContainer"), DMSInputContainer("SecondaryContainer")],
+        containers=[UnverifiedPhysicalContainer("PrimaryContainer"), UnverifiedPhysicalContainer("SecondaryContainer")],
     )
 
     yield pytest.param(
@@ -99,7 +99,7 @@ def merge_properties_test_cases() -> Iterable:
     view = ViewEntity.load("my_space:Car(version=v1)")
     container1 = ContainerEntity.load("my_space:CarContainer")
     container2 = ContainerEntity.load("my_space:CarContainer2")
-    first = DMSProperty(
+    first = PhysicalProperty(
         view=view,
         view_property="my_property",
         value_type=dt.String(),
@@ -108,7 +108,7 @@ def merge_properties_test_cases() -> Iterable:
         container=container1,
         container_property="my_property",
     )
-    second = DMSProperty(
+    second = PhysicalProperty(
         view=view,
         view_property="my_property",
         value_type=dt.Integer(),
@@ -121,7 +121,7 @@ def merge_properties_test_cases() -> Iterable:
     yield pytest.param(
         first,
         second,
-        DMSProperty(
+        PhysicalProperty(
             view=view,
             view_property="my_property",
             value_type=dt.String(),
@@ -137,20 +137,20 @@ def merge_properties_test_cases() -> Iterable:
 
 def merge_views_test_cases() -> Iterable:
     view = ViewEntity.load("my_space:Car(version=v1)")
-    first = DMSView(view=view, implements=[ViewEntity.load("my_space:Vehicle(version=v1)")])
-    second = DMSView(view=view, implements=[ViewEntity.load("my_space:Thing(version=v1)")], name="Car")
+    first = PhysicalView(view=view, implements=[ViewEntity.load("my_space:Vehicle(version=v1)")])
+    second = PhysicalView(view=view, implements=[ViewEntity.load("my_space:Thing(version=v1)")], name="Car")
     yield pytest.param(
         first,
         second,
         {"conflict_resolution": "priority"},
-        DMSView(view=view, implements=[ViewEntity.load("my_space:Vehicle(version=v1)")], name="Car"),
+        PhysicalView(view=view, implements=[ViewEntity.load("my_space:Vehicle(version=v1)")], name="Car"),
         id="Merge with priority",
     )
     yield pytest.param(
         first,
         second,
         {"conflict_resolution": "combined"},
-        DMSView(
+        PhysicalView(
             view=view,
             name="Car",
             implements=[ViewEntity.load("my_space:Vehicle(version=v1)"), ViewEntity.load("my_space:Thing(version=v1)")],
@@ -161,8 +161,8 @@ def merge_views_test_cases() -> Iterable:
 
 def merge_containers_test_cases() -> Iterable:
     container = ContainerEntity.load("my_space:CarContainer")
-    first = DMSContainer(container=container, used_for="node")
-    second = DMSContainer(
+    first = PhysicalContainer(container=container, used_for="node")
+    second = PhysicalContainer(
         container=container,
         name="Car Container",
         description="This is a car container",
@@ -171,7 +171,7 @@ def merge_containers_test_cases() -> Iterable:
     yield pytest.param(
         first,
         second,
-        DMSContainer(
+        PhysicalContainer(
             container=container,
             name="Car Container",
             description="This is a car container",
@@ -183,8 +183,8 @@ def merge_containers_test_cases() -> Iterable:
 
 def merge_node_test_cases() -> Iterable:
     node = DMSNodeEntity.load("my_space:CarNode")
-    primary = DMSNode(node=node, usage="type")
-    secondary = DMSNode(
+    primary = PhysicalNodeType(node=node, usage="type")
+    secondary = PhysicalNodeType(
         node=node,
         name="Car Node",
         description="This is a car node",
@@ -193,7 +193,7 @@ def merge_node_test_cases() -> Iterable:
     yield pytest.param(
         primary,
         secondary,
-        DMSNode(
+        PhysicalNodeType(
             node=node,
             name="Car Node",
             description="This is a car node",
@@ -205,11 +205,11 @@ def merge_node_test_cases() -> Iterable:
 
 def merge_enum_test_cases() -> Iterable:
     collection = ConceptEntity.load("my_space:MyCollection")
-    primary = DMSEnum(
+    primary = PhysicalEnum(
         collection=collection,
         value="my_value",
     )
-    secondary = DMSEnum(
+    secondary = PhysicalEnum(
         collection=collection,
         value="my_value",
         name="My Value",
@@ -218,7 +218,7 @@ def merge_enum_test_cases() -> Iterable:
     yield pytest.param(
         primary,
         secondary,
-        DMSEnum(
+        PhysicalEnum(
             collection=collection,
             name="My Value",
             description="This is my value",
@@ -232,16 +232,16 @@ class TestMergeConceptual:
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_model_test_cases()))
     def test_merge_models(
         self,
-        primary: DMSInputRules,
-        secondary: DMSInputRules,
+        primary: UnverifiedPhysicalDataModel,
+        secondary: UnverifiedPhysicalDataModel,
         args: dict[str, object],
-        expected: DMSInputRules,
+        expected: UnverifiedPhysicalDataModel,
     ):
-        primary_model = primary.as_verified_rules()
-        secondary_model = secondary.as_verified_rules()
-        expected_model = expected.as_verified_rules()
+        primary_model = primary.as_verified_data_model()
+        secondary_model = secondary.as_verified_data_model()
+        expected_model = expected.as_verified_data_model()
 
-        transformer = MergeDMSRules(secondary_model, **args)
+        transformer = MergePhysicalDataModel(secondary_model, **args)
         merged = transformer.transform(primary_model)
 
         exclude = {"metadata": {"created", "updated"}}
@@ -250,61 +250,61 @@ class TestMergeConceptual:
     @pytest.mark.parametrize("primary, secondary, expected", list(merge_properties_test_cases()))
     def test_merge_properties(
         self,
-        primary: DMSProperty,
-        secondary: DMSProperty,
-        expected: DMSProperty,
+        primary: PhysicalProperty,
+        secondary: PhysicalProperty,
+        expected: PhysicalProperty,
     ) -> None:
-        actual = MergeDMSRules.merge_properties(primary, secondary)
+        actual = MergePhysicalDataModel.merge_properties(primary, secondary)
 
         assert actual.model_dump() == expected.model_dump()
 
     @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_views_test_cases()))
     def test_merge_views(
         self,
-        primary: DMSView,
-        secondary: DMSView,
+        primary: PhysicalView,
+        secondary: PhysicalView,
         args: dict[str, object],
-        expected: DMSView,
+        expected: PhysicalView,
     ) -> None:
-        actual = MergeDMSRules.merge_views(primary, secondary, **args)
+        actual = MergePhysicalDataModel.merge_views(primary, secondary, **args)
 
         assert actual.model_dump() == expected.model_dump()
 
     @pytest.mark.parametrize("primary, secondary, expected", list(merge_containers_test_cases()))
     def test_merge_containers(
         self,
-        primary: DMSContainer,
-        secondary: DMSContainer,
-        expected: DMSContainer,
+        primary: PhysicalContainer,
+        secondary: PhysicalContainer,
+        expected: PhysicalContainer,
     ) -> None:
-        actual = MergeDMSRules.merge_containers(primary, secondary)
+        actual = MergePhysicalDataModel.merge_containers(primary, secondary)
         assert actual.model_dump() == expected.model_dump()
 
     @pytest.mark.parametrize("primary, secondary, expected", list(merge_node_test_cases()))
     def test_merge_nodes(
         self,
-        primary: DMSNode,
-        secondary: DMSNode,
-        expected: DMSNode,
+        primary: PhysicalNodeType,
+        secondary: PhysicalNodeType,
+        expected: PhysicalNodeType,
     ) -> None:
-        actual = MergeDMSRules.merge_nodes(primary, secondary)
+        actual = MergePhysicalDataModel.merge_nodes(primary, secondary)
         assert actual.model_dump() == expected.model_dump()
 
     @pytest.mark.parametrize("primary, secondary, expected", list(merge_enum_test_cases()))
     def test_merge_enums(
         self,
-        primary: DMSEnum,
-        secondary: DMSEnum,
-        expected: DMSEnum,
+        primary: PhysicalEnum,
+        secondary: PhysicalEnum,
+        expected: PhysicalEnum,
     ) -> None:
-        actual = MergeDMSRules.merge_enum(primary, secondary)
+        actual = MergePhysicalDataModel.merge_enum(primary, secondary)
         assert actual.model_dump() == expected.model_dump()
 
     def test_merge_models_duplicated_properties(self) -> None:
-        existing = DMSInputRules(
-            metadata=DMSInputMetadata("my_model", "v1", "neat", "doctrino"),
+        existing = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata("my_model", "v1", "neat", "doctrino"),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "Asset",
                     "name",
                     "text",
@@ -313,7 +313,7 @@ class TestMergeConceptual:
                     container="CogniteDescribable",
                     container_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "Equipment",
                     "name",
                     "text",
@@ -322,7 +322,7 @@ class TestMergeConceptual:
                     container="CogniteDescribable",
                     container_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "Equipment",
                     "asset",
                     "Asset",
@@ -333,16 +333,16 @@ class TestMergeConceptual:
                     container_property="asset",
                 ),
             ],
-            views=[DMSInputView("Asset"), DMSInputView("Equipment")],
+            views=[UnverifiedPhysicalView("Asset"), UnverifiedPhysicalView("Equipment")],
             containers=[
-                DMSInputContainer("CogniteDescribable"),
-                DMSInputContainer("CogniteEquipment"),
+                UnverifiedPhysicalContainer("CogniteDescribable"),
+                UnverifiedPhysicalContainer("CogniteEquipment"),
             ],
-        ).as_verified_rules()
-        additional = DMSInputRules(
-            metadata=DMSInputMetadata("my_model", "v1", "neat", "doctrino"),
+        ).as_verified_data_model()
+        additional = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata("my_model", "v1", "neat", "doctrino"),
             properties=[
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "MyAsset",
                     "name",
                     "text",
@@ -351,7 +351,7 @@ class TestMergeConceptual:
                     container="MyAssetContainer",
                     container_property="name",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "MyAsset",
                     "tags",
                     "text",
@@ -360,7 +360,7 @@ class TestMergeConceptual:
                     container="MyAssetContainer",
                     container_property="tags",
                 ),
-                DMSInputProperty(
+                UnverifiedPhysicalProperty(
                     "Asset",
                     "name",
                     "text",
@@ -370,14 +370,14 @@ class TestMergeConceptual:
                     container_property="description",
                 ),
             ],
-            views=[DMSInputView("MyAsset"), DMSInputView("Asset")],
+            views=[UnverifiedPhysicalView("MyAsset"), UnverifiedPhysicalView("Asset")],
             containers=[
-                DMSInputContainer("MyAssetContainer"),
-                DMSInputContainer("CogniteDescribable"),
+                UnverifiedPhysicalContainer("MyAssetContainer"),
+                UnverifiedPhysicalContainer("CogniteDescribable"),
             ],
-        ).as_verified_rules()
+        ).as_verified_data_model()
 
-        actual = MergeDMSRules(additional).transform(existing)
+        actual = MergePhysicalDataModel(additional).transform(existing)
 
         assert len(actual.containers) == 3
         assert {c.container.suffix for c in actual.containers} == {

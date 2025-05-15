@@ -2,23 +2,32 @@ from collections.abc import Iterable
 
 import pytest
 
-from cognite.neat.core._data_model._shared import ImportedDataModel, InputRules
+from cognite.neat.core._data_model._shared import ImportedDataModel, UnverifiedDataModel
 from cognite.neat.core._data_model.importers import DMSMergeImporter
 from cognite.neat.core._data_model.importers._base import BaseImporter
-from cognite.neat.core._data_model.models import DMSInputRules, DMSRules, UnverifiedConceptualDataModel
+from cognite.neat.core._data_model.models import (
+    PhysicalDataModel,
+    UnverifiedConceptualDataModel,
+    UnverifiedPhysicalDataModel,
+)
 from cognite.neat.core._data_model.models.conceptual import (
-    UnverifiedConceptualClass,
+    UnverifiedConcept,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models.dms import DMSInputContainer, DMSInputMetadata, DMSInputProperty, DMSInputView
+from cognite.neat.core._data_model.models.physical import (
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
+)
 from cognite.neat.core._issues.errors import NeatError
 
 
 class ImportAdditional(BaseImporter):
-    def to_rules(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedConceptualDataModel]:
         return ImportedDataModel(
-            rules=UnverifiedConceptualDataModel(
+            unverified_data_model=UnverifiedConceptualDataModel(
                 metadata=UnverifiedConceptualMetadata(
                     external_id="my_model", version="1.0.0", space="neat", creator="doctrino"
                 ),
@@ -31,24 +40,26 @@ class ImportAdditional(BaseImporter):
                         max_count=1,
                     )
                 ],
-                classes=[
-                    UnverifiedConceptualClass(
+                concepts=[
+                    UnverifiedConcept(
                         "MyAsset",
                         implements="CogniteAsset",
                     )
                 ],
             ),
-            read_context={},
+            context={},
         )
 
 
 class ImportExisting(BaseImporter):
-    def to_rules(self) -> ImportedDataModel[DMSInputRules]:
+    def to_data_model(self) -> ImportedDataModel[UnverifiedPhysicalDataModel]:
         return ImportedDataModel(
-            rules=DMSInputRules(
-                metadata=DMSInputMetadata(external_id="my_model", version="1.0.0", space="neat", creator="doctrino"),
+            unverified_data_model=UnverifiedPhysicalDataModel(
+                metadata=UnverifiedPhysicalMetadata(
+                    external_id="my_model", version="1.0.0", space="neat", creator="doctrino"
+                ),
                 properties=[
-                    DMSInputProperty(
+                    UnverifiedPhysicalProperty(
                         "CogniteAsset",
                         "name",
                         "text",
@@ -57,7 +68,7 @@ class ImportExisting(BaseImporter):
                         container="CogniteDescribable",
                         container_property="name",
                     ),
-                    DMSInputProperty(
+                    UnverifiedPhysicalProperty(
                         "CogniteEquipment",
                         "name",
                         "text",
@@ -66,7 +77,7 @@ class ImportExisting(BaseImporter):
                         container="CogniteDescribable",
                         container_property="name",
                     ),
-                    DMSInputProperty(
+                    UnverifiedPhysicalProperty(
                         "CogniteEquipment",
                         "asset",
                         "CogniteAsset",
@@ -77,10 +88,13 @@ class ImportExisting(BaseImporter):
                         container_property="asset",
                     ),
                 ],
-                views=[DMSInputView("CogniteAsset"), DMSInputView("CogniteEquipment")],
-                containers=[DMSInputContainer("CogniteDescribable"), DMSInputContainer("CogniteEquipment")],
+                views=[UnverifiedPhysicalView("CogniteAsset"), UnverifiedPhysicalView("CogniteEquipment")],
+                containers=[
+                    UnverifiedPhysicalContainer("CogniteDescribable"),
+                    UnverifiedPhysicalContainer("CogniteEquipment"),
+                ],
             ),
-            read_context={},
+            context={},
         )
 
 
@@ -94,8 +108,12 @@ def merge_importer_unhappy_test_cases() -> Iterable:
     )
     yield pytest.param(
         ImportedDataModel(
-            DMSInputRules(
-                DMSInputMetadata(external_id="my_model", version="1.0.0", creator="doctrino", space="my_space"), [], []
+            UnverifiedPhysicalDataModel(
+                UnverifiedPhysicalMetadata(
+                    external_id="my_model", version="1.0.0", creator="doctrino", space="my_space"
+                ),
+                [],
+                [],
             ),
             {},
         ),
@@ -111,10 +129,10 @@ class TestMergeImporter:
             existing=ImportExisting(),
             additional=ImportAdditional(),
         )
-        input_rules = importer.to_rules()
-        assert input_rules.rules is not None
-        model = input_rules.rules.as_verified_rules()
-        assert isinstance(model, DMSRules)
+        input_rules = importer.to_data_model()
+        assert input_rules.unverified_data_model is not None
+        model = input_rules.unverified_data_model.as_verified_data_model()
+        assert isinstance(model, PhysicalDataModel)
         assert {view.view.external_id for view in model.views} == {"CogniteAsset", "CogniteEquipment", "MyAsset"}
 
         assert {(prop.view.external_id, prop.view_property) for prop in model.properties} == {
@@ -126,17 +144,20 @@ class TestMergeImporter:
 
     @pytest.mark.parametrize("existing, additional, expected", list(merge_importer_unhappy_test_cases()))
     def test_merge_importer_unhappy_path(
-        self, existing: ImportedDataModel[InputRules], additional: ImportedDataModel[InputRules], expected: str
+        self,
+        existing: ImportedDataModel[UnverifiedDataModel],
+        additional: ImportedDataModel[UnverifiedDataModel],
+        expected: str,
     ) -> None:
         class DummyExistingFailing(BaseImporter):
-            def to_rules(self) -> ImportedDataModel[InputRules]:
+            def to_data_model(self) -> ImportedDataModel[UnverifiedDataModel]:
                 return existing
 
         class DummyAdditionalFailing(BaseImporter):
-            def to_rules(self) -> ImportedDataModel[InputRules]:
+            def to_data_model(self) -> ImportedDataModel[UnverifiedDataModel]:
                 return additional
 
         # Test with existing rules as None
         with pytest.raises(NeatError) as e:
-            DMSMergeImporter(DummyExistingFailing(), DummyAdditionalFailing()).to_rules()
+            DMSMergeImporter(DummyExistingFailing(), DummyAdditionalFailing()).to_data_model()
         assert str(e.value) == expected
