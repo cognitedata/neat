@@ -10,5 +10,5 @@ class DataModelImporterPlugin:
         pass
 
     def configure(self, source: Any, *args: Any, **kwargs: Any) -> BaseImporter:
-        """Return a dictionary representation of the object."""
+        """Return a configure plugin for data model import."""
         raise NotImplementedError()
