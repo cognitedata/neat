@@ -1,6 +1,6 @@
 # Physical Reference
 
-This document is a reference for the physical data model. It was last generated 2024-12-06.
+This document is a reference for the physical data model. It was last generated 2025-05-15.
 
 The physical data model has the following sheets:
 - Metadata: Contains information about the data model.
@@ -21,10 +21,11 @@ Contains information about the data model.
 | version | Version of the data model | Yes |
 | name | Human readable name of the data model | No |
 | description | Short description of the data model | No |
-| creator | List of contributors (comma seperated) to the data model creation, typically information architects are considered as contributors. | Yes |
+| creator | List of creators (comma separated) to the data model. | Yes |
 | created | Date of the data model creation | Yes |
 | updated | Date of the data model update | Yes |
-| logical | None | No |
+| sourceId | Id of source that produced this rules | No |
+| conceptual | None | No |
 
 ## Properties Sheet
 
@@ -39,15 +40,15 @@ Contains the properties of the data model.
 | Description | Short description of the property | No |
 | Connection | nly applies to connection between views. It specify how the connection should be implemented in CDF. | No |
 | Value Type | Value type that the property can hold. It takes either subset of CDF primitive types or a View id | Yes |
-| Nullable | Used to indicate whether the property is required or not. Only applies to primitive type. | No |
+| Min Count | Minimum number of values that the property can hold. If no value is provided, the default value is  `0`, which means that the property is optional. | No |
+| Max Count | Maximum number of values that the property can hold. If no value is provided, the default value is  `inf`, which means that the property can hold any number of values (listable). | No |
 | Immutable | sed to indicate whether the property is can only be set once. Only applies to primitive type. | No |
-| Is List | Used to indicate whether the property holds single or multiple values (list). Only applies to primitive types. | No |
 | Default | Specifies default value for the property. | No |
 | Container | Specifies container where the property is stored. Only applies to primitive type. | No |
 | Container Property | Specifies property in the container where the property is stored. Only applies to primitive type. | No |
 | Index | The names of the indexes (comma separated) that should be created for the property. | No |
-| Constraint | The names of the uniquness (comma separated) that should be created for the property. | No |
-| Logical | Used to make connection between physical and logical data model aspect | No |
+| Constraint | List of creators (comma separated) to the data model.. | No |
+| Conceptual | Used to make connection between physical and conceptual data model aspect | No |
 
 ## Views Sheet
 
@@ -62,7 +63,7 @@ Contains the views of the data model.
 | Implements | List of parent view ids (comma separated) which the view being defined implements. | No |
 | Filter | Explicitly define the filter for the view. | No |
 | In Model | Indicates whether the view being defined is a part of the data model. | Yes |
-| Logical | Used to make connection between physical and logical data model aspect | No |
+| Conceptual | Used to make connection between physical and conceptual data model level | No |
 
 ## Containers Sheet
 

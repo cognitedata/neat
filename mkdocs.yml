@@ -25,10 +25,9 @@ nav:
         - From Conceptual to Physical Data Modeling: tutorials/data-modeling/from-conceptual-to-physical-via-CDM.ipynb
   - Data Model in Spreadsheet:
       - Overview: excel_data_modeling/rules.md
-      - Logical Data Model:
-          - Overview: excel_data_modeling/logical/overview.md
-          - Reference: excel_data_modeling/logical/reference.md
-          - Properties: excel_data_modeling/logical/properties.md
+      - Conceptual Data Model:
+          - Overview: excel_data_modeling/conceptual/overview.md
+          - Reference: excel_data_modeling/conceptual/reference.md
       - Physical Data Model:
           - Overview: excel_data_modeling/physical/overview.md
           - Reference: excel_data_modeling/physical/reference.md

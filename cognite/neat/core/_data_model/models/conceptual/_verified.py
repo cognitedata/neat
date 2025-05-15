@@ -43,7 +43,7 @@ class ConceptualMetadata(BaseVerifiedMetadata):
     level: ClassVar[DataModelLevel] = DataModelLevel.conceptual
 
     # Linking to Conceptual and Physical data model aspects
-    physical: URIRef | str | None = Field(None, description="Link to the physical data model aspect")
+    physical: URIRef | str | None = Field(None, description="Link to the physical data model level")
 
 
 def _get_metadata(context: Any) -> ConceptualMetadata | None:
