@@ -5,6 +5,8 @@ from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._client._api.data_modeling_loaders import MultiCogniteAPIError
+from cognite.neat.core._client.data_classes.schema import DMSSchema
+from tests.data import SchemaData
 
 
 @pytest.fixture(scope="session")
@@ -28,6 +30,21 @@ def container_props(cognite_client: CogniteClient, space: dm.Space) -> dm.Contai
         },
     )
     return cognite_client.data_modeling.containers.apply(container)
+
+
+@pytest.fixture(scope="session")
+def deployed_space_and_container_strongly_coupled_model(cognite_client: CogniteClient) -> DMSSchema:
+    schema = DMSSchema.from_directory(SchemaData.Physical.strongly_connected_model_folder)
+
+    if not cognite_client.data_modeling.spaces.retrieve(list(schema.spaces.keys())):
+        created_space = cognite_client.data_modeling.spaces.apply(list(schema.spaces.values()))
+        assert len(created_space) == len(schema.spaces)
+
+    if len(cognite_client.data_modeling.containers.retrieve(list(schema.containers.keys()))) != len(schema.containers):
+        created_containers = cognite_client.data_modeling.containers.apply(list(schema.containers.values()))
+        assert len(created_containers) == len(schema.containers)
+
+    return schema
 
 
 class TestViewLoader:
@@ -88,6 +105,17 @@ class TestViewLoader:
         )
 
         assert len(cached_views) == len(views), "The cached views should be the same as the original views"
+
+    def test_deploy_strongly_coupled(
+        self, neat_client: NeatClient, deployed_space_and_container_strongly_coupled_model: DMSSchema
+    ) -> None:
+        schema = deployed_space_and_container_strongly_coupled_model
+        try:
+            created = neat_client.loaders.views.create(list(schema.views.values()))
+
+            assert len(created) == len(schema.views)
+        finally:
+            neat_client.data_modeling.views.delete(list(schema.views.keys()))
 
 
 class TestContainerLoader:
