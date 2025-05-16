@@ -11,7 +11,7 @@ from typing import (
 )
 
 from cognite.neat.core._issues._base import NeatError
-from cognite.neat.core._plugins.data_model.importers import (
+from cognite.neat.core.plugins.data_model.importers import (
     DataModelImporter,
 )
 
@@ -128,6 +128,6 @@ if hasattr(all_entry_points, "select"):
 register(
     "excel",
     DataModelImporter,
-    "cognite.neat.core._plugins.data_model.importers",
+    "cognite.neat.core.plugins.data_model.importers",
     "ExcelDataModelImporter",
 )

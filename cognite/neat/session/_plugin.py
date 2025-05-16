@@ -3,10 +3,10 @@ from typing import Any
 
 from cognite.neat.core import _plugin
 from cognite.neat.core._issues._base import IssueList
-from cognite.neat.core._plugins.data_model.importers._base import (
+from cognite.neat.core._utils.reader._base import NeatReader
+from cognite.neat.core.plugins.data_model.importers._base import (
     DataModelImporter,
 )
-from cognite.neat.core._utils.reader._base import NeatReader
 from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
