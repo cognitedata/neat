@@ -46,15 +46,14 @@ class DataModelPlugins:
         )
 
         plugin = _plugin.get(format, DataModelImporter)
+        cls = plugin.get_class()
 
         if isinstance(plugin, _plugin.ExternalPlugin):
             print(
-                f"You are using an external plugin {plugin.class_name} not developed by the NEAT team."
+                f"You are using an external plugin {cls.__name__} not developed by the NEAT team."
                 "\nWe are not responsible for any issues that may arise from using it."
                 "\nUse at your own risk."
             )
-
-        cls = plugin.get_class()
 
         importer = cls().configure(source=path, **kwargs)
         return self._state.rule_import(importer)
