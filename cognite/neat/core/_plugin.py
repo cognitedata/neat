@@ -26,7 +26,7 @@ __all__ = [
 
 
 neat_entry_points = {
-    "cognite.neat.core._plugins.data_model.importers": DataModelImporter,
+    "cognite.neat.core.plugins.data_model.importers": DataModelImporter,
 }
 
 _plugins: dict[tuple[str, type[Any]], InternalPlugin] = {}
