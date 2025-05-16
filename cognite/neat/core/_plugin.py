@@ -16,8 +16,8 @@ from cognite.neat.core.plugins.data_model.importers import (
 )
 
 __all__ = [
-    "NeatPlugin",
-    "Plugin",
+    "ExternalPlugin",
+    "InternalPlugin",
     "PluginError",
     "T_Plugin",
     "get",
@@ -29,7 +29,7 @@ neat_entry_points = {
     "cognite.neat.core._plugins.data_model.importers": DataModelImporter,
 }
 
-_plugins: dict[tuple[str, type[Any]], Plugin] = {}
+_plugins: dict[tuple[str, type[Any]], InternalPlugin] = {}
 
 
 @dataclass(unsafe_hash=True)
@@ -44,7 +44,21 @@ class PluginError(NeatError):
 T_Plugin = TypeVar("T_Plugin")
 
 
-class Plugin(Generic[T_Plugin]):
+class InternalPlugin(Generic[T_Plugin]):
+    """Plugin class for registering internal plugins.
+
+    Args:
+        name (str): The name of format (e.g. Excel) or action (e.g. merge) plugin is handling.
+        kind (type[T_Plugin]): The type of the plugin.
+        entry_point (EntryPoint): The entry point for the plugin.
+
+
+    !!! note "name uniqueness"
+        The name of the plugin must be lower case and unique across all plugins of the same kind.
+        If two plugins have the same name, the first one registered will be used.
+        This is to avoid conflicts and ensure that the correct plugin is used.
+    """
+
     def __init__(self, name: str, kind: type[T_Plugin], module_path: str, class_name: str):
         self.name = name
         self.kind = kind
@@ -59,8 +73,8 @@ class Plugin(Generic[T_Plugin]):
         return self._class
 
 
-class NeatPlugin(Plugin[T_Plugin]):
-    """Neat plugin class for plugins registered via entry points.
+class ExternalPlugin(InternalPlugin[T_Plugin]):
+    """Plugin class for plugins registered via entry points (external).
 
     Args:
         name (str): The name of format (e.g. Excel) or action (e.g. merge) plugin is handling.
@@ -97,11 +111,11 @@ def register(name: str, kind: type[Any], module_path: str, class_name: str) -> N
         class_name (str): The name of the plugin class.
 
     """
-    p = Plugin(name, kind, module_path, class_name)
+    p = InternalPlugin(name, kind, module_path, class_name)
     _plugins[(name, kind)] = p
 
 
-def get(name: str, kind: type[T_Plugin]) -> type[T_Plugin]:
+def get(name: str, kind: type[T_Plugin]) -> InternalPlugin[T_Plugin]:
     """
     Returns desired plugin
 
@@ -110,10 +124,10 @@ def get(name: str, kind: type[T_Plugin]) -> type[T_Plugin]:
         kind (type[T_Plugin]): The type of the plugin.
     """
     try:
-        p: Plugin[T_Plugin] = _plugins[(name, kind)]
+        p: InternalPlugin[T_Plugin] = _plugins[(name, kind)]
     except KeyError:
         raise PluginError(name=name, kind=kind.__name__) from None
-    return p.get_class()
+    return p
 
 
 # This will register all the external plugins
@@ -121,7 +135,7 @@ all_entry_points = entry_points()
 if hasattr(all_entry_points, "select"):
     for entry_point, kind in neat_entry_points.items():
         for ep in all_entry_points.select(group=entry_point):
-            _plugins[(ep.name, kind)] = NeatPlugin(ep.name, kind, ep)
+            _plugins[(ep.name, kind)] = ExternalPlugin(ep.name, kind, ep)
 
 
 # Here we register internal plugins
