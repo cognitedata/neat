@@ -50,9 +50,8 @@ class DataModelPlugins:
 
         if isinstance(plugin, _plugin.ExternalPlugin):
             print(
-                f"You are using an external plugin {cls.__name__} not developed by the NEAT team."
-                "\nWe are not responsible for any issues that may arise from using it."
-                "\nUse at your own risk."
+                f"You are using an external plugin {cls.__name__}, which is not developed by the NEAT team."
+                "\nUse it at your own risk."
             )
 
         importer = cls().configure(source=path, **kwargs)
