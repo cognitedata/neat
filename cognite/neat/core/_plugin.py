@@ -34,7 +34,7 @@ _plugins: dict[tuple[str, type[Any]], Plugin] = {}
 
 @dataclass(unsafe_hash=True)
 class PluginError(NeatError):
-    """No plugin of kind <{kind}> registered for format/action <{name}>)"""
+    """No plugin of kind '{kind}' registered for format/action '{name}'"""
 
     name: str
     kind: str
