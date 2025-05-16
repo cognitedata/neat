@@ -65,7 +65,7 @@ class PhysicalValidation:
         client: NeatClient | None = None,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ) -> None:
-        self._rules = data_model
+        self._data_model = data_model
         self._client = client
         self._metadata = data_model.metadata
         self._properties = data_model.properties
@@ -109,7 +109,7 @@ class PhysicalValidation:
         )
         if (imported_views or imported_containers) and self._client is None:
             raise CDFMissingClientError(
-                f"{self._rules.metadata.as_data_model_id()} has imported views and/or container: "
+                f"{self._data_model.metadata.as_data_model_id()} has imported views and/or container: "
                 f"{imported_views}, {imported_containers}."
             )
         referenced_views = ViewList([])
@@ -131,10 +131,10 @@ class PhysicalValidation:
                 raise CDFMissingResourcesError(containers=tuple(missing_containers), views=tuple(missing_views))
 
         # Setup data structures for validation
-        dms_schema = self._rules.as_schema()
+        dms_schema = self._data_model.as_schema()
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
         ref_container_by_id = {container.as_id(): container for container in referenced_containers}
-        # All containers and views are the Containers/Views in the DMSRules + the referenced ones
+        # All containers and views are the Containers/Views in the Physical DM + the referenced ones
         all_containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container] = {
             **dict(dms_schema.containers.items()),
             **ref_container_by_id,
@@ -175,7 +175,7 @@ class PhysicalValidation:
     def _same_space_views_and_data_model(self) -> IssueList:
         issue_list = IssueList()
 
-        schema = self._rules.as_schema(remove_cdf_spaces=True)
+        schema = self._data_model.as_schema(remove_cdf_spaces=True)
 
         if schema.data_model and schema.views:
             data_model_space = schema.data_model.space

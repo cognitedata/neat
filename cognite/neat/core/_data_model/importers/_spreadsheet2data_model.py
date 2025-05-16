@@ -1,7 +1,4 @@
-"""This module performs importing of graph to TransformationRules pydantic class.
-In more details, it traverses the graph and abstracts class and properties, basically
-generating a list of data_model based on which nodes that form the graph are made.
-"""
+"""This module performs importing of data model from spreadsheets."""
 
 import tempfile
 from collections import UserDict, defaultdict
@@ -20,8 +17,8 @@ from cognite.neat.core._data_model._shared import (
     T_UnverifiedDataModel,
 )
 from cognite.neat.core._data_model.models import (
-    INPUT_RULES_BY_ROLE,
-    VERIFIED_RULES_BY_ROLE,
+    UNVERIFIED_DATA_MODEL_BY_ROLE,
+    VERIFIED_DATA_MODEL_BY_ROLE,
     RoleTypes,
     SchemaCompleteness,
 )
@@ -58,8 +55,8 @@ MANDATORY_SHEETS_BY_ROLE: dict[RoleTypes, set[str]] = {
     role_type: {
         str(sheet_name)
         for sheet_name in (
-            VERIFIED_RULES_BY_ROLE.get(role_type).mandatory_fields(use_alias=True)  # type: ignore
-            if VERIFIED_RULES_BY_ROLE.get(role_type)
+            VERIFIED_DATA_MODEL_BY_ROLE.get(role_type).mandatory_fields(use_alias=True)  # type: ignore
+            if VERIFIED_DATA_MODEL_BY_ROLE.get(role_type)
             else []
         )
         if sheet_name is not None
@@ -280,7 +277,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
         original_role = user_read.role
         read_info_by_sheet = user_read.read_info_by_sheet
 
-        data_model_cls = INPUT_RULES_BY_ROLE[original_role]
+        data_model_cls = UNVERIFIED_DATA_MODEL_BY_ROLE[original_role]
         data_model = cast(T_UnverifiedDataModel, data_model_cls.load(sheets))
 
         # Delete the temporary file if it was created

@@ -1,7 +1,7 @@
 # Enum
 
-Enum (short for 'enumeration') is a text/string field that can only have a predefined set of values. You can 
-define an enumeration in the `enum` sheet in the DMSRules spreadsheet, which you can then reference in the 
+Enum (short for 'enumeration') is a text/string field that can only have a predefined set of values. You can
+define an enumeration in the `enum` sheet in the physical data model spreadsheet, which you can then reference in the
 `Value Type` column in the `properties` sheet.
 
 ## Defining an enumeration

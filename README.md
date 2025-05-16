@@ -13,9 +13,9 @@
 
 NEAT is a domain expert centric and developer friendly solution for rapid:
 
-- semantic data modeling
-- creation, transformation and enrichment of knowledge graphs
-- and ingestion of the models and graphs into [Cognite Data Fusion](https://www.cognite.com/en/product/cognite_data_fusion_industrial_dataops_platform)
+- data modeling
+- extraction, transformation and loading of instances
+- and ingestion of the models and instances (i.e. knowledge graphs) into [Cognite Data Fusion](https://www.cognite.com/en/product/cognite_data_fusion_industrial_dataops_platform)
 
 NEAT is using open and globally recognized standards maintained by the [World Wide Web Consortium (W3C)](https://www.w3.org/RDF/).
 NEAT represents an essential tool for creation of standardized, machine-actionable, linked and semantic (meta)data.
@@ -31,13 +31,12 @@ By mid of 2022, sheet2rdf was used in several POCs in Cognite. As Cognite's Data
 
 Presented in various forums in 2022, this approach paved the way for NEAT’s formal development in November 2022 to enable cost-saving and empowerment of Cognite customers to self-sufficiently maintain and onboard knowledge graphs to Cognite Data Fusion.
 
-
 ## Authorship
 
 ### Authors
 The plot below shows the NEAT authorship from the start until present day.
 
-![NEAT authorship](./docs/artifacts/figs/authorship.png)
+![NEAT authorship](./artifacts/figs/authorship.png)
 
 #### Current authors
 - [Nikola Vasiljević](www.linkedin.com/in/thisisnikola)
@@ -54,7 +53,15 @@ We are very grateful for the contributions made by:
 
 - [Marie Solvik Lepoutre](https://www.linkedin.com/in/mslepoutre/), who improved RDF triples projections to Cognite Data Fusion
 - [Bård Henning Tvedt](https://www.linkedin.com/in/bhtvedt/), who implemented IMF importer
+- [Hassan Gomaa](https://www.linkedin.com/in/dr-hassan-gomaa-232638121/), who extended the DEXPI extractor
 - [Kristina Tomičić](https://www.linkedin.com/in/kristina-tomicic-6bb443108/), who implemented Data Model and Instances visualization
+
+
+## Sponsors
+NEAT is developed and maintained by Cognite. We are grateful for the past support of our sponsors, who funded us to develop NEAT and to make it open source.
+
+- [Statnett](https://www.statnett.no/) - the MIMIR team ([Ola Hagen Øyan](https://www.linkedin.com/in/ola-%C3%B8yan-b0205b19/), [Olav Westeng Alstad](https://www.linkedin.com/in/olav-w-alstad-52329191/),[Andreas Kimsås](https://www.linkedin.com/in/andreas-kims%C3%A5s-964a0b2/) and [Anders Willersrud](https://www.linkedin.com/in/anders-willersrud-13a20220/)) – who supported the development of NEAT from end of 2022 to mid of 2023 and its integration with Statnett's infrastructure, where NEAT was battle-tested as a tool for non-sematic experts to define data models and transform large knowledge graphs representing the entire Norwegian power grid system. Without Statnett's support NEAT would not exist in the first place, and would not be open-source.
+- [Aker Solutions](https://www.akersolutions.com/) – the IMod Team (currently lead by [Maria Kenderkova](https://www.linkedin.com/in/maria-kenderkova/)), who funded development of NEAT from mid of 2023 till end of 2024 (multi-level and role-based data modeling, support for ontologies, IMF, DEXPI, AML,...) , as well who were early adopters and embraced NEAT and who were patient with us when things did not work so well. Aker Solutions was instrumental to elevating NEAT to a product level, and who selflessly advocate for NEAT globally.
 
 
 ## Installation

@@ -39,7 +39,7 @@ class KnowledgeGraphExtractor(BaseExtractor):
 
     @abstractmethod
     def get_conceptual_data_model(self) -> ConceptualDataModel:
-        """Returns the information rules that the extractor uses."""
+        """Returns the conceptual data model that the extractor uses."""
         raise NotImplementedError()
 
     @property

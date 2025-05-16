@@ -17,7 +17,7 @@ __all__ = [
     "SubclassInferenceImporter",
 ]
 
-RulesImporters = (
+DataModelImporters = (
     OWLImporter
     | IMFImporter
     | DMSImporter
@@ -47,5 +47,5 @@ def _repr_html_() -> str:
 
     return (
         "<strong>Importer</strong> An importer reads data/schema/data model from a source"
-        f" and converts it into Neat's representation of a data model called <em>Rules</em>.<br />{table}"
+        f" and converts it into Neat's representation of a data model.<br />{table}"
     )

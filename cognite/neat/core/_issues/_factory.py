@@ -37,7 +37,7 @@ def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, Spre
     if location:
         return SpreadsheetError.create(location, neat_error, read_info_by_sheet.get(cast(str, location[0])))
 
-    # errors that occur while for example parsing spreadsheet in input rules
+    # errors that occur while for example parsing spreadsheet in imported data model
     # will not have location information so we return neat_error as is
     # this is workaround until more elegant solution is found
     return neat_error

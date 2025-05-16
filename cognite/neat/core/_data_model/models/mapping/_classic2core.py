@@ -32,7 +32,7 @@ def load_classic_to_core_mapping(org_name: str | None, source_space: str, source
 
     read: ImportedDataModel[UnverifiedPhysicalDataModel] = DictImporter(loaded).to_data_model()
     if not isinstance(read.unverified_data_model, UnverifiedPhysicalDataModel):
-        raise NeatValueError(f"Expected DMS rules, but got {type(read.unverified_data_model).__name__}")
+        raise NeatValueError(f"Expected physical data model, but got {type(read.unverified_data_model).__name__}")
 
     verified = VerifyPhysicalDataModel(validate=False).transform(read)
 

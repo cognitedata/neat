@@ -27,29 +27,29 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-T_BaseRules = TypeVar("T_BaseRules", bound=BaseVerifiedDataModel)
-T_RuleModel = TypeVar("T_RuleModel", bound=SchemaModel)
+T_BaseDataModel = TypeVar("T_BaseDataModel", bound=BaseVerifiedDataModel)
+T_DataModel = TypeVar("T_DataModel", bound=SchemaModel)
 
 
 @dataclass
-class UnverifiedDataModel(Generic[T_BaseRules], ABC):
-    """Input rules are raw data that is not yet validated."""
+class UnverifiedDataModel(Generic[T_BaseDataModel], ABC):
+    """Input data model are raw data that is not yet validated."""
 
     @classmethod
     @abstractmethod
-    def _get_verified_cls(cls) -> type[T_BaseRules]:
+    def _get_verified_cls(cls) -> type[T_BaseDataModel]:
         raise NotImplementedError("This method should be implemented in the subclass.")
 
     @classmethod
     @overload
-    def load(cls: "type[T_InputRules]", data: dict[str, Any]) -> "T_InputRules": ...
+    def load(cls: "type[T_UnverifiedDataModel]", data: dict[str, Any]) -> "T_UnverifiedDataModel": ...
 
     @classmethod
     @overload
-    def load(cls: "type[T_InputRules]", data: None) -> None: ...
+    def load(cls: "type[T_UnverifiedDataModel]", data: None) -> None: ...
 
     @classmethod
-    def load(cls: "type[T_InputRules]", data: dict | None) -> "T_InputRules | None":
+    def load(cls: "type[T_UnverifiedDataModel]", data: dict | None) -> "T_UnverifiedDataModel | None":
         if data is None:
             return None
         return cls._load(data)
@@ -110,7 +110,7 @@ class UnverifiedDataModel(Generic[T_BaseRules], ABC):
     def _dataclass_fields(self) -> list[Field]:
         return list(fields(self))
 
-    def as_verified_data_model(self) -> T_BaseRules:
+    def as_verified_data_model(self) -> T_BaseDataModel:
         cls_ = self._get_verified_cls()
         return cls_.model_validate(self.dump())
 
@@ -127,14 +127,14 @@ class UnverifiedDataModel(Generic[T_BaseRules], ABC):
         return output
 
 
-T_InputRules = TypeVar("T_InputRules", bound=UnverifiedDataModel)
+T_UnverifiedDataModel = TypeVar("T_UnverifiedDataModel", bound=UnverifiedDataModel)
 
 
 @dataclass
-class UnverifiedComponent(ABC, Generic[T_RuleModel]):
+class UnverifiedComponent(ABC, Generic[T_DataModel]):
     @classmethod
     @abstractmethod
-    def _get_verified_cls(cls) -> type[T_RuleModel]:
+    def _get_verified_cls(cls) -> type[T_DataModel]:
         raise NotImplementedError("This method should be implemented in the subclass.")
 
     @classmethod

@@ -69,7 +69,7 @@ class TemplateAPI:
                 - Charts
 
         """
-        last_rules = self._state.rule_store.last_verified_data_model
+        last_dm = self._state.data_model_store.last_verified_data_model
         issues = self._state.rule_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
@@ -78,8 +78,8 @@ class TemplateAPI:
                 move_connections=True,
             )
         )
-        if last_rules and not issues.has_errors:
-            self._state.last_reference = last_rules
+        if last_dm and not issues.has_errors:
+            self._state.last_reference = last_dm
         return issues
 
     def data_product_model(
@@ -105,9 +105,9 @@ class TemplateAPI:
                 If you set same-space, only the properties of the views in the same space as the data model
                 will be included.
         """
-        last_rules = self._state.rule_store.last_verified_data_model
+        last_dm = self._state.data_model_store.last_verified_data_model
         view_ids, container_ids = PhysicalValidation(
-            self._state.rule_store.last_verified_physical_data_model
+            self._state.data_model_store.last_verified_physical_data_model
         ).imported_views_and_containers_ids()
         transformers: list[VerifiedDataModelTransformer] = []
         client = self._state.client
@@ -123,8 +123,8 @@ class TemplateAPI:
         transformers.append(ToDataProductModel(new_model_id=data_model_id, include=include))
 
         issues = self._state.rule_transform(*transformers)
-        if last_rules and not issues.has_errors:
-            self._state.last_reference = last_rules
+        if last_dm and not issues.has_errors:
+            self._state.last_reference = last_dm
         return issues
 
     def conceptual_model(
@@ -187,14 +187,16 @@ class TemplateAPI:
         with catch_issues() as issues:
             read: ImportedDataModel[UnverifiedConceptualDataModel] = ExcelImporter(path).to_data_model()
             if read.unverified_data_model is not None:
-                # If rules are None there will be issues that are already caught.
+                # If data model arise None there will be issues that are already caught.
                 if not isinstance(read.unverified_data_model, UnverifiedConceptualDataModel):
-                    raise NeatSessionError(f"The input {reader.name} must contain an InformationInputRules object. ")
+                    raise NeatSessionError(
+                        f"The input {reader.name} must contain an UnverifiedConceptualDataModel object. "
+                    )
                 if self._state.client is None:
                     raise NeatSessionError("Client must be set in the session to run the extension.")
                 modified = AddCogniteProperties(self._state.client, dummy_property).transform(read)
                 if modified.unverified_data_model is not None:
-                    # If rules are None there will be issues that are already caught.
+                    # If data model is None there will be issues that are already caught.
                     info = modified.unverified_data_model.as_verified_data_model()
 
                     ExcelExporter(styling="maximal").export_to_file(info, output_path)
@@ -202,5 +204,5 @@ class TemplateAPI:
 
         # Adding issues to the state in the rule store
         if issues:
-            self._state.rule_store._last_issues = issues
+            self._state.data_model_store._last_issues = issues
         return issues

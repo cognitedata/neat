@@ -29,8 +29,8 @@ class MockGraphGenerator(BaseExtractor):
     Class used to generate mock graph data for purposes of testing of NEAT.
 
     Args:
-        rules: Transformation rules defining the classes with their properties.
-        class_count: Target class count for each class in the ontology
+        data_model: Data model defining the concepts with their properties.
+        concept_count: Target concept count for each concept/class in the data model
         stop_on_exception: To stop if exception is encountered or not, default is False
         allow_isolated_classes: To allow generation of instances for classes that are not
                                  connected to any other class, default is True
@@ -47,37 +47,38 @@ class MockGraphGenerator(BaseExtractor):
             # fixes potential issues with circular dependencies
             from cognite.neat.core._data_model.transformers import PhysicalToConceptual
 
-            self.rules = PhysicalToConceptual().transform(data_model)
+            self.data_model = PhysicalToConceptual().transform(data_model)
         elif isinstance(data_model, ConceptualDataModel):
-            self.rules = data_model
+            self.data_model = data_model
         else:
-            raise ValueError("Rules must be of type InformationRules or DMSRules!")
+            raise ValueError("Data model must be of type Conceptual or Physical!")
 
         if not concept_count:
             self.concept_count = {
-                concept: 1 for concept in DataModelAnalysis(self.rules).defined_concepts(include_ancestors=True)
+                concept: 1 for concept in DataModelAnalysis(self.data_model).defined_concepts(include_ancestors=True)
             }
         elif all(isinstance(key, str) for key in concept_count.keys()):
             self.concept_count = {
-                ConceptEntity.load(f"{self.rules.metadata.prefix}:{key}"): value for key, value in concept_count.items()
+                ConceptEntity.load(f"{self.data_model.metadata.prefix}:{key}"): value
+                for key, value in concept_count.items()
             }
         elif all(isinstance(key, ConceptEntity) for key in concept_count.keys()):
             self.concept_count = cast(dict[ConceptEntity, int], concept_count)
         else:
-            raise ValueError("Class count keys must be of type str! or ClassEntity! or empty dict!")
+            raise ValueError("Class count keys must be of type str! or ConceptEntity! or empty dict!")
 
         self.stop_on_exception = stop_on_exception
         self.allow_isolated_classes = allow_isolated_classes
 
     def extract(self) -> list[Triple]:
-        """Generate mock triples based on data model defined transformation rules and desired number
-        of class instances
+        """Generate mock triples based on data model and desired number
+        of concept instances
 
         Returns:
             List of RDF triples, represented as tuples `(subject, predicate, object)`, that define data model instances
         """
         return generate_triples(
-            self.rules,
+            self.data_model,
             self.concept_count,
             stop_on_exception=self.stop_on_exception,
             allow_isolated_concepts=self.allow_isolated_classes,
@@ -94,8 +95,8 @@ def generate_triples(
     of class instances
 
     Args:
-        rules : Rules defining the data model
-        concept_count: Target class count for each class in the ontology
+        data_model : Data model
+        concept_count: Target concept count for each class in the data model
         stop_on_exception: To stop if exception is encountered or not, default is False
         allow_isolated_concepts: To allow generation of instances for classes that are not
                                  connected to any other class, default is True

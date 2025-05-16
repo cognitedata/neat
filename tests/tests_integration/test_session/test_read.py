@@ -63,14 +63,14 @@ class TestRead:
     def test_read_pump_with_duplicates(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
         neat.read.excel(SchemaData.Physical.pump_example_duplicated_resources_xlsx)
-        assert len(neat._state.rule_store.last_issues) == 4
+        assert len(neat._state.data_model_store.last_issues) == 4
 
     def test_data_model_views_not_in_same_space(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
         neat.read.excel(SchemaData.Physical.dm_view_space_different_xlsx)
-        assert len(neat._state.rule_store.last_issues) == 1
+        assert len(neat._state.data_model_store.last_issues) == 1
         assert isinstance(
-            neat._state.rule_store.last_issues[0],
+            neat._state.data_model_store.last_issues[0],
             ViewsAndDataModelNotInSameSpaceWarning,
         )
 

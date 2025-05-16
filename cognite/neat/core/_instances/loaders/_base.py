@@ -29,8 +29,8 @@ class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
 
-    def __init__(self, graph_store: NeatInstanceStore):
-        self.graph_store = graph_store
+    def __init__(self, instance_store: NeatInstanceStore):
+        self.instance_store = instance_store
 
     @abstractmethod
     def write_to_file(self, filepath: Path) -> None:
