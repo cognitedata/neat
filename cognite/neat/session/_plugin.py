@@ -3,7 +3,9 @@ from typing import Any
 
 from cognite.neat.core import _plugin
 from cognite.neat.core._issues._base import IssueList
-from cognite.neat.core._plugins.data_model.importers._base import DataModelImporterPlugin
+from cognite.neat.core._plugins.data_model.importers._base import (
+    DataModelImporter,
+)
 from cognite.neat.core._utils.reader._base import NeatReader
 from cognite.neat.session._experimental import ExperimentalFlags
 
@@ -19,18 +21,19 @@ class PluginAPI:
         self._state = state
         self._verbose = verbose
 
-        self.data_model = DataModelPlugin(self._state, self._verbose)
+        self.data_model = DataModelPlugins(self._state, self._verbose)
 
 
 @session_class_wrapper
-class DataModelPlugin:
+class DataModelPlugins:
     """Read from a data source into NeatSession graph store."""
 
     def __init__(self, state: SessionState, verbose: bool) -> None:
         self._state = state
         self._verbose = verbose
 
-    def read(self, format: str, io: Any) -> IssueList:
+    def read(self, format: str, io: Any, **kwargs: Any) -> IssueList:
+        """Provides access to the data model plugins."""
         warnings.filterwarnings("default")
         ExperimentalFlags.plugin.warn()
 
@@ -42,5 +45,5 @@ class DataModelPlugin:
             empty_data_model_store_required=True,
         )
 
-        importer = _plugin.get(format, DataModelImporterPlugin)().configure(source=path)
+        importer = _plugin.get(format, DataModelImporter)().configure(source=path, **kwargs)
         return self._state.rule_import(importer)

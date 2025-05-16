@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from importlib.metadata import EntryPoint, entry_points
 from typing import (
     Any,
@@ -11,13 +12,13 @@ from typing import (
 
 from cognite.neat.core._issues._base import NeatError
 from cognite.neat.core._plugins.data_model.importers import (
-    DataModelImporterPlugin,
+    DataModelImporter,
 )
 
 __all__ = [
     "NeatPlugin",
     "Plugin",
-    "PluginException",
+    "PluginError",
     "T_Plugin",
     "get",
     "register",
@@ -25,14 +26,18 @@ __all__ = [
 
 
 neat_entry_points = {
-    "cognite.neat.core._plugins.data_model.importers": DataModelImporterPlugin,
+    "cognite.neat.core._plugins.data_model.importers": DataModelImporter,
 }
 
 _plugins: dict[tuple[str, type[Any]], Plugin] = {}
 
 
-class PluginException(NeatError):
-    pass
+@dataclass(unsafe_hash=True)
+class PluginError(NeatError):
+    """No plugin of kind <{kind}> registered for format/action <{name}>)"""
+
+    name: str
+    kind: str
 
 
 #: A generic type variable for plugins
@@ -64,7 +69,7 @@ class NeatPlugin(Plugin[T_Plugin]):
 
 
     !!! note "name uniqueness"
-        The name of the plugin must be unique across all plugins of the same kind.
+        The name of the plugin must be lower case and unique across all plugins of the same kind.
         If two plugins have the same name, the first one registered will be used.
         This is to avoid conflicts and ensure that the correct plugin is used.
     """
@@ -107,7 +112,7 @@ def get(name: str, kind: type[T_Plugin]) -> type[T_Plugin]:
     try:
         p: Plugin[T_Plugin] = _plugins[(name, kind)]
     except KeyError:
-        raise PluginException(f"No plugin registered for ({name}, {kind})") from None
+        raise PluginError(name=name, kind=kind.__name__) from None
     return p.get_class()
 
 
@@ -122,7 +127,7 @@ if hasattr(all_entry_points, "select"):
 # Here we register internal plugins
 register(
     "excel",
-    DataModelImporterPlugin,
-    "cognite.neat.core._plugins.data_model.importers._excel",
-    "ExcelDataModelImporterPlugin",
+    DataModelImporter,
+    "cognite.neat.core._plugins.data_model.importers",
+    "ExcelDataModelImporter",
 )

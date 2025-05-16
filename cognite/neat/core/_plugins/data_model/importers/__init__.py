@@ -1,7 +1,7 @@
-from ._base import DataModelImporterPlugin
-from ._excel import ExcelDataModelImporterPlugin
+from ._base import DataModelImporter
+from ._excel import ExcelDataModelImporter
 
 __all__ = [
-    "DataModelImporterPlugin",
-    "ExcelDataModelImporterPlugin",
+    "DataModelImporter",
+    "ExcelDataModelImporter",
 ]

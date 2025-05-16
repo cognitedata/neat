@@ -1,14 +1,15 @@
 from pathlib import Path
+from typing import Any
 
 from cognite.neat.core._data_model.importers._spreadsheet2data_model import ExcelImporter
 
-from ._base import DataModelImporterPlugin
+from ._base import DataModelImporter
 
-__all__ = ["ExcelDataModelImporterPlugin"]
+__all__ = ["ExcelDataModelImporter"]
 
 
-class ExcelDataModelImporterPlugin(DataModelImporterPlugin):
-    def configure(self, source: str) -> ExcelImporter:
+class ExcelDataModelImporter(DataModelImporter):
+    def configure(self, source: str, **kwargs: Any) -> ExcelImporter:
         """
         Configures Excel importer.
 
