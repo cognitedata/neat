@@ -3,12 +3,11 @@ from collections.abc import Hashable, Iterable
 from pathlib import Path
 from typing import ClassVar, Generic, TypeVar
 
-from cognite.client import CogniteClient
 from cognite.client.data_classes.capabilities import Capability
 
+from cognite.neat.core._client import NeatClient
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.errors import AuthorizationError
-from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.auxiliary import class_html_doc
 from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
@@ -28,9 +27,6 @@ class _START_OF_CLASS:
 class BaseLoader(ABC, Generic[T_Output]):
     _new_line = "\n"
     _encoding = "utf-8"
-
-    def __init__(self, graph_store: NeatInstanceStore):
-        self.graph_store = graph_store
 
     @abstractmethod
     def write_to_file(self, filepath: Path) -> None:
@@ -59,9 +55,7 @@ class BaseLoader(ABC, Generic[T_Output]):
 class CDFLoader(BaseLoader[T_Output]):
     _UPLOAD_BATCH_SIZE: ClassVar[int] = 1000
 
-    def load_into_cdf(
-        self, client: CogniteClient, dry_run: bool = False, check_client: bool = True
-    ) -> UploadResultList:
+    def load_into_cdf(self, client: NeatClient, dry_run: bool = False, check_client: bool = True) -> UploadResultList:
         upload_result_by_name: dict[str, UploadResult] = {}
         for upload_result in self.load_into_cdf_iterable(client, dry_run, check_client):
             if last_result := upload_result_by_name.get(upload_result.name):
@@ -72,7 +66,7 @@ class CDFLoader(BaseLoader[T_Output]):
         return UploadResultList(upload_result_by_name.values())
 
     def load_into_cdf_iterable(
-        self, client: CogniteClient, dry_run: bool = False, check_client: bool = True
+        self, client: NeatClient, dry_run: bool = False, check_client: bool = True
     ) -> Iterable[UploadResult]:
         if check_client:
             missing_capabilities = client.iam.verify_capabilities(self._get_required_capabilities())
@@ -113,7 +107,7 @@ class CDFLoader(BaseLoader[T_Output]):
     @abstractmethod
     def _upload_to_cdf(
         self,
-        client: CogniteClient,
+        client: NeatClient,
         items: list[T_Output],
         dry_run: bool,
         read_issues: IssueList,
