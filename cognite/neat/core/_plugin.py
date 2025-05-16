@@ -24,8 +24,9 @@ __all__ = [
     "register",
 ]
 
-
-neat_entry_points = {
+# Here we configure entry points for external plugins to be registered
+# in the plugin manager.
+plugins_entry_points = {
     "cognite.neat.core.plugins.data_model.importers": DataModelImporter,
 }
 
@@ -133,7 +134,7 @@ def get(name: str, kind: type[T_Plugin]) -> InternalPlugin[T_Plugin]:
 # This will register all the external plugins
 all_entry_points = entry_points()
 if hasattr(all_entry_points, "select"):
-    for entry_point, kind in neat_entry_points.items():
+    for entry_point, kind in plugins_entry_points.items():
         for ep in all_entry_points.select(group=entry_point):
             _plugins[(ep.name, kind)] = ExternalPlugin(ep.name, kind, ep)
 
