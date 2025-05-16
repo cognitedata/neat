@@ -54,5 +54,5 @@ class DataModelPlugins:
                 "\nUse it at your own risk."
             )
 
-        importer = cls().configure(source=path, **kwargs)
+        importer = cls().configure(io=path, **kwargs)
         return self._state.rule_import(importer)

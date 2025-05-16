@@ -9,6 +9,6 @@ class DataModelImporter:
     def __init__(self) -> None:
         pass
 
-    def configure(self, source: Any, **kwargs: Any) -> BaseImporter:
+    def configure(self, io: Any, **kwargs: Any) -> BaseImporter:
         """Return a configure plugin for data model import."""
         raise NotImplementedError()

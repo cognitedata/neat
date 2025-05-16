@@ -9,7 +9,7 @@ __all__ = ["ExcelDataModelImporter"]
 
 
 class ExcelDataModelImporter(DataModelImporter):
-    def configure(self, source: str, **kwargs: Any) -> ExcelImporter:
+    def configure(self, io: Path, **kwargs: Any) -> ExcelImporter:
         """
         Configures Excel importer.
 
@@ -17,4 +17,4 @@ class ExcelDataModelImporter(DataModelImporter):
             source (str): Path to the Excel file.
         """
 
-        return ExcelImporter(filepath=Path(source))
+        return ExcelImporter(filepath=io)
