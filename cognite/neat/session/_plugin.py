@@ -32,13 +32,17 @@ class DataModelPlugins:
         self._state = state
         self._verbose = verbose
 
-    def read(self, format: str, io: Any, **kwargs: Any) -> IssueList:
+    def read(self, format: str, io: Any | None = None, **kwargs: Any) -> IssueList:
         """Provides access to the data model plugins."""
         warnings.filterwarnings("default")
         ExperimentalFlags.plugin.warn()
 
-        reader = NeatReader.create(io)
-        path = reader.materialize_path()
+        # Some plugins may not support the io argument
+        if io:
+            reader = NeatReader.create(io)
+            path = reader.materialize_path()
+        else:
+            path = None
 
         self._state._raise_exception_if_condition_not_met(
             "Data Model Read",
