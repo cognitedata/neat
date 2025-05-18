@@ -71,8 +71,17 @@ class SetInstances:
         self._state = state
         self._verbose = verbose
 
-    def type_using_property(self, current_type: str, property_type: str, drop_property: bool = True) -> None:
+    def type_using_property(
+        self, current_type: str, property_type: str, drop_property: bool = True, keep_parent: bool = True
+    ) -> None:
         """Replaces the type of all instances with the value of a property.
+
+        Args:
+            current_type (str): The type of the instances to be replaced.
+            property_type (str): The property to use as the type.
+            drop_property (bool, optional): If True, the property will be dropped from the instance. Defaults to True.
+            keep_parent (bool, optional): If True, the parent type will be referred to as the superclass.
+                Defaults to True.
 
         Example:
             All Assets have a property `assetCategory` that we want to use as the type of all asset instances.
@@ -101,7 +110,7 @@ class SetInstances:
         if not self._state.instances.store.queries.select.type_with_property(type_uri[0], property_uri[0]):
             raise NeatValueError(f"Property {property_type} is not defined for type {current_type}.")
 
-        self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property))
+        self._state.instances.store.transform(SetType(type_uri[0], property_uri[0], drop_property, keep_parent))
 
         return None
 
