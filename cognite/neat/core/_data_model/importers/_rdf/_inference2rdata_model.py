@@ -469,6 +469,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
                     properties_by_id[property_id] = self._create_property(
                         read_properties, parent_suffix, property_uri, property_id, prefixes
                     )
+                properties_by_class_suffix_by_property_id[parent_suffix] = properties_by_id
         return classes, [
             prop for properties in properties_by_class_suffix_by_property_id.values() for prop in properties.values()
         ]
