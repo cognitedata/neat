@@ -12,6 +12,15 @@ from ._base import BaseTransformerStandardised, RowTransformationOutput
 
 
 class ObjectMapper(BaseTransformerStandardised):
+    """This transformer maps all values for a given predicate and type.
+
+    Args:
+        mapping (dict[Hashable, object]): A dictionary where the key is the value to be
+            mapped and the value is the new value.
+        predicate (URIRef): The predicate to be mapped.
+        type (URIRef | None): The type of the instance. If None, all instances with the given predicate will be mapped.
+    """
+
     description = "Maps all values for a given predicate and type."
 
     def __init__(self, mapping: dict[Hashable, object], predicate: URIRef, type: URIRef | None = None) -> None:
