@@ -5,7 +5,7 @@ from rdflib import RDF, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.core._issues.warnings import NeatValueWarning
-from cognite.neat.core._utils.rdf_ import uri_instance_to_display_name
+from cognite.neat.core._utils.rdf_ import uri_to_cdf_id
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
@@ -37,14 +37,14 @@ class SetRDFTypeById(BaseTransformerStandardised):
     def operation(self, query_result_row: ResultRow) -> RowTransformationOutput:
         row_output = RowTransformationOutput()
         instance_id, existing_type = cast(tuple[URIRef, URIRef], query_result_row)
-        instance_id_str = uri_instance_to_display_name(instance_id)
+        instance_id_str = uri_to_cdf_id(instance_id)
         if instance_id_str not in self.type_by_id:
             if self.warn_missing_instances:
                 warnings.warn(
                     NeatValueWarning(
                         f"Cannot change type of {instance_id_str!r}. "
                         f"It is not found in the given mapping. "
-                        f"Will keep type {uri_instance_to_display_name(existing_type)}."
+                        f"Will keep type {uri_to_cdf_id(existing_type)}."
                     ),
                     stacklevel=2,
                 )
@@ -54,8 +54,7 @@ class SetRDFTypeById(BaseTransformerStandardised):
         if new_type == existing_type:
             warnings.warn(
                 NeatValueWarning(
-                    f"Type of {instance_id_str} is already {uri_instance_to_display_name(existing_type)}. "
-                    "No change needed."
+                    f"Type of {instance_id_str} is already {uri_to_cdf_id(existing_type)}. No change needed."
                 ),
                 stacklevel=2,
             )

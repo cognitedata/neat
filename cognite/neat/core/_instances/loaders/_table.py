@@ -25,7 +25,7 @@ from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._store import NeatInstanceStore
 from cognite.neat.core._utils.collection_ import iterate_progress_bar_if_above_config_threshold
 from cognite.neat.core._utils.io_ import to_directory_compatible
-from cognite.neat.core._utils.rdf_ import split_uri, uri_instance_to_display_name
+from cognite.neat.core._utils.rdf_ import split_uri, uri_to_cdf_id
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, BaseLoader
 
@@ -104,7 +104,7 @@ class DictLoader(BaseLoader[dict[str, object]]):
             )
 
             for instance_id, properties in iterable:
-                identifier = uri_instance_to_display_name(instance_id)
+                identifier = uri_to_cdf_id(instance_id)
                 cleaned = self._clean_uris(properties, properties_by_id)
                 cleaned["externalId"] = identifier
                 yield cleaned
@@ -119,8 +119,8 @@ class DictLoader(BaseLoader[dict[str, object]]):
             if key == RDF.type:
                 continue
             if isinstance(key, URIRef):
-                key = uri_instance_to_display_name(key)
-            value_ = (uri_instance_to_display_name(item) if isinstance(item, URIRef) else item for item in value)
+                key = uri_to_cdf_id(key)
+            value_ = (uri_to_cdf_id(item) if isinstance(item, URIRef) else item for item in value)
             if prop := properties_by_id.get(key):
                 value = [
                     item
