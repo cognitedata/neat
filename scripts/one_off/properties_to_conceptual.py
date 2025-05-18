@@ -15,11 +15,11 @@ convert_properties_to_conceptual(prop_df.to_dict(orient="records"), "output.xlsx
 import getpass
 from pathlib import Path
 import pandas as pd
-from cognite.neat.core._rules.models.information import InformationInputClass, InformationInputMetadata, InformationInputProperty, InformationInputRules
-from cognite.neat.core._rules.exporters import ExcelExporter
+from cognite.neat.core._data_model.models.conceptual import UnverifiedConceptualDataModel, UnverifiedConceptualProperty, UnverifiedConcept, UnverifiedConceptualMetadata
+from cognite.neat.core._data_model.exporters import ExcelExporter
 
 
-def convert_properties_to_conceptual(prop_df: pd.DataFrame, data_model_id: tuple[str, str, str]) -> InformationInputRules:
+def convert_properties_to_conceptual(prop_df: pd.DataFrame, data_model_id: tuple[str, str, str]) -> UnverifiedConceptualDataModel:
     """Convert a list of properties to a conceptual model.
 
     Args:
@@ -33,16 +33,16 @@ def convert_properties_to_conceptual(prop_df: pd.DataFrame, data_model_id: tuple
     if {"property", "type"} - set(prop_df.columns):
         raise ValueError("Input DataFrame must contain 'property' and 'type' columns.")
     # Create the conceptual model
-    classes = prop_df["type"].dropna().unique()
-    classes = [
-        InformationInputClass(class_=class_id)
-        for class_id in classes
+    concepts = prop_df["type"].dropna().unique()
+    concepts = [
+        UnverifiedConcept(concept=class_id)
+        for class_id in concepts
     ]
-    properties: list[InformationInputProperty] = []
+    properties: list[UnverifiedConceptualProperty] = []
     for class_id, class_df in prop_df.groupby("type"):
         property_ids = class_df["property"].dropna().unique()
         properties.extend([
-            InformationInputProperty(
+            UnverifiedConceptualProperty(
                 class_id,
                 property_id,
                 value_type="text",
@@ -52,7 +52,7 @@ def convert_properties_to_conceptual(prop_df: pd.DataFrame, data_model_id: tuple
         ])
 
     # Create the metadata
-    metadata = InformationInputMetadata(
+    metadata = UnverifiedConceptualMetadata(
         name="Conceptual Model",
         description="Converted from properties",
         creator=getpass.getuser(),
@@ -61,9 +61,8 @@ def convert_properties_to_conceptual(prop_df: pd.DataFrame, data_model_id: tuple
         version=data_model_id[2],
     )
 
-    model = InformationInputRules(
+    return UnverifiedConceptualDataModel(
         metadata=metadata,
-        classes=classes,
+        concepts=concepts,
         properties=properties,
     )
-    return model
