@@ -10,6 +10,7 @@ from ._classic_cdf import (
     LookupRelationshipSourceTarget,
     RelationshipAsEdgeTransformer,
 )
+from ._object_mapper import ObjectMapper
 from ._prune_graph import (
     AttachPropertyFromTargetToSource,
     PruneDanglingNodes,
@@ -35,6 +36,7 @@ __all__ = [
     "LiteralToEntity",
     "LookupRelationshipSourceTarget",
     "MakeConnectionOnExactMatch",
+    "ObjectMapper",
     "PruneDanglingNodes",
     "PruneDeadEndEdges",
     "PruneInstancesOfUnknownType",
