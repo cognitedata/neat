@@ -57,8 +57,8 @@ class SelectQueries(BaseQuery):
             named_graph: Named graph to query over, default None (default graph)
 
         """
-        query = """SELECT DISTINCT ?property
-                   WHERE {?s ?property ?o . FILTER(?property != rdf:type)}"""
+        query = f"""SELECT DISTINCT ?property
+                   WHERE {{?s ?property ?o . FILTER(?property != {RDF.type.n3()})}}"""
         return {  # type: ignore[misc, index, arg-type]
             cast(URIRef, type_): remove_namespace_from_uri(cast(URIRef, type_))
             for (type_,) in list(self.graph(named_graph).query(query))
@@ -123,7 +123,7 @@ class SelectQueries(BaseQuery):
     def list_instance_object_ids(self, limit: int = -1, named_graph: URIRef | None = None) -> Iterable[URIRef]:
         query = (
             "SELECT DISTINCT ?object WHERE { "
-            "?subject ?predicate ?object . FILTER(?predicate != rdf:type && isURI(?object))"
+            f"?subject ?predicate ?object . FILTER(?predicate != {RDF.type.n3()} && isURI(?object))"
             "}"
         )
         if limit != -1:
