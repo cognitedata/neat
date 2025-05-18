@@ -83,7 +83,7 @@ def _to_camel_case(string: str, is_all_upper: bool, is_first_upper: bool) -> str
 
     string_split = []
     for part in cleaned:
-        string_split.extend(re.findall(r"[A-Z][a-z0-9]*", part))
+        string_split.extend(re.findall(r"[A-Z0-9][a-z0-9]*", part))
     if not string_split:
         string_split = [string]
     if len(string_split) == 0:
