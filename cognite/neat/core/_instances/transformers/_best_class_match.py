@@ -7,7 +7,7 @@ from rdflib import RDF, Graph, Literal, URIRef
 from rdflib.query import ResultRow
 
 from cognite.neat.core._issues.warnings import MultiClassFoundWarning, NoClassFoundWarning, PartialClassFoundWarning
-from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_instance_to_display_name
+from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_to_cdf_id
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
@@ -67,7 +67,7 @@ class BestClassMatch(BaseTransformerStandardised):
                 results[class_uri] = (missing_properties, matching_properties, len(class_properties))
 
         if not results:
-            warnings.warn(NoClassFoundWarning(uri_instance_to_display_name(instance)), stacklevel=2)
+            warnings.warn(NoClassFoundWarning(uri_to_cdf_id(instance)), stacklevel=2)
             return row_output
 
         best_class, (min_missing_properties, max_matching_properties, _) = min(
@@ -78,8 +78,8 @@ class BestClassMatch(BaseTransformerStandardised):
         if len(min_missing_properties) > 0:
             warnings.warn(
                 PartialClassFoundWarning(
-                    uri_instance_to_display_name(instance),
-                    uri_instance_to_display_name(best_class),
+                    uri_to_cdf_id(instance),
+                    uri_to_cdf_id(best_class),
                     len(min_missing_properties),
                     frozenset({urllib.parse.unquote(prop) for prop in min_missing_properties}),
                 ),
@@ -87,7 +87,7 @@ class BestClassMatch(BaseTransformerStandardised):
             )
         if alternatives := frozenset(
             {
-                uri_instance_to_display_name(cls_)
+                uri_to_cdf_id(cls_)
                 for cls_, (missing_properties, match_properties, _) in results.items()
                 if len(missing_properties) == len(min_missing_properties)
                 and len(match_properties) == len(max_matching_properties)
@@ -96,8 +96,8 @@ class BestClassMatch(BaseTransformerStandardised):
         ):
             warnings.warn(
                 MultiClassFoundWarning(
-                    uri_instance_to_display_name(instance),
-                    uri_instance_to_display_name(best_class),
+                    uri_to_cdf_id(instance),
+                    uri_to_cdf_id(best_class),
                     alternatives,
                 ),
                 stacklevel=2,
