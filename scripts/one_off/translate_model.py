@@ -6,14 +6,14 @@ The script uses the Cloud Translation APi from Google to perform the translation
 from pathlib import Path
 from googletrans import Translator
 
-from cognite.neat.core._rules.exporters import ExcelExporter
-from cognite.neat.core._rules.models import InformationInputRules
+from cognite.neat.core._data_model.exporters import ExcelExporter
+from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
 from cognite.neat.core._utils.collection_ import chunker
 from cognite.neat.core._utils.text import NamingStandardization
 from rich import print
 import json
 
-async def translate_property_ids(input_rules: InformationInputRules, output_model: Path, source_language: str, translation_file: Path, standardize: bool = True) -> None:
+async def translate_property_ids(input_rules: UnverifiedConceptualDataModel, output_model: Path, source_language: str, translation_file: Path, standardize: bool = True) -> None:
     """Translates the property Ids of the input model to English.
 
     Args:
@@ -29,10 +29,10 @@ async def translate_property_ids(input_rules: InformationInputRules, output_mode
     class_renaming: dict[str, str] = {}
     if standardize:
         # Standardize the class Ids
-        for class_ in input_rules.classes:
+        for class_ in input_rules.concepts:
             if class_.name is None:
                 continue
-            new_class_id = NamingStandardization.standardize_class_str(class_.name)
+            new_class_id = NamingStandardization.standardize_concept_str(class_.name)
             class_renaming[class_.class_] = new_class_id
             class_.class_ = new_class_id
 
@@ -67,5 +67,5 @@ async def translate_property_ids(input_rules: InformationInputRules, output_mode
                 property_.property_ = NamingStandardization.standardize_property_str(property_.property_)
 
     exporter = ExcelExporter(styling="maximal")
-    exporter.export_to_file(input_rules.as_verified_rules(), output_model)
-    print(f"Exported {len(input_rules.properties)} properties and {len(input_rules.classes)} classes to {output_model.as_posix()}.")
+    exporter.export_to_file(input_rules.as_verified_data_model(), output_model)
+    print(f"Exported {len(input_rules.properties)} properties and {len(input_rules.concepts)} classes to {output_model.as_posix()}.")
