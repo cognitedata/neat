@@ -29,12 +29,12 @@ async def translate_property_ids(input_rules: UnverifiedConceptualDataModel, out
     class_renaming: dict[str, str] = {}
     if standardize:
         # Standardize the class Ids
-        for class_ in input_rules.concepts:
-            if class_.name is None:
+        for concept in input_rules.concepts:
+            if concept.name is None:
                 continue
-            new_class_id = NamingStandardization.standardize_concept_str(class_.name)
-            class_renaming[class_.class_] = new_class_id
-            class_.class_ = new_class_id
+            new_class_id = NamingStandardization.standardize_concept_str(concept.name)
+            class_renaming[concept.concept] = new_class_id
+            concept.concept = new_class_id
 
     # Storing all translations to avoid repeated API calls
     translations: dict[str, str] = {}
@@ -56,7 +56,7 @@ async def translate_property_ids(input_rules: UnverifiedConceptualDataModel, out
             print(f"Translated {len(to_translate)} properties.")
             translation_file.write_text(json.dumps(translations), encoding="utf-8")
         for property_ in properties:
-            property_.class_ = class_renaming.get(property_.class_, property_.class_)
+            property_.concept = class_renaming.get(property_.concept, property_.concept)
             if property_.name is None:
                 continue
             if property_.name in translations:
