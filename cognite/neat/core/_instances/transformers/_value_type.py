@@ -10,11 +10,7 @@ from rdflib.query import ResultRow
 from cognite.neat.core._constants import NEAT
 from cognite.neat.core._issues.warnings import PropertyDataTypeConversionWarning
 from cognite.neat.core._utils.auxiliary import string_to_ideal_type
-from cognite.neat.core._utils.rdf_ import (
-    Triple,
-    get_namespace,
-    remove_namespace_from_uri,
-)
+from cognite.neat.core._utils.rdf_ import Triple, get_namespace, remove_namespace_from_uri, uri_to_cdf_id
 
 from ._base import BaseTransformerStandardised, RowTransformationOutput
 
@@ -303,7 +299,7 @@ class ConnectionToLiteral(BaseTransformerStandardised):
         row_output = RowTransformationOutput()
 
         instance, object_entity = cast(tuple[URIRef, URIRef], query_result_row)
-        value = remove_namespace_from_uri(object_entity)
+        value = uri_to_cdf_id(object_entity)
 
         row_output.add_triples.add((instance, self.subject_predicate, rdflib.Literal(value)))
         row_output.remove_triples.add((instance, self.subject_predicate, object_entity))
