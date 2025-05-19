@@ -23,6 +23,7 @@ from cognite.neat.core._issues.errors import RegexViolationError
 from cognite.neat.core._issues.errors._general import NeatImportError
 from cognite.neat.core._store._data_model import DataModelEntity
 from cognite.neat.core._utils.auxiliary import local_import
+from cognite.neat.session._plugin import PluginAPI
 
 from ._collector import _COLLECTOR, Collector
 from ._drop import DropAPI
@@ -108,6 +109,7 @@ class NeatSession:
         self.subset = SubsetAPI(self._state)
         self.template = TemplateAPI(self._state)
         self._explore = ExploreAPI(self._state)
+        self._plugin = PluginAPI(self._state, verbose)
         self.opt = OptAPI()
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
