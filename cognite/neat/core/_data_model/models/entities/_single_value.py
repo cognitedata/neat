@@ -549,3 +549,11 @@ class ReferenceEntity(ConceptEntity):
 
     def as_concept_entity(self) -> ConceptEntity:
         return ConceptEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
+
+
+class ContainerIndexEntity(ConceptualEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.container_index
+    prefix: Literal["container_index"] = "container_index"
+    suffix: str
+    cursorable: bool = False
+    by_space: bool = False
