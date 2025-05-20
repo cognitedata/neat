@@ -21,6 +21,7 @@ from cognite.neat.core._data_model.models._base_unverified import (
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ContainerEntity,
+    ContainerIndexEntity,
     DMSNodeEntity,
     EdgeEntity,
     PhysicalUnknownEntity,
@@ -135,7 +136,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     default: str | int | float | bool | dict | None = None
     container: str | None = None
     container_property: str | None = None
-    index: str | list[str] | None = None
+    index: str | list[str | ContainerIndexEntity] | ContainerIndexEntity | None = None
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
     conceptual: str | URIRef | None = None
@@ -167,6 +168,15 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
             if self.container
             else None
         )
+        if isinstance(self.index, str):
+            output["Index"] = [ContainerIndexEntity.load(self.index)]
+        elif isinstance(self.index, ContainerIndexEntity):
+            output["Index"] = [self.index]
+        elif isinstance(self.index, list):
+            output["Index"] = [
+                ContainerIndexEntity.load(self.index) if isinstance(self.index, str) else self.index
+                for index in self.index
+            ]
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
