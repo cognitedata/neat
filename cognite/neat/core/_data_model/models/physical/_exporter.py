@@ -384,7 +384,7 @@ class _DMSExporter:
             for prop in container_properties:
                 if prop.container_property is not None:
                     for index in prop.index or []:
-                        index_properties[index].add(prop.container_property)
+                        index_properties[index.suffix].add(prop.container_property)
             for index_name, properties in index_properties.items():
                 container.indexes = container.indexes or {}
                 container.indexes[index_name] = BTreeIndex(properties=list(properties))
