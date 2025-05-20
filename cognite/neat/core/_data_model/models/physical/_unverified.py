@@ -168,15 +168,10 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
             if self.container
             else None
         )
-        if isinstance(self.index, str):
+        if isinstance(self.index, str | ContainerIndexEntity):
             output["Index"] = [ContainerIndexEntity.load(self.index)]
-        elif isinstance(self.index, ContainerIndexEntity):
-            output["Index"] = [self.index]
         elif isinstance(self.index, list):
-            output["Index"] = [
-                ContainerIndexEntity.load(self.index) if isinstance(self.index, str) else self.index
-                for index in self.index
-            ]
+            output["Index"] = [ContainerIndexEntity.load(index) for index in self.index]
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
