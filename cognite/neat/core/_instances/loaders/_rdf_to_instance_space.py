@@ -82,20 +82,20 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
     def _upload_to_cdf(
         self,
         client: NeatClient,
-        items: list[dm.SpaceApply],
+        spaces: list[dm.SpaceApply],
         dry_run: bool,
         read_issues: IssueList,
         class_name: str | None = None,
     ) -> Iterable[UploadResult]:
-        cdf_items = client.data_modeling.spaces.retrieve([item.space for item in items])
-        cdf_idem_by_id = {item.space: item for item in cdf_items}
+        cdf_spaces = client.data_modeling.spaces.retrieve([space.space for space in spaces])
+        cdf_space_by_id = {item.space: item for item in cdf_spaces}
 
         to_create = dm.SpaceApplyList([])
         to_update = dm.SpaceApplyList([])
         unchanged = dm.SpaceApplyList([])
 
-        for local_space in items:
-            cdf_space = cdf_idem_by_id.get(local_space.space)
+        for local_space in spaces:
+            cdf_space = cdf_space_by_id.get(local_space.space)
             if cdf_space is None:
                 to_create.append(local_space)
             elif cdf_space != local_space.as_write():
@@ -156,7 +156,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
     ) -> Iterable[dm.SpaceApply | NeatIssue | type[_END_OF_CLASS] | _START_OF_CLASS]:
         yield from self._lookup_issues
         seen: set[str] = set()
-        for space_str in self.space_by_instance_uri.values():
+        for space_str in set(self.space_by_instance_uri.values()):
             if space_str in seen or space_str in COGNITE_SPACES:
                 continue
             yield dm.SpaceApply(space=space_str)
@@ -173,7 +173,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
             raise ValueError("Graph store must be provided to lookup spaces")
         # Case 2: Use the source space, i.e., the space of the instances when extracted from CDF
         if self.use_source_space:
-            self._lookup_instance_uris(self.graph_store)
+            self._lookup_space_via_instance_uris(self.graph_store)
         # Case 3: Use a property on each instance to determine the space.
         elif self.space_property is not None:
             if self.instance_space is None:
@@ -181,11 +181,11 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
                     f"Missing fallback instance space. This is required when using '{self.space_property=}'"
                 )
             self._space_by_instance_uri = defaultdict(lambda: cast(str, self.instance_space))
-            self._lookup_space_property(self.graph_store, self.space_property)
+            self._lookup_space_via_property(self.graph_store, self.space_property)
         else:
             raise ValueError("Either 'instance_space", "space_property', or 'use_source_space' must be provided. ")
 
-    def _lookup_instance_uris(self, graph_store: NeatInstanceStore) -> None:
+    def _lookup_space_via_instance_uris(self, graph_store: NeatInstanceStore) -> None:
         instance_iterable = itertools.chain(
             (res[0] for res in graph_store.queries.select.list_instances_ids()),
             graph_store.queries.select.list_instance_object_ids(),
@@ -200,7 +200,7 @@ class InstanceSpaceLoader(CDFLoader[dm.SpaceApply]):
             else:
                 self._space_by_instance_uri[instance_uri] = space
 
-    def _lookup_space_property(self, graph_store: NeatInstanceStore, space_property: str) -> None:
+    def _lookup_space_via_property(self, graph_store: NeatInstanceStore, space_property: str) -> None:
         properties_by_uriref = graph_store.queries.select.properties()
         space_property_uri = next((k for k, v in properties_by_uriref.items() if v == space_property), None)
         if space_property_uri is None:
