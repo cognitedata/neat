@@ -22,6 +22,7 @@ from rdflib import RDF, URIRef
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._client._api_client import SchemaAPI
 from cognite.neat.core._constants import (
+    COGNITE_SPACES,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     is_readonly_property,
 )
@@ -585,7 +586,12 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield dm.NodeApply(
                 space=space,
                 external_id=external_id,
-                type=(projection.view_id.space, projection.view_id.external_id),
+                # Currently there are no node types in Cognite Spaces
+                type=(
+                    (projection.view_id.space, projection.view_id.external_id)
+                    if projection.view_id.space not in COGNITE_SPACES
+                    else None
+                ),
                 sources=sources,
             )
         yield from self._create_edges_without_properties(space, external_id, properties, projection, stop_on_exception)
