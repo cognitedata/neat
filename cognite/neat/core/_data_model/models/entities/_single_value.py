@@ -553,7 +553,7 @@ class ReferenceEntity(ConceptEntity):
 
 class ContainerIndexEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.container_index
-    prefix: Literal["container_index"] = "container_index"
+    prefix: _UndefinedType = Undefined
     suffix: str
     cursorable: bool = False
-    by_space: bool = False
+    by_space: bool = Field(False, alias="bySpace")
