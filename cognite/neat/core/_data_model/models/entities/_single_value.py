@@ -216,7 +216,7 @@ class ConceptualEntity(BaseModel, extra="ignore"):
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
         }
         for field_name, field in self.model_fields.items():
-            if field.default not in (Undefined, PydanticUndefined):
+            if field.default not in (Undefined, PydanticUndefined, None):
                 defaults[field.alias or field_name] = field.default
 
         # We only remove the default values if all the fields are default
