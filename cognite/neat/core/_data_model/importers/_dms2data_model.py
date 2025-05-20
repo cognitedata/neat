@@ -554,7 +554,9 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         container = self._all_containers_by_id[prop.container]
         index: list[str | ContainerIndexEntity] = []
         for index_name, index_obj in (container.indexes or {}).items():
-            if isinstance(index_obj, BTreeIndex | InvertedIndex) and prop_id in index_obj.properties:
+            if isinstance(index_obj, BTreeIndex) and prop_id in index_obj.properties:
+                index.append(ContainerIndexEntity(suffix=index_name, cursorable=index_obj.cursorable))
+            elif isinstance(index_obj, InvertedIndex) and prop_id in index_obj.properties:
                 index.append(index_name)
         return index or None
 

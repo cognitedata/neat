@@ -53,7 +53,7 @@ class TestImportExportFlow:
         issues = neat.read.cdf.data_model(("my_space", "my_model", "v1"))
         assert len(issues) == 0
 
-        _ = neat.to.cdf.data_model()
+        _ = neat.to.cdf.data_model(existing="recreate", drop_data=True)
 
         assert created_container is not None
         indices = created_container.indexes
