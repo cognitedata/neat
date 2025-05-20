@@ -117,8 +117,8 @@ class NeatSession:
         """Select the most performant store based on the current environment."""
 
         try:
-            local_import("pyoxigraph", "pyoxigraph")
-            local_import("oxrdflib", "pyoxigraph")
+            local_import("pyoxigraph", "oxi")
+            local_import("oxrdflib", "oxi")
             return "oxigraph"
         except NeatImportError:
             return "memory"

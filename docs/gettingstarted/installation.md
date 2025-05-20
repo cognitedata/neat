@@ -48,10 +48,11 @@ guide you through the installation process using [Jupyter Lab](https://jupyter.o
 1. Create and enter directory for `neat` installation
 1. Create a virtual environment:
 2. Activate your virtual environment
-3. Install `cognite-neat` with `oxigraph`
+3. Install `cognite-neat`
 4. Install a notebook environment, `pip install jupyterlab`
-5. Start your notebook environment, `jupyter lab`
-6. Import `NeatSession` and `get_cognite_client` and start using it
+5. Install tqdm for progress bars, `pip install tqdm`
+6. Start your notebook environment, `jupyter lab`
+7. Import `NeatSession` and `get_cognite_client` and start using it
 
 === "Windows"
 
@@ -68,11 +69,15 @@ guide you through the installation process using [Jupyter Lab](https://jupyter.o
     ```
 
     ```
-    pip install "cognite-neat[pyoxigraph]"
+    pip install cognite-neat
     ```
 
     ```
-    pip install pip install jupyterlab
+    pip install jupyterlab
+    ```
+
+    ```
+    pip install tqdm
     ```
 
     ```
