@@ -450,7 +450,7 @@ class CDFToAPI:
             "Load location filter into CDF",
             client_required=True,
         )
-        data_model_id = self._state.rule_store.last_verified_physical_data_model.metadata.as_data_model_id()
+        data_model_id = self._state.data_model_store.last_verified_physical_data_model.metadata.as_data_model_id()
 
         if instance_spaces is not None:
             selected_instance_spaces = list(instance_spaces)
@@ -485,7 +485,7 @@ class CDFToAPI:
             "Export DMS instances to CDF",
             client_required=True,
         )
-        dms_rules = self._state.rule_store.last_verified_physical_data_model
+        dms_rules = self._state.data_model_store.last_verified_physical_data_model
         instance_space = self._get_instance_space(instance_space, dms_rules.metadata.space)
         return loaders.InstanceSpaceLoader(
             self._state.instances.store,
@@ -572,10 +572,10 @@ class ToPythonAPI:
         """Export the verified DMS data model to Python format."""
         self._state._raise_exception_if_condition_not_met(
             "Export DMS data model to Python",
-            has_dms_rules=True,
+            has_physical_data_model=True,
         )
         exporter = exporters.DMSExporter()
-        return self._state.rule_store.export(exporter)
+        return self._state.data_model_store.export(exporter)
 
 
 @session_class_wrapper

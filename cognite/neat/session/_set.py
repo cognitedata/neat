@@ -130,8 +130,8 @@ class SetInstances:
         self._state._raise_exception_if_condition_not_met(
             "Set instance type based on best matching class",
             instances_required=True,
-            has_dms_rules=False,
-            has_information_rules=False,
+            has_physical_data_model=False,
+            has_conceptual_data_model=False,
         )
         model = read_conceptual_model(conceptual_io)
         analysis = DataModelAnalysis(model)
@@ -163,8 +163,8 @@ class SetInstances:
         self._state._raise_exception_if_condition_not_met(
             "Set instance type based ID",
             instances_required=True,
-            has_dms_rules=False,
-            has_information_rules=False,
+            has_physical_data_model=False,
+            has_conceptual_data_model=False,
         )
         namespace = Namespace(DEFAULT_SPACE_URI.format(space=space)) if space else DEFAULT_NAMESPACE
         type_by_id = {instance_id: namespace[type_id] for instance_id, type_id in mapping.items()}

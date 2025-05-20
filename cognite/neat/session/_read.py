@@ -16,14 +16,7 @@ from cognite.neat.core._data_model.models.entities._single_value import ViewEnti
 from cognite.neat.core._data_model.transformers import ClassicPrepareCore
 from cognite.neat.core._data_model.transformers._converters import (
     ToEnterpriseModel,
-)
-from cognite.neat.core._data_model import catalog, importers
-from cognite.neat.core._data_model.importers import BaseImporter
-from cognite.neat.core._data_model.models.entities._single_value import ViewEntity
-from cognite.neat.core._data_model.transformers import ClassicPrepareCore
-from cognite.neat.core._data_model.transformers._converters import (
-    ToEnterpriseModel,
-    _SubsetEditableCDMRules,
+    _SubsetEditableCDMPhysicalDataModel,
 )
 from cognite.neat.core._instances import examples as instances_examples
 from cognite.neat.core._instances import extractors
@@ -148,7 +141,7 @@ class CDFReadAPI(BaseReadAPI):
 
         self._state._raise_exception_if_condition_not_met(
             "Read data model from CDF",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             client_required=True,
         )
 

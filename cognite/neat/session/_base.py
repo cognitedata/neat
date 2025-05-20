@@ -285,11 +285,11 @@ class NeatSession:
 
         """
         self._state._raise_exception_if_condition_not_met(
-            "Connect data to data model", has_information_rules=True, instances_required=True
+            "Connect data to data model", has_conceptual_data_model=True, instances_required=True
         )
-        if not self._state.rule_store.provenance:
+        if not self._state.data_model_store.provenance:
             raise NeatValueError("Failed to find the last data model in the session.")
-        last_entity = self._state.rule_store.provenance[-1].target_entity
+        last_entity = self._state.data_model_store.provenance[-1].target_entity
         importer = importers.GraphImporter(
             self._state.instances.store, last_entity.conceptual.metadata.as_data_model_id()
         )
@@ -323,7 +323,7 @@ class NeatSession:
 
             return updated, updated_dms
 
-        return self._state.rule_store.do_activity(action, importer)
+        return self._state.data_model_store.do_activity(action, importer)
 
     def _repr_html_(self) -> str:
         state = self._state
