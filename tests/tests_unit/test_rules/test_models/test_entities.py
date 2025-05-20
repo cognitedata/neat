@@ -6,6 +6,7 @@ from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
     ConceptEntity,
     ConceptualEntity,
+    ContainerIndexEntity,
     DataModelEntity,
     DMSNodeEntity,
     EdgeEntity,
@@ -24,6 +25,21 @@ DEFAULT_VERSION = "vDefault"
 
 
 TEST_CASES = [
+    (
+        ContainerIndexEntity,
+        "name",
+        ContainerIndexEntity(suffix="name"),
+    ),
+    (
+        ContainerIndexEntity,
+        "name(cursorable=True)",
+        ContainerIndexEntity(suffix="name", cursorable=True),
+    ),
+    (
+        ContainerIndexEntity,
+        "name(bySpace=True,cursorable=True)",
+        ContainerIndexEntity(suffix="name", cursorable=True, bySpace=True),
+    ),
     (
         UnitEntity,
         "acceleration:ft-per-sec2",
@@ -123,7 +139,7 @@ class TestEntities:
     def test_load_dump(self, cls_: type[ConceptualEntity], raw: str, expected: ConceptualEntity) -> None:
         if issubclass(cls_, PhysicalEntity):
             defaults = {"space": DEFAULT_SPACE, "version": DEFAULT_VERSION}
-        elif issubclass(cls_, AssetEntity | RelationshipEntity):
+        elif issubclass(cls_, AssetEntity | RelationshipEntity | ContainerIndexEntity):
             defaults = {}
         else:
             defaults = {"prefix": DEFAULT_SPACE, "version": DEFAULT_VERSION}
