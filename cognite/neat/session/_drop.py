@@ -78,7 +78,7 @@ class DropDataModelAPI:
         """
         if sum([view_external_id is not None, group is not None]) != 1:
             raise NeatSessionError("Only one of view_external_id or group can be specified.")
-        last_dms = self._state.rule_store.last_verified_physical_data_model
+        last_dms = self._state.data_model_store.last_verified_physical_data_model
         if group is not None and last_dms.metadata.as_data_model_id() not in COGNITE_MODELS:
             raise NeatSessionError("Group can only be specified for CogniteCore models.")
         if view_external_id is not None:
@@ -98,6 +98,6 @@ class DropDataModelAPI:
                 )
         before = len(last_dms.views)
         issues = self._state.rule_transform(DropModelViews(view_external_id, group))
-        after = len(self._state.rule_store.last_verified_physical_data_model.views)
+        after = len(self._state.data_model_store.last_verified_physical_data_model.views)
         print(f"Dropped {before - after} views.")
         return issues

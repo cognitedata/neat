@@ -104,7 +104,7 @@ COGNITE_CONCEPTS = (
 
 DMS_LISTABLE_PROPERTY_LIMIT = 1000
 
-EXAMPLE_RULES = PACKAGE_DIRECTORY / "core" / "_data_model" / "examples"
+EXAMPLE_DATA_MODELS = PACKAGE_DIRECTORY / "core" / "_data_model" / "examples"
 EXAMPLE_GRAPHS = PACKAGE_DIRECTORY / "core" / "_instances" / "examples"
 
 DEFAULT_SPACE_URI = "http://purl.org/cognite/space/{space}#"

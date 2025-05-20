@@ -23,7 +23,7 @@ from ._verified import ConceptualDataModel, ConceptualProperty
 
 
 class ConceptualValidation:
-    """This class does all the validation of the Information rules that have dependencies
+    """This class does all the validation of the conceptual data model that have dependencies
     between components."""
 
     def __init__(

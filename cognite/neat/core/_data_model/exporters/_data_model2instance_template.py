@@ -20,8 +20,8 @@ from ._base import BaseExporter
 
 class InstanceTemplateExporter(BaseExporter[ConceptualDataModel, Workbook]):
     """
-    Converts Information Rules to a templated spreadsheet meant for capturing
-    instances based on class definitions in the rules.
+    Converts conceptual data model to a templated spreadsheet meant for capturing
+    instances based on concept definitions in the data model.
 
     Args:
         no_rows: number of rows for processing, by default 1000
@@ -50,30 +50,30 @@ class InstanceTemplateExporter(BaseExporter[ConceptualDataModel, Workbook]):
 
     def export(
         self,
-        rules: ConceptualDataModel,
+        data_model: ConceptualDataModel,
     ) -> Workbook:
         workbook = Workbook()
 
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
-        for class_, properties in DataModelAnalysis(rules).properties_by_id_by_concept().items():
-            workbook.create_sheet(title=class_.suffix)
+        for concept, properties in DataModelAnalysis(data_model).properties_by_id_by_concept().items():
+            workbook.create_sheet(title=concept.suffix)
 
             # Add header rows
-            workbook[class_.suffix].append(["identifier", *list(properties.keys())])
+            workbook[concept.suffix].append(["identifier", *list(properties.keys())])
 
             if self.auto_identifier_type == "uuid":
-                _add_uuid_identifiers(workbook, class_.suffix, self.no_rows)
+                _add_uuid_identifiers(workbook, concept.suffix, self.no_rows)
             else:
                 # Default to index-based identifier
-                _add_index_identifiers(workbook, class_.suffix, self.no_rows)
+                _add_index_identifiers(workbook, concept.suffix, self.no_rows)
 
             for i, property_ in enumerate(properties.values()):
                 if property_.type_ == EntityTypes.object_property and self.add_drop_down_list:
                     _add_drop_down_list(
                         workbook,
-                        class_.suffix,
+                        concept.suffix,
                         get_column_letter(i + 2),
                         self.no_rows,
                         cast(ConceptEntity, property_.value_type).suffix,
@@ -85,9 +85,9 @@ class InstanceTemplateExporter(BaseExporter[ConceptualDataModel, Workbook]):
 
         return workbook
 
-    def export_to_file(self, rules: ConceptualDataModel, filepath: Path) -> None:
+    def export_to_file(self, data_model: ConceptualDataModel, filepath: Path) -> None:
         """Exports graph capturing sheet to excel file."""
-        data = self.export(rules)
+        data = self.export(data_model)
         try:
             data.save(filepath)
         finally:

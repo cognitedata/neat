@@ -10,7 +10,13 @@ from cognite.neat.core._data_model.models import PhysicalDataModel, ConceptualDa
 from cognite.neat.core._data_model.models._base_verified import BaseVerifiedDataModel
 
 DMS_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'physical' / 'reference.md'
-INFO_REFERENCE_MD = Path(__file__).resolve().parent.parent / 'docs' / 'excel_data_modeling' / 'logical' / 'reference.md'
+INFO_REFERENCE_MD = (
+    Path(__file__).resolve().parent.parent
+    / "docs"
+    / "excel_data_modeling"
+    / "conceptual"
+    / "reference.md"
+)
 TODAY = date.today().strftime("%Y-%m-%d")
 
 HEADER = """# {name_title} Reference
@@ -100,4 +106,4 @@ def get_field_cls_type(field: FieldInfo) -> type[BaseModel]:
 
 if __name__ == "__main__":
     generate_reference("physical", PhysicalDataModel, DMS_REFERENCE_MD)
-    generate_reference("logical", ConceptualDataModel, INFO_REFERENCE_MD)
+    generate_reference("conceptual", ConceptualDataModel, INFO_REFERENCE_MD)

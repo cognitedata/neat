@@ -143,8 +143,8 @@ def test_infer_with_bad_property_names() -> None:
         named_graph=neat._state.instances.store.default_named_graph,
     )
     neat.infer()
-    assert neat._state.rule_store.provenance
-    info = neat._state.rule_store.last_verified_conceptual_data_model
+    assert neat._state.data_model_store.provenance
+    info = neat._state.data_model_store.last_verified_conceptual_data_model
 
     assert info is not None
     assert len(info.properties) == 1
@@ -163,8 +163,8 @@ def test_infer_importer_names_different_casing() -> None:
         named_graph=neat._state.instances.store.default_named_graph,
     )
     neat.infer()
-    assert neat._state.rule_store.provenance
-    info = neat._state.rule_store.last_verified_conceptual_data_model
+    assert neat._state.data_model_store.provenance
+    info = neat._state.data_model_store.last_verified_conceptual_data_model
 
     assert info is not None
     assert len(info.properties) == 1
@@ -173,8 +173,8 @@ def test_infer_importer_names_different_casing() -> None:
 
     neat.convert()
 
-    dms_rules = neat._state.rule_store.last_verified_physical_data_model
-    info_rules = neat._state.rule_store.last_verified_conceptual_data_model
+    dms_rules = neat._state.data_model_store.last_verified_physical_data_model
+    info_rules = neat._state.data_model_store.last_verified_conceptual_data_model
 
     store = neat._state.instances.store
     instances = [

@@ -25,8 +25,8 @@ from .exceptions import NeatSessionError, session_class_wrapper
 
 @session_class_wrapper
 class ToAPI:
-    """API used to write the contents of a NeatSession to a specified destination. For instance writing information
-    rules or DMS rules to a NEAT rules Excel spreadsheet, or writing a verified data model to CDF.
+    """API used to write the contents of a NeatSession to a specified destination. For instance writing
+    conceptual or physical data model to a NEAT formatted Excel spreadsheet, or writing a verified data model to CDF.
 
     """
 
@@ -58,7 +58,7 @@ class ToAPI:
             filepath = filepath.with_suffix(".ttl")
 
         exporter = exporters.OWLExporter()
-        self._state.rule_store.export_to_file(exporter, Path(io))
+        self._state.data_model_store.export_to_file(exporter, Path(io))
         return None
 
     def excel(
@@ -81,10 +81,10 @@ class ToAPI:
             add_empty_rows: If True, empty rows will be added between each component. Defaults to False.
 
         Example:
-            Export information model to excel rules sheet
+            Export conceptual data model to an Excel file
             ```python
-            information_rules_file_name = "information_rules.xlsx"
-            neat.to.excel(information_rules_file_name)
+            conceptual_dm_file_name = "conceptual_data_model.xlsx"
+            neat.to.excel(conceptual_dm_file_name)
             ```
 
         Example:
@@ -98,8 +98,8 @@ class ToAPI:
                 data_model_id=("sp_doctrino_space", "ExtensionCore", "v1"),
                 org_name="MyOrg",
             )
-            dms_rules_file_name = "dms_rules.xlsx"
-            neat.to.excel(dms_rules_file_name, include_reference=True)
+            physical_dm_file_name = "physical_dm.xlsx"
+            neat.to.excel(physical_dm_file_name, include_reference=True)
             ```
 
         Example:
@@ -110,36 +110,36 @@ class ToAPI:
             neat = NeatSession(client)
 
             neat.read.cdf(("my_space", "ISA95Model", "v5"))
-            dms_rules_file_name = "dms_rules.xlsx"
-            neat.to.excel(dms_rules_file_name, include_reference=("cdf_cdm", "CogniteCore", "v1"))
+            physical_dm_file_name = "physical_dm.xlsx"
+            neat.to.excel(physical_dm_file_name, include_reference=("cdf_cdm", "CogniteCore", "v1"))
         """
         reference_data_model_with_prefix: tuple[VerifiedDataModel, str] | None = None
         include_properties = include_properties.strip().lower()
 
         if include_reference is not False:
             if include_reference is True and self._state.last_reference is not None:
-                ref_rules: ConceptualDataModel | PhysicalDataModel | None = self._state.last_reference
+                ref_data_model: ConceptualDataModel | PhysicalDataModel | None = self._state.last_reference
             elif include_reference is True:
-                ref_rules = None
+                ref_data_model = None
             else:
                 if not self._state.client:
                     raise NeatSessionError("No client provided!")
-                ref_rules = None
+                ref_data_model = None
                 with catch_issues() as issues:
                     ref_read = DMSImporter.from_data_model_id(self._state.client, include_reference).to_data_model()
                     if ref_read.unverified_data_model is not None:
-                        ref_rules = ref_read.unverified_data_model.as_verified_data_model()
-                if ref_rules is None or issues.has_errors:
+                        ref_data_model = ref_read.unverified_data_model.as_verified_data_model()
+                if ref_data_model is None or issues.has_errors:
                     issues.action = f"Read {include_reference}"
                     return issues
-            if ref_rules is not None:
+            if ref_data_model is not None:
                 prefix = "Ref"
                 if (
-                    isinstance(ref_rules.metadata, PhysicalMetadata)
-                    and ref_rules.metadata.as_data_model_id() in COGNITE_MODELS
+                    isinstance(ref_data_model.metadata, PhysicalMetadata)
+                    and ref_data_model.metadata.as_data_model_id() in COGNITE_MODELS
                 ):
                     prefix = "CDM"
-                reference_data_model_with_prefix = ref_rules, prefix
+                reference_data_model_with_prefix = ref_data_model, prefix
 
         if include_properties == "same-space":
             warnings.filterwarnings("default")
@@ -151,7 +151,7 @@ class ToAPI:
             add_empty_rows=add_empty_rows,
             include_properties=include_properties,  # type: ignore
         )
-        self._state.rule_store.export_to_file(exporter, Path(io))
+        self._state.data_model_store.export_to_file(exporter, Path(io))
         return None
 
     def session(self, io: Any) -> None:
@@ -216,7 +216,7 @@ class ToAPI:
         Example:
             Export to yaml file in the case of "neat" format
             ```python
-            your_yaml_file_name = "neat_rules.yaml"
+            your_yaml_file_name = "neat_dm.yaml"
             neat.to.yaml(your_yaml_file_name, format="neat")
             ```
 
@@ -238,9 +238,9 @@ class ToAPI:
         if format == "neat":
             exporter = exporters.YAMLExporter()
             if io is None:
-                return self._state.rule_store.export(exporter)
+                return self._state.data_model_store.export(exporter)
 
-            self._state.rule_store.export_to_file(exporter, Path(io))
+            self._state.data_model_store.export_to_file(exporter, Path(io))
         elif format == "toolkit":
             if io is None or not isinstance(io, str | Path):
                 raise NeatSessionError(
@@ -250,7 +250,7 @@ class ToAPI:
             user_path = Path(io)
             if user_path.suffix == "" and not user_path.exists():
                 user_path.mkdir(parents=True)
-            self._state.rule_store.export_to_file(
+            self._state.data_model_store.export_to_file(
                 exporters.DMSExporter(remove_cdf_spaces=skip_system_spaces), user_path
             )
         else:
@@ -310,10 +310,10 @@ class CDFToAPI:
         )
 
         client = cast(NeatClient, self._state.client)
-        dms_rules = self._state.rule_store.last_verified_physical_data_model
-        instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
+        physical_data_model = self._state.data_model_store.last_verified_physical_data_model
+        instance_space = instance_space or f"{physical_data_model.metadata.space}_instances"
 
-        if instance_space and instance_space == dms_rules.metadata.space:
+        if instance_space and instance_space == physical_data_model.metadata.space:
             raise NeatSessionError("Space for instances must be different from the data model space.")
         elif not PATTERNS.space_compliance.match(str(instance_space)):
             raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
@@ -322,8 +322,8 @@ class CDFToAPI:
             client.data_modeling.spaces.apply(dm.SpaceApply(space=instance_space))
 
         loader = loaders.DMSLoader(
-            self._state.rule_store.last_verified_physical_data_model,
-            self._state.rule_store.last_verified_conceptual_data_model,
+            self._state.data_model_store.last_verified_physical_data_model,
+            self._state.data_model_store.last_verified_conceptual_data_model,
             self._state.instances.store,
             instance_space=instance_space,
             client=client,
@@ -375,7 +375,7 @@ class CDFToAPI:
 
         exporter = exporters.DMSExporter(existing=existing, drop_data=drop_data)
 
-        result = self._state.rule_store.export_to_cdf(exporter, cast(NeatClient, self._state.client), dry_run)
+        result = self._state.data_model_store.export_to_cdf(exporter, cast(NeatClient, self._state.client), dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
 
@@ -418,17 +418,17 @@ class ToPythonAPI:
             instances = neat.to._python.instances(space_from_property="dataSetId")
             ```
         """
-        dms_rules = self._state.rule_store.last_verified_physical_data_model
-        instance_space = instance_space or f"{dms_rules.metadata.space}_instances"
+        physical_data_model = self._state.data_model_store.last_verified_physical_data_model
+        instance_space = instance_space or f"{physical_data_model.metadata.space}_instances"
 
-        if instance_space and instance_space == dms_rules.metadata.space:
+        if instance_space and instance_space == physical_data_model.metadata.space:
             raise NeatSessionError("Space for instances must be different from the data model space.")
         elif not PATTERNS.space_compliance.match(str(instance_space)):
             raise NeatSessionError(f"Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
 
         loader = loaders.DMSLoader(
-            self._state.rule_store.last_verified_physical_data_model,
-            self._state.rule_store.last_verified_conceptual_data_model,
+            self._state.data_model_store.last_verified_physical_data_model,
+            self._state.data_model_store.last_verified_conceptual_data_model,
             self._state.instances.store,
             instance_space=instance_space,
             space_property=space_from_property,
