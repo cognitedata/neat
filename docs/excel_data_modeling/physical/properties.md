@@ -8,7 +8,7 @@ These concepts match a `Entity` and `Literal` in semantic modeling. It is recomm
 views, neat uses `camelCase` for data properties. This makes it easier to distinguish between the two by looking
 at the `Value Type` column in the `Properties` sheet.
 
-### Data Property
+## Data Property
 A data property is used to specify the data that is stored on the node (also known as node attributes). Below is an example of a data property:
 
 | View        | View Property | Value Type                | Container      | Container Property |
@@ -38,7 +38,28 @@ There are two `Value Type` that supports extra parameters
 | WindTurbine | category      | enum(collection=category, unknownValue=onshore) | WindTurbine | category           |
 
 
-### Connection Property
+### Index
+
+For data properties, you can specify an index. The index is used to speed up queries on the property. The syntax is as
+follows;
+
+| View        | View Property | Value Type | Container      | Container Property | Index                      |
+|-------------|---------------|------------|----------------|--------------------|----------------------------|
+| WindTurbine | name          | text       | GeneratingUnit | name               | nameIndex(cursorable=True) |
+
+Note that you can specify whether the index is cursorable or not, see 
+[here](https://docs.cognite.com/cdf/dm/dm_guides/dm_performance_considerations/#pagination-cursorable-indexes).
+
+You can also specify indices that uses multiple data properties. You can do this by specifying the same `Index` name
+for multiple properties. See the example below:
+
+| View        | View Property | Value Type | Container      | Container Property | Index              |
+|-------------|---------------|------------|----------------|--------------------|--------------------|
+| WindTurbine | name          | text       | GeneratingUnit | name               | nameCapacityIndex  |
+| WindTurbine | capacity      | float64    | GeneratingUnit | capacity           | nameCapacityIndex  |
+
+
+## Connection Property
 
 All connections have a `ValueType` that specifies the type of the connected node. For example:
 
@@ -99,3 +120,5 @@ connected to a MetMast.
 Connecting this example to the previous example, we see that the reverse here will be an edge that is pointing the
 opposite direction of the `WindTurbine`.`metmasts` edge. The reverse enable use to easily reuse the same edge
 for both directions.
+
+## Index 
