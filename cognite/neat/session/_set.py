@@ -48,7 +48,7 @@ class SetAPI:
                     "Cannot change the data model ID of a Cognite Data Model in NeatSession"
                     " due to temporarily issue with the reverse direct relation interpretation"
                 )
-        return self._state.rule_transform(SetIDDMSModel(new_model_id, name))
+        return self._state.data_model_transform(SetIDDMSModel(new_model_id, name))
 
     def client(self, client: CogniteClient) -> None:
         """Sets the client to be used in the session."""

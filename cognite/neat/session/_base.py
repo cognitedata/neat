@@ -174,7 +174,7 @@ class NeatSession:
         )
         converter = ConceptualToPhysical(reserved_properties=reserved_properties, client=self._state.client)
 
-        issues = self._state.rule_transform(converter)
+        issues = self._state.data_model_transform(converter)
 
         if self._verbose and not issues.has_errors:
             print("Conceptual data model converted to physical data model.")
@@ -222,7 +222,7 @@ class NeatSession:
             max_number_of_instance=max_number_of_instance,
             data_model_id=model_id,
         )
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
     def _infer_subclasses(
         self,

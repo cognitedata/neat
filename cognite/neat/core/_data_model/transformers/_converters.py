@@ -2346,7 +2346,7 @@ class AddCogniteProperties(
     ) -> ImportedDataModel[UnverifiedConceptualDataModel]:
         input_ = data_model.unverified_data_model
         if input_ is None:
-            raise NeatValueError("Rule read failed. Cannot add cognite properties to None data_model.")
+            raise NeatValueError("Data model read failed. Cannot add cognite properties to None data_model.")
 
         default_space = input_.metadata.space
         default_version = input_.metadata.version

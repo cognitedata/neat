@@ -70,7 +70,7 @@ class TemplateAPI:
 
         """
         last_dm = self._state.data_model_store.last_verified_data_model
-        issues = self._state.rule_transform(
+        issues = self._state.data_model_transform(
             ToEnterpriseModel(
                 new_model_id=data_model_id,
                 org_name=org_name,
@@ -122,7 +122,7 @@ class TemplateAPI:
 
         transformers.append(ToDataProductModel(new_model_id=data_model_id, include=include))
 
-        issues = self._state.rule_transform(*transformers)
+        issues = self._state.data_model_transform(*transformers)
         if last_dm and not issues.has_errors:
             self._state.last_reference = last_dm
         return issues
@@ -202,7 +202,7 @@ class TemplateAPI:
                     ExcelExporter(styling="maximal").export_to_file(info, output_path)
         issues.action = "Created extension template"
 
-        # Adding issues to the state in the rule store
+        # Adding issues to the state in the data model store
         if issues:
             self._state.data_model_store._last_issues = issues
         return issues
