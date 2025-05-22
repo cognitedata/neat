@@ -62,9 +62,9 @@ class InspectAPI:
             neat.inspect.properties
             ```
         """
-        if self._state.rule_store.empty:
+        if self._state.data_model_store.empty:
             return pd.DataFrame()
-        last_entity = self._state.rule_store.provenance[-1].target_entity
+        last_entity = self._state.data_model_store.provenance[-1].target_entity
         if last_entity.physical:
             df = last_entity.physical.properties.to_pandas()
         else:
@@ -73,9 +73,9 @@ class InspectAPI:
         return df
 
     def views(self) -> pd.DataFrame:
-        if self._state.rule_store.empty:
+        if self._state.data_model_store.empty:
             return pd.DataFrame()
-        last_entity = self._state.rule_store.provenance[-1].target_entity
+        last_entity = self._state.data_model_store.provenance[-1].target_entity
         if last_entity.physical is None:
             return pd.DataFrame()
         df = last_entity.physical.views.to_pandas()
@@ -95,7 +95,7 @@ class InspectIssues:
     def __call__(
         self,
         search: str | None = None,
-        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
+        include: (Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]]) = "all",
         return_dataframe: Literal[True] = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame: ...
 
@@ -103,7 +103,7 @@ class InspectIssues:
     def __call__(
         self,
         search: str | None = None,
-        include: Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]] = "all",
+        include: (Literal["all", "errors", "warning"] | Set[Literal["all", "errors", "warning"]]) = "all",
         return_dataframe: Literal[False] = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> None: ...
 
@@ -114,7 +114,7 @@ class InspectIssues:
         return_dataframe: bool = (False if IN_NOTEBOOK else True),  # type: ignore[assignment]
     ) -> pd.DataFrame | None:
         """Returns the issues of the current data model."""
-        issues = self._state.rule_store.last_issues
+        issues = self._state.data_model_store.last_issues
         if issues is None and self._state.instances.store.provenance:
             last_change = self._state.instances.store.provenance[-1]
             issues = last_change.target_entity.issues
@@ -180,7 +180,7 @@ class InspectOutcome:
     """
 
     def __init__(self, state: SessionState) -> None:
-        self.data_model = InspectUploadOutcome(lambda: state.rule_store.last_outcome)
+        self.data_model = InspectUploadOutcome(lambda: state.data_model_store.last_outcome)
         self.instances = InspectUploadOutcome(lambda: state.instances.last_outcome)
 
 

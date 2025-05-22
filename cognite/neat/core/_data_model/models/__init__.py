@@ -10,18 +10,20 @@ from ._base_verified import DataModelType, ExtensionCategory, RoleTypes, SchemaC
 from .physical._unverified import UnverifiedPhysicalDataModel
 from .physical._verified import PhysicalDataModel
 
-INPUT_RULES_BY_ROLE: dict[RoleTypes, type[UnverifiedConceptualDataModel] | type[UnverifiedPhysicalDataModel]] = {
+UNVERIFIED_DATA_MODEL_BY_ROLE: dict[
+    RoleTypes, type[UnverifiedConceptualDataModel] | type[UnverifiedPhysicalDataModel]
+] = {
     RoleTypes.information: UnverifiedConceptualDataModel,
     RoleTypes.dms: UnverifiedPhysicalDataModel,
 }
-VERIFIED_RULES_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[PhysicalDataModel]] = {
+VERIFIED_DATA_MODEL_BY_ROLE: dict[RoleTypes, type[ConceptualDataModel] | type[PhysicalDataModel]] = {
     RoleTypes.information: ConceptualDataModel,
     RoleTypes.dms: PhysicalDataModel,
 }
 
 
 __all__ = [
-    "INPUT_RULES_BY_ROLE",
+    "UNVERIFIED_DATA_MODEL_BY_ROLE",
     "ConceptualDataModel",
     "DMSSchema",
     "DataModelType",

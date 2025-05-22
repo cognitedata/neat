@@ -1,7 +1,7 @@
 import functools
 import warnings
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeVar
 
 from cognite.neat.core._issues.errors import CDFMissingClientError, NeatImportError
 from cognite.neat.core._issues.errors._external import OxigraphStorageLockedError
@@ -68,7 +68,10 @@ def _session_method_wrapper(func: Callable, cls_name: str) -> Any:
     return wrapper
 
 
-def session_class_wrapper(cls: type) -> type:
+T_Class = TypeVar("T_Class", bound=object)
+
+
+def session_class_wrapper(cls: type[T_Class]) -> type[T_Class]:
     """This decorator wraps all methods of a class.
 
     It should be used with all composition classes used with the NeatSession class.

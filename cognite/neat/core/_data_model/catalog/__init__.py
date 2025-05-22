@@ -1,4 +1,4 @@
-"""Shortcut to rules catalog files"""
+"""Shortcut to data model catalog"""
 
 from pathlib import Path
 

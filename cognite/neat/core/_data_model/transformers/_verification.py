@@ -35,7 +35,7 @@ class VerificationTransformer(DataModelTransformer[T_ImportedUnverifiedDataModel
     def transform(self, data_model: T_ImportedUnverifiedDataModel) -> T_VerifiedDataModel:
         in_ = data_model.unverified_data_model
         if in_ is None:
-            raise NeatValueError("Cannot verify rules. The reading of the rules failed.")
+            raise NeatValueError("Cannot verify data model. The reading of the data model failed.")
         verified_data_model: T_VerifiedDataModel | None = None
         # We need to catch issues as we use the error args to provide extra context for the errors/warnings
         # For example, which row in the spreadsheet the error occurred.

@@ -15,7 +15,7 @@ from cognite.neat.core._data_model.models.entities._single_value import ViewEnti
 from cognite.neat.core._data_model.transformers import ClassicPrepareCore
 from cognite.neat.core._data_model.transformers._converters import (
     ToEnterpriseModel,
-    _SubsetEditableCDMRules,
+    _SubsetEditableCDMPhysicalDataModel,
 )
 from cognite.neat.core._instances import examples as instances_examples
 from cognite.neat.core._instances import extractors
@@ -113,7 +113,7 @@ class CDFReadAPI(BaseReadAPI):
 
         self._state._raise_exception_if_condition_not_met(
             "Read data model from CDF",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             client_required=True,
         )
 
@@ -148,7 +148,7 @@ class CDFReadAPI(BaseReadAPI):
 
         self._state._raise_exception_if_condition_not_met(
             "Subset Core Data Model",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             client_required=True,
         )
 
@@ -164,7 +164,7 @@ class CDFReadAPI(BaseReadAPI):
         if issues.has_errors:
             return issues
 
-        cdm_rules = self._state.rule_store.last_verified_data_model
+        cdm_data_model = self._state.data_model_store.last_verified_data_model
 
         issues.extend(
             self._state.rule_transform(
@@ -182,7 +182,7 @@ class CDFReadAPI(BaseReadAPI):
 
         issues.extend(
             self._state.rule_transform(
-                _SubsetEditableCDMRules(
+                _SubsetEditableCDMPhysicalDataModel(
                     views={
                         ViewEntity(
                             space=cdm_v1.space,
@@ -195,8 +195,8 @@ class CDFReadAPI(BaseReadAPI):
             )
         )
 
-        if cdm_rules and not issues.has_errors:
-            self._state.last_reference = cdm_rules
+        if cdm_data_model and not issues.has_errors:
+            self._state.last_reference = cdm_data_model
 
         return issues
 
@@ -220,7 +220,7 @@ class CDFReadAPI(BaseReadAPI):
         """
         self._state._raise_exception_if_condition_not_met(
             "Read DMS Graph",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             empty_instances_store_required=True,
             client_required=True,
         )
@@ -350,7 +350,7 @@ class CDFClassicAPI(BaseReadAPI):
         """
         self._state._raise_exception_if_condition_not_met(
             "Read classic graph",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             empty_instances_store_required=True,
             client_required=True,
         )
@@ -399,7 +399,7 @@ class CDFClassicAPI(BaseReadAPI):
         # The above transformations creates a new type, so we need to update
         self._state.instances.neat_prefix_by_type_uri.update({namespace["ClassicSourceSystem"]: "ClassicSourceSystem_"})
         # Updating the information model.
-        prepare_issues = self._state.rule_store.transform(
+        prepare_issues = self._state.data_model_store.transform(
             ClassicPrepareCore(namespace, reference_timeseries, reference_files)
         )
 
@@ -432,7 +432,7 @@ class CDFClassicAPI(BaseReadAPI):
         namespace = CLASSIC_CDF_NAMESPACE
         self._state._raise_exception_if_condition_not_met(
             "Read time series",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             empty_instances_store_required=True,
             client_required=True,
         )
@@ -491,7 +491,7 @@ class CDFClassicAPI(BaseReadAPI):
         namespace = CLASSIC_CDF_NAMESPACE
         self._state._raise_exception_if_condition_not_met(
             "Read time series",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             empty_instances_store_required=True,
             client_required=True,
         )
@@ -528,15 +528,15 @@ class CDFClassicAPI(BaseReadAPI):
 
 @session_class_wrapper
 class ExcelReadAPI(BaseReadAPI):
-    """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
-    or a DMS Architect.
+    """Reads a Neat Excel Data Model to the data model store.
+    The data model spreadsheets may contain conceptual or physical data model definitions.
 
     Args:
         io: file path to the Excel sheet
 
     Example:
         ```python
-        neat.read.excel("information_or_dms_rules_sheet.xlsx")
+        neat.read.excel("conceptual_or_physical_data_model.xlsx")
         ```
     """
 
@@ -544,27 +544,28 @@ class ExcelReadAPI(BaseReadAPI):
         super().__init__(state, verbose)
 
     def __call__(self, io: Any, enable_manual_edit: bool = False) -> IssueList:
-        """Reads a Neat Excel Rules sheet to the graph store. The rules sheet may stem from an Information architect,
-        or a DMS Architect.
+        """Reads a Neat Excel Data Model to the data model store.
+        The data model spreadsheets may contain conceptual or physical data model definitions.
 
-        Args:
-            io: file path to the Excel sheet
-            enable_manual_edit: If True, the user will be able to re-import rules which where edit outside NeatSession
+            Args:
+                io: file path to the Excel sheet
+                enable_manual_edit: If True, the user will be able to re-import data model
+                    which where edit outside NeatSession
 
-        !!! note "Manual Edit Warning"
-            This is an alpha feature and is subject to change without notice.
-            It is expected to have some limitations and may not work as expected in all cases.
+            !!! note "Manual Edit Warning"
+                This is an alpha feature and is subject to change without notice.
+                It is expected to have some limitations and may not work as expected in all cases.
         """
         reader = NeatReader.create(io)
         path = reader.materialize_path()
 
         if enable_manual_edit:
             warnings.filterwarnings("default")
-            ExperimentalFlags.manual_rules_edit.warn()
+            ExperimentalFlags.manual_data_model_edit.warn()
         else:
             self._state._raise_exception_if_condition_not_met(
-                "Read Excel Rules",
-                empty_rules_store_required=True,
+                "Read Excel Data Model",
+                empty_data_model_store_required=True,
             )
 
         return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
@@ -573,7 +574,8 @@ class ExcelReadAPI(BaseReadAPI):
 @session_class_wrapper
 class YamlReadAPI(BaseReadAPI):
     def __call__(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> IssueList:
-        """Reads a yaml with either neat rules, or several toolkit yaml files to import Data Model(s) into NeatSession.
+        """Reads a yaml with either neat data mode, or several toolkit yaml files to
+        import Data Model(s) into NeatSession.
 
         Args:
             io: File path to the Yaml file in the case of "neat" yaml, or path to a zip folder or directory with several
@@ -587,7 +589,7 @@ class YamlReadAPI(BaseReadAPI):
         """
         self._state._raise_exception_if_condition_not_met(
             "Read YAML data model",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
         )
         reader = NeatReader.create(io)
         path = reader.materialize_path()
@@ -695,7 +697,7 @@ class XMLReadAPI(BaseReadAPI):
 
         self._state._raise_exception_if_condition_not_met(
             "Read DEXPI file",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             empty_instances_store_required=True,
         )
 
@@ -757,7 +759,7 @@ class XMLReadAPI(BaseReadAPI):
 
         self._state._raise_exception_if_condition_not_met(
             "Read AML file",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             empty_instances_store_required=True,
         )
 
@@ -817,7 +819,7 @@ class RDFReadAPI(BaseReadAPI):
 
         self._state._raise_exception_if_condition_not_met(
             "Read Ontology file",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
         )
 
         reader = NeatReader.create(io)
@@ -840,7 +842,7 @@ class RDFReadAPI(BaseReadAPI):
 
         self._state._raise_exception_if_condition_not_met(
             "Read IMF file",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
         )
 
         reader = NeatReader.create(io)
@@ -850,7 +852,7 @@ class RDFReadAPI(BaseReadAPI):
     def instances(self, io: Any) -> IssueList:
         self._state._raise_exception_if_condition_not_met(
             "Read RDF Instances",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
         )
         reader = NeatReader.create(io)
         self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
@@ -898,7 +900,7 @@ class Examples:
         self._state._raise_exception_if_condition_not_met(
             "Read Nordic44 graph example",
             empty_instances_store_required=True,
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
         )
 
         self._state.instances.store.write(extractors.RdfFileExtractor(instances_examples.nordic44_knowledge_graph))
@@ -909,7 +911,7 @@ class Examples:
 
         self._state._raise_exception_if_condition_not_met(
             "Read Pump Data Model example",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
         )
 
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
@@ -920,7 +922,7 @@ class Examples:
 
         self._state._raise_exception_if_condition_not_met(
             "Read Core Data Model example",
-            empty_rules_store_required=True,
+            empty_data_model_store_required=True,
             client_required=True,
         )
 

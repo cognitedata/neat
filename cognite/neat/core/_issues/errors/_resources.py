@@ -72,7 +72,7 @@ class ResourceNotDefinedError(ResourceError[T_Identifier]):
 class ResourceConversionError(ResourceError, ValueError):
     """Failed to convert the {resource_type} {identifier} to {target_format}: {reason}"""
 
-    fix = "Check the error message and correct the rules."
+    fix = "Check the error message and correct the data model."
     target_format: str
     reason: str
 
