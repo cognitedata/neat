@@ -43,9 +43,9 @@ There are two `Value Type` that supports extra parameters
 For data properties, you can specify an index. The index is used to speed up queries on the property. The syntax is as
 follows;
 
-| View        | View Property | Value Type | Container      | Container Property | Index                      |
-|-------------|---------------|------------|----------------|--------------------|----------------------------|
-| WindTurbine | name          | text       | GeneratingUnit | name               | nameIndex(cursorable=True) |
+| View        | View Property | Value Type | Container      | Container Property | Index                            |
+|-------------|---------------|------------|----------------|--------------------|----------------------------------|
+| WindTurbine | name          | text       | GeneratingUnit | name               | btree:nameIndex(cursorable=True) |
 
 Note that you can specify whether the index is cursorable or not, see 
 [here](https://docs.cognite.com/cdf/dm/dm_guides/dm_performance_considerations/#pagination-cursorable-indexes).
@@ -57,6 +57,15 @@ for multiple properties. See the example below:
 |-------------|---------------|------------|----------------|--------------------|--------------------|
 | WindTurbine | name          | text       | GeneratingUnit | name               | nameCapacityIndex  |
 | WindTurbine | capacity      | float64    | GeneratingUnit | capacity           | nameCapacityIndex  |
+
+There are two available index types, `btree` which should be used for non-list properties and `inverted` which should
+be used for list properties. If you do not specify the index type, it will default to `btree` for non-list properties
+and `inverted` for list properties. 
+
+| View        | View Property | Value Type | Container      | Container Property | Index              |
+|-------------|---------------|------------|----------------|--------------------|--------------------|
+| WindTurbine | tags          | text       | GeneratingUnit | name               | inverted:tagsIndex |
+
 
 
 ## Connection Property
