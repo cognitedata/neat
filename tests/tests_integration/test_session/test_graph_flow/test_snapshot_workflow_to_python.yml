@@ -201,7 +201,7 @@ data_product:
     container_property: sourceCreatedTime
     description: When the instance was created in source system (if available)
     immutable: false
-    index: sourceCreatedTime
+    index: btree:sourceCreatedTime(cursorable=False)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
@@ -223,7 +223,7 @@ data_product:
     container_property: sourceId
     description: Identifier from the source system
     immutable: false
-    index: sourceId(cursorable=True)
+    index: btree:sourceId(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
@@ -234,7 +234,7 @@ data_product:
     container_property: sourceUpdatedTime
     description: When the instance was last updated in the source system (if available)
     immutable: false
-    index: sourceUpdatedTime(cursorable=True)
+    index: btree:sourceUpdatedTime(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
@@ -382,7 +382,7 @@ data_product:
     container_property: manufacturer
     description: The manufacturer of the equipment.
     immutable: false
-    index: manufacturer(cursorable=True)
+    index: btree:manufacturer(cursorable=True)
     max_count: 1
     min_count: 0
     name: Manufacturer
@@ -394,7 +394,7 @@ data_product:
     container_property: name
     description: Name of the instance
     immutable: false
-    index: name
+    index: btree:name(cursorable=False)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
@@ -405,7 +405,7 @@ data_product:
     container_property: serialNumber
     description: The serial number of the equipment.
     immutable: false
-    index: serialNumber(cursorable=True)
+    index: btree:serialNumber(cursorable=True)
     max_count: 1
     min_count: 0
     name: Serial number
@@ -440,7 +440,7 @@ data_product:
     container_property: sourceCreatedTime
     description: When the instance was created in source system (if available)
     immutable: false
-    index: sourceCreatedTime
+    index: btree:sourceCreatedTime(cursorable=False)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
@@ -462,7 +462,7 @@ data_product:
     container_property: sourceId
     description: Identifier from the source system
     immutable: false
-    index: sourceId(cursorable=True)
+    index: btree:sourceId(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
@@ -473,7 +473,7 @@ data_product:
     container_property: sourceUpdatedTime
     description: When the instance was last updated in the source system (if available)
     immutable: false
-    index: sourceUpdatedTime(cursorable=True)
+    index: btree:sourceUpdatedTime(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
@@ -596,7 +596,7 @@ data_product:
     container_property: name
     description: Name of the instance
     immutable: false
-    index: name
+    index: btree:name(cursorable=False)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
@@ -607,7 +607,7 @@ data_product:
     container_property: scheduledEndTime
     description: The planned end time of an activity (or similar that extends this)
     immutable: false
-    index: scheduledEndTime(cursorable=True)
+    index: btree:scheduledEndTime(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSchedulable/scheduledEndTime
@@ -618,7 +618,7 @@ data_product:
     container_property: scheduledStartTime
     description: The planned start time of an activity (or similar that extends this)
     immutable: false
-    index: scheduledStartTime(cursorable=True)
+    index: btree:scheduledStartTime(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSchedulable/scheduledStartTime
@@ -652,7 +652,7 @@ data_product:
     container_property: sourceCreatedTime
     description: When the instance was created in source system (if available)
     immutable: false
-    index: sourceCreatedTime
+    index: btree:sourceCreatedTime(cursorable=False)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
@@ -674,7 +674,7 @@ data_product:
     container_property: sourceId
     description: Identifier from the source system
     immutable: false
-    index: sourceId(cursorable=True)
+    index: btree:sourceId(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
@@ -685,7 +685,7 @@ data_product:
     container_property: sourceUpdatedTime
     description: When the instance was last updated in the source system (if available)
     immutable: false
-    index: sourceUpdatedTime(cursorable=True)
+    index: btree:sourceUpdatedTime(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
@@ -933,7 +933,7 @@ data_product:
     container_property: sourceId
     description: Identifier from the source system
     immutable: false
-    index: sourceId(cursorable=True)
+    index: btree:sourceId(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
@@ -1365,7 +1365,7 @@ data_product:
     container_property: sourceCreatedTime
     description: When the instance was created in source system (if available)
     immutable: false
-    index: sourceCreatedTime
+    index: btree:sourceCreatedTime(cursorable=False)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceCreatedTime
@@ -1387,7 +1387,7 @@ data_product:
     container_property: sourceId
     description: Identifier from the source system
     immutable: false
-    index: sourceId(cursorable=True)
+    index: btree:sourceId(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceId
@@ -1408,7 +1408,7 @@ data_product:
     container_property: sourceUpdatedTime
     description: When the instance was last updated in the source system (if available)
     immutable: false
-    index: sourceUpdatedTime(cursorable=True)
+    index: btree:sourceUpdatedTime(cursorable=True)
     max_count: 1
     min_count: 0
     neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteSourceable/sourceUpdatedTime
