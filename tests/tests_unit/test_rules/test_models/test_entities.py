@@ -33,12 +33,27 @@ TEST_CASES = [
     (
         ContainerIndexEntity,
         "name(cursorable=True)",
+        ContainerIndexEntity(suffix="name", cursorable=False),
+    ),
+    (
+        ContainerIndexEntity,
+        "name(cursorable=True)",
         ContainerIndexEntity(suffix="name", cursorable=True),
     ),
     (
         ContainerIndexEntity,
         "name(bySpace=True,cursorable=True)",
         ContainerIndexEntity(suffix="name", cursorable=True, bySpace=True),
+    ),
+    (
+        ContainerIndexEntity,
+        "btree:name(bySpace=True,cursorable=True)",
+        ContainerIndexEntity(prefix="btree", suffix="name", cursorable=True, bySpace=True),
+    ),
+    (
+        ContainerIndexEntity,
+        "inverted:tags",
+        ContainerIndexEntity(prefix="inverted", suffix="tags"),
     ),
     (
         UnitEntity,

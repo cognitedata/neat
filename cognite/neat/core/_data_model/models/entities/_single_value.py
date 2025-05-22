@@ -21,7 +21,6 @@ from pydantic import (
     model_serializer,
     model_validator,
 )
-from pydantic_core import PydanticUndefined
 
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._utils.text import replace_non_alphanumeric_with_underscore
@@ -215,10 +214,6 @@ class ConceptualEntity(BaseModel, extra="ignore"):
             for field_name, field in self.model_fields.items()
             if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
         }
-        for field_name, field in self.model_fields.items():
-            if field.default not in (Undefined, PydanticUndefined, None):
-                defaults[field.alias or field_name] = field.default
-
         # We only remove the default values if all the fields are default
         # For example, if we dump `cdf_cdm:CogniteAsset(version=v1)` and the default is `version=v1`,
         # we should not remove it unless the space is `cdf_cdm`
@@ -231,7 +226,7 @@ class ConceptualEntity(BaseModel, extra="ignore"):
                 if model_dump[key] == value:
                     to_delete.append(key)
                 elif isinstance(self, EdgeEntity | ContainerIndexEntity):
-                    # Exception is edge and container index enteties, then we remove all the defaults we can.
+                    # Exception is edge and container index entities, then we remove all the defaults we can.
                     continue
                 else:
                     # Not all fields are default. We should not remove any of them.
@@ -558,7 +553,11 @@ class ReferenceEntity(ConceptEntity):
 
 class ContainerIndexEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.container_index
-    prefix: _UndefinedType = Undefined
+    prefix: _UndefinedType | Literal["btree", "inverted"] = Undefined
     suffix: str
-    cursorable: bool = False
-    by_space: bool = Field(False, alias="bySpace")
+    cursorable: bool | None = Field(
+        None, description="Whether the index is cursorable. None indicates the value is not set."
+    )
+    by_space: bool | None = Field(
+        None, alias="bySpace", description="Whether the index is by space. None indicates the value is not set."
+    )

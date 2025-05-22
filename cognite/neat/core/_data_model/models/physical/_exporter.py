@@ -37,6 +37,7 @@ from cognite.neat.core._data_model.models.entities import (
     NodeTypeFilter,
     PhysicalUnknownEntity,
     ReverseConnectionEntity,
+    Undefined,
     UnitEntity,
     ViewEntity,
 )
@@ -388,11 +389,15 @@ class _DMSExporter:
                         index_properties[(index, prop.is_list or False)].add(prop.container_property)
             for (index_entity, is_list), properties in index_properties.items():
                 container.indexes = container.indexes or {}
-                if is_list:
+                if index_entity.prefix == "inverted" or (index_entity.prefix is Undefined and is_list):
                     container.indexes[index_entity.suffix] = InvertedIndex(properties=sorted(properties))
-                else:
+                elif index_entity.prefix == "btree" or (index_entity.prefix is Undefined and not is_list):
                     container.indexes[index_entity.suffix] = BTreeIndex(
-                        properties=sorted(properties), cursorable=index_entity.cursorable
+                        properties=sorted(properties), cursorable=index_entity.cursorable or False
+                    )
+                else:
+                    raise NeatValueError(
+                        f"Invalid index prefix {index_entity.prefix!r} in {container_id}.{index_entity.suffix!r}"
                     )
 
         # We might drop containers we convert direct relations of list into multi-edge connections

@@ -555,9 +555,9 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         index: list[str | ContainerIndexEntity] = []
         for index_name, index_obj in (container.indexes or {}).items():
             if isinstance(index_obj, BTreeIndex) and prop_id in index_obj.properties:
-                index.append(ContainerIndexEntity(suffix=index_name, cursorable=index_obj.cursorable))
+                index.append(ContainerIndexEntity(prefix="btree", suffix=index_name, cursorable=index_obj.cursorable))
             elif isinstance(index_obj, InvertedIndex) and prop_id in index_obj.properties:
-                index.append(index_name)
+                index.append(ContainerIndexEntity(prefix="inverted", suffix=index_name))
         return index or None
 
     def _get_constraint(self, prop: ViewPropertyApply, prop_id: str) -> list[str] | None:
