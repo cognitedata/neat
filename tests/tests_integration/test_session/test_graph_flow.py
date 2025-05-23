@@ -53,7 +53,8 @@ class TestExtractToLoadFlow:
         assert not issues.has_errors
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"), name="Nikola is NEAT janitor")
         instances, issues = neat.to._python.instances(
-            "sp_windfarm_dataset", space_from_property="dataSetId", instance_space="fallback_space"
+            "sp_windfarm_dataset",
+            space_from_property="dataSetId",
         )
         assert not issues.has_errors
         rules_str = neat.to.yaml(format="neat")
@@ -78,9 +79,7 @@ class TestExtractToLoadFlow:
         issues = neat.mapping.data_model.classic_to_core("Classic")
         assert not issues.has_errors
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"))
-        instances, issues = neat.to._python.instances(
-            "sp_windfarm_dataset", space_from_property="dataSetId", instance_space="fallback_space"
-        )
+        instances, issues = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
         assert not issues.has_errors
 
         rules_str = neat.to.yaml(format="neat")
