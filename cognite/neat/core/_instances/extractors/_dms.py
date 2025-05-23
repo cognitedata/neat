@@ -37,6 +37,8 @@ class DMSExtractor(BaseExtractor):
             means the externalId of the view used as type, while type is the node.type.
         edge_type: The prioritized order of the edge type to use. The options are "view" and "type". "view"
             means the externalId of the view used as type, while type is the edge.type.
+        type_ids: If True, the type of the node or edge will be added to the instance id (URIRef) as a query parameter.
+            This is essential for disambiguating between different types of instances with the same externalId
     """
 
     def __init__(
@@ -49,6 +51,8 @@ class DMSExtractor(BaseExtractor):
         str_to_ideal_type: bool = False,
         node_type: tuple[typing.Literal["view", "type"], ...] = ("view",),
         edge_type: tuple[typing.Literal["view", "type"], ...] = ("view", "type"),
+        view_by_view_id: dict[dm.ViewId, dm.View] | None = None,
+        typed_ids: bool = False,
     ) -> None:
         self.total_instances_pair_by_view = total_instances_pair_by_view
         self.limit = limit
@@ -58,6 +62,8 @@ class DMSExtractor(BaseExtractor):
         self.str_to_ideal_type = str_to_ideal_type
         self.node_type = node_type
         self.edge_type = edge_type
+        self.typed_ids = typed_ids
+        self.view_by_view_id = view_by_view_id or {}
 
     @classmethod
     def from_data_model(
@@ -69,6 +75,7 @@ class DMSExtractor(BaseExtractor):
         instance_space: str | SequenceNotStr[str] | None = None,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        typed_ids: bool = False,
     ) -> "DMSExtractor":
         """Create an extractor from a data model.
 
@@ -91,6 +98,7 @@ class DMSExtractor(BaseExtractor):
             instance_space,
             unpack_json,
             str_to_ideal_type,
+            typed_ids=typed_ids,
         )
 
     @classmethod
@@ -103,6 +111,7 @@ class DMSExtractor(BaseExtractor):
         instance_space: str | SequenceNotStr[str] | None = None,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        typed_ids: bool = False,
     ) -> "DMSExtractor":
         """Create an extractor from a set of views.
 
@@ -117,9 +126,11 @@ class DMSExtractor(BaseExtractor):
                 convert it to the ideal type.
         """
         total_instances_pair_by_view: dict[dm.ViewId, tuple[int | None, Iterable[Instance]]] = {}
+        view_by_view_id: dict[dm.ViewId, dm.View] = {}
         for view in views:
             instance_iterator = _ViewInstanceIterator(client, view, instance_space)
             total_instances_pair_by_view[view.as_id()] = (instance_iterator.count, instance_iterator)
+            view_by_view_id[view.as_id()] = view
 
         return cls(
             total_instances_pair_by_view=total_instances_pair_by_view,
@@ -127,6 +138,8 @@ class DMSExtractor(BaseExtractor):
             overwrite_namespace=overwrite_namespace,
             unpack_json=unpack_json,
             str_to_ideal_type=str_to_ideal_type,
+            view_by_view_id=view_by_view_id,
+            typed_ids=typed_ids,
         )
 
     def extract(self) -> Iterable[Triple]:
@@ -145,12 +158,20 @@ class DMSExtractor(BaseExtractor):
                     f"Extracting instances from {view_id.space}:{view_id.external_id}(version={view_id.version})",
                 )
 
+            view = self.view_by_view_id[view_id]
+            source_by_property = self._source_by_property(self.view_by_view_id[view_id])
+
             for count, item in enumerate(instances, 1):
                 if self.limit and count > self.limit:
                     break
-                yield from self._extract_instance(item)
+                yield from self._extract_instance(item, view, source_by_property)
 
-    def _extract_instance(self, instance: Instance) -> Iterable[Triple]:
+    def _extract_instance(
+        self,
+        instance: Instance,
+        view: dm.View,
+        source_by_property: dict[str, str] | None = None,
+    ) -> Iterable[Triple]:
         if isinstance(instance, dm.Edge):
             if not instance.properties:
                 yield (
@@ -178,7 +199,7 @@ class DMSExtractor(BaseExtractor):
                 )
 
         elif isinstance(instance, dm.Node):
-            id_ = self._as_uri_ref(instance)
+            id_ = self._as_uri_ref(instance, view.external_id if self.typed_ids else None)
             type_ = self._create_type(
                 instance, fallback=self._get_namespace(instance.space).Node, type_priority=self.node_type
             )
@@ -200,6 +221,8 @@ class DMSExtractor(BaseExtractor):
                 self.empty_values,
                 self.str_to_ideal_type,
                 self.unpack_json,
+                source_by_property=source_by_property,
+                typed_ids=self.typed_ids,
             ).extract()
 
     def _create_type(
@@ -227,13 +250,28 @@ class DMSExtractor(BaseExtractor):
             return self._get_namespace(view_id.space)[urllib.parse.quote(view_id.external_id)]
         return None
 
-    def _as_uri_ref(self, instance: Instance | dm.DirectRelationReference) -> URIRef:
-        return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id)]
+    def _as_uri_ref(
+        self,
+        instance: Instance | dm.DirectRelationReference,
+        typed_suffix: str | None = None,
+    ) -> URIRef:
+        suffix = f"?type={typed_suffix}" if typed_suffix else ""
+        return self._get_namespace(instance.space)[urllib.parse.quote(instance.external_id) + suffix]
 
     def _get_namespace(self, space: str) -> Namespace:
         if self.overwrite_namespace:
             return self.overwrite_namespace
         return Namespace(DEFAULT_SPACE_URI.format(space=urllib.parse.quote(space)))
+
+    @staticmethod
+    def _source_by_property(view: dm.View) -> dict[str, str]:
+        source_by_property = {}
+
+        for id_, prop_ in view.properties.items():
+            if isinstance(prop_, dm.MappedProperty) and (source := prop_.source):
+                source_by_property[id_] = source.external_id
+
+        return source_by_property
 
 
 class _ViewInstanceIterator(Iterable[Instance]):
@@ -296,6 +334,8 @@ class _ViewInstanceIterator(Iterable[Instance]):
                 if prop.edge_source:
                     # All edges with properties are extracted from the edge source
                     continue
+                # Needs filtering on start and end node (ideally type). See
+                # Slack: https://cognitedata.slack.com/archives/C07JWR2V6L8/p1747988688102619
                 yield from self.client.instances.iterate(
                     instance_type="edge",
                     filter_=dm.filters.Equals(

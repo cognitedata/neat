@@ -75,12 +75,20 @@ def remove_namespace_from_uri(
         if validation == "full":
             try:
                 _ = TypeAdapter(HttpUrl).validate_python(u)
-                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+                output.append(
+                    u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1].split(
+                        "?type="
+                    )[0]
+                )
             except ValidationError:
                 output.append(str(u))
         else:
             if u.lower().startswith("http"):
-                output.append(u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1])
+                output.append(
+                    u.split(special_separator if special_separator in u else "#" if "#" in u else "/")[-1].split(
+                        "?type="
+                    )[0]
+                )
             else:
                 output.append(str(u))
 
