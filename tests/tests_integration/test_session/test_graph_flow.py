@@ -16,7 +16,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from cognite.neat import NeatSession
 from cognite.neat.core._constants import COGNITE_SPACES
 from cognite.neat.core._data_model.models.entities import ContainerEntity
-from cognite.neat.core._instances.loaders import DMSLoader
+from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from tests.data import GraphData, SchemaData
 
 RESERVED_PROPERTIES = frozenset(
@@ -52,7 +52,10 @@ class TestExtractToLoadFlow:
         issues = neat.mapping.data_model.classic_to_core("Classic")
         assert not issues.has_errors
         neat.set.data_model_id(("sp_windfarm", "WindFarm", "v1"), name="Nikola is NEAT janitor")
-        instances, issues = neat.to._python.instances("sp_windfarm_dataset", space_from_property="dataSetId")
+        instances, issues = neat.to._python.instances(
+            "sp_windfarm_dataset",
+            space_from_property="dataSetId",
+        )
         assert not issues.has_errors
         rules_str = neat.to.yaml(format="neat")
         rules_dict = yaml.safe_load(rules_str)
@@ -227,7 +230,8 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.data_model_store.last_verified_physical_data_model
             info_rules = neat._state.data_model_store.last_verified_conceptual_data_model
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
+            instance_loader = InstanceSpaceLoader(instance_space="sp_instance_space")
+            instances = list(DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
@@ -265,13 +269,14 @@ class TestExtractToLoadFlow:
             dms_rules = neat._state.data_model_store.last_verified_physical_data_model
             info_rules = neat._state.data_model_store.last_verified_conceptual_data_model
             store = neat._state.instances.store
-            instances = list(DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load())
+            instance_loader = InstanceSpaceLoader(instance_space="sp_instance_space")
+            instances = list(DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load())
 
             nodes = [instance for instance in instances if isinstance(instance, NodeApply)]
             edges = [instance for instance in instances if isinstance(instance, EdgeApply)]
             instances = [
                 self._standardize_instance(instance)
-                for instance in DMSLoader(dms_rules, info_rules, store, "sp_instance_space").load()
+                for instance in DMSLoader(dms_rules, info_rules, store, instance_loader.space_by_instance_uri).load()
             ]
 
         else:
