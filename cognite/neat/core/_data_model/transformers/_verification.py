@@ -54,7 +54,7 @@ class VerificationTransformer(DataModelTransformer[T_ImportedUnverifiedDataModel
                 elif issubclass(validation_cls, ConceptualValidation):
                     validation_issues = ConceptualValidation(verified_data_model, data_model.context).validate()  # type: ignore[arg-type]
                 else:
-                    raise NeatValueError("Unsupported rule type")
+                    raise NeatValueError("Unsupported data model type")
                 issues.extend(validation_issues)
 
         # Raise issues which is expected to be handled outside of this method

@@ -264,7 +264,7 @@ class DataModelPrepareAPI:
 
         """
 
-        return self._state.rule_transform(PrefixEntities(prefix))  # type: ignore[arg-type]
+        return self._state.data_model_transform(PrefixEntities(prefix))  # type: ignore[arg-type]
 
     def standardize_naming(self) -> IssueList:
         """Standardize the naming of all views/classes/properties in the data model.
@@ -274,7 +274,7 @@ class DataModelPrepareAPI:
         """
         warnings.filterwarnings("default")
         ExperimentalFlags.standardize_naming.warn()
-        return self._state.rule_transform(StandardizeNaming())
+        return self._state.data_model_transform(StandardizeNaming())
 
     def standardize_space_and_version(self) -> IssueList:
         """Standardize space and version in the data model.
@@ -283,4 +283,4 @@ class DataModelPrepareAPI:
         """
         warnings.filterwarnings("default")
         ExperimentalFlags.standardize_space_and_version.warn()
-        return self._state.rule_transform(StandardizeSpaceAndVersion())
+        return self._state.data_model_transform(StandardizeSpaceAndVersion())

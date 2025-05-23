@@ -68,4 +68,4 @@ class DataModelMappingAPI:
         )
         if use_parent_property_name:
             transformers.append(AsParentPropertyId(self._state.client))
-        return self._state.rule_transform(*transformers)
+        return self._state.data_model_transform(*transformers)

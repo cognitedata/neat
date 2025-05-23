@@ -30,7 +30,7 @@ class SessionState:
         self.client = client
         self.quoted_source_identifiers = False
 
-    def rule_transform(self, *transformer: VerifiedDataModelTransformer) -> IssueList:
+    def data_model_transform(self, *transformer: VerifiedDataModelTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
         start = self.data_model_store.provenance[-1].target_entity.display_name
@@ -40,7 +40,7 @@ class SessionState:
         issues.hint = "Use the .inspect.issues() for more details."
         return issues
 
-    def rule_import(self, importer: BaseImporter, enable_manual_edit: bool = False) -> IssueList:
+    def data_model_import(self, importer: BaseImporter, enable_manual_edit: bool = False) -> IssueList:
         issues = self.data_model_store.import_data_model(
             importer,
             client=self.client,

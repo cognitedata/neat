@@ -97,7 +97,7 @@ class DropDataModelAPI:
                     f"{len(missing_views)} view(s) not found in the data model.\nDid you mean {', '.join(suggestions)}?"
                 )
         before = len(last_dms.views)
-        issues = self._state.rule_transform(DropModelViews(view_external_id, group))
+        issues = self._state.data_model_transform(DropModelViews(view_external_id, group))
         after = len(self._state.data_model_store.last_verified_physical_data_model.views)
         print(f"Dropped {before - after} views.")
         return issues
