@@ -3,6 +3,7 @@ from typing import Any
 
 import pytest
 from cognite.client.data_classes import AssetWriteList
+from cognite.client.data_classes.data_modeling import SpaceApply
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat.core._client.testing import monkeypatch_neat_client
@@ -91,7 +92,7 @@ def load_instance_space_invalid_test_cases() -> Iterable:
 class TestInstanceSpaceLoader:
     @pytest.mark.parametrize("exporter, expected_spaces", list(load_instance_spaces_test_cases()))
     def test_export_instance_space(self, exporter: InstanceSpaceLoader, expected_spaces: set[str]) -> None:
-        loaded = list(exporter.load())
+        loaded = [result for result in exporter.load() if isinstance(result, SpaceApply)]
 
         assert {space.space for space in loaded} == expected_spaces
 
