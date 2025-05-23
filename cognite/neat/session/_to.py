@@ -311,7 +311,6 @@ class CDFToAPI:
 
         client = cast(NeatClient, self._state.client)
         physical_data_model = self._state.data_model_store.last_verified_physical_data_model
-        instance_space = instance_space or f"{physical_data_model.metadata.space}_instances"
 
         if instance_space and instance_space == physical_data_model.metadata.space:
             raise NeatSessionError("Space for instances must be different from the data model space.")
@@ -423,7 +422,6 @@ class ToPythonAPI:
             ```
         """
         physical_data_model = self._state.data_model_store.last_verified_physical_data_model
-        instance_space = instance_space or f"{physical_data_model.metadata.space}_instances"
 
         if instance_space and instance_space == physical_data_model.metadata.space:
             raise NeatSessionError("Space for instances must be different from the data model space.")
