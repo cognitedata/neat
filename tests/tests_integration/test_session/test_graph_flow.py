@@ -14,6 +14,7 @@ from cognite.client.data_classes.data_modeling import (
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
+from cognite.neat.core._constants import COGNITE_SPACES
 from cognite.neat.core._data_model.models.entities import ContainerEntity
 from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from tests.data import GraphData, SchemaData
@@ -152,6 +153,24 @@ class TestExtractToLoadFlow:
         instance_result = neat.to.cdf._instances(use_source_space=True)
         errors = {res.name: res.error_messages for res in instance_result if res.error_messages}
         assert not errors, errors
+
+    def test_no_node_type_on_system_views_instances(self, cognite_client: CogniteClient) -> None:
+        neat = NeatSession(cognite_client, storage="oxigraph")
+        neat.read.cdf._graph(
+            ("sp_windfarm", "WindFarm", "v1"),
+            instance_space=["sp_windfarm_dataset", "usecase_01", "source_ds", "maintenance"],
+            unpack_json=True,
+            str_to_ideal_type=True,
+            skip_cognite_views=False,
+        )
+        instances, _ = neat.to._python.instances(use_source_space=True)
+
+        check = []
+        for instance in instances:
+            if instance.instance_type == "node" and instance.sources[0].source.space in COGNITE_SPACES:
+                check.append(instance.type is None)
+
+        assert all(check), "System views should not have node type"
 
     def test_convert_info_with_cdm_ref(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
