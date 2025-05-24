@@ -1,5 +1,3 @@
-from cognite.neat.core._instances.transformers import ConnectionToLiteral
-from cognite.neat.core._issues import IssueList
 from collections.abc import Hashable
 
 from cognite.neat.core._data_model.models.mapping import load_classic_to_core_mapping

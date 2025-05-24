@@ -367,7 +367,7 @@ class CDFDataModelAPI(BaseReadAPI):
         )
 
         importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
     def update(self, data_model_id: DataModelIdentifier, spreadsheet_io: Any) -> IssueList:
         """Updates a Data Model from CDF with a local
@@ -397,7 +397,7 @@ class CDFDataModelAPI(BaseReadAPI):
         # The Excel importer can be either conceptual or physical.
         excel_importer = importers.ExcelImporter(path)  # type: ignore[var-annotated]
         importer = importers.DMSMergeImporter(cdf_importer, excel_importer, cast(NeatClient, self._state.client))
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
 
 @session_class_wrapper
