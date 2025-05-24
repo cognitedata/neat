@@ -431,8 +431,8 @@ instances:
     externalId: ClassicRelationship
     space: sp_windfarm
 - endNode:
-    externalId: metMast
-    space: sp_2458119666837052
+    externalId: Label_metMast
+    space: sp_windfarm_dataset
   externalId: 8ca8265214a7968fc1bcdbf71c8a623ae94be693c7aead5d779fb70e2a6ce130.labels.Label_metMast
   instanceType: edge
   space: sp_2458119666837052
@@ -525,8 +525,8 @@ instances:
     externalId: ClassicRelationship
     space: sp_windfarm
 - endNode:
-    externalId: metMast
-    space: sp_2458119666837052
+    externalId: Label_metMast
+    space: sp_windfarm_dataset
   externalId: dd8ad0fb1b0957b30eedf6b2aedb7d39b2d663f4779fd85cc7c2be5285404447.labels.Label_metMast
   instanceType: edge
   space: sp_2458119666837052

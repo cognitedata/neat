@@ -179,3 +179,7 @@ class UnverifiedComponent(ABC, Generic[T_DataModel]):
 
     def _repr_html_(self) -> str:
         return pd.DataFrame([self.dump()])._repr_html_()  # type: ignore[operator]
+
+    def as_verified(self, **kwargs: Any) -> Self:
+        cls_ = self._get_verified_cls()
+        return cast(Self, cls_.model_validate(self.dump(**kwargs)))

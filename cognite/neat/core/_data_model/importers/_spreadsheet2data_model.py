@@ -2,6 +2,7 @@
 
 import tempfile
 from collections import UserDict, defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, cast
@@ -275,7 +276,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
 
         sheets = user_read.sheets
         original_role = user_read.role
-        read_info_by_sheet = user_read.read_info_by_sheet
+        read_info_by_sheet: Mapping[str, object] = user_read.read_info_by_sheet
 
         data_model_cls = UNVERIFIED_DATA_MODEL_BY_ROLE[original_role]
         data_model = cast(T_UnverifiedDataModel, data_model_cls.load(sheets))
