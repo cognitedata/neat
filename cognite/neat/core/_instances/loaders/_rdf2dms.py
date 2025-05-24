@@ -24,6 +24,7 @@ from cognite.neat.core._client._api_client import SchemaAPI
 from cognite.neat.core._constants import (
     COGNITE_SPACES,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+    DMS_INSTANCE_LIMIT_MARGIN,
     is_readonly_property,
 )
 from cognite.neat.core._data_model.analysis import DataModelAnalysis
@@ -39,11 +40,13 @@ from cognite.neat.core._data_model.models.data_types import (
 )
 from cognite.neat.core._issues import IssueList, NeatError, NeatIssue, catch_issues
 from cognite.neat.core._issues.errors import (
+    InstanceLimitWillExceedError,
     ResourceCreationError,
     ResourceDuplicatedError,
     ResourceNotFoundError,
 )
 from cognite.neat.core._issues.warnings import (
+    NeatValueWarning,
     PropertyDirectRelationLimitWarning,
     PropertyMultipleValueWarning,
     PropertyTypeNotSupportedWarning,
@@ -158,6 +161,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         yield from issues
         if self.neat_prefix_by_type_uri:
             self._lookup_identifier_by_uri()
+
+        if self._client:
+            validate_issue = self._validate_cdf_project_instance_capacity(
+                self._client, sum(it.instance_count for it in view_iterations)
+            )
+            if validate_issue:
+                yield validate_issue
+                return
 
         for it in view_iterations:
             view = it.view
@@ -635,6 +646,18 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 else:
                     result.unchanged.add(instance.as_id())
             yield result
+
+    @staticmethod
+    def _validate_cdf_project_instance_capacity(client: NeatClient, total_instances: int) -> NeatIssue | None:
+        try:
+            stats = client.instance_statistics.project()
+        except CogniteAPIError as e:
+            # This endpoint is not yet in alpha, it may change or not be available.
+            return NeatValueWarning(f"Cannot check project instance capacity. Endpoint not available: {e}")
+        instance_capacity = stats.instances.instances_limit - stats.instances.instances
+        if total_instances + DMS_INSTANCE_LIMIT_MARGIN > instance_capacity:
+            raise InstanceLimitWillExceedError(total_instances, stats.project, instance_capacity)
+        return None
 
 
 def _get_field_value_types(cls: Any, info: ValidationInfo) -> Any:
