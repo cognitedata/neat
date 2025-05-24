@@ -99,7 +99,7 @@ class TestRulesStoreProvenanceSyncing:
         neat.fix.data_model.cdf_compliant_external_ids()
 
         with pytest.raises(NeatValueError) as e:
-            neat._state.rule_import(
+            neat._state.data_model_import(
                 importers.ExcelImporter(tmp_path / "nordic44.xlsx"),
                 enable_manual_edit=True,
             )
@@ -115,7 +115,7 @@ class TestRulesStoreProvenanceSyncing:
         neat.read.examples.pump_example()
 
         with pytest.raises(NeatValueError) as e:
-            neat._state.rule_import(
+            neat._state.data_model_import(
                 importers.ExcelImporter(SchemaData.Physical.dms_unknown_value_type_xlsx),
                 enable_manual_edit=True,
             )
@@ -132,7 +132,7 @@ class TestRulesStoreProvenanceSyncing:
         neat2.infer()
 
         with pytest.raises(NeatValueError) as e:
-            neat2._state.rule_import(
+            neat2._state.data_model_import(
                 importers.ExcelImporter(tmp_path / "pump.xlsx"),
                 enable_manual_edit=True,
             )

@@ -270,14 +270,14 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
 
         model = self.schema.data_model
 
-        user_data_model = self._create_rule_components(model, self.schema, self.metadata)
+        user_data_model = self._create_data_model_components(model, self.schema, self.metadata)
 
         self.issue_list.trigger_warnings()
         if self.issue_list.has_errors:
             raise MultiValueError(self.issue_list.errors)
         return ImportedDataModel(user_data_model, {})
 
-    def _create_rule_components(
+    def _create_data_model_components(
         self,
         data_model: dm.DataModelApply,
         schema: DMSSchema,

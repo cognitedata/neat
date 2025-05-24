@@ -118,7 +118,7 @@ class CDFReadAPI(BaseReadAPI):
         )
 
         importer = importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
     def core_data_model(self, concepts: str | list[str]) -> IssueList:
         """Subset the data model to the desired concepts.
@@ -159,7 +159,7 @@ class CDFReadAPI(BaseReadAPI):
         importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
             cast(NeatClient, self._state.client), cdm_v1
         )
-        issues = self._state.rule_import(importer)
+        issues = self._state.data_model_import(importer)
 
         if issues.has_errors:
             return issues
@@ -167,7 +167,7 @@ class CDFReadAPI(BaseReadAPI):
         cdm_data_model = self._state.data_model_store.last_verified_data_model
 
         issues.extend(
-            self._state.rule_transform(
+            self._state.data_model_transform(
                 ToEnterpriseModel(
                     new_model_id=("my_space", "MyCDMSubset", "v1"),
                     org_name="CopyOf",
@@ -181,7 +181,7 @@ class CDFReadAPI(BaseReadAPI):
             return issues
 
         issues.extend(
-            self._state.rule_transform(
+            self._state.data_model_transform(
                 _SubsetEditableCDMPhysicalDataModel(
                     views={
                         ViewEntity(
@@ -568,7 +568,7 @@ class ExcelReadAPI(BaseReadAPI):
                 empty_data_model_store_required=True,
             )
 
-        return self._state.rule_import(importers.ExcelImporter(path), enable_manual_edit)
+        return self._state.data_model_import(importers.ExcelImporter(path), enable_manual_edit)
 
 
 @session_class_wrapper
@@ -607,7 +607,7 @@ class YamlReadAPI(BaseReadAPI):
             importer = dms_importer
         else:
             raise NeatValueError(f"Unsupported YAML format: {format}")
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
 
 @session_class_wrapper
@@ -824,7 +824,7 @@ class RDFReadAPI(BaseReadAPI):
 
         reader = NeatReader.create(io)
         importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
     def imf(self, io: Any) -> IssueList:
         """Reads IMF Types provided as SHACL shapes into NeatSession.
@@ -847,7 +847,7 @@ class RDFReadAPI(BaseReadAPI):
 
         reader = NeatReader.create(io)
         importer = importers.IMFImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
     def instances(self, io: Any) -> IssueList:
         self._state._raise_exception_if_condition_not_met(
@@ -915,7 +915,7 @@ class Examples:
         )
 
         importer: importers.ExcelImporter = importers.ExcelImporter(catalog.hello_world_pump)
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
     def core_data_model(self) -> IssueList:
         """Reads the core data model example into the NeatSession."""
@@ -930,4 +930,4 @@ class Examples:
         importer: importers.DMSImporter = importers.DMSImporter.from_data_model_id(
             cast(NeatClient, self._state.client), cdm_v1
         )
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)

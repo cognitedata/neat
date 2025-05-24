@@ -68,14 +68,14 @@ class SubsetAPI:
                 for concept in concepts
             }
 
-            issues = self._state.rule_transform(SubsetPhysicalDataModel(views=views))
+            issues = self._state.data_model_transform(SubsetPhysicalDataModel(views=views))
             if not issues:
                 after = len(self._state.data_model_store.last_verified_physical_data_model.views)
 
         elif information:
             classes = {ConceptEntity(prefix=information.metadata.space, suffix=concept) for concept in concepts}
 
-            issues = self._state.rule_transform(SubsetConceptualDataModel(concepts=classes))
+            issues = self._state.data_model_transform(SubsetConceptualDataModel(concepts=classes))
             if not issues:
                 after = len(self._state.data_model_store.last_verified_conceptual_data_model.concepts)
 
