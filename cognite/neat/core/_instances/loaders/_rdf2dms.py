@@ -40,10 +40,10 @@ from cognite.neat.core._data_model.models.data_types import (
 )
 from cognite.neat.core._issues import IssueList, NeatError, NeatIssue, catch_issues
 from cognite.neat.core._issues.errors import (
-    InstanceLimitWillExceedError,
     ResourceCreationError,
     ResourceDuplicatedError,
     ResourceNotFoundError,
+    WillExceedInstanceLimitError,
 )
 from cognite.neat.core._issues.warnings import (
     NeatValueWarning,
@@ -656,7 +656,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return NeatValueWarning(f"Cannot check project instance capacity. Endpoint not available: {e}")
         instance_capacity = stats.instances.instances_limit - stats.instances.instances
         if total_instances + DMS_INSTANCE_LIMIT_MARGIN > instance_capacity:
-            raise InstanceLimitWillExceedError(total_instances, stats.project, instance_capacity)
+            raise WillExceedInstanceLimitError(total_instances, stats.project, instance_capacity)
         return None
 
 

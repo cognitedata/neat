@@ -17,7 +17,7 @@ from cognite.neat.core._data_model.transformers._converters import (
 )
 from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._issues import IssueList
-from cognite.neat.core._issues.errors import InstanceLimitWillExceedError
+from cognite.neat.core._issues.errors import WillExceedInstanceLimitError
 from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData
 
@@ -100,7 +100,7 @@ class TestDMSLoader:
                 client,
             )
 
-        with pytest.raises(InstanceLimitWillExceedError) as excinfo:
+        with pytest.raises(WillExceedInstanceLimitError) as excinfo:
             _ = loader.load_into_cdf(client)
 
-        assert excinfo.value == InstanceLimitWillExceedError(6, "neat-project", 250_000)
+        assert excinfo.value == WillExceedInstanceLimitError(6, "neat-project", 250_000)

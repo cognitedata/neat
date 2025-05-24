@@ -39,7 +39,7 @@ class NeatImportError(NeatError, ImportError):
 
 
 @dataclass(unsafe_hash=True)
-class InstanceLimitWillExceedError(NeatError, RuntimeError):
+class WillExceedInstanceLimitError(NeatError, RuntimeError):
     """Cannot write {instance_count} instances to project {project} as the current available capacity
     is {available_capacity} instances. Neat requires a capacity of at least {margin} instances are
     left for future writes, {available_capacity}-{instance_count} < {margin}."""
