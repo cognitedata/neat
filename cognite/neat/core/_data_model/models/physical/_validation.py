@@ -391,7 +391,9 @@ class PhysicalValidation:
                         "rows",
                     )
                 )
-            index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
+            index_definitions = {
+                ",".join([index.suffix for index in prop.index]) for _, prop in properties if prop.index is not None
+            }
             if len(index_definitions) > 1:
                 errors.append(
                     PropertyDefinitionDuplicatedError[dm.ContainerId](

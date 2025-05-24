@@ -42,6 +42,7 @@ class EntityTypes(StrEnum):
     version = "version"
     prefix = "prefix"
     space = "space"
+    container_index = "container_index"
 
 
 def get_reserved_words(
