@@ -9,7 +9,6 @@ from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, 
 from rdflib.namespace import DefinedNamespace
 
 from cognite import neat
-from cognite.neat.core._issues.errors._general import NeatValueError
 
 if TYPE_CHECKING:
     from cognite.neat.core._data_model.models.physical import PhysicalProperty
@@ -211,6 +210,8 @@ def get_base_concepts(
         base_model: The base model to get the concepts for.
         total_concepts: The number of concepts to get. If None, all concepts are returned.
     """
+    # Local import to avoid circular dependency issues
+    from cognite.neat.core._issues.errors._general import NeatValueError
 
     if base_model == "CogniteCore":
         return [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS][:total_concepts]
