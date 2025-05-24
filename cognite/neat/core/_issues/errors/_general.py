@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from cognite.neat.core._constants import DMS_INSTANCE_LIMIT_MARGIN
 from cognite.neat.core._issues import NeatError
 
 
@@ -35,3 +36,15 @@ class NeatImportError(NeatError, ImportError):
 
     module: str
     neat_extra: str
+
+
+@dataclass(unsafe_hash=True)
+class InstanceLimitWillExceedError(NeatError, RuntimeError):
+    """Cannot write {instance_count} instances to project {project} as the current available capacity
+    is {available_capacity} instances. Neat requires a capacity of at least {margin} instances are
+    left for future writes, {available_capacity}-{instance_count} < {margin}."""
+
+    instance_count: int
+    project: str
+    available_capacity: int
+    margin: int = DMS_INSTANCE_LIMIT_MARGIN

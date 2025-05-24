@@ -12,7 +12,7 @@ from ._external import (
     NeatYamlError,
     OxigraphStorageLockedError,
 )
-from ._general import NeatImportError, NeatTypeError, NeatValueError, RegexViolationError
+from ._general import InstanceLimitWillExceedError, NeatImportError, NeatTypeError, NeatValueError, RegexViolationError
 from ._properties import (
     PropertyDefinitionDuplicatedError,
     PropertyDefinitionError,
@@ -55,6 +55,7 @@ __all__ = [
     "FileNotFoundNeatError",
     "FileReadError",
     "FileTypeUnexpectedError",
+    "InstanceLimitWillExceedError",
     "MetadataValueError",
     "NeatError",
     "NeatImportError",
