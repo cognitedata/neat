@@ -1,5 +1,6 @@
 from collections.abc import Hashable
 from dataclasses import dataclass, field
+from typing import Literal
 
 
 @dataclass
@@ -27,4 +28,11 @@ class ResourceDifference:
 
 @dataclass
 class DeployResult:
+    status: Literal["success", "failure", "dry-run"]
     diffs: list[ResourceDifference] = field(default_factory=list)
+    created: list[Hashable] = field(default_factory=list)
+    deleted: list[Hashable] = field(default_factory=list)
+    skipped: list[Hashable] = field(default_factory=list)
+    unchanged: list[Hashable] = field(default_factory=list)
+    existing: list[Hashable] = field(default_factory=list)
+    updated: list[ResourceDifference] = field(default_factory=list)

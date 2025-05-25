@@ -59,40 +59,54 @@ class NeatClient(CogniteClient):
         crud_api = crud_api_cls(self)
 
         ids = crud_api.as_ids(resources)
-        existing = crud_api.retrieve(ids)
-        cdf_resource_by_id = {crud_api.as_id(resource): resource for resource in existing}
+        cdf_resources = crud_api.retrieve(ids)
+        cdf_resource_by_id = {crud_api.as_id(resource): resource for resource in cdf_resources}
         local_by_id = {crud_api.as_id(resource): resource for resource in resources}
 
-        to_create, to_update, to_delete, unchanged = (
+        to_create, to_update, to_delete = (
             crud_api.list_cls([]),
             crud_api.list_cls([]),
-            [],
             [],
         )
-
-        result = DeployResult()
+        result = DeployResult("dry-run" if dry_run else "success")
         for id_, local in local_by_id.items():
             cdf_resource = cdf_resource_by_id.get(id_)
             if cdf_resource is None:
                 to_create.append(local)
-                continue
-            if existing == "skip":
-                # Log in report
-                continue
-            if existing == "fail":
-                # Log in report, mark is failing
-                raise NotImplementedError()
-            if existing == "recreate":
+            elif existing == "skip":
+                result.skipped.append(id_)
+            elif existing == "fail":
+                result.existing.append(id_)
+            elif existing == "recreate":
                 to_delete.append(id_)
                 to_create.append(local)
-
-            if diffs := crud_api.diffs(cdf_resource, local):
+            elif diffs := crud_api.diffs(cdf_resource, local):
                 result.diffs.append(diffs)
                 to_update.append(local)
             else:
-                unchanged.append(id_)
+                result.unchanged.append(id_)
 
-        # 1. Delete. 2. Create. 3. Update.
-        # 3. Perform the operations in the correct order. Include dry_run.
-        # 4. If failure occurs, and restore is possible, restore the resource to its original state.
-        raise NotImplementedError()
+        if existing == "fail" and result.existing:
+            raise ValueError(
+                f"The following resources already exist and cannot be deployed: {', '.join(map(str, result.existing))}"
+            )
+
+        if dry_run:
+            return result
+
+        # Happy path. No API Errors
+        if to_delete:
+            deleted_ids = crud_api.delete(to_delete)
+            result.deleted.extend(deleted_ids)
+
+        if to_create:
+            created = crud_api.create(to_create)
+            result.created.extend(crud_api.as_ids(created))
+
+        if to_update:
+            updated = crud_api.update(to_update)
+            for resource in updated:
+                id_ = crud_api.as_id(resource)
+                previous = cdf_resource_by_id[id_]
+                result.updated.append(crud_api.diffs(resource, previous))
+        return result

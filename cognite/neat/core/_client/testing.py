@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
+from types import MethodType
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -31,6 +32,7 @@ class NeatClientMock(CogniteClientMock):
         self.loaders = DataModelLoaderAPI(self)
         self.instances = NeatInstancesAPI(self)
         self.location_filters = MagicMock(spec_set=LocationFiltersAPI)
+        self.deploy = MethodType(NeatClient.deploy, self)
 
 
 @contextmanager
