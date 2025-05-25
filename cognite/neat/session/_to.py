@@ -6,8 +6,10 @@ from typing import Any, Literal, cast, overload
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
+from IPython.display import display
 
 from cognite.neat.core._client._api_client import NeatClient
+from cognite.neat.core._client._deploy import ExistingResource
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat.core._data_model import exporters
@@ -20,6 +22,7 @@ from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat.core._utils.upload import UploadResultList
 from cognite.neat.session._experimental import ExperimentalFlags
+from cognite.neat.session.notebook_visualization.deploy_report import display_deploy_result
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -494,6 +497,39 @@ class CDFToAPI:
             use_source_space=use_source_space,
             neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
         )
+
+    def containers(self, existing: ExistingResource, drop_data: bool = False, dry_run: bool = False) -> None:
+        """Export the verified DMS containers to CDF.
+
+        Args:
+            existing: What to do if the container already exists. Defaults to "update".
+                See the note below for more information about the options.
+            drop_data: If existing is 'force' or 'recreate' this must be set to True as it deleting and
+                recreating the container will lead to data loss. Defaults to False.
+            dry_run: If True, no changes will be made to CDF. Defaults to False.
+        !!! note "Container creation modes"
+            - "fail": If any container already exists, the export will fail.
+            - "skip": If any container already exists, it will be skipped.
+            - "update": If any container already exists, it will be updated. For containers this means
+                combining the existing and new container. For example, the properties of the new and existing
+                container will be combined.
+            - "force": If any container already exists, and the update fails, it will be deleted and recreated.
+            - "recreate": All containers will be deleted and recreated. The exception is spaces, which will be updated.
+
+        Returns:
+            None: The result of the upload.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS containers to CDF",
+            client_required=True,
+            has_physical_data_model=True,
+        )
+        exporter = exporters.ContainerExporter(existing=existing, drop_data=drop_data)
+        last_dms = self._state.data_model_store.last_verified_physical_data_model
+        result = exporter.deploy(last_dms, dry_run=dry_run, client=cast(NeatClient, self._state.client))
+
+        display(display_deploy_result(result))
 
 
 @session_class_wrapper

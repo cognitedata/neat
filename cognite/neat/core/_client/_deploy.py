@@ -76,7 +76,7 @@ def _prepare_api_calls(
         crud_api.list_cls([]),
         [],
     )
-    result = DeployResult("dry-run" if dry_run else "success")
+    result = DeployResult("dry-run" if dry_run else "success", resource_type=crud_api.resource_type)
     for id_, local in local_by_id.items():
         cdf_resource = cdf_resource_by_id.get(id_)
         if cdf_resource is None:
