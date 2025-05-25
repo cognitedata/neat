@@ -6,6 +6,7 @@ from typing import Any, Literal, cast, overload
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
+from IPython.display import display
 
 from cognite.neat.core._client._api_client import NeatClient
 from cognite.neat.core._client._deploy import ExistingResource
@@ -525,11 +526,10 @@ class CDFToAPI:
             has_physical_data_model=True,
         )
         exporter = exporters.ContainerExporter(existing=existing, drop_data=drop_data)
+        last_dms = self._state.data_model_store.last_verified_physical_data_model
+        result = exporter.deploy(last_dms, dry_run=dry_run, client=cast(NeatClient, self._state.client))
 
-        result = self._state.data_model_store.export_to_cdf2(
-            exporter, cast(NeatClient, self._state.client), dry_run=dry_run
-        )
-        display_deploy_result(result)
+        display(display_deploy_result(result))
 
 
 @session_class_wrapper
