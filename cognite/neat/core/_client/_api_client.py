@@ -1,7 +1,9 @@
+from collections.abc import Hashable
 from typing import Literal, TypeAlias
 
 from cognite.client import ClientConfig, CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList
+from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.core._utils.auth import _CLIENT_NAME
 
@@ -11,7 +13,7 @@ from ._api.location_filters import LocationFiltersAPI
 from ._api.neat_instances import NeatInstancesAPI
 from ._api.schema import SchemaAPI
 from ._api.statistics import StatisticsAPI
-from .data_classes.deploy_result import DeployResult
+from .data_classes.deploy_result import DeployResult, FailedRequest, ForcedResource
 
 ExistingResource: TypeAlias = Literal["skip", "fail", "update", "force", "recreate"]
 
@@ -60,8 +62,7 @@ class NeatClient(CogniteClient):
         if restore_on_failure and not crud_api.support_restore_on_failure:
             raise ValueError(f"The {crud_api.list_cls.__name__} does not support restoring on failure. ")
 
-        ids = crud_api.as_ids(resources)
-        cdf_resources = crud_api.retrieve(ids)
+        cdf_resources = crud_api.retrieve(crud_api.as_ids(resources))
         cdf_resource_by_id = {crud_api.as_id(resource): resource for resource in cdf_resources}
         local_by_id = {crud_api.as_id(resource): resource for resource in resources}
 
@@ -94,25 +95,141 @@ class NeatClient(CogniteClient):
                 result.unchanged.append(id_)
 
         if existing == "fail" and result.existing:
+            result.message = f"Cannot deploy {len(resources)} resources, {len(result.existing)} already exist."
             return result
 
         if dry_run:
             return result
 
-        # Todo: Handle API errors.
+        deleted_ids: list[Hashable] = []
         if to_delete:
-            deleted_ids = crud_api.delete(to_delete)
-            result.deleted.extend(deleted_ids)
+            try:
+                deleted_ids = crud_api.delete(to_delete)
+            except CogniteAPIError as e:
+                result.status = "failure"
+                result.message = f"Failed to delete {len(to_delete)} resources: {e!r}"
+                result.failed_deleted.append(
+                    FailedRequest(
+                        error_message=str(e),
+                        status_code=e.code,
+                        resource_ids=to_delete,
+                    )
+                )
+            else:
+                result.deleted.extend(deleted_ids)
 
-        if to_create:
-            created = crud_api.create(to_create)
-            result.created.extend(crud_api.as_ids(created))
+        created = crud_api.list_cls([])
+        if to_create and result.status != "failure":
+            try:
+                created = crud_api.create(to_create)
+            except CogniteAPIError as e:
+                result.status = "failure"
+                result.message = f"Failed to create {len(to_create)} resources: {e!r}"
+                result.failed_created.append(
+                    FailedRequest(
+                        error_message=str(e),
+                        status_code=e.code,
+                        resource_ids=crud_api.as_ids(to_create),
+                    )
+                )
+            else:
+                result.created.extend(crud_api.as_ids(created))
 
-        if to_update:
-            # Todo: force implementation
-            updated = crud_api.update(to_update)
-            for resource in updated:
-                id_ = crud_api.as_id(resource)
-                previous = cdf_resource_by_id[id_]
-                result.updated.append(crud_api.difference(resource, previous))
+        updated = crud_api.list_cls([])
+        if to_update and result.status != "failure":
+            try:
+                updated = crud_api.update(to_update)
+            except CogniteAPIError as e1:
+                if existing == "force":
+                    to_delete_ids = crud_api.as_ids(to_update)
+                    try:
+                        _ = crud_api.delete(to_delete_ids)
+                    except CogniteAPIError as e2:
+                        result.status = "failure"
+                        result.message = "Failed to force update resources. The delete operation failed: {e2!r}"
+                        result.failed_deleted.append(
+                            FailedRequest(
+                                error_message=str(e2),
+                                status_code=e2.code,
+                                resource_ids=to_delete_ids,
+                            )
+                        )
+                    try:
+                        created = crud_api.create(to_update)
+                    except CogniteAPIError as e3:
+                        result.status = "failure"
+                        result.message = f"Failed to force update resources. The create operation failed: {e3!r}"
+                        result.failed_created.append(
+                            FailedRequest(
+                                error_message=str(e3),
+                                status_code=e3.code,
+                                resource_ids=crud_api.as_ids(to_update),
+                            )
+                        )
+                    else:
+                        result.forced.extend(
+                            [
+                                ForcedResource(
+                                    resource_id=resource_id,
+                                    reason=str(e1),
+                                )
+                                for resource_id in crud_api.as_ids(created)
+                            ]
+                        )
+                        for resource in created:
+                            id_ = crud_api.as_id(resource)
+                            previous = cdf_resource_by_id[id_]
+                            result.updated.append(crud_api.difference(resource, previous))
+                else:
+                    result.status = "failure"
+                    result.message = f"Failed to update {len(to_update)} resources: {e1!r}"
+                    result.failed_updated.append(
+                        FailedRequest(
+                            error_message=str(e1),
+                            status_code=e1.code,
+                            resource_ids=crud_api.as_ids(to_update),
+                        )
+                    )
+            else:
+                for resource in updated:
+                    id_ = crud_api.as_id(resource)
+                    previous = cdf_resource_by_id[id_]
+                    result.updated.append(crud_api.difference(resource, previous))
+
+        if result.status == "failure" and restore_on_failure:
+            result.restored = True
+            if updated:
+                raise NotImplementedError()
+            if deleted_ids:
+                restore_create = crud_api.list_cls(
+                    [cdf_resource_by_id[id_] for id_ in deleted_ids if id_ in cdf_resource_by_id]
+                )
+                try:
+                    _ = crud_api.create(restore_create)
+                except CogniteAPIError as e:
+                    result.message = f"Failed to restore deleted resources: {e!r}"
+                    result.restored = False
+                    result.failed_restored.append(
+                        FailedRequest(
+                            error_message=str(e),
+                            status_code=e.code,
+                            resource_ids=deleted_ids,
+                        )
+                    )
+
+            if created:
+                restore_delete_ids = crud_api.as_ids(created)
+                try:
+                    deleted_ids = crud_api.delete(restore_delete_ids)
+                except CogniteAPIError as e:
+                    result.message = f"Failed to restore created resources: {e!r}"
+                    result.restored = False
+                    result.failed_restored.append(
+                        FailedRequest(
+                            error_message=str(e),
+                            status_code=e.code,
+                            resource_ids=deleted_ids,
+                        )
+                    )
+
         return result
