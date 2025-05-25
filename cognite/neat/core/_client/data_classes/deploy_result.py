@@ -29,7 +29,12 @@ class ResourceDifference:
 @dataclass
 class DeployResult:
     status: Literal["success", "failure", "dry-run"]
+
     diffs: list[ResourceDifference] = field(default_factory=list)
+    to_create: list[Hashable] = field(default_factory=list)
+    to_update: list[Hashable] = field(default_factory=list)
+    to_delete: list[Hashable] = field(default_factory=list)
+
     created: list[Hashable] = field(default_factory=list)
     deleted: list[Hashable] = field(default_factory=list)
     skipped: list[Hashable] = field(default_factory=list)

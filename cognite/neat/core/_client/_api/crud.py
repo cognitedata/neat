@@ -7,13 +7,16 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList, T_CogniteResource, T_CogniteResourceList
 from cognite.client.data_classes.data_modeling import SpaceApply, SpaceApplyList
 
-from cognite.neat.core._client.data_classes.deploy_result import ResourceDifference
+from cognite.neat.core._client.data_classes.deploy_result import Property, PropertyChange, ResourceDifference
 
 T_ID = TypeVar("T_ID", bound=Hashable)
 
 
 class CrudAPI(Generic[T_ID, T_CogniteResource, T_CogniteResourceList]):
     list_cls: type[T_CogniteResourceList]  # The class of the resource list
+    # Views and DataModels can be restored on failure, while Containers and Spaces cannot
+    # as these will result in data loss if deleted and recreated.
+    support_restore_on_failure: bool = False
 
     def __init__(self, client: CogniteClient) -> None:
         self._client = client
@@ -46,7 +49,7 @@ class CrudAPI(Generic[T_ID, T_CogniteResource, T_CogniteResourceList]):
         raise NotImplementedError("This method should be implemented in a subclass.")
 
     @abstractmethod
-    def diffs(self, cdf_resources: T_CogniteResource, local_resources: T_CogniteResource) -> Any:
+    def difference(self, new: T_CogniteResource, previous: T_CogniteResource) -> Any:
         """Compare CDF resources with local resources and return the differences."""
         raise NotImplementedError("This method should be implemented in a subclass.")
 
@@ -84,9 +87,36 @@ class SpaceCrudAPI(CrudAPI[str, SpaceApply, SpaceApplyList]):
         """Extract IDs from a SpaceApplyList."""
         return resource.as_id()
 
-    def diffs(self, cdf_resources: SpaceApply, local_resources: SpaceApply) -> ResourceDifference:
+    def difference(self, new: SpaceApply, previous: SpaceApply) -> ResourceDifference:
         """Compare CDF resources with local resources and return the differences."""
-        raise NotImplementedError()
+        diff = ResourceDifference(resource_id=new.as_id())
+        if new.name is not None and previous.name is None:
+            diff.added.append(Property(location="name", value_representation=new.name))
+        elif new.name is None and previous.name is not None:
+            diff.removed.append(Property(location="name", value_representation=previous.name))
+        elif new.name is not None and previous.name is not None and new.name != previous.name:
+            diff.changed.append(
+                PropertyChange(
+                    location="name",
+                    value_representation=new.name,
+                    previous_representation=previous.name,
+                )
+            )
+        if new.description is not None and previous.description is None:
+            diff.added.append(Property(location="description", value_representation=new.description))
+        elif new.description is None and previous.description is not None:
+            diff.removed.append(Property(location="description", value_representation=previous.description))
+        elif (
+            new.description is not None and previous.description is not None and new.description != previous.description
+        ):
+            diff.changed.append(
+                PropertyChange(
+                    location="description",
+                    value_representation=new.description,
+                    previous_representation=previous.description,
+                )
+            )
+        return diff
 
 
 _CRUDAPI_CLASS_BY_LIST_TYPE: MappingProxyType[type[CogniteResourceList], type[CrudAPI]] = MappingProxyType(

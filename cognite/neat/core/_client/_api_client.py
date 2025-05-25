@@ -57,6 +57,8 @@ class NeatClient(CogniteClient):
         """
         crud_api_cls = CrudAPI.get_crud_api_cls(type(resources))
         crud_api = crud_api_cls(self)
+        if restore_on_failure and not crud_api.support_restore_on_failure:
+            raise ValueError(f"The {crud_api.list_cls.__name__} does not support restoring on failure. ")
 
         ids = crud_api.as_ids(resources)
         cdf_resources = crud_api.retrieve(ids)
@@ -73,28 +75,31 @@ class NeatClient(CogniteClient):
             cdf_resource = cdf_resource_by_id.get(id_)
             if cdf_resource is None:
                 to_create.append(local)
+                result.to_create.append(id_)
             elif existing == "skip":
                 result.skipped.append(id_)
             elif existing == "fail":
+                result.status = "failure"
                 result.existing.append(id_)
             elif existing == "recreate":
                 to_delete.append(id_)
                 to_create.append(local)
-            elif diffs := crud_api.diffs(cdf_resource, local):
+                result.to_delete.append(id_)
+                result.to_create.append(id_)
+            elif diffs := crud_api.difference(local, cdf_resource):
                 result.diffs.append(diffs)
+                result.to_update.append(id_)
                 to_update.append(local)
             else:
                 result.unchanged.append(id_)
 
         if existing == "fail" and result.existing:
-            raise ValueError(
-                f"The following resources already exist and cannot be deployed: {', '.join(map(str, result.existing))}"
-            )
+            return result
 
         if dry_run:
             return result
 
-        # Happy path. No API Errors
+        # Todo: Handle API errors.
         if to_delete:
             deleted_ids = crud_api.delete(to_delete)
             result.deleted.extend(deleted_ids)
@@ -104,9 +109,10 @@ class NeatClient(CogniteClient):
             result.created.extend(crud_api.as_ids(created))
 
         if to_update:
+            # Todo: force implementation
             updated = crud_api.update(to_update)
             for resource in updated:
                 id_ = crud_api.as_id(resource)
                 previous = cdf_resource_by_id[id_]
-                result.updated.append(crud_api.diffs(resource, previous))
+                result.updated.append(crud_api.difference(resource, previous))
         return result
