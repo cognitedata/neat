@@ -175,39 +175,6 @@ def deploy(
                 result.updated.append(crud_api.difference(resource, previous))
 
     if result.status == "failure" and restore_on_failure:
-        result.restored = True
-        if updated:
-            raise NotImplementedError()
-        if deleted_ids:
-            restore_create = crud_api.list_cls(
-                [cdf_resource_by_id[id_] for id_ in deleted_ids if id_ in cdf_resource_by_id]
-            )
-            try:
-                _ = crud_api.create(restore_create)
-            except CogniteAPIError as e:
-                result.message = f"Failed to restore deleted resources: {e!r}"
-                result.restored = False
-                result.failed_restored.append(
-                    FailedRequest(
-                        error_message=str(e),
-                        status_code=e.code,
-                        resource_ids=deleted_ids,
-                    )
-                )
-
-        if created:
-            restore_delete_ids = crud_api.as_ids(created)
-            try:
-                deleted_ids = crud_api.delete(restore_delete_ids)
-            except CogniteAPIError as e:
-                result.message = f"Failed to restore created resources: {e!r}"
-                result.restored = False
-                result.failed_restored.append(
-                    FailedRequest(
-                        error_message=str(e),
-                        status_code=e.code,
-                        resource_ids=deleted_ids,
-                    )
-                )
+        raise NotImplementedError()
 
     return result
