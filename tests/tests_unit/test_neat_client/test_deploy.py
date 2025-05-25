@@ -6,7 +6,7 @@ from cognite.client.data_classes._base import CogniteResourceList
 from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.core._client.testing import monkeypatch_neat_client
-from tests.utils import as_read_spaces
+from tests.utils import as_read_containers, as_read_spaces
 
 
 def deploy_test_cases() -> Iterable:
@@ -20,6 +20,37 @@ def deploy_test_cases() -> Iterable:
         as_read_spaces,
         "spaces",
         id="Deploy spaces",
+    )
+    yield pytest.param(
+        dm.ContainerApplyList(
+            [
+                dm.ContainerApply(
+                    "my_space",
+                    "container1",
+                    {
+                        "name": dm.ContainerProperty(dm.data_types.Text()),
+                        "tags": dm.ContainerProperty(dm.data_types.Text(is_list=True, max_list_size=2000)),
+                    },
+                    "Description of container 1",
+                    "Container 1",
+                    used_for="node",
+                ),
+                dm.ContainerApply(
+                    "my_space",
+                    "container2",
+                    {
+                        "source": dm.ContainerProperty(dm.data_types.Text()),
+                        "createdDate": dm.ContainerProperty(dm.data_types.Date()),
+                    },
+                    "Description of container 2",
+                    "Container 2",
+                    used_for="node",
+                ),
+            ]
+        ),
+        as_read_containers,
+        "containers",
+        id="Deploy containers",
     )
 
 
