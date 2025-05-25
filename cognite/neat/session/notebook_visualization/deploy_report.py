@@ -469,7 +469,7 @@ def display_deploy_result(deploy_result: DeployResult) -> HTML:
         </div>
     </body>
     </html>
-    """
+    """  # noqa: E501
 
     # Display the HTML in Jupyter
     return HTML(html_content)
