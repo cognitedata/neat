@@ -1,5 +1,6 @@
 import pytest
 from cognite.client import data_modeling as dm
+from cognite.client.exceptions import CogniteAPIError
 
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from tests.utils import as_read_space
@@ -53,6 +54,37 @@ class TestDeploySpace:
         assert len(result.diffs) == 1
         difference = result.diffs[0]
         assert {prop.location for prop in difference.changed} == {"name", "description"}
+
+    def test_deploy_space_existing_force(self, two_spaces: dm.SpaceApplyList) -> None:
+        # Note in reality, spaces will not fail to update, but this tests the logic of the deploy function
+        with monkeypatch_neat_client() as client:
+            cdf_space = as_read_space(two_spaces[0])
+            cdf_space.name = "Last name"
+            cdf_space.description = "Last description"
+            client.data_modeling.spaces.retrieve.return_value = dm.SpaceList([cdf_space])
+            client.data_modeling.spaces.apply.side_effect = [
+                dm.SpaceList([as_read_space(two_spaces[1])]),
+                CogniteAPIError("Update failed", code=400),
+                dm.SpaceList([as_read_space(two_spaces[0])]),
+            ]
+            result = client.deploy(two_spaces, existing="force")
+
+        # The first space is created, update fails, then the second space is updated
+        assert client.data_modeling.spaces.apply.call_count == 3
+        # Create call
+        assert client.data_modeling.spaces.apply.call_args_list[0][0] == (dm.SpaceApplyList([two_spaces[1]]),)
+        # Failed call
+        assert client.data_modeling.spaces.apply.call_args_list[1][0] == (dm.SpaceApplyList([two_spaces[0]]),)
+        # Recreate call
+        assert client.data_modeling.spaces.apply.call_args_list[2][0] == (dm.SpaceApplyList([two_spaces[0]]),)
+        # Delete call
+        assert client.data_modeling.spaces.delete.call_count == 1
+
+        assert result.status == "success"
+        assert len(result.forced) == 1
+        forced = result.forced[0]
+        assert forced.resource_id == two_spaces[0].space
+        assert forced.reason == "Update failed | code: 400 | X-Request-ID: None"
 
     def test_deploy_space_existing_recreate(self, two_spaces: dm.SpaceApplyList) -> None:
         with monkeypatch_neat_client() as client:
