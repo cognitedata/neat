@@ -11,11 +11,10 @@ import rdflib
 from rdflib import URIRef
 
 from cognite.neat.core._client import NeatClient
-from cognite.neat.core._client.data_classes.deploy_result import DeployResult
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import T_VerifiedDataModel, VerifiedDataModel
 from cognite.neat.core._data_model.exporters import BaseExporter
-from cognite.neat.core._data_model.exporters._base import CDFExporter, CDFExporter2, T_Export
+from cognite.neat.core._data_model.exporters._base import CDFExporter, T_Export
 from cognite.neat.core._data_model.importers import BaseImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.core._data_model.transformers import (
@@ -258,10 +257,6 @@ class NeatDataModelStore:
         return self._export_activity(
             exporter.export_to_cdf, exporter, DEFAULT_NAMESPACE["upload-result"], client, dry_run
         )
-
-    def export_to_cdf2(self, exporter: CDFExporter2, client: NeatClient, dry_run: bool = False) -> DeployResult:
-        """Export data model to CDF using the CDFExporter2 interface."""
-        return self._export_activity(exporter.deploy, exporter, DEFAULT_NAMESPACE["upload-result"], client, dry_run)
 
     def do_activity(
         self,
