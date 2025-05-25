@@ -95,7 +95,10 @@ def _prepare_api_calls(
         elif diffs := crud_api.difference(local, cdf_resource):
             result.diffs.append(diffs)
             result.to_update.append(id_)
-            to_update.append(local)
+            if crud_api.support_merge:
+                to_update.append(crud_api.merge(local, cdf_resource))
+            else:
+                to_update.append(local)
         else:
             result.unchanged.append(id_)
     return result, to_create, to_delete, to_update

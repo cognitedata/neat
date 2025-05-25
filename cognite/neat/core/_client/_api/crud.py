@@ -5,9 +5,16 @@ from typing import Any, Generic, TypeVar
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList, T_CogniteResource, T_CogniteResourceList
-from cognite.client.data_classes.data_modeling import SpaceApply, SpaceApplyList
+from cognite.client.data_classes.data_modeling import (
+    ContainerApply,
+    ContainerApplyList,
+    ContainerId,
+    SpaceApply,
+    SpaceApplyList,
+)
 
-from cognite.neat.core._client.data_classes.deploy_result import Property, PropertyChange, ResourceDifference
+from cognite.neat.core._client.data_classes.deploy_differences import DifferenceFactory
+from cognite.neat.core._client.data_classes.deploy_result import ResourceDifference
 
 T_ID = TypeVar("T_ID", bound=Hashable)
 
@@ -17,6 +24,7 @@ class CrudAPI(Generic[T_ID, T_CogniteResource, T_CogniteResourceList]):
     # Views and DataModels can be restored on failure, while Containers and Spaces cannot
     # as these will result in data loss if deleted and recreated.
     support_restore_on_failure: bool = False
+    support_merge: bool = False
 
     def __init__(self, client: CogniteClient) -> None:
         self._client = client
@@ -53,6 +61,10 @@ class CrudAPI(Generic[T_ID, T_CogniteResource, T_CogniteResourceList]):
         """Compare CDF resources with local resources and return the differences."""
         raise NotImplementedError("This method should be implemented in a subclass.")
 
+    def merge(self, new: T_CogniteResource, previous: T_CogniteResource) -> T_CogniteResource:
+        """Merge two resources, returning the new resource."""
+        raise NotImplementedError("This method should be implemented in a subclass that supports merging.")
+
     @abstractmethod
     def as_id(self, resource: T_CogniteResource) -> T_ID:
         raise NotImplementedError
@@ -66,6 +78,7 @@ class SpaceCrudAPI(CrudAPI[str, SpaceApply, SpaceApplyList]):
     """CRUD API for SpaceApply resources."""
 
     list_cls = SpaceApplyList
+    support_restore_on_failure = False
 
     def create(self, resources: SpaceApplyList) -> SpaceApplyList:
         """Create a space or a list of spaces."""
@@ -90,33 +103,61 @@ class SpaceCrudAPI(CrudAPI[str, SpaceApply, SpaceApplyList]):
     def difference(self, new: SpaceApply, previous: SpaceApply) -> ResourceDifference:
         """Compare CDF resources with local resources and return the differences."""
         diff = ResourceDifference(resource_id=new.as_id())
-        if new.name is not None and previous.name is None:
-            diff.added.append(Property(location="name", value_representation=new.name))
-        elif new.name is None and previous.name is not None:
-            diff.removed.append(Property(location="name", value_representation=previous.name))
-        elif new.name is not None and previous.name is not None and new.name != previous.name:
-            diff.changed.append(
-                PropertyChange(
-                    location="name",
-                    value_representation=new.name,
-                    previous_representation=previous.name,
-                )
-            )
-        if new.description is not None and previous.description is None:
-            diff.added.append(Property(location="description", value_representation=new.description))
-        elif new.description is None and previous.description is not None:
-            diff.removed.append(Property(location="description", value_representation=previous.description))
-        elif (
-            new.description is not None and previous.description is not None and new.description != previous.description
-        ):
-            diff.changed.append(
-                PropertyChange(
-                    location="description",
-                    value_representation=new.description,
-                    previous_representation=previous.description,
-                )
-            )
+        DifferenceFactory.nullable_primary(diff, "name", new.name, previous.name)
+        DifferenceFactory.nullable_primary(diff, "description", new.description, previous.description)
         return diff
+
+
+class ContainerCrudAPI(CrudAPI[ContainerId, ContainerApply, ContainerApplyList]):
+    """CRUD API for ContainerApply resources."""
+
+    list_cls = ContainerApplyList
+    support_restore_on_failure = False
+    support_merge = True
+
+    def create(self, resources: ContainerApplyList) -> ContainerApplyList:
+        """Create a container or a list of containers."""
+        return self._client.data_modeling.containers.apply(resources).as_write()
+
+    def retrieve(self, ids: list[ContainerId]) -> ContainerApplyList:
+        """Retrieve containers by their IDs."""
+        return self._client.data_modeling.containers.retrieve(ids).as_write()
+
+    def update(self, resources: ContainerApplyList) -> ContainerApplyList:
+        """Update containers."""
+        return self._client.data_modeling.containers.apply(resources).as_write()
+
+    def delete(self, ids: list[ContainerId]) -> list[ContainerId]:
+        """Delete containers by their IDs."""
+        return self._client.data_modeling.containers.delete(ids)
+
+    def as_id(self, resource: ContainerApply) -> ContainerId:
+        """Extract IDs from a ContainerApplyList."""
+        return resource.as_id()
+
+    @classmethod
+    def difference(cls, new: ContainerApply, previous: ContainerApply) -> ResourceDifference:
+        """Compare CDF resources with local resources and return the differences."""
+        diff = ResourceDifference(resource_id=new.as_id())
+        DifferenceFactory.nullable_primary(diff, "name", new.name, previous.name)
+        DifferenceFactory.nullable_primary(diff, "description", new.description, previous.description)
+        DifferenceFactory.comparable_by_id(diff, "properties", new.properties, previous.properties)
+        DifferenceFactory.comparable_by_id(diff, "indexes", new.indexes, previous.indexes)
+        DifferenceFactory.comparable_by_id(diff, "constraints", new.constraints, previous.constraints)
+        return diff
+
+    @classmethod
+    def merge(cls, new: ContainerApply, previous: ContainerApply) -> ContainerApply:
+        return ContainerApply(
+            space=new.space,
+            external_id=new.external_id,
+            used_for=new.used_for,
+            name=new.name or previous.name,
+            description=new.description or previous.description,
+            properties={**previous.properties, **new.properties},
+            indexes={**previous.indexes, **new.indexes},
+            constraints={**previous.constraints, **new.constraints},
+        )
 
 
 _CRUDAPI_CLASS_BY_LIST_TYPE: MappingProxyType[type[CogniteResourceList], type[CrudAPI]] = MappingProxyType(

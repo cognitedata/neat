@@ -6,12 +6,12 @@ from typing import Literal
 @dataclass
 class Property:
     location: str
-    value_representation: str
+    value_representation: str | None = None
 
 
 @dataclass
 class PropertyChange(Property):
-    previous_representation: str
+    previous_representation: str | None = None
 
 
 @dataclass
