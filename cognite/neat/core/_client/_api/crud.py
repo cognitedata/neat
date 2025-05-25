@@ -13,7 +13,8 @@ from cognite.client.data_classes.data_modeling import (
     SpaceApplyList,
 )
 
-from cognite.neat.core._client.data_classes.deploy_result import Property, PropertyChange, ResourceDifference
+from cognite.neat.core._client.data_classes.deploy_differences import DifferenceFactory
+from cognite.neat.core._client.data_classes.deploy_result import ResourceDifference
 
 T_ID = TypeVar("T_ID", bound=Hashable)
 
@@ -102,32 +103,8 @@ class SpaceCrudAPI(CrudAPI[str, SpaceApply, SpaceApplyList]):
     def difference(self, new: SpaceApply, previous: SpaceApply) -> ResourceDifference:
         """Compare CDF resources with local resources and return the differences."""
         diff = ResourceDifference(resource_id=new.as_id())
-        if new.name is not None and previous.name is None:
-            diff.added.append(Property(location="name", value_representation=new.name))
-        elif new.name is None and previous.name is not None:
-            diff.removed.append(Property(location="name", value_representation=previous.name))
-        elif new.name is not None and previous.name is not None and new.name != previous.name:
-            diff.changed.append(
-                PropertyChange(
-                    location="name",
-                    value_representation=new.name,
-                    previous_representation=previous.name,
-                )
-            )
-        if new.description is not None and previous.description is None:
-            diff.added.append(Property(location="description", value_representation=new.description))
-        elif new.description is None and previous.description is not None:
-            diff.removed.append(Property(location="description", value_representation=previous.description))
-        elif (
-            new.description is not None and previous.description is not None and new.description != previous.description
-        ):
-            diff.changed.append(
-                PropertyChange(
-                    location="description",
-                    value_representation=new.description,
-                    previous_representation=previous.description,
-                )
-            )
+        DifferenceFactory.nullable_primary(diff, "name", new.name, previous.name)
+        DifferenceFactory.nullable_primary(diff, "description", new.description, previous.description)
         return diff
 
 
@@ -162,37 +139,25 @@ class ContainerCrudAPI(CrudAPI[ContainerId, ContainerApply, ContainerApplyList])
     def difference(cls, new: ContainerApply, previous: ContainerApply) -> ResourceDifference:
         """Compare CDF resources with local resources and return the differences."""
         diff = ResourceDifference(resource_id=new.as_id())
-        if new.name is not None and previous.name is None:
-            diff.added.append(Property(location="name", value_representation=new.name))
-        elif new.name is None and previous.name is not None:
-            diff.removed.append(Property(location="name", value_representation=previous.name))
-        elif new.name is not None and previous.name is not None and new.name != previous.name:
-            diff.changed.append(
-                PropertyChange(
-                    location="name",
-                    value_representation=new.name,
-                    previous_representation=previous.name,
-                )
-            )
-        if new.description is not None and previous.description is None:
-            diff.added.append(Property(location="description", value_representation=new.description))
-        elif new.description is None and previous.description is not None:
-            diff.removed.append(Property(location="description", value_representation=previous.description))
-        elif (
-            new.description is not None and previous.description is not None and new.description != previous.description
-        ):
-            diff.changed.append(
-                PropertyChange(
-                    location="description",
-                    value_representation=new.description,
-                    previous_representation=previous.description,
-                )
-            )
+        DifferenceFactory.nullable_primary(diff, "name", new.name, previous.name)
+        DifferenceFactory.nullable_primary(diff, "description", new.description, previous.description)
+        DifferenceFactory.comparable_by_id(diff, "properties", new.properties, previous.properties)
+        DifferenceFactory.comparable_by_id(diff, "indexes", new.indexes, previous.indexes)
+        DifferenceFactory.comparable_by_id(diff, "constraints", new.constraints, previous.constraints)
         return diff
 
     @classmethod
     def merge(cls, new: ContainerApply, previous: ContainerApply) -> ContainerApply:
-        raise NotImplementedError()
+        return ContainerApply(
+            space=new.space,
+            external_id=new.external_id,
+            used_for=new.used_for,
+            name=new.name or previous.name,
+            description=new.description or previous.description,
+            properties={**previous.properties, **new.properties},
+            indexes={**previous.indexes, **new.indexes},
+            constraints={**previous.constraints, **new.constraints},
+        )
 
 
 _CRUDAPI_CLASS_BY_LIST_TYPE: MappingProxyType[type[CogniteResourceList], type[CrudAPI]] = MappingProxyType(
