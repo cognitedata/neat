@@ -9,7 +9,6 @@ from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat.core._client._api_client import NeatClient
 from cognite.neat.core._client._deploy import ExistingResource
-from cognite.neat.core._client.data_classes.deploy_result import DeployResult
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat.core._data_model import exporters
@@ -22,6 +21,7 @@ from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat.core._utils.upload import UploadResultList
 from cognite.neat.session._experimental import ExperimentalFlags
+from cognite.neat.session.notebook_visualization.deploy_report import display_deploy_result
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -497,7 +497,7 @@ class CDFToAPI:
             neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
         )
 
-    def containers(self, existing: ExistingResource, drop_data: bool = False, dry_run: bool = False) -> DeployResult:
+    def containers(self, existing: ExistingResource, drop_data: bool = False, dry_run: bool = False) -> None:
         """Export the verified DMS containers to CDF.
 
         Args:
@@ -529,9 +529,7 @@ class CDFToAPI:
         result = self._state.data_model_store.export_to_cdf2(
             exporter, cast(NeatClient, self._state.client), dry_run=dry_run
         )
-        print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
-
-        return result
+        display_deploy_result(result)
 
 
 @session_class_wrapper
