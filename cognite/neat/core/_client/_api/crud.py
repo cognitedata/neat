@@ -23,6 +23,7 @@ class CrudAPI(Generic[T_ID, T_CogniteResource, T_CogniteResourceList]):
     # Views and DataModels can be restored on failure, while Containers and Spaces cannot
     # as these will result in data loss if deleted and recreated.
     support_restore_on_failure: bool = False
+    support_merge: bool = False
 
     def __init__(self, client: CogniteClient) -> None:
         self._client = client
@@ -58,6 +59,10 @@ class CrudAPI(Generic[T_ID, T_CogniteResource, T_CogniteResourceList]):
     def difference(self, new: T_CogniteResource, previous: T_CogniteResource) -> Any:
         """Compare CDF resources with local resources and return the differences."""
         raise NotImplementedError("This method should be implemented in a subclass.")
+
+    def merge(self, new: T_CogniteResource, previous: T_CogniteResource) -> T_CogniteResource:
+        """Merge two resources, returning the new resource."""
+        raise NotImplementedError("This method should be implemented in a subclass that supports merging.")
 
     @abstractmethod
     def as_id(self, resource: T_CogniteResource) -> T_ID:
@@ -131,6 +136,7 @@ class ContainerCrudAPI(CrudAPI[ContainerId, ContainerApply, ContainerApplyList])
 
     list_cls = ContainerApplyList
     support_restore_on_failure = False
+    support_merge = True
 
     def create(self, resources: ContainerApplyList) -> ContainerApplyList:
         """Create a container or a list of containers."""
@@ -152,7 +158,8 @@ class ContainerCrudAPI(CrudAPI[ContainerId, ContainerApply, ContainerApplyList])
         """Extract IDs from a ContainerApplyList."""
         return resource.as_id()
 
-    def difference(self, new: ContainerApply, previous: ContainerApply) -> ResourceDifference:
+    @classmethod
+    def difference(cls, new: ContainerApply, previous: ContainerApply) -> ResourceDifference:
         """Compare CDF resources with local resources and return the differences."""
         diff = ResourceDifference(resource_id=new.as_id())
         if new.name is not None and previous.name is None:
@@ -182,6 +189,10 @@ class ContainerCrudAPI(CrudAPI[ContainerId, ContainerApply, ContainerApplyList])
                 )
             )
         return diff
+
+    @classmethod
+    def merge(cls, new: ContainerApply, previous: ContainerApply) -> ContainerApply:
+        raise NotImplementedError()
 
 
 _CRUDAPI_CLASS_BY_LIST_TYPE: MappingProxyType[type[CogniteResourceList], type[CrudAPI]] = MappingProxyType(
