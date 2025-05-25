@@ -45,6 +45,7 @@ class DeployResult:
     status: Literal["success", "failure", "dry-run"] = "success"
     restored: bool = False
     message: str = ""
+    resource_type: str | None = None
 
     # Preparation phase
     diffs: list[ResourceDifference] = field(default_factory=list)

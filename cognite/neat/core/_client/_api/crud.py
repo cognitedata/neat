@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Hashable
 from types import MappingProxyType
-from typing import Any, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 from cognite.client import CogniteClient
 from cognite.client.data_classes._base import CogniteResourceList, T_CogniteResource, T_CogniteResourceList
@@ -25,6 +25,7 @@ class CrudAPI(Generic[T_ID, T_CogniteResource, T_CogniteResourceList]):
     # as these will result in data loss if deleted and recreated.
     support_restore_on_failure: bool = False
     support_merge: bool = False
+    resource_type: ClassVar[str]
 
     def __init__(self, client: CogniteClient) -> None:
         self._client = client
@@ -79,6 +80,7 @@ class SpaceCrudAPI(CrudAPI[str, SpaceApply, SpaceApplyList]):
 
     list_cls = SpaceApplyList
     support_restore_on_failure = False
+    resource_type = "Spaces"
 
     def create(self, resources: SpaceApplyList) -> SpaceApplyList:
         """Create a space or a list of spaces."""
@@ -114,6 +116,7 @@ class ContainerCrudAPI(CrudAPI[ContainerId, ContainerApply, ContainerApplyList])
     list_cls = ContainerApplyList
     support_restore_on_failure = False
     support_merge = True
+    resource_type = "Containers"
 
     def create(self, resources: ContainerApplyList) -> ContainerApplyList:
         """Create a container or a list of containers."""
