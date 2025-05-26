@@ -33,7 +33,7 @@ TEST_CASES = [
     (
         ContainerIndexEntity,
         "name(cursorable=True)",
-        ContainerIndexEntity(suffix="name", cursorable=False),
+        ContainerIndexEntity(suffix="name", cursorable=True),
     ),
     (
         ContainerIndexEntity,
