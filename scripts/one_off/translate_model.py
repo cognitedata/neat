@@ -69,3 +69,23 @@ async def translate_property_ids(input_rules: UnverifiedConceptualDataModel, out
     exporter = ExcelExporter(styling="maximal")
     exporter.export_to_file(input_rules.as_verified_data_model(), output_model)
     print(f"Exported {len(input_rules.properties)} properties and {len(input_rules.concepts)} classes to {output_model.as_posix()}.")
+
+async def translate_names(names: list[str], source_language: str, target_language: str, folder: Path | None = None) -> dict[str, str]:
+    """Translates a list of names from the source language to the target language."""
+    translation_file = (folder / Path.cwd()) / f"name_translations_from_{source_language}_to_{target_language}.json"
+
+    if translation_file.exists():
+        cache = json.loads(translation_file.read_text(encoding="utf-8"))
+    else:
+        cache = {}
+
+    to_translate = [name for name in names if name not in cache]
+    translator = Translator()
+    for name_chunk in chunker(to_translate, 10):
+        translated = await translator.translate(list(name_chunk), src=source_language, dest=target_language)
+        for response in translated:
+            cache[response.origin] = response.text
+        print(f"Translated {len(name_chunk)} names.")
+        translation_file.write_text(json.dumps(cache, indent=2), encoding="utf-8")
+
+    return {name: cache[name] for name in names}
