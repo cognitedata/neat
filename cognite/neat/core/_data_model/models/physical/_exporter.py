@@ -4,7 +4,7 @@ from collections.abc import Collection, Hashable, Sequence
 from typing import Any, cast
 
 from cognite.client.data_classes import data_modeling as dm
-from cognite.client.data_classes.data_modeling.containers import BTreeIndex
+from cognite.client.data_classes.data_modeling.containers import BTreeIndex, InvertedIndex
 from cognite.client.data_classes.data_modeling.data_types import EnumValue as DMSEnumValue
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.views import (
@@ -29,6 +29,7 @@ from cognite.neat.core._data_model.models.data_types import DataType, Double, En
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     ContainerEntity,
+    ContainerIndexEntity,
     DMSFilter,
     DMSNodeEntity,
     EdgeEntity,
@@ -36,6 +37,7 @@ from cognite.neat.core._data_model.models.entities import (
     NodeTypeFilter,
     PhysicalUnknownEntity,
     ReverseConnectionEntity,
+    Undefined,
     UnitEntity,
     ViewEntity,
 )
@@ -380,14 +382,25 @@ class _DMSExporter:
                 container.constraints = container.constraints or {}
                 container.constraints[constraint_name] = dm.UniquenessConstraint(properties=list(properties))
 
-            index_properties: dict[str, set[str]] = defaultdict(set)
+            index_properties: dict[tuple[str, bool], list[tuple[str, ContainerIndexEntity]]] = defaultdict(list)
             for prop in container_properties:
                 if prop.container_property is not None:
                     for index in prop.index or []:
-                        index_properties[index].add(prop.container_property)
-            for index_name, properties in index_properties.items():
+                        index_properties[(index.suffix, prop.is_list or False)].append((prop.container_property, index))
+            for (index_name, is_list), properties in index_properties.items():
                 container.indexes = container.indexes or {}
-                container.indexes[index_name] = BTreeIndex(properties=list(properties))
+                index_property_list = [prop_id for prop_id, _ in sorted(properties, key=lambda x: x[1].order or 0)]
+                index_entity = properties[0][1]
+                if index_entity.prefix == "inverted" or (index_entity.prefix is Undefined and is_list):
+                    container.indexes[index_name] = InvertedIndex(properties=index_property_list)
+                elif index_entity.prefix == "btree" or (index_entity.prefix is Undefined and not is_list):
+                    container.indexes[index_name] = BTreeIndex(
+                        properties=index_property_list, cursorable=index_entity.cursorable or False
+                    )
+                else:
+                    raise NeatValueError(
+                        f"Invalid index prefix {index_entity.prefix!r} in {container_id}.{index_entity.suffix!r}"
+                    )
 
         # We might drop containers we convert direct relations of list into multi-edge connections
         # which do not have a container.
