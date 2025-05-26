@@ -172,6 +172,18 @@ class TestEntities:
         error = e.value.errors()[0]["ctx"]["error"]
         assert NeatValueError("Invalid view entity: 'bad(entity)'") == error
 
+    @pytest.mark.parametrize(
+        "entity1, entity2",
+        [
+            (
+                ContainerIndexEntity(prefix="btree", suffix="name", cursorable=True),
+                ContainerIndexEntity(prefix="btree", suffix="name", cursorable=False),
+            ),
+        ],
+    )
+    def test_are_not_equal(self, entity1: ConceptualEntity, entity2: ConceptualEntity) -> None:
+        assert entity1 != entity2, f"Expected {entity1} and {entity2} to be different entities"
+
 
 class TestEntityPattern:
     @pytest.mark.parametrize(
