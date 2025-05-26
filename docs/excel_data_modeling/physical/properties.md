@@ -41,7 +41,7 @@ There are two `Value Type` that supports extra parameters
 ### Index
 
 For data properties, you can specify an index. The index is used to speed up queries on the property. The syntax is as
-follows;
+follows:
 
 | View        | View Property | Value Type | Container      | Container Property | Index                            |
 |-------------|---------------|------------|----------------|--------------------|----------------------------------|
@@ -51,12 +51,13 @@ Note that you can specify whether the index is cursorable or not, see
 [here](https://docs.cognite.com/cdf/dm/dm_guides/dm_performance_considerations/#pagination-cursorable-indexes).
 
 You can also specify indices that uses multiple data properties. You can do this by specifying the same `Index` name
-for multiple properties. See the example below:
+for multiple properties. When you specify an index on multiple properties you must specify the order these properties
+should be used. See the example below:
 
-| View        | View Property | Value Type | Container      | Container Property | Index              |
-|-------------|---------------|------------|----------------|--------------------|--------------------|
-| WindTurbine | name          | text       | GeneratingUnit | name               | nameCapacityIndex  |
-| WindTurbine | capacity      | float64    | GeneratingUnit | capacity           | nameCapacityIndex  |
+| View        | View Property | Value Type | Container      | Container Property | Index                      |
+|-------------|---------------|------------|----------------|--------------------|----------------------------|
+| WindTurbine | name          | text       | GeneratingUnit | name               | nameCapacityIndex(order=1) |
+| WindTurbine | capacity      | float64    | GeneratingUnit | capacity           | nameCapacityIndex(order=2) |
 
 There are two available index types, `btree` which should be used for non-list properties and `inverted` which should
 be used for list properties. If you do not specify the index type, it will default to `btree` for non-list properties
