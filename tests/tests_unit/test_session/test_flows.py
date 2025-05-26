@@ -19,14 +19,19 @@ class TestImportExportFlow:
                 external_id="my_container",
                 properties={
                     "name": dm.ContainerProperty(dm.data_types.Text()),
+                    "section": dm.ContainerProperty(dm.data_types.Text()),
                 },
-                indexes={"nameindex": dm.containers.BTreeIndex(["name"], cursorable=True)},
+                indexes={
+                    "nameindex": dm.containers.BTreeIndex(["name"], cursorable=True),
+                    "combinedIndex": dm.containers.BTreeIndex(["section", "name"], cursorable=True),
+                },
             )
             my_view = dm.ViewApply(
                 space="my_space",
                 external_id="my_view",
                 properties={
                     "name": dm.MappedPropertyApply(my_container.as_id(), "name"),
+                    "section": dm.MappedPropertyApply(my_container.as_id(), "section"),
                 },
                 version="v1",
             )
@@ -61,3 +66,8 @@ class TestImportExportFlow:
         name_index = indices["nameindex"]
         assert isinstance(name_index, dm.containers.BTreeIndex)
         assert name_index.cursorable is True
+        assert "combinedIndex" in indices
+        combined_index = indices["combinedIndex"]
+        assert isinstance(combined_index, dm.containers.BTreeIndex)
+        assert combined_index.cursorable is True
+        assert combined_index.properties == ["section", "name"]

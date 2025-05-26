@@ -382,18 +382,20 @@ class _DMSExporter:
                 container.constraints = container.constraints or {}
                 container.constraints[constraint_name] = dm.UniquenessConstraint(properties=list(properties))
 
-            index_properties: dict[tuple[ContainerIndexEntity, bool], set[str]] = defaultdict(set)
+            index_properties: dict[tuple[str, bool], list[tuple[str, ContainerIndexEntity]]] = defaultdict(list)
             for prop in container_properties:
                 if prop.container_property is not None:
                     for index in prop.index or []:
-                        index_properties[(index, prop.is_list or False)].add(prop.container_property)
-            for (index_entity, is_list), properties in index_properties.items():
+                        index_properties[(index.suffix, prop.is_list or False)].append((prop.container_property, index))
+            for (index_name, is_list), properties in index_properties.items():
                 container.indexes = container.indexes or {}
+                index_property_list = [prop_id for prop_id, _ in sorted(properties, key=lambda x: x[1].order or 0)]
+                index_entity = properties[0][1]
                 if index_entity.prefix == "inverted" or (index_entity.prefix is Undefined and is_list):
-                    container.indexes[index_entity.suffix] = InvertedIndex(properties=sorted(properties))
+                    container.indexes[index_name] = InvertedIndex(properties=index_property_list)
                 elif index_entity.prefix == "btree" or (index_entity.prefix is Undefined and not is_list):
-                    container.indexes[index_entity.suffix] = BTreeIndex(
-                        properties=sorted(properties), cursorable=index_entity.cursorable or False
+                    container.indexes[index_name] = BTreeIndex(
+                        properties=index_property_list, cursorable=index_entity.cursorable or False
                     )
                 else:
                     raise NeatValueError(

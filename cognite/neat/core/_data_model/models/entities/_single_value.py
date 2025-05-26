@@ -555,6 +555,7 @@ class ContainerIndexEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.container_index
     prefix: _UndefinedType | Literal["btree", "inverted"] = Undefined
     suffix: str
+    order: int | None = Field(None, description="The order of the index. None indicates the value is not set.")
     cursorable: bool | None = Field(
         None, description="Whether the index is cursorable. None indicates the value is not set."
     )
