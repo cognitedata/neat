@@ -172,8 +172,8 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         extra: tuple[str, ...] = tuple(
             [
                 str(v or "")
-                for field_name in self.model_fields
-                if isinstance(v := getattr(self, field_name), str | None) and field_name not in {"prefix", "suffix"}
+                for field_name in self.model_fields.keys()
+                if (v := getattr(self, field_name)) and field_name not in {"prefix", "suffix"}
             ]
         )
         if isinstance(self.prefix, _UndefinedType):
