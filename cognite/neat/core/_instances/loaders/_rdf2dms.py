@@ -656,6 +656,9 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return NeatValueWarning(f"Cannot check project instance capacity. Endpoint not available: {e}")
         instance_capacity = stats.instances.instances_limit - stats.instances.instances
         if total_instances + DMS_INSTANCE_LIMIT_MARGIN > instance_capacity:
+            # This breaks the general contract of loaders, which is to not raise exceptions unless
+            # stop_on_exception is True.
+            # However, this is a special case where we do not want to proceed no matter what.
             raise WillExceedInstanceLimitError(total_instances, stats.project, instance_capacity)
         return None
 
