@@ -11,7 +11,11 @@ from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._config import GLOBAL_CONFIG
-from cognite.neat.core._constants import DEFAULT_SPACE_URI, is_readonly_property
+from cognite.neat.core._constants import (
+    DEFAULT_NAMESPACE,
+    DEFAULT_SPACE_URI,
+    is_readonly_property,
+)
 from cognite.neat.core._issues.errors import ResourceRetrievalError
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._utils.collection_ import iterate_progress_bar
@@ -182,11 +186,13 @@ class DMSExtractor(BaseExtractor):
                 return
             else:
                 # If the edge has properties, we create a node for the edge and connect it to the start and end nodes.
-                id_ = self._as_uri_ref(instance)
+                id_ = self._as_uri_ref(instance, view.external_id if self.typed_ids else None)
                 type_ = self._create_type(
                     instance, fallback=self._get_namespace(instance.space).Edge, type_priority=self.edge_type
                 )
+
                 yield id_, RDF.type, type_
+                yield id_, DEFAULT_NAMESPACE.edgeType, Literal(f"{instance.type.space}:{instance.type.external_id}")
                 yield (
                     id_,
                     self._as_uri_ref(dm.DirectRelationReference(instance.space, "startNode")),

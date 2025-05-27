@@ -233,6 +233,7 @@ class CDFReadAPI(BaseReadAPI):
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        typed_ids: bool = False,
     ) -> IssueList:
         extractor = extractors.DMSGraphExtractor.from_data_model_id(
             # We are skipping the Cognite Views
@@ -242,6 +243,7 @@ class CDFReadAPI(BaseReadAPI):
             skip_cognite_views=skip_cognite_views,
             unpack_json=unpack_json,
             str_to_ideal_type=str_to_ideal_type,
+            typed_ids=typed_ids,
         )
         return self._state.write_graph(extractor)
 

@@ -39,6 +39,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        typed_ids: bool = False,
     ) -> None:
         self._client = client
         self._data_model = data_model
@@ -48,6 +49,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._skip_cognite_views = skip_cognite_views
         self._unpack_json = unpack_json
         self._str_to_ideal_type = str_to_ideal_type
+        self.typed_ids = typed_ids
 
         self._views: list[dm.View] | None = None
         self._conceptual_data_model: ConceptualDataModel | None = None
@@ -63,6 +65,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        typed_ids: bool = False,
     ) -> "DMSGraphExtractor":
         issues: list[NeatIssue] = []
         try:
@@ -78,6 +81,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 skip_cognite_views,
                 unpack_json,
                 str_to_ideal_type,
+                typed_ids=typed_ids,
             )
         if not data_model:
             issues.append(ResourceRetrievalWarning(frozenset({data_model_id}), "data model"))
@@ -90,6 +94,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 skip_cognite_views,
                 unpack_json,
                 str_to_ideal_type,
+                typed_ids=typed_ids,
             )
         return cls(
             data_model.latest_version(),
@@ -100,6 +105,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             skip_cognite_views,
             unpack_json,
             str_to_ideal_type,
+            typed_ids=typed_ids,
         )
 
     @classmethod
@@ -143,6 +149,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             instance_space=self._instance_space,
             unpack_json=self._unpack_json,
             str_to_ideal_type=self._str_to_ideal_type,
+            typed_ids=self.typed_ids,
         ).extract()
 
     def _get_views(self) -> list[dm.View]:

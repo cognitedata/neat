@@ -102,6 +102,8 @@ COGNITE_CONCEPTS = (
     "CogniteCADNode",
 )
 
+COGNITE_EDGE_TYPES = ("diagrams.FileLink", "diagrams.AssetLink")
+
 DMS_LISTABLE_PROPERTY_LIMIT = 1000
 
 EXAMPLE_DATA_MODELS = PACKAGE_DIRECTORY / "core" / "_data_model" / "examples"
@@ -128,6 +130,7 @@ class NEAT(DefinedNamespace):
 
     UnknownType: URIRef  # Unknown type used to express that the type of a subject is unknown
     EmptyType: URIRef  # Empty type used to express that the type of a subject is empty
+    edgeType: URIRef  # used to express edge types
 
 
 def get_default_prefixes_and_namespaces() -> dict[str, Namespace]:

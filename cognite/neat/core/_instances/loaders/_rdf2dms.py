@@ -22,6 +22,7 @@ from rdflib import RDF, URIRef
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._client._api_client import SchemaAPI
 from cognite.neat.core._constants import (
+    COGNITE_EDGE_TYPES,
     COGNITE_SPACES,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     is_readonly_property,
@@ -239,6 +240,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         ordered_view_ids = SchemaAPI.get_view_order_by_direct_relation_constraints(views)
         # Sort is stable in Python, so we will keep the order of the views:
         ordered_view_ids.sort(key=sort_by_instance_type)
+
         view_iterations: list[_ViewIterator] = []
         for view_id in ordered_view_ids:
             if view_id not in iterations_by_view_id:
@@ -545,6 +547,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
         _ = properties.pop(RDF.type)[0]
 
+        edge_type = properties.pop("edgeType", [None])[0]
+
         sources = []
         with catch_issues() as property_issues:
             sources = [
@@ -574,14 +578,34 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             if isinstance(end, NeatError):
                 yield end
             if isinstance(start, InstanceId) and isinstance(end, InstanceId):
-                yield dm.EdgeApply(
-                    space=space,
-                    external_id=external_id,
-                    type=(projection.view_id.space, projection.view_id.external_id),
-                    start_node=start.as_tuple(),
-                    end_node=end.as_tuple(),
-                    sources=sources,
+                type_ = (
+                    tuple(edge_type.split(":"))
+                    if edge_type
+                    else (projection.view_id.space, projection.view_id.external_id)
                 )
+
+                if type_[0] in COGNITE_SPACES and type_[1] not in COGNITE_EDGE_TYPES:
+                    # If the type is in a CDF space, we do not set the type
+                    # as it is not supported by DMS
+
+                    creation_error = ResourceCreationError(
+                        external_id,
+                        instance_type,
+                        f"View used for {projection.used_for} instance {external_id!s} has illegal edge type {type_!r}",
+                    )
+                    if stop_on_exception:
+                        raise creation_error from None
+                    yield creation_error
+                    return
+                else:
+                    yield dm.EdgeApply(
+                        space=space,
+                        external_id=external_id,
+                        type=type_,
+                        start_node=start.as_tuple(),
+                        end_node=end.as_tuple(),
+                        sources=sources,
+                    )
         else:
             yield dm.NodeApply(
                 space=space,
