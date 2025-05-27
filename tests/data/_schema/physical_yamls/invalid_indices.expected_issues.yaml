@@ -1,0 +1,77 @@
+- NeatIssue: PropertyDefinitionDuplicatedError
+  identifier:
+    externalId: MyDescribable
+    space: my_space
+    type: container
+  locationName: rows
+  locations:
+  - 3
+  - 6
+  propertyName: name
+  propertyValues:
+  - btree:NameIndex(cursorable=True)
+  - inverted:NameIndex
+  resourceType: container
+- NeatIssue: PropertyDefinitionWarning
+  identifier: my_space:MyDescribable
+  propertyName: areaCode
+  reason: The type of index is not defined. Please set 'inverted:AreaCodeIndex' or
+    'btree:AreaCodeIndex'.
+  resourceType: container property
+- NeatIssue: PropertyDefinitionWarning
+  identifier: my_space:MyDescribable
+  propertyName: location
+  reason: It is not recommended to use inverted index on non-list properties. Please
+    consider using btree index instead.
+  resourceType: container property
+- NeatIssue: PropertyDefinitionWarning
+  identifier: my_space:MyDescribable
+  propertyName: name
+  reason: It is not recommended to use inverted index on non-list properties. Please
+    consider using btree index instead.
+  resourceType: container property
+- NeatIssue: PropertyDefinitionWarning
+  identifier: my_space:MyDescribable
+  propertyName: relatedTerms
+  reason: Cursorable and bySpace are not supported for inverted indexes. These will
+    be ignored.
+  resourceType: container property
+- NeatIssue: PropertyDefinitionWarning
+  identifier: my_space:MyDescribable
+  propertyName: relatedTerms
+  reason: It is not recommended to use inverted index on non-list properties. Please
+    consider using btree index instead.
+  resourceType: container property
+- NeatIssue: PropertyDefinitionWarning
+  identifier: my_space:MyDescribable
+  propertyName: tags
+  reason: It is not recommended to use inverted index on non-list properties. Please
+    consider using btree index instead.
+  resourceType: container property
+- NeatIssue: PropertyInvalidDefinitionError
+  identifier:
+    externalId: MyDescribable
+    space: my_space
+    type: container
+  locationName: rows
+  locations:
+  - 1
+  - 2
+  propertyName: code and department
+  reason: You must specify the order when using a composite index. For example btree:codeDepartmentIndex(order=1)
+    and btree:codeDepartmentIndex(order=2).
+  resourceType: container
+- NeatIssue: PropertyInvalidDefinitionError
+  identifier:
+    externalId: MyDescribable
+    space: my_space
+    type: container
+  locationName: rows
+  locations:
+  - 7
+  - 8
+  propertyName: location and tags
+  reason: You cannot have multiple properties with the same order in a composite index.
+    Got order=42 for all composite properties.Please ensure that each property has
+    an unique order.
+  resourceType: container
