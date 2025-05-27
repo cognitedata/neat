@@ -1,0 +1,41 @@
+- NeatIssue: PropertyDefinitionDuplicatedError
+  identifier:
+    externalId: MyDescribable
+    space: my_space
+    type: container
+  locationName: rows
+  locations:
+  - 2
+  - 3
+  propertyName: name
+  propertyValues:
+  - btree:NameIndex(cursorable=True)
+  - inverted:NameIndex
+  resourceType: container
+- NeatIssue: PropertyInvalidDefinitionError
+  identifier:
+    externalId: MyDescribable
+    space: my_space
+    type: container
+  locationName: rows
+  locations:
+  - 4
+  - 5
+  propertyName: location and tags
+  reason: You cannot have multiple properties with the same order in a composite index.
+    Got order=42 for all composite properties.Please ensure that each property has
+    an unique order.
+  resourceType: container
+- NeatIssue: PropertyInvalidDefinitionError
+  identifier:
+    externalId: MyDescribable
+    space: my_space
+    type: container
+  locationName: rows
+  locations:
+  - 0
+  - 1
+  propertyName: code and department
+  reason: You must specify the order when using a composite index. For example btree:codeDepartmentIndex(order=1)
+    and btree:codeDepartmentIndex(order=2).
+  resourceType: container
