@@ -1,0 +1,61 @@
+containers:
+- container: MyDescribable
+metadata:
+  created: '2025-05-27T06:35:07.129608'
+  creator: doctrino
+  external_id: invalidIndices
+  role: DMS Architect
+  space: my_space
+  updated: '2025-05-27T06:35:07.129608'
+  version: v1
+properties:
+- container: MyDescribable
+  container_property: code
+  index: btree:codeDepartmentIndex
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/FirstView/code
+  value_type: text
+  view: FirstView
+  view_property: code
+- container: MyDescribable
+  container_property: department
+  index: btree:codeDepartmentIndex
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/FirstView/department
+  value_type: text
+  view: FirstView
+  view_property: department
+- container: MyDescribable
+  container_property: name
+  index: btree:NameIndex(cursorable=True)
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/FirstView/name
+  value_type: text
+  view: FirstView
+  view_property: name
+- container: MyDescribable
+  container_property: name
+  index: inverted:NameIndex
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/SecondView/name
+  value_type: text
+  view: SecondView
+  view_property: name
+- container: MyDescribable
+  container_property: location
+  index: inverted:locationTagsIndex(order=42)
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/SecondView/location
+  value_type: text
+  view: SecondView
+  view_property: location
+- container: MyDescribable
+  container_property: tags
+  index: inverted:locationTagsIndex(order=42)
+  max_value: 1000
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/SecondView/tags
+  value_type: text
+  view: SecondView
+  view_property: tags
+views:
+- in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/FirstView
+  view: FirstView
+- in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/invalidIndices/v1/SecondView
+  view: SecondView
