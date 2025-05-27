@@ -24,12 +24,14 @@ from cognite.neat.core._constants import (
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ContainerEntity, RawFilter
 from cognite.neat.core._data_model.models.entities._single_value import (
+    ContainerIndexEntity,
     ViewEntity,
 )
 from cognite.neat.core._issues import IssueList, NeatError
 from cognite.neat.core._issues.errors import (
     CDFMissingClientError,
     PropertyDefinitionDuplicatedError,
+    PropertyInvalidDefinitionError,
     PropertyMappingDuplicatedError,
     PropertyNotFoundError,
     ResourceDuplicatedError,
@@ -154,7 +156,9 @@ class PhysicalValidation:
         # Neat DMS classes Validation
         # These are errors that can only happen due to the format of the Neat DMS classes
         issue_list.extend(self._validate_raw_filter())
-        issue_list.extend(self._consistent_container_properties())
+        container_properties_by_id = self._create_container_properties_by_id()
+        issue_list.extend(self._consistent_container_properties(container_properties_by_id))
+        issue_list.extend(self._valid_container_indices(container_properties_by_id))
         issue_list.extend(self._validate_value_type_existence())
         issue_list.extend(
             self._validate_property_referenced_views_and_containers_exists(all_views_by_id, all_containers_by_id)
@@ -320,13 +324,20 @@ class PhysicalValidation:
             parents_by_view[view_id] = get_parents(view_id)
         return parents_by_view
 
-    def _consistent_container_properties(self) -> IssueList:
+    def _create_container_properties_by_id(
+        self,
+    ) -> dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]:
         container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]] = defaultdict(
             list
         )
         for prop_no, prop in enumerate(self._properties):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
+        return container_properties_by_id
+
+    def _consistent_container_properties(
+        self, container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]
+    ) -> IssueList:
         properties_sheet = self._read_info_by_spreadsheet.get("Properties")
         errors = IssueList()
         for (container, prop_name), properties in container_properties_by_id.items():
@@ -392,11 +403,11 @@ class PhysicalValidation:
                     )
                 )
             index_definitions = {
-                ",".join([index.suffix for index in prop.index]) for _, prop in properties if prop.index is not None
+                ",".join([str(index) for index in prop.index]) for _, prop in properties if prop.index is not None
             }
             if len(index_definitions) > 1:
                 errors.append(
-                    PropertyDefinitionDuplicatedError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError(
                         container_id,
                         "container",
                         prop_name,
@@ -420,6 +431,73 @@ class PhysicalValidation:
                     )
                 )
 
+        return errors
+
+    def _valid_container_indices(
+        self, container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]
+    ) -> IssueList:
+        """Validate that the indices on the container properties are valid."""
+        properties_by_container_index: dict[
+            tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty, ContainerIndexEntity]]
+        ] = defaultdict(list)
+        for (container, _), properties in container_properties_by_id.items():
+            for row_no, prop in properties:
+                for index in prop.index or []:
+                    properties_by_container_index[(container, index.suffix)].append((row_no, prop, index))
+        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
+        errors = IssueList()
+        for (container, _), properties in properties_by_container_index.items():
+            if len(properties) <= 1:
+                continue
+            container_id = container.as_id()
+            row_numbers = tuple([row_no for row_no, *_ in properties])
+            if properties_sheet:
+                row_numbers = tuple([properties_sheet.adjusted_row_number(row_no) for row_no in row_numbers])
+            if order_missing := [(prop.container_property, index) for _, prop, index in properties if not index.order]:
+                property_names = [prop_name for prop_name, _ in order_missing]
+                # If this is the same property, this is not a composite index, but a poorly defined single property
+                # index. This will be caught by the PropertyDefinitionDuplicatedError.
+                if len(set(property_names)) != 1:
+                    properties_str = humanize_collection(property_names)
+                    fixed_indices = [
+                        str(index.model_copy(update={"order": no})) for no, (_, index) in enumerate(order_missing, 1)
+                    ]
+                    message = (
+                        "You must specify the order when using a composite index. "
+                        f"For example {humanize_collection(fixed_indices)}."
+                    )
+                    errors.append(
+                        PropertyInvalidDefinitionError(
+                            container_id,
+                            "container",
+                            properties_str,
+                            message,
+                            row_numbers,
+                            "rows",
+                        )
+                    )
+            properties_by_order: dict[int, list[tuple[int, PhysicalProperty]]] = defaultdict(list)
+            for row_no, prop, index in properties:
+                if index.order is not None:
+                    properties_by_order[index.order].append((row_no, prop))
+            for order, props in properties_by_order.items():
+                if len(props) > 1:
+                    properties_str = humanize_collection([prop.view_property for _, prop in props])
+                    message = (
+                        "You cannot have multiple properties with the same order in a composite index. "
+                        f"Got order={order} for all composite properties."
+                        "Please ensure that each property has an unique order."
+                    )
+                    errors.append(
+                        PropertyInvalidDefinitionError(
+                            container_id,
+                            "container",
+                            properties_str,
+                            message,
+                            row_numbers,
+                            "rows",
+                        )
+                    )
         return errors
 
     @staticmethod
