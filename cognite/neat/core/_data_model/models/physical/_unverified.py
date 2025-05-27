@@ -26,6 +26,7 @@ from cognite.neat.core._data_model.models.entities import (
     EdgeEntity,
     PhysicalUnknownEntity,
     ReverseConnectionEntity,
+    UnknownEntity,
     ViewEntity,
     load_connection,
     load_dms_value_type,
