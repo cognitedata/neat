@@ -6,10 +6,21 @@ from pathlib import Path
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat.core._constants import (
+    DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+    DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
+)
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.models import ConceptualDataModel
-from cognite.neat.core._data_model.models.physical import PhysicalDataModel
+from cognite.neat.core._data_model.models.physical import (
+    PhysicalDataModel,
+    UnverifiedPhysicalContainer,
+    UnverifiedPhysicalDataModel,
+    UnverifiedPhysicalMetadata,
+    UnverifiedPhysicalProperty,
+    UnverifiedPhysicalView,
+)
 from cognite.neat.core._data_model.transformers import (
     ConceptualToPhysical,
     VerifyAnyDataModel,
@@ -56,6 +67,64 @@ class TestDMSExporter:
         assert counts["view"] == len(alice_rules.views)
         assert counts["container"] == len(alice_rules.containers)
         assert counts["node"] == len(schema.node_types)
+
+    def test_export_dms_keep_default_list_limits(self) -> None:
+        model = UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
+                "my_space",
+                "my_model",
+                "doctrino",
+                "v1",
+            ),
+            properties=[
+                UnverifiedPhysicalProperty(
+                    "Asset",
+                    "equipments",
+                    "Equipment",
+                    connection="direct",
+                    max_count=DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
+                    min_count=0,
+                    container="Asset",
+                    container_property="equipments",
+                ),
+                UnverifiedPhysicalProperty(
+                    "Asset",
+                    "tags",
+                    "text",
+                    max_count=DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
+                    min_count=0,
+                    container="Asset",
+                    container_property="tags",
+                ),
+                UnverifiedPhysicalProperty("Asset", "name", "text", container="Asset", container_property="name"),
+                UnverifiedPhysicalProperty(
+                    "Equipment", "name", "text", container="Equipment", container_property="name"
+                ),
+            ],
+            views=[
+                UnverifiedPhysicalView("Asset"),
+                UnverifiedPhysicalView("Equipment"),
+            ],
+            containers=[
+                UnverifiedPhysicalContainer("Asset"),
+                UnverifiedPhysicalContainer("Equipment"),
+            ],
+        )
+
+        exporter = DMSExporter()
+
+        exported = exporter.export(model.as_verified_data_model())
+
+        container = exported.containers[dm.ContainerId("my_space", "Asset")]
+        assert "equipments" in container.properties
+        equipment_type = container.properties["equipments"].type
+        assert isinstance(equipment_type, dm.data_types.ListablePropertyType)
+        assert equipment_type.max_list_size == DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT
+
+        assert "tags" in container.properties
+        tags_type = container.properties["tags"].type
+        assert isinstance(tags_type, dm.data_types.ListablePropertyType)
+        assert tags_type.max_list_size == DMS_PRIMITIVE_LIST_DEFAULT_LIMIT
 
 
 class TestImportExportDMS:
