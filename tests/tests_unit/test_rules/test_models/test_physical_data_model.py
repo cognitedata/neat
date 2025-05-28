@@ -285,7 +285,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     external_id="WindFarm",
                     properties={
                         "windTurbines": dm.ContainerProperty(
-                            type=dm.DirectRelation(is_list=True),
+                            type=dm.DirectRelation(is_list=True, max_list_size=100),
                         ),
                     },
                     constraints={"my_space_Asset": dm.RequiresConstraint(dm.ContainerId("my_space", "Asset"))},
@@ -583,7 +583,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     properties={
                         "name": dm.ContainerProperty(type=dm.Text(), nullable=True),
                         "asset": dm.ContainerProperty(type=dm.DirectRelation(), nullable=True),
-                        "activities": dm.ContainerProperty(type=dm.DirectRelation(is_list=True), nullable=True),
+                        "activities": dm.ContainerProperty(
+                            type=dm.DirectRelation(is_list=True, max_list_size=100), nullable=True
+                        ),
                     },
                 ),
             ]
