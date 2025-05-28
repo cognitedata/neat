@@ -13,9 +13,13 @@ from ._classic_cdf._timeseries import TimeSeriesExtractor
 from ._dict import DictExtractor
 from ._dms import DMSExtractor
 from ._dms_graph import DMSGraphExtractor
+from ._exclude import ExcludePredicateExtractor
+from ._extractor_mapping import ExtractorMapper
 from ._mock_graph_generator import MockGraphGenerator
 from ._raw import RAWExtractor
 from ._rdf_file import RdfFileExtractor
+from ._unknown_namespace_extractor_mapper import UnknownNamespaceExtractorMapper
+from ._views import ViewExtractor
 
 __all__ = [
     "AssetsExtractor",
@@ -26,6 +30,8 @@ __all__ = [
     "DataSetExtractor",
     "DictExtractor",
     "EventsExtractor",
+    "ExcludePredicateExtractor",
+    "ExtractorMapper",
     "FilesExtractor",
     "KnowledgeGraphExtractor",
     "LabelsExtractor",
@@ -35,6 +41,8 @@ __all__ = [
     "RelationshipsExtractor",
     "SequencesExtractor",
     "TimeSeriesExtractor",
+    "UnknownNamespaceExtractorMapper",
+    "ViewExtractor",
 ]
 
 
@@ -53,6 +61,8 @@ TripleExtractors = (
     | DataSetExtractor
     | EngineExtractor
     | DMSGraphExtractor
+    | ViewExtractor
+    | ExcludePredicateExtractor
 )
 
 

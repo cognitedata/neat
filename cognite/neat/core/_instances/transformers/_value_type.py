@@ -316,11 +316,13 @@ class SetType(BaseTransformerStandardised):
         subject_type: URIRef,
         subject_predicate: URIRef,
         drop_property: bool = False,
+        keep_parent: bool = True,
         namespace: Namespace | None = None,
     ) -> None:
         self.subject_type = subject_type
         self.subject_predicate = subject_predicate
         self.drop_property = drop_property
+        self.keep_parent = keep_parent
         self._namespace = namespace or Namespace(get_namespace(subject_type))
 
     def _count_query(self) -> str:
@@ -360,7 +362,8 @@ class SetType(BaseTransformerStandardised):
         row_output.remove_triples.add((instance, RDF.type, self.subject_type))
         new_type = self._namespace[quote(object_literal.toPython())]
         row_output.add_triples.add((instance, RDF.type, new_type))
-        row_output.add_triples.add((new_type, RDFS.subClassOf, self.subject_type))
+        if self.keep_parent:
+            row_output.add_triples.add((new_type, RDFS.subClassOf, self.subject_type))
         row_output.instances_modified_count += 1
 
         return row_output

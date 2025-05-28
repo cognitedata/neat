@@ -21,7 +21,7 @@ class _END_OF_CLASS: ...
 
 class _START_OF_CLASS:
     def __init__(self, class_name: str | None = None):
-        self.class_name = class_name
+        self.conceptname = class_name
 
 
 class BaseLoader(ABC, Generic[T_Output]):
@@ -87,7 +87,7 @@ class CDFLoader(BaseLoader[T_Output]):
             elif result is _END_OF_CLASS:
                 ...
             elif isinstance(result, _START_OF_CLASS):
-                last_class_name = result.class_name
+                last_class_name = result.conceptname
                 continue
             else:
                 # MyPy does not understand that 'else' means the item will be of type T_Output

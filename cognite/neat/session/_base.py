@@ -12,15 +12,17 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
 from cognite.neat.core._data_model.transformers import (
+    ConceptualPropertyRenaming,
     ConceptualToPhysical,
-    MergeConceptualDataModels,
-    MergePhysicalDataModels,
+    MergeConceptualDataModel,
+    MergeIdenticalProperties,
+    MergePhysicalDataModel,
     ToDMSCompliantEntities,
     VerifyConceptualDataModel,
 )
 from cognite.neat.core._issues import IssueList
 from cognite.neat.core._issues.errors import RegexViolationError
-from cognite.neat.core._issues.errors._general import NeatImportError
+from cognite.neat.core._issues.errors._general import NeatImportError, NeatValueError
 from cognite.neat.core._store._data_model import DataModelEntity
 from cognite.neat.core._utils.auxiliary import local_import
 
@@ -250,12 +252,15 @@ class NeatSession:
 
         def action() -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
             unverified_conceptual = importer.to_data_model()
-            unverified_conceptual = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_conceptual)
+            unverified_conceptual = ToDMSCompliantEntities(rename_warning="raise", always_standardize=True).transform(
+                unverified_conceptual
+            )
+            unverified_conceptual = MergeIdenticalProperties().transform(unverified_conceptual)
 
             extra_conceptual = VerifyConceptualDataModel().transform(unverified_conceptual)
             if not last_entity:
                 return extra_conceptual, None
-            merged_conceptual = MergeConceptualDataModels(extra_conceptual).transform(last_entity.conceptual)
+            merged_conceptual = MergeConceptualDataModel(extra_conceptual).transform(last_entity.conceptual)
             if not last_entity.physical:
                 return merged_conceptual, None
 
@@ -263,8 +268,60 @@ class NeatSession:
                 extra_conceptual
             )
 
-            merged_physical = MergePhysicalDataModels(extra_physical).transform(last_entity.physical)
+            merged_physical = MergePhysicalDataModel(extra_physical).transform(last_entity.physical)
             return merged_conceptual, merged_physical
+
+        return self._state.data_model_store.do_activity(action, importer)
+
+    def connect_data(self, data_to_model_mapping: dict[tuple[str, str], tuple[str, str]] | None = None) -> IssueList:
+        """Connect the instances to the data model.
+
+        This assumes that you have read in instances and a data model.
+
+        Args:
+            data_to_model_mapping: A mapping of the data to the model. The keys are tuples of (data_type, property_type)
+                and the values are tuples of (concept, property). This is used to connect the instances
+                to the data model.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Connect data to data model", has_conceptual_data_model=True, instances_required=True
+        )
+        if not self._state.data_model_store.provenance:
+            raise NeatValueError("Failed to find the last data model in the session.")
+        last_entity = self._state.data_model_store.provenance[-1].target_entity
+        importer = importers.GraphImporter(
+            self._state.instances.store, last_entity.conceptual.metadata.as_data_model_id()
+        )
+
+        def action() -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
+            data_schema = importer.to_data_model()
+            if data_schema.unverified_data_model is None:
+                raise NeatValueError("Failed to infer the data model from the instances.")
+            conceptual = VerifyConceptualDataModel().transform(data_schema)
+
+            if data_to_model_mapping:
+                conceptual = ConceptualPropertyRenaming(data_to_model_mapping).transform(conceptual)
+
+            updated = MergeConceptualDataModel(
+                conceptual, join="primary", priority="primary", conflict_resolution="priority"
+            ).transform(last_entity.conceptual)
+
+            if last_entity.physical is None:
+                return updated, None
+            converted = ConceptualToPhysical(reserved_properties="warning", client=self._state.client).transform(
+                updated
+            )
+
+            updated_dms = MergePhysicalDataModel(
+                converted, join="primary", priority="primary", conflict_resolution="priority"
+            ).transform(last_entity.physical)
+
+            # We need to sync the metadata between the two rules, such that the `.sync_with_info_rules` method works.
+            updated.metadata.physical = updated_dms.metadata.identifier
+            updated_dms.sync_with_conceptual_data_model(updated)
+
+            return updated, updated_dms
 
         return self._state.data_model_store.do_activity(action, importer)
 
