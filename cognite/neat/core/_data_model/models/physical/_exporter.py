@@ -22,8 +22,6 @@ from cognite.neat.core._client.data_classes.data_modeling import (
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import (
     COGNITE_SPACES,
-    DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
-    DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
 )
 from cognite.neat.core._data_model.models.data_types import DataType, Double, Enum, Float
 from cognite.neat.core._data_model.models.entities import (
@@ -335,14 +333,7 @@ class _DMSExporter:
                 if issubclass(type_cls, ListablePropertyType):
                     is_list = args["is_list"] = prop.is_list or False
                     if is_list:
-                        if type_cls is dm.DirectRelation and prop.max_count == DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT:
-                            # Use default of API.
-                            args["max_list_size"] = None
-                        elif type_cls is not dm.DirectRelation and prop.max_count == DMS_PRIMITIVE_LIST_DEFAULT_LIMIT:
-                            # Use default of API.
-                            args["max_list_size"] = None
-                        else:
-                            args["max_list_size"] = prop.max_count
+                        args["max_list_size"] = prop.max_count
                 if isinstance(prop.value_type, Double | Float) and isinstance(prop.value_type.unit, UnitEntity):
                     args["unit"] = prop.value_type.unit.as_reference()
                 if isinstance(prop.value_type, Enum):
