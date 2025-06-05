@@ -254,7 +254,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         elif path.is_dir():
             return cls.from_directory(path, client)
         else:
-            raise NeatValueError(f"The provided path does not exist: {path.as_posix()!r}")
+            raise FileNotFoundNeatError(path)
 
     def to_data_model(self) -> ImportedDataModel[UnverifiedPhysicalDataModel]:
         if self.issue_list.has_errors:
