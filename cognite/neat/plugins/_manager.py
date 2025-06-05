@@ -48,7 +48,7 @@ class Plugin(Generic[T_Plugin]):
         self.type_ = type_
         self.entry_point = entry_point
 
-    def load(self) -> type[T_Plugin]:
+    def load(self) -> NeatPlugin:
         try:
             return self.entry_point.load()
         except Exception as e:
@@ -62,7 +62,7 @@ class PluginManager:
         "cognite.neat.plugins.data_model.importers": DataModelImporterPlugin,
     }
 
-    def __init__(self, plugins: dict[tuple[str, type[Any]], T_Plugin]) -> None:
+    def __init__(self, plugins: dict[tuple[str, type[Any]], NeatPlugin]) -> None:
         self._plugins = plugins
 
     def get(self, name: str, type_: type[T_Plugin]) -> NeatPlugin:
@@ -88,7 +88,7 @@ class PluginManager:
             entry_points: Entry points to load plugins from. If None, uses the default entry points.
         """
 
-        _plugins: dict[tuple[str, type[Any]], Any] = {}
+        _plugins: dict[tuple[str, type[Any]], NeatPlugin] = {}
 
         print(cls._plugins_entry_points)
 
