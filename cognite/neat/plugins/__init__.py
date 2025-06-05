@@ -1,7 +1,3 @@
-from ._manager import ExternalPlugin, T_Plugin, get
+from ._manager import manager
 
-__all__ = [
-    "ExternalPlugin",
-    "T_Plugin",
-    "get",
-]
+__all__ = ["manager"]

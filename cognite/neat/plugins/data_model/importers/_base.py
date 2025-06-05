@@ -3,7 +3,7 @@ from typing import Any
 from cognite.neat.core._data_model.importers._base import BaseImporter
 
 
-class DataModelImporter:
+class DataModelImporterPlugin:
     def __init__(self) -> None:
         pass
 

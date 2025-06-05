@@ -1,5 +1,5 @@
-from ._base import DataModelImporter
+from ._base import DataModelImporterPlugin
 
 __all__ = [
-    "DataModelImporter",
+    "DataModelImporterPlugin",
 ]

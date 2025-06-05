@@ -5,21 +5,21 @@ from cognite.neat.core._issues._base import NeatError
 
 @dataclass(unsafe_hash=True)
 class PluginError(NeatError):
-    """No plugin of kind '{kind}' registered for format/action '{name}'"""
+    """No plugin of type '{type_}' registered under name '{name}'"""
 
     name: str
-    kind: str
+    type_: str
 
 
 @dataclass(unsafe_hash=True)
-class PluginClassLoadError(PluginError):
-    """Unable to load class for plugin of kind '{kind}' registered for format/action '{name}' due to: {exception}"""
+class PluginLoadingError(PluginError):
+    """Unable to load plugin of type '{type_}' registered under name '{name}' due to: {exception}"""
 
     exception: str
 
 
 @dataclass(unsafe_hash=True)
 class PluginDuplicateError(PluginError):
-    """Plugin of kind '{kind}' registered for format/action '{name}' already exists"""
+    """Plugin of type '{type_}' registered for under name '{name}' already exists"""
 
     pass
