@@ -16,3 +16,10 @@ class PluginClassLoadError(PluginError):
     """Unable to load class for plugin of kind '{kind}' registered for format/action '{name}' due to: {exception}"""
 
     exception: str
+
+
+@dataclass(unsafe_hash=True)
+class PluginDuplicateError(PluginError):
+    """Plugin of kind '{kind}' registered for format/action '{name}' already exists"""
+
+    pass

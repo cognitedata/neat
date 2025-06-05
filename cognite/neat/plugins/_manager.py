@@ -7,7 +7,7 @@ from typing import (
     TypeVar,
 )
 
-from ._issues import PluginClassLoadError, PluginError
+from ._issues import PluginClassLoadError, PluginDuplicateError, PluginError
 from .data_model.importers import (
     DataModelImporter,
 )
@@ -76,4 +76,7 @@ all_entry_points = entry_points()
 if hasattr(all_entry_points, "select"):
     for entry_point, kind in plugins_entry_points.items():
         for ep in all_entry_points.select(group=entry_point):
+            # here we need to ensure no duplicate plugins are registered
+            if (ep.name, kind) in _plugins:
+                raise PluginDuplicateError(name=ep.name, kind=kind.__name__)
             _plugins[(ep.name, kind)] = ExternalPlugin(ep.name, kind, ep)
