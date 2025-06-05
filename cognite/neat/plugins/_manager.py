@@ -74,8 +74,6 @@ class PluginManager:
         """
         _plugins: dict[tuple[str, type[NeatPlugin]], Any] = {}
 
-        print(cls._plugins_entry_points)
-
         entry_points = entry_points or metadata.entry_points()
         if hasattr(entry_points, "select"):
             for group, type_ in cls._plugins_entry_points.items():
