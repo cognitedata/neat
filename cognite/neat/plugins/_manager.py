@@ -24,7 +24,6 @@ plugins_entry_points = {
 
 NeatPlugin: TypeAlias = DataModelImporterPlugin
 
-
 T_Plugin = TypeVar("T_Plugin", bound=NeatPlugin)
 
 
@@ -48,24 +47,24 @@ class Plugin(Generic[T_Plugin]):
         self.type_ = type_
         self.entry_point = entry_point
 
-    def load(self) -> NeatPlugin:
+    def load(self) -> Any:
         try:
             return self.entry_point.load()
         except Exception as e:
             raise PluginLoadingError(self.name, self.type_.__name__, str(e)) from e
 
 
-class PluginManager:
+class PluginManager(Generic[T_Plugin]):
     """Plugin manager for external plugins."""
 
     _plugins_entry_points: ClassVar[dict[str, Any]] = {
         "cognite.neat.plugins.data_model.importers": DataModelImporterPlugin,
     }
 
-    def __init__(self, plugins: dict[tuple[str, type[Any]], NeatPlugin]) -> None:
+    def __init__(self, plugins: dict[tuple[str, type[T_Plugin]], Any]) -> None:
         self._plugins = plugins
 
-    def get(self, name: str, type_: type[T_Plugin]) -> NeatPlugin:
+    def get(self, name: str, type_: type[T_Plugin]) -> Any:
         """
         Returns desired plugin
 
@@ -88,7 +87,7 @@ class PluginManager:
             entry_points: Entry points to load plugins from. If None, uses the default entry points.
         """
 
-        _plugins: dict[tuple[str, type[Any]], NeatPlugin] = {}
+        _plugins: dict[tuple[str, type[T_Plugin]], Any] = {}
 
         print(cls._plugins_entry_points)
 
