@@ -1,48 +1,34 @@
 """Plugin manager for external plugins."""
 
 from importlib import metadata
-from typing import (
-    Any,
-    ClassVar,
-    Generic,
-    TypeAlias,
-    TypeVar,
-)
+from typing import Any, ClassVar, TypeAlias
 
 from ._issues import PluginDuplicateError, PluginError, PluginLoadingError
-from .data_model.importers import (
-    DataModelImporterPlugin,
-)
+from .data_model.importers import DataModelImporterPlugin
 
 # Here we configure entry points where external plugins are going to be registered.
 plugins_entry_points = {
     "cognite.neat.plugins.data_model.importers": DataModelImporterPlugin,
 }
 
-
-#: A generic type variable for plugins
-
+#: Type alias for all supported plugin types
 NeatPlugin: TypeAlias = DataModelImporterPlugin
 
-T_Plugin = TypeVar("T_Plugin", bound=NeatPlugin)
 
-
-class Plugin(Generic[T_Plugin]):
+class Plugin:
     """Plugin class for registering plugins registered via entry points (i.e. external plugins).
 
     Args:
         name (str): The name of format (e.g. Excel) or action (e.g. merge) plugin is handling.
-        type_ (type[T_Plugin]): The type of the plugin.
+        type_ (type): The type of the plugin.
         entry_point (EntryPoint): The entry point for the plugin.
-
 
     !!! note "name uniqueness"
         The name of the plugin must be lower case and unique across all plugins of the same kind.
-        If two plugins have the same name, the exception will be raised .
-
+        If two plugins have the same name, the exception will be raised.
     """
 
-    def __init__(self, name: str, type_: type[T_Plugin], entry_point: metadata.EntryPoint):
+    def __init__(self, name: str, type_: type[NeatPlugin], entry_point: metadata.EntryPoint):
         self.name = name
         self.type_ = type_
         self.entry_point = entry_point
@@ -54,23 +40,23 @@ class Plugin(Generic[T_Plugin]):
             raise PluginLoadingError(self.name, self.type_.__name__, str(e)) from e
 
 
-class PluginManager(Generic[T_Plugin]):
+class PluginManager:
     """Plugin manager for external plugins."""
 
-    _plugins_entry_points: ClassVar[dict[str, Any]] = {
+    _plugins_entry_points: ClassVar[dict[str, type[NeatPlugin]]] = {
         "cognite.neat.plugins.data_model.importers": DataModelImporterPlugin,
     }
 
-    def __init__(self, plugins: dict[tuple[str, type[T_Plugin]], Any]) -> None:
+    def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], Any]) -> None:
         self._plugins = plugins
 
-    def get(self, name: str, type_: type[T_Plugin]) -> Any:
+    def get(self, name: str, type_: type[NeatPlugin]) -> Any:
         """
         Returns desired plugin
 
         Args:
             name (str): The name of format (e.g. Excel) or action (e.g. merge) plugin is handling.
-            type_ (type[T_Plugin]): The type of the plugin.
+            type_ (type): The type of the plugin.
         """
         try:
             return self._plugins[(name, type_)]
@@ -86,8 +72,7 @@ class PluginManager(Generic[T_Plugin]):
         Args:
             entry_points: Entry points to load plugins from. If None, uses the default entry points.
         """
-
-        _plugins: dict[tuple[str, type[T_Plugin]], Any] = {}
+        _plugins: dict[tuple[str, type[NeatPlugin]], Any] = {}
 
         print(cls._plugins_entry_points)
 
