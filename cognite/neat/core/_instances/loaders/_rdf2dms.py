@@ -160,7 +160,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             self._lookup_identifier_by_uri()
 
         if self._client:
-            validate_issue = self._client.instance_statistics.validate_cdf_project_instance_capacity(
+            validate_issue = self._client.instances.validate_cdf_project_capacity(
                 sum(it.instance_count for it in view_iterations)
             )
             if validate_issue:

@@ -5,7 +5,6 @@ from cognite.client._api_client import APIClient
 from cognite.client._cognite_client import CogniteClient
 from cognite.client.config import ClientConfig
 from cognite.client.data_classes.data_modeling.ids import _load_space_identifier
-from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from cognite.neat.core._client.data_classes.statistics import (
@@ -13,10 +12,6 @@ from cognite.neat.core._client.data_classes.statistics import (
     SpaceInstanceCounts,
     SpaceInstanceCountsList,
 )
-from cognite.neat.core._constants import DMS_INSTANCE_LIMIT_MARGIN
-from cognite.neat.core._issues import NeatIssue
-from cognite.neat.core._issues.errors import WillExceedLimitError
-from cognite.neat.core._issues.warnings import NeatValueWarning
 
 
 class StatisticsAPI(APIClient):
@@ -94,28 +89,3 @@ class StatisticsAPI(APIClient):
         if is_single:
             return result[0]
         return result
-
-    def validate_cdf_project_instance_capacity(self, total_instances: int) -> NeatIssue | None:
-        """Validates if the current project instance capacity can accommodate the given number of instances.
-
-        Args:
-            total_instances (int): The total number of instances to check against the project's capacity.
-
-        Returns:
-            NeatIssue | None: Returns a warning if the capacity is exceeded, otherwise None.
-
-        """
-        try:
-            stats = self.project()
-        except CogniteAPIError as e:
-            # This endpoint is not yet in alpha, it may change or not be available.
-            return NeatValueWarning(f"Cannot check project instance capacity. Endpoint not available: {e}")
-        instance_capacity = stats.instances.instances_limit - stats.instances.instances
-        if total_instances + DMS_INSTANCE_LIMIT_MARGIN > instance_capacity:
-            # This breaks the general contract of loaders, which is to not raise exceptions unless
-            # stop_on_exception is True.
-            # However, this is a special case where we do not want to proceed no matter what.
-            raise WillExceedLimitError(
-                "instances", total_instances, stats.project, instance_capacity, DMS_INSTANCE_LIMIT_MARGIN
-            )
-        return None
