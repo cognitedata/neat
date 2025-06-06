@@ -57,8 +57,8 @@ class SelectQueries(BaseQuery):
             named_graph: Named graph to query over, default None (default graph)
 
         """
-        query = """SELECT DISTINCT ?property
-                   WHERE {?s ?property ?o . FILTER(?property != rdf:type)}"""
+        query = f"""SELECT DISTINCT ?property
+                   WHERE {{?s ?property ?o . FILTER(?property != {RDF.type.n3()})}}"""
         return {  # type: ignore[misc, index, arg-type]
             cast(URIRef, type_): remove_namespace_from_uri(cast(URIRef, type_))
             for (type_,) in list(self.graph(named_graph).query(query))
@@ -123,7 +123,7 @@ class SelectQueries(BaseQuery):
     def list_instance_object_ids(self, limit: int = -1, named_graph: URIRef | None = None) -> Iterable[URIRef]:
         query = (
             "SELECT DISTINCT ?object WHERE { "
-            "?subject ?predicate ?object . FILTER(?predicate != rdf:type && isURI(?object))"
+            f"?subject ?predicate ?object . FILTER(?predicate != {RDF.type.n3()} && isURI(?object))"
             "}"
         )
         if limit != -1:
@@ -391,7 +391,11 @@ class SelectQueries(BaseQuery):
             entry["type"]: entry["instanceCount"]
             for entry in self.types_with_instance_and_property_count(remove_namespace=False, named_graph=named_graph)
         }
-        query = """SELECT ?type ?property (COUNT(DISTINCT ?instance) AS ?instanceCount)
+        query = """SELECT
+        ?type
+        ?property
+        (COUNT(DISTINCT ?value) as ?cardinality)
+        (COUNT(DISTINCT ?instance) AS ?instanceCount)
     WHERE {
       ?instance a ?type .
       ?instance ?property ?value .
@@ -403,10 +407,13 @@ class SelectQueries(BaseQuery):
             {
                 "type": urllib.parse.unquote(remove_namespace_from_uri(type_)) if remove_namespace else type_,
                 "property": urllib.parse.unquote(remove_namespace_from_uri(property)) if remove_namespace else property,
+                "cardinality": cast(RdfLiteral, cardinality).toPython(),
                 "instanceCount": cast(RdfLiteral, instance_count).toPython(),
                 "total": instance_count_by_type[type_],
             }
-            for type_, property, instance_count in list(cast(list[ResultRow], self.graph(named_graph).query(query)))
+            for type_, property, cardinality, instance_count in list(
+                cast(list[ResultRow], self.graph(named_graph).query(query))
+            )
         ]
 
     @overload

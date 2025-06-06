@@ -185,3 +185,7 @@ def as_read_space(space: dm.SpaceApply) -> dm.Space:
         name=space.name,
         is_global=space.space.startswith("cdf"),
     )
+
+
+def as_read_spaces(spaces: Sequence[dm.SpaceApply]) -> dm.SpaceList:
+    return dm.SpaceList([as_read_space(space) for space in spaces])

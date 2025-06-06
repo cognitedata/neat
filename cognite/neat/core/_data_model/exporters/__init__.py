@@ -1,4 +1,5 @@
 from ._base import BaseExporter, CDFExporter
+from ._data_model2containers import ContainerExporter
 from ._data_model2dms import DMSExporter
 from ._data_model2excel import ExcelExporter
 from ._data_model2instance_template import InstanceTemplateExporter
@@ -8,6 +9,7 @@ from ._data_model2yaml import YAMLExporter
 __all__ = [
     "BaseExporter",
     "CDFExporter",
+    "ContainerExporter",
     "DMSExporter",
     "ExcelExporter",
     "GraphExporter",

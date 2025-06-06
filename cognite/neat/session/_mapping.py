@@ -1,3 +1,5 @@
+from collections.abc import Hashable
+
 from cognite.neat.core._data_model.models.mapping import load_classic_to_core_mapping
 from cognite.neat.core._data_model.transformers import (
     AsParentPropertyId,
@@ -6,6 +8,7 @@ from cognite.neat.core._data_model.transformers import (
     PhysicalDataModelMapper,
     VerifiedDataModelTransformer,
 )
+from cognite.neat.core._instances.transformers import ConnectionToLiteral, ObjectMapper
 from cognite.neat.core._issues import IssueList
 
 from ._state import SessionState
@@ -16,6 +19,7 @@ from .exceptions import NeatSessionError, session_class_wrapper
 class MappingAPI:
     def __init__(self, state: SessionState):
         self.data_model = DataModelMappingAPI(state)
+        self.instances = InstanceMappingAPI(state)
 
 
 @session_class_wrapper
@@ -54,6 +58,7 @@ class DataModelMappingAPI:
         transformers: list[VerifiedDataModelTransformer] = []
         if company_prefix:
             transformers.append(ChangeViewPrefix("Classic", company_prefix))
+
         transformers.extend(
             [
                 PhysicalDataModelMapper(
@@ -68,4 +73,49 @@ class DataModelMappingAPI:
         )
         if use_parent_property_name:
             transformers.append(AsParentPropertyId(self._state.client))
-        return self._state.data_model_transform(*transformers)
+        issues = self._state.data_model_transform(*transformers)
+
+        # Convert the labels to literals - note that the mapping changes labels to tags.
+        label_predicate = self._state.instances.store.queries.select.property_uri("labels")[0]
+        issues.extend(self._state.instances.store.transform(ConnectionToLiteral(None, label_predicate)))
+        return issues
+
+
+@session_class_wrapper
+class InstanceMappingAPI:
+    def __init__(self, state: SessionState):
+        self._state = state
+
+    def value_mapping(self, mapping: dict[Hashable, object], property: str, type: str | None = None) -> IssueList:
+        """Maps all values for a given property and type.
+
+        Args:
+            mapping: A dictionary where the key is the value to be mapped and the value is the new value.
+            property: The property to be mapped.
+            type: The type of the instance. If None, all instances with the given property will be mapped.
+
+        Example:
+            ```python
+            neat.mapping.value_mapping(mapping={"old_value": "new_value"}, property="type", type="Event")
+            ```
+        """
+        self._state._raise_exception_if_condition_not_met("Mapping instance values", instances_required=True)
+        predicates = self._state.instances.store.queries.select.property_uri(property)
+
+        if not predicates:
+            raise NeatSessionError(f"Property {property} not found in the store.")
+        elif len(predicates) > 1:
+            raise NeatSessionError(f"Multiple properties found: {predicates}. Please specify the property.")
+        predicate = predicates[0]
+        if type is not None:
+            types_by_uri = self._state.instances.store.queries.select.types()
+            type_uris_by_value = {v: k for k, v in types_by_uri.items()}
+            if type not in type_uris_by_value:
+                raise NeatSessionError(f"Type {type} not found in the store.")
+            rdf_type = type_uris_by_value[type]
+        else:
+            rdf_type = None
+
+        mapper = ObjectMapper(mapping, predicate, rdf_type)
+
+        return self._state.instances.store.transform(mapper)

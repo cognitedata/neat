@@ -471,6 +471,42 @@ class DMSSchema:
             created_time=0,
         )
 
+    def as_read_spaces(self) -> dm.SpaceList:
+        return dm.SpaceList(
+            [
+                dm.Space(
+                    space.space,
+                    name=space.name,
+                    description=space.description,
+                    last_updated_time=0,
+                    created_time=0,
+                    is_global=False,
+                )
+                for space in self.spaces.values()
+            ]
+        )
+
+    def as_read_containers(self) -> dm.ContainerList:
+        return dm.ContainerList(
+            [
+                dm.Container(
+                    container.space,
+                    container.external_id,
+                    properties=container.properties,
+                    description=container.description,
+                    name=container.name,
+                    last_updated_time=0,
+                    created_time=0,
+                    is_global=False,
+                    # Mypy does not understand Literal -> Literal with the same values
+                    used_for=container.used_for,  # type: ignore[arg-type]
+                    constraints=container.constraints,
+                    indexes=container.indexes,
+                )
+                for container in self.containers.values()
+            ]
+        )
+
     @staticmethod
     def _as_read_properties(
         write: ViewPropertyApply, all_containers: MutableMapping[dm.ContainerId, dm.ContainerApply]
