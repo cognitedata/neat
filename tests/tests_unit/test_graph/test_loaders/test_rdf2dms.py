@@ -7,6 +7,7 @@ from cognite.neat.core._client.data_classes.statistics import (
     ProjectStatsAndLimits,
 )
 from cognite.neat.core._client.testing import monkeypatch_neat_client
+from cognite.neat.core._constants import DMS_INSTANCE_LIMIT_MARGIN
 from cognite.neat.core._data_model.importers import SubclassInferenceImporter
 from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._data_model.models.conceptual._verified import (
@@ -17,7 +18,7 @@ from cognite.neat.core._data_model.transformers._converters import (
 )
 from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._issues import IssueList
-from cognite.neat.core._issues.errors import WillExceedInstanceLimitError
+from cognite.neat.core._issues.errors import WillExceedLimitError
 from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData
 
@@ -100,7 +101,7 @@ class TestDMSLoader:
                 client,
             )
 
-        with pytest.raises(WillExceedInstanceLimitError) as excinfo:
+        with pytest.raises(WillExceedLimitError) as excinfo:
             _ = loader.load_into_cdf(client)
 
-        assert excinfo.value == WillExceedInstanceLimitError(6, "neat-project", 250_000)
+        assert excinfo.value == WillExceedLimitError("instances", 6, "neat-project", 250_000, DMS_INSTANCE_LIMIT_MARGIN)

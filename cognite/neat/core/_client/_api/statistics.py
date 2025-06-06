@@ -15,7 +15,7 @@ from cognite.neat.core._client.data_classes.statistics import (
 )
 from cognite.neat.core._constants import DMS_INSTANCE_LIMIT_MARGIN
 from cognite.neat.core._issues import NeatIssue
-from cognite.neat.core._issues.errors import WillExceedInstanceLimitError
+from cognite.neat.core._issues.errors import WillExceedLimitError
 from cognite.neat.core._issues.warnings import NeatValueWarning
 
 
@@ -115,5 +115,7 @@ class StatisticsAPI(APIClient):
             # This breaks the general contract of loaders, which is to not raise exceptions unless
             # stop_on_exception is True.
             # However, this is a special case where we do not want to proceed no matter what.
-            raise WillExceedInstanceLimitError(total_instances, stats.project, instance_capacity)
+            raise WillExceedLimitError(
+                "instances", total_instances, stats.project, instance_capacity, DMS_INSTANCE_LIMIT_MARGIN
+            )
         return None
