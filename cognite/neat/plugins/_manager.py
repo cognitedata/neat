@@ -61,7 +61,7 @@ class PluginManager:
         try:
             return self._plugins[(name, type_)]
         except KeyError:
-            raise PluginError(name=name, type_=type_.__name__) from None
+            raise PluginError(plugin_name=name, plugin_type=type_.__name__) from None
 
     @classmethod
     def load_plugins(cls, entry_points: metadata.EntryPoints | None = None) -> "PluginManager":
@@ -80,7 +80,7 @@ class PluginManager:
                 for entry_point in entry_points.select(group=group):
                     # Check for duplicate plugins
                     if (entry_point.name, type_) in _plugins:
-                        raise PluginDuplicateError(name=entry_point.name, type_=type_.__name__)
+                        raise PluginDuplicateError(plugin_name=entry_point.name, plugin_type=type_.__name__)
 
                     # Register the plugin
                     _plugins[(entry_point.name, type_)] = Plugin(entry_point.name, type_, entry_point).load()
