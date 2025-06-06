@@ -84,6 +84,9 @@ class NeatInstancesAPI:
         Returns:
             NeatIssue | None: Returns a warning if the capacity is exceeded, otherwise None.
 
+        Raises:
+            WillExceedLimitError: If the total instances exceed the project's instance capacity.
+
         """
         try:
             stats = self._client.instance_statistics.project()
@@ -92,9 +95,6 @@ class NeatInstancesAPI:
             return NeatValueWarning(f"Cannot check project instance capacity. Endpoint not available: {e}")
         instance_capacity = stats.instances.instances_limit - stats.instances.instances
         if total_instances + DMS_INSTANCE_LIMIT_MARGIN > instance_capacity:
-            # This breaks the general contract of loaders, which is to not raise exceptions unless
-            # stop_on_exception is True.
-            # However, this is a special case where we do not want to proceed no matter what.
             raise WillExceedLimitError(
                 "instances", total_instances, stats.project, instance_capacity, DMS_INSTANCE_LIMIT_MARGIN
             )
