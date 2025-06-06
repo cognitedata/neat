@@ -68,6 +68,7 @@ from cognite.neat.core._issues import (
     catch_issues,
 )
 from cognite.neat.core._issues.errors import (
+    FileNotFoundNeatError,
     FileTypeUnexpectedError,
     NeatValueError,
     PropertyTypeNotSupportedError,
@@ -254,7 +255,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         elif path.is_dir():
             return cls.from_directory(path, client)
         else:
-            raise NeatValueError(f"Unsupported YAML format: {format}")
+            raise FileNotFoundNeatError(path)
 
     def to_data_model(self) -> ImportedDataModel[UnverifiedPhysicalDataModel]:
         if self.issue_list.has_errors:
