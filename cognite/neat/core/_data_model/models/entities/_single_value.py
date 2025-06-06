@@ -172,8 +172,8 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         extra: tuple[str, ...] = tuple(
             [
                 str(v or "")
-                for field_name in self.model_fields
-                if isinstance(v := getattr(self, field_name), str | None) and field_name not in {"prefix", "suffix"}
+                for field_name in self.model_fields.keys()
+                if (v := getattr(self, field_name)) and field_name not in {"prefix", "suffix"}
             ]
         )
         if isinstance(self.prefix, _UndefinedType):
@@ -225,8 +225,8 @@ class ConceptualEntity(BaseModel, extra="ignore"):
                     continue
                 if model_dump[key] == value:
                     to_delete.append(key)
-                elif isinstance(self, EdgeEntity):
-                    # Exception is edge entity, then, we remove all the defaults we can.
+                elif isinstance(self, EdgeEntity | ContainerIndexEntity):
+                    # Exception is edge and container index entities, then we remove all the defaults we can.
                     continue
                 else:
                     # Not all fields are default. We should not remove any of them.
@@ -549,3 +549,23 @@ class ReferenceEntity(ConceptEntity):
 
     def as_concept_entity(self) -> ConceptEntity:
         return ConceptEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
+
+
+class ContainerIndexEntity(PhysicalEntity[None]):
+    type_: ClassVar[EntityTypes] = EntityTypes.container_index
+    prefix: _UndefinedType | Literal["btree", "inverted"] = Undefined  # type: ignore[assignment]
+    suffix: str
+    order: int | None = Field(None, description="The order of the index. None indicates the value is not set.")
+    cursorable: bool | None = Field(
+        None, description="Whether the index is cursorable. None indicates the value is not set."
+    )
+    by_space: bool | None = Field(
+        None, alias="bySpace", description="Whether the index is by space. None indicates the value is not set."
+    )
+
+    def as_id(self) -> None:
+        return None
+
+    @classmethod
+    def from_id(cls, id: None) -> Self:
+        return cls(suffix="dummy")
