@@ -551,9 +551,9 @@ class ReferenceEntity(ConceptEntity):
         return ConceptEntity(prefix=self.prefix, suffix=self.suffix, version=self.version)
 
 
-class ContainerIndexEntity(ConceptualEntity):
+class ContainerIndexEntity(PhysicalEntity[None]):
     type_: ClassVar[EntityTypes] = EntityTypes.container_index
-    prefix: _UndefinedType | Literal["btree", "inverted"] = Undefined
+    prefix: _UndefinedType | Literal["btree", "inverted"] = Undefined  # type: ignore[assignment]
     suffix: str
     order: int | None = Field(None, description="The order of the index. None indicates the value is not set.")
     cursorable: bool | None = Field(
@@ -562,3 +562,10 @@ class ContainerIndexEntity(ConceptualEntity):
     by_space: bool | None = Field(
         None, alias="bySpace", description="Whether the index is by space. None indicates the value is not set."
     )
+
+    def as_id(self) -> None:
+        return None
+
+    @classmethod
+    def from_id(cls, id: None) -> Self:
+        return cls(suffix="dummy")
