@@ -30,6 +30,7 @@ from ._explore import ExploreAPI
 from ._fix import FixAPI
 from ._inspect import InspectAPI
 from ._mapping import MappingAPI
+from ._plugin import PluginAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
 from ._set import SetAPI
@@ -108,6 +109,7 @@ class NeatSession:
         self.subset = SubsetAPI(self._state)
         self.template = TemplateAPI(self._state)
         self._explore = ExploreAPI(self._state)
+        self._plugins = PluginAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
