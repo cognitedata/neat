@@ -68,6 +68,7 @@ from cognite.neat.core._issues import (
     catch_issues,
 )
 from cognite.neat.core._issues.errors import (
+    FileNotFoundNeatError,
     FileTypeUnexpectedError,
     NeatValueError,
     PropertyTypeNotSupportedError,
