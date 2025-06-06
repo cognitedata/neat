@@ -161,7 +161,7 @@ DMS_PRIMITIVE_LIST_DEFAULT_LIMIT = 1000
 DMS_CONTAINER_LIST_MAX_LIMIT = 2000
 
 # The number of instances that should be left as a margin when Neat writes to CDF through the DMS API.
-DMS_INSTANCE_LIMIT_MARGIN = 500_000
+DMS_INSTANCE_LIMIT_MARGIN = 1_000_000
 
 _ASSET_ROOT_PROPERTY = {
     "connection": "direct",
