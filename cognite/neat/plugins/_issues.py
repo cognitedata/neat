@@ -4,7 +4,7 @@ from cognite.neat.core._issues._base import NeatError
 
 
 @dataclass(unsafe_hash=True)
-class PluginError(NeatError):
+class PluginError(NeatError, ImportError):
     """No plugin of type '{type_}' registered under name '{name}'"""
 
     name: str
