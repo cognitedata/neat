@@ -40,12 +40,12 @@ class NeatImportError(NeatError, ImportError):
 
 @dataclass(unsafe_hash=True)
 class WillExceedLimitError(NeatError, RuntimeError):
-    """Cannot write {instance_count} {resource_type} to project {project} as the current available capacity
+    """Cannot write {resource_count} {resource_type} to project {project} as the current available capacity
     is {available_capacity} {resource_type}. Neat requires a capacity of at least {margin} {resource_type} are
-    left for future writes, {available_capacity}-{instance_count} < {margin}."""
+    left for future writes, {available_capacity}-{resource_count} < {margin}."""
 
     resource_type: Literal["instances"]
-    instance_count: int
+    resource_count: int
     project: str
     available_capacity: int
     margin: int
