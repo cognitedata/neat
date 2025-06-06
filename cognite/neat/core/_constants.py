@@ -9,7 +9,6 @@ from rdflib import DC, DCTERMS, FOAF, OWL, RDF, RDFS, SH, SKOS, XSD, Namespace, 
 from rdflib.namespace import DefinedNamespace
 
 from cognite import neat
-from cognite.neat.core._issues.errors._general import NeatValueError
 
 if TYPE_CHECKING:
     from cognite.neat.core._data_model.models.physical import PhysicalProperty
@@ -161,6 +160,14 @@ DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT = 100
 DMS_PRIMITIVE_LIST_DEFAULT_LIMIT = 1000
 DMS_CONTAINER_LIST_MAX_LIMIT = 2000
 
+# The number of instances that should be left as a margin when Neat writes to CDF through the DMS API.
+# This is currently set conservatively to 1 million. The reasoning for this is that there are CDF
+# applications such as Infield and Industrial Canvas that can write to the DMS API, as well as likely third-party
+# applications that can write to the DMS API. If Neat fills up the entire capacity, these type of data gathering
+# applications will experience data loss. The limit of 1 million is chosen such that it will trigger alarms in the
+# CDF projects, such that admins can take action to increase or clean up the capacity before it is too late.
+DMS_INSTANCE_LIMIT_MARGIN = 1_000_000
+
 _ASSET_ROOT_PROPERTY = {
     "connection": "direct",
     "container": "cdf_cdm:CogniteAsset",
@@ -211,6 +218,8 @@ def get_base_concepts(
         base_model: The base model to get the concepts for.
         total_concepts: The number of concepts to get. If None, all concepts are returned.
     """
+    # Local import to avoid circular dependency issues
+    from cognite.neat.core._issues.errors._general import NeatValueError
 
     if base_model == "CogniteCore":
         return [f"cdf_cdm:{concept}(version=v1)" for concept in COGNITE_CONCEPTS][:total_concepts]
