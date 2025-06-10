@@ -52,7 +52,7 @@ We are very grateful for the contributions made by:
 
 
 - [Marie Solvik Lepoutre](https://www.linkedin.com/in/mslepoutre/), who improved RDF triples projections to Cognite Data Fusion
-- [Bård Henning Tvedt](https://www.linkedin.com/in/bhtvedt/), who implemented IMF importer
+- [Bård Henning Tvedt](https://www.linkedin.com/in/bhtvedt/), who implemented IMF importer (now as a [plugin](https://github.com/thisisneat-io/imf-importer-plugin))
 - [Hassan Gomaa](https://www.linkedin.com/in/dr-hassan-gomaa-232638121/), who extended the DEXPI extractor
 - [Kristina Tomičić](https://www.linkedin.com/in/kristina-tomicic-6bb443108/), who implemented Data Model and Instances visualization
 
