@@ -32,7 +32,6 @@ from cognite.neat.core._data_model.models._types import (
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ConceptualEntity,
-    ContainerEntityList,
     DMSNodeEntity,
     EdgeEntity,
     HasDataFilter,
@@ -44,6 +43,7 @@ from cognite.neat.core._data_model.models.entities import (
     ViewEntity,
     ViewEntityList,
 )
+from cognite.neat.core._data_model.models.entities._types import ContainerEntityList, ContainerIndexListType
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.warnings._general import NeatValueWarning
 
@@ -142,7 +142,7 @@ class PhysicalProperty(SheetRow):
         alias="Container Property",
         description="Specifies property in the container where the property is stored. Only applies to primitive type.",
     )
-    index: StrListType | None = Field(
+    index: ContainerIndexListType | None = Field(
         None,
         alias="Index",
         description="The names of the indexes (comma separated) that should be created for the property.",

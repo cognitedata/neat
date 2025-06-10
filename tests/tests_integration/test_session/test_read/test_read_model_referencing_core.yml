@@ -43,7 +43,7 @@ properties:
   container_property: name
   description: Name of the instance
   immutable: false
-  index: name
+  index: btree:name(cursorable=False)
   max_count: 1
   min_count: 0
   neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name

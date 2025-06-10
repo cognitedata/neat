@@ -47,6 +47,7 @@ from cognite.neat.core._data_model.models.data_types import DataType, Enum, Stri
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     ContainerEntity,
+    ContainerIndexEntity,
     DMSNodeEntity,
     EdgeEntity,
     PhysicalUnknownEntity,
@@ -385,7 +386,9 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
             ),
             view=str(view_entity),
             view_property=prop_id,
-            index=self._get_index(prop, prop_id),
+            # MyPy fails to understand that list[ContainerIndexEntity] | None is valid even though
+            # the index expects str | list[ContainerIndexEntity | str] | None.
+            index=self._get_index(prop, prop_id),  # type: ignore[arg-type]
             constraint=self._get_constraint(prop, prop_id),
         )
 
@@ -548,14 +551,22 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
                 return str(default)
         return None
 
-    def _get_index(self, prop: ViewPropertyApply, prop_id: str) -> list[str] | None:
+    def _get_index(self, prop: ViewPropertyApply, prop_id: str) -> list[ContainerIndexEntity] | None:
         if not isinstance(prop, dm.MappedPropertyApply):
             return None
         container = self._all_containers_by_id[prop.container]
-        index: list[str] = []
+        index: list[ContainerIndexEntity] = []
         for index_name, index_obj in (container.indexes or {}).items():
-            if isinstance(index_obj, BTreeIndex | InvertedIndex) and prop_id in index_obj.properties:
-                index.append(index_name)
+            if isinstance(index_obj, BTreeIndex) and prop_id in index_obj.properties:
+                order = None if len(index_obj.properties) == 1 else index_obj.properties.index(prop_id)
+                index.append(
+                    ContainerIndexEntity(
+                        prefix="btree", suffix=index_name, cursorable=index_obj.cursorable, order=order
+                    )
+                )
+            elif isinstance(index_obj, InvertedIndex) and prop_id in index_obj.properties:
+                order = None if len(index_obj.properties) == 1 else index_obj.properties.index(prop_id)
+                index.append(ContainerIndexEntity(prefix="inverted", suffix=index_name, order=order))
         return index or None
 
     def _get_constraint(self, prop: ViewPropertyApply, prop_id: str) -> list[str] | None:

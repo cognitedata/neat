@@ -21,6 +21,7 @@ from cognite.neat.core._data_model.models._base_unverified import (
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ContainerEntity,
+    ContainerIndexEntity,
     DMSNodeEntity,
     EdgeEntity,
     PhysicalUnknownEntity,
@@ -135,7 +136,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     default: str | int | float | bool | dict | None = None
     container: str | None = None
     container_property: str | None = None
-    index: str | list[str] | None = None
+    index: str | list[str | ContainerIndexEntity] | ContainerIndexEntity | None = None
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
     conceptual: str | URIRef | None = None
@@ -167,6 +168,26 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
             if self.container
             else None
         )
+        if isinstance(self.index, ContainerIndexEntity) or (isinstance(self.index, str) and "," not in self.index):
+            output["Index"] = [ContainerIndexEntity.load(self.index)]
+        elif isinstance(self.index, str) and "," in self.index:
+            output["Index"] = [
+                ContainerIndexEntity.load(index.strip()) for index in self.index.split(",") if index.strip()
+            ]
+        elif isinstance(self.index, list):
+            index_list: list[ContainerIndexEntity | PhysicalUnknownEntity] = []
+            for index in self.index:
+                if isinstance(index, ContainerIndexEntity):
+                    index_list.append(index)
+                elif isinstance(index, str) and "," in index:
+                    index_list.extend(
+                        [ContainerIndexEntity.load(idx.strip()) for idx in index.split(",") if idx.strip()]
+                    )
+                elif isinstance(index, str):
+                    index_list.append(ContainerIndexEntity.load(index.strip()))
+                else:
+                    raise TypeError(f"Unexpected type for index: {type(index)}")
+            output["Index"] = index_list
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
