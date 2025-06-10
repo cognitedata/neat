@@ -168,10 +168,26 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
             if self.container
             else None
         )
-        if isinstance(self.index, str | ContainerIndexEntity):
+        if isinstance(self.index, ContainerIndexEntity) or (isinstance(self.index, str) and "," not in self.index):
             output["Index"] = [ContainerIndexEntity.load(self.index)]
+        elif isinstance(self.index, str) and "," in self.index:
+            output["Index"] = [
+                ContainerIndexEntity.load(index.strip()) for index in self.index.split(",") if index.strip()
+            ]
         elif isinstance(self.index, list):
-            output["Index"] = [ContainerIndexEntity.load(index) for index in self.index]
+            index_list: list[ContainerIndexEntity | PhysicalUnknownEntity] = []
+            for index in self.index:
+                if isinstance(index, ContainerIndexEntity):
+                    index_list.append(index)
+                elif isinstance(index, str) and "," in index:
+                    index_list.extend(
+                        [ContainerIndexEntity.load(idx.strip()) for idx in index.split(",") if idx.strip()]
+                    )
+                elif isinstance(index, str):
+                    index_list.append(ContainerIndexEntity.load(index.strip()))
+                else:
+                    raise TypeError(f"Unexpected type for index: {type(index)}")
+            output["Index"] = index_list
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
