@@ -11,7 +11,7 @@ def test_plugin_error_handling():
     # Neat Session does not raise an error, but prints it.
     output = io.StringIO()
     with contextlib.redirect_stdout(output):
-        neat._plugins.data_model.read("csv", "./test.txt")
+        neat.plugins.data_model.read("csv", "./test.txt")
 
     printed_statements = output.getvalue()
     assert printed_statements == (

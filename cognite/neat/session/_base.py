@@ -109,7 +109,7 @@ class NeatSession:
         self.subset = SubsetAPI(self._state)
         self.template = TemplateAPI(self._state)
         self._explore = ExploreAPI(self._state)
-        self._plugins = PluginAPI(self._state)
+        self.plugins = PluginAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
