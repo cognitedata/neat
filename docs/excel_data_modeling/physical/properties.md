@@ -54,10 +54,10 @@ You can also specify indices that uses multiple data properties. You can do this
 for multiple properties. When you specify an index on multiple properties you must specify the order these properties
 should be used. See the example below:
 
-| View        | View Property | Value Type | Container      | Container Property | Index                      |
-|-------------|---------------|------------|----------------|--------------------|----------------------------|
-| WindTurbine | name          | text       | GeneratingUnit | name               | nameCapacityIndex(order=1) |
-| WindTurbine | capacity      | float64    | GeneratingUnit | capacity           | nameCapacityIndex(order=2) |
+| View        | View Property | Value Type | Container      | Container Property | Index                               |
+|-------------|---------------|------------|----------------|--------------------|-------------------------------------|
+| WindTurbine | name          | text       | GeneratingUnit | name               | inverted:nameCapacityIndex(order=1) |
+| WindTurbine | capacity      | float64    | GeneratingUnit | capacity           | inverted:nameCapacityIndex(order=2) |
 
 There are two available index types, `btree` which should be used for non-list properties and `inverted` which should
 be used for list properties. If you do not specify the index type, it will default to `btree` for non-list properties
