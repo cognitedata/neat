@@ -1,14 +1,12 @@
 from ._base import BaseImporter
 from ._dict2data_model import DictImporter
 from ._dms2data_model import DMSImporter
-from ._dtdl2data_model import DTDLImporter
 from ._rdf import InferenceImporter, OWLImporter, SubclassInferenceImporter
 from ._spreadsheet2data_model import ExcelImporter
 
 __all__ = [
     "BaseImporter",
     "DMSImporter",
-    "DTDLImporter",
     "DictImporter",
     "ExcelImporter",
     "InferenceImporter",
@@ -17,13 +15,7 @@ __all__ = [
 ]
 
 DataModelImporters = (
-    OWLImporter
-    | DMSImporter
-    | ExcelImporter
-    | DTDLImporter
-    | DictImporter
-    | InferenceImporter
-    | SubclassInferenceImporter
+    OWLImporter | DMSImporter | ExcelImporter | DictImporter | InferenceImporter | SubclassInferenceImporter
 )
 
 
