@@ -1,5 +1,5 @@
 """This module performs importing of various formats to one of serializations for which
-there are loaders to TransformationRules pydantic class."""
+there are loaders to data model pydantic class."""
 
 from cognite.neat.core._data_model.importers._rdf._base import BaseRDFImporter
 from cognite.neat.core._data_model.importers._rdf._shared import (
@@ -75,7 +75,7 @@ PROPERTIES_QUERY = """
 
 
 class IMFImporter(BaseRDFImporter):
-    """Convert IMF Types provided as SHACL shapes to Input Rules."""
+    """Convert IMF Types provided as SHACL shapes to unverified data model."""
 
     @property
     def description(self) -> str:

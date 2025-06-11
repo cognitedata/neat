@@ -217,7 +217,7 @@ class ClassicGraphExtractor(KnowledgeGraphExtractor):
             ExcelImporter(classic_model).to_data_model(),
         )
         if unverified.unverified_data_model is None:
-            raise NeatValueError(f"Could not read the classic model rules from {classic_model}.")
+            raise NeatValueError(f"Could not read the classic data model from {classic_model}.")
 
         verified = unverified.unverified_data_model.as_verified_data_model()
         prefixes = get_default_prefixes_and_namespaces()

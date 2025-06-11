@@ -1,5 +1,5 @@
 """This module performs importing of various formats to one of serializations for which
-there are loaders to TransformationRules pydantic class."""
+there are loaders to data model pydantic class."""
 
 from cognite.neat.core._data_model.importers._rdf._base import BaseRDFImporter
 from cognite.neat.core._data_model.importers._rdf._shared import (
@@ -47,20 +47,20 @@ PROPERTIES_QUERY = """
 
 
 class OWLImporter(BaseRDFImporter):
-    """Convert OWL ontology to tables/ transformation rules / Excel file.
+    """Convert OWL ontology to unverified data model.
 
         Args:
             filepath: Path to OWL ontology
 
     !!! Note
         OWL Ontologies are information models which completeness varies. As such, constructing functional
-        data model directly will often be impossible, therefore the produced Rules object will be ill formed.
-        To avoid this, neat will automatically attempt to make the imported rules compliant by adding default
+        data model directly will often be impossible, therefore the produced data model object will be ill formed.
+        To avoid this, neat will automatically attempt to make the imported data model compliant by adding default
         values for missing information, attaching dangling properties to default containers based on the
         property type, etc.
 
         One has to be aware that NEAT will be opinionated about how to make the ontology
-        compliant, and that the resulting rules may not be what you expect.
+        compliant, and that the resulting data model may not be what you expect.
 
     """
 

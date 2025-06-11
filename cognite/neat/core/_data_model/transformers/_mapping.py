@@ -29,7 +29,7 @@ from ._base import VerifiedDataModelTransformer
 
 
 class MapOntoTransformers(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel], ABC):
-    """Base class for transformers that map one rule onto another."""
+    """Base class for transformers that map one data model onto another."""
 
     ...
 

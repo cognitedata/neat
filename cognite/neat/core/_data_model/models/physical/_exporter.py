@@ -63,15 +63,16 @@ from ._verified import (
 
 
 class _DMSExporter:
-    """The DMS Exporter is responsible for exporting the DMSRules to a DMSSchema.
+    """The DMS Exporter is responsible for exporting the physical data model to a DMSSchema.
 
-    This kept in this location such that it can be used by the DMSRules to validate the schema.
+    This kept in this location such that it can be used by the physical data model to validate the schema.
     (This module cannot have a dependency on the exporter module, as it would create a circular dependency.)
 
     Args
         include_pipeline (bool): If True, the pipeline will be included with the schema. Pipeline means the
             raw tables and transformations necessary to populate the data model.
-        instance_space (str): The space to use for the instance. Defaults to None,`Rules.metadata.space` will be used
+        instance_space (str): The space to use for the instance. Defaults to None,`
+            PhysicalDataModel.metadata.space` will be used
         remove_cdf_spaces(bool): The
     """
 

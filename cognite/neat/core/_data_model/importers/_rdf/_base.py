@@ -28,13 +28,13 @@ DEFAULT_RDF_DATA_MODEL_ID = ("neat_space", "RDFDataModel", "rdf")
 
 
 class BaseRDFImporter(BaseImporter[UnverifiedConceptualDataModel]):
-    """Baser RDF importers used for all rules importers that are using RDF as input.
+    """Baser RDF importers used for all data model importers that are using RDF as input.
 
     Args:
         issue_list: Issue list to store issues
-        graph: Knowledge graph
-        data_model_id: Data model id to be used for the imported rules
-        space: CDF Space to be used for the imported rules
+        graph: graph where instances are stored
+        data_model_id: Data model id to be used for the imported data model
+        space: CDF Space to be used for the imported data model
         language: Language for description and human readable entity names
 
 
@@ -119,18 +119,18 @@ class BaseRDFImporter(BaseImporter[UnverifiedConceptualDataModel]):
         self,
     ) -> ImportedDataModel[UnverifiedConceptualDataModel]:
         """
-        Creates `Rules` object from the data for target role.
+        Creates `ImportedDataModel` object from the data for target role.
         """
         if self.issue_list.has_errors:
             # In case there were errors during the import, the to_data_model method will return None
             self.issue_list.trigger_warnings()
             raise MultiValueError(self.issue_list.errors)
 
-        rules_dict = self._to_data_model_components()
+        data_model_dict = self._to_data_model_components()
 
-        rules = UnverifiedConceptualDataModel.load(rules_dict)
+        data_model = UnverifiedConceptualDataModel.load(data_model_dict)
         self.issue_list.trigger_warnings()
-        return ImportedDataModel(rules, {})
+        return ImportedDataModel(data_model, {})
 
     def _to_data_model_components(self) -> dict:
         raise NotImplementedError()

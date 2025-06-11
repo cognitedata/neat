@@ -33,7 +33,7 @@ from cognite.neat.core._instances.extractors import (
     FilesExtractor,
     RdfFileExtractor,
 )
-from cognite.neat.core._instances.loaders import DMSLoader
+from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.warnings import PropertyDirectRelationLimitWarning
 from cognite.neat.core._shared import Triple
@@ -71,7 +71,9 @@ def test_metadata_as_json_filed():
         prop.concept = ConceptEntity.load("neat_space:YourAsset")
         prop.property_ = f"your_{prop.property_}"
 
-    loader = DMSLoader(dms_rules, info_rules, store, dms_rules.metadata.space)
+    loader = DMSLoader(
+        dms_rules, info_rules, store, InstanceSpaceLoader(instance_space=dms_rules.metadata.space).space_by_instance_uri
+    )
     instances = {instance.external_id: instance for instance in loader._load() if isinstance(instance, InstanceApply)}
 
     # metadata not unpacked but kept as Json obj
@@ -96,7 +98,9 @@ def test_imf_attribute_nodes():
     store = NeatInstanceStore.from_oxi_local_store()
     store.write(RdfFileExtractor(GraphData.imf_temp_transmitter_complete_ttl))
 
-    loader = DMSLoader(dms_rules, info_rules, store, instance_space="knowledge")
+    loader = DMSLoader(
+        dms_rules, info_rules, store, InstanceSpaceLoader(instance_space=dms_rules.metadata.space).space_by_instance_uri
+    )
     knowledge_nodes = list(loader.load())
 
     assert len(knowledge_nodes) == 56
@@ -118,7 +122,7 @@ def test_extract_above_direct_relation_limit() -> None:
         neat.infer()
         neat.prepare.data_model.prefix("Classic")
         neat.convert()
-        dms_rules = neat._state.rule_store.last_verified_physical_data_model
+        dms_rules = neat._state.data_model_store.last_verified_physical_data_model
         # Default conversion uses edges for connections. We need to change it to direct relations
         asset_ids = next(prop for prop in dms_rules.properties if prop.view_property == "assetIds")
         asset_ids.connection = "direct"
@@ -223,7 +227,7 @@ def test_dms_load_respect_container_cardinality() -> None:
         dms,
         info,
         store,
-        instance_space="sp_instance_space",
+        space_by_instance_uri=InstanceSpaceLoader(instance_space=dms.metadata.space).space_by_instance_uri,
     )
     results = list(loader.load(stop_on_exception=True))
 

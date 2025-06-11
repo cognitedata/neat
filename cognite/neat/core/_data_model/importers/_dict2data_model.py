@@ -7,7 +7,10 @@ from cognite.neat.core._data_model._shared import (
     ImportedDataModel,
     T_UnverifiedDataModel,
 )
-from cognite.neat.core._data_model.models import INPUT_RULES_BY_ROLE, RoleTypes
+from cognite.neat.core._data_model.models import (
+    UNVERIFIED_DATA_MODEL_BY_ROLE,
+    RoleTypes,
+)
 from cognite.neat.core._issues import IssueList, MultiValueError, NeatIssue
 from cognite.neat.core._issues.errors import (
     FileMissingRequiredFieldError,
@@ -44,16 +47,18 @@ class YAMLReader:
 
 
 class DictImporter(BaseImporter[T_UnverifiedDataModel]):
-    """Imports the rules from a YAML file.
+    """Imports the data model from a YAML file.
 
     Args:
         raw_data: The raw data to be imported.
 
     .. note::
 
-        YAML files are typically used for storing rules when checked into version control systems, e.g., git-history.
-        The advantage of using YAML files over Excel is that tools like git can show the differences between different
-        versions of the rules.
+        YAML files are typically used for storing data model when checked into version
+        control systems, e.g., git-history.
+        The advantage of using YAML files over Excel is that tools like git can
+        show the differences between different
+        versions of the data model.
 
     """
 
@@ -115,7 +120,7 @@ class DictImporter(BaseImporter[T_UnverifiedDataModel]):
 
         role_input = RoleTypes(metadata["role"])
         role_enum = RoleTypes(role_input)
-        data_model_cls = INPUT_RULES_BY_ROLE[role_enum]
+        data_model_cls = UNVERIFIED_DATA_MODEL_BY_ROLE[role_enum]
 
         data_model = cast(T_UnverifiedDataModel, data_model_cls.load(self.raw_data))
 

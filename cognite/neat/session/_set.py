@@ -39,16 +39,16 @@ class SetAPI:
             neat.set.data_model_id(("my_data_model_space", "MyDataModel", "v1"), name="My Data Model")
             ```
         """
-        if self._state.rule_store.empty:
-            raise NeatSessionError("No rules to set the data model ID.")
-        rules = self._state.rule_store.provenance[-1].target_entity.physical
-        if isinstance(rules, PhysicalDataModel):
-            if rules.metadata.as_data_model_id() in COGNITE_MODELS:
+        if self._state.data_model_store.empty:
+            raise NeatSessionError("No data model to set the data model ID.")
+        data_model = self._state.data_model_store.provenance[-1].target_entity.physical
+        if isinstance(data_model, PhysicalDataModel):
+            if data_model.metadata.as_data_model_id() in COGNITE_MODELS:
                 raise NeatSessionError(
                     "Cannot change the data model ID of a Cognite Data Model in NeatSession"
                     " due to temporarily issue with the reverse direct relation interpretation"
                 )
-        return self._state.rule_transform(SetIDDMSModel(new_model_id, name))
+        return self._state.data_model_transform(SetIDDMSModel(new_model_id, name))
 
     def client(self, client: CogniteClient) -> None:
         """Sets the client to be used in the session."""
