@@ -159,6 +159,14 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         if self.neat_prefix_by_type_uri:
             self._lookup_identifier_by_uri()
 
+        if self._client:
+            validate_issue = self._client.instances.validate_cdf_project_capacity(
+                sum(it.instance_count for it in view_iterations)
+            )
+            if validate_issue:
+                yield validate_issue
+                return
+
         for it in view_iterations:
             view = it.view
             if view is None:

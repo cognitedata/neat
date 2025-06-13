@@ -12,7 +12,7 @@ from ._external import (
     NeatYamlError,
     OxigraphStorageLockedError,
 )
-from ._general import NeatImportError, NeatTypeError, NeatValueError, RegexViolationError
+from ._general import NeatImportError, NeatTypeError, NeatValueError, RegexViolationError, WillExceedLimitError
 from ._properties import (
     PropertyDefinitionDuplicatedError,
     PropertyDefinitionError,
@@ -82,6 +82,7 @@ __all__ = [
     "ReversedConnectionNotFeasibleError",
     "SpreadsheetError",
     "ViewValueError",
+    "WillExceedLimitError",
 ]
 
 _NEAT_ERRORS_BY_NAME = {error.__name__: error for error in _get_subclasses(NeatError, include_base=True)}

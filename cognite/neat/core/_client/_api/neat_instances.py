@@ -7,6 +7,11 @@ from cognite.client.data_classes.filters import Filter
 from cognite.client.exceptions import CogniteAPIError
 from cognite.client.utils.useful_types import SequenceNotStr
 
+from cognite.neat.core._constants import DMS_INSTANCE_LIMIT_MARGIN
+from cognite.neat.core._issues import NeatIssue
+from cognite.neat.core._issues.errors import WillExceedLimitError
+from cognite.neat.core._issues.warnings import NeatValueWarning
+
 if TYPE_CHECKING:
     from cognite.neat.core._client._api_client import NeatClient
 
@@ -69,3 +74,28 @@ class NeatInstancesAPI:
             if (time.perf_counter() - last_limit_change) > 30.0 and body["limit"] < 1_000:
                 body["limit"] = min(int(body["limit"] * 1.5), 1_000)
                 last_limit_change = time.perf_counter()
+
+    def validate_cdf_project_capacity(self, total_instances: int) -> NeatIssue | None:
+        """Validates if the current project instance capacity can accommodate the given number of instances.
+
+        Args:
+            total_instances (int): The total number of instances to check against the project's capacity.
+
+        Returns:
+            NeatIssue | None: Returns a warning if the capacity is exceeded, otherwise None.
+
+        Raises:
+            WillExceedLimitError: If the total instances exceed the project's instance capacity.
+
+        """
+        try:
+            stats = self._client.instance_statistics.project()
+        except CogniteAPIError as e:
+            # This endpoint is not yet in alpha, it may change or not be available.
+            return NeatValueWarning(f"Cannot check project instance capacity. Endpoint not available: {e}")
+        instance_capacity = stats.instances.instances_limit - stats.instances.instances
+        if total_instances + DMS_INSTANCE_LIMIT_MARGIN > instance_capacity:
+            raise WillExceedLimitError(
+                "instances", total_instances, stats.project, instance_capacity, DMS_INSTANCE_LIMIT_MARGIN
+            )
+        return None
