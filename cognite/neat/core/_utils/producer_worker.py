@@ -23,7 +23,7 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
     ) -> None:
         self._producer_iterable = producer_iterable
         self.production_complete = False
-        self.is_processing = False if process is not None else True
+        self.is_processing = False
         self._work = work
         self._process = process
         self.console = Console()
@@ -115,7 +115,7 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
 
     def _write_worker(self, progress: Progress, write_task: TaskID) -> None:
         """Worker thread for writing data to file."""
-        source_queue = self.work_queue if self._process is None else self.process_queue
+        source_queue = self.process_queue if self._process is None else self.work_queue
         while (
             not self.production_complete
             or self.is_processing
