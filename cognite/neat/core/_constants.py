@@ -116,6 +116,8 @@ DEFAULT_BASE_URI = URIRef(DEFAULT_NAMESPACE)
 CLASSIC_CDF_NAMESPACE = Namespace("http://purl.org/cognite/cdf-classic#")
 XML_SCHEMA_NAMESPACE = Namespace("http://www.w3.org/2001/XMLSchema#")
 
+DATA_MODELING_MAX_WRITE_WORKERS = 4
+
 
 class NEAT(DefinedNamespace):
     """

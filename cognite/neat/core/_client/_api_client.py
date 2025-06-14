@@ -5,6 +5,7 @@ from cognite.neat.core._utils.auth import _CLIENT_NAME
 
 from ._api.crud import CrudAPI
 from ._api.data_modeling_loaders import DataModelLoaderAPI
+from ._api.extended_data_modeling import ExtendedDataModelingAPI
 from ._api.location_filters import LocationFiltersAPI
 from ._api.neat_instances import NeatInstancesAPI
 from ._api.schema import SchemaAPI
@@ -23,6 +24,7 @@ class NeatClient(CogniteClient):
         self.loaders = DataModelLoaderAPI(self)
         self.schema = SchemaAPI(self)
         self.instances = NeatInstancesAPI(self)
+        self.data_modeling: ExtendedDataModelingAPI = ExtendedDataModelingAPI(self._config, self._API_VERSION, self)
         self.instance_statistics = StatisticsAPI(self._config, self._config.api_subversion, self)
         self.location_filters = LocationFiltersAPI(self._config, self._API_VERSION, self)
 
