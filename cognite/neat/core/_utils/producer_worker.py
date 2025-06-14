@@ -15,8 +15,8 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
         self,
         producer_iterable: Iterable[T_Produced],
         work: Callable[[T_Processed], None],
-        iteration_count: int,
         max_queue_size: int,
+        iteration_count: int | None = None,
         process: Callable[[T_Produced], T_Processed] | None = None,
         produce_process_display_name: str = "Downloading...",
         work_process_display_name: str = "Writing to file...",
@@ -45,14 +45,20 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
             TimeRemainingColumn(),
             console=self.console,
         ) as progress:
-            produce_task = progress.add_task(self._produce_process_display_name, total=self.iteration_count)
+            produce_task: TaskID | None = None
+            if self.iteration_count is not None:
+                produce_task = progress.add_task(self._produce_process_display_name, total=self.iteration_count)
             produce_thread = threading.Thread(target=self._producer_worker, args=(progress, produce_task))
-            work_task = progress.add_task(self._work_process_display_name, total=self.iteration_count)
+            work_task: TaskID | None = None
+            if self.iteration_count is None:
+                work_task = progress.add_task(self._work_process_display_name, total=self.iteration_count)
             write_thread = threading.Thread(target=self._write_worker, args=(progress, work_task))
 
             process_thread: threading.Thread | None = None
             if self._process is not None:
-                process_task = progress.add_task("Processing", total=self.iteration_count)
+                process_task: TaskID | None = None
+                if self.iteration_count is not None:
+                    process_task = progress.add_task("Processing", total=self.iteration_count)
                 process_thread = threading.Thread(target=self._process_worker, args=(progress, process_task))
 
             produce_thread.start()
@@ -66,7 +72,7 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
                 process_thread.join()
             write_thread.join()
 
-    def _producer_worker(self, progress: Progress, produce_task: TaskID) -> None:
+    def _producer_worker(self, progress: Progress, produce_task: TaskID | None) -> None:
         """Thread for producing data."""
         iterator = iter(self._producer_iterable)
         while not self.error_occurred:
@@ -76,7 +82,8 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
                 while not self.error_occurred:
                     try:
                         self.process_queue.put(items, timeout=0.5)
-                        progress.update(produce_task, advance=1)
+                        if produce_task is not None:
+                            progress.update(produce_task, advance=1)
                         break  # Exit the loop once the item is successfully added
                     except queue.Full:
                         # Retry until the queue has space
@@ -92,7 +99,7 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
                 )
                 break
 
-    def _process_worker(self, progress: Progress, process_task: TaskID) -> None:
+    def _process_worker(self, progress: Progress, process_task: TaskID | None) -> None:
         """Worker thread for processing data."""
         if self._process is None:
             raise ValueError("Process function must be provided for processing data.")
@@ -102,7 +109,8 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
                 items = self.process_queue.get(timeout=0.5)
                 processed_items = self._process(items)
                 self.work_queue.put(processed_items)
-                progress.update(process_task, advance=1)
+                if process_task is not None:
+                    progress.update(process_task, advance=1)
                 self.process_queue.task_done()
             except queue.Empty:
                 continue
@@ -113,7 +121,7 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
                 break
         self.is_processing = False
 
-    def _write_worker(self, progress: Progress, write_task: TaskID) -> None:
+    def _write_worker(self, progress: Progress, write_task: TaskID | None) -> None:
         """Worker thread for writing data to file."""
         source_queue = self.process_queue if self._process is None else self.work_queue
         while (
@@ -126,7 +134,8 @@ class ProducerWorkerExecutor(Generic[T_Produced, T_Processed]):
                 items = source_queue.get(timeout=0.5)
                 # Assume T_Processed = T_Produced if no _process function is provided
                 self._work(items)  # type: ignore[arg-type]
-                progress.update(write_task, advance=1)
+                if write_task is not None:
+                    progress.update(write_task, advance=1)
                 source_queue.task_done()
             except queue.Empty:
                 continue
