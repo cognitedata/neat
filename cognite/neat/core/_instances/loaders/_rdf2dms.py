@@ -1,4 +1,3 @@
-import itertools
 import json
 import urllib.parse
 import warnings
@@ -9,13 +8,11 @@ from pathlib import Path
 from typing import Any, Literal, cast, get_args
 
 import yaml
-from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.capabilities import Capability, DataModelInstancesAcl
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
-from cognite.client.exceptions import CogniteAPIError
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF, URIRef
 
@@ -595,46 +592,28 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
 
     def _upload_to_cdf(
         self,
-        client: CogniteClient,
+        client: NeatClient,
         items: list[dm.InstanceApply],
         dry_run: bool,
         read_issues: IssueList,
         class_name: str | None = None,
     ) -> Iterable[UploadResult]:
         name = class_name or "Instances"
-        nodes = [item for item in items if isinstance(item, dm.NodeApply)]
-        edges = [item for item in items if isinstance(item, dm.EdgeApply)]
-        try:
-            upserted = client.data_modeling.instances.apply(
-                nodes,
-                edges,
-                auto_create_end_nodes=True,
-                auto_create_start_nodes=True,
-                skip_on_version_conflict=True,
-            )
-        except CogniteAPIError as e:
-            if len(items) == 1:
-                yield UploadResult(
-                    name=name,
-                    issues=read_issues,
-                    failed_items=items,
-                    error_messages=[str(e)],
-                    failed_upserted={item.as_id() for item in items},  # type: ignore[attr-defined]
-                )
+        upserted = client.data_modeling.instances.apply_fast(
+            items,
+            auto_create_end_nodes=True,
+            auto_create_start_nodes=True,
+            skip_on_version_conflict=True,
+        )
+        result = UploadResult(name=name, issues=read_issues)  # type: ignore[var-annotated]
+        for instance_id, instance in zip(upserted.as_ids(), upserted, strict=False):  # type: ignore[attr-defined]
+            if instance.was_modified and instance.created_time == instance.last_updated_time:
+                result.created.add(instance_id)
+            elif instance.was_modified:
+                result.changed.add(instance_id)
             else:
-                half = len(items) // 2
-                yield from self._upload_to_cdf(client, items[:half], dry_run, read_issues, class_name)
-                yield from self._upload_to_cdf(client, items[half:], dry_run, read_issues, class_name)
-        else:
-            result = UploadResult(name=name, issues=read_issues)  # type: ignore[var-annotated]
-            for instance in itertools.chain(upserted.nodes, upserted.edges):  # type: ignore[attr-defined]
-                if instance.was_modified and instance.created_time == instance.last_updated_time:
-                    result.created.add(instance.as_id())
-                elif instance.was_modified:
-                    result.changed.add(instance.as_id())
-                else:
-                    result.unchanged.add(instance.as_id())
-            yield result
+                result.unchanged.add(instance_id)
+        yield result
 
 
 def _get_field_value_types(cls: Any, info: ValidationInfo) -> Any:

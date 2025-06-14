@@ -6,8 +6,10 @@ from types import UnionType
 from typing import TYPE_CHECKING, Generic, TypeVar, Union, get_args, get_origin
 
 from cognite.neat.core._client import NeatClient
+from cognite.neat.core._client.data_classes.deploy_result import DeployResult
 from cognite.neat.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.core._data_model._shared import T_VerifiedDataModel
+from cognite.neat.core._data_model.models import PhysicalDataModel
 from cognite.neat.core._utils.auxiliary import class_html_doc
 from cognite.neat.core._utils.upload import UploadResult, UploadResultList
 
@@ -65,3 +67,14 @@ class CDFExporter(BaseExporter[T_VerifiedDataModel, T_Export], ABC):
         self, data_model: T_VerifiedDataModel, client: NeatClient, dry_run: bool = False
     ) -> UploadResultList:
         return UploadResultList(self.export_to_cdf_iterable(data_model, client, dry_run))
+
+
+class CDFExporter2(BaseExporter[PhysicalDataModel, T_Export], ABC):
+    """Base class for exporters that export to CDF.
+
+    This class is used to export data models to CDF. It provides a common interface for exporting data models to CDF.
+    """
+
+    @abstractmethod
+    def deploy(self, data_model: PhysicalDataModel, client: NeatClient, dry_run: bool = False) -> DeployResult:
+        raise NotImplementedError

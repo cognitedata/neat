@@ -63,7 +63,7 @@ class PhysicalValidation:
         self,
         data_model: PhysicalDataModel,
         client: NeatClient | None = None,
-        read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+        read_context: Mapping[str, object] | None = None,
     ) -> None:
         self._data_model = data_model
         self._client = client
@@ -71,7 +71,9 @@ class PhysicalValidation:
         self._properties = data_model.properties
         self._containers = data_model.containers
         self._views = data_model.views
-        self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
+        self._read_info_by_spreadsheet = {
+            k: v for k, v in (read_context or {}).items() if isinstance(v, SpreadsheetRead)
+        }
 
     def imported_views_and_containers_ids(
         self, include_views_with_no_properties: bool = True
