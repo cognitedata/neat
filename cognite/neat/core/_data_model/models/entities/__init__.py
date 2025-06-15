@@ -21,15 +21,15 @@ from ._single_value import (
     UnknownEntity,
     ViewEntity,
 )
-from ._types import CdfResourceEntityList, ClassEntityList, ContainerEntityList, URLEntity, ViewEntityList
+from ._types import CdfResourceEntityList, ConceptEntityList, ContainerEntityList, URLEntity, ViewEntityList
 from ._wrapped import DMSFilter, HasDataFilter, NodeTypeFilter, RawFilter, WrappedEntity
 
 __all__ = [
     "AssetEntity",
     "AssetFields",
     "CdfResourceEntityList",
-    "ClassEntityList",
     "ConceptEntity",
+    "ConceptEntityList",
     "ConceptualEntity",
     "ContainerEntity",
     "ContainerEntityList",

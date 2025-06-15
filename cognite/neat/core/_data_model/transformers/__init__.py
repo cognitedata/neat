@@ -1,4 +1,5 @@
 from ._base import DataModelTransformer, VerifiedDataModelTransformer
+from ._conceptual_property_renaming import ConceptualPropertyRenaming
 from ._converters import (
     AddCogniteProperties,
     AddConceptImplements,
@@ -9,8 +10,7 @@ from ._converters import (
     ConvertToDataModel,
     DropModelViews,
     IncludeReferenced,
-    MergeConceptualDataModels,
-    MergePhysicalDataModels,
+    MergeIdenticalProperties,
     PhysicalToConceptual,
     PrefixEntities,
     SetIDDMSModel,
@@ -26,6 +26,8 @@ from ._converters import (
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, PhysicalDataModelMapper
+from ._merge_conceptual import MergeConceptualDataModel
+from ._merge_physical import MergePhysicalDataModel
 from ._verification import (
     VerifyAnyDataModel,
     VerifyConceptualDataModel,
@@ -38,6 +40,7 @@ __all__ = [
     "AsParentPropertyId",
     "ChangeViewPrefix",
     "ClassicPrepareCore",
+    "ConceptualPropertyRenaming",
     "ConceptualToPhysical",
     "ConversionTransformer",
     "ConvertToDataModel",
@@ -45,7 +48,11 @@ __all__ = [
     "DropModelViews",
     "IncludeReferenced",
     "MapOneToOne",
+    "MergeConceptualDataModel",
     "MergeConceptualDataModels",
+    "MergeIdenticalProperties",
+    "MergeInformationRules",
+    "MergePhysicalDataModel",
     "MergePhysicalDataModels",
     "PhysicalDataModelMapper",
     "PhysicalToConceptual",
@@ -54,6 +61,8 @@ __all__ = [
     "StandardizeNaming",
     "StandardizeSpaceAndVersion",
     "SubsetConceptualDataModel",
+    "SubsetConceptualDataModel",
+    "SubsetPhysicalDataModel",
     "SubsetPhysicalDataModel",
     "ToCompliantEntities",
     "ToDMSCompliantEntities",
@@ -62,7 +71,11 @@ __all__ = [
     "ToExtensionModel",
     "ToSolutionModel",
     "VerifiedDataModelTransformer",
+    "VerifiedDataModelTransformer",
     "VerifyAnyDataModel",
+    "VerifyAnyRules",
     "VerifyConceptualDataModel",
+    "VerifyConceptualDataModel",
+    "VerifyPhysicalDataModel",
     "VerifyPhysicalDataModel",
 ]

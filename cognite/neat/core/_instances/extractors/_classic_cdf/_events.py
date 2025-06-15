@@ -29,5 +29,5 @@ class EventsExtractor(ClassicCDFBaseExtractor[Event]):
 
     @classmethod
     def _from_file(cls, file_path: str | Path) -> tuple[int | None, Iterable[Event]]:
-        assets = EventList.load(Path(file_path).read_text())
+        assets = EventList.load((Path(file_path) if isinstance(file_path, str) else file_path).read_text())
         return len(assets), assets

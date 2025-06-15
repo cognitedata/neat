@@ -1,8 +1,10 @@
+import re
 import warnings
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from collections.abc import Callable, Collection, Iterable, Sequence
 from dataclasses import dataclass, field
-from graphlib import TopologicalSorter
+from graphlib import CycleError, TopologicalSorter
 from typing import TYPE_CHECKING, Any, ClassVar, Generic, Literal, TypeVar, cast, overload
 
 from cognite.client.data_classes import filters
@@ -56,6 +58,7 @@ from cognite.neat.core._client.data_classes.data_modeling import Component
 from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._issues.warnings import CDFMaxIterationsWarning
 from cognite.neat.core._shared import T_ID
+from cognite.neat.core._utils.tarjan import tarjan
 
 if TYPE_CHECKING:
     from cognite.neat.core._client._api_client import NeatClient
@@ -619,6 +622,81 @@ class ViewLoader(DataModelingLoader[ViewId, ViewApply, View, ViewApplyList, View
 
     def _create(self, items: Sequence[ViewApply]) -> ViewList:
         return self._client.data_modeling.views.apply(items)
+
+    def create(self, items: Sequence[ViewApply]) -> ViewList:
+        try:
+            return self._create(items)
+        except CogniteAPIError as e1:
+            if self._is_auto_retryable(e1):
+                # Fallback to creating one by one if the error is auto-retryable.
+                return self._fallback_one_by_one(self._create, items)
+            elif self._is_false_not_exists(e1, {item.as_id() for item in items}):
+                return self._try_to_recover_coupled(items, e1)
+            raise
+
+    def _try_to_recover_coupled(self, items: Sequence[ViewApply], original_error: CogniteAPIError) -> ViewList:
+        """The /models/views endpoint can give faulty 400 about missing views that are part of the request.
+
+        This method tries to recover from such errors by identifying the strongly connected components in the graph
+        defined by the implements and through properties of the views. We then create the components in topological
+        order.
+
+        Args:
+            items: The items that failed to create.
+            original_error: The original error that was raised. If the problem is not recoverable, this error is raised.
+
+        Returns:
+            The views that were created.
+
+        """
+        views_by_id = {self.get_id(item): item for item in items}
+        parents_by_child: dict[ViewId, set[ViewId]] = {
+            view_id: {parent for parent in view.implements or [] if parent in views_by_id}
+            for view_id, view in views_by_id.items()
+        }
+        # Check for cycles in the implements graph
+        try:
+            TopologicalSorter(parents_by_child).static_order()
+        except CycleError as e:
+            raise CycleError(f"Failed to deploy views. This likely due to a cycle in implements. {e.args[1]}") from None
+
+        dependencies_by_id: dict[ViewId, set[ViewId]] = defaultdict(set)
+        for view_id, view in views_by_id.items():
+            dependencies_by_id[view_id].update([parent for parent in view.implements or [] if parent in views_by_id])
+            for properties in (view.properties or {}).values():
+                if isinstance(properties, ReverseDirectRelationApply):
+                    if isinstance(properties.through.source, ViewId) and properties.through.source in views_by_id:
+                        dependencies_by_id[view_id].add(properties.through.source)
+
+        created = ViewList([])
+        for strongly_connected in tarjan(dependencies_by_id):
+            to_create = [views_by_id[view_id] for view_id in strongly_connected]
+            try:
+                created_set = self._client.data_modeling.views.apply(to_create)
+            except CogniteAPIError:
+                self._client.data_modeling.views.delete(created.as_ids())
+                raise original_error from None
+            created.extend(created_set)
+        return created
+
+    @staticmethod
+    def _is_auto_retryable(e: CogniteAPIError) -> bool:
+        return isinstance(e.extra, dict) and "isAutoRetryable" in e.extra and e.extra["isAutoRetryable"]
+
+    @staticmethod
+    def _is_false_not_exists(e: CogniteAPIError, request_views: set[ViewId]) -> bool:
+        """This is a bug in the API where it returns a 400 status complaining that a views does not exist,
+        even though they are part of the request. This bug is reported to Cognite. The workaround is to do a
+        topological sort of the strongly connected views and retry the request.
+        """
+        if "not exist" not in e.message and 400 <= e.code < 500:
+            return False
+        results = re.findall(r"'([a-zA-Z0-9_-]+):([a-zA-Z0-9_]+)/([.a-zA-Z0-9_-]+)'", e.message)
+        if not results:
+            # No view references in the message
+            return False
+        error_message_views = {ViewId(*result) for result in results}
+        return error_message_views.issubset(request_views)
 
     @overload
     def retrieve(
