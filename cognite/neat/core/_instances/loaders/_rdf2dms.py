@@ -13,7 +13,7 @@ from cognite.client.data_classes.capabilities import Capability, DataModelInstan
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from cognite.client.data_classes.data_modeling.ids import InstanceId
 from cognite.client.data_classes.data_modeling.views import SingleEdgeConnection
-from cognite.client.exceptions import CogniteAPIError, CogniteException
+from cognite.client.exceptions import CogniteException
 from pydantic import BaseModel, ValidationInfo, create_model, field_validator
 from rdflib import RDF, URIRef
 
