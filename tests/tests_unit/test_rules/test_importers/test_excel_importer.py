@@ -22,6 +22,7 @@ from cognite.neat.core._issues.warnings import (
     DeprecatedWarning,
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
+    PropertyDefinitionWarning,
 )
 from tests.config import DOC_RULES
 from tests.data import SchemaData
@@ -51,6 +52,12 @@ def invalid_rules_filepaths():
         SchemaData.PhysicalInvalid.invalid_property_dms_rules_xlsx,
         IssueList(
             [
+                PropertyDefinitionWarning(
+                    "neat:Asset",
+                    "container property",
+                    "name",
+                    "The type of index is not defined. Please set 'inverted:index_name' or 'btree:index_name'.",
+                ),
                 PropertyValueError(
                     row=5,
                     column="Max Count",
@@ -78,6 +85,12 @@ def invalid_rules_filepaths():
                     (4, 5),
                     "rows",
                 ),
+                PropertyDefinitionWarning(
+                    "neat:Asset",
+                    "container property",
+                    "name",
+                    "The type of index is not defined. Please set 'inverted:index_name' or 'btree:index_name'.",
+                ),
             ]
         ),
         id="Inconsistent container",
@@ -92,6 +105,12 @@ def invalid_rules_filepaths():
                     "imported views and/or container: "
                     "{view(prefix=neat,suffix=Pump,version=1)}, "
                     "{container(prefix=neat,suffix=Pump)}."
+                ),
+                PropertyDefinitionWarning(
+                    "neat:Asset",
+                    "container property",
+                    "name",
+                    "The type of index is not defined. Please set 'inverted:index_name' or 'btree:index_name'.",
                 ),
             ]
         ),
