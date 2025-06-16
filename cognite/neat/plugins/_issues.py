@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from cognite.neat.core._issues._base import NeatError
+from cognite.neat.core._issues.errors import _NEAT_ERRORS_BY_NAME, NeatError
 
 
 @dataclass(unsafe_hash=True)
@@ -23,3 +23,13 @@ class PluginDuplicateError(PluginError):
     """Plugin of type '{plugin_type}' registered for under name '{plugin_name}' already exists"""
 
     ...
+
+
+# Register the errors in the _NEAT_ERRORS_BY_NAME dictionary
+_NEAT_ERRORS_BY_NAME.update(
+    {
+        "PluginError": PluginError,
+        "PluginLoadingError": PluginLoadingError,
+        "PluginDuplicateError": PluginDuplicateError,
+    }
+)
