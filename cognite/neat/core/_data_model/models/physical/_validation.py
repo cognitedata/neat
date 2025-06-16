@@ -470,7 +470,7 @@ class PhysicalValidation:
                         _ContainerPropertyIndex(row_no, prop, index)
                     )
 
-        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
+        properties_sheet_info = self._read_info_by_spreadsheet.get("Properties")
         errors = IssueList()
         for (container, _), index_properties in index_properties_by_container_index.items():
             if len(index_properties) <= 1:
@@ -479,8 +479,8 @@ class PhysicalValidation:
                 continue
             container_id = container.as_id()
             row_numbers = tuple([index_prop.location for index_prop in index_properties])
-            if properties_sheet:
-                row_numbers = tuple([properties_sheet.adjusted_row_number(row_no) for row_no in row_numbers])
+            if properties_sheet_info:
+                row_numbers = tuple([properties_sheet_info.adjusted_row_number(row_no) for row_no in row_numbers])
 
             if order_missing_error := self._validate_container_indices_has_order(
                 index_properties, row_numbers, container_id
