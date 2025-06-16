@@ -90,6 +90,7 @@ class PluginManager:
 
 _manager_instance: PluginManager | None = None
 
+
 def get_plugin_manager(force_reload: bool = False) -> PluginManager:
     """Get or create a singleton PluginManager instance."""
     global _manager_instance
