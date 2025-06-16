@@ -10,6 +10,7 @@ from ._single_value import (
     AssetEntity,
     ConceptEntity,
     ContainerEntity,
+    ContainerIndexEntity,
     RelationshipEntity,
     ViewEntity,
 )
@@ -64,6 +65,16 @@ CdfResourceEntityList = Annotated[
 ContainerEntityList = Annotated[
     list[ContainerEntity],
     BeforeValidator(_split_str),
+]
+
+ContainerIndexListType = Annotated[
+    list[ContainerIndexEntity],
+    BeforeValidator(_split_str),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
 ]
 
 ViewEntityList = Annotated[
