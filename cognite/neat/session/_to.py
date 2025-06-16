@@ -5,8 +5,12 @@ from typing import Any, Literal, cast, overload
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
+from cognite.client.utils.useful_types import SequenceNotStr
+from IPython.display import display
 
 from cognite.neat.core._client._api_client import NeatClient
+from cognite.neat.core._client._deploy import ExistingResource
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._constants import COGNITE_MODELS
 from cognite.neat.core._data_model import exporters
 from cognite.neat.core._data_model._constants import PATTERNS
@@ -18,6 +22,7 @@ from cognite.neat.core._instances import loaders
 from cognite.neat.core._issues import IssueList, NeatIssue, catch_issues
 from cognite.neat.core._utils.upload import UploadResultList
 from cognite.neat.session._experimental import ExperimentalFlags
+from cognite.neat.session.notebook_visualization.deploy_report import display_deploy_result
 
 from ._state import SessionState
 from .exceptions import NeatSessionError, session_class_wrapper
@@ -35,6 +40,7 @@ class ToAPI:
         self._verbose = verbose
         self.cdf = CDFToAPI(state, verbose)
         self._python = ToPythonAPI(state, verbose)
+        self.file = ToFileAPI(state, verbose)
 
     def ontology(self, io: Any) -> None:
         """Export the data model to ontology.
@@ -304,11 +310,7 @@ class CDFToAPI:
         space_from_property: str | None = None,
         use_source_space: bool = False,
     ) -> UploadResultList:
-        self._state._raise_exception_if_condition_not_met(
-            "Export DMS instances to CDF",
-            client_required=True,
-        )
-
+        instance_space_loader = self._create_instance_loader(instance_space, space_from_property, use_source_space)
         client = cast(NeatClient, self._state.client)
         physical_data_model = self._state.data_model_store.last_verified_physical_data_model
 
@@ -338,9 +340,53 @@ class CDFToAPI:
             neat_prefix_by_type_uri=self._state.instances.neat_prefix_by_type_uri,
         )
 
-        instance_result = loader.load_into_cdf(client)
+        result = loader.load_into_cdf(client)
         print("You can inspect the details with the .inspect.outcome.instances(...) method.")
-        result.extend(instance_result)
+        self._state.instances.outcome.append(result)
+        return result
+
+    def instance_spaces(
+        self,
+        instance_space: str | None = None,
+        space_from_property: str | None = None,
+        use_source_space: bool = False,
+    ) -> UploadResultList:
+        """Create the instance space in CDF.
+
+        Args:
+            instance_space: Name of instance space to create. Default is to suffix the schema space with '_instances'.
+                Note this space is required to be different from the space with the data model.
+            space_from_property: This is an alternative to the 'space' argument. If provided, the spaces to create
+                will be found by using the value of the property with the given name for each instance.
+                If the property is not found, the 'instance_space' argument will be used. Defaults to None.
+            use_source_space: If the instances were extracted from CDF, this options will keep the original
+                space of the instances. Defaults to False.
+
+        Returns:
+            UploadResultList: The results fo the creation of the instance space.
+
+        Example:
+            Create instance space 'my_space'
+            ```python
+            neat.to.cdf.instances('my_space')
+            ```
+
+            Creates instance spaces using the `dataSetId` property of all extracted instances.
+            ```python
+            neat.to.cdf.instances(space_property="dataSetId")
+            ```
+
+            Use the original space of the instances
+            ```python
+            neat.to.cdf.instances(use_source_space=True)
+            ```
+
+        """
+        loader = self._create_instance_loader(instance_space, space_from_property, use_source_space)
+        client = cast(NeatClient, self._state.client)
+
+        result = loader.load_into_cdf(client)
+        print("You can inspect the details with the .inspect.outcome.instances(...) method.")
         self._state.instances.outcome.append(result)
         return result
 
@@ -370,17 +416,120 @@ class CDFToAPI:
             - "recreate": All components will be deleted and recreated. The exception is spaces, which will be updated.
 
         """
-
         self._state._raise_exception_if_condition_not_met(
             "Export DMS data model to CDF",
             client_required=True,
         )
-
         exporter = exporters.DMSExporter(existing=existing, drop_data=drop_data)
 
         result = self._state.data_model_store.export_to_cdf(exporter, cast(NeatClient, self._state.client), dry_run)
         print("You can inspect the details with the .inspect.outcome.data_model(...) method.")
         return result
+
+    def location_filter(
+        self,
+        instance_space: str | None = None,
+        space_from_property: str | None = None,
+        use_source_space: bool = False,
+        instance_spaces: SequenceNotStr[str] | None = None,
+        name: str | None = None,
+    ) -> UploadResultList:
+        """Creates a location filter for the given data model and instance spaces.
+
+        This is the configuration used for Search in the Fusion UI.
+
+        Args:
+            instance_space: The instance spaces to use. If None, the space_from_property is used.
+            space_from_property: Looks up spaces in the property with the given name for each instance
+            use_source_space: If True, the instance space will be set to the source space of the instance.
+            instance_spaces: The instance spaces to use. If None, the space_from_property is used.
+            name: The name of the location filter. If None, the name will be set to the data model id.
+
+        Returns:
+            UploadResultList: The result of the upload.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Load location filter into CDF",
+            client_required=True,
+        )
+        data_model_id = self._state.data_model_store.last_verified_physical_data_model.metadata.as_data_model_id()
+
+        if instance_spaces is not None:
+            selected_instance_spaces = list(instance_spaces)
+        else:
+            instance_space_loader = self._create_instance_loader(instance_space, space_from_property, use_source_space)
+            selected_instance_spaces = list(set(instance_space_loader.space_by_instance_uri.values()))
+        client = cast(NeatClient, self._state.client)
+        loader = loaders.LocationFilterLoader(
+            data_model_id=data_model_id,
+            instance_spaces=selected_instance_spaces,
+            name=name,
+        )
+
+        result = loader.load_into_cdf(client)
+        print("You can inspect the details with the .inspect.outcome.instances(...) method.")
+        self._state.instances.outcome.append(result)
+        return result
+
+    @staticmethod
+    def _get_instance_space(instance_space: str | None, schema_space: str) -> str | None:
+        instance_space = instance_space or f"{schema_space}_instances"
+        if instance_space and instance_space == schema_space:
+            raise NeatSessionError("Space for instances must be different from the data model space.")
+        elif not PATTERNS.space_compliance.match(str(instance_space)):
+            raise NeatSessionError("Please provide a valid space name. {PATTERNS.space_compliance.pattern}")
+        return instance_space
+
+    def _create_instance_loader(
+        self, instance_space: str | None = None, space_from_property: str | None = None, use_source_space: bool = False
+    ) -> loaders.InstanceSpaceLoader:
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS instances to CDF",
+            client_required=True,
+        )
+        dms_rules = self._state.data_model_store.last_verified_physical_data_model
+        instance_space = self._get_instance_space(instance_space, dms_rules.metadata.space)
+        return loaders.InstanceSpaceLoader(
+            self._state.instances.store,
+            instance_space=instance_space,
+            space_property=space_from_property,
+            use_source_space=use_source_space,
+            neat_prefix_by_predicate_uri=self._state.instances.neat_prefix_by_predicate_uri,
+        )
+
+    def containers(self, existing: ExistingResource, drop_data: bool = False, dry_run: bool = False) -> None:
+        """Export the verified DMS containers to CDF.
+
+        Args:
+            existing: What to do if the container already exists. Defaults to "update".
+                See the note below for more information about the options.
+            drop_data: If existing is 'force' or 'recreate' this must be set to True as it deleting and
+                recreating the container will lead to data loss. Defaults to False.
+            dry_run: If True, no changes will be made to CDF. Defaults to False.
+        !!! note "Container creation modes"
+            - "fail": If any container already exists, the export will fail.
+            - "skip": If any container already exists, it will be skipped.
+            - "update": If any container already exists, it will be updated. For containers this means
+                combining the existing and new container. For example, the properties of the new and existing
+                container will be combined.
+            - "force": If any container already exists, and the update fails, it will be deleted and recreated.
+            - "recreate": All containers will be deleted and recreated. The exception is spaces, which will be updated.
+
+        Returns:
+            None: The result of the upload.
+
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS containers to CDF",
+            client_required=True,
+            has_physical_data_model=True,
+        )
+        exporter = exporters.ContainerExporter(existing=existing, drop_data=drop_data)
+        last_dms = self._state.data_model_store.last_verified_physical_data_model
+        result = exporter.deploy(last_dms, dry_run=dry_run, client=cast(NeatClient, self._state.client))
+
+        display(display_deploy_result(result))
 
 
 @session_class_wrapper
@@ -452,3 +601,48 @@ class ToPythonAPI:
             elif isinstance(item, NeatIssue):
                 issue_list.append(item)
         return instances, issue_list
+
+    def data_model(
+        self,
+    ) -> DMSSchema:
+        """Export the verified DMS data model to Python format."""
+        self._state._raise_exception_if_condition_not_met(
+            "Export DMS data model to Python",
+            has_physical_data_model=True,
+        )
+        exporter = exporters.DMSExporter()
+        return self._state.data_model_store.export(exporter)
+
+
+@session_class_wrapper
+class ToFileInstancesAPI:
+    """API used to write the contents of a NeatSession to a file."""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+
+    def parquet(self, folder: Any) -> None:
+        """Export the instances to a parquet file.
+
+        Args:
+            folder: The folder path to write the parquet file to.
+
+        Example:
+            Export instances to parquet
+            ```python
+            neat.to.instances.parquet("my_folder")
+            ```
+
+        """
+        loaders.DictLoader(self._state.instances.store, file_format="parquet").write_to_file(Path(folder))
+
+
+@session_class_wrapper
+class ToFileAPI:
+    """API used to write the contents of a NeatSession to a file."""
+
+    def __init__(self, state: SessionState, verbose: bool) -> None:
+        self._state = state
+        self._verbose = verbose
+        self.instances = ToFileInstancesAPI(state, verbose)

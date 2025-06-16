@@ -1750,8 +1750,8 @@ instances:
     externalId: ClassicRelationship
     space: sp_windfarm
 - endNode:
-    externalId: metMast
-    space: source_ds
+    externalId: Label_metMast
+    space: sp_windfarm_dataset
   externalId: WT-01_to_MetMast.labels.Label_metMast
   instanceType: edge
   space: source_ds
@@ -1877,8 +1877,8 @@ instances:
     externalId: ClassicRelationship
     space: sp_windfarm
 - endNode:
-    externalId: metMast
-    space: source_ds
+    externalId: Label_metMast
+    space: sp_windfarm_dataset
   externalId: WT-02_to_MetMast.labels.Label_metMast
   instanceType: edge
   space: source_ds

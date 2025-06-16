@@ -50,7 +50,11 @@ class DropAPI:
         for type_item in type_list:
             if type_item not in uri_type_type:
                 print(f"Type {type_item} not found.")
+                continue
             selected_uri_by_type[uri_type_type[type_item]] = type_item
+        if not selected_uri_by_type:
+            print("No types found.")
+            return None
 
         result = self._state.instances.store.queries.update.drop_types(list(selected_uri_by_type.keys()))
 
