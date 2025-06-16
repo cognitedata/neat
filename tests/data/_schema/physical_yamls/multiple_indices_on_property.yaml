@@ -1,0 +1,27 @@
+containers:
+- container: CogniteAssetType
+  used_for: node
+metadata:
+  created: 2025-05-12 10:25:12.414295
+  creator: Cognite
+  external_id: CogniteCore
+  role: DMS Architect
+  space: cdf_cdm
+  updated: 2025-05-12 10:25:12.414295
+  version: v1
+properties:
+- container: CogniteAssetType
+  container_property: code
+  value_type: text
+  view: CogniteAssetType
+  view_property: code
+  index: btree:code(cursorable=True),btree:standard(cursorable=True,order=1)
+- container: CogniteAssetType
+  container_property: standard
+  value_type: text
+  index: btree:standard(cursorable=True,order=0)
+  view: CogniteAssetType
+  view_property: standard
+views:
+- in_model: true
+  view: CogniteAssetType
