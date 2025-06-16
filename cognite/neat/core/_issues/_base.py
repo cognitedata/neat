@@ -339,6 +339,5 @@ def _get_subclasses(cls_: type[T_Cls], include_base: bool = False) -> Iterable[t
     if include_base:
         yield cls_
     for s in cls_.__subclasses__():
-        print(s)
         yield s
         yield from _get_subclasses(s, False)
