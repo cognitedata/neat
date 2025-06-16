@@ -88,4 +88,12 @@ class PluginManager:
         return cls(_plugins)
 
 
-manager = PluginManager.load_plugins()
+_manager_instance: PluginManager | None = None
+
+
+def get_plugin_manager(force_reload: bool = False) -> PluginManager:
+    """Get or create a singleton PluginManager instance."""
+    global _manager_instance
+    if force_reload or _manager_instance is None:
+        _manager_instance = PluginManager.load_plugins()
+    return _manager_instance
