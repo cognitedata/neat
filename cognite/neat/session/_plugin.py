@@ -3,7 +3,7 @@ from typing import Any
 
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._utils.reader._base import NeatReader
-from cognite.neat.plugins import manager as plugin_manager
+from cognite.neat.plugins import get_plugin_manager
 from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlugin
 from cognite.neat.session._experimental import ExperimentalFlags
 
@@ -55,6 +55,7 @@ class DataModelPlugins:
             empty_data_model_store_required=True,
         )
 
+        plugin_manager = get_plugin_manager()
         plugin = plugin_manager.get(name, DataModelImporterPlugin)
 
         print(
