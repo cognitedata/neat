@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Literal
 
 from cognite.neat.core._issues import NeatError
 
@@ -35,3 +36,16 @@ class NeatImportError(NeatError, ImportError):
 
     module: str
     neat_extra: str
+
+
+@dataclass(unsafe_hash=True)
+class WillExceedLimitError(NeatError, RuntimeError):
+    """Cannot write {resource_count} {resource_type} to project {project} as the current available capacity
+    is {available_capacity} {resource_type}. Neat requires a capacity of at least {margin} {resource_type} are
+    left for future writes, {available_capacity}-{resource_count} < {margin}."""
+
+    resource_type: Literal["instances"]
+    resource_count: int
+    project: str
+    available_capacity: int
+    margin: int

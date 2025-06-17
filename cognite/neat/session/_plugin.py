@@ -1,9 +1,10 @@
 import warnings
+from pathlib import Path
 from typing import Any
 
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._utils.reader._base import NeatReader
-from cognite.neat.plugins import manager as plugin_manager
+from cognite.neat.plugins import get_plugin_manager
 from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlugin
 from cognite.neat.session._experimental import ExperimentalFlags
 
@@ -28,12 +29,12 @@ class DataModelPlugins:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def read(self, name: str, io: Any | None = None, **kwargs: Any) -> IssueList:
+    def read(self, name: str, io: str | Path | None = None, **kwargs: Any) -> IssueList:
         """Provides access to the external plugins for data model importing.
 
         Args:
             name (str): The name of format (e.g. Excel) plugin is handling.
-            io (Any | None): The input/output interface for the plugin.
+            io (str | Path | None): The input/output interface for the plugin.
             **kwargs (Any): Additional keyword arguments for the plugin.
 
         !!! note "kwargs"
@@ -55,6 +56,7 @@ class DataModelPlugins:
             empty_data_model_store_required=True,
         )
 
+        plugin_manager = get_plugin_manager()
         plugin = plugin_manager.get(name, DataModelImporterPlugin)
 
         print(
