@@ -1,7 +1,7 @@
 """Plugin manager for external plugins."""
 
 from importlib import metadata
-from typing import Any, ClassVar, TypeAlias
+from typing import Any, ClassVar, TypeAlias, TypeVar, cast
 
 from ._issues import PluginDuplicateError, PluginError, PluginLoadingError
 from .data_model.importers import DataModelImporterPlugin
@@ -13,6 +13,9 @@ plugins_entry_points = {
 
 #: Type alias for all supported plugin types
 NeatPlugin: TypeAlias = DataModelImporterPlugin
+
+# Generic type variable for plugin types
+T_NeatPlugin = TypeVar("T_NeatPlugin", bound=NeatPlugin)
 
 
 class Plugin:
@@ -33,7 +36,7 @@ class Plugin:
         self.type_ = type_
         self.entry_point = entry_point
 
-    def load(self) -> Any:
+    def load(self) -> type[NeatPlugin]:
         try:
             return self.entry_point.load()
         except Exception as e:
@@ -50,7 +53,7 @@ class PluginManager:
     def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], Any]) -> None:
         self._plugins = plugins
 
-    def get(self, name: str, type_: type[NeatPlugin]) -> Any:
+    def get(self, name: str, type_: type[T_NeatPlugin]) -> type[T_NeatPlugin]:
         """
         Returns desired plugin
 
@@ -59,7 +62,8 @@ class PluginManager:
             type_ (type): The type of the plugin.
         """
         try:
-            return self._plugins[(name, type_)]
+            plugin_class = self._plugins[(name, type_)]
+            return cast(type[T_NeatPlugin], plugin_class)
         except KeyError:
             raise PluginError(plugin_name=name, plugin_type=type_.__name__) from None
 
