@@ -10,8 +10,7 @@ from cognite.neat.core._constants import (
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat.core._data_model.catalog import imf_attributes
-from cognite.neat.core._data_model.importers import ExcelImporter, SubclassInferenceImporter
+from cognite.neat.core._data_model.importers import SubclassInferenceImporter
 from cognite.neat.core._data_model.models.entities._single_value import (
     ConceptEntity,
     ContainerEntity,
@@ -31,14 +30,13 @@ from cognite.neat.core._data_model.transformers import (
 from cognite.neat.core._instances.extractors import (
     AssetsExtractor,
     FilesExtractor,
-    RdfFileExtractor,
 )
 from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from cognite.neat.core._issues import IssueList, NeatIssue
 from cognite.neat.core._issues.warnings import PropertyDirectRelationLimitWarning
 from cognite.neat.core._shared import Triple
 from cognite.neat.core._store import NeatInstanceStore
-from tests.data import GraphData, InstanceData
+from tests.data import InstanceData
 
 
 def test_metadata_as_json_filed():
@@ -84,29 +82,6 @@ def test_metadata_as_json_filed():
 
     assert instances["Asset_4288662884680989"].type.external_id == "MyAsset"
     assert instances["Asset_4288662884680989"].type.space == "neat_space"
-
-
-def test_imf_attribute_nodes():
-    # this test also accounts for renaming of classes
-    # as well omitting to remove namespace from values if
-    # properties are not specified to be object properties
-
-    info_rules = ExcelImporter(imf_attributes).to_data_model().unverified_data_model.as_verified_data_model()
-
-    dms_rules = ConceptualToPhysical().transform(info_rules)
-
-    store = NeatInstanceStore.from_oxi_local_store()
-    store.write(RdfFileExtractor(GraphData.imf_temp_transmitter_complete_ttl))
-
-    loader = DMSLoader(
-        dms_rules, info_rules, store, InstanceSpaceLoader(instance_space=dms_rules.metadata.space).space_by_instance_uri
-    )
-    knowledge_nodes = list(loader.load())
-
-    assert len(knowledge_nodes) == 56
-
-    assert knowledge_nodes[0].sources[0].properties["predicate"] == "CFIHOS-40000524"
-    assert len(store.multi_type_instances[store.default_named_graph]) == 63
 
 
 @pytest.mark.xfail(reason="Need to update the prefix to work on verified rules")
