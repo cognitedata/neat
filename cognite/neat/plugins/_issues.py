@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-
 from cognite.neat.core._issues.errors import _NEAT_ERRORS_BY_NAME, NeatError
 
 
