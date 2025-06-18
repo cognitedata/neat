@@ -5,7 +5,8 @@ from typing import Any, TypeVar
 
 from cognite.neat.core._issues.errors import CDFMissingClientError, NeatImportError
 from cognite.neat.core._issues.errors._external import OxigraphStorageLockedError
-from cognite.neat.core._issues.errors._general import NeatValueError
+from cognite.neat.core._issues.errors._general import NeatValueError, WillExceedLimitError
+from cognite.neat.plugins._issues import PluginError
 from cognite.neat.session._experimental import ExperimentalFeatureWarning
 
 from ._collector import _COLLECTOR
@@ -50,6 +51,8 @@ def _session_method_wrapper(func: Callable, cls_name: str) -> Any:
             NeatImportError,
             NeatValueError,
             OxigraphStorageLockedError,
+            PluginError,
+            WillExceedLimitError,
         ) as e:
             print(f"{_ERROR_PREFIX} {escape(e.as_message())}")
         except ModuleNotFoundError as e:
