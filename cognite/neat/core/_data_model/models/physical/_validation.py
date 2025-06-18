@@ -174,7 +174,7 @@ class PhysicalValidation:
         # These are errors that can only happen due to the format of the Neat DMS classes
         issue_list.extend(self._validate_raw_filter())
         issue_list.extend(self._consistent_container_properties(container_properties_by_id))
-        issue_list.extend(self._valid_container_indices(container_properties_by_id))
+        issue_list.extend(self._valid_composite_container_indices(container_properties_by_id))
         issue_list.extend(self._validate_value_type_existence())
         issue_list.extend(
             self._validate_property_referenced_views_and_containers_exists(all_views_by_id, all_containers_by_id)
@@ -456,7 +456,7 @@ class PhysicalValidation:
 
         return errors
 
-    def _valid_container_indices(
+    def _valid_composite_container_indices(
         self, container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]
     ) -> IssueList:
         """Validate that the indices on the container properties are valid."""
