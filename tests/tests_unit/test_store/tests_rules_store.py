@@ -19,6 +19,18 @@ class FailingTransformer(VerifiedDataModelTransformer[PhysicalDataModel, Physica
         return "Failing transformer"
 
 
+class FailingExporter(exporters.BaseExporter[PhysicalDataModel, str]):
+    @property
+    def description(self) -> str:
+        return "Failing exporter"
+
+    def export_to_file(self, data_model: PhysicalDataModel, filepath: str) -> None:
+        raise NeatValueError("This exporter always fails")
+
+    def export(self, data_model: PhysicalDataModel) -> str:
+        raise NeatValueError("This exporter always fails")
+
+
 class TestRuleStore:
     def test_import_export(self, data_regression: DataRegressionFixture) -> None:
         store = NeatDataModelStore()
@@ -59,3 +71,18 @@ class TestRuleStore:
 
         assert exc_info.value.expected == (ConceptualDataModel,)
         assert exc_info.value.have == (PhysicalDataModel,)
+
+    def test_raise_exception_in_exporter(self) -> None:
+        store = NeatDataModelStore()
+
+        import_issues = store.import_data_model(importers.ExcelImporter(catalog.hello_world_pump), validate=False)
+
+        assert not import_issues.errors
+
+        store.export(FailingExporter())
+
+        assert store.last_issues
+        assert len(store.last_issues.errors) == 1
+        error = store.last_issues.errors[0]
+        assert isinstance(error, NeatValueError)
+        assert "This exporter always fails" in error.as_message()
