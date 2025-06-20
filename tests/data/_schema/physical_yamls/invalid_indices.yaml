@@ -1,0 +1,92 @@
+containers:
+- container: MyDescribable
+metadata:
+  created: '2025-05-27T06:35:07.129608'
+  creator: doctrino
+  external_id: invalidIndices
+  role: DMS Architect
+  space: my_space
+  updated: '2025-05-27T06:35:07.129608'
+  version: v1
+properties:
+- container: MyDescribable
+  container_property: nonIndexedProperty
+  value_type: text
+  view: FirstView
+  view_property: nonIndexedProperty
+- container: MyDescribable
+  container_property: code
+  # Composite index without order
+  index: btree:codeDepartmentIndex
+  value_type: text
+  view: FirstView
+  view_property: code
+- container: MyDescribable
+  container_property: department
+  # Composite index without order
+  index: btree:codeDepartmentIndex
+  value_type: text
+  view: FirstView
+  view_property: department
+- container: MyDescribable
+  container_property: name
+    # This property is defined twice with different indices, which is invalid.
+  index: btree:NameIndex(cursorable=True)
+  value_type: text
+  view: FirstView
+  view_property: name
+- container: MyDescribable
+  container_property: anotherNonIndexedProperty
+  value_type: text
+  view: FirstView
+  view_property: anotherNonIndexedProperty
+- container: MyDescribable
+  container_property: areaCode
+  # Index type not defined.container_property:
+  index: AreaCodeIndex
+  value_type: text
+  view: FirstView
+  view_property: areaCode
+- container: MyDescribable
+  container_property: name
+  # - Redefinition of index on the same property
+  # - Inverted index on a property that should be btree
+  index: inverted:NameIndex
+  value_type: text
+  view: SecondView
+  view_property: name
+- container: MyDescribable
+  container_property: location
+  index: inverted:locationTagsIndex(order=42)
+  value_type: text
+  view: SecondView
+  view_property: location
+- container: MyDescribable
+  container_property: tags
+  # Ambiguous order, location and tags have the same order
+  index: inverted:locationTagsIndex(order=42)
+  max_value: 1000
+  value_type: text
+  view: SecondView
+  view_property: tags
+- container: MyDescribable
+  container_property: alias
+  # Wrong index type, should be inverted
+  index: btree:AliasIndex(cursorable=True)
+  max_value: 1000
+  value_type: text
+  view: SecondView
+  view_property: alias
+- container: MyDescribable
+  container_property: relatedTerms
+  # Cursorable is not valid for inverted indices
+  index: inverted:RelatedTermsIndex(cursorable=True)
+  max_value: 1000
+  value_type: text
+  view: SecondView
+  view_property: relatedTerms
+views:
+- in_model: true
+  view: FirstView
+- in_model: true
+  view: SecondView

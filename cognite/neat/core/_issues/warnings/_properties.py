@@ -91,6 +91,17 @@ class PropertyMultipleValueWarning(PropertyWarning[T_Identifier]):
 
 
 @dataclass(unsafe_hash=True)
+class PropertyDefinitionWarning(PropertyWarning[T_Identifier]):
+    """The {resource_type} with identifier {identifier} property {property_name}: {reason}"""
+
+    extra = "in locations {locations} with name {location_name}"
+
+    reason: str
+    locations: tuple[str | int, ...] | None = None
+    location_name: str | None = None
+
+
+@dataclass(unsafe_hash=True)
 class ReversedConnectionNotFeasibleWarning(PropertyWarning[T_Identifier]):
     """The {resource_type} {identifier}.{property_name} cannot be created: {reason}"""
 

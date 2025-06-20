@@ -34,6 +34,7 @@ from ._models import (
 from ._properties import (
     PropertyDataTypeConversionWarning,
     PropertyDefinitionDuplicatedWarning,
+    PropertyDefinitionWarning,
     PropertyDirectRelationLimitWarning,
     PropertyMultipleValueWarning,
     PropertyNotFoundWarning,
@@ -72,6 +73,7 @@ __all__ = [
     "PrincipleSolutionBuildsOnEnterpriseWarning",
     "PropertyDataTypeConversionWarning",
     "PropertyDefinitionDuplicatedWarning",
+    "PropertyDefinitionWarning",
     "PropertyDirectRelationLimitWarning",
     "PropertyMultipleValueWarning",
     "PropertyNotFoundWarning",

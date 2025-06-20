@@ -124,7 +124,7 @@ class NeatIssue:
         if isinstance(value, str | int | bool | float):
             return value
         elif isinstance(value, frozenset):
-            return [cls._dump_value(item) for item in value]
+            return [cls._dump_value(item) for item in sorted(value)]
         elif isinstance(value, Path):
             return value.as_posix()
         elif isinstance(value, tuple):

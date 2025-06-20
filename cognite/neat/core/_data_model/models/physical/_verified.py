@@ -32,6 +32,7 @@ from cognite.neat.core._data_model.models._types import (
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ConceptualEntity,
+    ContainerIndexEntity,
     DMSNodeEntity,
     EdgeEntity,
     HasDataFilter,
@@ -40,12 +41,13 @@ from cognite.neat.core._data_model.models.entities import (
     PhysicalUnknownEntity,
     RawFilter,
     ReverseConnectionEntity,
+    Undefined,
     ViewEntity,
     ViewEntityList,
 )
 from cognite.neat.core._data_model.models.entities._types import ContainerEntityList, ContainerIndexListType
 from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._issues.warnings._general import NeatValueWarning
+from cognite.neat.core._issues.warnings import NeatValueWarning, PropertyDefinitionWarning
 
 if TYPE_CHECKING:
     from cognite.neat.core._data_model.models import ConceptualDataModel
@@ -255,6 +257,53 @@ class PhysicalProperty(SheetRow):
             raise ValueError(
                 "Reverse connection are not stored in a container, please remove the container and container property"
             )
+        return value
+
+    @field_validator("index", mode="after")
+    @classmethod
+    def index_set_correctly(cls, value: list[ContainerIndexEntity] | None, info: ValidationInfo) -> Any:
+        if value is None:
+            return value
+        try:
+            container = str(info.data["container"])
+            container_property = str(info.data["container_property"])
+        except KeyError:
+            raise ValueError("Container and container property must be set to use indexes") from None
+        max_count = info.data.get("max_count")
+        is_list = (
+            max_count is not None and (isinstance(max_count, int | float) and max_count > 1)
+        ) or max_count is float("inf")
+        for index in value:
+            if index.prefix is Undefined:
+                message = f"The type of index is not defined. Please set 'inverted:{index!s}' or 'btree:{index!s}'."
+                warnings.warn(
+                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    stacklevel=2,
+                )
+            elif index.prefix == "inverted" and not is_list:
+                message = (
+                    "It is not recommended to use inverted index on non-list properties. "
+                    "Please consider using btree index instead."
+                )
+                warnings.warn(
+                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    stacklevel=2,
+                )
+            elif index.prefix == "btree" and is_list:
+                message = (
+                    "It is not recommended to use btree index on list properties. "
+                    "Please consider using inverted index instead."
+                )
+                warnings.warn(
+                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    stacklevel=2,
+                )
+            if index.prefix == "inverted" and (index.cursorable is not None or index.by_space is not None):
+                message = "Cursorable and bySpace are not supported for inverted indexes. These will be ignored."
+                warnings.warn(
+                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    stacklevel=2,
+                )
         return value
 
     @field_serializer("value_type", when_used="always")
