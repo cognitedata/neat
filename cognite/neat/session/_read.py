@@ -826,29 +826,6 @@ class RDFReadAPI(BaseReadAPI):
         importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.data_model_import(importer)
 
-    def imf(self, io: Any) -> IssueList:
-        """Reads IMF Types provided as SHACL shapes into NeatSession.
-
-        Args:
-            io: file path or url to the IMF file
-
-        Example:
-            ```python
-            neat.read.rdf.imf("url_or_path_to_imf_source")
-            ```
-        """
-        warnings.filterwarnings("default")
-        ExperimentalFlags.imf_read.warn()
-
-        self._state._raise_exception_if_condition_not_met(
-            "Read IMF file",
-            empty_data_model_store_required=True,
-        )
-
-        reader = NeatReader.create(io)
-        importer = importers.IMFImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
-        return self._state.data_model_import(importer)
-
     def instances(self, io: Any) -> IssueList:
         self._state._raise_exception_if_condition_not_met(
             "Read RDF Instances",

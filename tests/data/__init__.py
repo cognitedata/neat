@@ -17,7 +17,6 @@ class GraphData:
     dexpi_example_xml = _graph_dir / "dexpi_example.xml"
     dexpi_raw_graph_ttl = _graph_dir / "dexpi_raw_graph.ttl"
     low_quality_graph_ttl = _graph_dir / "low-quality-graph.ttl"
-    imf_temp_transmitter_complete_ttl = _graph_dir / "IMF_TempTransmitterComplete.ttl"
     car = _car
     car_py = _graph_dir / "car.py"
     iodd_Piab_piCOMPACT10X_20230509_IODD1_1_xml = _graph_dir / "iodd_Piab-piCOMPACT10X-20230509-IODD1.1.xml"
