@@ -14,6 +14,7 @@ from cognite.neat.core._constants import (
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
+from cognite.neat.core._data_model._constants import SPLIT_ON_COMMA_PATTERN
 from cognite.neat.core._data_model.models._base_unverified import (
     UnverifiedComponent,
     UnverifiedDataModel,
@@ -170,18 +171,24 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
         )
         if isinstance(self.index, ContainerIndexEntity) or (isinstance(self.index, str) and "," not in self.index):
             output["Index"] = [ContainerIndexEntity.load(self.index)]
-        elif isinstance(self.index, str) and "," in self.index:
+        elif isinstance(self.index, str):
             output["Index"] = [
-                ContainerIndexEntity.load(index.strip()) for index in self.index.split(",") if index.strip()
+                ContainerIndexEntity.load(index.strip())
+                for index in SPLIT_ON_COMMA_PATTERN.split(self.index)
+                if index.strip()
             ]
         elif isinstance(self.index, list):
             index_list: list[ContainerIndexEntity | PhysicalUnknownEntity] = []
             for index in self.index:
                 if isinstance(index, ContainerIndexEntity):
                     index_list.append(index)
-                elif isinstance(index, str) and "," in index:
+                elif isinstance(index, str):
                     index_list.extend(
-                        [ContainerIndexEntity.load(idx.strip()) for idx in index.split(",") if idx.strip()]
+                        [
+                            ContainerIndexEntity.load(idx.strip())
+                            for idx in SPLIT_ON_COMMA_PATTERN.split(index)
+                            if idx.strip()
+                        ]
                     )
                 elif isinstance(index, str):
                     index_list.append(ContainerIndexEntity.load(index.strip()))

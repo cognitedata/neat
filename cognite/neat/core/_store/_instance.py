@@ -172,7 +172,7 @@ class NeatInstanceStore:
         local_import("pyoxigraph", "oxi")
         local_import("oxrdflib", "oxi")
         import oxrdflib
-        import pyoxigraph
+        import pyoxigraph  # type: ignore[import-untyped]
 
         try:
             oxi_store = pyoxigraph.Store(path=str(storage_dir) if storage_dir else None)
