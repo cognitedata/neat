@@ -355,6 +355,7 @@ class NeatDataModelStore:
 
         agent = exporter.agent
         start = datetime.now(timezone.utc)
+        result: UploadResultList | Path | URIRef | None = None
         with catch_issues() as issue_list:
             # Validate the type of the result
             result = action(input_, *exporter_args)
