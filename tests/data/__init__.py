@@ -74,6 +74,7 @@ class SchemaData:
         pump_example_duplicated_resources_xlsx = _physical / "pump_example_duplicated_resources.xlsx"
         pump_example_with_missing_cells_xlsx = _physical / "pump_example_with_missing_cells.xlsx"
         pump_example_with_missing_cells_raise_issues = _physical / "pump_example_with_missing_cells_raise_issues.xlsx"
+        strongly_connected_model_folder = _physical / "strongly_connected_model"
 
     class Conversion:
         conversion = _schema_dir / "conversion"
