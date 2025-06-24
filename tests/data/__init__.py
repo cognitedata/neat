@@ -70,6 +70,7 @@ class SchemaData:
         dms_unknown_value_type_xlsx = _physical / "dms-unknown-value-type.xlsx"
         isa_plus_cdm_xlsx = _physical / "isa_plus_cdm.xlsx"
         missing_in_model_value_xlsx = _physical / "missing-in-model-value.xlsx"
+        physical_singleton_issue_xlsx = _physical / "physical_singleton_issue.xlsx"
         mixed_up_version_xlsx = _physical / "mixed-up-version.xlsx"
         pump_example_duplicated_resources_xlsx = _physical / "pump_example_duplicated_resources.xlsx"
         pump_example_with_missing_cells_xlsx = _physical / "pump_example_with_missing_cells.xlsx"
