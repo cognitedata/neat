@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 from cognite.client import data_modeling as dm
 
+from cognite.neat import NeatSession
+from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.exporters import DMSExporter
 from cognite.neat.core._data_model.models import ConceptualDataModel
@@ -56,6 +58,17 @@ class TestDMSExporter:
         assert counts["view"] == len(alice_rules.views)
         assert counts["container"] == len(alice_rules.containers)
         assert counts["node"] == len(schema.node_types)
+
+    def test_container_index_undefined_not_singleton(self) -> None:
+        with monkeypatch_neat_client() as client:
+            neat = NeatSession(client)
+            read_issues = neat.read.excel(SchemaData.Physical.physical_singleton_issue_xlsx)
+            # There are a few warnings for direct relations without ValueType specified.
+            assert len(read_issues.errors) == 0, "Expected no errors when reading the file"
+            _ = neat.to.cdf.data_model()
+            deploy_issues = neat.inspect.issues()
+
+        assert len(deploy_issues) == 0, f"Got {len(deploy_issues)} issues: {deploy_issues[0].as_message()}"
 
 
 class TestImportExportDMS:
