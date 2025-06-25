@@ -16,6 +16,7 @@ from ._general import NeatImportError, NeatTypeError, NeatValueError, RegexViola
 from ._properties import (
     PropertyDefinitionDuplicatedError,
     PropertyDefinitionError,
+    PropertyInvalidDefinitionError,
     PropertyMappingDuplicatedError,
     PropertyNotFoundError,
     PropertyTypeNotSupportedError,
@@ -65,6 +66,7 @@ __all__ = [
     "OxigraphStorageLockedError",
     "PropertyDefinitionDuplicatedError",
     "PropertyDefinitionError",
+    "PropertyInvalidDefinitionError",
     "PropertyMappingDuplicatedError",
     "PropertyNotFoundError",
     "PropertyTypeNotSupportedError",
