@@ -391,9 +391,9 @@ class _DMSExporter:
                 container.indexes = container.indexes or {}
                 index_property_list = [prop_id for prop_id, _ in sorted(properties, key=lambda x: x[1].order or 0)]
                 index_entity = properties[0][1]
-                if index_entity.prefix == "inverted" or (index_entity.prefix is Undefined and is_list):
+                if index_entity.prefix == "inverted" or (index_entity.prefix == Undefined and is_list):
                     container.indexes[index_name] = InvertedIndex(properties=index_property_list)
-                elif index_entity.prefix == "btree" or (index_entity.prefix is Undefined and not is_list):
+                elif index_entity.prefix == "btree" or (index_entity.prefix == Undefined and not is_list):
                     container.indexes[index_name] = BTreeIndex(
                         properties=index_property_list, cursorable=index_entity.cursorable or False
                     )
