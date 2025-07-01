@@ -76,6 +76,16 @@ TEST_CASES = [
         ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
     ),
     (
+        ConceptEntity,
+        "cdf_cdm:Concept(version=v1)",
+        ConceptEntity(prefix="cdf_cdm", suffix="Concept", version="v1"),
+    ),
+    (
+        ConceptEntity,
+        "cdf_cdm:Conceptual%20%Concept(version=v1)",
+        ConceptEntity(prefix="cdf_cdm", suffix="Conceptual%20%Concept", version="v1"),
+    ),
+    (
         ViewEntity,
         "subject:person(version=1.0)",
         ViewEntity(space="subject", externalId="person", version="1.0"),
