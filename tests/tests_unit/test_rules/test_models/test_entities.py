@@ -6,6 +6,7 @@ from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
     ConceptEntity,
     ConceptualEntity,
+    ContainerIndexEntity,
     DataModelEntity,
     DMSNodeEntity,
     EdgeEntity,
@@ -25,6 +26,36 @@ DEFAULT_VERSION = "vDefault"
 
 TEST_CASES = [
     (
+        ContainerIndexEntity,
+        "name",
+        ContainerIndexEntity(suffix="name"),
+    ),
+    (
+        ContainerIndexEntity,
+        "name(cursorable=True)",
+        ContainerIndexEntity(suffix="name", cursorable=True),
+    ),
+    (
+        ContainerIndexEntity,
+        "name(cursorable=True)",
+        ContainerIndexEntity(suffix="name", cursorable=True),
+    ),
+    (
+        ContainerIndexEntity,
+        "name(bySpace=True,cursorable=True)",
+        ContainerIndexEntity(suffix="name", cursorable=True, bySpace=True),
+    ),
+    (
+        ContainerIndexEntity,
+        "btree:name(bySpace=True,cursorable=True)",
+        ContainerIndexEntity(prefix="btree", suffix="name", cursorable=True, bySpace=True),
+    ),
+    (
+        ContainerIndexEntity,
+        "inverted:tags",
+        ContainerIndexEntity(prefix="inverted", suffix="tags"),
+    ),
+    (
         UnitEntity,
         "acceleration:ft-per-sec2",
         UnitEntity(prefix="acceleration", suffix="ft-per-sec2"),
@@ -43,6 +74,16 @@ TEST_CASES = [
         ConceptEntity,
         "cdf_cdm:CogniteAsset(version=v1)",
         ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1"),
+    ),
+    (
+        ConceptEntity,
+        "cdf_cdm:Concept(version=v1)",
+        ConceptEntity(prefix="cdf_cdm", suffix="Concept", version="v1"),
+    ),
+    (
+        ConceptEntity,
+        "cdf_cdm:Conceptual%20%Concept(version=v1)",
+        ConceptEntity(prefix="cdf_cdm", suffix="Conceptual%20%Concept", version="v1"),
     ),
     (
         ViewEntity,
@@ -123,7 +164,7 @@ class TestEntities:
     def test_load_dump(self, cls_: type[ConceptualEntity], raw: str, expected: ConceptualEntity) -> None:
         if issubclass(cls_, PhysicalEntity):
             defaults = {"space": DEFAULT_SPACE, "version": DEFAULT_VERSION}
-        elif issubclass(cls_, AssetEntity | RelationshipEntity):
+        elif issubclass(cls_, AssetEntity | RelationshipEntity | ContainerIndexEntity):
             defaults = {}
         else:
             defaults = {"prefix": DEFAULT_SPACE, "version": DEFAULT_VERSION}
@@ -140,6 +181,18 @@ class TestEntities:
             ViewEntity.load("bad(entity)", space=DEFAULT_SPACE, version=DEFAULT_VERSION)
         error = e.value.errors()[0]["ctx"]["error"]
         assert NeatValueError("Invalid view entity: 'bad(entity)'") == error
+
+    @pytest.mark.parametrize(
+        "entity1, entity2",
+        [
+            (
+                ContainerIndexEntity(prefix="btree", suffix="name", cursorable=True),
+                ContainerIndexEntity(prefix="btree", suffix="name", cursorable=False),
+            ),
+        ],
+    )
+    def test_are_not_equal(self, entity1: ConceptualEntity, entity2: ConceptualEntity) -> None:
+        assert entity1 != entity2, f"Expected {entity1} and {entity2} to be different entities"
 
 
 class TestEntityPattern:

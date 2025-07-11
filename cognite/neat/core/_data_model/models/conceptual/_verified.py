@@ -43,7 +43,7 @@ class ConceptualMetadata(BaseVerifiedMetadata):
     level: ClassVar[DataModelLevel] = DataModelLevel.conceptual
 
     # Linking to Conceptual and Physical data model aspects
-    physical: URIRef | str | None = Field(None, description="Link to the physical data model aspect")
+    physical: URIRef | str | None = Field(None, description="Link to the physical data model level")
 
 
 def _get_metadata(context: Any) -> ConceptualMetadata | None:
@@ -300,7 +300,7 @@ class ConceptualDataModel(BaseVerifiedDataModel):
             if view.conceptual in classes_by_neat_id:
                 classes_by_neat_id[view.conceptual].physical = neat_id
 
-    def as_dms_rules(self) -> "PhysicalDataModel":
+    def as_physical_data_model(self) -> "PhysicalDataModel":
         from cognite.neat.core._data_model.transformers._converters import (
             _ConceptualDataModelConverter,
         )

@@ -61,6 +61,17 @@ class PropertyDefinitionDuplicatedError(PropertyError[T_Identifier]):
 
 
 @dataclass(unsafe_hash=True)
+class PropertyInvalidDefinitionError(PropertyError[T_Identifier]):
+    """The {resource_type} with identifier {identifier} has an invalid definition of {property_name}. {reason}"""
+
+    extra = "in locations {locations} with name {location_name}"
+
+    reason: str
+    locations: tuple[str | int, ...] | None = None
+    location_name: str | None = None
+
+
+@dataclass(unsafe_hash=True)
 class PropertyMappingDuplicatedError(PropertyError[T_Identifier], Generic[T_Identifier, T_ReferenceIdentifier]):
     """The {resource_type} with identifier {identifier}.{property_name} is mapped to by: {mappings}. Ensure
     that only one {mapping_type} maps to {resource_type} {identifier}.{property_name}"""

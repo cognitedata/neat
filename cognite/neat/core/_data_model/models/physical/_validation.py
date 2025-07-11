@@ -1,6 +1,7 @@
 import warnings
 from collections import Counter, defaultdict
 from collections.abc import Mapping
+from dataclasses import dataclass
 from functools import lru_cache
 
 from cognite.client import data_modeling as dm
@@ -24,12 +25,14 @@ from cognite.neat.core._constants import (
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ContainerEntity, RawFilter
 from cognite.neat.core._data_model.models.entities._single_value import (
+    ContainerIndexEntity,
     ViewEntity,
 )
 from cognite.neat.core._issues import IssueList, NeatError
 from cognite.neat.core._issues.errors import (
     CDFMissingClientError,
     PropertyDefinitionDuplicatedError,
+    PropertyInvalidDefinitionError,
     PropertyMappingDuplicatedError,
     PropertyNotFoundError,
     ResourceDuplicatedError,
@@ -55,6 +58,21 @@ from cognite.neat.core._utils.text import humanize_collection
 from ._verified import PhysicalDataModel, PhysicalProperty
 
 
+@dataclass
+class _ContainerPropertyIndex:
+    """This is a helper class used in the indices validation
+
+    Args:
+        location: The index of the property in the properties list.
+        property_: The physical property associated with the container.
+        index: The index entity that defines the container property.
+    """
+
+    location: int
+    property_: PhysicalProperty
+    index: ContainerIndexEntity
+
+
 class PhysicalValidation:
     """This class does all the validation of the physical data model that
     have dependencies between components."""
@@ -65,7 +83,7 @@ class PhysicalValidation:
         client: NeatClient | None = None,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ) -> None:
-        self._rules = data_model
+        self._data_model = data_model
         self._client = client
         self._metadata = data_model.metadata
         self._properties = data_model.properties
@@ -109,7 +127,7 @@ class PhysicalValidation:
         )
         if (imported_views or imported_containers) and self._client is None:
             raise CDFMissingClientError(
-                f"{self._rules.metadata.as_data_model_id()} has imported views and/or container: "
+                f"{self._data_model.metadata.as_data_model_id()} has imported views and/or container: "
                 f"{imported_views}, {imported_containers}."
             )
         referenced_views = ViewList([])
@@ -131,10 +149,10 @@ class PhysicalValidation:
                 raise CDFMissingResourcesError(containers=tuple(missing_containers), views=tuple(missing_views))
 
         # Setup data structures for validation
-        dms_schema = self._rules.as_schema()
+        dms_schema = self._data_model.as_schema()
         ref_view_by_id = {view.as_id(): view for view in referenced_views}
         ref_container_by_id = {container.as_id(): container for container in referenced_containers}
-        # All containers and views are the Containers/Views in the DMSRules + the referenced ones
+        # All containers and views are the Containers/Views in the Physical DM + the referenced ones
         all_containers_by_id: dict[dm.ContainerId, dm.ContainerApply | dm.Container] = {
             **dict(dms_schema.containers.items()),
             **ref_container_by_id,
@@ -145,6 +163,7 @@ class PhysicalValidation:
         all_properties_by_ids = {**ref_properties_by_ids, **properties_by_ids}
         view_properties_by_id = self._as_view_properties_by_id(properties_by_ids)
         parents_view_ids_by_child_id = self._parent_view_ids_by_child_id(all_views_by_id)
+        container_properties_by_id = self._create_container_properties_by_id()
 
         issue_list = IssueList()
 
@@ -154,7 +173,8 @@ class PhysicalValidation:
         # Neat DMS classes Validation
         # These are errors that can only happen due to the format of the Neat DMS classes
         issue_list.extend(self._validate_raw_filter())
-        issue_list.extend(self._consistent_container_properties())
+        issue_list.extend(self._consistent_container_properties(container_properties_by_id))
+        issue_list.extend(self._valid_composite_container_indices(container_properties_by_id))
         issue_list.extend(self._validate_value_type_existence())
         issue_list.extend(
             self._validate_property_referenced_views_and_containers_exists(all_views_by_id, all_containers_by_id)
@@ -175,7 +195,7 @@ class PhysicalValidation:
     def _same_space_views_and_data_model(self) -> IssueList:
         issue_list = IssueList()
 
-        schema = self._rules.as_schema(remove_cdf_spaces=True)
+        schema = self._data_model.as_schema(remove_cdf_spaces=True)
 
         if schema.data_model and schema.views:
             data_model_space = schema.data_model.space
@@ -320,13 +340,27 @@ class PhysicalValidation:
             parents_by_view[view_id] = get_parents(view_id)
         return parents_by_view
 
-    def _consistent_container_properties(self) -> IssueList:
+    def _create_container_properties_by_id(
+        self,
+    ) -> dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]:
+        """Create a mapping of container properties with their location in the properties list.
+
+        Returns:
+            dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]: A dictionary where the key is a tuple
+                of (ContainerEntity, property name) and the value is a list of tuples of (int, PhysicalProperty) where
+                int is the index of the property in the properties list and PhysicalProperty is the property itself.
+        """
         container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]] = defaultdict(
             list
         )
         for prop_no, prop in enumerate(self._properties):
             if prop.container and prop.container_property:
                 container_properties_by_id[(prop.container, prop.container_property)].append((prop_no, prop))
+        return container_properties_by_id
+
+    def _consistent_container_properties(
+        self, container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]
+    ) -> IssueList:
         properties_sheet = self._read_info_by_spreadsheet.get("Properties")
         errors = IssueList()
         for (container, prop_name), properties in container_properties_by_id.items():
@@ -391,10 +425,12 @@ class PhysicalValidation:
                         "rows",
                     )
                 )
-            index_definitions = {",".join(prop.index) for _, prop in properties if prop.index is not None}
+            index_definitions = {
+                ",".join([str(index) for index in prop.index]) for _, prop in properties if prop.index is not None
+            }
             if len(index_definitions) > 1:
                 errors.append(
-                    PropertyDefinitionDuplicatedError[dm.ContainerId](
+                    PropertyDefinitionDuplicatedError(
                         container_id,
                         "container",
                         prop_name,
@@ -419,6 +455,104 @@ class PhysicalValidation:
                 )
 
         return errors
+
+    def _valid_composite_container_indices(
+        self, container_properties_by_id: dict[tuple[ContainerEntity, str], list[tuple[int, PhysicalProperty]]]
+    ) -> IssueList:
+        """Validate that the indices on the container properties are valid."""
+        index_properties_by_container_index: dict[tuple[ContainerEntity, str], list[_ContainerPropertyIndex]] = (
+            defaultdict(list)
+        )
+        for (container, _), properties in container_properties_by_id.items():
+            for row_no, prop in properties:
+                for index in prop.index or []:
+                    index_properties_by_container_index[(container, index.suffix)].append(
+                        _ContainerPropertyIndex(row_no, prop, index)
+                    )
+
+        properties_sheet_info = self._read_info_by_spreadsheet.get("Properties")
+        errors = IssueList()
+        for (container, _), index_properties in index_properties_by_container_index.items():
+            if len(index_properties) <= 1:
+                # If there is only one property in the index, this is already validated in the field_validator
+                # of the PhysicalProperty class. This validation is only for composite indices.
+                continue
+            container_id = container.as_id()
+            row_numbers = tuple([index_prop.location for index_prop in index_properties])
+            if properties_sheet_info:
+                row_numbers = tuple([properties_sheet_info.adjusted_row_number(row_no) for row_no in row_numbers])
+
+            if order_missing_error := self._validate_container_indices_has_order(
+                index_properties, row_numbers, container_id
+            ):
+                errors.append(order_missing_error)
+            same_order_errors = self._validate_container_indices_same_order(index_properties, row_numbers, container_id)
+            errors.extend(same_order_errors)
+        return errors
+
+    @staticmethod
+    def _validate_container_indices_has_order(
+        index_properties: list[_ContainerPropertyIndex], row_numbers: tuple[int, ...], container_id: dm.ContainerId
+    ) -> PropertyInvalidDefinitionError | None:
+        property_names: list[str] = []
+        indices: list[ContainerIndexEntity] = []
+        for prop_index in index_properties:
+            if prop_index.index.order is None:
+                property_names.append(prop_index.property_.view_property)
+                indices.append(prop_index.index)
+
+        if not property_names:
+            return None
+
+        if len(set(property_names)) == 1:
+            # If this is the same property, this is not a composite index, but a poorly defined single property
+            # index. This will be caught by the PropertyDefinitionDuplicatedError.
+            return None
+
+        properties_str = humanize_collection(property_names)
+        fixed_indices = [str(index.model_copy(update={"order": no})) for no, index in enumerate(indices, 1)]
+        message = (
+            "You must specify the order when using a composite index. "
+            f"For example {humanize_collection(fixed_indices)}."
+        )
+        return PropertyInvalidDefinitionError(
+            container_id,
+            "container",
+            properties_str,
+            message,
+            row_numbers,
+            "rows",
+        )
+
+    @staticmethod
+    def _validate_container_indices_same_order(
+        index_properties: list[_ContainerPropertyIndex], row_numbers: tuple[int, ...], container_id: dm.ContainerId
+    ) -> list[PropertyInvalidDefinitionError]:
+        """Checks whether there are multiple properties with the same order in a composite index."""
+        properties_by_order: dict[int, list[tuple[int, PhysicalProperty]]] = defaultdict(list)
+        for index_prop in index_properties:
+            if index_prop.index.order is not None:
+                properties_by_order[index_prop.index.order].append((index_prop.location, index_prop.property_))
+        same_order_errors: list[PropertyInvalidDefinitionError] = []
+        for order, props in properties_by_order.items():
+            if len(props) > 1:
+                properties_str = humanize_collection([prop.view_property for _, prop in props])
+                message = (
+                    "You cannot have multiple properties with the same order in a composite index. "
+                    f"Got order={order} for all composite properties."
+                    "Please ensure that each property has an unique order."
+                )
+                same_order_errors.append(
+                    PropertyInvalidDefinitionError(
+                        container_id,
+                        "container",
+                        properties_str,
+                        message,
+                        row_numbers,
+                        "rows",
+                    )
+                )
+        return same_order_errors
 
     @staticmethod
     def _containers_are_proper_size(dms_schema: DMSSchema) -> IssueList:

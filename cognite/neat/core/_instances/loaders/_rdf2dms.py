@@ -6,7 +6,7 @@ from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, cast, get_args, overload
+from typing import Any, Literal, cast, get_args
 
 import yaml
 from cognite.client import CogniteClient
@@ -22,6 +22,7 @@ from rdflib import RDF, URIRef
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._client._api_client import SchemaAPI
 from cognite.neat.core._constants import (
+    COGNITE_SPACES,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     is_readonly_property,
 )
@@ -38,13 +39,11 @@ from cognite.neat.core._data_model.models.data_types import (
 )
 from cognite.neat.core._issues import IssueList, NeatError, NeatIssue, catch_issues
 from cognite.neat.core._issues.errors import (
-    AuthorizationError,
     ResourceCreationError,
     ResourceDuplicatedError,
     ResourceNotFoundError,
 )
 from cognite.neat.core._issues.warnings import (
-    NeatValueWarning,
     PropertyDirectRelationLimitWarning,
     PropertyMultipleValueWarning,
     PropertyTypeNotSupportedWarning,
@@ -57,11 +56,8 @@ from cognite.neat.core._utils.collection_ import (
     iterate_progress_bar_if_above_config_threshold,
 )
 from cognite.neat.core._utils.rdf_ import (
-    namespace_as_space,
     remove_namespace_from_uri,
-    split_uri,
 )
-from cognite.neat.core._utils.text import NamingStandardization
 from cognite.neat.core._utils.upload import UploadResult
 
 from ._base import _END_OF_CLASS, _START_OF_CLASS, CDFLoader
@@ -96,46 +92,35 @@ class _Projection:
 
 
 class DMSLoader(CDFLoader[dm.InstanceApply]):
-    """Loads Instances to Cognite Data Fusion Data Model Service from NeatGraph.
+    """Loads Instances to Cognite Data Fusion Data Model Service from NeatInstanceStore.
 
     Args:
-        dms_rules (DMSRules): The DMS rules used by the data model.
-        info_rules (InformationRules): The information rules used by the data model, used to
-            look+up the instances in the store.
-        graph_store (NeatGraphStore): The graph store to load the data from.
-        instance_space (str): The instance space to load the data into.
+        physical_data_model (PhysicalDataModel): Physical data model.
+        conceptual_data_model (ConceptualDataModel): Conceptual data model,
+            used to look+up the instances in the store.
+        instance_store (NeatInstanceStore): The instance store to load the instances from.
         create_issues (Sequence[NeatIssue] | None): A list of issues that occurred during reading. Defaults to None.
         client (NeatClient | None): This is used to lookup containers such that the loader
             creates instances in accordance with required constraints. Defaults to None.
         unquote_external_ids (bool): If True, the loader will unquote external ids before creating the instances.
-        neat_prefix_by_predicate_uri (dict[URIRef, str] | None): A dictionary that maps a predicate URIRef to a
-            prefix that Neat added to the object upon extraction. This is used to remove the prefix from the
-            object before creating the instance.
     """
 
     def __init__(
         self,
-        dms_rules: PhysicalDataModel,
-        info_rules: ConceptualDataModel,
-        graph_store: NeatInstanceStore,
-        instance_space: str,
-        space_property: str | None = None,
-        use_source_space: bool = False,
+        physical_data_model: PhysicalDataModel,
+        conceptual_data_model: ConceptualDataModel,
+        instance_store: NeatInstanceStore,
+        space_by_instance_uri: dict[URIRef, str],
         client: NeatClient | None = None,
         create_issues: Sequence[NeatIssue] | None = None,
         unquote_external_ids: bool = False,
-        neat_prefix_by_predicate_uri: dict[URIRef, str] | None = None,
         neat_prefix_by_type_uri: dict[URIRef, str] | None = None,
     ):
-        super().__init__(graph_store)
-        self.dms_rules = dms_rules
-        self.info_rules = info_rules
-        self.neat_prefix_by_predicate_uri = neat_prefix_by_predicate_uri or {}
+        self.instance_store = instance_store
+        self.physical_data_model = physical_data_model
+        self.conceptual_data_model = conceptual_data_model
         self.neat_prefix_by_type_uri = neat_prefix_by_type_uri or {}
-        self._instance_space = instance_space
-        self._space_property = space_property
-        self._use_source_space = use_source_space
-        self._space_by_instance_uri: dict[URIRef, str] = defaultdict(lambda: instance_space)
+        self._space_by_instance_uri = space_by_instance_uri
         self._external_id_by_uri: dict[URIRef, str] = {}
         self._issues = IssueList(create_issues or [])
         self._client = client
@@ -171,18 +156,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
         view_iterations, issues = self._create_view_iterations()
         yield from issues
-        if self._space_property:
-            yield from self._lookup_space_by_uri(view_iterations, stop_on_exception)
-
-            if self._client:
-                space_creation = self._create_instance_space_if_not_exists()
-                yield from space_creation.warnings
-                if space_creation.has_errors and stop_on_exception:
-                    raise space_creation.as_exception()
-                yield from space_creation.errors
-
         if self.neat_prefix_by_type_uri:
             self._lookup_identifier_by_uri()
+
+        if self._client:
+            validate_issue = self._client.instances.validate_cdf_project_capacity(
+                sum(it.instance_count for it in view_iterations)
+            )
+            if validate_issue:
+                yield validate_issue
+                return
 
         for it in view_iterations:
             view = it.view
@@ -192,7 +175,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             projection, issues = self._create_projection(view)
             yield from issues
             query = it.query
-            reader = self.graph_store.read(
+            reader = self.instance_store.read(
                 query.rdf_type,
                 property_renaming_config=query.property_renaming_config,
                 remove_uri_namespace=False,
@@ -209,7 +192,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield _END_OF_CLASS
 
     def _create_view_iterations(self) -> tuple[list[_ViewIterator], IssueList]:
-        view_query_by_id = DataModelAnalysis(self.info_rules, self.dms_rules).view_query_by_id
+        view_query_by_id = DataModelAnalysis(self.conceptual_data_model, self.physical_data_model).view_query_by_id
         iterations_by_view_id = self._select_views_with_instances(view_query_by_id)
         if self._client:
             issues = IssueList()
@@ -224,7 +207,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         else:
             views = dm.ViewList([])
             with catch_issues() as issues:
-                read_model = self.dms_rules.as_schema().as_read_model()
+                read_model = self.physical_data_model.as_schema().as_read_model()
                 views.extend(read_model.views)
             if issues.has_errors:
                 return [], issues
@@ -274,57 +257,17 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         """Selects the views with data."""
         view_iterations: dict[dm.ViewId, _ViewIterator] = {}
         for view_id, query in view_query_by_id.items():
-            count = self.graph_store.queries.select.count_of_type(query.rdf_type)
+            count = self.instance_store.queries.select.count_of_type(query.rdf_type)
             if count > 0:
                 view_iterations[view_id] = _ViewIterator(view_id, count, query)
         return view_iterations
-
-    def _lookup_space_by_uri(self, view_iterations: list[_ViewIterator], stop_on_exception: bool = False) -> IssueList:
-        issues = IssueList()
-        if self._space_property is None:
-            return issues
-        total = sum(it.instance_count for it in view_iterations)
-        properties_by_uriref = self.graph_store.queries.select.properties()
-        space_property_uri = next((k for k, v in properties_by_uriref.items() if v == self._space_property), None)
-        if space_property_uri is None:
-            error: ResourceNotFoundError[str, str] = ResourceNotFoundError(
-                self._space_property,
-                "property",
-                more=f"Could not find the {self._space_property} in the graph.",
-            )
-            if stop_on_exception:
-                raise error
-            issues.append(error)
-            return issues
-
-        instance_iterable = self.graph_store.queries.select.list_instances_ids_by_space(space_property_uri)
-        instance_iterable = iterate_progress_bar_if_above_config_threshold(
-            instance_iterable, total, f"Looking up spaces for {total} instances..."
-        )
-        neat_prefix = self.neat_prefix_by_predicate_uri.get(space_property_uri)
-        warned_spaces: set[str] = set()
-        for instance, space in instance_iterable:
-            if neat_prefix:
-                space = space.removeprefix(neat_prefix)
-
-            clean_space = NamingStandardization.standardize_space_str(space)
-            if clean_space != space and space not in warned_spaces:
-                issues.append(
-                    NeatValueWarning(
-                        f"Invalid space in property {self._space_property}: {space}. Fixed to {clean_space}"
-                    )
-                )
-                warned_spaces.add(space)
-
-            self._space_by_instance_uri[instance] = clean_space
-        return issues
 
     def _lookup_identifier_by_uri(self) -> None:
         if not self.neat_prefix_by_type_uri:
             return
 
-        count = sum(count for _, count in self.graph_store.queries.select.summarize_instances())
-        instance_iterable = self.graph_store.queries.select.list_instances_ids()
+        count = sum(count for _, count in self.instance_store.queries.select.summarize_instances())
+        instance_iterable = self.instance_store.queries.select.list_instances_ids()
         instance_iterable = iterate_progress_bar_if_above_config_threshold(
             instance_iterable, count, f"Looking up identifiers for {count} instances..."
         )
@@ -341,20 +284,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         for identifier, uris in count_by_identifier.items():
             if len(uris) == 1:
                 self._external_id_by_uri[uris[0]] = identifier
-
-    def _create_instance_space_if_not_exists(self) -> IssueList:
-        issues = IssueList()
-        if not self._client:
-            return issues
-
-        instance_spaces = set(self._space_by_instance_uri.values()) - {self._instance_space}
-        existing_spaces = {space.space for space in self._client.data_modeling.spaces.retrieve(list(instance_spaces))}
-        if missing_spaces := (instance_spaces - existing_spaces):
-            try:
-                self._client.data_modeling.spaces.apply([dm.SpaceApply(space=space) for space in missing_spaces])
-            except CogniteAPIError as e:
-                issues.append(AuthorizationError(f"Creating {len(missing_spaces)} instance spaces.", str(e)))
-        return issues
 
     def _create_projection(self, view: dm.View) -> tuple[_Projection, IssueList]:
         issues = IssueList()
@@ -472,12 +401,10 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                         )
                         value = value[:limit]
 
-                    ids = (self._create_instance_id(v, "node", stop_on_exception=True) for v in value)
+                    ids = (self._create_instance_id(v) for v in value)
                     return [id_.dump(camel_case=True, include_instance_type=False) for id_ in ids]
                 elif value:
-                    return self._create_instance_id(value[0], "node", stop_on_exception=True).dump(
-                        camel_case=True, include_instance_type=False
-                    )
+                    return self._create_instance_id(value[0]).dump(camel_case=True, include_instance_type=False)
                 return {}
 
             validators["parse_direct_relation"] = field_validator(*direct_relation_by_property.keys(), mode="before")(  # type: ignore[assignment]
@@ -517,7 +444,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         projection: _Projection,
         stop_on_exception: Literal[True, False] = False,
     ) -> Iterable[dm.InstanceApply | NeatIssue]:
-        instance_id = self._create_instance_id(instance_uri, "node", stop_on_exception)
+        instance_id = self._create_instance_id(instance_uri)
         if not isinstance(instance_id, InstanceId):
             yield instance_id
             return
@@ -566,8 +493,8 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return
 
         if start_node and end_node:
-            start = self._create_instance_id(start_node, "edge", stop_on_exception)
-            end = self._create_instance_id(end_node, "edge", stop_on_exception)
+            start = self._create_instance_id(start_node)
+            end = self._create_instance_id(end_node)
             if isinstance(start, NeatError):
                 yield start
             if isinstance(end, NeatError):
@@ -585,10 +512,15 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             yield dm.NodeApply(
                 space=space,
                 external_id=external_id,
-                type=(projection.view_id.space, projection.view_id.external_id),
+                # Currently there are no node types for schemas in cognite schema spaces
+                type=(
+                    (projection.view_id.space, projection.view_id.external_id)
+                    if projection.view_id.space not in COGNITE_SPACES
+                    else None
+                ),
                 sources=sources,
             )
-        yield from self._create_edges_without_properties(space, external_id, properties, projection, stop_on_exception)
+        yield from self._create_edges_without_properties(space, external_id, properties, projection)
 
     def _create_edges_without_properties(
         self,
@@ -596,7 +528,6 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
         identifier: str,
         properties: dict[str | InstanceType, list[str] | list[URIRef]],
         projection: _Projection,
-        stop_on_exception: Literal[True, False],
     ) -> Iterable[dm.EdgeApply | NeatIssue]:
         for predicate, values in properties.items():
             if predicate in projection.edge_by_type:
@@ -614,10 +545,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                 yield error
                 continue
             for target in values:
-                target_id = self._create_instance_id(target, "edge", stop_on_exception)  # type: ignore[call-overload]
-                if not isinstance(target_id, InstanceId):
-                    yield target_id
-                    continue
+                target_id = self._create_instance_id(cast(URIRef, target))
                 if isinstance(target, URIRef):
                     target = remove_namespace_from_uri(target)
                 external_id = f"{identifier}.{prop_id}.{target}"
@@ -650,43 +578,16 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
             return start_node, end_node  # type: ignore[return-value]
         return None, None
 
-    @overload
-    def _create_instance_id(
-        self, uri: URIRef, instance_type: str, stop_on_exception: Literal[False] = False
-    ) -> InstanceId | NeatError: ...
-
-    @overload
-    def _create_instance_id(
-        self, uri: URIRef, instance_type: str, stop_on_exception: Literal[True] = True
-    ) -> InstanceId: ...
-
-    def _create_instance_id(
-        self, uri: URIRef, instance_type: str, stop_on_exception: bool = False
-    ) -> InstanceId | NeatError:
-        space: str | None = None
-        external_id: str | None = None
-        error: NeatError | None = None
-        if self._use_source_space:
-            namespace, external_id = split_uri(uri)
-            space = namespace_as_space(namespace)
-            if space is None:
-                error = ResourceCreationError(uri, instance_type, f"Could not find space for {uri!s}.")
+    def _create_instance_id(self, uri: URIRef) -> InstanceId:
+        space = self._space_by_instance_uri[uri]
+        if uri in self._external_id_by_uri:
+            external_id = self._external_id_by_uri[uri]
         else:
-            space = self._space_by_instance_uri[uri]
-            if uri in self._external_id_by_uri:
-                external_id = self._external_id_by_uri[uri]
-            else:
-                external_id = remove_namespace_from_uri(uri)
+            external_id = remove_namespace_from_uri(uri)
 
         if external_id and self._unquote_external_ids:
             external_id = urllib.parse.unquote(external_id)
-        if space and external_id:
-            return InstanceId(space, external_id)
-        if error is None:
-            raise ValueError(f"Bug in neat. Failed to create instance ID and determine error for {uri!r}")
-        if stop_on_exception:
-            raise error
-        return error
+        return InstanceId(space, external_id)
 
     def _get_required_capabilities(self) -> list[Capability]:
         return [
@@ -696,7 +597,7 @@ class DMSLoader(CDFLoader[dm.InstanceApply]):
                     DataModelInstancesAcl.Action.Write_Properties,
                     DataModelInstancesAcl.Action.Read,
                 ],
-                scope=DataModelInstancesAcl.Scope.SpaceID([self._instance_space]),
+                scope=DataModelInstancesAcl.Scope.SpaceID(sorted(set(self._space_by_instance_uri.values()))),
             )
         ]
 

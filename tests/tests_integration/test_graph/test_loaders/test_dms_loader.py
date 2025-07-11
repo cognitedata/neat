@@ -64,8 +64,8 @@ class TestDMSLoader:
         }
         neat = NeatSession(neat_client)
         neat.read.examples.core_data_model()
-        physical_data_model = neat._state.rule_store.last_verified_physical_data_model
-        conceptual_data_model = neat._state.rule_store.last_verified_conceptual_data_model
+        physical_data_model = neat._state.data_model_store.last_verified_physical_data_model
+        conceptual_data_model = neat._state.data_model_store.last_verified_conceptual_data_model
         conceptual_data_model.metadata.physical = physical_data_model.metadata.identifier
         physical_data_model.sync_with_conceptual_data_model(conceptual_data_model)
 

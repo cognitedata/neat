@@ -48,7 +48,7 @@ class PropertyDefinitionDuplicatedWarning(PropertyWarning[T_Identifier]):
 @dataclass(unsafe_hash=True)
 class PropertyValueTypeUndefinedWarning(PropertyWarning[T_Identifier]):
     """The {resource_type} with identifier {identifier} has a property {property_name}
-    which has undefined value type. This may result in unexpected behavior when exporting rules.
+    which has undefined value type. This may result in unexpected behavior when exporting data model.
     {default_action}"""
 
     extra = "Recommended action: {recommended_action}"
@@ -88,6 +88,17 @@ class PropertyMultipleValueWarning(PropertyWarning[T_Identifier]):
     Selecting the first value {value}, the rest will be ignored."""
 
     value: str
+
+
+@dataclass(unsafe_hash=True)
+class PropertyDefinitionWarning(PropertyWarning[T_Identifier]):
+    """The {resource_type} with identifier {identifier} property {property_name}: {reason}"""
+
+    extra = "in locations {locations} with name {location_name}"
+
+    reason: str
+    locations: tuple[str | int, ...] | None = None
+    location_name: str | None = None
 
 
 @dataclass(unsafe_hash=True)

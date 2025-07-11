@@ -30,6 +30,7 @@ from ._explore import ExploreAPI
 from ._fix import FixAPI
 from ._inspect import InspectAPI
 from ._mapping import MappingAPI
+from ._plugin import PluginAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
 from ._set import SetAPI
@@ -108,6 +109,7 @@ class NeatSession:
         self.subset = SubsetAPI(self._state)
         self.template = TemplateAPI(self._state)
         self._explore = ExploreAPI(self._state)
+        self.plugins = PluginAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
@@ -162,20 +164,22 @@ class NeatSession:
             reserved_properties: What to do with reserved properties. Can be "error" or "warning".
 
         Example:
-            Convert to DMS rules
+            Convert to Physical Data Model
             ```python
             neat.convert()
             ```
         """
         self._state._raise_exception_if_condition_not_met(
-            "Convert to physical", has_dms_rules=False, has_information_rules=True
+            "Convert to physical",
+            has_physical_data_model=False,
+            has_conceptual_data_model=True,
         )
         converter = ConceptualToPhysical(reserved_properties=reserved_properties, client=self._state.client)
 
-        issues = self._state.rule_transform(converter)
+        issues = self._state.data_model_transform(converter)
 
         if self._verbose and not issues.has_errors:
-            print("Rules converted to dms.")
+            print("Conceptual data model converted to physical data model.")
         else:
             print("Conversion failed.")
         if issues:
@@ -220,7 +224,7 @@ class NeatSession:
             max_number_of_instance=max_number_of_instance,
             data_model_id=model_id,
         )
-        return self._state.rule_import(importer)
+        return self._state.data_model_import(importer)
 
     def _infer_subclasses(
         self,
@@ -232,47 +236,49 @@ class NeatSession:
     ) -> IssueList:
         """Infer data model from instances."""
         last_entity: DataModelEntity | None = None
-        if self._state.rule_store.provenance:
-            last_entity = self._state.rule_store.provenance[-1].target_entity
+        if self._state.data_model_store.provenance:
+            last_entity = self._state.data_model_store.provenance[-1].target_entity
 
-        # Note that this importer behaves as a transformer in the rule store when there is an existing rules.
-        # We are essentially transforming the last entity's information rules into a new set of information rules.
+        # Note that this importer behaves as a transformer in the data model store when there
+        # is an existing data model.
+        # We are essentially transforming the last entity's conceptual data model
+        # into a new conceptual data model.
         importer = importers.SubclassInferenceImporter(
             issue_list=IssueList(),
             graph=self._state.instances.store.graph(),
-            rules=last_entity.conceptual if last_entity is not None else None,
+            data_model=last_entity.conceptual if last_entity is not None else None,
             data_model_id=(dm.DataModelId.load(model_id) if last_entity is None else None),
         )
 
         def action() -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
-            unverified_information = importer.to_data_model()
-            unverified_information = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_information)
+            unverified_conceptual = importer.to_data_model()
+            unverified_conceptual = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_conceptual)
 
-            extra_info = VerifyConceptualDataModel().transform(unverified_information)
+            extra_conceptual = VerifyConceptualDataModel().transform(unverified_conceptual)
             if not last_entity:
-                return extra_info, None
-            merged_info = MergeConceptualDataModels(extra_info).transform(last_entity.conceptual)
+                return extra_conceptual, None
+            merged_conceptual = MergeConceptualDataModels(extra_conceptual).transform(last_entity.conceptual)
             if not last_entity.physical:
-                return merged_info, None
+                return merged_conceptual, None
 
-            extra_dms = ConceptualToPhysical(reserved_properties="warning", client=self._state.client).transform(
-                extra_info
+            extra_physical = ConceptualToPhysical(reserved_properties="warning", client=self._state.client).transform(
+                extra_conceptual
             )
 
-            merged_dms = MergePhysicalDataModels(extra_dms).transform(last_entity.physical)
-            return merged_info, merged_dms
+            merged_physical = MergePhysicalDataModels(extra_physical).transform(last_entity.physical)
+            return merged_conceptual, merged_physical
 
-        return self._state.rule_store.do_activity(action, importer)
+        return self._state.data_model_store.do_activity(action, importer)
 
     def _repr_html_(self) -> str:
         state = self._state
-        if state.instances.empty and state.rule_store.empty:
+        if state.instances.empty and state.data_model_store.empty:
             return "<strong>Empty session</strong>. Get started by reading something with the <em>.read</em> attribute."
 
         output = []
 
-        if state.rule_store.provenance:
-            last_entity = state.rule_store.provenance[-1].target_entity
+        if state.data_model_store.provenance:
+            last_entity = state.data_model_store.provenance[-1].target_entity
             if last_entity.physical:
                 html = last_entity.physical._repr_html_()
             else:

@@ -42,6 +42,7 @@ class EntityTypes(StrEnum):
     version = "version"
     prefix = "prefix"
     space = "space"
+    container_index = "container_index"
 
 
 def get_reserved_words(
@@ -110,10 +111,7 @@ PHYSICAL_PROPERTY_ID_COMPLIANCE_REGEX = (
     rf"(?!^({'|'.join(get_reserved_words('property'))})$)"
     r"(^[a-zA-Z][a-zA-Z0-9_]{0,253}[a-zA-Z0-9]?$)"
 )
-CONCEPT_ID_COMPLIANCE_REGEX = (
-    rf"(?!^({'|'.join(get_reserved_words('concept'))})$)"
-    r"(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
-)
+CONCEPT_ID_COMPLIANCE_REGEX = r"^[a-zA-Z0-9._~?@!$&'*+,;=%-]+$"
 
 INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"

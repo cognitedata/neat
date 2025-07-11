@@ -25,31 +25,31 @@ class SessionState:
         client: NeatClient | None = None,
     ) -> None:
         self.instances = InstancesState(store_type, storage_path=storage_path)
-        self.rule_store = NeatDataModelStore()
+        self.data_model_store = NeatDataModelStore()
         self.last_reference: PhysicalDataModel | ConceptualDataModel | None = None
         self.client = client
         self.quoted_source_identifiers = False
 
-    def rule_transform(self, *transformer: VerifiedDataModelTransformer) -> IssueList:
+    def data_model_transform(self, *transformer: VerifiedDataModelTransformer) -> IssueList:
         if not transformer:
             raise NeatSessionError("No transformers provided.")
-        start = self.rule_store.provenance[-1].target_entity.display_name
-        issues = self.rule_store.transform(*transformer)
-        last_entity = self.rule_store.provenance[-1].target_entity
+        start = self.data_model_store.provenance[-1].target_entity.display_name
+        issues = self.data_model_store.transform(*transformer)
+        last_entity = self.data_model_store.provenance[-1].target_entity
         issues.action = f"{start} &#8594; {last_entity.display_name}"
         issues.hint = "Use the .inspect.issues() for more details."
         return issues
 
-    def rule_import(self, importer: BaseImporter, enable_manual_edit: bool = False) -> IssueList:
-        issues = self.rule_store.import_data_model(
+    def data_model_import(self, importer: BaseImporter, enable_manual_edit: bool = False) -> IssueList:
+        issues = self.data_model_store.import_data_model(
             importer,
             client=self.client,
             enable_manual_edit=enable_manual_edit,
         )
-        if self.rule_store.empty:
+        if self.data_model_store.empty:
             result = "failed"
         else:
-            result = self.rule_store.provenance[-1].target_entity.display_name
+            result = self.data_model_store.provenance[-1].target_entity.display_name
         if isinstance(importer, InferenceImporter):
             issues.action = f"Inferred {result}"
         else:
@@ -60,19 +60,19 @@ class SessionState:
 
     def write_graph(self, extractor: KnowledgeGraphExtractor) -> IssueList:
         extract_issues = self.instances.store.write(extractor)
-        issues = self.rule_store.import_graph(extractor)
+        issues = self.data_model_store.import_graph(extractor)
         issues.extend(extract_issues)
         return issues
 
     def _raise_exception_if_condition_not_met(
         self,
         activity: str,
-        empty_rules_store_required: bool = False,
+        empty_data_model_store_required: bool = False,
         empty_instances_store_required: bool = False,
         instances_required: bool = False,
         client_required: bool = False,
-        has_information_rules: bool | None = None,
-        has_dms_rules: bool | None = None,
+        has_conceptual_data_model: bool | None = None,
+        has_physical_data_model: bool | None = None,
     ) -> None:
         """Set conditions for raising an error in the session that are used by various methods in the session."""
         condition = set()
@@ -81,14 +81,14 @@ class SessionState:
         if client_required and not self.client:
             condition.add(f"{activity} expects a client in NEAT session")
             suggestion.add("Please provide a client")
-        if has_information_rules is True and self.rule_store.try_get_last_conceptual_data_model is None:
-            condition.add(f"{activity} expects information rules in NEAT session")
-            suggestion.add("Read in information rules to neat session")
-        if has_dms_rules is False and self.rule_store.try_get_last_physical_data_model is not None:
-            condition.add(f"{activity} expects no DMS data model in NEAT session")
-            suggestion.add("You already have a DMS data model in the session")
+        if has_conceptual_data_model is True and self.data_model_store.try_get_last_conceptual_data_model is None:
+            condition.add(f"{activity} expects conceptual data model in NEAT session")
+            suggestion.add("Read in conceptual data model to neat session")
+        if has_physical_data_model is False and self.data_model_store.try_get_last_physical_data_model is not None:
+            condition.add(f"{activity} expects no physical data model in NEAT session")
+            suggestion.add("You already have a physical data model in the session")
             try_again = False
-        if empty_rules_store_required and not self.rule_store.empty:
+        if empty_data_model_store_required and not self.data_model_store.empty:
             condition.add(f"{activity} expects no data model in NEAT session")
             suggestion.add("Start new session")
         if empty_instances_store_required and not self.instances.empty:

@@ -42,12 +42,12 @@ class DataModelMappingAPI:
             neat.mapping.classic_to_core(company_prefix="WindFarmX", use_parent_property_name=True)
             ```
         """
-        if self._state.rule_store.empty:
-            raise NeatSessionError("No rules to map")
-        last_entity = self._state.rule_store.provenance[-1].target_entity
+        if self._state.data_model_store.empty:
+            raise NeatSessionError("No data model to map")
+        last_entity = self._state.data_model_store.provenance[-1].target_entity
         if last_entity.physical is None:
             raise NeatSessionError("Data model not converted to DMS. Try running `neat.convert('dms')` first.")
-        rules = last_entity.physical
+        data_model = last_entity.physical
         if self._state.client is None:
             raise NeatSessionError("Client is required to map classic to core")
 
@@ -57,11 +57,15 @@ class DataModelMappingAPI:
         transformers.extend(
             [
                 PhysicalDataModelMapper(
-                    load_classic_to_core_mapping(company_prefix, rules.metadata.space, rules.metadata.version)
+                    load_classic_to_core_mapping(
+                        company_prefix,
+                        data_model.metadata.space,
+                        data_model.metadata.version,
+                    )
                 ),
                 IncludeReferenced(self._state.client),
             ]
         )
         if use_parent_property_name:
             transformers.append(AsParentPropertyId(self._state.client))
-        return self._state.rule_transform(*transformers)
+        return self._state.data_model_transform(*transformers)

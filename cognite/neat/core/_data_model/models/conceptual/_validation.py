@@ -23,7 +23,7 @@ from ._verified import ConceptualDataModel, ConceptualProperty
 
 
 class ConceptualValidation:
-    """This class does all the validation of the Information rules that have dependencies
+    """This class does all the validation of the conceptual data model that have dependencies
     between components."""
 
     def __init__(
@@ -46,7 +46,7 @@ class ConceptualValidation:
         self._parent_concept_defined()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
-        self._regex_compliance_with_dms()
+        self._regex_compliance_with_physical_data_model()
 
         return self.issue_list
 
@@ -180,7 +180,7 @@ class ConceptualValidation:
                     )
                 )
 
-    def _regex_compliance_with_dms(self) -> None:
+    def _regex_compliance_with_physical_data_model(self) -> None:
         """Check regex compliance with DMS of properties, classes and value types."""
 
         for prop_ in self._properties:
@@ -239,7 +239,7 @@ class ConceptualValidation:
                     ResourceRegexViolationWarning(
                         concepts.concept,
                         "Concept",
-                        "Concepts sheet, Class column",
+                        "Concepts sheet, Concept column",
                         PATTERNS.view_id_compliance.pattern,
                     )
                 )

@@ -17,7 +17,6 @@ class GraphData:
     dexpi_example_xml = _graph_dir / "dexpi_example.xml"
     dexpi_raw_graph_ttl = _graph_dir / "dexpi_raw_graph.ttl"
     low_quality_graph_ttl = _graph_dir / "low-quality-graph.ttl"
-    imf_temp_transmitter_complete_ttl = _graph_dir / "IMF_TempTransmitterComplete.ttl"
     car = _car
     car_py = _graph_dir / "car.py"
     iodd_Piab_piCOMPACT10X_20230509_IODD1_1_xml = _graph_dir / "iodd_Piab-piCOMPACT10X-20230509-IODD1.1.xml"
@@ -71,10 +70,12 @@ class SchemaData:
         dms_unknown_value_type_xlsx = _physical / "dms-unknown-value-type.xlsx"
         isa_plus_cdm_xlsx = _physical / "isa_plus_cdm.xlsx"
         missing_in_model_value_xlsx = _physical / "missing-in-model-value.xlsx"
+        physical_singleton_issue_xlsx = _physical / "physical_singleton_issue.xlsx"
         mixed_up_version_xlsx = _physical / "mixed-up-version.xlsx"
         pump_example_duplicated_resources_xlsx = _physical / "pump_example_duplicated_resources.xlsx"
         pump_example_with_missing_cells_xlsx = _physical / "pump_example_with_missing_cells.xlsx"
         pump_example_with_missing_cells_raise_issues = _physical / "pump_example_with_missing_cells_raise_issues.xlsx"
+        strongly_connected_model_folder = _physical / "strongly_connected_model"
 
     class Conversion:
         conversion = _schema_dir / "conversion"

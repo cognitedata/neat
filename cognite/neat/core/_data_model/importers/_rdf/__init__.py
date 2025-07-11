@@ -1,5 +1,4 @@
-from ._imf2rules import IMFImporter
-from ._inference2rules import InferenceImporter, SubclassInferenceImporter
-from ._owl2rules import OWLImporter
+from ._inference2rdata_model import InferenceImporter, SubclassInferenceImporter
+from ._owl2data_model import OWLImporter
 
-__all__ = ["IMFImporter", "InferenceImporter", "OWLImporter", "SubclassInferenceImporter"]
+__all__ = ["InferenceImporter", "OWLImporter", "SubclassInferenceImporter"]

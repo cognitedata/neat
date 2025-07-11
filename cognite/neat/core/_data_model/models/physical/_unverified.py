@@ -14,6 +14,7 @@ from cognite.neat.core._constants import (
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
+from cognite.neat.core._data_model._constants import SPLIT_ON_COMMA_PATTERN
 from cognite.neat.core._data_model.models._base_unverified import (
     UnverifiedComponent,
     UnverifiedDataModel,
@@ -21,6 +22,7 @@ from cognite.neat.core._data_model.models._base_unverified import (
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import (
     ContainerEntity,
+    ContainerIndexEntity,
     DMSNodeEntity,
     EdgeEntity,
     PhysicalUnknownEntity,
@@ -135,7 +137,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     default: str | int | float | bool | dict | None = None
     container: str | None = None
     container_property: str | None = None
-    index: str | list[str] | None = None
+    index: str | list[str | ContainerIndexEntity] | ContainerIndexEntity | None = None
     constraint: str | list[str] | None = None
     neatId: str | URIRef | None = None
     conceptual: str | URIRef | None = None
@@ -167,6 +169,32 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
             if self.container
             else None
         )
+        if isinstance(self.index, ContainerIndexEntity) or (isinstance(self.index, str) and "," not in self.index):
+            output["Index"] = [ContainerIndexEntity.load(self.index)]
+        elif isinstance(self.index, str):
+            output["Index"] = [
+                ContainerIndexEntity.load(index.strip())
+                for index in SPLIT_ON_COMMA_PATTERN.split(self.index)
+                if index.strip()
+            ]
+        elif isinstance(self.index, list):
+            index_list: list[ContainerIndexEntity | PhysicalUnknownEntity] = []
+            for index in self.index:
+                if isinstance(index, ContainerIndexEntity):
+                    index_list.append(index)
+                elif isinstance(index, str):
+                    index_list.extend(
+                        [
+                            ContainerIndexEntity.load(idx.strip())
+                            for idx in SPLIT_ON_COMMA_PATTERN.split(index)
+                            if idx.strip()
+                        ]
+                    )
+                elif isinstance(index, str):
+                    index_list.append(ContainerIndexEntity.load(index.strip()))
+                else:
+                    raise TypeError(f"Unexpected type for index: {type(index)}")
+            output["Index"] = index_list
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:

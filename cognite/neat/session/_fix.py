@@ -25,4 +25,4 @@ class DataModelFixAPI:
 
     def cdf_compliant_external_ids(self) -> IssueList:
         """Convert (information/logical) data model component external ids to CDF compliant entities."""
-        return self._state.rule_transform(ToCompliantEntities())
+        return self._state.data_model_transform(ToCompliantEntities())

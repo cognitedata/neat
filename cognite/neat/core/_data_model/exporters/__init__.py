@@ -34,6 +34,6 @@ def _repr_html_() -> str:
     )._repr_html_()
 
     return (
-        "<strong>Exporter</strong> An exporter converts Neat's representation of a data model called <em>Rules</em>"
+        "<strong>Exporter</strong> An exporter converts Neat's representation of a data model"
         f" into a schema/data model for a target format.<br />{table}"
     )

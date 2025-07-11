@@ -10,7 +10,7 @@ class ExperimentalFeatureWarning(UserWarning):
 
 
 class ExperimentalFlags:
-    manual_rules_edit = ExperimentalFeatureWarning("enable_manual_edit")
+    manual_data_model_edit = ExperimentalFeatureWarning("enable_manual_edit")
     same_space_properties_only_export = ExperimentalFeatureWarning("same-space-properties-only")
     standardize_naming = ExperimentalFeatureWarning("standardize_naming")
     standardize_space_and_version = ExperimentalFeatureWarning("standardize_space_and_version")
@@ -23,3 +23,4 @@ class ExperimentalFlags:
     csv_read = ExperimentalFeatureWarning("csv_read")
     to_ontology = ExperimentalFeatureWarning("to_ontology")
     extension = ExperimentalFeatureWarning("extension")
+    plugin = ExperimentalFeatureWarning("plugin")
