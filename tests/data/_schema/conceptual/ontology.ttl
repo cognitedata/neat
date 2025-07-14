@@ -1,0 +1,42 @@
+@prefix : <http://example.com/industrial#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://example.com/industrial>
+    a owl:Ontology .
+
+### Classes
+
+<http://example.com/industrial/Machine.Type-A(01)~?@!$&'*+,;=%[]>
+    a owl:Class ;
+    rdfs:label "Machine Type A" .
+
+<http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]>
+    a owl:Class ;
+    rdfs:label "Temperature Sensor Unit" .
+
+<http://example.com/industrial/Control.Panel-1(Safety)~?@!$&'*+,;=%[]>
+    a owl:Class ;
+    rdfs:label "Safety Control Panel" .
+
+### Object Properties with special characters in URIs
+
+<http://example.com/industrial/has.Sensor-Unit(01):Temp~?@!$&'*+,;=%[]>
+    a owl:ObjectProperty ;
+    rdfs:domain <http://example.com/industrial/Machine.Type-A(01)~?@!$&'*+,;=%[]> ;
+    rdfs:range <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]> ;
+    rdfs:label "has sensor unit" .
+
+<http://example.com/industrial/is.Controlled-By(Panel):Safety~?@!$&'*+,;=%[]>
+    a owl:ObjectProperty ;
+    rdfs:domain <http://example.com/industrial/Machine.Type-A(01)~?@!$&'*+,;=%[]> ;
+    rdfs:range <http://example.com/industrial/Control.Panel-1(Safety)~?@!$&'*+,;=%[]> ;
+    rdfs:label "is controlled by" .
+
+<http://example.com/industrial/is.Connected-To(Control):Panel~?@!$&'*+,;=%[]>
+    a owl:ObjectProperty ;
+    rdfs:domain <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]> ;
+    rdfs:range <http://example.com/industrial/Control.Panel-1(Safety)~?@!$&'*+,;=%[]> ;
+    rdfs:label "is connected to" .

@@ -49,6 +49,7 @@ class SchemaData:
         information_unknown_value_type_xlsx = _conceptual / "information-unknown-value-type.xlsx"
         info_with_cdm_ref_xlsx = _conceptual / "info_with_cdm_ref.xlsx"
         broken_concepts_xlsx = _conceptual / "broken_concepts.xlsx"
+        ontology_with_regex_warnings = _conceptual / "ontology.ttl"
 
     class NonNeatFormats:
         class DTDL:
