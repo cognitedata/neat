@@ -241,8 +241,10 @@ class ConceptualProperty(SheetRow):
 
 class ConceptualDataModel(BaseVerifiedDataModel):
     metadata: ConceptualMetadata = Field(alias="Metadata", description="Metadata for the conceptual data model")
-    properties: SheetList[ConceptualProperty] = Field(alias="Properties", description="List of properties")
     concepts: SheetList[Concept] = Field(alias="Concepts", description="List of concepts")
+    properties: SheetList[ConceptualProperty] = Field(
+        alias="Properties", default_factory=SheetList, description="List of properties"
+    )
     prefixes: dict[str, Namespace] = Field(
         alias="Prefixes",
         default_factory=get_default_prefixes_and_namespaces,

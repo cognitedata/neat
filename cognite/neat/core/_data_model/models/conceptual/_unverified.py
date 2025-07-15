@@ -146,8 +146,8 @@ class UnverifiedConcept(UnverifiedComponent[Concept]):
 @dataclass
 class UnverifiedConceptualDataModel(UnverifiedDataModel[ConceptualDataModel]):
     metadata: UnverifiedConceptualMetadata
-    properties: list[UnverifiedConceptualProperty] = field(default_factory=list)
     concepts: list[UnverifiedConcept] = field(default_factory=list)
+    properties: list[UnverifiedConceptualProperty] = field(default_factory=list)
     prefixes: dict[str, Namespace] | None = None
 
     @classmethod

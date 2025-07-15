@@ -31,8 +31,10 @@ from cognite.neat.core._data_model.transformers._converters import (
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.core._issues import NeatError
 from cognite.neat.core._issues._base import MultiValueError
+from cognite.neat.core._issues._contextmanagers import catch_issues
 from cognite.neat.core._issues.errors import ResourceNotDefinedError
 from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
+from cognite.neat.core._issues.warnings._models import ConceptOnlyDataModelWarning
 
 
 def case_insensitive_value_types():
@@ -151,6 +153,45 @@ def duplicated_entries():
     )
 
 
+def concepts_only_data_model():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "creator": "Jon, Emma, David",
+                "space": "power",
+                "external_id": "power2consumer",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "name": "Power to Consumer Data Model",
+            },
+            "Concepts": [
+                {
+                    "Concept": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                },
+                {
+                    "Concept": "Substation",
+                    "Description": None,
+                    "Parent Class": None,
+                },
+            ],
+            "Properties": [],
+        },
+        {
+            ResourceDuplicatedError(
+                identifier="name",
+                resource_type="property",
+                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
+            ),
+            ConceptOnlyDataModelWarning(),
+        },
+        id="concept_only_data_model",
+    )
+
+
 def incomplete_rules_case():
     yield pytest.param(
         {
@@ -214,6 +255,19 @@ class TestInformationRules:
             _ = transformer.transform(input_rules)
 
         assert set(e.value.errors) == expected_exception
+
+    @pytest.mark.parametrize("dm_dict, expected_exception", list(concepts_only_data_model()))
+    def test_concepts_only_data_model(self, dm_dict, expected_exception) -> None:
+        input_rules = ImportedDataModel(
+            unverified_data_model=UnverifiedConceptualDataModel.load(dm_dict),
+            context={},
+        )
+        with catch_issues() as issues:
+            _ = VerifyAnyDataModel(validate=True).transform(input_rules)
+
+        assert not issues.has_errors
+        assert len(issues) == 3
+        assert len([issue for issue in issues if issue.__class__ == ConceptOnlyDataModelWarning]) == 1
 
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())
