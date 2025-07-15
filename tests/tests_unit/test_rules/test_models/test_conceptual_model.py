@@ -306,7 +306,7 @@ class TestInformationRules:
         assert set(e.value.errors) == expected_exception
 
     @pytest.mark.parametrize("dm_dict", list(dangling_properties_data_model()))
-    def test_concepts_only_data_model(self, dm_dict) -> None:
+    def test_dangling_properties(self, dm_dict) -> None:
         input_rules = ImportedDataModel(
             unverified_data_model=UnverifiedConceptualDataModel.load(dm_dict),
             context={},
@@ -319,7 +319,7 @@ class TestInformationRules:
         assert len([issue for issue in issues if issue.__class__ == DanglingPropertyWarning]) == 2
 
     @pytest.mark.parametrize("dm_dict", list(concepts_only_data_model()))
-    def test_dangling_properties(self, dm_dict) -> None:
+    def test_concepts_only_data_model(self, dm_dict) -> None:
         input_rules = ImportedDataModel(
             unverified_data_model=UnverifiedConceptualDataModel.load(dm_dict),
             context={},
