@@ -113,7 +113,6 @@ PHYSICAL_PROPERTY_ID_COMPLIANCE_REGEX = (
 )
 CONCEPT_ID_COMPLIANCE_REGEX = r"^[a-zA-Z0-9._~?@!$&'*+,;=%-]+$"
 
-INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX = r"^(\*)|(?!^(Property|property)$)(^[a-zA-Z0-9._-]{0,253}[a-zA-Z0-9]?$)"
 VERSION_COMPLIANCE_REGEX = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 
 
@@ -153,7 +152,7 @@ class _Patterns:
 
     @cached_property
     def conceptual_property_id_compliance(self) -> re.Pattern[str]:
-        return re.compile(INFORMATION_PROPERTY_ID_COMPLIANCE_REGEX)
+        return re.compile(CONCEPT_ID_COMPLIANCE_REGEX)
 
     @cached_property
     def version_compliance(self) -> re.Pattern[str]:

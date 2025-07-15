@@ -1,7 +1,9 @@
+from urllib.parse import quote
+
 import pytest
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.core._data_model._constants import ENTITY_PATTERN
+from cognite.neat.core._data_model._constants import ENTITY_PATTERN, PATTERNS
 from cognite.neat.core._data_model.models.entities import (
     AssetEntity,
     ConceptEntity,
@@ -193,6 +195,42 @@ class TestEntities:
     )
     def test_are_not_equal(self, entity1: ConceptualEntity, entity2: ConceptualEntity) -> None:
         assert entity1 != entity2, f"Expected {entity1} and {entity2} to be different entities"
+
+    @pytest.mark.parametrize(
+        "propety_id",
+        [
+            "耐久性",
+            "信頼性",
+            "効率",
+            "精度",
+            "柔軟性",
+            "スケーラビリティ",
+            "持続可能性",
+            "保守性",
+            "安全性",
+            "オートメーション",
+            "標準化",
+            "統合",
+            "モジュール性",
+            "費用対効果",
+            "生産性",
+            "革新",
+            "品質",
+            "負荷容量",
+            "耐熱性",
+            "耐食性",
+            "エネルギー効率",
+            "環境への親しみやすさ",
+            "ノイズリダクション",
+            "サイクル時間",
+            "スループット",
+        ],
+    )
+    def test_conceptual_property(self, propety_id: str) -> None:
+        encoded_prop = quote(propety_id, safe="")
+        assert PATTERNS.conceptual_property_id_compliance.match(encoded_prop), (
+            f"Property ID '{propety_id}' should be valid but is not."
+        )
 
 
 class TestEntityPattern:
