@@ -23,6 +23,7 @@ from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     MultiValueTypeInfo,
 )
+from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
 from cognite.neat.core._data_model.transformers._converters import (
     ConceptualToPhysical,
     ToCompliantEntities,
@@ -34,7 +35,7 @@ from cognite.neat.core._issues._base import MultiValueError
 from cognite.neat.core._issues._contextmanagers import catch_issues
 from cognite.neat.core._issues.errors import ResourceNotDefinedError
 from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
-from cognite.neat.core._issues.warnings._models import ConceptOnlyDataModelWarning
+from cognite.neat.core._issues.warnings._models import ConceptOnlyDataModelWarning, DanglingPropertyWarning
 
 
 def case_insensitive_value_types():
@@ -180,15 +181,63 @@ def concepts_only_data_model():
             ],
             "Properties": [],
         },
-        {
-            ResourceDuplicatedError(
-                identifier="name",
-                resource_type="property",
-                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
-            ),
-            ConceptOnlyDataModelWarning(),
-        },
         id="concept_only_data_model",
+    )
+
+
+def dangling_properties_data_model():
+    yield pytest.param(
+        {
+            "Metadata": {
+                "role": "information architect",
+                "creator": "Jon, Emma, David",
+                "space": "power",
+                "external_id": "power2consumer",
+                "created": datetime(2024, 2, 9, 0, 0),
+                "updated": datetime(2024, 2, 9, 0, 0),
+                "version": "0.1.0",
+                "name": "Power to Consumer Data Model",
+            },
+            "Concepts": [
+                {
+                    "Concept": "GeneratingUnit",
+                    "Description": None,
+                    "Parent Class": None,
+                },
+                {
+                    "Concept": "Substation",
+                    "Description": None,
+                    "Parent Class": None,
+                },
+            ],
+            "Properties": [
+                {
+                    "Concept": UnknownEntity(),
+                    "Property": "name_xx",
+                    "Description": None,
+                    "Value Type": "string",
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                },
+                {
+                    "Concept": UnknownEntity(),
+                    "Property": "name",
+                    "Description": None,
+                    "Value Type": UnknownEntity(),
+                    "Min Count": 1,
+                    "Max Count": 1.0,
+                    "Default": None,
+                    "Source": None,
+                    "MatchType": None,
+                    "Transformation": None,
+                },
+            ],
+        },
+        id="dangling_properties_data_model",
     )
 
 
@@ -256,8 +305,21 @@ class TestInformationRules:
 
         assert set(e.value.errors) == expected_exception
 
-    @pytest.mark.parametrize("dm_dict, expected_exception", list(concepts_only_data_model()))
-    def test_concepts_only_data_model(self, dm_dict, expected_exception) -> None:
+    @pytest.mark.parametrize("dm_dict", list(dangling_properties_data_model()))
+    def test_concepts_only_data_model(self, dm_dict) -> None:
+        input_rules = ImportedDataModel(
+            unverified_data_model=UnverifiedConceptualDataModel.load(dm_dict),
+            context={},
+        )
+        with catch_issues() as issues:
+            _ = VerifyAnyDataModel(validate=True).transform(input_rules)
+
+        assert not issues.has_errors
+        assert len(issues) == 5
+        assert len([issue for issue in issues if issue.__class__ == DanglingPropertyWarning]) == 2
+
+    @pytest.mark.parametrize("dm_dict", list(concepts_only_data_model()))
+    def test_dangling_properties(self, dm_dict) -> None:
         input_rules = ImportedDataModel(
             unverified_data_model=UnverifiedConceptualDataModel.load(dm_dict),
             context={},

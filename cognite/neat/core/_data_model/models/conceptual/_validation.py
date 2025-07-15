@@ -11,7 +11,11 @@ from cognite.neat.core._issues.errors._resources import (
     ResourceDuplicatedError,
     ResourceNotDefinedError,
 )
-from cognite.neat.core._issues.warnings._models import ConceptOnlyDataModelWarning, UndefinedConceptWarning
+from cognite.neat.core._issues.warnings._models import (
+    ConceptOnlyDataModelWarning,
+    DanglingPropertyWarning,
+    UndefinedConceptWarning,
+)
 from cognite.neat.core._issues.warnings._resources import (
     ResourceNotDefinedWarning,
     ResourceRegexViolationWarning,
@@ -47,6 +51,7 @@ class ConceptualValidation:
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
         self._concept_only_data_model()
+        self._dangling_properties()
         self._regex_compliance_with_physical_data_model()
 
         return self.issue_list
@@ -55,6 +60,13 @@ class ConceptualValidation:
         """Check if the data model only consists of concepts without any properties."""
         if not self._properties:
             self.issue_list.append(ConceptOnlyDataModelWarning())
+
+    def _dangling_properties(self) -> None:
+        """Check if there are properties that do not reference any concept."""
+        dangling_properties = [prop for prop in self._properties if prop.concept == UnknownEntity()]
+        if dangling_properties:
+            for prop in dangling_properties:
+                self.issue_list.append(DanglingPropertyWarning(property_id=prop.property_))
 
     def _duplicated_resources(self) -> None:
         properties_sheet = self._read_info_by_spreadsheet.get("Properties")
@@ -119,7 +131,7 @@ class ConceptualValidation:
 
     def _undefined_classes(self) -> None:
         defined_concept = {concept.concept for concept in self._concepts}
-        referred_concepts = {property_.concept for property_ in self._properties}
+        referred_concepts = {property_.concept for property_ in self._properties} - {UnknownEntity()}
 
         if undefined_concepts := referred_concepts.difference(defined_concept):
             for concept in undefined_concepts:
@@ -199,7 +211,7 @@ class ConceptualValidation:
                         PATTERNS.physical_property_id_compliance.pattern,
                     )
                 )
-            if not PATTERNS.view_id_compliance.match(prop_.concept.suffix):
+            if prop_.concept != UnknownEntity() and not PATTERNS.view_id_compliance.match(prop_.concept.suffix):
                 self.issue_list.append(
                     ResourceRegexViolationWarning(
                         prop_.concept,
