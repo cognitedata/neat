@@ -98,6 +98,10 @@ def read_individual_sheet(
         # Special handling for Value Type column, #N/A is treated specially by NEAT it means Unknown
         raw["Value Type"] = raw["Value Type"].replace(float("nan"), "#N/A")
 
+    if "Concept" in raw.columns:
+        # Special handling for Concept column, #N/A is treated specially by NEAT it means Unknown
+        raw["Concept"] = raw["Concept"].replace(float("nan"), "#N/A")
+
     output = raw.replace(float("nan"), None).to_dict(orient="records")
     if return_read_info:
         # If no rows are skipped, row 1 is the header row.
