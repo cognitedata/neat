@@ -1,4 +1,5 @@
 from typing import cast
+from urllib.parse import quote
 
 from rdflib import BNode, Graph
 from rdflib.plugins.sparql import prepareQuery
@@ -32,6 +33,9 @@ def parse_concepts(graph: Graph, query: str, language: str, issue_list: IssueLis
     for raw in graph.query(query):
         res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
         res = {key: res.get(key, None) for key in expected_keys}
+
+        # Quote the concept id to ensure it is web-safe
+        res["concept"] = quote(res["concept"], safe="")
 
         concept_id = res["concept"]
 
@@ -91,6 +95,8 @@ def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueL
         res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
         res = {key: res.get(key, None) for key in expected_keys}
 
+        # Quote the concept id to ensure it is web-safe
+        res["property_"] = quote(res["property_"], safe="")
         property_id = res["property_"]
 
         # Safeguarding against incomplete semantic definitions
@@ -114,6 +120,10 @@ def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueL
                 )
             )
             continue
+
+        # Quote the concept and value_type to ensure they are web-safe
+        res["concept"] = quote(res["concept"], safe="")
+        res["value_type"] = quote(res["value_type"], safe="")
 
         id_ = f"{res['concept']}.{res['property_']}"
 
