@@ -315,7 +315,7 @@ class TestInformationRules:
             _ = VerifyAnyDataModel(validate=True).transform(input_rules)
 
         assert not issues.has_errors
-        assert len(issues) == 5
+        assert len(issues) == 4
         assert len([issue for issue in issues if issue.__class__ == DanglingPropertyWarning]) == 2
 
     @pytest.mark.parametrize("dm_dict", list(concepts_only_data_model()))

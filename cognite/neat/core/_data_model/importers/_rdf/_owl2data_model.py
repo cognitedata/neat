@@ -70,7 +70,6 @@ class OWLImporter(BaseRDFImporter):
         concepts, issue_list = parse_concepts(self.graph, CLASSES_QUERY, self.language, self.issue_list)
         self.issue_list = issue_list
 
-        # NeatError
         properties, issue_list = parse_properties(self.graph, PROPERTIES_QUERY, self.language, self.issue_list)
         self.issue_list = issue_list
 

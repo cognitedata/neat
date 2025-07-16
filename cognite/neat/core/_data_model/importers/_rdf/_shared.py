@@ -99,31 +99,31 @@ def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueL
         res["property_"] = quote(res["property_"], safe="")
         property_id = res["property_"]
 
-        # Safeguarding against incomplete semantic definitions
-        if not res["concept"] or isinstance(res["concept"], BNode):
+        # Skip Bnode
+        if isinstance(res["concept"], BNode):
             issue_list.append(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=("Unable to determine to what concept property is being defined"),
+                    error=("Cannot determine concept of property as it is a blank node"),
                 )
             )
             continue
 
-        # Safeguarding against incomplete semantic definitions
-        if not res["value_type"] or isinstance(res["value_type"], BNode):
+        # Skip Bnode
+        if isinstance(res["value_type"], BNode):
             issue_list.append(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=("Unable to determine value type of property"),
+                    error=("Unable to determine value type of property as it is a blank node"),
                 )
             )
             continue
 
         # Quote the concept and value_type to ensure they are web-safe
-        res["concept"] = quote(res["concept"], safe="")
-        res["value_type"] = quote(res["value_type"], safe="")
+        res["concept"] = quote(res["concept"], safe="") if res["concept"] else "#N/A"
+        res["value_type"] = quote(res["value_type"], safe="") if res["value_type"] else "#N/A"
 
         id_ = f"{res['concept']}.{res['property_']}"
 

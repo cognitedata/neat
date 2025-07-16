@@ -165,7 +165,7 @@ class ConceptualValidation:
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass
         defined_concept = {concept.concept for concept in self._concepts}
-        classes_with_explicit_properties = {property_.concept for property_ in self._properties}
+        classes_with_explicit_properties = {property_.concept for property_ in self._properties} - {UnknownEntity()}
 
         # USE CASE: models are complete
         if missing_classes := classes_with_explicit_properties.difference(defined_concept):
