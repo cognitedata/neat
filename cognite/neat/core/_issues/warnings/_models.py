@@ -110,6 +110,16 @@ class ConceptOnlyDataModelWarning(UserModelingWarning):
 
 
 @dataclass(unsafe_hash=True)
+class DanglingPropertyWarning(UserModelingWarning):
+    """Property {property_id} is not defined for any concept.
+    This will likely cause issues when converting to a physical data model."""
+
+    fix = "Define the property for a concept or remove it from the data model."
+
+    property_id: str
+
+
+@dataclass(unsafe_hash=True)
 class UndefinedViewWarning(UserModelingWarning):
     """Undefined view {value_type} has been referred as value type for property <{view_property}> of view {view_id}."""
 

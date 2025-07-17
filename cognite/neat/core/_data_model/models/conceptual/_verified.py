@@ -123,7 +123,7 @@ class ConceptualProperty(SheetRow):
               knowledge graph. Defaults to None (no transformation)
     """
 
-    concept: ConceptEntityType = Field(
+    concept: ConceptEntityType | UnknownEntity = Field(
         alias="Concept",
         description="Concept id that the property is defined for, strongly advise `PascalCase` usage.",
     )

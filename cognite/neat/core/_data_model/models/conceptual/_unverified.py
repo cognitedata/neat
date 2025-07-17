@@ -78,7 +78,7 @@ class UnverifiedConceptualMetadata(UnverifiedComponent[ConceptualMetadata]):
 
 @dataclass
 class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
-    concept: ConceptEntity | str
+    concept: ConceptEntity | str | UnknownEntity
     property_: str
     value_type: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity | str
     name: str | None = None
