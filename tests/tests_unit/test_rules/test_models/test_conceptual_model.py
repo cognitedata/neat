@@ -37,6 +37,7 @@ from cognite.neat.core._issues.errors import ResourceNotDefinedError
 from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
 from cognite.neat.core._issues.warnings._models import ConceptOnlyDataModelWarning, DanglingPropertyWarning
 
+
 def case_insensitive_value_types():
     yield pytest.param(
         {
@@ -237,15 +238,6 @@ def dangling_properties_data_model():
             ],
         },
         id="dangling_properties_data_model",
-        {
-            ResourceDuplicatedError(
-                identifier="name",
-                resource_type="property",
-                location="the Properties sheet at row 1 and 2 if data model is read from a spreadsheet.",
-            ),
-            ConceptOnlyDataModelWarning(),
-        },
-        id="concept_only_data_model",
     )
 
 
@@ -313,7 +305,6 @@ class TestInformationRules:
 
         assert set(e.value.errors) == expected_exception
 
-
     @pytest.mark.parametrize("dm_dict", list(dangling_properties_data_model()))
     def test_dangling_properties(self, dm_dict) -> None:
         input_rules = ImportedDataModel(
@@ -327,8 +318,8 @@ class TestInformationRules:
         assert len(issues) == 5
         assert len([issue for issue in issues if issue.__class__ == DanglingPropertyWarning]) == 2
 
-    @pytest.mark.parametrize("dm_dict, expected_exception", list(concepts_only_data_model()))
-    def test_concepts_only_data_model(self, dm_dict, expected_exception) -> None:
+    @pytest.mark.parametrize("dm_dict", list(concepts_only_data_model()))
+    def test_concepts_only_data_model(self, dm_dict) -> None:
         input_rules = ImportedDataModel(
             unverified_data_model=UnverifiedConceptualDataModel.load(dm_dict),
             context={},
