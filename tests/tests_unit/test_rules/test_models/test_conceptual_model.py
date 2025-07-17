@@ -315,8 +315,8 @@ class TestInformationRules:
             _ = VerifyAnyDataModel(validate=True).transform(input_rules)
 
         assert not issues.has_errors
-        assert len(issues) == 4
-        assert len([issue for issue in issues if issue.__class__ == DanglingPropertyWarning]) == 2
+        assert len(issues) == 5
+        assert len([issue for issue in issues if isinstance(issue, DanglingPropertyWarning)]) == 2
 
     @pytest.mark.parametrize("dm_dict", list(concepts_only_data_model()))
     def test_concepts_only_data_model(self, dm_dict) -> None:
@@ -329,7 +329,7 @@ class TestInformationRules:
 
         assert not issues.has_errors
         assert len(issues) == 3
-        assert len([issue for issue in issues if issue.__class__ == ConceptOnlyDataModelWarning]) == 1
+        assert len([issue for issue in issues if isinstance(issue, ConceptOnlyDataModelWarning)]) == 1
 
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())
