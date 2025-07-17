@@ -62,5 +62,27 @@ def test_owl_enitity_quoting():
     assert len(categorized_issues[ResourceNotDefinedWarning]) == 1
     assert len(categorized_issues[DanglingPropertyWarning]) == 6
 
-    assert len(conceptual_data_model.concepts) == 3
-    assert len(conceptual_data_model.properties) == 9
+    expected_concepts = {
+        ConceptEntity(
+            prefix="neat_space", suffix="Control.Panel-1%28Safety%29~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D"
+        ),
+        ConceptEntity(prefix="neat_space", suffix="Machine.Type-A%2801%29~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D"),
+        ConceptEntity(
+            prefix="neat_space", suffix="Sensor.Unit_01%28Temp%29~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D"
+        ),
+    }
+
+    expected_properties = {
+        "contains.Serial-Number%28ID%29%3AX~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "has.Relation-Type%28Generic%29%3AX~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "has.Sensor-Unit%2801%29%3ATemp~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "has.Value-Reading%28Temp%29%3AC~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "is.Connected-To%28Control%29%3APanel~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "is.Controlled-By%28Panel%29%3ASafety~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "links.Interface-Module%2802%29%3AIO~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "logs.Data-Stream%2801%29%3ARaw~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "reports.Status-Flag%28OK%29%3A1~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+    }
+
+    assert {concept.concept for concept in conceptual_data_model.concepts} == expected_concepts
+    assert {prop.property_ for prop in conceptual_data_model.properties} == expected_properties
