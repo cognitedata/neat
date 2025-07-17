@@ -113,7 +113,7 @@ def parse_properties(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=("Cannot determine concept of property as it is a blank node"),
+                    error="Cannot determine concept of property as it is a blank node",
                 )
             )
             continue
@@ -124,7 +124,7 @@ def parse_properties(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=("Unable to determine value type of property as it is a blank node"),
+                    error="Unable to determine value type of property as it is a blank node",
                 )
             )
             continue
