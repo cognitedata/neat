@@ -102,6 +102,14 @@ class UndefinedConceptWarning(UserModelingWarning):
 
 
 @dataclass(unsafe_hash=True)
+class ConceptOnlyDataModelWarning(UserModelingWarning):
+    """Data model is concept-only (contains concepts but no properties).
+    This model will likely cause issues when converting to a physical data model."""
+
+    fix = "Define properties for concepts or make sure that concepts implement other concepts that have properties."
+
+
+@dataclass(unsafe_hash=True)
 class UndefinedViewWarning(UserModelingWarning):
     """Undefined view {value_type} has been referred as value type for property <{view_property}> of view {view_id}."""
 

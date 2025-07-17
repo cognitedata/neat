@@ -11,7 +11,7 @@ from cognite.neat.core._issues.errors._resources import (
     ResourceDuplicatedError,
     ResourceNotDefinedError,
 )
-from cognite.neat.core._issues.warnings._models import UndefinedConceptWarning
+from cognite.neat.core._issues.warnings._models import ConceptOnlyDataModelWarning, UndefinedConceptWarning
 from cognite.neat.core._issues.warnings._resources import (
     ResourceNotDefinedWarning,
     ResourceRegexViolationWarning,
@@ -46,9 +46,15 @@ class ConceptualValidation:
         self._parent_concept_defined()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
+        self._concept_only_data_model()
         self._regex_compliance_with_physical_data_model()
 
         return self.issue_list
+
+    def _concept_only_data_model(self) -> None:
+        """Check if the data model only consists of concepts without any properties."""
+        if not self._properties:
+            self.issue_list.append(ConceptOnlyDataModelWarning())
 
     def _duplicated_resources(self) -> None:
         properties_sheet = self._read_info_by_spreadsheet.get("Properties")
