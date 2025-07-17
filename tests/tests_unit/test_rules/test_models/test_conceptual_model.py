@@ -267,7 +267,7 @@ class TestInformationRules:
 
         assert not issues.has_errors
         assert len(issues) == 3
-        assert len([issue for issue in issues if issue.__class__ == ConceptOnlyDataModelWarning]) == 1
+        assert len([issue for issue in issues if isinstance(issue, ConceptOnlyDataModelWarning)]) == 1
 
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())
