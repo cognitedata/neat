@@ -11,7 +11,6 @@ from cognite.neat.core._issues.errors._resources import (
     ResourceDuplicatedError,
     ResourceNotDefinedError,
 )
-
 from cognite.neat.core._issues.warnings._models import (
     ConceptOnlyDataModelWarning,
     DanglingPropertyWarning,
@@ -61,7 +60,6 @@ class ConceptualValidation:
         """Check if the data model only consists of concepts without any properties."""
         if not self._properties:
             self.issue_list.append(ConceptOnlyDataModelWarning())
-
 
     def _dangling_properties(self) -> None:
         """Check if there are properties that do not reference any concept."""
