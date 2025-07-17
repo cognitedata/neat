@@ -2,6 +2,7 @@ import itertools
 from collections import Counter, defaultdict
 from collections.abc import Iterable
 
+from cognite.neat.core._constants import get_base_concepts
 from cognite.neat.core._data_model._constants import PATTERNS, EntityTypes
 from cognite.neat.core._data_model.models.entities import ConceptEntity, UnknownEntity
 from cognite.neat.core._data_model.models.entities._multi_value import MultiValueTypeInfo
@@ -35,19 +36,25 @@ class ConceptualValidation:
         data_model: ConceptualDataModel,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ):
+        from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
+
         self.data_model = data_model
+        self.analysis = DataModelAnalysis(self.data_model)
         self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
         self._metadata = data_model.metadata
         self._properties = data_model.properties
         self._concepts = data_model.concepts
+        self._cdf_concepts = {
+            ConceptEntity.load(concept_as_string) for concept_as_string in get_base_concepts(base_model="CogniteCore")
+        }
         self.issue_list = IssueList()
 
     def validate(self) -> IssueList:
         self._duplicated_resources()
         self._namespaces_reassigned()
-        self._classes_without_properties()
-        self._undefined_classes()
-        self._parent_concept_defined()
+        self._concepts_without_properties()
+        self._undefined_concept()
+        self._ancestors_defined()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
         self._concept_only_data_model()
@@ -110,30 +117,40 @@ class ConceptualValidation:
                 )
             )
 
-    def _classes_without_properties(self) -> None:
-        defined_concepts = {concept.concept for concept in self._concepts}
-        referred_classes = {property_.concept for property_ in self._properties}
-        concept_parent_pairs = self._concept_parent_pairs()
+    def _concepts_without_properties(self) -> None:
+        # This is the method that needs to perform more thourough validation, as concepts that
+        # implement other concepts may have properties defined in their parents
+        # alt, they might implement CDM concepts, which are guarneteed to have properties
 
-        if concepts_without_properties := defined_concepts.difference(referred_classes):
-            for concept in concepts_without_properties:
+        concepts = {concept.concept for concept in self._concepts}
+        parents_by_concept = self.analysis.parents_by_concept(include_ancestors=True, include_different_space=True)
+        concepts_with_properties = self.analysis.defined_concepts().union(self._cdf_concepts)
+
+        if candidate_concepts := concepts.difference(concepts_with_properties):
+            for concept in candidate_concepts:
+                # USE CASE: class has no direct properties, but it has parents with properties
+                if (parents := parents_by_concept.get(concept)) and (
+                    len(parents.difference(concepts_with_properties)) != len(parents)
+                ):
+                    continue
+
                 # USE CASE: class has no direct properties and no parents with properties
                 # and it is a class in the prefix of data model, as long as it is in the
                 # same prefix, meaning same space
-                if not concept_parent_pairs[concept] and concept.prefix == self._metadata.prefix:
+                if concept.prefix == self._metadata.prefix:
                     self.issue_list.append(
                         ResourceNotDefinedWarning(
                             resource_type="concept",
                             identifier=concept,
-                            location="Properties sheet",
+                            location="Concepts sheet",
                         )
                     )
 
-    def _undefined_classes(self) -> None:
-        defined_concept = {concept.concept for concept in self._concepts}
-        referred_concepts = {property_.concept for property_ in self._properties} - {UnknownEntity()}
+    def _undefined_concept(self) -> None:
+        concepts = {concept.concept for concept in self._concepts}
+        concepts_with_properties = {property_.concept for property_ in self._properties} - {UnknownEntity()}
 
-        if undefined_concepts := referred_concepts.difference(defined_concept):
+        if undefined_concepts := concepts_with_properties.difference(concepts):
             for concept in undefined_concepts:
                 self.issue_list.append(
                     ResourceNotDefinedError(
@@ -143,21 +160,24 @@ class ConceptualValidation:
                     )
                 )
 
-    def _parent_concept_defined(self) -> None:
-        """This is a validation to check if the parent concept is defined."""
-        concept_parent_pairs = self._concept_parent_pairs()
-        concepts = set(concept_parent_pairs.keys())
-        parents = set(itertools.chain.from_iterable(concept_parent_pairs.values()))
+    def _ancestors_defined(self) -> None:
+        """This is a validation to check if the ancestor concepts (e.g. parents) are defined."""
+        concepts = {concept.concept for concept in self._concepts}.union(self._cdf_concepts)
+        ancestors = set(
+            itertools.chain.from_iterable(
+                self.analysis.parents_by_concept(include_ancestors=True, include_different_space=True).values()
+            )
+        )
 
-        if undefined_parents := parents.difference(concepts):
-            for parent in undefined_parents:
-                if parent.prefix != self._metadata.prefix:
-                    self.issue_list.append(UndefinedConceptWarning(concept_id=str(parent)))
+        if undefined_ancestor := ancestors.difference(concepts):
+            for ancestor in undefined_ancestor:
+                if ancestor.prefix != self._metadata.prefix:
+                    self.issue_list.append(UndefinedConceptWarning(concept_id=str(ancestor)))
                 else:
                     self.issue_list.append(
                         ResourceNotDefinedWarning(
                             resource_type="concept",
-                            identifier=parent,
+                            identifier=ancestor,
                             location="Concepts sheet",
                         )
                     )
