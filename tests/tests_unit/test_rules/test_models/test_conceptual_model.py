@@ -316,7 +316,7 @@ class TestInformationRules:
 
         assert not issues.has_errors
         assert len(issues) == 5
-        assert len([issue for issue in issues if issue.__class__ == DanglingPropertyWarning]) == 2
+        assert len([issue for issue in issues if isinstance(issue, DanglingPropertyWarning)]) == 2
 
     @pytest.mark.parametrize("dm_dict", list(concepts_only_data_model()))
     def test_concepts_only_data_model(self, dm_dict) -> None:
