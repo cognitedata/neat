@@ -45,6 +45,7 @@ class SchemaData:
     class Conceptual:
         _conceptual = _schema_dir / "conceptual"
         only_concepts_xlsx = _conceptual / "only_concepts.xlsx"
+        dangling_properties_xlsx = _conceptual / "dangling-properties.xlsx"
         info_arch_car_rules_xlsx = _conceptual / "info-arch-car-rules.xlsx"
         information_unknown_value_type_xlsx = _conceptual / "information-unknown-value-type.xlsx"
         info_with_cdm_ref_xlsx = _conceptual / "info_with_cdm_ref.xlsx"
