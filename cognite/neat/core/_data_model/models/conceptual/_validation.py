@@ -115,7 +115,10 @@ class ConceptualValidation:
                 ResourceDuplicatedError(
                     identifier[0],
                     "concept",
-                    (f"the Concept sheet at row {humanize_collection(rows)} if data model is read from a spreadsheet."),
+                    (
+                        f"the Concepts sheet at row {humanize_collection(rows)}"
+                        " if data model is read from a spreadsheet."
+                    ),
                 )
             )
 
