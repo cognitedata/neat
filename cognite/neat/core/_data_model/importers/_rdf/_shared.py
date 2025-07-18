@@ -14,12 +14,17 @@ from cognite.neat.core._issues.warnings._resources import (
 from cognite.neat.core._utils.rdf_ import convert_rdflib_content
 
 
-def parse_concepts(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:
+def parse_concepts(
+    graph: Graph, query: str, parameters: set, language: str, issue_list: IssueList
+) -> tuple[dict, IssueList]:
     """Parse concepts from graph
 
     Args:
         graph: Graph containing concept definitions
+        query: SPARQL query to use for parsing concepts
+        parameters: Set of parameters to extract from the query results
         language: Language to use for parsing, by default "en"
+        issue_list: List to collect issues during parsing
 
     Returns:
         Dataframe containing owl classes
@@ -28,11 +33,10 @@ def parse_concepts(graph: Graph, query: str, language: str, issue_list: IssueLis
     concepts: dict[str, dict] = {}
 
     query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
-    expected_keys = [str(v) for v in query.algebra._vars]
 
     for raw in graph.query(query):
         res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
-        res = {key: res.get(key, None) for key in expected_keys}
+        res = {key: res.get(key, None) for key in parameters}
 
         # Quote the concept id to ensure it is web-safe
         res["concept"] = quote(res["concept"], safe="")
@@ -75,12 +79,17 @@ def parse_concepts(graph: Graph, query: str, language: str, issue_list: IssueLis
     return concepts, issue_list
 
 
-def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueList) -> tuple[dict, IssueList]:
+def parse_properties(
+    graph: Graph, query: str, parameters: set, language: str, issue_list: IssueList
+) -> tuple[dict, IssueList]:
     """Parse properties from graph
 
     Args:
-        graph: Graph containing owl classes
+        graph: Graph containing property definitions
+        query: SPARQL query to use for parsing properties
+        parameters: Set of parameters to extract from the query results
         language: Language to use for parsing, by default "en"
+        issue_list: List to collect issues during parsing
 
     Returns:
         Dataframe containing owl classes
@@ -89,41 +98,40 @@ def parse_properties(graph: Graph, query: str, language: str, issue_list: IssueL
     properties: dict[str, dict] = {}
 
     query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
-    expected_keys = [str(v) for v in query.algebra._vars]
 
     for raw in graph.query(query):
         res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
-        res = {key: res.get(key, None) for key in expected_keys}
+        res = {key: res.get(key, None) for key in parameters}
 
         # Quote the concept id to ensure it is web-safe
         res["property_"] = quote(res["property_"], safe="")
         property_id = res["property_"]
 
-        # Safeguarding against incomplete semantic definitions
-        if not res["concept"] or isinstance(res["concept"], BNode):
+        # Skip Bnode
+        if isinstance(res["concept"], BNode):
             issue_list.append(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=("Unable to determine to what concept property is being defined"),
+                    error="Cannot determine concept of property as it is a blank node",
                 )
             )
             continue
 
-        # Safeguarding against incomplete semantic definitions
-        if not res["value_type"] or isinstance(res["value_type"], BNode):
+        # Skip Bnode
+        if isinstance(res["value_type"], BNode):
             issue_list.append(
                 ResourceRetrievalWarning(
                     property_id,
                     "property",
-                    error=("Unable to determine value type of property"),
+                    error="Unable to determine value type of property as it is a blank node",
                 )
             )
             continue
 
         # Quote the concept and value_type to ensure they are web-safe
-        res["concept"] = quote(res["concept"], safe="")
-        res["value_type"] = quote(res["value_type"], safe="")
+        res["concept"] = quote(res["concept"], safe="") if res["concept"] else "#N/A"
+        res["value_type"] = quote(res["value_type"], safe="") if res["value_type"] else "#N/A"
 
         id_ = f"{res['concept']}.{res['property_']}"
 
