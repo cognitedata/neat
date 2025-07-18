@@ -255,6 +255,11 @@ class IssueList(list, Sequence[NeatIssue]):
         self.action = action
         self.hint = hint
 
+    def append_if_not_exist(self, issue: NeatIssue) -> None:
+        """Append an issue to the list if it does not already exist."""
+        if issue not in self:
+            self.append(issue)
+
     @property
     def errors(self) -> Self:
         """Return all the errors in this list."""

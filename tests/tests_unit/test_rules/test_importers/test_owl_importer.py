@@ -4,7 +4,7 @@ from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._issues.warnings._resources import ResourceNotDefinedWarning, ResourceRegexViolationWarning
+from cognite.neat.core._issues.warnings._resources import ResourceRegexViolationWarning
 from tests.data import SchemaData
 
 
@@ -51,14 +51,13 @@ def test_owl_enitity_quoting():
             categorized_issues[type(issue)] = []
         categorized_issues[type(issue)].append(issue)
 
-    assert len(issues) == 13
+    assert len(issues) == 11
     # quoting is successful, but regex warnings are raised
     assert not issues.has_errors
     assert issues.has_warnings
 
     assert len(categorized_issues) == 2
-    assert len(categorized_issues[ResourceRegexViolationWarning]) == 12
-    assert len(categorized_issues[ResourceNotDefinedWarning]) == 1
+    assert len(categorized_issues[ResourceRegexViolationWarning]) == 10
 
     assert len(conceptual_data_model.concepts) == 3
     assert len(conceptual_data_model.properties) == 3
