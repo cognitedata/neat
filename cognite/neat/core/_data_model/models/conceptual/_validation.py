@@ -7,7 +7,6 @@ from cognite.neat.core._data_model._constants import PATTERNS, EntityTypes
 from cognite.neat.core._data_model.models.entities import ConceptEntity, UnknownEntity
 from cognite.neat.core._data_model.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat.core._issues import IssueList
-from cognite.neat.core._issues._base import NeatWarning
 from cognite.neat.core._issues.errors import NeatValueError
 from cognite.neat.core._issues.errors._resources import (
     ResourceDuplicatedError,
@@ -68,23 +67,23 @@ class ConceptualValidation:
     def _concept_only_data_model(self) -> None:
         """Check if the data model only consists of concepts without any properties."""
         if not self._properties:
-            self.issue_list.append(ConceptOnlyDataModelWarning())
+            self.issue_list.append_if_not_exist(ConceptOnlyDataModelWarning())
 
     def _dangling_properties(self) -> None:
         """Check if there are properties that do not reference any concept."""
         dangling_properties = [prop for prop in self._properties if prop.concept == UnknownEntity()]
         if dangling_properties:
             for prop in dangling_properties:
-                self.issue_list.append(DanglingPropertyWarning(property_id=prop.property_))
+                self.issue_list.append_if_not_exist(DanglingPropertyWarning(property_id=prop.property_))
 
     def _duplicated_resources(self) -> None:
-        properties_sheet = self._read_info_by_spreadsheet.get("Properties")
-        concepts_sheet = self._read_info_by_spreadsheet.get("Concepts")
+        properties_sheet_info = self._read_info_by_spreadsheet.get("Properties")
+        concepts_sheet_info = self._read_info_by_spreadsheet.get("Concepts")
 
         visited = defaultdict(list)
         for row_no, property_ in enumerate(self._properties):
             visited[property_._identifier()].append(
-                properties_sheet.adjusted_row_number(row_no) if properties_sheet else row_no + 1
+                properties_sheet_info.adjusted_row_number(row_no) if properties_sheet_info else row_no + 1
             )
 
         for identifier, rows in visited.items():
@@ -105,13 +104,13 @@ class ConceptualValidation:
         visited = defaultdict(list)
         for row_no, concept in enumerate(self._concepts):
             visited[concept._identifier()].append(
-                concepts_sheet.adjusted_row_number(row_no) if concepts_sheet else row_no + 1
+                concepts_sheet_info.adjusted_row_number(row_no) if concepts_sheet_info else row_no + 1
             )
 
         for identifier, rows in visited.items():
             if len(rows) == 1:
                 continue
-            self.issue_list.append(
+            self.issue_list.append_if_not_exist(
                 ResourceDuplicatedError(
                     identifier[0],
                     "concept",
@@ -136,8 +135,7 @@ class ConceptualValidation:
                 ):
                     continue
 
-                issue = UndefinedConceptWarning(concept_id=str(concept))
-                self.issue_list.append(issue) if issue not in self.issue_list else None
+                self.issue_list.append_if_not_exist(UndefinedConceptWarning(concept_id=str(concept)))
 
     def _concepts_with_properties_defined(self) -> None:
         """This validation checks if concepts to which properties are attached are defined."""
@@ -146,7 +144,7 @@ class ConceptualValidation:
 
         if undefined_concepts_with_properties := concepts_with_properties.difference(concepts):
             for concept in undefined_concepts_with_properties:
-                self.issue_list.append(
+                self.issue_list.append_if_not_exist(
                     ResourceNotDefinedError(
                         identifier=concept,
                         resource_type="concept",
@@ -165,12 +163,13 @@ class ConceptualValidation:
 
         if undefined_ancestor := ancestors.difference(concepts):
             for ancestor in undefined_ancestor:
-                issue: NeatWarning = ResourceNotDefinedWarning(
-                    resource_type="concept",
-                    identifier=ancestor,
-                    location="Concepts sheet",
+                self.issue_list.append_if_not_exist(
+                    ResourceNotDefinedWarning(
+                        resource_type="concept",
+                        identifier=ancestor,
+                        location="Concepts sheet",
+                    )
                 )
-                self.issue_list.append(issue) if issue not in self.issue_list else None
 
     def _object_properties_use_defined_concepts(self) -> None:
         """Check if the value types of object properties are defined as concepts."""
@@ -184,19 +183,20 @@ class ConceptualValidation:
 
         if undefined_value_types := value_types.difference(concepts):
             for value_type in undefined_value_types:
-                issue: NeatWarning = ResourceNotDefinedWarning(
-                    resource_type="concept",
-                    identifier=value_type,
-                    location="Concepts sheet",
+                self.issue_list.append_if_not_exist(
+                    ResourceNotDefinedWarning(
+                        resource_type="concept",
+                        identifier=value_type,
+                        location="Concepts sheet",
+                    )
                 )
-                self.issue_list.append(issue) if issue not in self.issue_list else None
 
     def _regex_compliance_with_physical_data_model(self) -> None:
         """Check regex compliance with DMS of properties, classes and value types."""
 
         for prop_ in self._properties:
             if not PATTERNS.physical_property_id_compliance.match(prop_.property_):
-                self.issue_list.append(
+                self.issue_list.append_if_not_exist(
                     ResourceRegexViolationWarning(
                         prop_.property_,
                         "Property",
@@ -205,7 +205,7 @@ class ConceptualValidation:
                     )
                 )
             if prop_.concept != UnknownEntity() and not PATTERNS.view_id_compliance.match(prop_.concept.suffix):
-                self.issue_list.append(
+                self.issue_list.append_if_not_exist(
                     ResourceRegexViolationWarning(
                         prop_.concept,
                         "Concept",
@@ -220,7 +220,7 @@ class ConceptualValidation:
                 and prop_.value_type != UnknownEntity()
                 and not PATTERNS.view_id_compliance.match(prop_.value_type.suffix)
             ):
-                self.issue_list.append(
+                self.issue_list.append_if_not_exist(
                     ResourceRegexViolationWarning(
                         prop_.value_type,
                         "Value Type",
@@ -235,7 +235,7 @@ class ConceptualValidation:
                         and prop_.value_type != UnknownEntity()
                         and not PATTERNS.view_id_compliance.match(value_type.suffix)
                     ):
-                        self.issue_list.append(
+                        self.issue_list.append_if_not_exist(
                             ResourceRegexViolationWarning(
                                 value_type,
                                 "Value Type",
@@ -246,7 +246,7 @@ class ConceptualValidation:
 
         for concepts in self._concepts:
             if not PATTERNS.view_id_compliance.match(concepts.concept.suffix):
-                self.issue_list.append(
+                self.issue_list.append_if_not_exist(
                     ResourceRegexViolationWarning(
                         concepts.concept,
                         "Concept",
@@ -258,7 +258,7 @@ class ConceptualValidation:
             if concepts.implements:
                 for parent in concepts.implements:
                     if not PATTERNS.view_id_compliance.match(parent.suffix):
-                        self.issue_list.append(
+                        self.issue_list.append_if_not_exist(
                             ResourceRegexViolationWarning(
                                 parent,
                                 "Concept",
@@ -274,7 +274,7 @@ class ConceptualValidation:
         if len(set(prefixes.values())) != len(prefixes):
             reused_namespaces = [value for value, count in Counter(prefixes.values()).items() if count > 1]
             impacted_prefixes = [key for key, value in prefixes.items() if value in reused_namespaces]
-            self.issue_list.append(
+            self.issue_list.append_if_not_exist(
                 NeatValueError(
                     "Namespace collision detected. The following prefixes "
                     f"are assigned to the same namespace: {impacted_prefixes}"

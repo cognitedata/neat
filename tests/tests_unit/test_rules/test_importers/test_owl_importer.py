@@ -51,13 +51,13 @@ def test_owl_enitity_quoting():
             categorized_issues[type(issue)] = []
         categorized_issues[type(issue)].append(issue)
 
-    assert len(issues) == 13
+    assert len(issues) == 11
     # quoting is successful, but regex warnings are raised
     assert not issues.has_errors
     assert issues.has_warnings
 
     assert len(categorized_issues) == 2
-    assert len(categorized_issues[ResourceRegexViolationWarning]) == 12
+    assert len(categorized_issues[ResourceRegexViolationWarning]) == 10
 
     assert len(conceptual_data_model.concepts) == 3
     assert len(conceptual_data_model.properties) == 3
