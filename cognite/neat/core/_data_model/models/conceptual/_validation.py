@@ -53,7 +53,7 @@ class ConceptualValidation:
         self._duplicated_resources()
         self._namespaces_reassigned()
         self._concepts_without_properties()
-        self._undefined_concept()
+        self._referenced_concepts_defined()
         self._ancestors_defined()
         self._referenced_classes_exist()
         self._referenced_value_types_exist()
@@ -134,24 +134,16 @@ class ConceptualValidation:
                 ):
                     continue
 
-                # USE CASE: class has no direct properties and no parents with properties
-                # and it is a class in the prefix of data model, as long as it is in the
-                # same prefix, meaning same space
-                if concept.prefix == self._metadata.prefix:
-                    self.issue_list.append(
-                        ResourceNotDefinedWarning(
-                            resource_type="concept",
-                            identifier=concept,
-                            location="Concepts sheet",
-                        )
-                    )
+                issue = UndefinedConceptWarning(concept_id=str(concept))
+                self.issue_list.append(issue) if issue not in self.issue_list else None
 
-    def _undefined_concept(self) -> None:
+    def _referenced_concepts_defined(self) -> None:
+        """This validation checks if concepts which are referenced in properties are defined."""
         concepts = {concept.concept for concept in self._concepts}
         concepts_with_properties = {property_.concept for property_ in self._properties} - {UnknownEntity()}
 
-        if undefined_concepts := concepts_with_properties.difference(concepts):
-            for concept in undefined_concepts:
+        if undefined_referenced_concepts := concepts_with_properties.difference(concepts):
+            for concept in undefined_referenced_concepts:
                 self.issue_list.append(
                     ResourceNotDefinedError(
                         identifier=concept,
@@ -171,16 +163,8 @@ class ConceptualValidation:
 
         if undefined_ancestor := ancestors.difference(concepts):
             for ancestor in undefined_ancestor:
-                if ancestor.prefix != self._metadata.prefix:
-                    self.issue_list.append(UndefinedConceptWarning(concept_id=str(ancestor)))
-                else:
-                    self.issue_list.append(
-                        ResourceNotDefinedWarning(
-                            resource_type="concept",
-                            identifier=ancestor,
-                            location="Concepts sheet",
-                        )
-                    )
+                issue = UndefinedConceptWarning(concept_id=str(ancestor))
+                self.issue_list.append(issue) if issue not in self.issue_list else None
 
     def _referenced_classes_exist(self) -> None:
         # needs to be complete for this validation to pass
