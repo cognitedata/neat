@@ -17,10 +17,8 @@ from cognite.neat.core._data_model.models.conceptual import (
     ConceptualMetadata,
     ConceptualProperty,
 )
-from cognite.neat.core._data_model.models.conceptual._validation import duplicated_properties
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ConceptEntity
-from cognite.neat.core._issues import MultiValueError
 from cognite.neat.core._issues.errors import (
     PropertyDefinitionDuplicatedError,
 )
@@ -106,21 +104,6 @@ class Ontology(OntologyModel):
         Returns:
             An instance of Ontology.
         """
-        if duplicates := duplicated_properties(data_model.properties):
-            errors = []
-            for (concept, property_), definitions in duplicates.items():
-                errors.append(
-                    PropertyDefinitionDuplicatedError(
-                        concept,
-                        "concept",
-                        property_,
-                        frozenset({str(definition[1].value_type) for definition in definitions}),
-                        tuple(definition[0] for definition in definitions),
-                        "rows",
-                    )
-                )
-            raise MultiValueError(errors)
-
         analysis = DataModelAnalysis(data_model)
         concept_by_suffix = analysis.concept_by_suffix()
         return cls(
