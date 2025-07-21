@@ -36,6 +36,7 @@ class ConceptualValidation:
         data_model: ConceptualDataModel,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ):
+        # import here to avoid circular import issues
         from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
 
         self.data_model = data_model
