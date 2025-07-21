@@ -49,3 +49,9 @@ class TestNamingStandardization:
     )
     def test_space_standardization(self, raw: str, expected: str) -> None:
         assert NamingStandardization.standardize_space_str(raw) == expected
+
+    @pytest.mark.parametrize(
+        "raw, expected", [("094 [HeatExchanger] Equipment Weight", "property094HeatExchangerEquipmentWeight")]
+    )
+    def test_property_standardization(self, raw: str, expected: str) -> None:
+        assert NamingStandardization.standardize_property_str(raw) == expected
