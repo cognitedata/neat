@@ -26,6 +26,7 @@ from ._converters import (
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, PhysicalDataModelMapper
+from ._merge_conceptual import MergeConceptualDataModel
 from ._verification import (
     VerifyAnyDataModel,
     VerifyConceptualDataModel,
@@ -45,6 +46,7 @@ __all__ = [
     "DropModelViews",
     "IncludeReferenced",
     "MapOneToOne",
+    "MergeConceptualDataModel",
     "MergeConceptualDataModels",
     "MergePhysicalDataModels",
     "PhysicalDataModelMapper",
