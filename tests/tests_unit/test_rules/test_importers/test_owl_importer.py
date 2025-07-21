@@ -4,6 +4,7 @@ from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.core._issues import catch_issues
+from cognite.neat.core._issues.warnings._models import UndefinedConceptWarning
 from cognite.neat.core._issues.warnings._resources import ResourceRegexViolationWarning
 from tests.data import SchemaData
 
@@ -58,6 +59,23 @@ def test_owl_enitity_quoting():
 
     assert len(categorized_issues) == 2
     assert len(categorized_issues[ResourceRegexViolationWarning]) == 10
+    assert len(categorized_issues[UndefinedConceptWarning]) == 1
 
-    assert len(conceptual_data_model.concepts) == 3
-    assert len(conceptual_data_model.properties) == 3
+    expected_concepts = {
+        ConceptEntity(
+            prefix="neat_space", suffix="Control.Panel-1%28Safety%29~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D"
+        ),
+        ConceptEntity(prefix="neat_space", suffix="Machine.Type-A%2801%29~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D"),
+        ConceptEntity(
+            prefix="neat_space", suffix="Sensor.Unit_01%28Temp%29~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D"
+        ),
+    }
+
+    expected_properties = {
+        "has.Sensor-Unit%2801%29%3ATemp~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "is.Connected-To%28Control%29%3APanel~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "is.Controlled-By%28Panel%29%3ASafety~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+    }
+
+    assert {concept.concept for concept in conceptual_data_model.concepts} == expected_concepts
+    assert {prop.property_ for prop in conceptual_data_model.properties} == expected_properties
