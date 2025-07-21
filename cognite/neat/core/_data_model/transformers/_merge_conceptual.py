@@ -180,7 +180,7 @@ class MergeConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
             default=primary.default or secondary.default,
             value_type=primary.value_type
             if use_primary
-            else cls._merge_value_type(primary.value_type, secondary.value_type),
+            else cls.merge_value_type(primary.value_type, secondary.value_type),
             instance_source=instance_source,
             inherited=primary.inherited,
             physical=primary.physical,
@@ -208,7 +208,7 @@ class MergeConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
             return output
 
     @staticmethod
-    def _merge_value_type(
+    def merge_value_type(
         primary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
         secondary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
     ) -> DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity:
@@ -217,7 +217,10 @@ class MergeConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
         seen_types: set[DataType | ConceptEntity] = set()
         ordered_types: list[DataType | ConceptEntity] = []
         for type_ in (primary, secondary):
-            if isinstance(type_, MultiValueTypeInfo):
+            if isinstance(type_, UnknownEntity):
+                # If any of the types is UnknownEntity, we return UnknownEntity
+                return UnknownEntity()
+            elif isinstance(type_, MultiValueTypeInfo):
                 for t in type_.types:
                     if t not in seen_types:
                         seen_types.add(t)
