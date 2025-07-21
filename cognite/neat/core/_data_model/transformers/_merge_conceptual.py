@@ -40,18 +40,17 @@ class MergeConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
         self.conflict_resolution = conflict_resolution
 
     def transform(self, rules: ConceptualDataModel) -> ConceptualDataModel:
-        if self.join in ["primary", "combined"]:
-            output = rules.model_copy(deep=True)
-            secondary_classes = {cls.concept: cls for cls in self.secondary.concepts}
-            secondary_properties = {(prop.concept, prop.property_): prop for prop in self.secondary.properties}
-        elif self.join == "secondary":
-            output = self.secondary.model_copy(deep=True)
-            secondary_classes = {cls.concept: cls for cls in rules.concepts}
-            secondary_properties = {(prop.concept, prop.property_): prop for prop in rules.properties}
-        else:
+        primary_model = rules
+        secondary_model = self.secondary
+        if self.join == "secondary":
+            primary_model, secondary_model = self.secondary, rules
+        elif self.join not in ["primary", "combined"]:
             raise NeatValueError(
                 f"Invalid join strategy: {self.join}. Must be one of ['primary', 'secondary', 'combined']"
             )
+        output = primary_model.model_copy(deep=True)
+        secondary_classes = {cls.concept: cls for cls in secondary_model.concepts}
+        secondary_properties = {(prop.concept, prop.property_): prop for prop in secondary_model.properties}
 
         merged_concepts_by_id = self._merge_concepts(output.concepts, secondary_classes)
         output.concepts = SheetList[Concept](merged_concepts_by_id.values())
@@ -225,11 +224,7 @@ class MergeConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
                     if t not in seen_types:
                         seen_types.add(t)
                         ordered_types.append(t)
-            elif isinstance(type_, ConceptEntity):
-                if type_ not in seen_types:
-                    seen_types.add(type_)
-                    ordered_types.append(type_)
-            elif isinstance(type_, DataType):
+            elif isinstance(type_, ConceptEntity | DataType):
                 if type_ not in seen_types:
                     seen_types.add(type_)
                     ordered_types.append(type_)
