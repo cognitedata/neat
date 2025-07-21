@@ -3,6 +3,7 @@ from collections.abc import Iterable
 import pytest
 from rdflib import URIRef
 
+from cognite.neat.core._data_model.models import SheetList
 from cognite.neat.core._data_model.models import data_types as dt
 from cognite.neat.core._data_model.models.conceptual import (
     Concept,
@@ -240,3 +241,39 @@ class TestMergeConceptual:
         actual = MergeConceptualDataModel.merge_value_type(primary, secondary)
 
         assert actual.model_dump() == expected.model_dump()
+
+    def test_merge_two_concepts_and_properties_from_different_models(self):
+        car_concept = UnverifiedConcept("Car")
+        car_property = UnverifiedConceptualProperty(
+            "Car", "brand", "text", name="Brand", description="The brand of the car", min_count=1, max_count=1
+        )
+        model1 = UnverifiedConceptualDataModel(
+            metadata=UnverifiedConceptualMetadata("my_space", "my_model", "v1", "doctrino"),
+            concepts=SheetList([car_concept]),
+            properties=SheetList([car_property]),
+        ).as_verified_data_model()
+
+        vehicle = UnverifiedConcept("Vehicle")
+        car_concept2 = UnverifiedConcept("Car", implements="Vehicle")
+        car_property2 = UnverifiedConceptualProperty("Car", "wheel_count", "integer")
+        car_property3 = UnverifiedConceptualProperty("Car", "brand", "integer", min_count=0, max_count=1)
+        model2 = UnverifiedConceptualDataModel(
+            metadata=UnverifiedConceptualMetadata("my_space", "my_model", "v1", "doctrino"),
+            concepts=SheetList([car_concept2, vehicle]),
+            properties=SheetList([car_property2, car_property3]),
+        ).as_verified_data_model()
+
+        # Merge with combined join
+        transformer = MergeConceptualDataModel(
+            model2, join="combined", priority="secondary", conflict_resolution="combined"
+        )
+        merged = transformer.transform(model1)
+
+        # Should contain both concepts and both properties
+        merged_concepts = {c.concept.suffix for c in merged.concepts}
+        property_names = {(p.concept.suffix, p.property_): p for p in merged.properties}
+        assert merged_concepts == {"Car", "Vehicle"}
+        assert set(property_names) == {("Car", "brand"), ("Car", "wheel_count")}
+        brand = property_names[("Car", "brand")]
+        assert brand.name == "Brand"
+        assert brand.description == "The brand of the car"
