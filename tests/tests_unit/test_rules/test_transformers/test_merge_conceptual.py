@@ -12,7 +12,8 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models.entities import ConceptEntity, MultiValueTypeInfo
+from cognite.neat.core._data_model.models.data_types import DataType
+from cognite.neat.core._data_model.models.entities import ConceptEntity, MultiValueTypeInfo, UnknownEntity
 from cognite.neat.core._data_model.transformers import MergeConceptualDataModel
 
 
@@ -168,5 +169,74 @@ class TestMergeConceptual:
         expected: Concept,
     ) -> None:
         actual = MergeConceptualDataModel.merge_classes(primary, secondary, **args)
+
+        assert actual.model_dump() == expected.model_dump()
+
+    @pytest.mark.parametrize(
+        "primary, secondary, expected",
+        [
+            pytest.param(
+                dt.String(),
+                dt.Integer(),
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
+                id="String and Integer -> MultiValueTypeInfo",
+            ),
+            pytest.param(
+                dt.Integer(),
+                dt.Integer(),
+                dt.Integer(),
+                id="Integer and Integer -> Integer",
+            ),
+            pytest.param(
+                ConceptEntity.load("my_space:Car"),
+                ConceptEntity.load("my_space:Car"),
+                ConceptEntity.load("my_space:Car"),
+                id="Same ConceptEntity -> ConceptEntity",
+            ),
+            pytest.param(
+                ConceptEntity.load("my_space:Car"),
+                ConceptEntity.load("my_space:Vehicle"),
+                MultiValueTypeInfo(types=[ConceptEntity.load("my_space:Car"), ConceptEntity.load("my_space:Vehicle")]),
+                id="Different ConceptEntities -> MultiValueTypeInfo",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
+                dt.Boolean(),
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer(), dt.Boolean()]),
+                id="MultiValueTypeInfo and new DataType -> MultiValueTypeInfo",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
+                dt.String(),
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
+                id="MultiValueTypeInfo and existing DataType -> MultiValueTypeInfo (no dup)",
+            ),
+            pytest.param(
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer()]),
+                MultiValueTypeInfo(types=[dt.Integer(), dt.Boolean()]),
+                MultiValueTypeInfo(types=[dt.String(), dt.Integer(), dt.Boolean()]),
+                id="MultiValueTypeInfo and MultiValueTypeInfo (overlap) -> MultiValueTypeInfo",
+            ),
+            pytest.param(
+                UnknownEntity(),
+                dt.String(),
+                UnknownEntity(),
+                id="UnknownEntity and DataType -> UnknownEntity",
+            ),
+            pytest.param(
+                dt.String(),
+                UnknownEntity(),
+                UnknownEntity(),
+                id="DataType and UnknownEntity -> UnknownEntity",
+            ),
+        ],
+    )
+    def test_merge_value_type(
+        self,
+        primary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
+        secondary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
+        expected: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
+    ) -> None:
+        actual = MergeConceptualDataModel.merge_value_type(primary, secondary)
 
         assert actual.model_dump() == expected.model_dump()
