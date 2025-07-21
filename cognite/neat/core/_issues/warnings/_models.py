@@ -94,9 +94,9 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
 
 @dataclass(unsafe_hash=True)
 class UndefinedConceptWarning(UserModelingWarning):
-    """Class {concept_id} has no explicit properties defined neither implements other concepts"""
+    """Concept {concept_id} has no explicit properties neither implements concepts that have properties."""
 
-    fix = "Define properties for concept or inherit properties by implementing another concept."
+    fix = "Define properties for concept or inherit properties by implementing concept(s) that has properties."
 
     concept_id: str
 

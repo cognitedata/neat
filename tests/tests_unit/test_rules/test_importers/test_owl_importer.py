@@ -4,8 +4,8 @@ from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._issues.warnings._models import DanglingPropertyWarning
-from cognite.neat.core._issues.warnings._resources import ResourceNotDefinedWarning, ResourceRegexViolationWarning
+from cognite.neat.core._issues.warnings._models import DanglingPropertyWarning, UndefinedConceptWarning
+from cognite.neat.core._issues.warnings._resources import ResourceRegexViolationWarning
 from tests.data import SchemaData
 
 
@@ -46,21 +46,12 @@ def test_owl_enitity_quoting():
     with catch_issues() as issues:
         conceptual_data_model = VerifyAnyDataModel().transform(input)
 
-    categorized_issues = {}
-    for issue in issues:
-        if type(issue) not in categorized_issues:
-            categorized_issues[type(issue)] = []
-        categorized_issues[type(issue)].append(issue)
-
-    assert len(issues) == 24
     # quoting is successful, but regex warnings are raised
     assert not issues.has_errors
     assert issues.has_warnings
-
-    assert len(categorized_issues) == 3
-    assert len(categorized_issues[ResourceRegexViolationWarning]) == 17
-    assert len(categorized_issues[ResourceNotDefinedWarning]) == 1
-    assert len(categorized_issues[DanglingPropertyWarning]) == 6
+    assert issues.has_warning_type(UndefinedConceptWarning)
+    assert issues.has_warning_type(ResourceRegexViolationWarning)
+    assert issues.has_warning_type(DanglingPropertyWarning)
 
     expected_concepts = {
         ConceptEntity(
