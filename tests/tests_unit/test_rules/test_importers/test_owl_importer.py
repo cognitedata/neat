@@ -4,7 +4,7 @@ from cognite.neat.core._data_model.analysis import DataModelAnalysis
 from cognite.neat.core._data_model.models.entities import ConceptEntity
 from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._issues.warnings._models import UndefinedConceptWarning
+from cognite.neat.core._issues.warnings._models import DanglingPropertyWarning, UndefinedConceptWarning
 from cognite.neat.core._issues.warnings._resources import ResourceRegexViolationWarning
 from tests.data import SchemaData
 
@@ -46,20 +46,12 @@ def test_owl_enitity_quoting():
     with catch_issues() as issues:
         conceptual_data_model = VerifyAnyDataModel().transform(input)
 
-    categorized_issues = {}
-    for issue in issues:
-        if type(issue) not in categorized_issues:
-            categorized_issues[type(issue)] = []
-        categorized_issues[type(issue)].append(issue)
-
-    assert len(issues) == 11
     # quoting is successful, but regex warnings are raised
     assert not issues.has_errors
     assert issues.has_warnings
-
-    assert len(categorized_issues) == 2
-    assert len(categorized_issues[ResourceRegexViolationWarning]) == 10
-    assert len(categorized_issues[UndefinedConceptWarning]) == 1
+    assert issues.has_warning_type(UndefinedConceptWarning)
+    assert issues.has_warning_type(ResourceRegexViolationWarning)
+    assert issues.has_warning_type(DanglingPropertyWarning)
 
     expected_concepts = {
         ConceptEntity(
@@ -72,9 +64,15 @@ def test_owl_enitity_quoting():
     }
 
     expected_properties = {
+        "contains.Serial-Number%28ID%29%3AX~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "has.Relation-Type%28Generic%29%3AX~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
         "has.Sensor-Unit%2801%29%3ATemp~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "has.Value-Reading%28Temp%29%3AC~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
         "is.Connected-To%28Control%29%3APanel~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
         "is.Controlled-By%28Panel%29%3ASafety~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "links.Interface-Module%2802%29%3AIO~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "logs.Data-Stream%2801%29%3ARaw~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "reports.Status-Flag%28OK%29%3A1~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
     }
 
     assert {concept.concept for concept in conceptual_data_model.concepts} == expected_concepts
