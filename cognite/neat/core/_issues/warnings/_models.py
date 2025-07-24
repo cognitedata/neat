@@ -110,6 +110,13 @@ class ConceptOnlyDataModelWarning(UserModelingWarning):
 
 
 @dataclass(unsafe_hash=True)
+class ConversionToPhysicalModelImpossibleWarning(UserModelingWarning):
+    """Conceptual data model has issues that will likely lead to problems when converting to a physical data model."""
+
+    fix = "Fix the issues in the conceptual data model before attempting to convert it to a physical data model."
+
+
+@dataclass(unsafe_hash=True)
 class DanglingPropertyWarning(UserModelingWarning):
     """Property {property_id} is not defined for any concept.
     This will likely cause issues when converting to a physical data model."""

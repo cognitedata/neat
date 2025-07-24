@@ -14,6 +14,7 @@ from cognite.neat.core._issues.errors._resources import (
 )
 from cognite.neat.core._issues.warnings._models import (
     ConceptOnlyDataModelWarning,
+    ConversionToPhysicalModelImpossibleWarning,
     DanglingPropertyWarning,
     UndefinedConceptWarning,
 )
@@ -62,8 +63,21 @@ class ConceptualValidation:
 
         self._concept_only_data_model()
         self._regex_compliance_with_physical_data_model()
+        self._physical_data_model_conversion()
 
         return self.issue_list
+
+    def _physical_data_model_conversion(self) -> None:
+        if (
+            (
+                self.issue_list.has_warning_type(ConceptOnlyDataModelWarning)
+                and self.issue_list.has_warning_type(ResourceRegexViolationWarning)
+            )
+            or self.issue_list.has_warning_type(ResourceNotDefinedWarning)
+            or self.issue_list.has_warning_type(UndefinedConceptWarning)
+            or self.issue_list.has_warning_type(DanglingPropertyWarning)
+        ):
+            self.issue_list.append_if_not_exist(ConversionToPhysicalModelImpossibleWarning())
 
     def _concept_only_data_model(self) -> None:
         """Check if the data model only consists of concepts without any properties."""
