@@ -89,8 +89,8 @@ class SessionState:
             suggestion.add("Read in conceptual data model to neat session")
         if (
             can_convert_to_physical_data_model is True
-            and self.data_model_store.try_get_last_conceptual_data_model
-            and ConceptualValidation(self.data_model_store.try_get_last_conceptual_data_model)
+            and (conceptual_model := self.data_model_store.try_get_last_conceptual_data_model)
+            and ConceptualValidation(conceptual_model)
             .validate()
             .has_warning_type(ConversionToPhysicalModelImpossibleWarning)
         ):
