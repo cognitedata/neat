@@ -68,6 +68,8 @@ class ConceptualValidation:
         return self.issue_list
 
     def _physical_data_model_conversion(self) -> None:
+        """Check if the conceptual data model has issues that will likely lead
+        to problems when converting to a physical data model."""
         if (
             self.issue_list.has_warning_type(ConceptOnlyDataModelWarning)
             or self.issue_list.has_warning_type(ResourceRegexViolationWarning)
