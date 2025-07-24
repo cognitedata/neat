@@ -74,7 +74,7 @@ class SessionState:
         instances_required: bool = False,
         client_required: bool = False,
         has_conceptual_data_model: bool | None = None,
-        can_convert_to_physical_data_model: bool = True,
+        can_convert_to_physical_data_model: bool = False,
         has_physical_data_model: bool | None = None,
     ) -> None:
         """Set conditions for raising an error in the session that are used by various methods in the session."""
