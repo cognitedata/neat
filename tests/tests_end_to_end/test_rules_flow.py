@@ -38,7 +38,9 @@ class TestImportersToYAMLExporter:
             neat.convert()
 
         printed_statements = output.getvalue()
-        assert "[ERROR] Cannot convert" in printed_statements
+        assert printed_statements.startswith(
+            "[ERROR] Cannot convert: Convert to physical expects conceptual data model"
+        )
 
     @pytest.mark.freeze_time("2017-05-21")
     @pytest.mark.skip("Needs NEAT-608 to be completed")
