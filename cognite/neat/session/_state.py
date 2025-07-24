@@ -6,11 +6,13 @@ from rdflib import URIRef
 from cognite.neat.core._client import NeatClient
 from cognite.neat.core._data_model.importers import BaseImporter, InferenceImporter
 from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat.core._data_model.models.conceptual._validation import ConceptualValidation
 from cognite.neat.core._data_model.transformers import (
     VerifiedDataModelTransformer,
 )
 from cognite.neat.core._instances.extractors import KnowledgeGraphExtractor
 from cognite.neat.core._issues import IssueList
+from cognite.neat.core._issues.warnings._models import ConversionToPhysicalModelImpossibleWarning
 from cognite.neat.core._store import NeatDataModelStore, NeatInstanceStore
 from cognite.neat.core._utils.upload import UploadResultList
 
@@ -72,6 +74,7 @@ class SessionState:
         instances_required: bool = False,
         client_required: bool = False,
         has_conceptual_data_model: bool | None = None,
+        can_convert_to_physical_data_model: bool = True,
         has_physical_data_model: bool | None = None,
     ) -> None:
         """Set conditions for raising an error in the session that are used by various methods in the session."""
@@ -84,6 +87,17 @@ class SessionState:
         if has_conceptual_data_model is True and self.data_model_store.try_get_last_conceptual_data_model is None:
             condition.add(f"{activity} expects conceptual data model in NEAT session")
             suggestion.add("Read in conceptual data model to neat session")
+        if (
+            can_convert_to_physical_data_model is True
+            and self.data_model_store.try_get_last_conceptual_data_model
+            and ConceptualValidation(self.data_model_store.try_get_last_conceptual_data_model)
+            .validate()
+            .has_warning_type(ConversionToPhysicalModelImpossibleWarning)
+        ):
+            condition.add(f"{activity} expects conceptual data model that can be converted to physical data model")
+            suggestion.add(
+                "Read in conceptual data model and ensure that warnings that prevent conversion are resolved"
+            )
         if has_physical_data_model is False and self.data_model_store.try_get_last_physical_data_model is not None:
             condition.add(f"{activity} expects no physical data model in NEAT session")
             suggestion.add("You already have a physical data model in the session")
