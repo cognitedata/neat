@@ -344,7 +344,7 @@ class ExcelExporter(BaseExporter[VerifiedDataModel, Workbook]):
         for value_type_counter, value_type in enumerate(_DATA_TYPE_BY_DMS_TYPE.values()):
             value_type_as_str = value_type.dms._type.casefold() if role == RoleTypes.dms else value_type.xsd
             # skip types which require special handling or are surpassed by CDM
-            if value_type_as_str in ["enum", "timeseries", "sequence", "file", "json"]:
+            if value_type_as_str in ["enum", "timeseries", "sequence", "file"]:
                 continue
             workbook[self._helper_sheet_name].cell(
                 row=value_type_counter + 1,
