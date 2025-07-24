@@ -70,13 +70,15 @@ class ConceptualValidation:
     def _physical_data_model_conversion(self) -> None:
         """Check if the conceptual data model has issues that will likely lead
         to problems when converting to a physical data model."""
-        if (
-            self.issue_list.has_warning_type(ConceptOnlyDataModelWarning)
-            or self.issue_list.has_warning_type(ResourceRegexViolationWarning)
-            or self.issue_list.has_warning_type(ResourceNotDefinedWarning)
-            or self.issue_list.has_warning_type(UndefinedConceptWarning)
-            or self.issue_list.has_warning_type(DanglingPropertyWarning)
-        ):
+        warning_types_preventing_conversion = [
+            ConceptOnlyDataModelWarning,
+            ResourceRegexViolationWarning,
+            ResourceNotDefinedWarning,
+            UndefinedConceptWarning,
+            DanglingPropertyWarning,
+        ]
+
+        if any(self.issue_list.has_warning_type(warning_type) for warning_type in warning_types_preventing_conversion):
             self.issue_list.append_if_not_exist(ConversionToPhysicalModelImpossibleWarning())
 
     def _concept_only_data_model(self) -> None:
