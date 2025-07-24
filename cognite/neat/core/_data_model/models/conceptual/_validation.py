@@ -69,10 +69,8 @@ class ConceptualValidation:
 
     def _physical_data_model_conversion(self) -> None:
         if (
-            (
-                self.issue_list.has_warning_type(ConceptOnlyDataModelWarning)
-                and self.issue_list.has_warning_type(ResourceRegexViolationWarning)
-            )
+            self.issue_list.has_warning_type(ConceptOnlyDataModelWarning)
+            or self.issue_list.has_warning_type(ResourceRegexViolationWarning)
             or self.issue_list.has_warning_type(ResourceNotDefinedWarning)
             or self.issue_list.has_warning_type(UndefinedConceptWarning)
             or self.issue_list.has_warning_type(DanglingPropertyWarning)
