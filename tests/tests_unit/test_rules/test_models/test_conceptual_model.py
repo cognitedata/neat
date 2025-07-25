@@ -35,7 +35,12 @@ from cognite.neat.core._issues._base import MultiValueError
 from cognite.neat.core._issues._contextmanagers import catch_issues
 from cognite.neat.core._issues.errors import ResourceNotDefinedError
 from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
-from cognite.neat.core._issues.warnings._models import ConceptOnlyDataModelWarning, DanglingPropertyWarning
+from cognite.neat.core._issues.warnings._models import (
+    ConceptOnlyDataModelWarning,
+    ConversionToPhysicalModelImpossibleWarning,
+    DanglingPropertyWarning,
+    UndefinedConceptWarning,
+)
 
 
 def case_insensitive_value_types():
@@ -328,8 +333,9 @@ class TestInformationRules:
             _ = VerifyAnyDataModel(validate=True).transform(input_rules)
 
         assert not issues.has_errors
-        assert len(issues) == 3
-        assert len([issue for issue in issues if isinstance(issue, ConceptOnlyDataModelWarning)]) == 1
+        assert issues.has_warning_type(ConceptOnlyDataModelWarning)
+        assert issues.has_warning_type(ConversionToPhysicalModelImpossibleWarning)
+        assert issues.has_warning_type(UndefinedConceptWarning)
 
     def test_load_valid_jon_rules(self, david_spreadsheet: dict[str, dict[str, Any]]) -> None:
         valid_rules = ConceptualDataModel.model_validate(UnverifiedConceptualDataModel.load(david_spreadsheet).dump())

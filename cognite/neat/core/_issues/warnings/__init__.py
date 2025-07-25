@@ -23,6 +23,7 @@ from ._general import (
 from ._models import (
     BreakingModelingPrincipleWarning,
     CDFNotSupportedWarning,
+    ConversionToPhysicalModelImpossibleWarning,
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
     PrincipleMatchingSpaceAndVersionWarning,
@@ -58,6 +59,7 @@ __all__ = [
     "CDFAuthWarning",
     "CDFMaxIterationsWarning",
     "CDFNotSupportedWarning",
+    "ConversionToPhysicalModelImpossibleWarning",
     "DeprecatedWarning",
     "FileItemNotSupportedWarning",
     "FileMissingRequiredFieldWarning",

@@ -173,6 +173,7 @@ class NeatSession:
             "Convert to physical",
             has_physical_data_model=False,
             has_conceptual_data_model=True,
+            can_convert_to_physical_data_model=True,
         )
         converter = ConceptualToPhysical(reserved_properties=reserved_properties, client=self._state.client)
 
