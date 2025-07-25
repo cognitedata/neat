@@ -26,6 +26,7 @@ from ._converters import (
     ToSolutionModel,
 )
 from ._mapping import AsParentPropertyId, MapOneToOne, PhysicalDataModelMapper
+from ._union_conceptual import UnionConceptualDataModel
 from ._verification import (
     VerifyAnyDataModel,
     VerifyConceptualDataModel,
@@ -61,6 +62,7 @@ __all__ = [
     "ToEnterpriseModel",
     "ToExtensionModel",
     "ToSolutionModel",
+    "UnionConceptualDataModel",
     "VerifiedDataModelTransformer",
     "VerifyAnyDataModel",
     "VerifyConceptualDataModel",
