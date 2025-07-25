@@ -1,6 +1,7 @@
 from ._base import BaseImporter
 from ._dict2data_model import DictImporter
 from ._dms2data_model import DMSImporter
+from ._graph2data_model import GraphImporter
 from ._rdf import InferenceImporter, OWLImporter, SubclassInferenceImporter
 from ._spreadsheet2data_model import ExcelImporter
 
@@ -9,13 +10,20 @@ __all__ = [
     "DMSImporter",
     "DictImporter",
     "ExcelImporter",
+    "GraphImporter",
     "InferenceImporter",
     "OWLImporter",
     "SubclassInferenceImporter",
 ]
 
 DataModelImporters = (
-    OWLImporter | DMSImporter | ExcelImporter | DictImporter | InferenceImporter | SubclassInferenceImporter
+    OWLImporter
+    | DMSImporter
+    | ExcelImporter
+    | DictImporter
+    | InferenceImporter
+    | SubclassInferenceImporter
+    | GraphImporter
 )
 
 
