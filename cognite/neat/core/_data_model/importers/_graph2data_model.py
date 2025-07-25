@@ -48,15 +48,15 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         data_model_id: The data model id to be used for the imported rules.
     """
 
-    _ordered_concepts_query = """SELECT DISTINCT ?concept (count(?s) as ?instances )
+    _ORDERED_CONCEPTS_QUERY = """SELECT DISTINCT ?concept (count(?s) as ?instances )
                            WHERE { ?s a ?concept }
                            group by ?concept order by DESC(?instances)"""
 
-    _type_parent_query = f"""SELECT ?parent ?type
+    _TYPE_PARENT_QUERY = f"""SELECT ?parent ?type
                             WHERE {{ ?s a ?type .
                             ?type <{RDFS.subClassOf}> ?parent }}"""
 
-    _properties_query = """SELECT DISTINCT ?property ?valueType
+    _PROPERTIES_QUERY = """SELECT DISTINCT ?property ?valueType
                          WHERE {{
                             ?s a <{type}> .
                             ?s ?property ?object .
@@ -69,7 +69,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                             )
                         }}"""
 
-    _max_occurrence_query = """SELECT (MAX(?count) AS ?maxCount)
+    _MAX_OCCURRENCE_QUERY = """SELECT (MAX(?count) AS ?maxCount)
                             WHERE {{
                               {{
                                 SELECT ?subject (COUNT(?object) AS ?count)
@@ -109,7 +109,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
 
         prefixes: dict[str, Namespace] = {}
         concepts, properties = self._create_concepts_properties(read_properties, prefixes)
-        read_context: dict[str, object] = {"inferred_from": count_by_type}
+        read_context: dict[str, dict[URIRef, int]] = {"inferred_from": count_by_type}
 
         return ImportedDataModel(
             UnverifiedConceptualDataModel(
@@ -123,7 +123,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
 
     def _read_parent_by_child_from_graph(self) -> dict[URIRef, URIRef]:
         parent_by_child: dict[URIRef, URIRef] = {}
-        for result_row in self.store.dataset.query(self._type_parent_query):
+        for result_row in self.store.dataset.query(self._TYPE_PARENT_QUERY):
             parent_uri, child_uri = cast(tuple[URIRef, URIRef], result_row)
             parent_by_child[child_uri] = parent_uri
         return parent_by_child
@@ -131,7 +131,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
     def _read_types_with_counts_from_graph(self) -> dict[URIRef, int]:
         count_by_type: dict[URIRef, int] = {}
         # Reads all types and their instance counts from the graph
-        for result_row in self.store.dataset.query(self._ordered_concepts_query):
+        for result_row in self.store.dataset.query(self._ORDERED_CONCEPTS_QUERY):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
         return count_by_type
@@ -147,12 +147,12 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
             iterable = iterate_progress_bar(iterable, len(count_by_type), "Inferring types...")  # type: ignore[assignment]
 
         for type_uri, instance_count in iterable:
-            property_query = self._properties_query.format(type=type_uri, unknown_type=NEAT.UnknownType)
+            property_query = self._PROPERTIES_QUERY.format(type=type_uri, unknown_type=NEAT.UnknownType)
             for result_row in self.store.dataset.query(property_query):
                 property_uri, value_type_uri = cast(tuple[URIRef, URIRef], result_row)
                 if property_uri == RDF.type:
                     continue
-                occurrence_query = self._max_occurrence_query.format(type=type_uri, property=property_uri)
+                occurrence_query = self._MAX_OCCURRENCE_QUERY.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
                 occurrence_row, *_ = list(self.store.dataset.query(occurrence_query))
                 if occurrence_row:
@@ -261,8 +261,6 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
             if namespace not in prefixes:
                 prefixes[namespace] = Namespace(namespace)
             return suffix
-        elif len(value_types) == 0:
-            return UnknownEntity()
         uri_refs: list[str] = []
         for uri_ref in value_types:
             if uri_ref == NEAT.UnknownType:
