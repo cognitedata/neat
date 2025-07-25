@@ -18,52 +18,37 @@ from cognite.neat.core._data_model.models.entities import ConceptEntity, MultiVa
 from cognite.neat.core._data_model.transformers import UnionConceptualDataModel
 
 
-def merge_model_test_cases() -> Iterable:
+def union_model_test_cases() -> Iterable:
     metadata = UnverifiedConceptualMetadata("my_space", "my_model", "v1", "doctrino")
 
     single_cls1 = UnverifiedConceptualDataModel(
         metadata=metadata,
-        concepts=[UnverifiedConcept("PrimaryClass")],
-        properties=[UnverifiedConceptualProperty("PrimaryClass", "primary_property", "text")],
+        concepts=[UnverifiedConcept("PrimaryConcept")],
+        properties=[UnverifiedConceptualProperty("PrimaryConcept", "primary_property", "text")],
     )
     single_cls2 = UnverifiedConceptualDataModel(
         metadata=metadata,
-        concepts=[UnverifiedConcept("SecondaryClass")],
-        properties=[UnverifiedConceptualProperty("SecondaryClass", "secondary_property", "text")],
+        concepts=[UnverifiedConcept("SecondaryConcept")],
+        properties=[UnverifiedConceptualProperty("SecondaryConcept", "secondary_property", "text")],
     )
     combined = UnverifiedConceptualDataModel(
         metadata=metadata,
-        concepts=[UnverifiedConcept("PrimaryClass"), UnverifiedConcept("SecondaryClass")],
+        concepts=[UnverifiedConcept("PrimaryConcept"), UnverifiedConcept("SecondaryConcept")],
         properties=[
-            UnverifiedConceptualProperty("PrimaryClass", "primary_property", "text"),
-            UnverifiedConceptualProperty("SecondaryClass", "secondary_property", "text"),
+            UnverifiedConceptualProperty("PrimaryConcept", "primary_property", "text"),
+            UnverifiedConceptualProperty("SecondaryConcept", "secondary_property", "text"),
         ],
     )
 
     yield pytest.param(
         single_cls1,
         single_cls2,
-        {"join": "primary", "priority": "primary", "conflict_resolution": "priority"},
-        single_cls1,
-        id="Merge with primary only",
-    )
-    yield pytest.param(
-        single_cls1,
-        single_cls2,
-        {"join": "secondary", "priority": "primary", "conflict_resolution": "priority"},
-        single_cls2,
-        id="Merge with secondary only",
-    )
-    yield pytest.param(
-        single_cls1,
-        single_cls2,
-        {"join": "combined", "priority": "primary", "conflict_resolution": "priority"},
         combined,
-        id="Merge with combined",
+        id="Union of two single class models",
     )
 
 
-def merge_properties_test_cases() -> Iterable:
+def union_properties_test_cases() -> Iterable:
     cls_ = ConceptEntity.load("my_space:Car")
     first = ConceptualProperty(concept=cls_, property_="my_property", value_type=dt.String(), min_count=0, max_count=1)
     second = ConceptualProperty(
@@ -86,7 +71,7 @@ def merge_properties_test_cases() -> Iterable:
             max_count=1,
             instance_source=[URIRef("my_source")],
         ),
-        id="Merge with priority",
+        id="Union with priority",
     )
     yield pytest.param(
         first,
@@ -100,11 +85,11 @@ def merge_properties_test_cases() -> Iterable:
             max_count=5,
             instance_source=[URIRef("my_source")],
         ),
-        id="Merge with combined",
+        id="Union with combined",
     )
 
 
-def merge_classes_test_cases() -> Iterable:
+def union_concepts_test_cases() -> Iterable:
     cls_ = ConceptEntity.load("my_space:Car")
     first = Concept(concept=cls_, implements=[ConceptEntity.load("my_space:Vehicle")])
     second = Concept(
@@ -115,7 +100,7 @@ def merge_classes_test_cases() -> Iterable:
         second,
         {"conflict_resolution": "priority"},
         Concept(concept=cls_, implements=[ConceptEntity.load("my_space:Vehicle")], instance_source=URIRef("my_source")),
-        id="Merge with priority",
+        id="Union with priority",
     )
     yield pytest.param(
         first,
@@ -126,31 +111,30 @@ def merge_classes_test_cases() -> Iterable:
             implements=[ConceptEntity.load("my_space:Vehicle"), ConceptEntity.load("my_space:Thing")],
             instance_source=URIRef("my_source"),
         ),
-        id="Merge with combined",
+        id="Union with combined",
     )
 
 
-class TestMergeConceptual:
-    @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_model_test_cases()))
-    def test_merge_models(
+class TestUnionConceptual:
+    @pytest.mark.parametrize("primary, secondary, expected", list(union_model_test_cases()))
+    def test_union_models(
         self,
         primary: UnverifiedConceptualDataModel,
         secondary: UnverifiedConceptualDataModel,
-        args: dict[str, object],
         expected: UnverifiedConceptualDataModel,
     ):
         primary_model = primary.as_verified_data_model()
         secondary_model = secondary.as_verified_data_model()
         expected_model = expected.as_verified_data_model()
 
-        transformer = UnionConceptualDataModel(secondary_model, **args)
-        merged = transformer.transform(primary_model)
+        transformer = UnionConceptualDataModel(primary_model)
+        union = transformer.transform(secondary_model)
 
         exclude = {"metadata": {"created", "updated"}}
-        assert merged.dump(exclude=exclude) == expected_model.dump(exclude=exclude)
+        assert union.dump(exclude=exclude) == expected_model.dump(exclude=exclude)
 
-    @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_properties_test_cases()))
-    def test_merge_properties(
+    @pytest.mark.parametrize("primary, secondary, args, expected", list(union_properties_test_cases()))
+    def test_union_properties(
         self,
         primary: ConceptualProperty,
         secondary: ConceptualProperty,
@@ -161,8 +145,8 @@ class TestMergeConceptual:
 
         assert actual.model_dump() == expected.model_dump()
 
-    @pytest.mark.parametrize("primary, secondary, args, expected", list(merge_classes_test_cases()))
-    def test_merge_classes(
+    @pytest.mark.parametrize("primary, secondary, args, expected", list(union_concepts_test_cases()))
+    def test_union_concepts(
         self,
         primary: Concept,
         secondary: Concept,
@@ -221,18 +205,18 @@ class TestMergeConceptual:
             pytest.param(
                 UnknownEntity(),
                 dt.String(),
-                UnknownEntity(),
-                id="UnknownEntity and DataType -> UnknownEntity",
+                dt.String(),
+                id="UnknownEntity and DataType -> DataType",
             ),
             pytest.param(
                 dt.String(),
                 UnknownEntity(),
-                UnknownEntity(),
-                id="DataType and UnknownEntity -> UnknownEntity",
+                dt.String(),
+                id="DataType and UnknownEntity -> DataType",
             ),
         ],
     )
-    def test_merge_value_type(
+    def test_union_value_type(
         self,
         primary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
         secondary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
@@ -242,7 +226,7 @@ class TestMergeConceptual:
 
         assert actual.model_dump() == expected.model_dump()
 
-    def test_merge_two_concepts_and_properties_from_different_models(self):
+    def test_union_two_concepts_and_properties_from_different_models(self):
         car_concept = UnverifiedConcept("Car")
         car_property = UnverifiedConceptualProperty(
             "Car", "brand", "text", name="Brand", description="The brand of the car", min_count=1, max_count=1
@@ -263,16 +247,14 @@ class TestMergeConceptual:
             properties=SheetList([car_property2, car_property3]),
         ).as_verified_data_model()
 
-        # Merge with combined join
-        transformer = UnionConceptualDataModel(
-            model2, join="combined", priority="secondary", conflict_resolution="combined"
-        )
-        merged = transformer.transform(model1)
+        # Union with combined join
+        transformer = UnionConceptualDataModel(model1)
+        union = transformer.transform(model2)
 
         # Should contain both concepts and both properties
-        merged_concepts = {c.concept.suffix for c in merged.concepts}
-        property_names = {(p.concept.suffix, p.property_): p for p in merged.properties}
-        assert merged_concepts == {"Car", "Vehicle"}
+        union_concepts = {c.concept.suffix for c in union.concepts}
+        property_names = {(p.concept.suffix, p.property_): p for p in union.properties}
+        assert union_concepts == {"Car", "Vehicle"}
         assert set(property_names) == {("Car", "brand"), ("Car", "wheel_count")}
         brand = property_names[("Car", "brand")]
         assert brand.name == "Brand"
