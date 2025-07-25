@@ -48,9 +48,9 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         data_model_id: The data model id to be used for the imported rules.
     """
 
-    _ordered_class_query = """SELECT DISTINCT ?class (count(?s) as ?instances )
-                           WHERE { ?s a ?class }
-                           group by ?class order by DESC(?instances)"""
+    _ordered_concepts_query = """SELECT DISTINCT ?concept (count(?s) as ?instances )
+                           WHERE { ?s a ?concept }
+                           group by ?concept order by DESC(?instances)"""
 
     _type_parent_query = f"""SELECT ?parent ?type
                             WHERE {{ ?s a ?type .
@@ -105,16 +105,16 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
             )
             return ImportedDataModel(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
 
-        read_properties = self._read_class_properties_from_graph(count_by_type, parent_by_child)
+        read_properties = self._read_concept_properties_from_graph(count_by_type, parent_by_child)
 
         prefixes: dict[str, Namespace] = {}
-        classes, properties = self._create_concepts_properties(read_properties, prefixes)
+        concepts, properties = self._create_concepts_properties(read_properties, prefixes)
         read_context: dict[str, object] = {"inferred_from": count_by_type}
 
         return ImportedDataModel(
             UnverifiedConceptualDataModel(
                 metadata=metadata,
-                concepts=classes,
+                concepts=concepts,
                 properties=properties,
                 prefixes=prefixes,
             ),
@@ -131,12 +131,12 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
     def _read_types_with_counts_from_graph(self) -> dict[URIRef, int]:
         count_by_type: dict[URIRef, int] = {}
         # Reads all types and their instance counts from the graph
-        for result_row in self.store.dataset.query(self._ordered_class_query):
+        for result_row in self.store.dataset.query(self._ordered_concepts_query):
             type_uri, instance_count_literal = cast(tuple[URIRef, RdfLiteral], result_row)
             count_by_type[type_uri] = instance_count_literal.toPython()
         return count_by_type
 
-    def _read_class_properties_from_graph(
+    def _read_concept_properties_from_graph(
         self, count_by_type: dict[URIRef, int], parent_by_child: dict[URIRef, URIRef]
     ) -> list[_ReadProperties]:
         read_properties: list[_ReadProperties] = []
@@ -173,52 +173,52 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
     def _create_concepts_properties(
         self, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
     ) -> tuple[list[UnverifiedConcept], list[UnverifiedConceptualProperty]]:
-        classes: list[UnverifiedConcept] = []
+        concepts: list[UnverifiedConcept] = []
         properties: list[UnverifiedConceptualProperty] = []
 
         # Help for IDE
         type_uri: URIRef
         parent_uri: URIRef
-        for parent_uri, parent_class_properties_iterable in itertools.groupby(
+        for parent_uri, parent_concepts_properties_iterable in itertools.groupby(
             sorted(read_properties, key=lambda x: x.parent_uri or NEAT.EmptyType),
             key=lambda x: x.parent_uri or NEAT.EmptyType,
         ):
             parent_str: str | None = None
             if parent_uri != NEAT.EmptyType:
                 parent_str, parent_cls = self._create_concept(parent_uri, set_instance_source=False, prefixes=prefixes)
-                classes.append(parent_cls)
+                concepts.append(parent_cls)
 
-            properties_by_class_by_property = self._get_properties_by_class_by_property(
-                parent_class_properties_iterable
+            properties_by_concept_by_property = self._get_properties_by_concept_by_property(
+                parent_concepts_properties_iterable
             )
-            for type_uri, properties_by_property_uri in properties_by_class_by_property.items():
-                class_str, class_ = self._create_concept(
+            for type_uri, properties_by_property_uri in properties_by_concept_by_property.items():
+                concept_str, concept = self._create_concept(
                     type_uri, set_instance_source=True, prefixes=prefixes, implements=parent_str
                 )
-                classes.append(class_)
+                concepts.append(concept)
                 for property_uri, read_properties in properties_by_property_uri.items():
                     namespace, property_suffix = split_uri(property_uri)
                     if namespace not in prefixes:
                         prefixes[namespace] = Namespace(namespace)
                     properties.append(
                         self._create_property(
-                            read_properties, class_str, property_uri, urllib.parse.unquote(property_suffix), prefixes
+                            read_properties, concept_str, property_uri, urllib.parse.unquote(property_suffix), prefixes
                         )
                     )
-        return classes, properties
+        return concepts, properties
 
     @staticmethod
-    def _get_properties_by_class_by_property(
-        parent_class_properties_iterable: Iterable[_ReadProperties],
+    def _get_properties_by_concept_by_property(
+        parent_concept_properties_iterable: Iterable[_ReadProperties],
     ) -> dict[URIRef, dict[URIRef, list[_ReadProperties]]]:
-        properties_by_class_by_property: dict[URIRef, dict[URIRef, list[_ReadProperties]]] = {}
-        for class_uri, class_properties_iterable in itertools.groupby(
-            sorted(parent_class_properties_iterable, key=lambda x: x.type_uri), key=lambda x: x.type_uri
+        properties_by_concept_by_property: dict[URIRef, dict[URIRef, list[_ReadProperties]]] = {}
+        for concept_uri, concept_properties_iterable in itertools.groupby(
+            sorted(parent_concept_properties_iterable, key=lambda x: x.type_uri), key=lambda x: x.type_uri
         ):
-            properties_by_class_by_property[class_uri] = defaultdict(list)
-            for read_prop in class_properties_iterable:
-                properties_by_class_by_property[class_uri][read_prop.property_uri].append(read_prop)
-        return properties_by_class_by_property
+            properties_by_concept_by_property[concept_uri] = defaultdict(list)
+            for read_prop in concept_properties_iterable:
+                properties_by_concept_by_property[concept_uri][read_prop.property_uri].append(read_prop)
+        return properties_by_concept_by_property
 
     @staticmethod
     def _create_concept(
@@ -227,15 +227,15 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         namespace, suffix = split_uri(type_uri)
         if namespace not in prefixes:
             prefixes[namespace] = Namespace(namespace)
-        class_str = urllib.parse.unquote(suffix)
-        return class_str, UnverifiedConcept(
-            concept=class_str, implements=implements, instance_source=type_uri if set_instance_source else None
+        concept_str = urllib.parse.unquote(suffix)
+        return concept_str, UnverifiedConcept(
+            concept=concept_str, implements=implements, instance_source=type_uri if set_instance_source else None
         )
 
     def _create_property(
         self,
         read_properties: list[_ReadProperties],
-        class_str: str,
+        concept_str: str,
         property_uri: URIRef,
         property_id: str,
         prefixes: dict[str, Namespace],
@@ -243,7 +243,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         first = read_properties[0]
         value_type = self._get_value_type(read_properties, prefixes)
         return UnverifiedConceptualProperty(
-            concept=class_str,
+            concept=concept_str,
             property_=property_id,
             max_count=first.max_occurrence,
             value_type=value_type,
