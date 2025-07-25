@@ -154,9 +154,9 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                     continue
                 occurrence_query = self._MAX_OCCURRENCE_QUERY.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
-                occurrence_row, *_ = list(self.store.dataset.query(occurrence_query))
-                if occurrence_row:
-                    max_occurrence_literal, *__ = cast(tuple[RdfLiteral, Any], occurrence_row)
+                occurrence_results = list(self.store.dataset.query(occurrence_query))
+                if occurrence_results and occurrence_results[0] and occurrence_results[0][0]:
+                    max_occurrence_literal = cast(RdfLiteral, occurrence_results[0][0])
                     max_occurrence = int(max_occurrence_literal.toPython())
                 read_properties.append(
                     _ReadProperties(
