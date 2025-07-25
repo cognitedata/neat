@@ -26,10 +26,10 @@ class UnionConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
         secondary_model = data_model
 
         output = primary_model.model_copy(deep=True)
-        secondary_classes = {cls.concept: cls for cls in secondary_model.concepts}
+        secondary_concepts = {cls.concept: cls for cls in secondary_model.concepts}
         secondary_properties = {(prop.concept, prop.property_): prop for prop in secondary_model.properties}
 
-        union_concepts_by_id = self._union_concepts(output.concepts, secondary_classes)
+        union_concepts_by_id = self._union_concepts(output.concepts, secondary_concepts)
         output.concepts = SheetList[Concept](union_concepts_by_id.values())
 
         union_properties = self._union_properties(
@@ -42,21 +42,21 @@ class UnionConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
     def _union_concepts(
         self, primary_concepts: Iterable[Concept], new_concepts: dict[ConceptEntity, Concept]
     ) -> dict[ConceptEntity, Concept]:
-        union_classes = {cls.concept: cls for cls in primary_concepts}
-        for concept, primary_concept in union_classes.items():
+        union_concepts = {cls.concept: cls for cls in primary_concepts}
+        for concept, primary_concept in union_concepts.items():
             if concept not in new_concepts:
                 continue
             secondary_concept = new_concepts[concept]
-            union_classes[concept] = self.union_concepts(
+            union_concepts[concept] = self.union_concepts(
                 primary=primary_concept,
                 secondary=secondary_concept,
                 conflict_resolution="combined",
             )
 
         for concept, secondary_concept in new_concepts.items():
-            if concept not in union_classes:
-                union_classes[concept] = secondary_concept
-        return union_classes
+            if concept not in union_concepts:
+                union_concepts[concept] = secondary_concept
+        return union_concepts
 
     def _union_properties(
         self,
@@ -87,8 +87,18 @@ class UnionConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
         secondary: Concept,
         conflict_resolution: Literal["priority", "combined"] = "priority",
     ) -> Concept:
-        # Combined = merge implements for both classes
-        # Priority = keep the primary with fallback to secondary
+        """Union two concepts.
+
+        Args:
+            primary (Concept): The primary concept.
+            secondary (Concept): The secondary concept.
+            conflict_resolution (Literal["priority", "combined"]): How to resolve conflicts:
+                - "priority": Keep the primary concept with fallback to the secondary.
+                - "combined": Merge implements from both concepts. (only applies to implements)
+        Returns:
+            Concept: The union of the two concepts.
+
+        """
         if conflict_resolution == "combined":
             all_implements = (primary.implements or []) + (secondary.implements or [])
             implements = list(dict.fromkeys(all_implements))
@@ -112,8 +122,18 @@ class UnionConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
         secondary: ConceptualProperty,
         conflict_resolution: Literal["priority", "combined"] = "priority",
     ) -> ConceptualProperty:
-        # Combined = merge value types and instance sources
-        # Priority = keep the primary with fallback to secondary
+        """Union two conceptual properties.
+
+        Args:
+            primary (ConceptualProperty): The primary property.
+            secondary (ConceptualProperty): The secondary property.
+            conflict_resolution (Literal["priority", "combined"]): How to resolve conflicts:
+                - "priority": Keep the primary property with fallback to the secondary.
+                - "combined": Merge value types and instance sources.
+        Returns:
+            ConceptualProperty: The union of the two properties.
+
+        """
         if conflict_resolution == "combined":
             all_sources = (primary.instance_source or []) + (secondary.instance_source or [])
             instance_source = list(dict.fromkeys(all_sources))
