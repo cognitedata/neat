@@ -78,14 +78,14 @@ class ConceptualValidation:
             DanglingPropertyWarning,
         ]
 
-        if seen_warnings := [
-            warning_type.__name__
-            for warning_type in warning_types_preventing_conversion
-            if self.issue_list.has_warning_type(warning_type)
-        ]:
-            self.issue_list.append_if_not_exist(
-                ConversionToPhysicalModelImpossibleWarning(issue_types=", ".join(seen_warnings))
-            )
+        if seen_warnings := frozenset(
+            [
+                warning_type.__name__
+                for warning_type in warning_types_preventing_conversion
+                if self.issue_list.has_warning_type(warning_type)
+            ]
+        ):
+            self.issue_list.append_if_not_exist(ConversionToPhysicalModelImpossibleWarning(issue_types=seen_warnings))
 
     def _concept_only_data_model(self) -> None:
         """Check if the data model only consists of concepts without any properties."""

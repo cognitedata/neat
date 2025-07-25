@@ -114,7 +114,7 @@ class ConversionToPhysicalModelImpossibleWarning(UserModelingWarning):
     """Conceptual data model has {issue_types} that will lead to problems when converting to a physical data model."""
 
     fix = "Fix the issues in the conceptual data model before attempting to convert it to a physical data model."
-    issue_types: str
+    issue_types: frozenset[str]
 
 
 @dataclass(unsafe_hash=True)
