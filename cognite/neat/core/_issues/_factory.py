@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import cast
 from warnings import WarningMessage
 
@@ -9,10 +10,8 @@ from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from .errors import NeatValueError, SpreadsheetError
 
 
-def from_pydantic_errors(
-    errors: list[ErrorDetails], read_info_by_sheet: dict[str, SpreadsheetRead] | None = None
-) -> list[NeatError]:
-    read_info_by_sheet = read_info_by_sheet or {}
+def from_pydantic_errors(errors: list[ErrorDetails], context: Mapping[str, object] | None = None) -> list[NeatError]:
+    read_info_by_sheet = {key: value for key, value in (context or {}).items() if isinstance(value, SpreadsheetRead)}
     return [
         _from_pydantic_error(error, read_info_by_sheet)
         for error in errors

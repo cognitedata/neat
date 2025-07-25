@@ -1,5 +1,6 @@
 import itertools
 from collections import Counter, defaultdict
+from collections.abc import Iterable, Mapping
 
 from cognite.neat.core._constants import get_base_concepts
 from cognite.neat.core._data_model._constants import PATTERNS, EntityTypes
@@ -34,14 +35,16 @@ class ConceptualValidation:
     def __init__(
         self,
         data_model: ConceptualDataModel,
-        read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+        context: Mapping[str, object] | None = None,
     ):
         # import here to avoid circular import issues
         from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
 
         self.data_model = data_model
         self.analysis = DataModelAnalysis(self.data_model)
-        self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
+        self._read_info_by_spreadsheet = {
+            key: value for key, value in (context or {}).items() if isinstance(value, SpreadsheetRead)
+        }
         self._metadata = data_model.metadata
         self._properties = data_model.properties
         self._concepts = data_model.concepts
