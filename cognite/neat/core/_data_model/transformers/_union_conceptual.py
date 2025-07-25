@@ -89,13 +89,12 @@ class UnionConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
     ) -> Concept:
         # Combined = merge implements for both classes
         # Priority = keep the primary with fallback to secondary
-        implements = (primary.implements or secondary.implements or []).copy()
         if conflict_resolution == "combined":
-            seen = set(implements)
-            for cls_ in secondary.implements or []:
-                if cls_ not in seen:
-                    seen.add(cls_)
-                    implements.append(cls_)
+            all_implements = (primary.implements or []) + (secondary.implements or [])
+            implements = list(dict.fromkeys(all_implements))
+        else:
+            implements = (primary.implements or secondary.implements or []).copy()
+
         return Concept(
             neatId=primary.neatId,
             concept=primary.concept,
@@ -115,13 +114,11 @@ class UnionConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
     ) -> ConceptualProperty:
         # Combined = merge value types and instance sources
         # Priority = keep the primary with fallback to secondary
-        instance_source = (primary.instance_source or secondary.instance_source or []).copy()
         if conflict_resolution == "combined":
-            seen = set(instance_source)
-            for source in secondary.instance_source or []:
-                if source not in seen:
-                    seen.add(source)
-                    instance_source.append(source)
+            all_sources = (primary.instance_source or []) + (secondary.instance_source or [])
+            instance_source = list(dict.fromkeys(all_sources))
+        else:
+            instance_source = (primary.instance_source or secondary.instance_source or []).copy()
 
         use_primary = conflict_resolution == "priority"
         return ConceptualProperty(
@@ -171,25 +168,18 @@ class UnionConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel,
         primary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
         secondary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
     ) -> DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity:
-        # We use a set and list to preserve the order of the types
-        # and to avoid duplicates
-        seen_types: set[DataType | ConceptEntity] = set()
-        ordered_types: list[DataType | ConceptEntity] = []
+        all_types: list[DataType | ConceptEntity] = []
         for type_ in (primary, secondary):
-            if isinstance(type_, UnknownEntity):
-                # If any of the types is UnknownEntity, we skip it.
+            if isinstance(type_, MultiValueTypeInfo):
+                all_types.extend(type_.types)
+            elif isinstance(type_, UnknownEntity):
                 continue
-            elif isinstance(type_, MultiValueTypeInfo):
-                for t in type_.types:
-                    if t not in seen_types:
-                        seen_types.add(t)
-                        ordered_types.append(t)
-            elif isinstance(type_, ConceptEntity | DataType):
-                if type_ not in seen_types:
-                    seen_types.add(type_)
-                    ordered_types.append(type_)
+            elif isinstance(type_, DataType | ConceptEntity):
+                all_types.append(type_)
             else:
                 raise NotImplementedError(f"Unsupported type: {type_}")
+
+        ordered_types = list(dict.fromkeys(all_types))
         if len(ordered_types) == 0:
             return UnknownEntity()
         if len(ordered_types) == 1:
