@@ -15,7 +15,7 @@ from cognite.neat.core._data_model.models.conceptual import (
 )
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ConceptEntity, MultiValueTypeInfo, UnknownEntity
-from cognite.neat.core._data_model.transformers import MergeConceptualDataModel
+from cognite.neat.core._data_model.transformers import UnionConceptualDataModel
 
 
 def merge_model_test_cases() -> Iterable:
@@ -143,7 +143,7 @@ class TestMergeConceptual:
         secondary_model = secondary.as_verified_data_model()
         expected_model = expected.as_verified_data_model()
 
-        transformer = MergeConceptualDataModel(secondary_model, **args)
+        transformer = UnionConceptualDataModel(secondary_model, **args)
         merged = transformer.transform(primary_model)
 
         exclude = {"metadata": {"created", "updated"}}
@@ -157,7 +157,7 @@ class TestMergeConceptual:
         args: dict[str, object],
         expected: ConceptualProperty,
     ) -> None:
-        actual = MergeConceptualDataModel.merge_properties(primary, secondary, **args)
+        actual = UnionConceptualDataModel.union_properties(primary, secondary, **args)
 
         assert actual.model_dump() == expected.model_dump()
 
@@ -169,7 +169,7 @@ class TestMergeConceptual:
         args: dict[str, object],
         expected: Concept,
     ) -> None:
-        actual = MergeConceptualDataModel.merge_classes(primary, secondary, **args)
+        actual = UnionConceptualDataModel.union_concepts(primary, secondary, **args)
 
         assert actual.model_dump() == expected.model_dump()
 
@@ -238,7 +238,7 @@ class TestMergeConceptual:
         secondary: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
         expected: DataType | ConceptEntity | MultiValueTypeInfo | UnknownEntity,
     ) -> None:
-        actual = MergeConceptualDataModel.merge_value_type(primary, secondary)
+        actual = UnionConceptualDataModel.union_value_type(primary, secondary)
 
         assert actual.model_dump() == expected.model_dump()
 
@@ -264,7 +264,7 @@ class TestMergeConceptual:
         ).as_verified_data_model()
 
         # Merge with combined join
-        transformer = MergeConceptualDataModel(
+        transformer = UnionConceptualDataModel(
             model2, join="combined", priority="secondary", conflict_resolution="combined"
         )
         merged = transformer.transform(model1)
