@@ -5,7 +5,8 @@ from typing import Any
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._utils.reader._base import NeatReader
 from cognite.neat.plugins import get_plugin_manager
-from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlugin
+from cognite.neat.plugins.data_model.importers import DataModelImporterPlugin
+from cognite.neat.plugins.data_model.transformers import DataModelTransformerPlugin
 from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
@@ -44,7 +45,7 @@ class DataModelPlugins:
         warnings.filterwarnings("default")
         ExperimentalFlags.plugin.warn()
 
-        # Some plugins may not support the io argument
+        # Some plugins may not require the io argument
         if io:
             reader = NeatReader.create(io)
             path = reader.materialize_path()
@@ -65,3 +66,31 @@ class DataModelPlugins:
         )
 
         return self._state.data_model_import(plugin().configure(io=path, **kwargs))
+
+    def transform(self, name: str, io: str | Path | None = None, **kwargs: Any) -> IssueList:
+        warnings.filterwarnings("default")
+        ExperimentalFlags.plugin.warn()
+
+        # Some plugins may not require the io argument
+        if io:
+            reader = NeatReader.create(io)
+            path = reader.materialize_path()
+        else:
+            path = None
+
+        plugin_manager = get_plugin_manager()
+        plugin = plugin_manager.get(name, DataModelTransformerPlugin)
+
+        self._state._raise_exception_if_condition_not_met(
+            "Data Model Transform",
+            empty_data_model_store_required=False,
+            has_conceptual_data_model=True if plugin._required_data_model == "ConceptualDataModel" else False,
+            has_physical_data_model=True if plugin._required_data_model == "PhysicalDataModel" else False,
+        )
+
+        print(
+            f"You are using an external plugin {plugin.__name__}, which is not developed by the NEAT team."
+            "\nUse it at your own risk."
+        )
+
+        return self._state.data_model_transform(plugin().configure(io=path, **kwargs))

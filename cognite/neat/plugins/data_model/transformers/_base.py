@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
-from cognite.neat.core._data_model.transformers._base import DataModelTransformer
+from cognite.neat.core._data_model.transformers import VerifiedDataModelTransformer
 
 
 class DataModelTransformerPlugin:
@@ -10,7 +10,9 @@ class DataModelTransformerPlugin:
     It is expected to implement the `configure` method which returns a configured transformer.
     """
 
-    def configure(self, io: str | Path | None, **kwargs: Any) -> DataModelTransformer:
+    _required_data_model: Literal["ConceptualDataModel", "PhysicalDataModel"] = "ConceptualDataModel"
+
+    def configure(self, io: str | Path | None, **kwargs: Any) -> VerifiedDataModelTransformer:
         """Return a configure plugin for data model transformation.
 
         Args:
@@ -21,8 +23,8 @@ class DataModelTransformerPlugin:
             BaseImporter: A configured instance of the BaseImporter.
 
         !!! note "Returns"
-            The method must return an instance of `DataModelTransformer` or its subclasses
-            meaning it must implement the `DataModelTransformer` interface.
+            The method must return an instance of `VerifiedDataModelTransformer` or its subclasses
+            meaning it must implement the `VerifiedDataModelTransformer` interface.
         """
 
         raise NotImplementedError()
