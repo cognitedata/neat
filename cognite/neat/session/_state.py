@@ -88,6 +88,10 @@ class SessionState:
             condition.add(f"{activity} expects no physical data model in NEAT session")
             suggestion.add("You already have a physical data model in the session")
             try_again = False
+        if has_physical_data_model is True and self.data_model_store.try_get_last_physical_data_model is None:
+            condition.add(f"{activity} expects physical data model in NEAT session")
+            suggestion.add("Read in physical data model to neat session")
+            try_again = False
         if empty_data_model_store_required and not self.data_model_store.empty:
             condition.add(f"{activity} expects no data model in NEAT session")
             suggestion.add("Start new session")
