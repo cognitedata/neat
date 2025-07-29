@@ -68,6 +68,18 @@ class DataModelPlugins:
         return self._state.data_model_import(plugin().configure(io=path, **kwargs))
 
     def transform(self, name: str, io: str | Path | None = None, **kwargs: Any) -> IssueList:
+        """Provides access to the external plugins for data model transformation.
+
+        Args:
+            name (str): The name of action (e.g. merge) plugin is handling.
+            io (str | Path | None): The input/output interface for the plugin.
+            **kwargs (Any): Additional keyword arguments for the plugin.
+
+        !!! note "kwargs"
+            Users must consult the documentation of the plugin to understand
+            what keyword arguments are supported.
+
+        """
         warnings.filterwarnings("default")
         ExperimentalFlags.plugin.warn()
 
