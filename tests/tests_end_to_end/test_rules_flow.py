@@ -1,3 +1,5 @@
+import contextlib
+import io
 from pathlib import Path
 
 import pytest
@@ -25,6 +27,20 @@ class TestImportersToYAMLExporter:
 
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
+
+    def test_prohibiting_conversion_with_nice_message(self) -> None:
+        neat = NeatSession()
+
+        neat.read.rdf.ontology(SchemaData.Conceptual.ontology_with_regex_warnings)
+
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            neat.convert()
+
+        printed_statements = output.getvalue()
+        assert printed_statements.startswith(
+            "[ERROR] Cannot convert: Convert to physical expects conceptual data model"
+        )
 
     @pytest.mark.freeze_time("2017-05-21")
     @pytest.mark.skip("Needs NEAT-608 to be completed")

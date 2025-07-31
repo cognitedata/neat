@@ -14,7 +14,7 @@ def test_ill_formed_owl_importer():
     with catch_issues() as issues:
         _ = VerifyAnyDataModel().transform(input)
 
-    assert len(issues) == 6
+    assert len(issues) == 7
     assert issues.has_errors
     assert str(issues.errors[0].identifier) == "neat_space:Award"
 
