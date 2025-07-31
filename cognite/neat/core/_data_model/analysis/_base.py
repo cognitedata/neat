@@ -348,10 +348,6 @@ class DataModelAnalysis:
         properties_by_view = self.properties_by_view(include_ancestors)
         return {prop.view for prop in itertools.chain.from_iterable(properties_by_view.values())}
 
-    def concepts(self) -> set[ConceptEntity]:
-        """Returns all concepts defined Concepts in the data model."""
-        return {concept.concept for concept in self.conceptual.concepts}
-
     def defined_concepts(
         self,
         include_ancestors: bool = False,
