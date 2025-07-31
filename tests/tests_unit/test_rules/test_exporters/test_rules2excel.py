@@ -110,6 +110,12 @@ class TestExcelExporter:
         assert expected["_helper"]["B11"].value == '=IF(ISBLANK(Concepts!A3), "", Concepts!A3)'
         assert resulted["_helper"]["B11"].value == '=IF(ISBLANK(Concepts!A3), "", Concepts!A3)'
 
+        # Get all values from the "Value Type" column in the _helper sheet
+        # Check if "json" is in the values from the "Value Type" column in the _helper sheet
+        value_type_col_idx = exporter._helper_sheet_column_indexes_by_names["Value Type"]
+        has_json = any(row[value_type_col_idx - 1].value == "json" for row in resulted["_helper"].iter_rows())
+        assert has_json, "Expected 'json' to be found in _helper sheet column C"
+
     def test_conceptual_data_model_template_fail(self):
         exporter = ExcelExporter(base_model="NeatModel")
 
