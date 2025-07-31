@@ -176,6 +176,9 @@ class ConceptualValidation:
         """Check if the value types of object properties are defined as concepts."""
 
         concepts = {concept.concept for concept in self._concepts}
+
+        # We remove UnknownEntity from the concepts to avoid false positives
+        # as `UnknownEntity` is used as a placeholder when the value type is not defined.
         value_types = {
             property_.value_type
             for property_ in self.data_model.properties
