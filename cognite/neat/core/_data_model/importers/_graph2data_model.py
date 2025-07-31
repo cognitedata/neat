@@ -155,6 +155,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                     continue
                 occurrence_query = self._MAX_OCCURRENCE_QUERY.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
+                # We know that the _MAX_OCCURRENCE_QUERY will return a ResultRow
                 occurrence_results = list(cast(ResultRow, self.store.dataset.query(occurrence_query)))
                 if occurrence_results and occurrence_results[0] and occurrence_results[0][0]:
                     max_occurrence_literal = cast(RdfLiteral, occurrence_results[0][0])
