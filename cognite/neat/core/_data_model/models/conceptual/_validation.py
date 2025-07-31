@@ -130,7 +130,7 @@ class ConceptualValidation:
 
         if candidate_concepts := concepts.difference(concepts_with_properties):
             for concept in candidate_concepts:
-                # Here we chack if at least one of the ancestors of the concept has properties
+                # Here we check if at least one of the ancestors of the concept has properties
                 if (ancestors := ancestors_by_concept.get(concept)) and (
                     len(ancestors.difference(concepts_with_properties)) != len(ancestors)
                 ):
