@@ -35,6 +35,7 @@ class ConceptualValidation:
         data_model: ConceptualDataModel,
         read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
     ):
+        # import here to avoid circular import issues
         from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
 
         self.data_model = data_model
@@ -128,9 +129,9 @@ class ConceptualValidation:
 
         if candidate_concepts := concepts.difference(concepts_with_properties):
             for concept in candidate_concepts:
-                # Here we chack if at least one of the ancestors of the concept has properties
-                if (ancestors := ancestors_by_concept.get(concept)) and (
-                    len(ancestors.difference(concepts_with_properties)) != len(ancestors)
+                # Here we check if at least one of the ancestors of the concept has properties
+                if (ancestors := ancestors_by_concept.get(concept)) and ancestors.intersection(
+                    concepts_with_properties
                 ):
                     continue
 
@@ -174,6 +175,8 @@ class ConceptualValidation:
         """Check if the value types of object properties are defined as concepts."""
 
         concepts = {concept.concept for concept in self._concepts}
+        # We remove UnknownEntity from the concepts to avoid false positives
+        # as `UnknownEntity` is used as a placeholder when the value type is not defined.
         value_types = {
             property_.value_type
             for property_ in self.data_model.properties

@@ -25,6 +25,8 @@ CLASSES_QUERY = """SELECT ?concept  ?name ?description ?implements
     }}
     """
 
+CLASSES_QUERY_PARAMETERS = {"concept", "name", "description", "implements"}
+
 PROPERTIES_QUERY = """
 
     SELECT ?concept  ?property_ ?name ?description ?value_type ?minCount ?maxCount ?default
@@ -44,34 +46,36 @@ PROPERTIES_QUERY = """
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "{language}"))
     }}
     """
+PROPERTIES_QUERY_PARAMETERS = {
+    "concept",
+    "property_",
+    "name",
+    "description",
+    "value_type",
+    "minCount",
+    "maxCount",
+    "default",
+}
 
 
 class OWLImporter(BaseRDFImporter):
     """Convert OWL ontology to unverified data model.
 
-        Args:
-            filepath: Path to OWL ontology
-
-    !!! Note
-        OWL Ontologies are information models which completeness varies. As such, constructing functional
-        data model directly will often be impossible, therefore the produced data model object will be ill formed.
-        To avoid this, neat will automatically attempt to make the imported data model compliant by adding default
-        values for missing information, attaching dangling properties to default containers based on the
-        property type, etc.
-
-        One has to be aware that NEAT will be opinionated about how to make the ontology
-        compliant, and that the resulting data model may not be what you expect.
-
+    Args:
+        filepath: Path to OWL ontology
     """
 
     def _to_data_model_components(
         self,
     ) -> dict:
-        concepts, issue_list = parse_concepts(self.graph, CLASSES_QUERY, self.language, self.issue_list)
+        concepts, issue_list = parse_concepts(
+            self.graph, CLASSES_QUERY, CLASSES_QUERY_PARAMETERS, self.language, self.issue_list
+        )
         self.issue_list = issue_list
 
-        # NeatError
-        properties, issue_list = parse_properties(self.graph, PROPERTIES_QUERY, self.language, self.issue_list)
+        properties, issue_list = parse_properties(
+            self.graph, PROPERTIES_QUERY, PROPERTIES_QUERY_PARAMETERS, self.language, self.issue_list
+        )
         self.issue_list = issue_list
 
         components = {
