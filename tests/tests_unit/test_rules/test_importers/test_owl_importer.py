@@ -63,7 +63,6 @@ def test_owl_enitity_quoting():
         ),
     }
 
-
     expected_properties = {
         "contains.Serial-Number%28ID%29%3AX~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
         "has.Relation-Type%28Generic%29%3AX~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
