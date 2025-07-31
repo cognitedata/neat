@@ -147,7 +147,7 @@ def duplicated_entries():
             ResourceDuplicatedError(
                 identifier=ConceptEntity(prefix="power", suffix="GeneratingUnit"),
                 resource_type="concept",
-                location="the Classes sheet at row 1 and 2 if data model is read from a spreadsheet.",
+                location="the Concepts sheet at row 1 and 2 if data model is read from a spreadsheet.",
             ),
         },
         id="duplicated_entries",
@@ -315,7 +315,7 @@ class TestInformationRules:
             _ = VerifyAnyDataModel(validate=True).transform(input_rules)
 
         assert not issues.has_errors
-        assert len(issues) == 4
+        assert issues.has_warning_type(DanglingPropertyWarning)
         assert len([issue for issue in issues if isinstance(issue, DanglingPropertyWarning)]) == 2
 
     @pytest.mark.parametrize("dm_dict", list(concepts_only_data_model()))
