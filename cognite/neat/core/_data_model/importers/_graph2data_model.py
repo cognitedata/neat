@@ -5,11 +5,12 @@ from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, cast
+from typing import cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import RDF, RDFS, Namespace, URIRef
 from rdflib import Literal as RdfLiteral
+from rdflib.query import ResultRow
 
 from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT
@@ -154,7 +155,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                     continue
                 occurrence_query = self._MAX_OCCURRENCE_QUERY.format(type=type_uri, property=property_uri)
                 max_occurrence = 1  # default value
-                occurrence_results = list(self.store.dataset.query(occurrence_query))
+                occurrence_results = list(cast(ResultRow, self.store.dataset.query(occurrence_query)))
                 if occurrence_results and occurrence_results[0] and occurrence_results[0][0]:
                     max_occurrence_literal = cast(RdfLiteral, occurrence_results[0][0])
                     max_occurrence = int(max_occurrence_literal.toPython())
@@ -198,8 +199,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                 concepts.append(concept)
                 for property_uri, read_properties in properties_by_property_uri.items():
                     namespace, property_suffix = split_uri(property_uri)
-                    if namespace not in prefixes:
-                        prefixes[namespace] = Namespace(namespace)
+                    (self._add_uri_namespace_to_prefixes(namespace, prefixes),)
                     properties.append(
                         self._create_property(
                             read_properties, concept_str, property_uri, urllib.parse.unquote(property_suffix), prefixes
@@ -220,13 +220,12 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                 properties_by_concept_by_property[concept_uri][read_prop.property_uri].append(read_prop)
         return properties_by_concept_by_property
 
-    @staticmethod
+    @classmethod
     def _create_concept(
-        type_uri: URIRef, set_instance_source: bool, prefixes: dict[str, Namespace], implements: str | None = None
+        cls, type_uri: URIRef, set_instance_source: bool, prefixes: dict[str, Namespace], implements: str | None = None
     ) -> tuple[str, UnverifiedConcept]:
         namespace, suffix = split_uri(type_uri)
-        if namespace not in prefixes:
-            prefixes[namespace] = Namespace(namespace)
+        cls._add_uri_namespace_to_prefixes(namespace, prefixes)
         concept_str = urllib.parse.unquote(suffix)
         return concept_str, UnverifiedConcept(
             concept=concept_str, implements=implements, instance_source=type_uri if set_instance_source else None
@@ -250,24 +249,24 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
             instance_source=[property_uri],
         )
 
-    @staticmethod
-    def _get_value_type(read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]) -> str | UnknownEntity:
+    @classmethod
+    def _get_value_type(
+        cls, read_properties: list[_ReadProperties], prefixes: dict[str, Namespace]
+    ) -> str | UnknownEntity:
         value_types = {prop.value_type for prop in read_properties}
         if len(value_types) == 1:
             uri_ref = value_types.pop()
             if uri_ref == NEAT.UnknownType:
                 return UnknownEntity()
             namespace, suffix = split_uri(uri_ref)
-            if namespace not in prefixes:
-                prefixes[namespace] = Namespace(namespace)
+            cls._add_uri_namespace_to_prefixes(namespace, prefixes)
             return suffix
         uri_refs: list[str] = []
         for uri_ref in value_types:
             if uri_ref == NEAT.UnknownType:
                 return UnknownEntity()
             namespace, suffix = split_uri(uri_ref)
-            if namespace not in prefixes:
-                prefixes[namespace] = Namespace(namespace)
+            cls._add_uri_namespace_to_prefixes(namespace, prefixes)
             uri_refs.append(suffix)
         # Sort the URIs to ensure deterministic output
         return ", ".join(sorted(uri_refs))
@@ -286,3 +285,14 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
             updated=now,
             description="Inferred model from knowledge graph",
         )
+
+    @classmethod
+    def _add_uri_namespace_to_prefixes(cls, namespace: str, prefixes: dict[str, Namespace]) -> None:
+        """Add URI to prefixes dict if not already present
+
+        Args:
+            URI: URI from which namespace is being extracted
+            prefixes: Dict of prefixes and namespaces
+        """
+        if Namespace(namespace) not in prefixes.values():
+            prefixes[f"prefix_{len(prefixes) + 1}"] = Namespace(namespace)
