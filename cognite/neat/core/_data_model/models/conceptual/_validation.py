@@ -1,6 +1,5 @@
 import itertools
 from collections import Counter, defaultdict
-from collections.abc import Iterable
 
 from cognite.neat.core._constants import get_base_concepts
 from cognite.neat.core._data_model._constants import PATTERNS, EntityTypes
@@ -24,7 +23,7 @@ from cognite.neat.core._issues.warnings._resources import (
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from cognite.neat.core._utils.text import humanize_collection
 
-from ._verified import ConceptualDataModel, ConceptualProperty
+from ._verified import ConceptualDataModel
 
 
 class ConceptualValidation:
@@ -176,7 +175,6 @@ class ConceptualValidation:
         """Check if the value types of object properties are defined as concepts."""
 
         concepts = {concept.concept for concept in self._concepts}
-
         # We remove UnknownEntity from the concepts to avoid false positives
         # as `UnknownEntity` is used as a placeholder when the value type is not defined.
         value_types = {
@@ -286,12 +284,3 @@ class ConceptualValidation:
                     "\nMake sure that each unique namespace is assigned to a unique prefix"
                 )
             )
-
-
-def duplicated_properties(
-    properties: Iterable[ConceptualProperty],
-) -> dict[tuple[ConceptEntity, str], list[tuple[int, ConceptualProperty]]]:
-    concept_properties_by_id: dict[tuple[ConceptEntity, str], list[tuple[int, ConceptualProperty]]] = defaultdict(list)
-    for prop_no, prop in enumerate(properties):
-        concept_properties_by_id[(prop.concept, prop.property_)].append((prop_no, prop))
-    return {k: v for k, v in concept_properties_by_id.items() if len(v) > 1}
