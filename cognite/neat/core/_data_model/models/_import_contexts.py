@@ -8,6 +8,9 @@ T_Value = TypeVar("T_Value")
 
 
 class ImportContext(dict, Mapping[T_Key, T_Value]):
+    def __init__(self, data: Mapping[T_Key, T_Value] | None = None) -> None:
+        super().__init__(data or {})
+
     # The below methods are included to make better type hints in the IDE
     def __getitem__(self, k: T_Key) -> T_Value:
         return super().__getitem__(k)
@@ -30,10 +33,10 @@ class ImportContext(dict, Mapping[T_Key, T_Value]):
     def items(self) -> ItemsView[T_Key, T_Value]:  # type: ignore[override]
         return super().items()
 
-    def get(self, __key: T_Key, __default: T_Value = ...) -> T_Value:  # type: ignore[override, assignment]
+    def get(self, __key: T_Key, __default: T_Value | None = None) -> T_Value:  # type: ignore[override]
         return super().get(__key, __default)
 
-    def pop(self, __key: T_Key, __default: T_Value = ...) -> T_Value:  # type: ignore[override, assignment]
+    def pop(self, __key: T_Key, __default: T_Value | None = None) -> T_Value:  # type: ignore[override]
         return super().pop(__key, __default)
 
     def popitem(self) -> tuple[T_Key, T_Value]:

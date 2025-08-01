@@ -1,13 +1,15 @@
 import warnings
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 from pydantic import ValidationError
 
-from cognite.neat.core._data_model.models._import_contexts import ImportContext
-
 from ._base import IssueList, MultiValueError, NeatError
 from ._factory import from_pydantic_errors, from_warning
+
+if TYPE_CHECKING:
+    from cognite.neat.core._data_model.models._import_contexts import ImportContext
 
 
 @contextmanager
@@ -26,7 +28,7 @@ def catch_warnings() -> Iterator[IssueList]:
 
 
 @contextmanager
-def catch_issues(context: ImportContext | None = None) -> Iterator[IssueList]:
+def catch_issues(context: "ImportContext | None" = None) -> Iterator[IssueList]:
     """This is an internal help function to handle issues and warnings.
 
     Args:
