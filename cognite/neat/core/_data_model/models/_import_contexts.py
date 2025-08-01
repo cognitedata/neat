@@ -1,6 +1,8 @@
 from collections.abc import Hashable, ItemsView, Iterator, KeysView, Mapping, ValuesView
 from typing import TypeVar
 
+from rdflib import URIRef
+
 from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 T_Key = TypeVar("T_Key", bound=Hashable)
@@ -57,3 +59,24 @@ class SpreadsheetContext(ImportContext[str, SpreadsheetRead]):
                 raise TypeError(f"Expected string key, got {type(k).__name__}")
             if not isinstance(v, SpreadsheetRead):
                 raise TypeError(f"Expected SpreadsheetRead for key '{k}', got {type(v).__name__}")
+
+
+class GraphContext(ImportContext[str, Mapping[URIRef, int]]):
+    def __init__(self, data: dict[str, Mapping[URIRef, int]] | None = None) -> None:
+        """Initialize the GraphContext with a dictionary of mappings from URIRef to int.
+
+        Args:
+            data (dict[str, Mapping[URIRef, int]]): A dictionary where keys are graph names and values are
+                mappings of URIRef to integer identifiers.
+        """
+        super().__init__(data or {})
+        for k, v in self.items():
+            if not isinstance(k, str):
+                raise TypeError(f"Expected string key, got {type(k).__name__}")
+            if not isinstance(v, Mapping):
+                raise TypeError(f"Expected Mapping[URIRef, int] for key '{k}', got {type(v).__name__}")
+            for uri, value in v.items():
+                if not isinstance(uri, URIRef):
+                    raise TypeError(f"Expected URIRef key in mapping for '{k}', got {type(uri).__name__}")
+                if not isinstance(value, int):
+                    raise TypeError(f"Expected int value in mapping for '{k}', got {type(value).__name__}")
