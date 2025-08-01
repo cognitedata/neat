@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from pydantic import ValidationError
 
-from cognite.neat.core._data_model._shared import ImportContext
+from cognite.neat.core._data_model.models._import_contexts import ImportContext
 
 from ._base import IssueList, MultiValueError, NeatError
 from ._factory import from_pydantic_errors, from_warning

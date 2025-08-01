@@ -3,7 +3,7 @@ from collections import Counter, defaultdict
 
 from cognite.neat.core._constants import get_base_concepts
 from cognite.neat.core._data_model._constants import PATTERNS, EntityTypes
-from cognite.neat.core._data_model._shared import ImportContext, SpreadsheetContext
+from cognite.neat.core._data_model.models._import_contexts import ImportContext, SpreadsheetContext
 from cognite.neat.core._data_model.models.entities import ConceptEntity, UnknownEntity
 from cognite.neat.core._data_model.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat.core._issues import IssueList

@@ -14,7 +14,6 @@ from rdflib import Namespace, URIRef
 
 from cognite.neat.core._data_model._shared import (
     ImportedDataModel,
-    SpreadsheetContext,
     T_UnverifiedDataModel,
 )
 from cognite.neat.core._data_model.models import (
@@ -23,6 +22,7 @@ from cognite.neat.core._data_model.models import (
     RoleTypes,
     SchemaCompleteness,
 )
+from cognite.neat.core._data_model.models._import_contexts import SpreadsheetContext
 from cognite.neat.core._issues import IssueList, MultiValueError
 from cognite.neat.core._issues.errors import (
     FileMissingRequiredFieldError,

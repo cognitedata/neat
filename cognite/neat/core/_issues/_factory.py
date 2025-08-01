@@ -3,7 +3,7 @@ from warnings import WarningMessage
 
 from pydantic_core import ErrorDetails
 
-from cognite.neat.core._data_model._shared import ImportContext, SpreadsheetContext
+from cognite.neat.core._data_model.models._import_contexts import ImportContext, SpreadsheetContext
 from cognite.neat.core._issues._base import NeatError, NeatWarning
 
 from .errors import NeatValueError, SpreadsheetError

@@ -22,7 +22,7 @@ from cognite.neat.core._constants import (
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
     DMS_VIEW_CONTAINER_SIZE_LIMIT,
 )
-from cognite.neat.core._data_model._shared import ImportContext, SpreadsheetContext
+from cognite.neat.core._data_model.models._import_contexts import ImportContext, SpreadsheetContext
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ContainerEntity, RawFilter
 from cognite.neat.core._data_model.models.entities._single_value import (
