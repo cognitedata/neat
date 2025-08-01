@@ -22,6 +22,7 @@ from cognite.neat.core._data_model.models import (
     RoleTypes,
     SchemaCompleteness,
 )
+from cognite.neat.core._data_model.models._import_contexts import SpreadsheetContext
 from cognite.neat.core._issues import IssueList, MultiValueError
 from cognite.neat.core._issues.errors import (
     FileMissingRequiredFieldError,
@@ -271,7 +272,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
             raise MultiValueError(issue_list.errors)
 
         if user_read is None:
-            return ImportedDataModel(None, {})
+            return ImportedDataModel(None, None)
 
         sheets = user_read.sheets
         original_role = user_read.role
@@ -287,7 +288,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
             except Exception as e:
                 issue_list.append(FileReadError(self.filepath, f"Failed to delete temporary file: {e}"))
 
-        return ImportedDataModel(data_model, read_info_by_sheet)
+        return ImportedDataModel(data_model, SpreadsheetContext(read_info_by_sheet))
 
     @property
     def description(self) -> str:

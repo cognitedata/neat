@@ -22,6 +22,7 @@ from cognite.neat.core._constants import (
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
     DMS_VIEW_CONTAINER_SIZE_LIMIT,
 )
+from cognite.neat.core._data_model.models._import_contexts import ImportContext, SpreadsheetContext
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._data_model.models.entities import ContainerEntity, RawFilter
 from cognite.neat.core._data_model.models.entities._single_value import (
@@ -52,7 +53,6 @@ from cognite.neat.core._issues.warnings.user_modeling import (
     DirectRelationMissingSourceWarning,
     NotNeatSupportedFilterWarning,
 )
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from cognite.neat.core._utils.text import humanize_collection
 
 from ._verified import PhysicalDataModel, PhysicalProperty
@@ -81,7 +81,7 @@ class PhysicalValidation:
         self,
         data_model: PhysicalDataModel,
         client: NeatClient | None = None,
-        read_info_by_spreadsheet: dict[str, SpreadsheetRead] | None = None,
+        context: ImportContext | None = None,
     ) -> None:
         self._data_model = data_model
         self._client = client
@@ -89,7 +89,7 @@ class PhysicalValidation:
         self._properties = data_model.properties
         self._containers = data_model.containers
         self._views = data_model.views
-        self._read_info_by_spreadsheet = read_info_by_spreadsheet or {}
+        self._read_info_by_spreadsheet = context if isinstance(context, SpreadsheetContext) else SpreadsheetContext()
 
     def imported_views_and_containers_ids(
         self, include_views_with_no_properties: bool = True
