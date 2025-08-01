@@ -130,7 +130,7 @@ class BaseRDFImporter(BaseImporter[UnverifiedConceptualDataModel]):
 
         data_model = UnverifiedConceptualDataModel.load(data_model_dict)
         self.issue_list.trigger_warnings()
-        return ImportedDataModel(data_model, {})
+        return ImportedDataModel(data_model)
 
     def _to_data_model_components(self) -> dict:
         raise NotImplementedError()

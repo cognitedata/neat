@@ -347,7 +347,7 @@ class NeatInstanceStore:
             )
             return issue_list
         _start = datetime.now(timezone.utc)
-        with catch_issues({}) as transform_issues:
+        with catch_issues() as transform_issues:
             transformer.transform(self.graph(named_graph))
         issue_list.extend(transform_issues)
         self.provenance.append(

@@ -31,6 +31,7 @@ from cognite.neat.core._constants import (
 )
 from cognite.neat.core._data_model._constants import PATTERNS, get_reserved_words
 from cognite.neat.core._data_model._shared import (
+    ImportContext,
     ImportedDataModel,
     ImportedUnverifiedDataModel,
     VerifiedDataModel,
@@ -2411,13 +2412,13 @@ class AddCogniteProperties(
                 concepts=new_classes,
                 prefixes=input_.prefixes,
             ),
-            context={},
+            context=None,
         )
 
     @staticmethod
     def _get_properties_by_concepts(
         properties: list[UnverifiedConceptualProperty],
-        read_context: Mapping[str, object],
+        read_context: ImportContext | None,
         default_space: str,
     ) -> dict[ConceptEntity, dict[str, UnverifiedConceptualProperty]]:
         issues = IssueList()
@@ -2437,7 +2438,7 @@ class AddCogniteProperties(
     @staticmethod
     def _get_dependencies_by_concepts(
         concepts: list[UnverifiedConcept],
-        read_context: Mapping[str, object],
+        read_context: ImportContext | None,
         default_space: str,
     ) -> dict[ConceptEntity, set[ConceptEntity]]:
         dependencies_by_concepts: dict[ConceptEntity, set[ConceptEntity]] = {}

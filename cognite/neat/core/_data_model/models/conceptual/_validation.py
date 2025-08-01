@@ -1,9 +1,9 @@
 import itertools
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Mapping
 
 from cognite.neat.core._constants import get_base_concepts
 from cognite.neat.core._data_model._constants import PATTERNS, EntityTypes
+from cognite.neat.core._data_model._shared import ImportContext, SpreadsheetContext
 from cognite.neat.core._data_model.models.entities import ConceptEntity, UnknownEntity
 from cognite.neat.core._data_model.models.entities._multi_value import MultiValueTypeInfo
 from cognite.neat.core._issues import IssueList
@@ -22,7 +22,6 @@ from cognite.neat.core._issues.warnings._resources import (
     ResourceNotDefinedWarning,
     ResourceRegexViolationWarning,
 )
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 from cognite.neat.core._utils.text import humanize_collection
 
 from ._verified import ConceptualDataModel
@@ -35,16 +34,14 @@ class ConceptualValidation:
     def __init__(
         self,
         data_model: ConceptualDataModel,
-        context: Mapping[str, object] | None = None,
+        context: ImportContext | None = None,
     ):
         # import here to avoid circular import issues
         from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
 
         self.data_model = data_model
         self.analysis = DataModelAnalysis(self.data_model)
-        self._read_info_by_spreadsheet = {
-            key: value for key, value in (context or {}).items() if isinstance(value, SpreadsheetRead)
-        }
+        self._read_info_by_spreadsheet = context if isinstance(context, SpreadsheetContext) else SpreadsheetContext({})
         self._metadata = data_model.metadata
         self._properties = data_model.properties
         self._concepts = data_model.concepts

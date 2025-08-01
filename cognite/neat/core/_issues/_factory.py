@@ -1,17 +1,16 @@
-from collections.abc import Mapping
 from typing import cast
 from warnings import WarningMessage
 
 from pydantic_core import ErrorDetails
 
+from cognite.neat.core._data_model._shared import ImportContext, SpreadsheetContext
 from cognite.neat.core._issues._base import NeatError, NeatWarning
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 from .errors import NeatValueError, SpreadsheetError
 
 
-def from_pydantic_errors(errors: list[ErrorDetails], context: Mapping[str, object] | None = None) -> list[NeatError]:
-    read_info_by_sheet = {key: value for key, value in (context or {}).items() if isinstance(value, SpreadsheetRead)}
+def from_pydantic_errors(errors: list[ErrorDetails], context: ImportContext | None = None) -> list[NeatError]:
+    read_info_by_sheet = context if isinstance(context, SpreadsheetContext) else SpreadsheetContext({})
     return [
         _from_pydantic_error(error, read_info_by_sheet)
         for error in errors
@@ -28,7 +27,7 @@ def from_warning(warning: WarningMessage) -> NeatWarning | None:
     return None
 
 
-def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: dict[str, SpreadsheetRead]) -> NeatError:
+def _from_pydantic_error(error: ErrorDetails, read_info_by_sheet: SpreadsheetContext) -> NeatError:
     neat_error = _create_neat_value_error(error)
     location = error["loc"]
 

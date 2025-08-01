@@ -1,8 +1,10 @@
 import warnings
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator
 from contextlib import contextmanager
 
 from pydantic import ValidationError
+
+from cognite.neat.core._data_model._shared import ImportContext
 
 from ._base import IssueList, MultiValueError, NeatError
 from ._factory import from_pydantic_errors, from_warning
@@ -24,11 +26,11 @@ def catch_warnings() -> Iterator[IssueList]:
 
 
 @contextmanager
-def catch_issues(context: Mapping[str, object] | None = None) -> Iterator[IssueList]:
+def catch_issues(context: ImportContext | None = None) -> Iterator[IssueList]:
     """This is an internal help function to handle issues and warnings.
 
     Args:
-        context (Mapping[str, object]): The read context. This is used to adjust
+        context (ImportContext): The read context. This is used to adjust
             the row numbers in the errors/warnings if the data is read from a spreadsheet.
 
     Returns:
