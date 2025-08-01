@@ -16,6 +16,7 @@ from cognite.neat.core._config import GLOBAL_CONFIG
 from cognite.neat.core._constants import NEAT
 from cognite.neat.core._data_model._shared import ImportedDataModel
 from cognite.neat.core._data_model.models import UnverifiedConceptualDataModel
+from cognite.neat.core._data_model.models._import_contexts import GraphContext
 from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConcept,
     UnverifiedConceptualMetadata,
@@ -96,7 +97,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
         metadata = self._create_default_metadata()
         if not self.store.queries.select.has_data():
             warnings.warn(NeatValueWarning("Cannot infer data model. No data found in the graph."), stacklevel=2)
-            return ImportedDataModel(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
+            return ImportedDataModel(UnverifiedConceptualDataModel(metadata, [], [], {}), None)
 
         parent_by_child = self._read_parent_by_child_from_graph()
         count_by_type = self._read_types_with_counts_from_graph()
@@ -104,13 +105,12 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
             warnings.warn(
                 NeatValueWarning("Cannot infer data model. No RDF.type triples found in the graph."), stacklevel=2
             )
-            return ImportedDataModel(UnverifiedConceptualDataModel(metadata, [], [], {}), {})
+            return ImportedDataModel(UnverifiedConceptualDataModel(metadata, [], [], {}), None)
 
         read_properties = self._read_concept_properties_from_graph(count_by_type, parent_by_child)
 
         prefixes: dict[str, Namespace] = {}
         concepts, properties = self._create_concepts_properties(read_properties, prefixes)
-        read_context: dict[str, dict[URIRef, int]] = {"inferred_from": count_by_type}
 
         return ImportedDataModel(
             UnverifiedConceptualDataModel(
@@ -119,7 +119,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
                 properties=properties,
                 prefixes=prefixes,
             ),
-            context=read_context,
+            context=GraphContext({"inferred_from": count_by_type}),
         )
 
     def _read_parent_by_child_from_graph(self) -> dict[URIRef, URIRef]:
