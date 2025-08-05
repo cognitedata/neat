@@ -276,7 +276,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         self.issue_list.trigger_warnings()
         if self.issue_list.has_errors:
             raise MultiValueError(self.issue_list.errors)
-        return ImportedDataModel(user_data_model, {})
+        return ImportedDataModel(user_data_model, None)
 
     def _create_data_model_components(
         self,

@@ -128,4 +128,4 @@ class DictImporter(BaseImporter[T_UnverifiedDataModel]):
         if self._read_issues.has_errors:
             raise MultiValueError(self._read_issues.errors)
 
-        return ImportedDataModel[T_UnverifiedDataModel](data_model, {})
+        return ImportedDataModel[T_UnverifiedDataModel](data_model)

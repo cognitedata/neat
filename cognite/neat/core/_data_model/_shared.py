@@ -5,13 +5,13 @@ from cognite.neat.core._data_model.models import (
     ConceptualDataModel,
     PhysicalDataModel,
 )
+from cognite.neat.core._data_model.models._import_contexts import ImportContext
 from cognite.neat.core._data_model.models.conceptual._unverified import (
     UnverifiedConceptualDataModel,
 )
 from cognite.neat.core._data_model.models.physical._unverified import (
     UnverifiedPhysicalDataModel,
 )
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
 
 VerifiedDataModel: TypeAlias = ConceptualDataModel | PhysicalDataModel
 
@@ -32,7 +32,7 @@ class ImportedDataModel(Generic[T_UnverifiedDataModel]):
     """
 
     unverified_data_model: T_UnverifiedDataModel | None
-    context: dict[str, SpreadsheetRead]
+    context: ImportContext | None = None
 
     @classmethod
     def display_type_name(cls) -> str:

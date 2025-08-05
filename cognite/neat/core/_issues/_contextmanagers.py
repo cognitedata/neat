@@ -1,13 +1,15 @@
 import warnings
 from collections.abc import Iterator
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 from pydantic import ValidationError
 
-from cognite.neat.core._utils.spreadsheet import SpreadsheetRead
-
 from ._base import IssueList, MultiValueError, NeatError
 from ._factory import from_pydantic_errors, from_warning
+
+if TYPE_CHECKING:
+    from cognite.neat.core._data_model.models._import_contexts import ImportContext
 
 
 @contextmanager
@@ -26,12 +28,12 @@ def catch_warnings() -> Iterator[IssueList]:
 
 
 @contextmanager
-def catch_issues(read_info_by_sheet: dict[str, SpreadsheetRead] | None = None) -> Iterator[IssueList]:
+def catch_issues(context: "ImportContext | None" = None) -> Iterator[IssueList]:
     """This is an internal help function to handle issues and warnings.
 
     Args:
-        read_info_by_sheet (dict[str, SpreadsheetRead]): The read information by sheet. This is used to adjust
-            the row numbers in the errors/warnings.
+        context (ImportContext): The read context. This is used to adjust
+            the row numbers in the errors/warnings if the data is read from a spreadsheet.
 
     Returns:
         IssueList: The list of issues.
@@ -41,7 +43,7 @@ def catch_issues(read_info_by_sheet: dict[str, SpreadsheetRead] | None = None) -
         try:
             yield issues
         except ValidationError as e:
-            issues.extend(from_pydantic_errors(e.errors(), read_info_by_sheet))
+            issues.extend(from_pydantic_errors(e.errors(), context))
         except NeatError as single:
             issues.append(single)
         except MultiValueError as multi:
