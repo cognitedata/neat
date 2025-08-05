@@ -93,6 +93,15 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
 
 
 @dataclass(unsafe_hash=True)
+class ViewWithoutPropertiesWarning(UserModelingWarning):
+    """View {view_id} has no explicit properties neither implements views that have properties."""
+
+    fix = "Define properties for view or inherit properties by implementing view(s) that has properties."
+
+    view_id: ViewId
+
+
+@dataclass(unsafe_hash=True)
 class UndefinedConceptWarning(UserModelingWarning):
     """Concept {concept_id} has no explicit properties neither implements concepts that have properties."""
 
