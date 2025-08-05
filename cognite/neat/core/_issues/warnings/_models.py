@@ -94,7 +94,7 @@ class NotSupportedHasDataFilterLimitWarning(CDFNotSupportedWarning):
 
 @dataclass(unsafe_hash=True)
 class ViewWithoutPropertiesWarning(UserModelingWarning):
-    """View {view_id} has no explicit properties neither implements views that have properties."""
+    """View {view_id} has neither explicit properties nor implements views that have properties."""
 
     fix = "Define properties for view or inherit properties by implementing view(s) that has properties."
 
