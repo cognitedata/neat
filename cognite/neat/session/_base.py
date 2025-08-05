@@ -33,6 +33,7 @@ from ._mapping import MappingAPI
 from ._plugin import PluginAPI
 from ._prepare import PrepareAPI
 from ._read import ReadAPI
+from ._session._data_model import DataModelAPI
 from ._set import SetAPI
 from ._show import ShowAPI
 from ._state import SessionState
@@ -114,6 +115,9 @@ class NeatSession:
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):
             print(f"Neat Engine {engine_version} loaded.")
+
+        # new API for data model operations
+        self.data_model = DataModelAPI(self._state)
 
     def _select_most_performant_store(self) -> Literal["memory", "oxigraph"]:
         """Select the most performant store based on the current environment."""
