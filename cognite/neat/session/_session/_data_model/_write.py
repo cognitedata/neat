@@ -27,7 +27,7 @@ class WriteAPI:
     def __call__(
         self, name: str, io: str | Path | None = None, **kwargs: Any
     ) -> str | UploadResultList | IssueList | None:
-        """Provides access to the external plugins for data model importing.
+        """Provides access to the writers for exporting data models to different formats.
 
         Args:
             name (str): The name of format (e.g. Excel) writer is handling.
@@ -39,7 +39,7 @@ class WriteAPI:
             to understand what keyword arguments are supported.
         """
 
-        # These are internal readers that are not plugins
+        # These are internal writers that are not plugins
         format_name = name.strip().lower()
 
         if format_name == "excel":
