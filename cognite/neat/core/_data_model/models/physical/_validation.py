@@ -21,6 +21,7 @@ from cognite.neat.core._constants import (
     COGNITE_SPACES,
     DMS_CONTAINER_PROPERTY_SIZE_LIMIT,
     DMS_VIEW_CONTAINER_SIZE_LIMIT,
+    get_base_concepts,
 )
 from cognite.neat.core._data_model.models._import_contexts import ImportContext, SpreadsheetContext
 from cognite.neat.core._data_model.models.data_types import DataType
@@ -48,6 +49,7 @@ from cognite.neat.core._issues.warnings import (
     UndefinedViewWarning,
     user_modeling,
 )
+from cognite.neat.core._issues.warnings._models import ViewWithoutPropertiesWarning
 from cognite.neat.core._issues.warnings.user_modeling import (
     ContainerPropertyLimitWarning,
     DirectRelationMissingSourceWarning,
@@ -83,6 +85,9 @@ class PhysicalValidation:
         client: NeatClient | None = None,
         context: ImportContext | None = None,
     ) -> None:
+        # import here to avoid circular import issues
+        from cognite.neat.core._data_model.analysis._base import DataModelAnalysis
+
         self._data_model = data_model
         self._client = client
         self._metadata = data_model.metadata
@@ -90,6 +95,11 @@ class PhysicalValidation:
         self._containers = data_model.containers
         self._views = data_model.views
         self._read_info_by_spreadsheet = context if isinstance(context, SpreadsheetContext) else SpreadsheetContext()
+
+        self.analysis = DataModelAnalysis(physical=self._data_model)
+        self._cdf_concepts = {
+            ViewEntity.load(concept_as_string) for concept_as_string in get_base_concepts(base_model="CogniteCore")
+        }
 
     def imported_views_and_containers_ids(
         self, include_views_with_no_properties: bool = True
@@ -170,6 +180,9 @@ class PhysicalValidation:
         # Validated for duplicated resource
         issue_list.extend(self._duplicated_resources())
 
+        # Validate if views are defined (i.e. have at least one property defined, or inherited)
+        issue_list.extend(self._views_without_properties_exist())
+
         # Neat DMS classes Validation
         # These are errors that can only happen due to the format of the Neat DMS classes
         issue_list.extend(self._validate_raw_filter())
@@ -190,6 +203,23 @@ class PhysicalValidation:
         issue_list.extend(self._validate_schema(dms_schema, all_views_by_id, all_containers_by_id))
         issue_list.extend(self._validate_referenced_container_limits(dms_schema.views, view_properties_by_id))
         issue_list.extend(self._same_space_views_and_data_model())
+        return issue_list
+
+    def _views_without_properties_exist(self) -> IssueList:
+        """Check if there are views that do not have any properties defined directly or inherited."""
+        issue_list = IssueList()
+        views = {view.view for view in self._views}
+        ancestors_by_view = self.analysis.implements_by_view(include_ancestors=True, include_different_space=True)
+        views_with_properties = self.analysis.defined_views().union(self._cdf_concepts)
+
+        if candidate_views := views.difference(views_with_properties):
+            for view in candidate_views:
+                # Here we check if at least one of the ancestors of the view has properties
+                if (ancestors := ancestors_by_view.get(view)) and ancestors.intersection(views_with_properties):
+                    continue
+
+                issue_list.append_if_not_exist(ViewWithoutPropertiesWarning(view_id=view.as_id()))
+
         return issue_list
 
     def _same_space_views_and_data_model(self) -> IssueList:

@@ -105,6 +105,7 @@ class SchemaData:
         invalid_property_dms_rules_xlsx = _physical_invalid / "invalid_property_dms_rules.xlsx"
         missing_view_container_dms_rules_xlsx = _physical_invalid / "missing_view_container_dms_rules.xlsx"
         too_many_container_per_view_xlsx = _physical_invalid / "too_many_containers_per_view.xlsx"
+        views_without_properties_xlsx = _physical_invalid / "views_without_properties.xlsx"
 
     class PhysicalYamls:
         _physical_yaml = _schema_dir / "physical_yamls"
