@@ -238,21 +238,21 @@ class WriteAPI:
             Export to yaml file in the case of "neat" format
             ```python
             your_yaml_file_name = "neat_dm.yaml"
-            neat.to.yaml(your_yaml_file_name, format="neat")
+            neat.data_mode.write.yaml(your_yaml_file_name, format="neat")
             ```
 
         Example:
             Export yaml files as a zip folder in the case of "toolkit" format
             ```python
             your_zip_folder_name = "toolkit_data_model_files.zip"
-            neat.to.yaml(your_zip_folder_name, format="toolkit")
+            neat.data_model.write.yaml(your_zip_folder_name, format="toolkit")
             ```
 
         Example:
             Export yaml files to a folder in the case of "toolkit" format
             ```python
             your_folder_name = "my_project/data_model_files"
-            neat.to.yaml(your_folder_name, format="toolkit")
+            neat.data_model.write.yaml(your_folder_name, format="toolkit")
             ```
         """
 
