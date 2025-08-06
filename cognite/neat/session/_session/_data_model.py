@@ -18,7 +18,7 @@ class DataModelAPI:
     """API for managing data models in NEAT session."""
 
     def __init__(self, state: SessionState) -> None:
-        self.state = state
+        self._state = state
         self.read = ReadAPI(state)
 
 
@@ -27,7 +27,7 @@ class ReadAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def __call__(self, name: str, io: str | Path | None = None, **kwargs: Any) -> IssueList:
+    def __call__(self, name: str, io: Any, **kwargs: Any) -> IssueList:
         """Provides access to the external plugins for data model importing.
 
         Args:
