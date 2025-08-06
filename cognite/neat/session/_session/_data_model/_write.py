@@ -1,6 +1,6 @@
 import warnings
 from typing import Any, Literal, cast, overload
-from zipfile import Path
+from pathlib import Path
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
