@@ -1,3 +1,4 @@
+import inspect
 import warnings
 from pathlib import Path
 from typing import Any, Literal, cast, overload
@@ -45,11 +46,17 @@ class WriteAPI:
         if format_name == "excel":
             if io is None:
                 raise NeatSessionError("'io' parameter is required for Excel format.")
-            return self.excel(cast(str | Path, io), **kwargs)
+            sig = inspect.signature(self.excel)
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+            return self.excel(cast(str | Path, io), **filtered_kwargs)
         elif format_name == "cdf":
-            return self.cdf(**kwargs)
+            sig = inspect.signature(self.cdf)
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+            return self.cdf(**filtered_kwargs)
         elif format_name == "yaml":
-            return self.yaml(io, **kwargs)
+            sig = inspect.signature(self.yaml)
+            filtered_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+            return self.yaml(io, **filtered_kwargs)
         elif format_name == "ontology":
             if io is None:
                 raise NeatSessionError("'io' parameter is required for ontology format.")
