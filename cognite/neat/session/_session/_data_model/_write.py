@@ -1,4 +1,3 @@
-import inspect
 import warnings
 from pathlib import Path
 from typing import Any, Literal, cast, overload
@@ -14,6 +13,7 @@ from cognite.neat.core._data_model.models.conceptual._verified import Conceptual
 from cognite.neat.core._data_model.models.physical._verified import PhysicalDataModel, PhysicalMetadata
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._issues._contextmanagers import catch_issues
+from cognite.neat.core._utils.auxiliary import filter_kwargs_by_method
 from cognite.neat.core._utils.reader._base import NeatReader
 from cognite.neat.core._utils.upload import UploadResultList
 from cognite.neat.session._state import SessionState
@@ -46,17 +46,11 @@ class WriteAPI:
         if format_name == "excel":
             if io is None:
                 raise NeatSessionError("'io' parameter is required for Excel format.")
-            sig = inspect.signature(self.excel)
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
-            return self.excel(cast(str | Path, io), **filtered_kwargs)
+            return self.excel(cast(str | Path, io), **filter_kwargs_by_method(kwargs, self.excel))
         elif format_name == "cdf":
-            sig = inspect.signature(self.cdf)
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
-            return self.cdf(**filtered_kwargs)
+            return self.cdf(**filter_kwargs_by_method(kwargs, self.cdf))
         elif format_name == "yaml":
-            sig = inspect.signature(self.yaml)
-            filtered_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
-            return self.yaml(io, **filtered_kwargs)
+            return self.yaml(io, **filter_kwargs_by_method(kwargs, self.yaml))
         elif format_name == "ontology":
             if io is None:
                 raise NeatSessionError("'io' parameter is required for ontology format.")
