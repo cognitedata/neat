@@ -238,7 +238,7 @@ class WriteAPI:
             Export to yaml file in the case of "neat" format
             ```python
             your_yaml_file_name = "neat_dm.yaml"
-            neat.data_mode.write.yaml(your_yaml_file_name, format="neat")
+            neat.data_model.write.yaml(your_yaml_file_name, format="neat")
             ```
 
         Example:
