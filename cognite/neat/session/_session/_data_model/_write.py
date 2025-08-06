@@ -293,12 +293,7 @@ class WriteAPI:
             ```
         """
 
-        filepath = NeatReader.create(io).materialize_path()
-        if filepath.suffix != ".ttl":
-            warnings.filterwarnings("default")
-            warnings.warn("File extension is not .ttl, adding it to the file name", stacklevel=2)
-            filepath = filepath.with_suffix(".ttl")
-
+        filepath = self._prepare_ttl_filepath(io)
         exporter = exporters.OWLExporter()
         self._state.data_model_store.export_to_file(exporter, filepath)
         return None
@@ -317,12 +312,16 @@ class WriteAPI:
             ```
         """
 
+        filepath = self._prepare_ttl_filepath(io)
+        exporter = exporters.SHACLExporter()
+        self._state.data_model_store.export_to_file(exporter, filepath)
+        return None
+
+    def _prepare_ttl_filepath(self, io: str | Path) -> Path:
+        """Ensures the filepath has a .ttl extension, adding it if missing."""
         filepath = NeatReader.create(io).materialize_path()
         if filepath.suffix != ".ttl":
             warnings.filterwarnings("default")
             warnings.warn("File extension is not .ttl, adding it to the file name", stacklevel=2)
             filepath = filepath.with_suffix(".ttl")
-
-        exporter = exporters.SHACLExporter()
-        self._state.data_model_store.export_to_file(exporter, filepath)
-        return None
+        return filepath
