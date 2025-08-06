@@ -27,7 +27,7 @@ class ReadAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def __call__(self, name: str, io: Any, **kwargs: Any) -> IssueList:
+    def __call__(self, name: str, io: str | Path, **kwargs: Any) -> IssueList:
         """Provides access to the external plugins for data model importing.
 
         Args:
@@ -50,7 +50,7 @@ class ReadAPI:
         else:
             return self._plugin(name, io, **kwargs)
 
-    def _plugin(self, name: str, io: str | Path | None = None, **kwargs: Any) -> IssueList:
+    def _plugin(self, name: str, io: str | Path, **kwargs: Any) -> IssueList:
         """Provides access to the external plugins for data model importing.
 
         Args:
@@ -64,11 +64,8 @@ class ReadAPI:
         """
 
         # Some plugins may not support the io argument
-        if io:
-            reader = NeatReader.create(io)
-            path = reader.materialize_path()
-        else:
-            path = None
+        reader = NeatReader.create(io)
+        path = reader.materialize_path()
 
         self._state._raise_exception_if_condition_not_met(
             "Data Model Read",
