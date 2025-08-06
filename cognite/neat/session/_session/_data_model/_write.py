@@ -1,6 +1,6 @@
 import warnings
-from typing import Any, Literal, cast, overload
 from pathlib import Path
+from typing import Any, Literal, cast, overload
 
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 
@@ -40,16 +40,24 @@ class WriteAPI:
         """
 
         # These are internal readers that are not plugins
-        if name.strip().lower() == "excel":
+        format_name = name.strip().lower()
+
+        if format_name == "excel":
+            if io is None:
+                raise NeatSessionError("'io' parameter is required for Excel format.")
             return self.excel(cast(str | Path, io), **kwargs)
-        elif name.strip().lower() == "cdf":
+        elif format_name == "cdf":
             return self.cdf(**kwargs)
-        elif name.strip().lower() == "yaml":
+        elif format_name == "yaml":
             return self.yaml(io, **kwargs)
-        elif name.strip().lower() == "ontology":
+        elif format_name == "ontology":
+            if io is None:
+                raise NeatSessionError("'io' parameter is required for ontology format.")
             self.ontology(cast(str | Path, io))
             return None
-        elif name.strip().lower() == "shacl":
+        elif format_name == "shacl":
+            if io is None:
+                raise NeatSessionError("'io' parameter is required for SHACL format.")
             self.shacl(cast(str | Path, io))
             return None
         else:
