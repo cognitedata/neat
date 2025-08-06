@@ -24,7 +24,9 @@ class WriteAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def __call__(self, name: str, io: str | Path | None = None, **kwargs: Any) -> UploadResultList | IssueList | None:
+    def __call__(
+        self, name: str, io: str | Path | None = None, **kwargs: Any
+    ) -> str | UploadResultList | IssueList | None:
         """Provides access to the external plugins for data model importing.
 
         Args:
@@ -43,8 +45,7 @@ class WriteAPI:
         elif name.strip().lower() == "cdf":
             return self.cdf(**kwargs)
         elif name.strip().lower() == "yaml":
-            self.yaml(io, **kwargs)
-            return None
+            return self.yaml(io, **kwargs)
         elif name.strip().lower() == "ontology":
             self.ontology(cast(str | Path, io))
             return None
