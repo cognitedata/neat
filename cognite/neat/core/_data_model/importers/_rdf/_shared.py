@@ -5,6 +5,7 @@ from rdflib import BNode, Graph
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.query import ResultRow
 
+from cognite.neat.core._constants import cognite_prefixes
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._issues.errors._general import NeatValueError
 from cognite.neat.core._issues.warnings._resources import (
@@ -33,16 +34,16 @@ def parse_concepts(
     concepts: dict[str, dict] = {}
 
     query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
+    prefixes = cognite_prefixes()
 
     for raw in graph.query(query):
-        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
+        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), uri_handling="short-form", prefixes=prefixes)
         res = {key: res.get(key, None) for key in parameters}
 
         # Quote the concept id to ensure it is web-safe
         res["concept"] = quote(res["concept"], safe="")
 
         concept_id = res["concept"]
-
         # Safeguarding against incomplete semantic definitions
         if res["implements"] and isinstance(res["implements"], BNode):
             issue_list.append(
@@ -100,7 +101,7 @@ def parse_properties(
     query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
 
     for raw in graph.query(query):
-        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
+        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), uri_handling="remove-namespace")
         res = {key: res.get(key, None) for key in parameters}
 
         # Quote the concept id to ensure it is web-safe

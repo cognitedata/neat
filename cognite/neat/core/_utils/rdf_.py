@@ -147,36 +147,63 @@ def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     return URIRef(f"{namespace}{compliant_uri}")
 
 
-def convert_rdflib_content(content: RdfLiteral | URIRef | dict | list, remove_namespace: bool = False) -> Any:
+def convert_rdflib_content(
+    content: RdfLiteral | URIRef | dict | list,
+    uri_handling: Literal["skip", "remove-namespace", "short-form"] = "skip",
+    prefixes: dict[str, Namespace] | None = None,
+) -> Any:
+    """Converts rdflib content to a more Python-friendly format.
+
+    Args:
+        content: The content to convert, can be a RdfLiteral, URIRef, dict, or list.
+        uri_handling: How to handle URIs. Options are:
+            - "skip": Leave URIs as is.
+            - "remove-namespace": Remove the namespace from URIs.
+            - "short-form": Convert URIs to a short form using prefixes.
+
+    """
     if isinstance(content, RdfLiteral):
         return content.toPython()
     elif isinstance(content, URIRef):
-        return remove_namespace_from_uri(content) if remove_namespace else content.toPython()
+        if uri_handling == "remove-namespace":
+            return uri_to_short_form(content, {})
+        elif uri_handling == "short-form":
+            return uri_to_short_form(content, prefixes or {}, versioned_uri=True)
+        else:
+            return content.toPython()
     elif isinstance(content, dict):
-        return {key: convert_rdflib_content(value, remove_namespace) for key, value in content.items()}
+        return {key: convert_rdflib_content(value, uri_handling, prefixes) for key, value in content.items()}
     elif isinstance(content, list):
-        return [convert_rdflib_content(item, remove_namespace) for item in content]
+        return [convert_rdflib_content(item, uri_handling, prefixes) for item in content]
     else:
         return content
 
 
-def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIRef:
+# we need to extend this with capability to extract also version from the URI
+def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace], versioned_uri: bool = False) -> str | URIRef:
     """Returns the short form of a URI if its namespace is present in the prefixes dict,
-    otherwise returns the URI itself
+    otherwise removes the namespace from the URI.
 
     Args:
         URI: URI to be converted to form prefix:entityName
         prefixes: dict of prefixes
+        versioned_uri: if True, the URI is expected to be in the form of
+            <namespace>/<space>/<data_model_id>/<version>/<entity_id> and will be converted to
+            <prefix>:<entity_id>(version=<version>), otherwise it will be converted to
+            <prefix>:<<space>/<data_model_id>/<version>/<entity_id>>
 
     Returns:
         shortest form of the URI if its namespace is present in the prefixes dict,
-        otherwise returns the URI itself
+        otherwise removes the namespace from the URI.
     """
-    uris: set[str | URIRef] = {URI}
     for prefix, namespace in prefixes.items():
         if URI.startswith(namespace):
-            uris.add(f"{prefix}:{URI.replace(namespace, '')}")
-    return min(uris, key=len)
+            suffix = str(URI).replace(str(namespace), "")
+            if versioned_uri and (components := suffix.split("/")) and len(components) == 3:
+                suffix = f"{components[2]}(version={components[1]})"
+
+            return f"{prefix}:{suffix}"
+    return remove_namespace_from_uri(URI)
 
 
 def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
