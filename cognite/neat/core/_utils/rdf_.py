@@ -198,7 +198,7 @@ def uri_to_short_form(uri: URIRef, prefixes: dict[str, Namespace], versioned_uri
     for prefix, namespace in prefixes.items():
         if uri.startswith(namespace):
             suffix = str(uri)[len(str(namespace)) :]
-            if versioned_uri and (components := suffix.split("/")) and len(components) == 3:
+            if versioned_uri and (components := suffix.split("/")) and len(components) == 3 and all(components):
                 suffix = f"{components[2]}(version={components[1]})"
 
             return f"{prefix}:{suffix}"
