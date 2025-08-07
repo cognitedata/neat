@@ -179,31 +179,30 @@ def convert_rdflib_content(
         return content
 
 
-# we need to extend this with capability to extract also version from the URI
-def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace], versioned_uri: bool = False) -> str | URIRef:
+def uri_to_short_form(uri: URIRef, prefixes: dict[str, Namespace], versioned_uri: bool = False) -> str | URIRef:
     """Returns the short form of a URI if its namespace is present in the prefixes dict,
     otherwise removes the namespace from the URI.
 
     Args:
-        URI: URI to be converted to form prefix:entityName
+        uri: URI to be converted to form prefix:entityName
         prefixes: dict of prefixes
         versioned_uri: if True, the URI is expected to be in the form of
-            <namespace>/<space>/<data_model_id>/<version>/<entity_id> and will be converted to
+            <namespace>/<data_model_id>/<version>/<entity_id> and will be converted to
             <prefix>:<entity_id>(version=<version>), otherwise it will be converted to
-            <prefix>:<<space>/<data_model_id>/<version>/<entity_id>>
+            <prefix>:<data_model_id>/<version>/<entity_id>
 
     Returns:
         shortest form of the URI if its namespace is present in the prefixes dict,
         otherwise removes the namespace from the URI.
     """
     for prefix, namespace in prefixes.items():
-        if URI.startswith(namespace):
-            suffix = str(URI).replace(str(namespace), "")
+        if uri.startswith(namespace):
+            suffix = str(uri)[len(str(namespace)) :]
             if versioned_uri and (components := suffix.split("/")) and len(components) == 3:
                 suffix = f"{components[2]}(version={components[1]})"
 
             return f"{prefix}:{suffix}"
-    return remove_namespace_from_uri(URI)
+    return remove_namespace_from_uri(uri)
 
 
 def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
