@@ -61,6 +61,7 @@ def test_owl_enitity_quoting():
         ConceptEntity(
             prefix="neat_space", suffix="Sensor.Unit_01%28Temp%29~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D"
         ),
+        ConceptEntity(prefix="neat_space", suffix="Sensor"),
     }
 
     expected_properties = {
@@ -75,5 +76,10 @@ def test_owl_enitity_quoting():
         "reports.Status-Flag%28OK%29%3A1~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
     }
 
-    assert {concept.concept for concept in conceptual_data_model.concepts} == expected_concepts
-    assert {prop.property_ for prop in conceptual_data_model.properties} == expected_properties
+    actual_concepts = {concept.concept: concept for concept in conceptual_data_model.concepts}
+    actual_properties = {prop.property_ for prop in conceptual_data_model.properties}
+    assert set(actual_concepts) == expected_concepts
+    assert actual_properties == expected_properties
+    assert actual_concepts[ConceptEntity(prefix="neat_space", suffix="Sensor")].implements == [
+        ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1")
+    ]

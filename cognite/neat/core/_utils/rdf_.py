@@ -147,19 +147,6 @@ def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     return URIRef(f"{namespace}{compliant_uri}")
 
 
-def convert_rdflib_content(content: RdfLiteral | URIRef | dict | list, remove_namespace: bool = False) -> Any:
-    if isinstance(content, RdfLiteral):
-        return content.toPython()
-    elif isinstance(content, URIRef):
-        return remove_namespace_from_uri(content) if remove_namespace else content.toPython()
-    elif isinstance(content, dict):
-        return {key: convert_rdflib_content(value, remove_namespace) for key, value in content.items()}
-    elif isinstance(content, list):
-        return [convert_rdflib_content(item, remove_namespace) for item in content]
-    else:
-        return content
-
-
 def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIRef:
     """Returns the short form of a URI if its namespace is present in the prefixes dict,
     otherwise returns the URI itself
@@ -177,6 +164,43 @@ def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIR
         if URI.startswith(namespace):
             uris.add(f"{prefix}:{URI.replace(namespace, '')}")
     return min(uris, key=len)
+
+
+def uri_to_entity_components(uri: URIRef, prefixes: dict[str, Namespace]) -> tuple[str, str, str, str] | None:
+    """Converts a URI to its components: space, data_model_id, version, and entity_id.
+    Args:
+        uri: URI to be converted
+        prefixes: dict of prefixes
+
+    Returns:
+        tuple of space, data_model_id, version, and entity_id if found,
+        otherwise None
+
+    !!! note "URI Format"
+        The URI is expected to be in the form of `.../<space>/<data_model_id>/<version>/<entity_id>` to
+        be able to extract the components correctly.
+
+        An example of a valid entity URI is:
+
+        `https://cognitedata.com/cdf_cdm/CogniteCore/v1/CogniteAsset` , where:
+
+        - space is `cdf_cdm`
+        - data_model_id is `CogniteCore`
+        - version is `v1`
+        - entity_id is `CogniteAsset`
+
+        to be able to parse the URI correctly, the prefixes dict must have
+        the corresponding prefix registered:
+        {'cdf_cdm': Namespace('https://cognitedata.com/cdf_cdm/CogniteCore/v1/')}
+
+        for this method to return the correct components.
+    """
+    for prefix, namespace in prefixes.items():
+        if uri.startswith(namespace):
+            remainder = str(uri)[len(str(namespace)) :]
+            if (components := remainder.split("/")) and len(components) == 3 and all(components):
+                return prefix, components[0], components[1], components[2]
+    return None
 
 
 def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:

@@ -250,6 +250,11 @@ def is_hierarchy_property(container: dm.ContainerId, property_: str) -> bool:
     )
 
 
+def cognite_prefixes() -> dict[str, Namespace]:
+    """Returns the Cognite prefixes and namespaces."""
+    return {space: Namespace(CDF_NAMESPACE[space] + "/") for space in COGNITE_SPACES}
+
+
 DMS_RESERVED_PROPERTIES = frozenset(
     {
         "createdTime",
