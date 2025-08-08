@@ -147,10 +147,29 @@ def test_plugin_error_handling():
         "[ERROR] PluginError: No plugin of type 'DataModelImporterPlugin' registered \nunder name 'csv'\n"
     )
 
+    # Alternative access point to the plugins via read
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        neat.data_model.read("csv", "./test.txt")
+
+    printed_statements = output.getvalue()
+    assert printed_statements == (
+        "[ERROR] PluginError: No plugin of type 'DataModelImporterPlugin' registered \nunder name 'csv'\n"
+    )
+
 
 def test_plugin_read(mock_external_plugin):
     neat = NeatSession()
     neat.plugins.data_model.read("excel", SchemaData.Conceptual.info_arch_car_rules_xlsx)
+
+    assert isinstance(
+        neat._state.data_model_store.last_verified_conceptual_data_model,
+        ConceptualDataModel,
+    )
+
+    # alternative access point to the plugins via read
+    neat = NeatSession()
+    neat.data_model.read("excel", SchemaData.Conceptual.info_arch_car_rules_xlsx)
 
     assert isinstance(
         neat._state.data_model_store.last_verified_conceptual_data_model,
