@@ -216,7 +216,7 @@ def convert_rdflib_content(
         if uri_handling == "remove-namespace":
             return remove_namespace_from_uri(content)
         elif uri_handling == "as-concept-entity":
-            if (components := uri_to_entity_components(content, prefixes or {})) and all(components):
+            if components := uri_to_entity_components(content, prefixes or {}):
                 return ConceptEntity(prefix=components[0], suffix=components[3], version=components[2])
             # fallback to "remove-namespace"
             else:
