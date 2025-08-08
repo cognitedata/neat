@@ -12,6 +12,8 @@ from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlu
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import NeatSessionError, session_class_wrapper
 
+InternalReaderName = Literal["excel", "ontology", "yaml"]
+
 
 @session_class_wrapper
 class ReadAPI:
@@ -31,15 +33,22 @@ class ReadAPI:
             what keyword arguments are supported.
         """
 
-        # These are internal readers that are not plugins
-        if name.strip().lower() == "excel":
-            return self.excel(io, **kwargs)
-        elif name.strip().lower() == "ontology":
-            return self.ontology(io)
-        elif name.strip().lower() == "yaml":
-            return self.yaml(io, **kwargs)
-        else:
-            return self._plugin(name, io, **kwargs)
+        # Clean the input name once before matching.
+        clean_name: InternalReaderName | str = name.strip().lower()
+
+        # The match statement cleanly handles each case.
+        match clean_name:
+            case "excel":
+                return self.excel(io, **kwargs)
+
+            case "ontology":
+                return self.ontology(io)
+
+            case "yaml":
+                return self.yaml(io, **kwargs)
+
+            case _:  # The wildcard '_' acts as the default 'else' case.
+                return self._plugin(name, io, **kwargs)
 
     def _plugin(self, name: str, io: str | Path, **kwargs: Any) -> IssueList:
         """Provides access to the external plugins for data model importing.
