@@ -14,6 +14,7 @@ from cognite.neat.session.exceptions import NeatSessionError, session_class_wrap
 
 InternalReaderName = Literal["excel", "ontology", "yaml"]
 
+
 @session_class_wrapper
 class ReadAPI:
     def __init__(self, state: SessionState) -> None:
