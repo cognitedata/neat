@@ -147,62 +147,74 @@ def as_neat_compliant_uri(uri: URIRef) -> URIRef:
     return URIRef(f"{namespace}{compliant_uri}")
 
 
-def convert_rdflib_content(
-    content: RdfLiteral | URIRef | dict | list,
-    uri_handling: Literal["skip", "remove-namespace", "short-form"] = "skip",
-    prefixes: dict[str, Namespace] | None = None,
-) -> Any:
-    """Converts rdflib content to a more Python-friendly format.
-
-    Args:
-        content: The content to convert, can be a RdfLiteral, URIRef, dict, or list.
-        uri_handling: How to handle URIs. Options are:
-            - "skip": Leave URIs as is.
-            - "remove-namespace": Remove the namespace from URIs.
-            - "short-form": Convert URIs to a short form using prefixes.
-
-    """
-    if isinstance(content, RdfLiteral):
-        return content.toPython()
-    elif isinstance(content, URIRef):
-        if uri_handling == "remove-namespace":
-            return uri_to_short_form(content, {})
-        elif uri_handling == "short-form":
-            return uri_to_short_form(content, prefixes or {}, versioned_uri=True)
-        else:
-            return content.toPython()
-    elif isinstance(content, dict):
-        return {key: convert_rdflib_content(value, uri_handling, prefixes) for key, value in content.items()}
-    elif isinstance(content, list):
-        return [convert_rdflib_content(item, uri_handling, prefixes) for item in content]
-    else:
-        return content
-
-
-def uri_to_short_form(uri: URIRef, prefixes: dict[str, Namespace], versioned_uri: bool = False) -> str | URIRef:
+def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIRef:
     """Returns the short form of a URI if its namespace is present in the prefixes dict,
-    otherwise removes the namespace from the URI.
+    otherwise returns the URI itself
 
     Args:
-        uri: URI to be converted to form prefix:entityName
+        URI: URI to be converted to form prefix:entityName
         prefixes: dict of prefixes
-        versioned_uri: if True, the URI is expected to be in the form of
-            <namespace>/<data_model_id>/<version>/<entity_id> and will be converted to
-            <prefix>:<entity_id>(version=<version>), otherwise it will be converted to
-            <prefix>:<data_model_id>/<version>/<entity_id>
 
     Returns:
         shortest form of the URI if its namespace is present in the prefixes dict,
-        otherwise removes the namespace from the URI.
+        otherwise returns the URI itself
+    """
+    uris: set[str | URIRef] = {URI}
+    for prefix, namespace in prefixes.items():
+        if URI.startswith(namespace):
+            uris.add(f"{prefix}:{URI.replace(namespace, '')}")
+    return min(uris, key=len)
+
+
+def uri_to_entity_components(
+    uri: URIRef, prefixes: dict[str, Namespace]
+) -> tuple[str, str | None, str | None, str] | None:
+    """Converts a URI to its components: space, data_model_id, version, and entity_id.
+    Args:
+        uri: URI to be converted
+        prefixes: dict of prefixes
+
+    Returns:
+        tuple of space, data_model_id, version, and entity_id if found,
+        otherwise None
+
+    !!! note "URI Format"
+        The URI is expected to be in the form of `.../<space>/<data_model_id>/<version>/<entity_id>` to
+        be able to extract the components correctly.
+
+        An example of a valid entity URI is:
+
+        `https://cognitedata.com/cdf_cdm/CogniteCore/v1/CogniteAsset` , where:
+
+        - space is `cdf_cdm`
+        - data_model_id is `CogniteCore`
+        - version is `v1`
+        - entity_id is `CogniteAsset`
+
+        to be able to parse the URI correctly, the prefixes dict must have
+        the corresponding prefix registered:
+        {'cdf_cdm': Namespace('https://cognitedata.com/cdf_cdm/CogniteCore/v1/')}
+
+        for this method to return the correct components.
     """
     for prefix, namespace in prefixes.items():
         if uri.startswith(namespace):
-            suffix = str(uri)[len(str(namespace)) :]
-            if versioned_uri and (components := suffix.split("/")) and len(components) == 3 and all(components):
-                suffix = f"{components[2]}(version={components[1]})"
+            remainder = str(uri)[len(str(namespace)) :]
 
-            return f"{prefix}:{suffix}"
-    return remove_namespace_from_uri(uri)
+            if (components := remainder.split("/")) and all(components):
+                if len(components) == 3:
+                    data_model_id, version, entity_id = components
+                elif len(components) == 2:
+                    data_model_id, entity_id = components
+                    version = None
+                elif len(components) == 1:
+                    entity_id = components[0]
+                    data_model_id = None
+                    version = None
+                else:
+                    return None
+            return prefix, data_model_id, version, entity_id
+    return None
 
 
 def _traverse(hierarchy: dict, graph: dict, names: list[str]) -> dict:
