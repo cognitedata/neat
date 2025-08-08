@@ -25,7 +25,7 @@ from cognite.neat.core._issues.warnings import (
     NotSupportedViewContainerLimitWarning,
     PropertyDefinitionWarning,
 )
-from cognite.neat.core._issues.warnings._models import DanglingPropertyWarning
+from cognite.neat.core._issues.warnings._models import DanglingPropertyWarning, ViewWithoutPropertiesWarning
 from tests.config import DOC_RULES
 from tests.data import SchemaData
 
@@ -133,6 +133,17 @@ def invalid_rules_filepaths():
             ]
         ),
         id="Too many containers per view",
+    )
+    yield pytest.param(
+        SchemaData.PhysicalInvalid.views_without_properties_xlsx,
+        IssueList(
+            [
+                ViewWithoutPropertiesWarning(
+                    ViewId(space="neat_space", external_id="SensorWithoutProperties", version="rdf"),
+                ),
+            ]
+        ),
+        id="Views without properties",
     )
 
 
