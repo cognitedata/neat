@@ -166,9 +166,7 @@ def uri_to_short_form(URI: URIRef, prefixes: dict[str, Namespace]) -> str | URIR
     return min(uris, key=len)
 
 
-def uri_to_entity_components(
-    uri: URIRef, prefixes: dict[str, Namespace]
-) -> tuple[str, str | None, str | None, str] | None:
+def uri_to_entity_components(uri: URIRef, prefixes: dict[str, Namespace]) -> tuple[str, str, str, str] | None:
     """Converts a URI to its components: space, data_model_id, version, and entity_id.
     Args:
         uri: URI to be converted
@@ -200,20 +198,8 @@ def uri_to_entity_components(
     for prefix, namespace in prefixes.items():
         if uri.startswith(namespace):
             remainder = str(uri)[len(str(namespace)) :]
-
-            if (components := remainder.split("/")) and all(components):
-                if len(components) == 3:
-                    data_model_id, version, entity_id = components
-                elif len(components) == 2:
-                    data_model_id, entity_id = components
-                    version = None
-                elif len(components) == 1:
-                    entity_id = components[0]
-                    data_model_id = None
-                    version = None
-                else:
-                    return None
-            return prefix, data_model_id, version, entity_id
+            if (components := remainder.split("/")) and len(components) == 3 and all(components):
+                return prefix, components[0], components[1], components[2]
     return None
 
 
