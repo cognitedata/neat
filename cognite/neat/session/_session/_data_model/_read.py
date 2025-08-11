@@ -23,16 +23,21 @@ class ReadAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def __call__(self, name: str, io: str | Path, **kwargs: Any) -> IssueList:
-        """Provides access to the external plugins for data model importing.
+    def __call__(self, name: str, io: str | Path | DataModelIdentifier, **kwargs: Any) -> IssueList:
+        """Provides access to internal data model readers and external data model
+        reader plugins.
 
         Args:
-            name (str): The name of format (e.g. Excel) plugin is handling.
-            io (str | Path | None): The input/output interface for the plugin.
-            **kwargs (Any): Additional keyword arguments for the plugin.
+            name (str): The name of format (e.g. Excel) reader is handling.
+            io (str | Path | | DataModelIdentifier | None): The input/output interface for the reader.
+            **kwargs (Any): Additional keyword arguments for the reader.
+
+        !!! note "io"
+            The `io` parameter can be a file path, URL, or a DataModelIdentifier
+            depending on the reader's requirements.
 
         !!! note "kwargs"
-            Users must consult the documentation of the plugin to understand
+            Users must consult the documentation of the reader to understand
             what keyword arguments are supported.
         """
 
@@ -42,19 +47,19 @@ class ReadAPI:
         # The match statement cleanly handles each case.
         match clean_name:
             case "excel":
-                return self.excel(io, **kwargs)
+                return self.excel(cast(str | Path, io), **kwargs)
 
             case "cdf":
-                return self.excel(io, **kwargs)
+                return self.cdf(cast(DataModelIdentifier, io))
 
             case "ontology":
-                return self.ontology(io)
+                return self.ontology(cast(str | Path, io))
 
             case "yaml":
-                return self.yaml(io, **kwargs)
+                return self.yaml(cast(str | Path, io), **kwargs)
 
             case _:  # The wildcard '_' acts as the default 'else' case.
-                return self._plugin(name, io, **kwargs)
+                return self._plugin(name, cast(str | Path, io), **kwargs)
 
     def _plugin(self, name: str, io: str | Path, **kwargs: Any) -> IssueList:
         """Provides access to the external plugins for data model importing.
@@ -88,11 +93,11 @@ class ReadAPI:
 
         return self._state.data_model_import(plugin().configure(io=path, **kwargs))
 
-    def cdf(self, *, data_model_id: DataModelIdentifier) -> IssueList:
+    def cdf(self, io: DataModelIdentifier) -> IssueList:
         """Reads a Data Model from CDF to the knowledge graph.
 
         Args:
-            data_model_id: Tuple of strings with the id of a CDF Data Model.
+            io: Tuple of strings with the id of a CDF Data Model.
             Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
 
         Example:
@@ -101,7 +106,7 @@ class ReadAPI:
             ```
         """
 
-        data_model_id = DataModelId.load(data_model_id)
+        data_model_id = DataModelId.load(io)
 
         if not data_model_id.version:
             raise NeatSessionError("Data model version is required to read a data model.")
