@@ -1,9 +1,6 @@
-from typing import Any, Literal, cast
+from typing import Any, Literal
 from zipfile import Path
 
-from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
-
-from cognite.neat.core._client._api_client import NeatClient
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.importers._base import BaseImporter
 from cognite.neat.core._issues._base import IssueList
@@ -15,7 +12,7 @@ from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlu
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import NeatSessionError, session_class_wrapper
 
-InternalReaderName = Literal["excel", "cdf", "ontology", "yaml"]
+InternalReaderName = Literal["excel", "ontology", "yaml"]
 
 
 @session_class_wrapper
@@ -23,21 +20,16 @@ class ReadAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def __call__(self, name: str, io: str | Path | DataModelIdentifier, **kwargs: Any) -> IssueList:
-        """Provides access to internal data model readers and external data model
-        reader plugins.
+    def __call__(self, name: str, io: str | Path, **kwargs: Any) -> IssueList:
+        """Provides access to the external plugins for data model importing.
 
         Args:
-            name (str): The name of format (e.g. Excel) reader is handling.
-            io (str | Path | | DataModelIdentifier | None): The input/output interface for the reader.
-            **kwargs (Any): Additional keyword arguments for the reader.
-
-        !!! note "io"
-            The `io` parameter can be a file path, URL, or a DataModelIdentifier
-            depending on the reader's requirements.
+            name (str): The name of format (e.g. Excel) plugin is handling.
+            io (str | Path | None): The input/output interface for the plugin.
+            **kwargs (Any): Additional keyword arguments for the plugin.
 
         !!! note "kwargs"
-            Users must consult the documentation of the reader to understand
+            Users must consult the documentation of the plugin to understand
             what keyword arguments are supported.
         """
 
@@ -47,19 +39,16 @@ class ReadAPI:
         # The match statement cleanly handles each case.
         match clean_name:
             case "excel":
-                return self.excel(cast(str | Path, io), **kwargs)
-
-            case "cdf":
-                return self.cdf(cast(DataModelIdentifier, io))
+                return self.excel(io, **kwargs)
 
             case "ontology":
-                return self.ontology(cast(str | Path, io))
+                return self.ontology(io)
 
             case "yaml":
-                return self.yaml(cast(str | Path, io), **kwargs)
+                return self.yaml(io, **kwargs)
 
             case _:  # The wildcard '_' acts as the default 'else' case.
-                return self._plugin(name, cast(str | Path, io), **kwargs)
+                return self._plugin(name, io, **kwargs)
 
     def _plugin(self, name: str, io: str | Path, **kwargs: Any) -> IssueList:
         """Provides access to the external plugins for data model importing.
@@ -92,34 +81,6 @@ class ReadAPI:
         )
 
         return self._state.data_model_import(plugin().configure(io=path, **kwargs))
-
-    def cdf(self, io: DataModelIdentifier) -> IssueList:
-        """Reads a Data Model from CDF to the knowledge graph.
-
-        Args:
-            io: Tuple of strings with the id of a CDF Data Model.
-            Notation as follows (<name_of_space>, <name_of_data_model>, <data_model_version>)
-
-        Example:
-            ```python
-            neat.read.cdf.data_model(("example_data_model_space", "EXAMPLE_DATA_MODEL", "v1"))
-            ```
-        """
-
-        data_model_id = DataModelId.load(io)
-
-        if not data_model_id.version:
-            raise NeatSessionError("Data model version is required to read a data model.")
-
-        self._state._raise_exception_if_condition_not_met(
-            "Read data model from CDF",
-            empty_data_model_store_required=True,
-            client_required=True,
-        )
-
-        return self._state.data_model_import(
-            importers.DMSImporter.from_data_model_id(cast(NeatClient, self._state.client), data_model_id)
-        )
 
     def excel(self, io: str | Path, *, enable_manual_edit: bool = False) -> IssueList:
         """Reads a Neat Excel Data Model to the data model store.
