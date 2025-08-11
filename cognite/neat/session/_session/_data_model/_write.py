@@ -19,6 +19,8 @@ from cognite.neat.core._utils.upload import UploadResultList
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import NeatSessionError, session_class_wrapper
 
+InternalWriterName = Literal["excel", "ontology", "shacl", "cdf", "yaml"]
+
 
 @session_class_wrapper
 class WriteAPI:
@@ -40,32 +42,33 @@ class WriteAPI:
             to understand what keyword arguments are supported.
         """
 
-        # These are internal writers that are not plugins
-        format_name = name.strip().lower()
+        # Clean the input name once before matching.
+        clean_name: InternalWriterName | str = name.strip().lower()
 
-        if format_name == "excel":
-            if io is None:
-                raise NeatSessionError("'io' parameter is required for Excel format.")
-            return self.excel(cast(str | Path, io), **filter_kwargs_by_method(kwargs, self.excel))
-        elif format_name == "cdf":
-            return self.cdf(**filter_kwargs_by_method(kwargs, self.cdf))
-        elif format_name == "yaml":
-            return self.yaml(io, **filter_kwargs_by_method(kwargs, self.yaml))
-        elif format_name == "ontology":
-            if io is None:
-                raise NeatSessionError("'io' parameter is required for ontology format.")
-            self.ontology(cast(str | Path, io))
-            return None
-        elif format_name == "shacl":
-            if io is None:
-                raise NeatSessionError("'io' parameter is required for SHACL format.")
-            self.shacl(cast(str | Path, io))
-            return None
-        else:
-            raise NeatSessionError(
-                f"Unsupported data model writer: {name}. "
-                "Please use one of the following: 'excel', 'cdf', 'yaml', 'ontology', 'shacl'."
-            )
+        match clean_name:
+            case "excel":
+                if io is None:
+                    raise NeatSessionError("'io' parameter is required for Excel format.")
+                return self.excel(cast(str | Path, io), **filter_kwargs_by_method(kwargs, self.excel))
+            case "cdf":
+                return self.cdf(**filter_kwargs_by_method(kwargs, self.cdf))
+            case "yaml":
+                return self.yaml(io, **filter_kwargs_by_method(kwargs, self.yaml))
+            case "ontology":
+                if io is None:
+                    raise NeatSessionError("'io' parameter is required for ontology format.")
+                self.ontology(cast(str | Path, io))
+                return None
+            case "shacl":
+                if io is None:
+                    raise NeatSessionError("'io' parameter is required for SHACL format.")
+                self.shacl(cast(str | Path, io))
+                return None
+            case _:
+                raise NeatSessionError(
+                    f"Unsupported data model writer: {name}. "
+                    "Please use one of the following: 'excel', 'cdf', 'yaml', 'ontology', 'shacl'."
+                )
 
     def excel(
         self,
