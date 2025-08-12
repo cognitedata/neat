@@ -37,6 +37,17 @@ class TestRead:
 
         data_regression.check(exported_rules)
 
+    def test_read_cdm(self, cognite_client: CogniteClient, data_regression: DataRegressionFixture) -> None:
+        neat = NeatSession(client=cognite_client)
+        # The CogniteDescribable view is referenced in the REFERENCING_CORE model read below.
+        # The data product should lookup the describable properties and include them.
+        neat.data_model.read.cdf(("cdf_cdm", "CogniteCore", "v1"))
+
+        exported_yaml_str = neat.to.yaml()
+        exported_rules = yaml.safe_load(exported_yaml_str)
+
+        data_regression.check(exported_rules)
+
     def test_read_pump_hello_world(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)
 
