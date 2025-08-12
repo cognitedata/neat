@@ -183,7 +183,7 @@ def handle_meta(
         resources[resource_id][feature] = res[feature]
 
     # RAISE warning only if the feature is being redefined
-    elif resources[resource_id][feature] and res[feature]:
+    elif resources[resource_id][feature] and res[feature] and resources[resource_id][feature] != res[feature]:
         issue_list.append(
             ResourceRedefinedWarning(
                 identifier=resource_id,
