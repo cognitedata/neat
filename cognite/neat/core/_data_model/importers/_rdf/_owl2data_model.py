@@ -33,8 +33,41 @@ PROPERTIES_QUERY = """
     WHERE {{
         ?property_ a ?property_Type.
         FILTER (?property_Type IN (owl:ObjectProperty, owl:DatatypeProperty ) )
-        OPTIONAL {{?property_ rdfs:domain ?concept  }}.
-        OPTIONAL {{?property_ rdfs:range ?value_type }}.
+
+
+
+        # Handling owl:domain when it is expressed as
+        # owl restriction
+        OPTIONAL {{
+            ?property_ rdfs:domain ?domain .
+            FILTER(isBlank(?domain))
+            ?domain owl:unionOf|owl:intersectionOf ?concepts .
+            ?concepts rdf:rest*/rdf:first ?concept.
+        }}
+
+        # Handling the domain when it is a single concept
+        OPTIONAL {{
+            ?property_ rdfs:domain ?domain .
+            FILTER(!isBlank(?domain))
+            BIND(?domain AS ?concept)
+        }}
+
+        # Handling owl:range when it is expressed as
+        # owl restriction
+        OPTIONAL {{
+            ?property_ rdfs:range ?range .
+            FILTER(isBlank(?range))
+            ?range owl:unionOf|owl:intersectionOf ?value_types .
+            ?value_types rdf:rest*/rdf:first ?value_type.
+        }}
+
+        # Handling the range when it is a single concept
+        OPTIONAL {{
+            ?property_ rdfs:range ?range .
+            FILTER(!isBlank(?range))
+            BIND(?range AS ?value_type)
+        }}
+
         OPTIONAL {{?property_ rdfs:label|skos:prefLabel ?name }}.
         OPTIONAL {{?property_ rdfs:comment|skos:definition ?description}}.
         OPTIONAL {{?property_ owl:maxCardinality ?maxCount}}.

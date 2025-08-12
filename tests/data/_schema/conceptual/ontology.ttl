@@ -47,6 +47,22 @@
                                                                         rdfs:label "logs raw data stream" .
 
 
+###  http://example.com/industrial/is.Controlled-By(Panel):Safety~?@!$&'*+,;=%[]
+<http://example.com/industrial/multiConnect> rdf:type owl:ObjectProperty ;
+                                             rdfs:domain [ owl:unionOf ( <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]>
+                                                                         <http://example.com/industrial/Sensor>
+                                                                        ) ;
+                                                         rdf:type owl:Class
+                                                         ] ;
+                                                                              rdfs:range [ owl:unionOf ( <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]>
+                                                                         <http://example.com/industrial/Sensor>
+                                                                             ) ;
+                                                         rdf:type owl:Class
+                                                         ] ;
+                                                                              rdfs:label "is multi connect" .
+
+
+
 #################################################################
 #    Data properties
 #################################################################
