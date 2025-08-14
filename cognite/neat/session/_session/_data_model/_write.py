@@ -125,6 +125,10 @@ class WriteAPI:
         """
         reference_data_model_with_prefix: tuple[VerifiedDataModel, str] | None = None
         include_properties = include_properties.strip().lower()
+        if include_properties not in ["same-space", "all"]:
+            raise NeatSessionError(
+                f"Invalid include_properties value: '{include_properties}'. Must be 'same-space' or 'all'."
+            )
 
         if include_reference is not False:
             if include_reference is True and self._state.last_reference is not None:
@@ -155,7 +159,7 @@ class WriteAPI:
             styling="maximal",
             reference_data_model_with_prefix=reference_data_model_with_prefix,
             add_empty_rows=add_empty_rows,
-            include_properties=include_properties,  # type: ignore
+            include_properties=cast(Literal["same-space", "all"], include_properties),
         )
         self._state.data_model_store.export_to_file(exporter, NeatReader.create(io).materialize_path())
         return None
