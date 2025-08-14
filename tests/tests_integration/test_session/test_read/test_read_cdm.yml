@@ -1,0 +1,1871 @@
+containers:
+- constraint: CogniteDescribable,CogniteSourceable,CogniteSchedulable
+  container: CogniteActivity
+  description: Represent an activity
+  used_for: node
+- constraint: CogniteDescribable,CogniteSourceable
+  container: CogniteAnnotation
+  description: Annotation represents contextualization results or links
+  used_for: edge
+- constraint: CogniteDescribable,CogniteVisualizable,CogniteSourceable
+  container: CogniteAsset
+  description: The asset is the bare bone representation of assets in our asset centric
+    world
+  used_for: node
+- constraint: CogniteDescribable
+  container: CogniteAssetClass
+  description: This identifies the class of an asset
+  used_for: node
+- constraint: CogniteDescribable
+  container: CogniteAssetType
+  description: This identifies the type of an asset
+  used_for: node
+- container: CogniteDescribable
+  description: The describable core concept is used as a standard way of holding the
+    bare minimum of information about the instance.
+  used_for: all
+- constraint: CogniteDescribable,CogniteSourceable,CogniteAnnotation
+  container: CogniteDiagramAnnotation
+  used_for: edge
+- constraint: CogniteDescribable,CogniteSourceable
+  container: CogniteEquipment
+  description: Represent a physical piece of equipment
+  used_for: node
+- constraint: CogniteDescribable
+  container: CogniteEquipmentType
+  description: This identifies the type of an equipment
+  used_for: node
+- constraint: CogniteDescribable,CogniteSourceable
+  container: CogniteFile
+  description: This concept models the underlying file from the Files resource type
+  used_for: node
+- constraint: CogniteDescribable
+  container: CogniteFileCategory
+  description: Specifies the category for a file (as a result of categorization/classification))
+  used_for: node
+- container: CogniteSchedulable
+  description: CogniteSchedulable represents the metadata about when an activity (or
+    similar) starts and ends
+  used_for: node
+- container: CogniteSourceSystem
+  description: The CogniteSourceSystem core concept is used to standardize the way
+    source system is stored.
+  used_for: node
+- container: CogniteSourceable
+  description: The CogniteSourceable core concept is used to standardize the way source
+    information is stored.
+  used_for: all
+- constraint: CogniteDescribable,CogniteSourceable
+  container: CogniteTimeSeries
+  used_for: node
+- constraint: CogniteDescribable
+  container: CogniteUnit
+  description: Represents a single unit of measurement
+  used_for: node
+- container: CogniteVisualizable
+  description: CogniteVisualizable defines the standard way to reference a related
+    3D resource
+  used_for: node
+- container: cdf_cdm_3d:Cognite360Image
+  used_for: node
+- container: cdf_cdm_3d:Cognite360ImageAnnotation
+  used_for: edge
+- container: cdf_cdm_3d:Cognite3DGroup
+  used_for: node
+- container: cdf_cdm_3d:Cognite3DModel
+  used_for: node
+- container: cdf_cdm_3d:Cognite3DObject
+  used_for: node
+- container: cdf_cdm_3d:Cognite3DRevision
+  used_for: node
+- container: cdf_cdm_3d:Cognite3DTransformation
+  used_for: all
+- container: cdf_cdm_3d:CogniteCADNode
+  used_for: node
+- container: cdf_cdm_3d:CogniteCADRevision
+  used_for: node
+- container: cdf_cdm_3d:CogniteCubeMap
+  used_for: node
+- container: cdf_cdm_3d:CognitePointCloudRevision
+  used_for: node
+- container: cdf_cdm_3d:CognitePointCloudVolume
+  used_for: node
+enum:
+- collection: Cognite3DGroup.groupType
+  name: Station360
+  value: Station360
+- collection: Cognite3DModel.type
+  name: CAD
+  value: CAD
+- collection: Cognite3DModel.type
+  name: Image360
+  value: Image360
+- collection: Cognite3DModel.type
+  name: PointCloud
+  value: PointCloud
+- collection: Cognite3DRevision.status
+  name: Done
+  value: Done
+- collection: Cognite3DRevision.status
+  name: Failed
+  value: Failed
+- collection: Cognite3DRevision.status
+  name: Processing
+  value: Processing
+- collection: Cognite3DRevision.status
+  name: Queued
+  value: Queued
+- collection: Cognite3DRevision.type
+  name: CAD
+  value: CAD
+- collection: Cognite3DRevision.type
+  name: Image360
+  value: Image360
+- collection: Cognite3DRevision.type
+  name: PointCloud
+  value: PointCloud
+- collection: CogniteAnnotation.status
+  name: Approved
+  value: Approved
+- collection: CogniteAnnotation.status
+  name: Rejected
+  value: Rejected
+- collection: CogniteAnnotation.status
+  name: Suggested
+  value: Suggested
+- collection: CognitePointCloudVolume.volumeType
+  name: Box
+  value: Box
+- collection: CognitePointCloudVolume.volumeType
+  name: Cylinder
+  value: Cylinder
+- collection: CogniteTimeSeries.type
+  description: Time series with double floating point data points.
+  name: numeric
+  value: numeric
+- collection: CogniteTimeSeries.type
+  description: Time series with string data points.
+  name: string
+  value: string
+metadata:
+  created: '2024-08-29T13:49:56.696000Z'
+  creator: MISSING
+  description: Cognite core data model
+  external_id: CogniteCore
+  name: Cognite core data model
+  role: DMS Architect
+  source_id: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1
+  space: cdf_cdm
+  updated: '2024-08-29T13:49:56.696000Z'
+  version: v1
+properties:
+- connection: direct
+  container: cdf_cdm_3d:Cognite360Image
+  container_property: collection360
+  description: Direct relation to Cognite360ImageCollection
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image/collection360
+  value_type: Cognite360ImageCollection
+  view: Cognite360Image
+  view_property: collection360
+- connection: direct
+  container: cdf_cdm_3d:Cognite360Image
+  container_property: group3d
+  description: Direct relation to Cognite3DGroup instance that groups different Cognite360Image
+    instances to the same station
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image/station360
+  value_type: Cognite360ImageStation
+  view: Cognite360Image
+  view_property: station360
+- container: cdf_cdm_3d:Cognite360Image
+  container_property: takenAt
+  description: The timestamp when the 6 photos were taken
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image/takenAt
+  value_type: timestamp
+  view: Cognite360Image
+  view_property: takenAt
+- container: cdf_cdm_3d:Cognite360ImageAnnotation
+  container_property: formatVersion
+  description: Specifies the storage representation for the polygon
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageAnnotation/formatVersion
+  value_type: text
+  view: Cognite360ImageAnnotation
+  view_property: formatVersion
+- container: cdf_cdm_3d:Cognite360ImageAnnotation
+  container_property: polygon
+  description: List of floats representing the polygon. Format depends on formatVersion
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageAnnotation/polygon
+  value_type: float64
+  view: Cognite360ImageAnnotation
+  view_property: polygon
+- connection: direct
+  container: cdf_cdm_3d:Cognite3DRevision
+  container_property: model3D
+  description: ''
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageCollection/model3D
+  value_type: Cognite360ImageModel
+  view: Cognite360ImageCollection
+  view_property: model3D
+- connection: reverse(property=model3D)
+  description: List Cognite360Image collections for this instance
+  max_count: .inf
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageModel/collections
+  value_type: Cognite360ImageCollection
+  view: Cognite360ImageModel
+  view_property: collections
+- container: cdf_cdm_3d:Cognite3DGroup
+  container_property: groupType
+  description: Type of group
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageStation/groupType
+  value_type: enum(collection=Cognite3DGroup.groupType)
+  view: Cognite360ImageStation
+  view_property: groupType
+- connection: direct
+  container: cdf_cdm_3d:Cognite3DModel
+  container_property: thumbnail
+  description: Thumbnail of the 3D model
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DModel/thumbnail
+  value_type: CogniteFile
+  view: Cognite3DModel
+  view_property: thumbnail
+- container: cdf_cdm_3d:Cognite3DModel
+  container_property: type
+  description: CAD, PointCloud or Image360
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DModel/type
+  value_type: enum(collection=Cognite3DModel.type)
+  view: Cognite3DModel
+  view_property: type
+- connection: reverse(property=object3D)
+  description: Asset that is tied to this 3D object
+  max_count: 1
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/asset
+  value_type: CogniteAsset
+  view: Cognite3DObject
+  view_property: asset
+- connection: reverse(property=object3D)
+  description: List of up to 1000 CADNodes that represents the connected CogniteAsset
+  max_count: .inf
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/cadNodes
+  value_type: CogniteCADNode
+  view: Cognite3DObject
+  view_property: cadNodes
+- connection: edge(properties=Cognite360ImageAnnotation,type=image-360-annotation)
+  description: Edge connection to Cognite360Image annotations that represents the
+    connected CogniteAsset
+  max_count: .inf
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/images360
+  value_type: Cognite360Image
+  view: Cognite3DObject
+  view_property: images360
+- connection: reverse(property=object3D)
+  description: List of up to 1000 PointCloudVolumes that represents the connected
+    CogniteAsset
+  max_count: .inf
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/pointCloudVolumes
+  value_type: CognitePointCloudVolume
+  view: Cognite3DObject
+  view_property: pointCloudVolumes
+- container: cdf_cdm_3d:Cognite3DObject
+  container_property: xMax
+  description: Highest X value in bounding box
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/xMax
+  value_type: float64
+  view: Cognite3DObject
+  view_property: xMax
+- container: cdf_cdm_3d:Cognite3DObject
+  container_property: xMin
+  description: Lowest X value in bounding box
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/xMin
+  value_type: float64
+  view: Cognite3DObject
+  view_property: xMin
+- container: cdf_cdm_3d:Cognite3DObject
+  container_property: yMax
+  description: Highest Y value in bounding box
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/yMax
+  value_type: float64
+  view: Cognite3DObject
+  view_property: yMax
+- container: cdf_cdm_3d:Cognite3DObject
+  container_property: yMin
+  description: Lowest Y value in bounding box
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/yMin
+  value_type: float64
+  view: Cognite3DObject
+  view_property: yMin
+- container: cdf_cdm_3d:Cognite3DObject
+  container_property: zMax
+  description: Highest Z value in bounding box
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/zMax
+  value_type: float64
+  view: Cognite3DObject
+  view_property: zMax
+- container: cdf_cdm_3d:Cognite3DObject
+  container_property: zMin
+  description: Lowest Z value in bounding box
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject/zMin
+  value_type: float64
+  view: Cognite3DObject
+  view_property: zMin
+- connection: direct
+  container: cdf_cdm_3d:Cognite3DRevision
+  container_property: model3D
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DRevision/model3D
+  value_type: Cognite3DModel
+  view: Cognite3DRevision
+  view_property: model3D
+- container: cdf_cdm_3d:Cognite3DRevision
+  container_property: published
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DRevision/published
+  value_type: boolean
+  view: Cognite3DRevision
+  view_property: published
+- container: cdf_cdm_3d:Cognite3DRevision
+  container_property: status
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DRevision/status
+  value_type: enum(collection=Cognite3DRevision.status)
+  view: Cognite3DRevision
+  view_property: status
+- container: cdf_cdm_3d:Cognite3DRevision
+  container_property: type
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DRevision/type
+  value_type: enum(collection=Cognite3DRevision.type)
+  view: Cognite3DRevision
+  view_property: type
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: eulerRotationX
+  description: The rotation of the object around the X-axis in radians
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/eulerRotationX
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: eulerRotationX
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: eulerRotationY
+  description: The rotation of the object around the Y-axis in radians
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/eulerRotationY
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: eulerRotationY
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: eulerRotationZ
+  description: The rotation of the object around the Z-axis in radians
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/eulerRotationZ
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: eulerRotationZ
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: scaleX
+  description: The scaling factor applied to the object along the X-axis
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/scaleX
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: scaleX
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: scaleY
+  description: The scaling factor applied to the object along the Y-axis
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/scaleY
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: scaleY
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: scaleZ
+  description: The scaling factor applied to the object along the Z-axis
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/scaleZ
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: scaleZ
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: translationX
+  description: The displacement of the object along the X-axis in the 3D coordinate
+    system
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/translationX
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: translationX
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: translationY
+  description: The displacement of the object along the Y-axis in the 3D coordinate
+    system
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/translationY
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: translationY
+- container: cdf_cdm_3d:Cognite3DTransformation
+  container_property: translationZ
+  description: The displacement of the object along the Z-axis in the 3D coordinate
+    system
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation/translationZ
+  value_type: float64
+  view: Cognite3DTransformation
+  view_property: translationZ
+- connection: direct
+  container: CogniteActivity
+  container_property: assets
+  description: A list of assets the activity is related to.
+  immutable: false
+  max_count: 1200
+  min_count: 0
+  name: Assets
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/assets
+  value_type: CogniteAsset
+  view: CogniteActivity
+  view_property: assets
+- connection: direct
+  container: CogniteActivity
+  container_property: equipment
+  description: A list of equipment the activity is related to.
+  immutable: false
+  max_count: 100
+  min_count: 0
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/equipment
+  value_type: CogniteEquipment
+  view: CogniteActivity
+  view_property: equipment
+- connection: direct
+  container: CogniteActivity
+  container_property: timeSeries
+  description: A list of time series the activity is related to.
+  immutable: false
+  max_count: 100
+  min_count: 0
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity/timeSeries
+  value_type: CogniteTimeSeries
+  view: CogniteActivity
+  view_property: timeSeries
+- container: CogniteAnnotation
+  container_property: confidence
+  description: The confidence that the annotation is a good match
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAnnotation/confidence
+  value_type: float64
+  view: CogniteAnnotation
+  view_property: confidence
+- container: CogniteAnnotation
+  container_property: status
+  description: The status of the annotation
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAnnotation/status
+  value_type: enum(collection=CogniteAnnotation.status)
+  view: CogniteAnnotation
+  view_property: status
+- connection: reverse(property=assets)
+  description: An automatically updated list of activities related to the asset.
+  max_count: .inf
+  name: Activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/activities
+  value_type: CogniteActivity
+  view: CogniteAsset
+  view_property: activities
+- connection: direct
+  container: CogniteAsset
+  container_property: assetClass
+  description: Specifies the class of the asset. It's a direct relation to CogniteAssetClass.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Asset class
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/assetClass
+  value_type: CogniteAssetClass
+  view: CogniteAsset
+  view_property: assetClass
+- connection: reverse(property=parent)
+  description: An automatically updated list of assets with this asset as their parent.
+  max_count: .inf
+  name: Children
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/children
+  value_type: CogniteAsset
+  view: CogniteAsset
+  view_property: children
+- connection: reverse(property=asset)
+  description: An automatically updated list of equipment related to the asset.
+  max_count: .inf
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/equipment
+  value_type: CogniteEquipment
+  view: CogniteAsset
+  view_property: equipment
+- connection: reverse(property=assets)
+  description: An automatically updated list of files related to the asset.
+  max_count: .inf
+  name: Files
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/files
+  value_type: CogniteFile
+  view: CogniteAsset
+  view_property: files
+- connection: direct
+  container: CogniteAsset
+  container_property: assetHierarchy_parent
+  description: The parent of the asset.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Parent
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/parent
+  value_type: CogniteAsset
+  view: CogniteAsset
+  view_property: parent
+- connection: direct
+  container: CogniteAsset
+  container_property: assetHierarchy_path
+  description: An automatically updated ordered list of this asset's ancestors, starting
+    with the root asset. Enables subtree filtering to find all assets under a parent.
+  immutable: false
+  max_count: 100
+  min_count: 0
+  name: Path
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/path
+  value_type: CogniteAsset
+  view: CogniteAsset
+  view_property: path
+- container: CogniteAsset
+  container_property: assetHierarchy_path_last_updated_time
+  description: The last time the path was updated for this asset.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Path last updated time
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/pathLastUpdatedTime
+  value_type: timestamp
+  view: CogniteAsset
+  view_property: pathLastUpdatedTime
+- connection: direct
+  container: CogniteAsset
+  container_property: assetHierarchy_root
+  description: An automatically updated reference to the top-level asset of the hierarchy.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Root
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/root
+  value_type: CogniteAsset
+  view: CogniteAsset
+  view_property: root
+- connection: reverse(property=assets)
+  description: An automatically updated list of time series related to the asset.
+  max_count: .inf
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/timeSeries
+  value_type: CogniteTimeSeries
+  view: CogniteAsset
+  view_property: timeSeries
+- connection: direct
+  container: CogniteAsset
+  container_property: type
+  description: Specifies the type of the asset. It's a direct relation to CogniteAssetType.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Asset type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset/type
+  value_type: CogniteAssetType
+  view: CogniteAsset
+  view_property: type
+- constraint: uniqueCodeConstraint
+  container: CogniteAssetClass
+  container_property: code
+  description: A unique identifier for the class of asset.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Code
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetClass/code
+  value_type: text
+  view: CogniteAssetClass
+  view_property: code
+- constraint: uniqueCodeConstraint
+  container: CogniteAssetClass
+  container_property: standard
+  description: A text string to specify which standard the class is from.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Standard
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetClass/standard
+  value_type: text
+  view: CogniteAssetClass
+  view_property: standard
+- connection: direct
+  container: CogniteAssetType
+  container_property: assetClass
+  description: Specifies the class the type belongs to. It's a direct relation to
+    CogniteAssetClass.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Asset class
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetType/assetClass
+  value_type: CogniteAssetClass
+  view: CogniteAssetType
+  view_property: assetClass
+- container: CogniteAssetType
+  container_property: code
+  description: A unique identifier for the type of asset.
+  immutable: false
+  index: btree:code(cursorable=True),btree:standard(cursorable=True,order=1)
+  max_count: 1
+  min_count: 0
+  name: Code
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetType/code
+  value_type: text
+  view: CogniteAssetType
+  view_property: code
+- container: CogniteAssetType
+  container_property: standard
+  description: A text string to specify which standard the type is from.
+  immutable: false
+  index: btree:standard(cursorable=True,order=0)
+  max_count: 1
+  min_count: 0
+  name: Standard
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetType/standard
+  value_type: text
+  view: CogniteAssetType
+  view_property: standard
+- connection: reverse(property=model3D)
+  description: List of revisions for this CAD model
+  max_count: .inf
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADModel/revisions
+  value_type: CogniteCADRevision
+  view: CogniteCADModel
+  view_property: revisions
+- container: cdf_cdm_3d:CogniteCADNode
+  container_property: cadNodeReference
+  description: Reference to a node within a CAD model from the 3D API
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/cadNodeReference
+  value_type: text
+  view: CogniteCADNode
+  view_property: cadNodeReference
+- connection: direct
+  container: cdf_cdm_3d:CogniteCADNode
+  container_property: model3D
+  description: Direct relation to Cognite3DModel
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/model3D
+  value_type: CogniteCADModel
+  view: CogniteCADNode
+  view_property: model3D
+- connection: direct
+  container: cdf_cdm_3d:CogniteCADNode
+  container_property: object3D
+  description: Direct relation to object3D grouping for this node
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/object3D
+  value_type: Cognite3DObject
+  view: CogniteCADNode
+  view_property: object3D
+- connection: direct
+  container: cdf_cdm_3d:CogniteCADNode
+  container_property: revisions
+  description: List of direct relations to instances of Cognite3DRevision which this
+    CogniteCADNode exists in.
+  immutable: false
+  max_count: 100
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/revisions
+  value_type: CogniteCADRevision
+  view: CogniteCADNode
+  view_property: revisions
+- container: cdf_cdm_3d:CogniteCADNode
+  container_property: subTreeSizes
+  description: List of subtree sizes in the same order as revisions. Used by Reveal
+    and similar applications to know how many nodes exists below this node in the
+    hierarchy
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/subTreeSizes
+  value_type: int64
+  view: CogniteCADNode
+  view_property: subTreeSizes
+- container: cdf_cdm_3d:CogniteCADNode
+  container_property: treeIndexes
+  description: List of tree indexes in the same order as revisions. Used by Reveal
+    and similar applications to map from CogniteCADNode to tree index
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode/treeIndexes
+  value_type: int64
+  view: CogniteCADNode
+  view_property: treeIndexes
+- connection: direct
+  container: cdf_cdm_3d:Cognite3DRevision
+  container_property: model3D
+  description: .
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADRevision/model3D
+  value_type: CogniteCADModel
+  view: CogniteCADRevision
+  view_property: model3D
+- container: cdf_cdm_3d:CogniteCADRevision
+  container_property: revisionId
+  description: The 3D API revision identifier for this CAD model
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADRevision/revisionId
+  value_type: int64
+  view: CogniteCADRevision
+  view_property: revisionId
+- connection: direct
+  container: cdf_cdm_3d:CogniteCubeMap
+  container_property: back
+  description: Direct relation to a file holding the back projection of the cube map
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/back
+  value_type: CogniteFile
+  view: CogniteCubeMap
+  view_property: back
+- connection: direct
+  container: cdf_cdm_3d:CogniteCubeMap
+  container_property: bottom
+  description: Direct relation to a file holding the bottom projection of the cube
+    map
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/bottom
+  value_type: CogniteFile
+  view: CogniteCubeMap
+  view_property: bottom
+- connection: direct
+  container: cdf_cdm_3d:CogniteCubeMap
+  container_property: front
+  description: Direct relation to a file holding the front projection of the cube
+    map
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/front
+  value_type: CogniteFile
+  view: CogniteCubeMap
+  view_property: front
+- connection: direct
+  container: cdf_cdm_3d:CogniteCubeMap
+  container_property: left
+  description: Direct relation to a file holding the left projection of the cube map
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/left
+  value_type: CogniteFile
+  view: CogniteCubeMap
+  view_property: left
+- connection: direct
+  container: cdf_cdm_3d:CogniteCubeMap
+  container_property: right
+  description: Direct relation to a file holding the right projection of the cube
+    map
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/right
+  value_type: CogniteFile
+  view: CogniteCubeMap
+  view_property: right
+- connection: direct
+  container: cdf_cdm_3d:CogniteCubeMap
+  container_property: top
+  description: Direct relation to a file holding the top projection of the cube map
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap/top
+  value_type: CogniteFile
+  view: CogniteCubeMap
+  view_property: top
+- container: CogniteDescribable
+  container_property: aliases
+  description: Alternative names for the node
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDescribable/aliases
+  value_type: text
+  view: CogniteDescribable
+  view_property: aliases
+- container: CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDescribable/description
+  value_type: text
+  view: CogniteDescribable
+  view_property: description
+- container: CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: btree:name(cursorable=False)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDescribable/name
+  value_type: text
+  view: CogniteDescribable
+  view_property: name
+- container: CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDescribable/tags
+  value_type: text
+  view: CogniteDescribable
+  view_property: tags
+- container: CogniteDiagramAnnotation
+  container_property: endNodePageNumber
+  description: The number of the page on which this annotation is located in the endNode
+    File if an endNode is present. The first page has number 1
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/endNodePageNumber
+  value_type: int64
+  view: CogniteDiagramAnnotation
+  view_property: endNodePageNumber
+- container: CogniteDiagramAnnotation
+  container_property: endNodeText
+  description: The text extracted from within the bounding box on the endNode. Only
+    applicable if an endNode is defined
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/endNodeText
+  value_type: text
+  view: CogniteDiagramAnnotation
+  view_property: endNodeText
+- container: CogniteDiagramAnnotation
+  container_property: endNodeXMax
+  description: Value between [0,1]. Maximum abscissa of the bounding box (right edge).
+    Must be strictly more than endNodeXMin. Only applicable if an endNode is defined
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/endNodeXMax
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: endNodeXMax
+- container: CogniteDiagramAnnotation
+  container_property: endNodeXMin
+  description: Value between [0,1]. Minimum abscissa of the bounding box (left edge).
+    Must be strictly less than endNodeXMax. Only applicable if an endNode is defined
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/endNodeXMin
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: endNodeXMin
+- container: CogniteDiagramAnnotation
+  container_property: endNodeYMax
+  description: Value between [0,1]. Maximum ordinate of the bounding box (top edge).
+    Must be strictly more than endNodeYMin. Only applicable if an endNode is defined
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/endNodeYMax
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: endNodeYMax
+- container: CogniteDiagramAnnotation
+  container_property: endNodeYMin
+  description: Value between [0,1]. Minimum ordinate of the bounding box (bottom edge).
+    Must be strictly less than endNodeYMax. Only applicable if an endNode is defined
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/endNodeYMin
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: endNodeYMin
+- container: CogniteDiagramAnnotation
+  container_property: startNodePageNumber
+  description: The number of the page on which this annotation is located in `startNode`
+    File. The first page has number 1
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/startNodePageNumber
+  value_type: int64
+  view: CogniteDiagramAnnotation
+  view_property: startNodePageNumber
+- container: CogniteDiagramAnnotation
+  container_property: startNodeText
+  description: The text extracted from within the bounding box on the startNode
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/startNodeText
+  value_type: text
+  view: CogniteDiagramAnnotation
+  view_property: startNodeText
+- container: CogniteDiagramAnnotation
+  container_property: startNodeXMax
+  description: Value between [0,1]. Maximum abscissa of the bounding box (right edge).
+    Must be strictly more than startNodeXMin
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/startNodeXMax
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: startNodeXMax
+- container: CogniteDiagramAnnotation
+  container_property: startNodeXMin
+  description: Value between [0,1]. Minimum abscissa of the bounding box (left edge).
+    Must be strictly less than startNodeXMax
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/startNodeXMin
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: startNodeXMin
+- container: CogniteDiagramAnnotation
+  container_property: startNodeYMax
+  description: Value between [0,1]. Maximum ordinate of the bounding box (top edge).
+    Must be strictly more than startNodeYMin
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/startNodeYMax
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: startNodeYMax
+- container: CogniteDiagramAnnotation
+  container_property: startNodeYMin
+  description: Value between [0,1]. Minimum ordinate of the bounding box (bottom edge).
+    Must be strictly less than startNodeYMax
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation/startNodeYMin
+  value_type: float64
+  view: CogniteDiagramAnnotation
+  view_property: startNodeYMin
+- connection: reverse(property=equipment)
+  description: An automatically updated list of activities related to the equipment.
+  max_count: .inf
+  name: Activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/activities
+  value_type: CogniteActivity
+  view: CogniteEquipment
+  view_property: activities
+- connection: direct
+  container: CogniteEquipment
+  container_property: asset
+  description: The asset the equipment is related to.
+  immutable: false
+  index: btree:asset(cursorable=True)
+  max_count: 1
+  min_count: 0
+  name: Asset
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/asset
+  value_type: CogniteAsset
+  view: CogniteEquipment
+  view_property: asset
+- connection: direct
+  container: CogniteEquipment
+  container_property: equipmentType
+  description: Specifies the type of the equipment. It's a direct relation to CogniteEquipmentType.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Equipment type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/equipmentType
+  value_type: CogniteEquipmentType
+  view: CogniteEquipment
+  view_property: equipmentType
+- connection: direct
+  container: CogniteEquipment
+  container_property: files
+  description: A list of files the equipment relates to.
+  immutable: false
+  max_count: 100
+  min_count: 0
+  name: Files
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/files
+  value_type: CogniteFile
+  view: CogniteEquipment
+  view_property: files
+- container: CogniteEquipment
+  container_property: manufacturer
+  description: The manufacturer of the equipment.
+  immutable: false
+  index: btree:manufacturer(cursorable=True)
+  max_count: 1
+  min_count: 0
+  name: Manufacturer
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/manufacturer
+  value_type: text
+  view: CogniteEquipment
+  view_property: manufacturer
+- container: CogniteEquipment
+  container_property: serialNumber
+  description: The serial number of the equipment.
+  immutable: false
+  index: btree:serialNumber(cursorable=True)
+  max_count: 1
+  min_count: 0
+  name: Serial number
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/serialNumber
+  value_type: text
+  view: CogniteEquipment
+  view_property: serialNumber
+- connection: reverse(property=equipment)
+  description: An automatically updated list of time series related to the equipment.
+  max_count: .inf
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment/timeSeries
+  value_type: CogniteTimeSeries
+  view: CogniteEquipment
+  view_property: timeSeries
+- constraint: uniqueCodeConstraint
+  container: CogniteEquipmentType
+  container_property: code
+  description: A unique identifier for the type of equipment.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Code
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipmentType/code
+  value_type: text
+  view: CogniteEquipmentType
+  view_property: code
+- container: CogniteEquipmentType
+  container_property: equipmentClass
+  description: Represents the class of equipment.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Equipment class
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipmentType/equipmentClass
+  value_type: text
+  view: CogniteEquipmentType
+  view_property: equipmentClass
+- constraint: uniqueCodeConstraint
+  container: CogniteEquipmentType
+  container_property: standard
+  description: An identifier for the standard this equipment type is sourced from,
+    for example, ISO14224.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Standard
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipmentType/standard
+  value_type: text
+  view: CogniteEquipmentType
+  view_property: standard
+- container: CogniteEquipmentType
+  container_property: standardReference
+  description: A reference to the source of the equipment standard.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Standard reference
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipmentType/standardReference
+  value_type: text
+  view: CogniteEquipmentType
+  view_property: standardReference
+- connection: direct
+  container: CogniteFile
+  container_property: assets
+  description: A list of assets this file is related to.
+  immutable: false
+  max_count: 1200
+  min_count: 0
+  name: Assets
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/assets
+  value_type: CogniteAsset
+  view: CogniteFile
+  view_property: assets
+- connection: direct
+  container: CogniteFile
+  container_property: category
+  description: Specifies the detected category the file belongs to. It's a direct
+    relation to an instance of CogniteFileCategory.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Category
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/category
+  value_type: CogniteFileCategory
+  view: CogniteFile
+  view_property: category
+- container: CogniteFile
+  container_property: directory
+  description: Contains the path elements from the source (if the source system has
+    a file system hierarchy or similar.)
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Directory
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/directory
+  value_type: text
+  view: CogniteFile
+  view_property: directory
+- connection: reverse(property=files)
+  description: An automatically updated list of equipment this file is related to.
+  max_count: .inf
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/equipment
+  value_type: CogniteEquipment
+  view: CogniteFile
+  view_property: equipment
+- container: CogniteFile
+  container_property: isUploaded
+  default: false
+  description: Specifies if the file content has been uploaded to Cognite Data Fusion
+    or not.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Is uploaded
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/isUploaded
+  value_type: boolean
+  view: CogniteFile
+  view_property: isUploaded
+- container: CogniteFile
+  container_property: mimeType
+  description: The MIME type of the file.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: MIME type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/mimeType
+  value_type: text
+  view: CogniteFile
+  view_property: mimeType
+- container: CogniteFile
+  container_property: uploadedTime
+  description: The time the file upload completed.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Uploaded time
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile/uploadedTime
+  value_type: timestamp
+  view: CogniteFile
+  view_property: uploadedTime
+- constraint: uniqueCodeConstraint
+  container: CogniteFileCategory
+  container_property: code
+  description: An identifier for the category, for example, 'AA' for Accounting (from
+    Norsok.)
+  immutable: false
+  max_count: 1
+  min_count: 1
+  name: Code
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFileCategory/code
+  value_type: text
+  view: CogniteFileCategory
+  view_property: code
+- constraint: uniqueCodeConstraint
+  container: CogniteFileCategory
+  container_property: standard
+  description: The name of the standard the category originates from, for example,
+    'Norsok'.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Standard
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFileCategory/standard
+  value_type: text
+  view: CogniteFileCategory
+  view_property: standard
+- container: CogniteFileCategory
+  container_property: standardReference
+  description: A reference to the source of the category standard.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Standard reference
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFileCategory/standardReference
+  value_type: text
+  view: CogniteFileCategory
+  view_property: standardReference
+- connection: reverse(property=model3D)
+  description: List of revisions for this PointCloud model
+  max_count: .inf
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudModel/revisions
+  value_type: CognitePointCloudRevision
+  view: CognitePointCloudModel
+  view_property: revisions
+- connection: direct
+  container: cdf_cdm_3d:Cognite3DRevision
+  container_property: model3D
+  description: .
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudRevision/model3D
+  value_type: CognitePointCloudModel
+  view: CognitePointCloudRevision
+  view_property: model3D
+- container: cdf_cdm_3d:CognitePointCloudRevision
+  container_property: revisionId
+  description: The 3D API revision identifier for this PointCloud model
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudRevision/revisionId
+  value_type: int64
+  view: CognitePointCloudRevision
+  view_property: revisionId
+- container: cdf_cdm_3d:CognitePointCloudVolume
+  container_property: formatVersion
+  description: Specifies the version the ‘volume’ field is following. Volume definition
+    is today 9 floats (property volume)
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/formatVersion
+  value_type: text
+  view: CognitePointCloudVolume
+  view_property: formatVersion
+- connection: direct
+  container: cdf_cdm_3d:CognitePointCloudVolume
+  container_property: model3D
+  description: Direct relation to Cognite3DModel instance
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/model3D
+  value_type: CogniteCADModel
+  view: CognitePointCloudVolume
+  view_property: model3D
+- connection: direct
+  container: cdf_cdm_3d:CognitePointCloudVolume
+  container_property: object3D
+  description: Direct relation to object3D grouping for this node
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/object3D
+  value_type: Cognite3DObject
+  view: CognitePointCloudVolume
+  view_property: object3D
+- connection: direct
+  container: cdf_cdm_3d:CognitePointCloudVolume
+  container_property: revisions
+  description: List of direct relations to revision information
+  immutable: false
+  max_count: 100
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/revisions
+  value_type: CogniteCADRevision
+  view: CognitePointCloudVolume
+  view_property: revisions
+- container: cdf_cdm_3d:CognitePointCloudVolume
+  container_property: volume
+  description: Relevant coordinates for the volume type, 9 floats in total, that defines
+    the volume
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/volume
+  value_type: float64
+  view: CognitePointCloudVolume
+  view_property: volume
+- container: cdf_cdm_3d:CognitePointCloudVolume
+  container_property: volumeReferences
+  description: Unique volume metric hashes used to access the 3D specialized data
+    storage
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/volumeReferences
+  value_type: text
+  view: CognitePointCloudVolume
+  view_property: volumeReferences
+- container: cdf_cdm_3d:CognitePointCloudVolume
+  container_property: volumeType
+  description: Type of volume (Cylinder or Box)
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume/volumeType
+  value_type: enum(collection=CognitePointCloudVolume.volumeType)
+  view: CognitePointCloudVolume
+  view_property: volumeType
+- container: CogniteSchedulable
+  container_property: endTime
+  description: The actual end time of an activity (or similar that extends this)
+  immutable: false
+  index: btree:endTime(cursorable=True)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSchedulable/endTime
+  value_type: timestamp
+  view: CogniteSchedulable
+  view_property: endTime
+- container: CogniteSchedulable
+  container_property: scheduledEndTime
+  description: The planned end time of an activity (or similar that extends this)
+  immutable: false
+  index: btree:scheduledEndTime(cursorable=True)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSchedulable/scheduledEndTime
+  value_type: timestamp
+  view: CogniteSchedulable
+  view_property: scheduledEndTime
+- container: CogniteSchedulable
+  container_property: scheduledStartTime
+  description: The planned start time of an activity (or similar that extends this)
+  immutable: false
+  index: btree:scheduledStartTime(cursorable=True)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSchedulable/scheduledStartTime
+  value_type: timestamp
+  view: CogniteSchedulable
+  view_property: scheduledStartTime
+- container: CogniteSchedulable
+  container_property: startTime
+  description: The actual start time of an activity (or similar that extends this)
+  immutable: false
+  index: btree:startTime(cursorable=True)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSchedulable/startTime
+  value_type: timestamp
+  view: CogniteSchedulable
+  view_property: startTime
+- container: CogniteSourceSystem
+  container_property: manufacturer
+  description: Manufacturer of the source system
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceSystem/manufacturer
+  value_type: text
+  view: CogniteSourceSystem
+  view_property: manufacturer
+- container: CogniteSourceSystem
+  container_property: version
+  description: Version identifier for the source system
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceSystem/version
+  value_type: text
+  view: CogniteSourceSystem
+  view_property: version
+- connection: direct
+  container: CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: btree:source(cursorable=False)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/source
+  value_type: CogniteSourceSystem
+  view: CogniteSourceable
+  view_property: source
+- container: CogniteSourceable
+  container_property: sourceContext
+  description: Context of the source id. For systems where the sourceId is globally
+    unique, the sourceContext is expected to not be set.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/sourceContext
+  value_type: text
+  view: CogniteSourceable
+  view_property: sourceContext
+- container: CogniteSourceable
+  container_property: sourceCreatedTime
+  description: When the instance was created in source system (if available)
+  immutable: false
+  index: btree:sourceCreatedTime(cursorable=False)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/sourceCreatedTime
+  value_type: timestamp
+  view: CogniteSourceable
+  view_property: sourceCreatedTime
+- container: CogniteSourceable
+  container_property: sourceCreatedUser
+  description: User identifier from the source system on who created the source data.
+    This identifier is not guaranteed to match the user identifiers in CDF
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/sourceCreatedUser
+  value_type: text
+  view: CogniteSourceable
+  view_property: sourceCreatedUser
+- container: CogniteSourceable
+  container_property: sourceId
+  description: Identifier from the source system
+  immutable: false
+  index: btree:sourceId(cursorable=True)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/sourceId
+  value_type: text
+  view: CogniteSourceable
+  view_property: sourceId
+- container: CogniteSourceable
+  container_property: sourceUpdatedTime
+  description: When the instance was last updated in the source system (if available)
+  immutable: false
+  index: btree:sourceUpdatedTime(cursorable=True)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/sourceUpdatedTime
+  value_type: timestamp
+  view: CogniteSourceable
+  view_property: sourceUpdatedTime
+- container: CogniteSourceable
+  container_property: sourceUpdatedUser
+  description: User identifier from the source system on who last updated the source
+    data. This identifier is not guaranteed to match the user identifiers in CDF
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable/sourceUpdatedUser
+  value_type: text
+  view: CogniteSourceable
+  view_property: sourceUpdatedUser
+- connection: reverse(property=timeSeries)
+  description: An automatically updated list of activities the time series is related
+    to.
+  max_count: .inf
+  name: Activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/activities
+  value_type: CogniteActivity
+  view: CogniteTimeSeries
+  view_property: activities
+- connection: direct
+  container: CogniteTimeSeries
+  container_property: assets
+  description: A list of assets the time series is related to.
+  immutable: false
+  max_count: 1200
+  min_count: 0
+  name: Assets
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/assets
+  value_type: CogniteAsset
+  view: CogniteTimeSeries
+  view_property: assets
+- connection: direct
+  container: CogniteTimeSeries
+  container_property: equipment
+  description: A list of equipment the time series is related to.
+  immutable: false
+  max_count: 100
+  min_count: 0
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/equipment
+  value_type: CogniteEquipment
+  view: CogniteTimeSeries
+  view_property: equipment
+- container: CogniteTimeSeries
+  container_property: isStep
+  default: false
+  description: Specifies whether the time series is a step time series or not.
+  immutable: false
+  max_count: 1
+  min_count: 1
+  name: Is step
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/isStep
+  value_type: boolean
+  view: CogniteTimeSeries
+  view_property: isStep
+- container: CogniteTimeSeries
+  container_property: sourceUnit
+  description: The unit specified in the source system.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Source unit
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/sourceUnit
+  value_type: text
+  view: CogniteTimeSeries
+  view_property: sourceUnit
+- container: CogniteTimeSeries
+  container_property: type
+  description: Specifies the data type of the data points.
+  immutable: true
+  max_count: 1
+  min_count: 1
+  name: Type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/type
+  value_type: enum(collection=CogniteTimeSeries.type)
+  view: CogniteTimeSeries
+  view_property: type
+- connection: direct
+  container: CogniteTimeSeries
+  container_property: unit
+  description: The unit of the time series.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Unit
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/unit
+  value_type: CogniteUnit
+  view: CogniteTimeSeries
+  view_property: unit
+- container: CogniteUnit
+  container_property: quantity
+  description: Specifies the physical quantity the unit measures
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteUnit/quantity
+  value_type: text
+  view: CogniteUnit
+  view_property: quantity
+- container: CogniteUnit
+  container_property: source
+  description: Source of the unit definition
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteUnit/source
+  value_type: text
+  view: CogniteUnit
+  view_property: source
+- container: CogniteUnit
+  container_property: sourceReference
+  description: Reference to the source of the unit definition
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteUnit/sourceReference
+  value_type: text
+  view: CogniteUnit
+  view_property: sourceReference
+- container: CogniteUnit
+  container_property: symbol
+  description: The symbol for the unit of measurement
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteUnit/symbol
+  value_type: text
+  view: CogniteUnit
+  view_property: symbol
+- connection: direct
+  constraint: uniqueObject3D
+  container: CogniteVisualizable
+  container_property: object3D
+  description: Direct relation to an Object3D instance representing the 3D resource
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteVisualizable/object3D
+  value_type: Cognite3DObject
+  view: CogniteVisualizable
+  view_property: object3D
+views:
+- description: ''
+  implements: Cognite3DTransformation,CogniteCubeMap
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360Image
+  view: Cognite360Image
+- description: ''
+  implements: CogniteDescribable,CogniteSourceable,CogniteAnnotation
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageAnnotation
+  view: Cognite360ImageAnnotation
+- description: Represents a logical collection of Cognite360Image instances
+  filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+    "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+    "type"], "value": "Image360"}}]})'
+  implements: CogniteDescribable,Cognite3DRevision
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageCollection
+  view: Cognite360ImageCollection
+- description: Navigational aid for traversing Cognite360ImageModel instances
+  filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+    "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+    "type"], "value": "Image360"}}]})'
+  implements: CogniteDescribable,Cognite3DModel
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageModel
+  view: Cognite360ImageModel
+- description: A way to group images across collections. Used for creating visual
+    scan history
+  filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+    "externalId": "Cognite3DGroup"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DGroup",
+    "groupType"], "value": "Station360"}}]})'
+  implements: CogniteDescribable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite360ImageStation
+  view: Cognite360ImageStation
+- description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
+    Image360)
+  implements: CogniteDescribable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DModel
+  view: Cognite3DModel
+- description: This is the virtual position representation of an object in the physical
+    world, connecting an asset to one or more 3D resources
+  implements: CogniteDescribable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DObject
+  view: Cognite3DObject
+- description: Shared revision information for various 3D data types. Normally not
+    used directly, but through CognitePointCloudRevision, Image360Collection or CogniteCADRevision
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DRevision
+  view: Cognite3DRevision
+- description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
+    enabling precise adjustments to an object's position, orientation, and size in
+    the 3D coordinate system. It allows for the translation of objects along the three
+    spatial axes, rotation around these axes using Euler angles, and scaling along
+    each axis to modify the object's dimensions. The object's transformation is defined
+    in "CDF space", a coordinate system where the positive Z axis is the up direction
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/Cognite3DTransformation
+  view: Cognite3DTransformation
+- description: Represents activities. Activities typically happen over a period and
+    have a start and end time.
+  implements: CogniteDescribable,CogniteSourceable,CogniteSchedulable
+  in_model: true
+  name: Activity
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteActivity
+  view: CogniteActivity
+- description: Annotation represents contextualization results or links
+  implements: CogniteDescribable,CogniteSourceable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAnnotation
+  view: CogniteAnnotation
+- description: Assets represent systems that support industrial functions or processes.
+    Assets are often called 'functional location'.
+  implements: CogniteVisualizable,CogniteDescribable,CogniteSourceable
+  in_model: true
+  name: Asset
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAsset
+  view: CogniteAsset
+- description: Represents the class of an asset.
+  implements: CogniteDescribable
+  in_model: true
+  name: Asset class
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetClass
+  view: CogniteAssetClass
+- description: Represents the type of an asset.
+  implements: CogniteDescribable
+  in_model: true
+  name: Asset type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteAssetType
+  view: CogniteAssetType
+- description: Navigational aid for traversing CogniteCADModel instances
+  filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+    "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+    "type"], "value": "CAD"}}]})'
+  implements: CogniteDescribable,Cognite3DModel
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADModel
+  view: CogniteCADModel
+- description: Represents nodes from the 3D model that have been contextualized
+  implements: CogniteDescribable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADNode
+  view: CogniteCADNode
+- description: ''
+  filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+    "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+    "type"], "value": "CAD"}}]})'
+  implements: Cognite3DRevision
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCADRevision
+  view: CogniteCADRevision
+- description: The cube map holds references to 6 images in used to visually represent
+    the surrounding environment
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteCubeMap
+  view: CogniteCubeMap
+- description: The describable core concept is used as a standard way of holding the
+    bare minimum of information about the instance
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDescribable
+  view: CogniteDescribable
+- description: Annotation for diagrams
+  implements: CogniteDescribable,CogniteSourceable,CogniteAnnotation
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteDiagramAnnotation
+  view: CogniteDiagramAnnotation
+- description: Equipment represents physical supplies or devices.
+  implements: CogniteDescribable,CogniteSourceable
+  in_model: true
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipment
+  view: CogniteEquipment
+- description: Represents the type of equipment.
+  implements: CogniteDescribable
+  in_model: true
+  name: Equipment type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteEquipmentType
+  view: CogniteEquipmentType
+- description: Represents files.
+  implements: CogniteDescribable,CogniteSourceable
+  in_model: true
+  name: File
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFile
+  view: CogniteFile
+- description: Represents the categories of files as determined by contextualization
+    or categorization.
+  implements: CogniteDescribable
+  in_model: true
+  name: File category
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteFileCategory
+  view: CogniteFileCategory
+- description: Navigational aid for traversing CognitePointCloudModel instances
+  filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+    "externalId": "Cognite3DModel"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+    "type"], "value": "PointCloud"}}]})'
+  implements: CogniteDescribable,Cognite3DModel
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudModel
+  view: CognitePointCloudModel
+- description: Navigational aid for traversing CognitePointCloudRevision instances
+  filter_: 'rawFilter({"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d",
+    "externalId": "Cognite3DRevision"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DModel",
+    "type"], "value": "PointCloud"}}]})'
+  implements: Cognite3DRevision
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudRevision
+  view: CognitePointCloudRevision
+- description: PointCloud volume definition
+  implements: CogniteDescribable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CognitePointCloudVolume
+  view: CognitePointCloudVolume
+- description: CogniteSchedulable represents the metadata about when an activity (or
+    similar) starts and ends.
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSchedulable
+  view: CogniteSchedulable
+- description: The CogniteSourceSystem core concept is used to standardize the way
+    source system is stored.
+  implements: CogniteDescribable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceSystem
+  view: CogniteSourceSystem
+- in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteSourceable
+  view: CogniteSourceable
+- description: Represents a series of data points in time order.
+  implements: CogniteDescribable,CogniteSourceable
+  in_model: true
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries
+  view: CogniteTimeSeries
+- description: Represents a single unit of measurement
+  implements: CogniteDescribable
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteUnit
+  view: CogniteUnit
+- description: CogniteVisualizable defines the standard way to reference a related
+    3D resource
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteVisualizable
+  view: CogniteVisualizable
