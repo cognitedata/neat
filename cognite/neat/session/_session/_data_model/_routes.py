@@ -40,6 +40,6 @@ class DataModelAPI:
                 html = self.physical._repr_html_()
             if self.conceptual:
                 html = self.conceptual._repr_html_()
-            output.append(f"<H2>Data Model</H2><br />{html}")  # type: ignore
+            output.append(f"<H2>Data Model</H2><br />{html}")
 
         return "<br />".join(output)
