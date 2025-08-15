@@ -161,3 +161,9 @@ def get_parameters_by_method(obj: object, prefix: str = "") -> dict[str, dict[st
 def get_parameters(obj: Callable) -> dict[str, type]:
     annotations = inspect.get_annotations(obj)
     return {name: annotations[name] for name in annotations if name != "return"}
+
+
+def filter_kwargs_by_method(kwargs: dict[str, Any], method: Callable) -> dict[str, Any]:
+    """Filter kwargs by method parameters."""
+    signature = inspect.signature(method)
+    return {k: v for k, v in kwargs.items() if k in signature.parameters}
