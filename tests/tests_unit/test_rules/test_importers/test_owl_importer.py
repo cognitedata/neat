@@ -74,6 +74,7 @@ def test_owl_enitity_quoting():
         "links.Interface-Module%2802%29%3AIO~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
         "logs.Data-Stream%2801%29%3ARaw~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
         "reports.Status-Flag%28OK%29%3A1~%3F%40%21%24%26%27%2A%2B%2C%3B%3D%25%5B%5D",
+        "multiConnect",
     }
 
     actual_concepts = {concept.concept: concept for concept in conceptual_data_model.concepts}
