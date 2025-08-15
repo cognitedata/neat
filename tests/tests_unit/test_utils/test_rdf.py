@@ -29,6 +29,7 @@ class TestURIInstanceToDisplayName:
     def test_uri_to_cdf_id(self, uri: URIRef, expected: str) -> None:
         assert uri_to_cdf_id(uri) == expected
 
+
 class TestURIToEntityComponents:
     @pytest.mark.parametrize(
         "uri, prefixes, expected",
