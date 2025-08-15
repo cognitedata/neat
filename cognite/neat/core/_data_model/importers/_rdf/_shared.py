@@ -1,17 +1,21 @@
-from typing import cast
+from typing import Any, Literal, cast
 from urllib.parse import quote
 
-from rdflib import BNode, Graph
+from rdflib import BNode, Graph, Namespace, URIRef
+from rdflib import Literal as RdfLiteral
 from rdflib.plugins.sparql import prepareQuery
 from rdflib.query import ResultRow
 
+from cognite.neat.core._constants import cognite_prefixes
+from cognite.neat.core._data_model.models.entities._constants import Unknown
+from cognite.neat.core._data_model.models.entities._single_value import ConceptEntity
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._issues.errors._general import NeatValueError
 from cognite.neat.core._issues.warnings._resources import (
     ResourceRedefinedWarning,
     ResourceRetrievalWarning,
 )
-from cognite.neat.core._utils.rdf_ import convert_rdflib_content
+from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri, uri_to_entity_components
 
 
 def parse_concepts(
@@ -33,26 +37,30 @@ def parse_concepts(
     concepts: dict[str, dict] = {}
 
     query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
+    prefixes = cognite_prefixes()
 
     for raw in graph.query(query):
-        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
+        res: dict = convert_rdflib_content(
+            cast(ResultRow, raw).asdict(), uri_handling="as-concept-entity", prefixes=prefixes
+        )
         res = {key: res.get(key, None) for key in parameters}
-
-        # Quote the concept id to ensure it is web-safe
-        res["concept"] = quote(res["concept"], safe="")
-
-        concept_id = res["concept"]
 
         # Safeguarding against incomplete semantic definitions
         if res["implements"] and isinstance(res["implements"], BNode):
             issue_list.append(
                 ResourceRetrievalWarning(
-                    concept_id,
+                    res["concept"],
                     "implements",
                     error=("Unable to determine concept that is being implemented"),
                 )
             )
             continue
+
+        # sanitize the concept and implements
+        res["concept"] = sanitize_entity(res["concept"])
+        res["implements"] = sanitize_entity(res["implements"]) if res["implements"] else None
+
+        concept_id = res["concept"]
 
         if concept_id not in concepts:
             concepts[concept_id] = res
@@ -72,7 +80,6 @@ def parse_concepts(
 
             handle_meta("concept", concepts, concept_id, res, "name", issue_list)
             handle_meta("concept", concepts, concept_id, res, "description", issue_list)
-
     if not concepts:
         issue_list.append(NeatValueError("Unable to parse concepts"))
 
@@ -98,9 +105,12 @@ def parse_properties(
     properties: dict[str, dict] = {}
 
     query = prepareQuery(query.format(language=language), initNs={k: v for k, v in graph.namespaces()})
+    prefixes = cognite_prefixes()
 
     for raw in graph.query(query):
-        res: dict = convert_rdflib_content(cast(ResultRow, raw).asdict(), True)
+        res: dict = convert_rdflib_content(
+            cast(ResultRow, raw).asdict(), uri_handling="as-concept-entity", prefixes=prefixes
+        )
         res = {key: res.get(key, None) for key in parameters}
 
         # Quote the concept id to ensure it is web-safe
@@ -129,9 +139,9 @@ def parse_properties(
             )
             continue
 
-        # Quote the concept and value_type to ensure they are web-safe
-        res["concept"] = quote(res["concept"], safe="") if res["concept"] else "#N/A"
-        res["value_type"] = quote(res["value_type"], safe="") if res["value_type"] else "#N/A"
+        # Quote the concept and value_type if they exist if not signal neat that they are not available
+        res["concept"] = sanitize_entity(res["concept"]) if res["concept"] else str(Unknown)
+        res["value_type"] = sanitize_entity(res["value_type"]) if res["value_type"] else str(Unknown)
 
         id_ = f"{res['concept']}.{res['property_']}"
 
@@ -184,3 +194,58 @@ def handle_meta(
                 new_value=res[feature],
             )
         )
+
+
+def convert_rdflib_content(
+    content: RdfLiteral | URIRef | dict | list,
+    uri_handling: Literal["skip", "remove-namespace", "as-concept-entity"] = "skip",
+    prefixes: dict[str, Namespace] | None = None,
+) -> Any:
+    """Converts rdflib content to a more Python-friendly format.
+
+    Args:
+        content: The content to convert, can be a RdfLiteral, URIRef, dict, or list.
+        uri_handling: How to handle URIs. Options are:
+            - "skip": Leave URIs as is.
+            - "remove-namespace": Remove the namespace from URIs.
+            - "short-form": Convert URIs to a short form using prefixes.
+
+    """
+    if isinstance(content, RdfLiteral):
+        return content.toPython()
+    elif isinstance(content, URIRef):
+        if uri_handling == "remove-namespace":
+            return remove_namespace_from_uri(content)
+        elif uri_handling == "as-concept-entity":
+            if components := uri_to_entity_components(content, prefixes or {}):
+                return ConceptEntity(prefix=components[0], suffix=components[3], version=components[2])
+            # fallback to "remove-namespace"
+            else:
+                return convert_rdflib_content(content, uri_handling="remove-namespace", prefixes=prefixes)
+        else:
+            return content.toPython()
+    elif isinstance(content, dict):
+        return {key: convert_rdflib_content(value, uri_handling, prefixes) for key, value in content.items()}
+    elif isinstance(content, list):
+        return [convert_rdflib_content(item, uri_handling, prefixes) for item in content]
+    else:
+        return content
+
+
+def sanitize_entity(entity: str | ConceptEntity, safe: str = "") -> str:
+    """Sanitize an entity to ensure it yields entity form that will pass downstream validation.
+
+    Args:
+        entity: The entity to sanitize. Can be a string or a ConceptEntity.
+        safe: Characters that should not be quoted during sanitization.
+
+    Returns:
+        A web-safe string representation of the entity
+    """
+    if isinstance(entity, str):
+        return quote(entity, safe=safe)
+    # if it already we dont need to quote it so we return its string representation
+    elif isinstance(entity, ConceptEntity):
+        return str(entity)
+    else:
+        raise ValueError(f"Invalid entity type: {type(entity)}. Expected str, ConceptEntity.")
