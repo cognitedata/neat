@@ -7,6 +7,7 @@ from rdflib.plugins.sparql import prepareQuery
 from rdflib.query import ResultRow
 
 from cognite.neat.core._constants import cognite_prefixes
+from cognite.neat.core._data_model.models.entities._constants import Unknown
 from cognite.neat.core._data_model.models.entities._single_value import ConceptEntity
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._issues.errors._general import NeatValueError
@@ -139,8 +140,8 @@ def parse_properties(
             continue
 
         # Quote the concept and value_type if they exist if not signal neat that they are not available
-        res["concept"] = sanitize_entity(res["concept"]) if res["concept"] else "#N/A"
-        res["value_type"] = sanitize_entity(res["value_type"]) if res["value_type"] else "#N/A"
+        res["concept"] = sanitize_entity(res["concept"]) if res["concept"] else str(Unknown)
+        res["value_type"] = sanitize_entity(res["value_type"]) if res["value_type"] else str(Unknown)
 
         id_ = f"{res['concept']}.{res['property_']}"
 
