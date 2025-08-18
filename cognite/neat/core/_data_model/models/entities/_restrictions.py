@@ -1,22 +1,17 @@
-
-
-from abc import ABC
-from functools import total_ordering
 import re
-from typing import ClassVar, Literal, Self, cast, get_args
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from abc import ABC
+from typing import ClassVar, Literal, cast, get_args
 
-
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from pyparsing import Any, TypeVar, abstractmethod
 from rdflib import Literal as RDFLiteral
 
-from cognite.neat.core._data_model._constants import ENTITY_PATTERN, EntityTypes
+from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.models.data_types import _XSD_TYPES, DataType
 from cognite.neat.core._data_model.models.entities._constants import _PARSE
 from cognite.neat.core._data_model.models.entities._single_value import ConceptEntity, NamedIndividualEntity
 from cognite.neat.core._issues.errors._general import NeatValueError
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
-
 
 
 def get_constraints(
@@ -52,11 +47,9 @@ class ConceptPropertyRestriction(ABC, BaseModel):
         arbitrary_types_allowed=True,
         strict=False,
         extra="ignore",
-
     )
     type_: ClassVar[EntityTypes] = EntityTypes.concept_restriction
     property_: str
-
 
     @classmethod
     def load(cls: "type[T_ConceptPropertyRestriction]", data: Any, **defaults: Any) -> "T_ConceptPropertyRestriction":
@@ -64,7 +57,6 @@ class ConceptPropertyRestriction(ABC, BaseModel):
             return data
         elif not isinstance(data, str):
             raise ValueError(f"Cannot load {cls.__name__} from {data}")
-        
 
         return cls.model_validate({_PARSE: data, "defaults": defaults})
 
@@ -79,7 +71,7 @@ class ConceptPropertyRestriction(ABC, BaseModel):
             return data
 
         if not isinstance(data, str):
-            raise ValueError(f"Cannot load {cls.__name__} from {data}")        
+            raise ValueError(f"Cannot load {cls.__name__} from {data}")
 
         return cls._parse(data, defaults)
 
@@ -93,21 +85,25 @@ class ConceptPropertyRestriction(ABC, BaseModel):
 
 T_ConceptPropertyRestriction = TypeVar("T_ConceptPropertyRestriction", bound="ConceptPropertyRestriction")
 
+
 class ConceptPropertyValueConstraint(ConceptPropertyRestriction):
     type_: ClassVar[EntityTypes] = EntityTypes.value_constraint
     constraint: ValueConstraints
     value: RDFLiteral | ConceptEntity | NamedIndividualEntity
 
     def __str__(self) -> str:
-        value_str =f"{self.value.value}^^{remove_namespace_from_uri(self.value.datatype)}" if isinstance(self.value, RDFLiteral) else str(self.value)
+        value_str = (
+            f"{self.value.value}^^{remove_namespace_from_uri(self.value.datatype)}"
+            if isinstance(self.value, RDFLiteral)
+            else str(self.value)
+        )
         return f"{self.type_}:{self.property_}({self.constraint},{value_str})"
-
 
     @classmethod
     def _parse(cls, data: str, defaults: dict) -> dict:
-        if not (result := VALUE_CONSTRAINT_REGEX.match(data)):        
+        if not (result := VALUE_CONSTRAINT_REGEX.match(data)):
             raise NeatValueError(f"Invalid value constraint format: {data}")
-        
+
         property_ = result.group("property")
         constraint = result.group("constraint")
         raw_value = result.group("value")
@@ -115,20 +111,18 @@ class ConceptPropertyValueConstraint(ConceptPropertyRestriction):
         # scenarion 1: NamedIndividual as value restriction
         if raw_value.startswith("ni:"):
             value = NamedIndividualEntity.load(raw_value)
-        
+
         # scenario 2: Datatype as value restriction
         elif "^^" in raw_value:
             value_components = raw_value.split("^^")
-            value = RDFLiteral(
-                value_components[0],
-                datatype=DataType.load(value_components[1]).as_xml_uri_ref()
-            )
-        
+            value = RDFLiteral(value_components[0], datatype=DataType.load(value_components[1]).as_xml_uri_ref())
+
         # scenario 3: ConceptEntity as value restriction
         else:
             value = ConceptEntity.load(raw_value, **defaults)
 
         return dict(property_=property_, constraint=constraint, value=value)
+
 
 class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
     type_: ClassVar[EntityTypes] = EntityTypes.cardinality_constraint
@@ -139,14 +133,12 @@ class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
     def __str__(self) -> str:
         on_str = f",{self.on}" if self.on else ""
         return f"cardinalityConstraint:{self.property_}({self.constraint},{self.value}{on_str})"
-    
 
     @classmethod
     def _parse(cls, data: str, defaults: dict) -> dict:
         if not (result := CARDINALITY_CONSTRAINT_REGEX.match(data)):
             print(f"Failed to match regex: {result}")
             raise NeatValueError(f"Invalid cardinality constraint format: {data}")
-
 
         property_ = result.group("property")
         constraint = result.group("constraint")
@@ -162,8 +154,7 @@ class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
         return dict(property_=property_, constraint=constraint, value=value, on=on)
 
 
-
-def parse_restriction( data: str, **defaults: Any) -> ConceptPropertyRestriction:
+def parse_restriction(data: str, **defaults: Any) -> ConceptPropertyRestriction:
     """Parse a string to create either a value or cardinality constraint."""
     try:
         return ConceptPropertyValueConstraint.load(data, **defaults)
