@@ -32,6 +32,7 @@ from cognite.neat.core._data_model.models.entities import (
     ConceptualEntity,
     UnknownEntity,
 )
+from cognite.neat.core._data_model.models.entities._types import RestrictionEntityList
 from cognite.neat.core._issues.errors import PropertyDefinitionError
 
 if TYPE_CHECKING:
@@ -73,6 +74,11 @@ class Concept(SheetRow):
         default=None,
         description="List of classes (comma separated) that the current class implements (parents).",
     )
+    restrictions: RestrictionEntityList | None = Field(
+        alias="Restrictions",
+        default=None,
+        description="List of restrictions (comma separated) that apply to the current concept.",
+    )
     instance_source: URIRefType | None = Field(
         alias="Instance Source",
         default=None,
@@ -103,6 +109,10 @@ class Concept(SheetRow):
                 )
                 for concept in value
             )
+        return ",".join(str(value) for value in value)
+
+    @field_serializer("restrictions", when_used="unless-none")
+    def dump_restrictions(self, value: Any, info: SerializationInfo) -> str:
         return ",".join(str(value) for value in value)
 
 

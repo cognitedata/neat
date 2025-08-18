@@ -18,6 +18,11 @@ from cognite.neat.core._data_model.models.entities import (
     UnknownEntity,
     load_value_type,
 )
+from cognite.neat.core._data_model.models.entities._restrictions import (
+    ConceptPropertyCardinalityConstraint,
+    ConceptPropertyValueConstraint,
+    parse_restriction,
+)
 from cognite.neat.core._utils.rdf_ import uri_display_name
 
 from ._verified import (
@@ -118,6 +123,7 @@ class UnverifiedConcept(UnverifiedComponent[Concept]):
     description: str | None = None
     implements: str | list[ConceptEntity] | None = None
     instance_source: str | None = None
+    restrictions: str | list[ConceptPropertyValueConstraint | ConceptPropertyCardinalityConstraint] | None = None
     neatId: str | URIRef | None = None
     # linking
     physical: str | URIRef | None = None
@@ -133,13 +139,24 @@ class UnverifiedConcept(UnverifiedComponent[Concept]):
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
         parent: list[ConceptEntity] | None = None
+        restrictions: list[ConceptEntity] | None = None
+
         if isinstance(self.implements, str):
             self.implements = self.implements.strip()
             parent = [ConceptEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
         elif isinstance(self.implements, list):
             parent = [ConceptEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
+
+        if isinstance(self.restrictions, str):
+            self.restrictions = self.restrictions.strip()
+            restrictions = [
+                parse_restriction(restriction, prefix=default_prefix) for restriction in self.restrictions.split(",")
+            ]
+        elif isinstance(self.restrictions, list):
+            restrictions = [parse_restriction(restriction, prefix=default_prefix) for restriction in self.restrictions]
         output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
         output["Implements"] = parent
+        output["Restrictions"] = restrictions
         return output
 
 
