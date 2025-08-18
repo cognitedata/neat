@@ -269,6 +269,15 @@ class ConceptualEntity(BaseModel, extra="ignore"):
 T_Entity = TypeVar("T_Entity", bound=ConceptualEntity)
 
 
+class NamedIndividualEntity(ConceptualEntity):
+    type_: ClassVar[EntityTypes] = EntityTypes.named_individual
+
+    @model_validator(mode="after")
+    def reset_prefix(self) -> Any:
+        self.prefix = "ni"
+        return self
+
+
 class ConceptEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.concept
     version: str | None = None
