@@ -5,19 +5,22 @@ from cognite.neat.core._data_model.importers._rdf._base import BaseRDFImporter
 from cognite.neat.core._data_model.importers._rdf._shared import (
     parse_concepts,
     parse_properties,
+    parse_restriction,
 )
 
 CLASSES_QUERY = """SELECT ?concept  ?name ?description ?implements
         WHERE {{
 
         ?concept  a owl:Class .
-        OPTIONAL {{?concept  rdfs:subClassOf ?implements }}.
+        OPTIONAL {{?concept  rdfs:subClassOf ?subclasses }}.
         OPTIONAL {{?concept  rdfs:label|skos:prefLabel ?name }}.
         OPTIONAL {{?concept  rdfs:comment|skos:definition ?description}} .
 
 
-        FILTER (!isBlank(?concept ))
-        FILTER (!bound(?implements) || !isBlank(?implements))
+        FILTER (!isBlank(?concept))
+
+        # usage of restrictions are handling this usecase
+        BIND(IF(isBlank(?subclasses), "", ?subclasses) AS ?implements)        
 
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "{language}"))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "{language}"))
@@ -91,6 +94,47 @@ PROPERTIES_QUERY_PARAMETERS = {
 }
 
 
+RESTRICTION_QUERY = """
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT ?concept ?property_ ?valueConstraint ?value ?cardinalityConstraint ?cardinality ?on
+WHERE {
+    ?concept rdf:type owl:Class .
+    ?concept rdfs:subClassOf ?restriction .
+    ?restriction rdf:type owl:Restriction .
+    ?restriction owl:onProperty ?property_ .
+
+    OPTIONAL {
+        ?restriction owl:hasValue|owl:someValuesFrom|owl:allValuesFrom ?value .
+        ?restriction ?valueConstraint ?value .
+    }
+
+    
+   OPTIONAL {
+        ?restriction owl:minCardinality|owl:maxCardinality|owl:cardinality|owl:qualifiedCardinality ?cardinality .
+        ?restriction ?cardinalityConstraint ?cardinality .
+        OPTIONAL {
+            ?restriction owl:onClass|owl:onDataRange ?on .
+        }
+    }
+
+
+    
+}
+"""
+
+RESTRICTION_QUERY_PARAMETERS = {
+    "concept",
+    "property_",
+    "valueConstraint",
+    "value",
+    "cardinalityConstraint",
+    "cardinality",
+    "on",
+}
+
+
 class OWLImporter(BaseRDFImporter):
     """Convert OWL ontology to unverified data model.
 
@@ -104,6 +148,16 @@ class OWLImporter(BaseRDFImporter):
         concepts, issue_list = parse_concepts(
             self.graph, CLASSES_QUERY, CLASSES_QUERY_PARAMETERS, self.language, self.issue_list
         )
+        self.issue_list = issue_list
+
+        restrictions, issue_list = parse_restriction(
+            self.graph, RESTRICTION_QUERY, RESTRICTION_QUERY_PARAMETERS, self.issue_list
+        )
+
+        for concept, restrictions in restrictions.items():
+            if concept in concepts:
+                concepts[concept]["restrictions"] = restrictions
+
         self.issue_list = issue_list
 
         properties, issue_list = parse_properties(
