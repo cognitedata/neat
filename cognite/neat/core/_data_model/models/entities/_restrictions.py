@@ -1,9 +1,8 @@
 import re
-from abc import ABC
-from typing import ClassVar, Literal, cast, get_args
+from abc import ABC, abstractmethod
+from typing import Any, ClassVar, Literal, TypeAlias, TypeVar, cast, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from pyparsing import Any, TypeVar, abstractmethod
 from rdflib import Literal as RDFLiteral
 
 from cognite.neat.core._data_model._constants import EntityTypes
@@ -82,6 +81,31 @@ class ConceptPropertyRestriction(ABC, BaseModel):
     def dump(self) -> str:
         return self.__str__()
 
+    def as_tuple(self) -> tuple[str, ...]:
+        # We haver overwritten the serialization to str, so we need to do it manually
+        extra: tuple[str, ...] = tuple(
+            [
+                str(v or "")
+                for field_name in self.model_fields.keys()
+                if (v := getattr(self, field_name)) and field_name not in {"property_"}
+            ]
+        )
+
+        return self.property_, *extra
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, ConceptPropertyRestriction):
+            return NotImplemented
+        return self.as_tuple() < other.as_tuple()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, ConceptPropertyRestriction):
+            return NotImplemented
+        return self.as_tuple() == other.as_tuple()
+
+    def __hash__(self) -> int:
+        return hash(str(self))
+
 
 T_ConceptPropertyRestriction = TypeVar("T_ConceptPropertyRestriction", bound="ConceptPropertyRestriction")
 
@@ -146,7 +170,6 @@ class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
         on = result.group("on")
         if on:
             if on in _XSD_TYPES:
-                print(f"Using XSD type for 'on': {on}")
                 on = DataType.load(on)
             else:
                 on = cast(ConceptEntity, ConceptEntity.load(on, **defaults))
@@ -155,11 +178,15 @@ class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
 
 
 def parse_restriction(data: str, **defaults: Any) -> ConceptPropertyRestriction:
-    """Parse a string to create either a value or cardinality constraint."""
+    """Parse a string to create either a value or cardinality restriction."""
     try:
         return ConceptPropertyValueConstraint.load(data, **defaults)
     except:
         try:
             return ConceptPropertyCardinalityConstraint.load(data, **defaults)
         except:
-            raise NeatValueError(f"Unable to parse constraint: {data}")
+            raise NeatValueError(f"Unable to parse restriction: {data}")
+
+
+ConceptRestriction: TypeAlias = ConceptPropertyValueConstraint | ConceptPropertyCardinalityConstraint
+T_ConceptRestriction = TypeVar("T_ConceptRestriction", bound=ConceptRestriction)

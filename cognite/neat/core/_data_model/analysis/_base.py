@@ -21,6 +21,7 @@ from cognite.neat.core._data_model.models.entities import (
     MultiValueTypeInfo,
     ViewEntity,
 )
+from cognite.neat.core._data_model.models.entities._restrictions import ConceptRestriction
 from cognite.neat.core._data_model.models.entities._single_value import (
     UnknownEntity,
 )
@@ -448,6 +449,17 @@ class DataModelAnalysis:
     @property
     def concepts_by_neat_id(self) -> dict[URIRef, Concept]:
         return {concept.neatId: concept for concept in self.conceptual.concepts if concept.neatId}
+
+    @property
+    def concepts_by_restrictions(self) -> dict[URIRef, Concept]:
+        concepts_by_restrictions: dict[ConceptRestriction, set[ConceptEntity]] = defaultdict(set)
+
+        for concept in self.conceptual.concepts:
+            if concept.restrictions:
+                for restriction in concept.restrictions:
+                    concepts_by_restrictions[restriction].add(concept.concept)
+
+        return concepts_by_restrictions
 
     @property
     def multi_value_properties(self) -> list[ConceptualProperty]:

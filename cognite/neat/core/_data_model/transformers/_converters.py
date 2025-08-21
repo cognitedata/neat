@@ -72,6 +72,7 @@ from cognite.neat.core._data_model.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
+from cognite.neat.core._data_model.models.entities._restrictions import ConceptRestriction
 from cognite.neat.core._data_model.models.physical import (
     PhysicalMetadata,
     PhysicalProperty,
@@ -2246,19 +2247,105 @@ class SubsetPhysicalDataModel(VerifiedDataModelTransformer[PhysicalDataModel, Ph
             raise NeatValueError(f"Cannot subset data_model: {e}") from e
 
 
+class SubsetConceptualDataModelOnRestrictions(VerifiedDataModelTransformer[ConceptualDataModel, ConceptualDataModel]):
+    """Subsets Conceptual Data Model to only include concepts that match the specified restrictions."""
+
+    def __init__(
+        self,
+        restrictions: set[ConceptRestriction],
+        only_concepts_with_properties: bool = True,
+        include_dangling_properties: bool = False,
+        include_ancestors: bool = False,
+        include_different_space: bool = False,
+        operation: Literal["and", "or"] = "and",
+    ):
+        self._restrictions = restrictions
+        self._include_ancestors = include_ancestors
+        self._include_different_space = include_different_space
+        self._include_dangling_properties = include_dangling_properties
+        self._only_concepts_with_properties = only_concepts_with_properties
+        self._operation = operation
+
+    def transform(self, data_model: ConceptualDataModel) -> ConceptualDataModel:
+        analysis = DataModelAnalysis(conceptual=data_model)
+
+        parents_by_concept = (
+            analysis.parents_by_concept(
+                include_ancestors=self._include_ancestors, include_different_space=self.include_different_space
+            )
+            if self._include_ancestors
+            else []
+        )
+
+        if concepts_by_restriction := analysis.concepts_by_restrictions:
+            if self._operation == "and":
+                filtered_top_concepts = set.intersection(
+                    *[concepts_by_restriction[restriction] for restriction in self._restrictions]
+                )
+            elif self._operation == "or":
+                filtered_top_concepts = set.union(
+                    *[concepts_by_restriction[restriction] for restriction in self._restrictions]
+                )
+            else:
+                raise NeatValueError(
+                    f"Unsupported operation: {self._operation}. Supported operations are 'and' and 'or'."
+                )
+
+            if not filtered_top_concepts:
+                raise NeatValueError("No concepts found for the provided restrictions.")
+
+            if parents_by_concept:
+                # If we are including inheritance, we need to add all ancestors of the filtered concepts
+                ancestors = set()
+                for concept, parents in parents_by_concept.items():
+                    if filtered_top_concepts.intersection(parents):
+                        ancestors.add(concept)
+                filtered_top_concepts = filtered_top_concepts.union(ancestors)
+
+            return SubsetConceptualDataModel(
+                concepts=filtered_top_concepts,
+                include_different_space=self._include_different_space,
+                only_concepts_with_properties=self._only_concepts_with_properties,
+                include_dangling_properties=self._include_dangling_properties,
+                include_ancestors=self._include_ancestors,
+            ).transform(data_model)
+
+        else:
+            raise NeatValueError("No concepts found for the provided restrictions.")
+
+
 class SubsetConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel, ConceptualDataModel]):
     """Subsets Conceptual Data Model to only include the specified concepts."""
 
-    def __init__(self, concepts: set[ConceptEntity]):
+    def __init__(
+        self,
+        concepts: set[ConceptEntity],
+        include_different_space: bool = False,
+        include_ancestors: bool = False,
+        only_concepts_with_properties: bool = True,
+        include_dangling_properties: bool = False,
+    ):
         self._concepts = concepts
+        self._include_different_space = include_different_space
+        self._include_ancestors = include_ancestors
+        self._only_concepts_with_properties = only_concepts_with_properties
+        self._include_dangling_properties = include_dangling_properties
 
     def transform(self, data_model: ConceptualDataModel) -> ConceptualDataModel:
         analysis = DataModelAnalysis(conceptual=data_model)
 
         concept_by_concept_entity = analysis.concept_by_concept_entity
-        parent_entity_by_concept_entity = analysis.parents_by_concept()
+        parent_entity_by_concept_entity = (
+            analysis.parents_by_concept(include_different_space=self._include_different_space)
+            if self._include_ancestors
+            else {}
+        )
 
-        available = analysis.defined_concepts(include_ancestors=True)
+        available = (
+            analysis.defined_concepts(include_ancestors=True)
+            if self._only_concepts_with_properties
+            else set(concept_by_concept_entity.keys())
+        )
         subset = available.intersection(self._concepts)
 
         # need to add all the parent classes of the desired classes to the possible classes
@@ -2287,11 +2374,16 @@ class SubsetConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel
         }
 
         for concept in subset:
-            subsetted_data_model["concepts"].append(concept_by_concept_entity[concept])
+            # we allow for open ended data model where parent concept my not be defined in the conceptual data model
+            if concept in concept_by_concept_entity:
+                subsetted_data_model["concepts"].append(concept_by_concept_entity[concept])
 
         for concept, properties in analysis.properties_by_concepts(include_ancestors=False).items():
-            if concept not in subset:
+            if (concept not in subset and not isinstance(concept, UnknownEntity)) or (
+                not self._include_dangling_properties and isinstance(concept, UnknownEntity)
+            ):
                 continue
+
             for property_ in properties:
                 # datatype property can be added directly
                 if (
