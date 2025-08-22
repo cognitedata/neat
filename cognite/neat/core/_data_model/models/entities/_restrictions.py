@@ -193,14 +193,38 @@ class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
 
 
 def parse_restriction(data: str, **defaults: Any) -> ConceptPropertyRestriction:
-    """Parse a string to create either a value or cardinality restriction."""
-    try:
-        return ConceptPropertyValueConstraint.load(data, **defaults)
-    except Exception:
+    """Parse a string to create either a value or cardinality restriction.
+
+    Args:
+        data: String representation of the restriction
+        **defaults: Default values to use when parsing
+
+    Returns:
+        Either a ConceptPropertyValueConstraint or ConceptPropertyCardinalityConstraint
+
+    Raises:
+        NeatValueError: If the string cannot be parsed as either restriction type
+    """
+    # Check for value constraint pattern first (more specific)
+    if VALUE_CONSTRAINT_REGEX.match(data):
+        try:
+            return ConceptPropertyValueConstraint.load(data, **defaults)
+        except Exception as e:
+            raise NeatValueError(f"Failed to parse value constraint: {data}") from e
+
+    # Check for cardinality constraint pattern
+    if CARDINALITY_CONSTRAINT_REGEX.match(data):
         try:
             return ConceptPropertyCardinalityConstraint.load(data, **defaults)
         except Exception as e:
-            raise NeatValueError(f"Unable to parse restriction: {data}") from e
+            raise NeatValueError(f"Failed to parse cardinality constraint: {data}") from e
+
+    # If neither pattern matches, provide a clear error
+    raise NeatValueError(
+        f"Invalid restriction format: {data}. "
+        f"Expected format: '{EntityTypes.value_constraint}:property(constraint,value)' "
+        f"or '{EntityTypes.cardinality_constraint}:property(constraint,value[,on])'"
+    )
 
 
 ConceptRestriction: TypeAlias = ConceptPropertyValueConstraint | ConceptPropertyCardinalityConstraint

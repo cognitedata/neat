@@ -132,7 +132,7 @@ class TestParseRestriction:
         ],
     )
     def test_parse_invalid_restrictions(self, invalid_data):
-        with pytest.raises(NeatValueError, match="Unable to parse restriction"):
+        with pytest.raises(NeatValueError, match="Invalid restriction format"):
             parse_restriction(invalid_data)
 
 
