@@ -181,7 +181,7 @@ class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
 
     def __str__(self) -> str:
         on_str = f",{self.on}" if self.on else ""
-        return f"cardinalityConstraint:{self.property_}({self.constraint},{self.value}{on_str})"
+        return f"{self.type_}:{self.property_}({self.constraint},{self.value}{on_str})"
 
     @classmethod
     def _parse(cls, data: str, defaults: dict) -> dict:
