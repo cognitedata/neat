@@ -1,4 +1,5 @@
 import re
+import sys
 from abc import ABC
 from typing import Any, ClassVar, Final, Literal, TypeAlias, TypeVar, cast, get_args
 
@@ -12,6 +13,12 @@ from cognite.neat.core._data_model.models.entities._constants import _PARSE
 from cognite.neat.core._data_model.models.entities._single_value import ConceptEntity, ConceptualEntity
 from cognite.neat.core._issues.errors._general import NeatValueError
 from cognite.neat.core._utils.rdf_ import remove_namespace_from_uri
+
+if sys.version_info <= (3, 11):
+    from typing_extensions import Self
+else:
+    from typing import Self
+
 
 ValueConstraints = Literal["allValuesFrom", "someValuesFrom", "hasValue"]
 CardinalityConstraints = Literal["minCardinality", "maxCardinality", "cardinality", "qualifiedCardinality"]
@@ -45,7 +52,7 @@ class NamedIndividualEntity(ConceptualEntity):
     type_: ClassVar[EntityTypes] = EntityTypes.named_individual
 
     @model_validator(mode="after")
-    def reset_prefix(self) -> Any:
+    def reset_prefix(self) -> Self:
         self.prefix = "ni"
         return self
 
