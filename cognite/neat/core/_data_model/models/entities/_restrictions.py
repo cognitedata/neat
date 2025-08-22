@@ -186,7 +186,6 @@ class ConceptPropertyCardinalityConstraint(ConceptPropertyRestriction):
     @classmethod
     def _parse(cls, data: str, defaults: dict) -> dict:
         if not (result := CARDINALITY_CONSTRAINT_REGEX.match(data)):
-            print(f"Failed to match regex: {result}")
             raise NeatValueError(f"Invalid cardinality constraint format: {data}")
 
         property_ = result.group("property")
