@@ -24,15 +24,6 @@ ValueConstraints = Literal["allValuesFrom", "someValuesFrom", "hasValue"]
 CardinalityConstraints = Literal["minCardinality", "maxCardinality", "cardinality", "qualifiedCardinality"]
 
 
-VALUE_CONSTRAINT_REGEX = re.compile(
-    rf"^{EntityTypes.value_constraint}:(?P<property>[a-zA-Z0-9._~?@!$&'*+,;=%-]+)\((?P<constraint>{'|'.join(get_args(ValueConstraints))}),(?P<value>.+)\)$"
-)
-
-CARDINALITY_CONSTRAINT_REGEX = re.compile(
-    rf"^{EntityTypes.cardinality_constraint}:(?P<property>[a-zA-Z0-9._~?@!$&'*+,;=%-]+)\((?P<constraint>{'|'.join(get_args(CardinalityConstraints))}),(?P<value>\d+)(?:,(?P<on>[^(]*))?\)$"
-)
-
-
 # Constants for regex patterns - more maintainable
 PROPERTY_PATTERN: Final[str] = r"[a-zA-Z0-9._~?@!$&'*+,;=%-]+"
 VALUE_PATTERN: Final[str] = r".+"
