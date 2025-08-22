@@ -132,6 +132,21 @@ class DataModelAnalysis:
             raise NeatValueError("Physical Data Model is required for this analysis")
         return self._physical
 
+    @property
+    def children_by_concept(self) -> dict[ConceptEntity, set[ConceptEntity]]:
+        """Get a dictionary of concepts and their children.
+
+        Returns:
+            dict[ConceptEntity, set[ConceptEntity]]: Values children with concept parent as key.
+        """
+        children_by_concept: dict[ConceptEntity, set[ConceptEntity]] = defaultdict(set)
+        for concept in self.conceptual.concepts:
+            if concept.implements:
+                for parent in concept.implements:
+                    children_by_concept[parent].add(concept.concept)
+
+        return children_by_concept
+
     def parents_by_concept(
         self, include_ancestors: bool = False, include_different_space: bool = False
     ) -> dict[ConceptEntity, set[ConceptEntity]]:
@@ -161,6 +176,8 @@ class DataModelAnalysis:
             self._include_ancestors(parents_by_concept)
 
         return parents_by_concept
+
+    def descendents_by_concept(self): ...
 
     @staticmethod
     def _include_ancestors(
@@ -588,3 +605,19 @@ class DataModelAnalysis:
                     )
 
         return di_graph
+
+    def get_descendant_at_depth(
+        self,
+        children_by_parent: dict[ConceptEntity, set[ConceptEntity]] | dict[ViewEntity, set[ViewEntity]],
+        parent: ConceptEntity | ViewEntity,
+        depth: int,
+    ):
+        """
+        Returns all descendants of a given parent at a specific depth.
+        """
+        if depth == 0:
+            return [parent]
+        descendants = []
+        for child in children_by_parent.get(parent, []):
+            descendants.extend(self.get_descendant_at_depth(children_by_parent, child, depth - 1))
+        return descendants

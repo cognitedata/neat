@@ -72,7 +72,11 @@ from cognite.neat.core._data_model.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
-from cognite.neat.core._data_model.models.entities._restrictions import ConceptRestriction
+from cognite.neat.core._data_model.models.entities._constants import Unknown
+from cognite.neat.core._data_model.models.entities._restrictions import (
+    ConceptPropertyValueConstraint,
+    ConceptRestriction,
+)
 from cognite.neat.core._data_model.models.physical import (
     PhysicalMetadata,
     PhysicalProperty,
@@ -2267,7 +2271,8 @@ class SubsetConceptualDataModelOnRestrictions(VerifiedDataModelTransformer[Conce
         self._operation = operation
 
     def transform(self, data_model: ConceptualDataModel) -> ConceptualDataModel:
-        analysis = DataModelAnalysis(conceptual=data_model)
+        copy = data_model.model_copy()
+        analysis = DataModelAnalysis(conceptual=copy)
 
         parents_by_concept = (
             analysis.parents_by_concept(
@@ -2301,7 +2306,6 @@ class SubsetConceptualDataModelOnRestrictions(VerifiedDataModelTransformer[Conce
                     if filtered_top_concepts.intersection(parents):
                         ancestors.add(concept)
                 filtered_top_concepts = filtered_top_concepts.union(ancestors)
-
             return SubsetConceptualDataModel(
                 concepts=filtered_top_concepts,
                 include_different_space=self._include_different_space,
@@ -2407,6 +2411,43 @@ class SubsetConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel
             return ConceptualDataModel.model_validate(subsetted_data_model)
         except ValidationError as e:
             raise NeatValueError(f"Cannot subset data_model: {e}") from e
+
+
+class AddPropertiesFromRestriction(VerifiedDataModelTransformer[ConceptualDataModel, ConceptualDataModel]):
+    """Add properties from restrictions to the data model. This is specialized transformer that adds properties
+    which are otherwise defined as Concepts in the data model."""
+
+    def __init__(
+        self,
+        restrictions: set[ConceptPropertyValueConstraint],
+        depth: int = 1,
+    ):
+        self._restrictions = restrictions
+        self._depth = depth
+
+    def transform(self, data_model: ConceptualDataModel) -> ConceptualDataModel:
+        copy = data_model.model_copy(deep=True)
+        analysis = DataModelAnalysis(conceptual=copy)
+
+        if not (concepts_by_restriction := analysis.concepts_by_restrictions):
+            raise NeatValueError("No restrictions found.")
+
+        if missing_restrictions := self._restrictions - set(concepts_by_restriction.keys()):
+            raise NeatValueError(f"Following restrictions are missing in data model: {missing_restrictions}")
+
+        # attach properties
+        for restriction in self._restrictions:
+            restriction_concept = restriction.value
+            # create properties for each descendant concept
+            for descendant in analysis.get_descendant_at_depth(
+                analysis.children_by_concept, restriction_concept, self._depth
+            ):
+                for concept in concepts_by_restriction[restriction]:
+                    # attach property
+                    copy.properties.append(
+                        ConceptualProperty(concept=concept, property_=descendant.suffix, value_type=str(Unknown))
+                    )
+        return copy
 
 
 class AddCogniteProperties(
