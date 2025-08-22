@@ -3,6 +3,7 @@ import sys
 from abc import ABC
 from typing import Any, ClassVar, Final, Literal, TypeAlias, TypeVar, cast, get_args
 
+from nbformat import ValidationError
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from rdflib import Literal as RDFLiteral
 from rdflib import URIRef
@@ -196,10 +197,10 @@ def parse_restriction(data: str, **defaults: Any) -> ConceptPropertyRestriction:
     """Parse a string to create either a value or cardinality restriction."""
     try:
         return ConceptPropertyValueConstraint.load(data, **defaults)
-    except Exception:
+    except (NeatValueError, ValidationError):
         try:
             return ConceptPropertyCardinalityConstraint.load(data, **defaults)
-        except Exception as e:
+        except (NeatValueError, ValidationError) as e:
             raise NeatValueError(f"Unable to parse restriction: {data}") from e
 
 
