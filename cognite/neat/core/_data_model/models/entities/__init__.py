@@ -1,6 +1,7 @@
 from ._constants import Undefined, Unknown
 from ._loaders import load_connection, load_dms_value_type, load_value_type
 from ._multi_value import MultiValueTypeInfo
+from ._restrictions import ConceptPropertyCardinalityConstraint, ConceptPropertyValueConstraint, parse_restriction
 from ._single_value import (
     AssetEntity,
     AssetFields,
@@ -31,6 +32,8 @@ __all__ = [
     "CdfResourceEntityList",
     "ClassEntityList",
     "ConceptEntity",
+    "ConceptPropertyCardinalityConstraint",
+    "ConceptPropertyValueConstraint",
     "ConceptualEntity",
     "ContainerEntity",
     "ContainerEntityList",
@@ -61,4 +64,5 @@ __all__ = [
     "load_connection",
     "load_dms_value_type",
     "load_value_type",
+    "parse_restriction",
 ]
