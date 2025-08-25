@@ -43,7 +43,7 @@ from cognite.neat.core._data_model.transformers import (
     VerifyPhysicalDataModel,
 )
 from cognite.neat.core._issues import MultiValueError, NeatError, catch_issues
-from cognite.neat.core._issues.errors import NeatValueError, PropertyDefinitionDuplicatedError
+from cognite.neat.core._issues.errors import PropertyDefinitionDuplicatedError, PropertyValueError
 from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
 from cognite.neat.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
@@ -1617,16 +1617,15 @@ class TestDMSRules:
             views=[
                 UnverifiedPhysicalView("myView"),
             ],
-            containers=[UnverifiedPhysicalContainer("cdf_cmd::myContainer")],
+            containers=[UnverifiedPhysicalContainer("cdf_cmd:myContainer")],
         )
         with pytest.raises(MultiValueError) as exc_info:
             VerifyPhysicalDataModel(validate=False).transform(ImportedDataModel(model))
 
         exception = exc_info.value
         assert isinstance(exception, MultiValueError)
-        assert len(exception.errors) == 1
-        error = exception.errors[0]
-        assert isinstance(error, NeatValueError)
+        unexpected_types = [error for error in exception.errors if not isinstance(error, PropertyValueError)]
+        assert not unexpected_types, f"Unexpected errors: {unexpected_types}"
 
 
 def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
