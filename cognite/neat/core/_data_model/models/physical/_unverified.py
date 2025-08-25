@@ -170,7 +170,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
             else None
         )
         if isinstance(self.index, ContainerIndexEntity) or (isinstance(self.index, str) and "," not in self.index):
-            output["Index"] = [ContainerIndexEntity.load(self.index)]
+            output["Index"] = [ContainerIndexEntity.load(self.index, return_on_failure=True)]
         elif isinstance(self.index, str):
             output["Index"] = [
                 ContainerIndexEntity.load(index.strip())
@@ -198,10 +198,10 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
-        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
+        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version, return_on_failure=True)
 
     def referenced_container(self, default_space: str) -> ContainerEntity | None:
-        return ContainerEntity.load(self.container, strict=True, space=default_space) if self.container else None
+        return ContainerEntity.load(self.container, strict=True, space=default_space, return_on_failure=True) if self.container else None
 
     @classmethod
     def _load(cls, data: dict[str, Any]) -> Self:
