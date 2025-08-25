@@ -59,7 +59,15 @@ class ConceptualEntity(BaseModel, extra="ignore"):
 
     @classmethod
     @overload
-    def load(cls: "type[T_Entity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_Entity": ...
+    def load(
+        cls: "type[T_Entity]", data: Any, strict: Literal[True], return_on_failure: Literal[False], **defaults: Any
+    ) -> "T_Entity": ...
+
+    @classmethod
+    @overload
+    def load(
+        cls: "type[T_Entity]", data: Any, strict: Literal[True], return_on_failure: Literal[True], **defaults: Any
+    ) -> "T_Entity | str": ...
 
     @classmethod
     @overload
@@ -67,25 +75,53 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         cls: "type[T_Entity]",
         data: Any,
         strict: Literal[False] = False,
+        return_on_failure: Literal[False] = False,
         **defaults: Any,
     ) -> "T_Entity | UnknownEntity": ...
 
     @classmethod
-    def load(cls: "type[T_Entity]", data: Any, strict: bool = False, **defaults: Any) -> "T_Entity | UnknownEntity":
+    @overload
+    def load(
+        cls: "type[T_Entity]",
+        data: Any,
+        strict: Literal[False] = False,
+        return_on_failure: Literal[True] = True,
+        **defaults: Any,
+    ) -> "T_Entity | UnknownEntity | str": ...
+
+    @classmethod
+    def load(
+        cls: "type[T_Entity]", data: Any, strict: bool = False, return_on_failure: bool = False, **defaults: Any
+    ) -> "T_Entity | UnknownEntity | str":
+        """Loads an entity from a string or dict representation.
+
+        Args:
+            data: The data to load the entity from. Can be a string or a dict.
+            strict: If True, will raise an error if the data is "unknown".
+            return_on_failure: If True, will return the input data if loading fails.
+                This is used when you want to defer error handling to a later stage.
+            defaults: Default values to use when loading the entity. These will be used if the corresponding
+
+        """
         if isinstance(data, cls):
             return data
         elif isinstance(data, str) and data == str(Unknown):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
             return UnknownEntity(prefix=Undefined, suffix=Unknown)
-        if defaults and isinstance(defaults, dict):
-            # This is a trick to pass in default values
-            try:
-                return cls.model_validate({_PARSE: data, "defaults": defaults})
-            except ValueError:
-                raise
-        else:
-            return cls.model_validate(data)
+        try:
+            if defaults and isinstance(defaults, dict):
+                # This is a trick to pass in default values
+                try:
+                    return cls.model_validate({_PARSE: data, "defaults": defaults})
+                except ValueError:
+                    raise
+            else:
+                return cls.model_validate(data)
+        except ValueError:
+            if return_on_failure:
+                return data
+            raise
 
     @model_validator(mode="before")
     def _load(cls, data: Any) -> "dict | ConceptualEntity":
@@ -342,7 +378,15 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
+    def load(
+        cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], return_on_failure: Literal[False], **defaults: Any
+    ) -> "T_DMSEntity": ...
+
+    @classmethod
+    @overload
+    def load(
+        cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], return_on_failure: Literal[True], **defaults: Any
+    ) -> "T_DMSEntity | PhysicalUnknownEntity | str": ...
 
     @classmethod
     @overload
@@ -350,18 +394,29 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
         cls: "type[T_DMSEntity]",
         data: Any,
         strict: Literal[False] = False,
+        return_on_failure: Literal[False] = False,
         **defaults: Any,
     ) -> "T_DMSEntity | PhysicalUnknownEntity": ...
 
     @classmethod
+    @overload
     def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults: Any
+        cls: "type[T_DMSEntity]",
+        data: Any,
+        strict: Literal[False] = False,
+        return_on_failure: Literal[True] = True,
+        **defaults: Any,
+    ) -> "T_DMSEntity | PhysicalUnknownEntity | str": ...
+
+    @classmethod
+    def load(
+        cls: "type[T_DMSEntity]", data: Any, strict: bool = False, return_on_failure: bool = False, **defaults: Any
     ) -> "T_DMSEntity | PhysicalUnknownEntity":  # type: ignore
         if isinstance(data, str) and data == str(Unknown):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
             return PhysicalUnknownEntity.from_id(None)
-        return cast(T_DMSEntity, super().load(data, **defaults))
+        return cast(T_DMSEntity, super().load(data, return_on_failure=return_on_failure, **defaults))
 
     @property
     def space(self) -> str:
