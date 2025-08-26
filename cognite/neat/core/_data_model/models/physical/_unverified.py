@@ -200,10 +200,23 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
+<<<<<<< HEAD
         return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
 
     def referenced_container(self, default_space: str) -> ContainerEntity | None:
         return ContainerEntity.load(self.container, strict=True, space=default_space) if self.container else None
+=======
+        return ViewEntity.load(
+            self.view, strict=True, space=default_space, version=default_version, return_on_failure=True
+        )
+
+    def referenced_container(self, default_space: str) -> ContainerEntity | None:
+        return (
+            ContainerEntity.load(self.container, strict=True, space=default_space, return_on_failure=True)
+            if self.container
+            else None
+        )
+>>>>>>> 6c463abaab25a872dc7ed7cc2a9baf0cb1727a3d
 
     @classmethod
     def _load(cls, data: dict[str, Any]) -> Self:
