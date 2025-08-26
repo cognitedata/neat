@@ -1,7 +1,7 @@
 import re
 import sys
 from abc import ABC
-from typing import Any, ClassVar, Final, Literal, TypeAlias, TypeVar, cast, get_args
+from typing import Any, ClassVar, Final, Literal, TypeVar, cast, get_args
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from rdflib import Literal as RDFLiteral
@@ -227,5 +227,4 @@ def parse_restriction(data: str, **defaults: Any) -> ConceptPropertyRestriction:
     )
 
 
-ConceptRestriction: TypeAlias = ConceptPropertyValueConstraint | ConceptPropertyCardinalityConstraint
-T_ConceptRestriction = TypeVar("T_ConceptRestriction", bound=ConceptRestriction)
+T_ConceptRestriction = TypeVar("T_ConceptRestriction", bound=ConceptPropertyRestriction)
