@@ -161,11 +161,13 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        output["View"] = ViewEntity.load(self.view, space=default_space, version=default_version)
+        output["View"] = ViewEntity.load(
+            self.view, space=default_space, version=default_version, return_on_failure=True
+        )
         output["Value Type"] = load_dms_value_type(self.value_type, default_space, default_version)
         output["Connection"] = load_connection(self.connection, default_space, default_version)
         output["Container"] = (
-            ContainerEntity.load(self.container, space=default_space, version=default_version)
+            ContainerEntity.load(self.container, space=default_space, version=default_version, return_on_failure=True)
             if self.container
             else None
         )
@@ -173,35 +175,35 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
             output["Index"] = [ContainerIndexEntity.load(self.index, return_on_failure=True)]
         elif isinstance(self.index, str):
             output["Index"] = [
-                ContainerIndexEntity.load(index.strip())
+                ContainerIndexEntity.load(index.strip(), return_on_failure=True)
                 for index in SPLIT_ON_COMMA_PATTERN.split(self.index)
                 if index.strip()
             ]
         elif isinstance(self.index, list):
-            index_list: list[ContainerIndexEntity | PhysicalUnknownEntity] = []
+            index_list: list[ContainerIndexEntity | PhysicalUnknownEntity | str] = []
             for index in self.index:
                 if isinstance(index, ContainerIndexEntity):
                     index_list.append(index)
                 elif isinstance(index, str):
                     index_list.extend(
                         [
-                            ContainerIndexEntity.load(idx.strip())
+                            ContainerIndexEntity.load(idx.strip(), return_on_failure=True)
                             for idx in SPLIT_ON_COMMA_PATTERN.split(index)
                             if idx.strip()
                         ]
                     )
                 elif isinstance(index, str):
-                    index_list.append(ContainerIndexEntity.load(index.strip()))
+                    index_list.append(ContainerIndexEntity.load(index.strip(), return_on_failure=True))
                 else:
                     raise TypeError(f"Unexpected type for index: {type(index)}")
             output["Index"] = index_list
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
-        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version, return_on_failure=True)
+        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
 
     def referenced_container(self, default_space: str) -> ContainerEntity | None:
-        return ContainerEntity.load(self.container, strict=True, space=default_space, return_on_failure=True) if self.container else None
+        return ContainerEntity.load(self.container, strict=True, space=default_space) if self.container else None
 
     @classmethod
     def _load(cls, data: dict[str, Any]) -> Self:
@@ -257,16 +259,19 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
 
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        output["Container"] = self.as_entity_id(default_space)
+        output["Container"] = self.as_entity_id(default_space, return_on_failure=True)
         output["Constraint"] = (
-            [ContainerEntity.load(constraint.strip(), space=default_space) for constraint in self.constraint.split(",")]
+            [
+                ContainerEntity.load(constraint.strip(), space=default_space, return_on_failure=True)
+                for constraint in self.constraint.split(",")
+            ]
             if self.constraint
             else None
         )
         return output
 
-    def as_entity_id(self, default_space: str) -> ContainerEntity:
-        return ContainerEntity.load(self.container, strict=True, space=default_space)
+    def as_entity_id(self, default_space: str, return_on_failure: bool ) -> ContainerEntity | str:
+        return ContainerEntity.load(self.container, strict=True, space=default_space, return_on_failure=True)
 
     @classmethod
     def from_container(cls, container: dm.ContainerApply) -> "UnverifiedPhysicalContainer":
@@ -310,15 +315,21 @@ class UnverifiedPhysicalView(UnverifiedComponent[PhysicalView]):
         output["Implements"] = self._load_implements(default_space, default_version)
         return output
 
-    def as_entity_id(self, default_space: str, default_version: str) -> ViewEntity:
-        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
+    def as_entity_id(self, default_space: str, default_version: str) -> PhysicalUnknownEntity | ViewEntity | str:
+        return ViewEntity.load(
+            self.view, strict=True, space=default_space, version=default_version, return_on_failure=True
+        )
 
-    def _load_implements(self, default_space: str, default_version: str) -> list[ViewEntity] | None:
+    def _load_implements(
+        self, default_space: str, default_version: str
+    ) -> list[ViewEntity | PhysicalUnknownEntity | str] | None:
         self.implements = self.implements.strip() if self.implements else None
 
         return (
             [
-                ViewEntity.load(implement, strict=True, space=default_space, version=default_version)
+                ViewEntity.load(
+                    implement, strict=True, space=default_space, version=default_version, return_on_failure=True
+                )
                 for implement in self.implements.split(",")
             ]
             if self.implements
@@ -326,7 +337,9 @@ class UnverifiedPhysicalView(UnverifiedComponent[PhysicalView]):
         )
 
     def referenced_views(self, default_space: str, default_version: str) -> list[ViewEntity]:
-        return self._load_implements(default_space, default_version) or []
+        return [
+            view for view in self._load_implements(default_space, default_version) or [] if isinstance(view, ViewEntity)
+        ]
 
     @classmethod
     def from_view(cls, view: dm.ViewApply, in_model: bool) -> "UnverifiedPhysicalView":
@@ -361,7 +374,7 @@ class UnverifiedPhysicalNodeType(UnverifiedComponent[PhysicalNodeType]):
 
     def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        output["Node"] = DMSNodeEntity.load(self.node, space=default_space)
+        output["Node"] = DMSNodeEntity.load(self.node, space=default_space, return_on_failure=True)
         return output
 
 
@@ -446,13 +459,13 @@ class UnverifiedPhysicalDataModel(UnverifiedDataModel[PhysicalDataModel]):
 
         return views, containers
 
-    def as_view_entities(self) -> list[ViewEntity]:
+    def as_view_entities(self) -> list[ViewEntity | str]:
         return [view.as_entity_id(self.metadata.space, self.metadata.version) for view in self.views]
 
-    def as_container_entities(self) -> list[ContainerEntity]:
+    def as_container_entities(self) -> list[ContainerEntity | str]:
         return [container.as_entity_id(self.metadata.space) for container in self.containers or []]
 
-    def imported_views_and_containers(self) -> tuple[set[ViewEntity], set[ContainerEntity]]:
+    def imported_views_and_containers(self) -> tuple[set[ViewEntity | str], set[ContainerEntity | str]]:
         views, containers = self.referenced_views_and_containers()
         return views - set(self.as_view_entities()), containers - set(self.as_container_entities())
 
