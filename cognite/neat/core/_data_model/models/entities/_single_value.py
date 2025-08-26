@@ -443,6 +443,8 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
             return PhysicalUnknownEntity.from_id(None)
+        if isinstance(data, UnknownEntity):
+            return PhysicalUnknownEntity.from_id(None)
         return cast(T_DMSEntity, super().load(data, strict=False, return_on_failure=return_on_failure, **defaults))
 
     @property
