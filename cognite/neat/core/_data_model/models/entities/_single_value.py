@@ -119,10 +119,7 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         try:
             if defaults and isinstance(defaults, dict):
                 # This is a trick to pass in default values
-                try:
-                    return cls.model_validate({_PARSE: data, "defaults": defaults})
-                except ValueError:
-                    raise
+                return cls.model_validate({_PARSE: data, "defaults": defaults})
             else:
                 return cls.model_validate(data)
         except ValueError:
@@ -446,7 +443,7 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
             return PhysicalUnknownEntity.from_id(None)
-        return cast(T_DMSEntity, super().load(data, strict=strict, return_on_failure=return_on_failure, **defaults))
+        return cast(T_DMSEntity, super().load(data, strict=False, return_on_failure=return_on_failure, **defaults))
 
     @property
     def space(self) -> str:
