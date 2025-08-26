@@ -139,5 +139,4 @@ class TestParseRestriction:
 class TestNamedIndividualEntity:
     def test_reset_prefix(self):
         entity = NamedIndividualEntity(suffix="test", prefix="one-that-gets-reset")
-        entity.reset_prefix()
         assert entity.prefix == "ni"
