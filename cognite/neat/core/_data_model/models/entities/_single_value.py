@@ -385,7 +385,13 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
 
     @classmethod  # type: ignore[override]
     @overload
-    def load(cls: "type[T_DMSEntity]", data: Any, strict: Literal[True], **defaults: Any) -> "T_DMSEntity": ...
+    def load(
+        cls: "type[T_DMSEntity]",
+        data: Any,
+        strict: Literal[True],
+        return_on_failure: Literal[False] = False,
+        **defaults: Any,
+    ) -> "T_DMSEntity": ...
 
     @classmethod
     @overload
@@ -393,18 +399,54 @@ class PhysicalEntity(ConceptualEntity, Generic[T_ID], ABC):
         cls: "type[T_DMSEntity]",
         data: Any,
         strict: Literal[False] = False,
+        return_on_failure: Literal[False] = False,
         **defaults: Any,
     ) -> "T_DMSEntity | PhysicalUnknownEntity": ...
 
     @classmethod
+    @overload
     def load(
-        cls: "type[T_DMSEntity]", data: Any, strict: bool = False, **defaults: Any
-    ) -> "T_DMSEntity | PhysicalUnknownEntity":  # type: ignore
+        cls: "type[T_DMSEntity]",
+        data: Any,
+        strict: Literal[False] = False,
+        return_on_failure: Literal[True] = True,
+        **defaults: Any,
+    ) -> "T_DMSEntity | Any": ...
+
+    @classmethod
+    @overload
+    def load(
+        cls: "type[T_DMSEntity]",
+        data: Any,
+        strict: Literal[True] = True,
+        return_on_failure: Literal[True] = True,
+        **defaults: Any,
+    ) -> "T_DMSEntity | Any": ...
+
+    @classmethod
+    def load(
+        cls: "type[T_DMSEntity]",
+        data: Any,
+        strict: Literal[True, False] = False,
+        return_on_failure: Literal[True, False] = False,
+        **defaults: Any,
+    ) -> "T_DMSEntity | PhysicalUnknownEntity | Any":
+        """Loads a DMS entity from a string or dict representation.
+
+        Args:
+            data: The data to load the entity from. Can be a string or a dict.
+            strict: If True, will raise an error if the data is "unknown".
+            return_on_failure: If True, will return the input data if loading fails.
+                This is used when you want to defer error handling to a later stage.
+            defaults: Default values to use when loading the entity. These will be used if the corresponding
+                fields are missing in the input data.
+
+        """
         if isinstance(data, str) and data == str(Unknown):
             if strict:
                 raise NeatValueError(f"Failed to load entity {data!s}")
             return PhysicalUnknownEntity.from_id(None)
-        return cast(T_DMSEntity, super().load(data, **defaults))
+        return cast(T_DMSEntity, super().load(data, strict=strict, return_on_failure=return_on_failure, **defaults))
 
     @property
     def space(self) -> str:
