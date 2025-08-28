@@ -136,8 +136,8 @@ class UnverifiedConcept(UnverifiedComponent[Concept]):
         if isinstance(self.implements, str):
             self.implements = self.implements.strip()
             parent = [
-                ConceptEntity.load(parent, prefix=default_prefix, return_on_failure=True)
-                for parent in self.implements.split(",")
+                ConceptEntity.load(parent_str, prefix=default_prefix, return_on_failure=True)
+                for parent_str in self.implements.split(",")
             ]
         elif isinstance(self.implements, list):
             parent = [
