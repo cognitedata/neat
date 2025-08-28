@@ -356,7 +356,7 @@ class UnverifiedPhysicalView(UnverifiedComponent[PhysicalView]):
 
     def _load_implements(
         self, default_space: str, default_version: str, return_on_failure: Literal[True, False] = False
-    ) -> list[ViewEntity | str] | list[ViewEntity] | None:
+    ) -> list[ViewEntity] | list[ViewEntity | str] | None:
         self.implements = self.implements.strip() if self.implements else None
 
         return (

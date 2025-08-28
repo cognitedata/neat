@@ -20,7 +20,7 @@ def load_value_type(
     raw: str | MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity,
     default_prefix: str,
     return_on_failure: Literal[False] = False,
-) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity | str: ...
+) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity: ...
 
 
 @overload
@@ -82,7 +82,7 @@ def load_dms_value_type(
     default_space: str,
     default_version: str,
     return_on_failure: Literal[True, False] = False,
-) -> DataType | ViewEntity | PhysicalUnknownEntity | str | None:
+) -> DataType | ViewEntity | PhysicalUnknownEntity | str:
     if isinstance(raw, DataType | ViewEntity | PhysicalUnknownEntity):
         return raw
     elif isinstance(raw, str):
