@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, overload
 
 from cognite.neat.core._data_model.models.data_types import DataType
 from cognite.neat.core._issues.errors import NeatTypeError
@@ -46,6 +46,7 @@ def load_dms_value_type(
     raw: str | DataType | ViewEntity | PhysicalUnknownEntity,
     default_space: str,
     default_version: str,
+    return_on_failure: bool = True,
 ) -> DataType | ViewEntity | PhysicalUnknownEntity:
     if isinstance(raw, DataType | ViewEntity | PhysicalUnknownEntity):
         return raw
@@ -59,17 +60,36 @@ def load_dms_value_type(
     raise NeatTypeError(f"Invalid value type: {type(raw)}")
 
 
+@overload
 def load_connection(
     raw: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None,
     default_space: str,
     default_version: str,
-) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None:
+    return_on_failure: Literal[False] = False,
+) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None: ...
+
+
+@overload
+def load_connection(
+    raw: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None,
+    default_space: str,
+    default_version: str,
+    return_on_failure: Literal[True],
+) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None | str: ...
+
+
+def load_connection(
+    raw: Literal["direct"] | ReverseConnectionEntity | EdgeEntity | str | None,
+    default_space: str,
+    default_version: str,
+    return_on_failure: Literal[True, False] = False,
+) -> Literal["direct"] | ReverseConnectionEntity | EdgeEntity | None | str:
     if isinstance(raw, str) and raw.lower() == "direct":
         return "direct"  # type: ignore[return-value]
     elif isinstance(raw, EdgeEntity | ReverseConnectionEntity) or raw is None:
         return raw  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("edge"):
-        return EdgeEntity.load(raw, space=default_space, version=default_version)  # type: ignore[return-value]
+        return EdgeEntity.load(raw, space=default_space, version=default_version, return_on_failure=return_on_failure)  # type: ignore[return-value]
     elif isinstance(raw, str) and raw.startswith("reverse"):
-        return ReverseConnectionEntity.load(raw)  # type: ignore[return-value]
+        return ReverseConnectionEntity.load(raw, return_on_failure=return_on_failure)  # type: ignore[return-value]
     raise NeatTypeError(f"Invalid connection: {type(raw)}")
