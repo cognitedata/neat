@@ -232,6 +232,42 @@ class TestEntities:
             f"Property ID '{propety_id}' should be valid but is not."
         )
 
+    @pytest.mark.parametrize(
+        "cls_, raw",
+        [
+            pytest.param(ContainerIndexEntity, "notAnIndexType:name(bySpace=True,cursorable=True)", id="Bad prefix"),
+            pytest.param(ViewEntity, "invalid(entity)format", id="ViewEntity - Invalid format"),
+            pytest.param(ViewEntity, "bad:entity(invalid=parameter)", id="ViewEntity - Invalid parameter"),
+            pytest.param(
+                ConceptEntity,
+                "malformed:entity(invalid(nested)parens)",
+                id="ConceptEntity - Invalid nested parentheses",
+            ),
+            pytest.param(
+                EdgeEntity,
+                "edge(type=invalid:type,properties=malformed)",
+                id="EdgeEntity - Invalid type and properties",
+            ),
+            pytest.param(DataModelEntity, "data_model(invalid_param=value)", id="DataModelEntity - Invalid parameter"),
+            pytest.param(UnitEntity, ":missing_prefix", id="UnitEntity - Missing prefix"),
+            pytest.param(AssetEntity, "Asset(invalid_property=value)", id="AssetEntity - Invalid property"),
+            pytest.param(
+                ReferenceEntity, "malformed_reference_without_proper_format", id="ReferenceEntity - Malformed format"
+            ),
+            pytest.param(
+                ContainerIndexEntity, "invalid:index(invalidParam=true)", id="ContainerIndexEntity - Invalid parameter"
+            ),
+            pytest.param(
+                ContainerIndexEntity,
+                "btree:index(cursorable=invalid_bool)",
+                id="ContainerIndexEntity - Invalid boolean value",
+            ),
+        ],
+    )
+    def test_load_return_on_failure(self, cls_: type[ConceptualEntity], raw: str) -> None:
+        actual = cls_.load(raw, return_on_failure=True)
+        assert actual == raw
+
 
 class TestEntityPattern:
     @pytest.mark.parametrize(
