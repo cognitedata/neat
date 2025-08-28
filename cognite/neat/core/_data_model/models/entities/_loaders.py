@@ -15,10 +15,27 @@ from ._single_value import (
 )
 
 
+@overload
 def load_value_type(
     raw: str | MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity,
     default_prefix: str,
-) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity:
+    return_on_failure: Literal[False] = False,
+) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity | str: ...
+
+
+@overload
+def load_value_type(
+    raw: str | MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity,
+    default_prefix: str,
+    return_on_failure: Literal[True],
+) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity | None | str: ...
+
+
+def load_value_type(
+    raw: str | MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity,
+    default_prefix: str,
+    return_on_failure: Literal[True, False] = False,
+) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity | None | str:
     if isinstance(raw, MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity):
         return raw
     elif isinstance(raw, str):
@@ -37,17 +54,35 @@ def load_value_type(
 
         # property holding link to class
         else:
-            return ConceptEntity.load(raw, prefix=default_prefix)
+            return ConceptEntity.load(raw, prefix=default_prefix, return_on_failure=return_on_failure)
     else:
         raise NeatTypeError(f"Invalid value type: {type(raw)}")
+
+
+@overload
+def load_dms_value_type(
+    raw: str | DataType | ViewEntity | PhysicalUnknownEntity,
+    default_space: str,
+    default_version: str,
+    return_on_failure: Literal[False],
+) -> DataType | ViewEntity | PhysicalUnknownEntity: ...
+
+
+@overload
+def load_dms_value_type(
+    raw: str | DataType | ViewEntity | PhysicalUnknownEntity,
+    default_space: str,
+    default_version: str,
+    return_on_failure: Literal[True],
+) -> DataType | ViewEntity | PhysicalUnknownEntity | str: ...
 
 
 def load_dms_value_type(
     raw: str | DataType | ViewEntity | PhysicalUnknownEntity,
     default_space: str,
     default_version: str,
-    return_on_failure: bool = True,
-) -> DataType | ViewEntity | PhysicalUnknownEntity:
+    return_on_failure: Literal[True, False] = False,
+) -> DataType | ViewEntity | PhysicalUnknownEntity | str | None:
     if isinstance(raw, DataType | ViewEntity | PhysicalUnknownEntity):
         return raw
     elif isinstance(raw, str):
@@ -56,7 +91,9 @@ def load_dms_value_type(
         elif raw == str(Unknown):
             return PhysicalUnknownEntity()
         else:
-            return ViewEntity.load(raw, space=default_space, version=default_version)
+            return ViewEntity.load(
+                raw, space=default_space, version=default_version, return_on_failure=return_on_failure
+            )
     raise NeatTypeError(f"Invalid value type: {type(raw)}")
 
 
