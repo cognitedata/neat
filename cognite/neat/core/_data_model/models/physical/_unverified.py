@@ -3,7 +3,7 @@ import sys
 import warnings
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 import pandas as pd
 from cognite.client import data_modeling as dm
@@ -161,19 +161,23 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        output["View"] = ViewEntity.load(self.view, space=default_space, version=default_version)
-        output["Value Type"] = load_dms_value_type(self.value_type, default_space, default_version)
-        output["Connection"] = load_connection(self.connection, default_space, default_version)
+        output["View"] = ViewEntity.load(
+            self.view, space=default_space, version=default_version, return_on_failure=True
+        )
+        output["Value Type"] = load_dms_value_type(
+            self.value_type, default_space, default_version, return_on_failure=True
+        )
+        output["Connection"] = load_connection(self.connection, default_space, default_version, return_on_failure=True)
         output["Container"] = (
-            ContainerEntity.load(self.container, space=default_space, version=default_version)
+            ContainerEntity.load(self.container, space=default_space, version=default_version, return_on_failure=True)
             if self.container
             else None
         )
         if isinstance(self.index, ContainerIndexEntity) or (isinstance(self.index, str) and "," not in self.index):
-            output["Index"] = [ContainerIndexEntity.load(self.index)]
+            output["Index"] = [ContainerIndexEntity.load(self.index, return_on_failure=True)]
         elif isinstance(self.index, str):
             output["Index"] = [
-                ContainerIndexEntity.load(index.strip())
+                ContainerIndexEntity.load(index.strip(), return_on_failure=True)
                 for index in SPLIT_ON_COMMA_PATTERN.split(self.index)
                 if index.strip()
             ]
@@ -185,13 +189,13 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
                 elif isinstance(index, str):
                     index_list.extend(
                         [
-                            ContainerIndexEntity.load(idx.strip())
+                            ContainerIndexEntity.load(idx.strip(), return_on_failure=True)
                             for idx in SPLIT_ON_COMMA_PATTERN.split(index)
                             if idx.strip()
                         ]
                     )
                 elif isinstance(index, str):
-                    index_list.append(ContainerIndexEntity.load(index.strip()))
+                    index_list.append(ContainerIndexEntity.load(index.strip(), return_on_failure=True))
                 else:
                     raise TypeError(f"Unexpected type for index: {type(index)}")
             output["Index"] = index_list
@@ -306,19 +310,51 @@ class UnverifiedPhysicalView(UnverifiedComponent[PhysicalView]):
 
     def dump(self, default_space: str, default_version: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        output["View"] = self.as_entity_id(default_space, default_version)
-        output["Implements"] = self._load_implements(default_space, default_version)
+        output["View"] = self.as_entity_id(default_space, default_version, return_on_failure=True)
+        output["Implements"] = self._load_implements(default_space, default_version, return_on_failure=True)
         return output
 
-    def as_entity_id(self, default_space: str, default_version: str) -> ViewEntity:
-        return ViewEntity.load(self.view, strict=True, space=default_space, version=default_version)
+    @overload
+    def as_entity_id(
+        self, default_space: str, default_version: str, return_on_failure: Literal[False] = False
+    ) -> ViewEntity: ...
 
-    def _load_implements(self, default_space: str, default_version: str) -> list[ViewEntity] | None:
+    @overload
+    def as_entity_id(
+        self, default_space: str, default_version: str, return_on_failure: Literal[True]
+    ) -> ViewEntity | str: ...
+
+    def as_entity_id(
+        self, default_space: str, default_version: str, return_on_failure: Literal[True, False] = False
+    ) -> ViewEntity | str:
+        return ViewEntity.load(
+            self.view, strict=True, space=default_space, version=default_version, return_on_failure=return_on_failure
+        )
+
+    @overload
+    def _load_implements(
+        self, default_space: str, default_version: str, return_on_failure: Literal[False] = False
+    ) -> list[ViewEntity] | None: ...
+
+    @overload
+    def _load_implements(
+        self, default_space: str, default_version: str, return_on_failure: Literal[True]
+    ) -> list[ViewEntity | str] | None: ...
+
+    def _load_implements(
+        self, default_space: str, default_version: str, return_on_failure: Literal[True, False] = False
+    ) -> list[ViewEntity | str] | list[ViewEntity] | None:
         self.implements = self.implements.strip() if self.implements else None
 
         return (
             [
-                ViewEntity.load(implement, strict=True, space=default_space, version=default_version)
+                ViewEntity.load(
+                    implement,
+                    strict=True,
+                    space=default_space,
+                    version=default_version,
+                    return_on_failure=return_on_failure,
+                )
                 for implement in self.implements.split(",")
             ]
             if self.implements
