@@ -141,8 +141,8 @@ class UnverifiedConcept(UnverifiedComponent[Concept]):
             ]
         elif isinstance(self.implements, list):
             parent = [
-                ConceptEntity.load(parent_, prefix=default_prefix, return_on_failure=True)
-                for parent_ in self.implements
+                ConceptEntity.load(parent_str, prefix=default_prefix, return_on_failure=True)
+                for parent_str in self.implements
             ]
         output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix, return_on_failure=True)
         output["Implements"] = parent

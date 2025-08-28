@@ -36,6 +36,17 @@ def load_value_type(
     default_prefix: str,
     return_on_failure: Literal[True, False] = False,
 ) -> MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity | None | str:
+    """
+    Loads a value type from a raw string or entity.
+
+    Args:
+        raw: The raw value to load.
+        default_prefix: The default prefix to use if not specified in the raw value.
+        return_on_failure: If True, returns the raw value on parsing failure instead of raising an error.
+
+    Returns:
+        The loaded value type entity, or the raw value if loading fails and `return_on_failure` is True.
+    """
     if isinstance(raw, MultiValueTypeInfo | DataType | ConceptEntity | UnknownEntity):
         return raw
     elif isinstance(raw, str):
@@ -83,6 +94,18 @@ def load_dms_value_type(
     default_version: str,
     return_on_failure: Literal[True, False] = False,
 ) -> DataType | ViewEntity | PhysicalUnknownEntity | str:
+    """
+    Loads a value type from a raw string or entity in the context of a data modeling service
+
+    Args:
+        raw: The raw value to load.
+        default_space: The default space to use if not specified in the raw value.
+        default_version: The default version to use if not specified in the raw value.
+        return_on_failure: If True, returns the raw value on parsing failure instead of raising an error.
+
+    Returns:
+        The loaded value type entity, or the raw value if loading fails and `return_on_failure` is True.
+    """
     if isinstance(raw, DataType | ViewEntity | PhysicalUnknownEntity):
         return raw
     elif isinstance(raw, str):

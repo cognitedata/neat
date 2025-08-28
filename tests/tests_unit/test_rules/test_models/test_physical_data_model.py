@@ -1617,7 +1617,7 @@ class TestDMSRules:
             views=[
                 UnverifiedPhysicalView("myView"),
             ],
-            containers=[UnverifiedPhysicalContainer("cdf_cmd:myContainer")],
+            containers=[UnverifiedPhysicalContainer("cdf_cdm:myContainer")],
         )
         with pytest.raises(MultiValueError) as exc_info:
             VerifyPhysicalDataModel(validate=False).transform(ImportedDataModel(model))

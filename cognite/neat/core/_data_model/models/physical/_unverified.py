@@ -194,8 +194,6 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
                             if idx.strip()
                         ]
                     )
-                elif isinstance(index, str):
-                    index_list.append(ContainerIndexEntity.load(index.strip(), return_on_failure=True))
                 else:
                     raise TypeError(f"Unexpected type for index: {type(index)}")
             output["Index"] = index_list
