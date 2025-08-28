@@ -43,6 +43,10 @@ class EntityTypes(StrEnum):
     prefix = "prefix"
     space = "space"
     container_index = "container_index"
+    concept_restriction = "conceptRestriction"
+    value_constraint = "valueConstraint"
+    cardinality_constraint = "cardinalityConstraint"
+    named_individual = "named_individual"
 
 
 def get_reserved_words(

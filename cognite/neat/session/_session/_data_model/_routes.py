@@ -2,6 +2,7 @@ from cognite.neat.core._data_model.models.conceptual._verified import Conceptual
 from cognite.neat.core._data_model.models.physical._verified import PhysicalDataModel
 from cognite.neat.session._session._data_model._read import ReadAPI
 from cognite.neat.session._session._data_model._show import ShowAPI
+from cognite.neat.session._session._data_model._transform import TransformAPI
 from cognite.neat.session._session._data_model._write import WriteAPI
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import session_class_wrapper
@@ -14,6 +15,7 @@ class DataModelAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
         self.read = ReadAPI(state)
+        self.transform = TransformAPI(state)
         self.write = WriteAPI(state)
         self.show = ShowAPI(state)
 

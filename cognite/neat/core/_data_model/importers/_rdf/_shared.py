@@ -7,6 +7,7 @@ from rdflib.plugins.sparql import prepareQuery
 from rdflib.query import ResultRow
 
 from cognite.neat.core._constants import cognite_prefixes
+from cognite.neat.core._data_model._constants import EntityTypes
 from cognite.neat.core._data_model.models.entities._constants import Unknown
 from cognite.neat.core._data_model.models.entities._single_value import ConceptEntity
 from cognite.neat.core._issues._base import IssueList
@@ -47,6 +48,9 @@ def parse_concepts(
 
         # Safeguarding against incomplete semantic definitions
         if res["implements"] and isinstance(res["implements"], BNode):
+            print(
+                f"Warning: Concept {res['concept']} has an implements relation to a blank node, skipping. {res['implements']}"
+            )
             issue_list.append(
                 ResourceRetrievalWarning(
                     res["concept"],
@@ -54,7 +58,7 @@ def parse_concepts(
                     error=("Unable to determine concept that is being implemented"),
                 )
             )
-            continue
+            res["implements"] = None
 
         # sanitize the concept and implements
         res["concept"] = sanitize_entity(res["concept"])
@@ -66,20 +70,21 @@ def parse_concepts(
             concepts[concept_id] = res
         else:
             # Handling implements
+            handle_meta("concept", concepts, concept_id, res, "name", issue_list)
+            handle_meta("concept", concepts, concept_id, res, "description", issue_list)
+
             if concepts[concept_id]["implements"] and isinstance(concepts[concept_id]["implements"], list):
-                if res["implements"] not in concepts[concept_id]["implements"]:
+                if res["implements"] and res["implements"] not in concepts[concept_id]["implements"]:
                     concepts[concept_id]["implements"].append(res["implements"])
 
             elif concepts[concept_id]["implements"] and isinstance(concepts[concept_id]["implements"], str):
                 concepts[concept_id]["implements"] = [concepts[concept_id]["implements"]]
 
-                if res["implements"] not in concepts[concept_id]["implements"]:
+                if res["implements"] and res["implements"] not in concepts[concept_id]["implements"]:
                     concepts[concept_id]["implements"].append(res["implements"])
             elif res["implements"]:
                 concepts[concept_id]["implements"] = [res["implements"]]
 
-            handle_meta("concept", concepts, concept_id, res, "name", issue_list)
-            handle_meta("concept", concepts, concept_id, res, "description", issue_list)
     if not concepts:
         issue_list.append(NeatValueError("Unable to parse concepts"))
 
@@ -170,6 +175,39 @@ def parse_properties(
         issue_list.append(NeatValueError("Unable to parse properties"))
 
     return properties, issue_list
+
+
+def parse_restriction(
+    graph: Graph, query: str, parameters: set, issue_list: IssueList | None = None
+) -> tuple[dict, IssueList]:
+    """
+    Parse OWL restrictions from the graph.
+    """
+    restrictions: dict[str, dict] = {}
+
+    query = prepareQuery(query, initNs={k: v for k, v in graph.namespaces()})
+    prefixes = cognite_prefixes()
+
+    for raw in graph.query(query):
+        res: dict = convert_rdflib_content(
+            cast(ResultRow, raw).asdict(), uri_handling="as-concept-entity", prefixes=prefixes
+        )
+        res = {key: res.get(key, None) for key in parameters}
+
+        res["concept"] = sanitize_entity(res["concept"])
+        if res["concept"] not in restrictions:
+            restrictions[res["concept"]] = []
+
+        if res["value"] and res["valueConstraint"]:
+            restriction = f"{EntityTypes.value_constraint}:{res['property_']}({res['valueConstraint']},{res['value']})"
+        elif res["cardinalityConstraint"] and res["cardinality"]:
+            on_str = f",{sanitize_entity(res['on'])}" if res["on"] else ""
+            restriction = f"{EntityTypes.cardinality_constraint}:{res['property_']}({res['cardinalityConstraint']},{res['cardinality']}{on_str})"
+        else:
+            continue
+        restrictions[res["concept"]].append(restriction)
+
+    return restrictions, issue_list
 
 
 def handle_meta(

@@ -6,6 +6,11 @@ from pydantic import (
     PlainSerializer,
 )
 
+from cognite.neat.core._data_model.models.entities._restrictions import (
+    ConceptPropertyCardinalityConstraint,
+    ConceptPropertyValueConstraint,
+)
+
 from ._single_value import (
     AssetEntity,
     ConceptEntity,
@@ -47,6 +52,11 @@ def _generate_cdf_resource_list(v: Any) -> list[AssetEntity | RelationshipEntity
 
 ClassEntityList = Annotated[
     list[ConceptEntity],
+    BeforeValidator(_split_str),
+]
+
+RestrictionEntityList = Annotated[
+    list[ConceptPropertyValueConstraint | ConceptPropertyCardinalityConstraint],
     BeforeValidator(_split_str),
 ]
 
