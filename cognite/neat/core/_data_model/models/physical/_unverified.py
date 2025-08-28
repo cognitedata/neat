@@ -261,16 +261,29 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
 
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
-        output["Container"] = self.as_entity_id(default_space)
+        output["Container"] = self.as_entity_id(default_space, return_on_failure=True)
         output["Constraint"] = (
-            [ContainerEntity.load(constraint.strip(), space=default_space) for constraint in self.constraint.split(",")]
+            [
+                ContainerEntity.load(constraint.strip(), space=default_space, return_on_failure=True)
+                for constraint in self.constraint.split(",")
+            ]
             if self.constraint
             else None
         )
         return output
 
-    def as_entity_id(self, default_space: str) -> ContainerEntity:
-        return ContainerEntity.load(self.container, strict=True, space=default_space)
+    @overload
+    def as_entity_id(self, default_space: str, return_on_failure: Literal[False] = False) -> ContainerEntity: ...
+
+    @overload
+    def as_entity_id(self, default_space: str, return_on_failure: Literal[True]) -> ContainerEntity | str: ...
+
+    def as_entity_id(
+        self, default_space: str, return_on_failure: Literal[True, False] = False
+    ) -> ContainerEntity | str:
+        return ContainerEntity.load(
+            self.container, strict=True, space=default_space, return_on_failure=return_on_failure
+        )
 
     @classmethod
     def from_container(cls, container: dm.ContainerApply) -> "UnverifiedPhysicalContainer":
@@ -397,7 +410,7 @@ class UnverifiedPhysicalNodeType(UnverifiedComponent[PhysicalNodeType]):
 
     def dump(self, default_space: str, **_) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        output["Node"] = DMSNodeEntity.load(self.node, space=default_space)
+        output["Node"] = DMSNodeEntity.load(self.node, space=default_space, return_on_failure=True)
         return output
 
 
