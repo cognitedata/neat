@@ -147,7 +147,7 @@ class ConceptPropertyValueConstraint(ConceptPropertyRestriction):
         raw_value = result.group("value")
 
         value: NamedIndividualEntity | RDFLiteral | ConceptEntity
-        # scenarion 1: NamedIndividual as value restriction
+        # scenario 1: NamedIndividual as value restriction
         if raw_value.startswith("ni:"):
             value = NamedIndividualEntity.load(raw_value)
         # scenario 2: Datatype as value restriction
