@@ -60,6 +60,37 @@ class TestConceptPropertyValueConstraint:
         with pytest.raises(ValidationError, match=expected_error):
             ConceptPropertyValueConstraint.load(invalid_data)
 
+    def test_comparison_less_than(self):
+        """Test __lt__ comparison between restrictions."""
+        restriction1 = ConceptPropertyValueConstraint.load("valueConstraint:hasAge(hasValue,25^^integer)")
+        restriction2 = ConceptPropertyValueConstraint.load("valueConstraint:hasAge(hasValue,26^^integer)")
+
+        # Compare based on property names (25 < 26)
+        assert restriction1 < restriction2
+
+    def test_comparison_equal(self):
+        """Test __lt__ comparison between restrictions."""
+        restriction1 = ConceptPropertyValueConstraint.load("valueConstraint:hasAge(hasValue,25^^integer)")
+        restriction2 = ConceptPropertyValueConstraint.load("valueConstraint:hasAge(hasValue,25^^integer)")
+
+        assert restriction1 == restriction2
+        assert hash(restriction1) == hash(restriction2)
+
+    def test_hash_consistency(self):
+        """Test that hash is consistent with string representation."""
+        restriction = ConceptPropertyValueConstraint.load("valueConstraint:hasOwner(hasValue,ni:John)")
+        assert hash(restriction) == hash(str(restriction))
+
+    def test_as_tuple(self):
+        """Test as_tuple returns property and other fields as tuple."""
+        restriction = ConceptPropertyValueConstraint.load("valueConstraint:hasOwner(hasValue,ni:John)")
+        result = restriction.as_tuple()
+        assert result[0] == "hasOwner"
+        assert result[1] == "hasValue"
+        assert result[2] == "ni:John"
+        assert len(result) > 1
+        assert all(item != "" for item in result)
+
 
 class TestConceptPropertyCardinalityConstraint:
     @pytest.mark.parametrize(
@@ -87,6 +118,7 @@ class TestConceptPropertyCardinalityConstraint:
         assert result.constraint == expected_constraint
         assert result.value == expected_value
         assert result.on == expected_on
+        assert str(result) == data
 
     @pytest.mark.parametrize(
         "data,expected_on_type",
@@ -106,6 +138,49 @@ class TestConceptPropertyCardinalityConstraint:
         data = "invalidConstraint:hasProperty(minCardinality,1)"
         with pytest.raises(ValidationError, match="Invalid cardinality constraint format"):
             ConceptPropertyCardinalityConstraint.load(data)
+
+    def test_comparison_less_than(self):
+        """Test __lt__ comparison between restrictions."""
+        restriction1 = ConceptPropertyCardinalityConstraint.load(
+            "cardinalityConstraint:hasAge(qualifiedCardinality,18,integer)"
+        )
+        restriction2 = ConceptPropertyCardinalityConstraint.load(
+            "cardinalityConstraint:hasAge(qualifiedCardinality,21,integer)"
+        )
+        # Compare based on property names (18 < 21)
+        assert restriction1 < restriction2
+
+    def test_comparison_equal(self):
+        """Test __lt__ comparison between restrictions."""
+        restriction1 = ConceptPropertyCardinalityConstraint.load(
+            "cardinalityConstraint:hasAge(qualifiedCardinality,18,integer)"
+        )
+        restriction2 = ConceptPropertyCardinalityConstraint.load(
+            "cardinalityConstraint:hasAge(qualifiedCardinality,18,integer)"
+        )
+
+        assert restriction1 == restriction2
+        assert hash(restriction1) == hash(restriction2)
+
+    def test_hash_consistency(self):
+        """Test that hash is consistent with string representation."""
+        restriction = ConceptPropertyCardinalityConstraint.load(
+            "cardinalityConstraint:hasAge(qualifiedCardinality,18,integer)"
+        )
+        assert hash(restriction) == hash(str(restriction))
+
+    def test_as_tuple(self):
+        """Test as_tuple returns property and other fields as tuple."""
+        restriction = ConceptPropertyCardinalityConstraint.load(
+            "cardinalityConstraint:hasAge(qualifiedCardinality,18,integer)"
+        )
+        result = restriction.as_tuple()
+        assert result[0] == "hasAge"
+        assert result[1] == "qualifiedCardinality"
+        assert result[2] == "18"
+        assert result[3] == "integer"
+        assert len(result) > 1
+        assert all(item != "" for item in result)
 
 
 class TestParseRestriction:
