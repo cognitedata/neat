@@ -100,8 +100,8 @@ class UnverifiedConceptualProperty(UnverifiedComponent[ConceptualProperty]):
 
     def dump(self, default_prefix: str, **kwargs) -> dict[str, Any]:  # type: ignore
         output = super().dump()
-        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
-        output["Value Type"] = load_value_type(self.value_type, default_prefix)
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix, return_on_failure=True)
+        output["Value Type"] = load_value_type(self.value_type, default_prefix, return_on_failure=True)
         return output
 
     def copy(self, update: dict[str, Any], default_prefix: str) -> "UnverifiedConceptualProperty":
@@ -135,10 +135,16 @@ class UnverifiedConcept(UnverifiedComponent[Concept]):
         parent: list[ConceptEntity] | None = None
         if isinstance(self.implements, str):
             self.implements = self.implements.strip()
-            parent = [ConceptEntity.load(parent, prefix=default_prefix) for parent in self.implements.split(",")]
+            parent = [
+                ConceptEntity.load(parent_str, prefix=default_prefix, return_on_failure=True)
+                for parent_str in self.implements.split(",")
+            ]
         elif isinstance(self.implements, list):
-            parent = [ConceptEntity.load(parent_, prefix=default_prefix) for parent_ in self.implements]
-        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix)
+            parent = [
+                ConceptEntity.load(parent_str, prefix=default_prefix, return_on_failure=True)
+                for parent_str in self.implements
+            ]
+        output["Concept"] = ConceptEntity.load(self.concept, prefix=default_prefix, return_on_failure=True)
         output["Implements"] = parent
         return output
 

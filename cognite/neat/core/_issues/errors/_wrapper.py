@@ -20,7 +20,11 @@ class SpreadsheetError(NeatError, ValueError, ABC):
         spreadsheet_name = cast(str, location[0])
         if spreadsheet_name not in ERROR_CLS_BY_SPREADSHEET_NAME:
             # This happens for the metadata sheet, which are individual fields
-            return MetadataValueError(error, field_name=spreadsheet_name)
+            if spreadsheet_name == "Metadata" and len(location) >= 2 and isinstance(location[1], str):
+                field_name = cast(str, location[1])
+            else:
+                field_name = spreadsheet_name
+            return MetadataValueError(error, field_name=field_name)
 
         error_cls = ERROR_CLS_BY_SPREADSHEET_NAME[spreadsheet_name]
         row, column = cast(tuple[int, str], location[2:4])

@@ -42,8 +42,8 @@ from cognite.neat.core._data_model.transformers import (
     PhysicalToConceptual,
     VerifyPhysicalDataModel,
 )
-from cognite.neat.core._issues import NeatError, catch_issues
-from cognite.neat.core._issues.errors import PropertyDefinitionDuplicatedError
+from cognite.neat.core._issues import MultiValueError, NeatError, catch_issues
+from cognite.neat.core._issues.errors import PropertyDefinitionDuplicatedError, PropertyValueError
 from cognite.neat.core._issues.errors._resources import ResourceDuplicatedError
 from cognite.neat.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
@@ -1600,6 +1600,32 @@ class TestDMSRules:
 
         view_ids = {view["view"] for view in dumped["views"]}
         assert "cdf_cdm:CogniteDescribable(version=v1)" in view_ids
+
+    def test_error_message_bad_entity_syntax(self) -> None:
+        model = UnverifiedPhysicalDataModel(
+            UnverifiedPhysicalMetadata("my_space", "my_model", "Anders", "v1"),
+            properties=[
+                UnverifiedPhysicalProperty(
+                    "myView",
+                    "myProp",
+                    "text",
+                    container="cdf_cdm:myContainer",
+                    container_property="myProp",
+                    index="invalidIndex:name(order=1)",
+                ),
+            ],
+            views=[
+                UnverifiedPhysicalView("myView"),
+            ],
+            containers=[UnverifiedPhysicalContainer("cdf_cdm:myContainer")],
+        )
+        with pytest.raises(MultiValueError) as exc_info:
+            VerifyPhysicalDataModel(validate=False).transform(ImportedDataModel(model))
+
+        exception = exc_info.value
+        assert isinstance(exception, MultiValueError)
+        unexpected_types = [error for error in exception.errors if not isinstance(error, PropertyValueError)]
+        assert not unexpected_types, f"Unexpected errors: {unexpected_types}"
 
 
 def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:

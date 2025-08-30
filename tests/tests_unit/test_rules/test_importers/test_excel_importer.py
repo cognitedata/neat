@@ -42,12 +42,12 @@ def invalid_rules_filepaths():
         IssueList(
             [
                 MetadataValueError(
-                    field_name="space",
+                    field_name="externalId",
                     error=NeatValueError("value is missing."),
                 ),
             ]
         ),
-        id="Missing space in Metadata sheet.",
+        id="Missing externalId in Metadata sheet.",
     )
 
     yield pytest.param(
