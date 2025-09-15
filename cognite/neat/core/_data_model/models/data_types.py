@@ -261,6 +261,11 @@ class LangString(DataType):
     sql = "STRING"
 
     name: typing.Literal["langString"] = "langString"
+    max_text_size: int | None = Field(
+        None,
+        alias="maxTextSize",
+        description="Specifies the maximum size in bytes of the text property, when encoded with utf-8.",
+    )
 
 
 class AnyURI(DataType):
