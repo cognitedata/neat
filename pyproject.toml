@@ -22,7 +22,7 @@ dependencies = [
     "networkx>=3.4.2, <4.0.0",
     "mixpanel>=4.10.1, <5.0.0",
     # Used for loading neat engine
-    "packaging>=22.0, <25.0",
+    "packaging>=22.0",
     # NeatEngine dependencies
     "jsonpath-python>=1.0.6, <2.0.0",
     "elementpath>=4.0.0, <5.0.0",
