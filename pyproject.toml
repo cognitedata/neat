@@ -12,7 +12,7 @@ license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = [
     "pandas>=1.5.3, <3.0.0",
-    "cognite-sdk>=7.73.4, <8.0.0",
+    "cognite-sdk>=7.83.0, <8.0.0",
     "rdflib>=7.0.0, <8.0.0",
     "pydantic>=2.0.0, <3.0.0",
     "PyYAML>=6.0.1, <7.0.0",
