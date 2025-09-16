@@ -15,6 +15,29 @@ from tests.data import SchemaData
 
 class TestRead:
     @pytest.mark.freeze_time("2024-11-22")
+    def test_read_model_referencing_core_new_endpoint(
+        self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
+    ) -> None:
+        neat = NeatSession(client=cognite_client)
+        # The CogniteDescribable view is referenced in the REFERENCING_CORE model read below.
+        # The data product should lookup the describable properties and include them.
+        view = cognite_client.data_modeling.views.retrieve(("cdf_cdm", "CogniteDescribable", "v1"))[0]
+
+        issues = neat.read.yaml(SchemaData.NonNeatFormats.referencing_core_yamls, format="toolkit")
+        assert not issues.has_errors, issues
+
+        neat.data_model.template.data_product_model(("sp_my_space", "MyProduct", "v1"))
+
+        exported_yaml_str = neat.data_model.write.yaml()
+        exported_rules = yaml.safe_load(exported_yaml_str)
+        assert (
+            # CogniteDescribable + 1 extra in REFERENCING_CORE
+            len(exported_rules["properties"]) == len(view.properties) + 1
+        )
+
+        data_regression.check(exported_rules)
+
+    @pytest.mark.freeze_time("2024-11-22")
     def test_read_model_referencing_core(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
     ) -> None:
