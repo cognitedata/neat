@@ -19,7 +19,6 @@ from cognite.neat.core._data_model.transformers import (
 )
 from cognite.neat.core._issues import IssueList, catch_issues
 from cognite.neat.core._utils.reader import NeatReader, PathReader
-from cognite.neat.session._experimental import ExperimentalFlags
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import NeatSessionError, session_class_wrapper
 
@@ -171,7 +170,6 @@ class TemplateAPI:
                 physical data model. When converting a data model, it is recommended to have at least
                 one property for each concept. This ensures that you follow that recommendation.
         """
-        ExperimentalFlags.extension.warn()
         reader = NeatReader.create(io)
         path = reader.materialize_path()
         if output is None:
