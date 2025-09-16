@@ -162,7 +162,7 @@ def test_infer_importer_names_different_casing() -> None:
         ],
         named_graph=neat._state.instances.store.default_named_graph,
     )
-    neat.infer()
+    neat.data_model.infer()
     assert neat._state.data_model_store.provenance
     info = neat._state.data_model_store.last_verified_conceptual_data_model
 
@@ -171,7 +171,7 @@ def test_infer_importer_names_different_casing() -> None:
     assert info.properties[0].instance_source is not None
     assert len(info.properties[0].instance_source) == 2
 
-    neat.convert()
+    neat.data_model.convert()
 
     dms_rules = neat._state.data_model_store.last_verified_physical_data_model
     info_rules = neat._state.data_model_store.last_verified_conceptual_data_model
