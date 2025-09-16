@@ -261,7 +261,7 @@ class TestExtractToLoadFlow:
         rules.metadata.created = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
         rules.metadata.updated = datetime.datetime.fromisoformat("2024-09-19T00:00:00Z")
 
-        neat.data_model.convert()
+        neat.data_model.conceptual.to_physical()
         neat.set.data_model_id(("aml_playground", "AML", "terminology_3.0"))
 
         if True:

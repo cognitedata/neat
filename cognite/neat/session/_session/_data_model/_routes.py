@@ -31,16 +31,11 @@ class DataModelAPI:
         self.read = ReadAPI(state)
         self.write = WriteAPI(state)
         self.show = ShowAPI(state)
+        self.conceptual = ConceptualDataModelAPI(state)
 
-    @property
     def physical(self) -> PhysicalDataModel | None:
         """Access to the physical data model level."""
         return self._state.data_model_store.try_get_last_physical_data_model
-
-    @property
-    def conceptual(self) -> ConceptualDataModel | None:
-        """Access to the conceptual data model level."""
-        return self._state.data_model_store.try_get_last_conceptual_data_model
 
     def _repr_html_(self) -> str:
         if self._state.data_model_store.empty:
@@ -49,46 +44,15 @@ class DataModelAPI:
             )
 
         output = []
-
+        html = ""
         if self._state.data_model_store.provenance:
-            if self.physical:
-                html = self.physical._repr_html_()
-            if self.conceptual:
-                html = self.conceptual._repr_html_()
+            if physical := self.physical():
+                html += f"<H3>Physical</H3><br />{physical._repr_html_()} <br />"
+            if conceptual := self.conceptual():
+                html += f"<H3>Conceptual</H3><br />{conceptual._repr_html_()}"
             output.append(f"<H2>Data Model</H2><br />{html}")
 
         return "<br />".join(output)
-
-    def convert(self, reserved_properties: Literal["error", "warning"] = "warning") -> IssueList:
-        """Converts the last verified conceptual data model to the physical data model.
-
-        Args:
-            reserved_properties: What to do with reserved properties. Can be "error" or "warning".
-
-        Example:
-            Convert to Physical Data Model
-            ```python
-            neat.data_model.convert()
-            ```
-        """
-        self._state._raise_exception_if_condition_not_met(
-            "Convert to physical",
-            has_physical_data_model=False,
-            has_conceptual_data_model=True,
-            can_convert_to_physical_data_model=True,
-        )
-        converter = ConceptualToPhysical(reserved_properties=reserved_properties, client=self._state.client)
-
-        issues = self._state.data_model_transform(converter)
-
-        if issues.has_errors:
-            print("Conversion failed.")
-        if issues:
-            print("You can inspect the issues with the .inspect.issues(...) method.")
-            if issues.has_error_type(RegexViolationError):
-                print("You can use .prepare. to try to fix the issues")
-
-        return issues
 
     def infer(
         self,
@@ -158,3 +122,46 @@ class DataModelAPI:
             return merged_conceptual, merged_physical
 
         return self._state.data_model_store.do_activity(action, importer)
+
+
+@session_class_wrapper
+class ConceptualDataModelAPI:
+    """API for managing conceptual data models in NEAT session."""
+
+    def __init__(self, state: SessionState) -> None:
+        self._state = state
+
+    def __call__(self) -> ConceptualDataModel | None:
+        """Access to the conceptual data model level."""
+        return self._state.data_model_store.try_get_last_conceptual_data_model
+
+    def to_physical(self, reserved_properties: Literal["error", "warning"] = "warning") -> IssueList:
+        """Converts the last verified conceptual data model to the physical data model.
+
+        Args:
+            reserved_properties: What to do with reserved properties. Can be "error" or "warning".
+
+        Example:
+            Convert to Physical Data Model
+            ```python
+            neat.data_model.convert()
+            ```
+        """
+        self._state._raise_exception_if_condition_not_met(
+            "Convert to physical",
+            has_physical_data_model=False,
+            has_conceptual_data_model=True,
+            can_convert_to_physical_data_model=True,
+        )
+        converter = ConceptualToPhysical(reserved_properties=reserved_properties, client=self._state.client)
+
+        issues = self._state.data_model_transform(converter)
+
+        if issues.has_errors:
+            print("Conversion failed.")
+        if issues:
+            print("You can inspect the issues with the .inspect.issues(...) method.")
+            if issues.has_error_type(RegexViolationError):
+                print("You can use .prepare. to try to fix the issues")
+
+        return issues
