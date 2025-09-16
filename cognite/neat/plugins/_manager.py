@@ -7,12 +7,6 @@ from ._issues import PluginDuplicateError, PluginError, PluginLoadingError
 from .data_model.importers import DataModelImporterPlugin
 from .data_model.transformers._base import DataModelTransformerPlugin
 
-# Here we configure entry points where external plugins are going to be registered.
-plugins_entry_points = {
-    "cognite.neat.plugins.data_model.importers": DataModelImporterPlugin,
-    "cognite.neat.plugins.data_model.transformers": DataModelTransformerPlugin,
-}
-
 #: Type alias for all supported plugin types
 NeatPlugin: TypeAlias = DataModelImporterPlugin | DataModelTransformerPlugin
 
@@ -50,6 +44,7 @@ class PluginManager:
 
     _plugins_entry_points: ClassVar[dict[str, type[NeatPlugin]]] = {
         "cognite.neat.plugins.data_model.importers": DataModelImporterPlugin,
+        "cognite.neat.plugins.data_model.transformers": DataModelTransformerPlugin,
     }
 
     def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], Any]) -> None:
