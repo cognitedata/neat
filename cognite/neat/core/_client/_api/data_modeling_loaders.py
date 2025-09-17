@@ -1,3 +1,4 @@
+import itertools
 import re
 import warnings
 from abc import ABC, abstractmethod
@@ -238,7 +239,7 @@ class ResourceLoader(
         try:
             return self._update(items)
         except CogniteAPIError as e:
-            failed_ids = {self.get_id(failed) for failed in e.failed + e.unknown}
+            failed_ids = {self.get_id(failed) for failed in itertools.chain(e.failed, e.unknown)}
             success_ids = [self.get_id(success) for success in e.successful]
             success_ = self.retrieve(success_ids)
             if success is None:
