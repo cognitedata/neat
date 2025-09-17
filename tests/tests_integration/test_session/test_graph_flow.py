@@ -1,6 +1,5 @@
 import datetime
 from collections import defaultdict
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -295,38 +294,6 @@ class TestExtractToLoadFlow:
         assert len(nodes) == 973
         assert len(edges) == 972
         assert len(instances) == 1945
-
-    def test_create_extension_template(
-        self, cognite_client: CogniteClient, tmp_path: Path, data_regression: DataRegressionFixture
-    ) -> None:
-        neat = NeatSession(cognite_client)
-        output_path = tmp_path / "extension_template.xlsx"
-        neat.template.expand(SchemaData.Conceptual.only_concepts_xlsx, output_path)
-        assert output_path.exists()
-        neat.read.excel(output_path)
-
-        model_str = neat.to.yaml(format="neat")
-
-        model_dict = yaml.safe_load(model_str)
-
-        data_regression.check(model_dict)
-
-    def test_create_extension_template_broken(
-        self, cognite_client: CogniteClient, tmp_path: Path, data_regression: DataRegressionFixture
-    ) -> None:
-        """
-        Test to validate the behavior when field is invalid in the Excel sheet. # noqa
-        The broken_concepts.xlsx example has only one property, which is invalid.
-        Neat should inform the end user what/where is the  when using neat.inspect
-        """
-
-        neat = NeatSession(cognite_client)
-        output_path = tmp_path / "extension_template_broken.xlsx"
-        neat.template.expand(SchemaData.Conceptual.broken_concepts_xlsx, output_path)
-
-        error = neat.inspect.issues()
-
-        assert error["NeatIssue"][0] == "PropertyValueError"
 
     @staticmethod
     def _standardize_instance(instance: InstanceApply) -> dict[str, Any]:

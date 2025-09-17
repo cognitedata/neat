@@ -1,10 +1,12 @@
 from cognite.neat.core._data_model.models.conceptual._verified import ConceptualDataModel
 from cognite.neat.core._data_model.models.physical._verified import PhysicalDataModel
-from cognite.neat.session._session._data_model._read import ReadAPI
-from cognite.neat.session._session._data_model._show import ShowAPI
-from cognite.neat.session._session._data_model._write import WriteAPI
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import session_class_wrapper
+
+from ._read import ReadAPI
+from ._show import ShowAPI
+from ._template import TemplateAPI
+from ._write import WriteAPI
 
 
 @session_class_wrapper
@@ -16,6 +18,7 @@ class DataModelAPI:
         self.read = ReadAPI(state)
         self.write = WriteAPI(state)
         self.show = ShowAPI(state)
+        self.template = TemplateAPI(state)
 
     @property
     def physical(self) -> PhysicalDataModel | None:

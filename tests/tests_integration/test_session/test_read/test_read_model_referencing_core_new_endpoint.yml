@@ -1,0 +1,68 @@
+metadata:
+  created: '2024-11-22T00:00:00'
+  creator: MISSING
+  description: This is an enterprise data model for testing.
+  external_id: MyProduct
+  name: data_product data model
+  role: DMS Architect
+  source_id: http://purl.org/cognite/neat/data-model/verified/physical/sp_my_space/MyProduct/v1
+  space: sp_my_space
+  updated: '2024-11-22T00:00:00'
+  version: v1
+properties:
+- container: sp_referencing_core:MyDescribable
+  container_property: UUID
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_referencing_core/ReferencingCore/v1/MyDescribable/UUID
+  value_type: text
+  view: MyDescribable
+  view_property: UUID
+- container: cdf_cdm:CogniteDescribable
+  container_property: aliases
+  description: Alternative names for the node
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/aliases
+  value_type: text
+  view: MyDescribable
+  view_property: aliases
+- container: cdf_cdm:CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/description
+  value_type: text
+  view: MyDescribable
+  view_property: description
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: btree:name(cursorable=False)
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/name
+  value_type: text
+  view: MyDescribable
+  view_property: name
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/NEAT_LOOKUP/NEAT_LOOKUP/NEAT_LOOKUP/CogniteDescribable/tags
+  value_type: text
+  view: MyDescribable
+  view_property: tags
+views:
+- filter_: hasData(cdf_cdm:CogniteDescribable,sp_referencing_core:MyDescribable)
+  in_model: true
+  name: MyDescribable
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/sp_referencing_core/ReferencingCore/v1/MyDescribable
+  view: MyDescribable
