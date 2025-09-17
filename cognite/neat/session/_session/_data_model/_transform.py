@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from cognite.neat.core._data_model.transformers._converters import (
     PrefixEntities,
@@ -7,8 +7,8 @@ from cognite.neat.core._data_model.transformers._converters import (
     ToCompliantEntities,
 )
 from cognite.neat.core._issues._base import IssueList
+from cognite.neat.plugins._data_model import DataModelTransformerPlugin
 from cognite.neat.plugins._manager import get_plugin_manager
-from cognite.neat.plugins.data_model.transformers._base import DataModelTransformerPlugin
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import session_class_wrapper
 
@@ -58,7 +58,7 @@ class TransformAPI:
             "\nUse it at your own risk."
         )
 
-        return self._state.data_model_transform(plugin().configure(**kwargs))
+        return self._state.data_model_transform(cast(DataModelTransformerPlugin, plugin()).configure(**kwargs))
 
     def cdf_compliant_external_ids(self) -> IssueList:
         """Convert conceptual data model component external ids to CDF compliant ids."""

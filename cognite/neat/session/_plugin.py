@@ -1,11 +1,11 @@
 import warnings
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._utils.reader._base import NeatReader
 from cognite.neat.plugins import get_plugin_manager
-from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlugin
+from cognite.neat.plugins._data_model import DataModelImporterPlugin
 from cognite.neat.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
@@ -64,4 +64,4 @@ class DataModelPlugins:
             "\nUse it at your own risk."
         )
 
-        return self._state.data_model_import(plugin().configure(io=path, **kwargs))
+        return self._state.data_model_import(cast(DataModelImporterPlugin, plugin()).configure(io=path, **kwargs))

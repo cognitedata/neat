@@ -14,13 +14,12 @@ from cognite.neat.core._data_model.models.conceptual._verified import (
 from cognite.neat.core._data_model.models.entities._single_value import ConceptualEntity
 from cognite.neat.core._data_model.transformers._converters import SubsetConceptualDataModel
 from cognite.neat.plugins import _manager
+from cognite.neat.plugins._data_model import DataModelImporterPlugin, DataModelTransformerPlugin
 from cognite.neat.plugins._issues import (
     PluginDuplicateError,
     PluginLoadingError,
 )
 from cognite.neat.plugins._manager import PluginManager
-from cognite.neat.plugins.data_model.importers import DataModelImporterPlugin
-from cognite.neat.plugins.data_model.transformers._base import DataModelTransformerPlugin
 from tests.data import SchemaData
 
 
