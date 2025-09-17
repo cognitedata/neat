@@ -10,8 +10,8 @@ from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._issues.errors._general import NeatValueError
 from cognite.neat.core._issues.warnings._general import MissingCogniteClientWarning
 from cognite.neat.core._utils.reader._base import NeatReader
+from cognite.neat.plugins._data_model import DataModelImporterPlugin
 from cognite.neat.plugins._manager import get_plugin_manager
-from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlugin
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import NeatSessionError, session_class_wrapper
 
@@ -91,7 +91,7 @@ class ReadAPI:
             "\nUse it at your own risk."
         )
 
-        return self._state.data_model_import(plugin().configure(io=path, **kwargs))
+        return self._state.data_model_import(cast(DataModelImporterPlugin, plugin()).configure(io=path, **kwargs))
 
     def cdf(self, io: DataModelIdentifier) -> IssueList:
         """Reads a Data Model from CDF to the knowledge graph.
