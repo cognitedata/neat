@@ -428,7 +428,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "backports-strenum", marker = "python_full_version < '3.11'", specifier = ">=1.2,<2.0.0" },
-    { name = "cognite-sdk", specifier = ">=7.73.4,<8.0.0" },
+    { name = "cognite-sdk", specifier = ">=7.83.0,<8.0.0" },
     { name = "elementpath", specifier = ">=4.0.0,<5.0.0" },
     { name = "exceptiongroup", marker = "python_full_version < '3.11'", specifier = ">=1.1.3,<2.0.0" },
     { name = "google-api-python-client", marker = "extra == 'google'", specifier = ">=2.70.0,<3.0.0" },
@@ -496,7 +496,7 @@ dev = [
 
 [[package]]
 name = "cognite-sdk"
-version = "7.75.1"
+version = "7.83.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "msal" },
@@ -506,9 +506,9 @@ dependencies = [
     { name = "requests-oauthlib" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a1/a3/c613ba3d4ea34c7591a4d648b23a9c5d6d05a654b77391e2613752965dc6/cognite_sdk-7.75.1.tar.gz", hash = "sha256:f026a621c737bbaf9be8bc503f9946c83333fa09769fa2c5dbc324783c4d9f1a", size = 500308, upload-time = "2025-05-15T19:10:35.36Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/98/efaf3b8b082fae038000674f01aebcd85437280c889da036a0d1a1d88a2b/cognite_sdk-7.83.1.tar.gz", hash = "sha256:bd7b81936c94ce58b3e07aa31f1e0b88dc8027c07457171c81ca0d82f5ad3e9f", size = 516805, upload-time = "2025-08-30T19:30:17.26Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5e/ff/db712d28ddfdf9584636338df89be8f4837e712cf4bb4f75093a0f2c513e/cognite_sdk-7.75.1-py3-none-any.whl", hash = "sha256:6ff7200e0e4a55e208ce82c86b76f2002943e9a42b51f62e91bc34998ae8e592", size = 623264, upload-time = "2025-05-15T19:10:32.763Z" },
+    { url = "https://files.pythonhosted.org/packages/82/8b/81c0d6da28f98ee3b4aba873e3115085b51fb16fd3a2af42db5ea3a300bd/cognite_sdk-7.83.1-py3-none-any.whl", hash = "sha256:301c30686f8f2f945ef6239db799f62f7520e2f20b9346bd53a144cdf3a7c477", size = 644785, upload-time = "2025-08-30T19:30:14.985Z" },
 ]
 
 [package.optional-dependencies]

@@ -446,6 +446,8 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
                     return ViewEntity.from_id(prop.source)
             elif isinstance(prop_type, PropertyTypeWithUnit) and prop_type.unit:
                 return DataType.load(f"{prop_type._type}(unit={prop_type.unit.external_id})")
+            elif isinstance(prop_type, dm.Text) and prop_type.max_text_size is not None:
+                return DataType.load(f"{prop_type._type}(maxTextSize={prop_type.max_text_size})")
             elif isinstance(prop_type, DMSEnum):
                 if enum_collection_by_container_property is None:
                     return String()

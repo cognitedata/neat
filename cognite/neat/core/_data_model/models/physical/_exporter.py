@@ -25,7 +25,7 @@ from cognite.neat.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat.core._data_model.models.data_types import DataType, Double, Enum, Float
+from cognite.neat.core._data_model.models.data_types import DataType, Double, Enum, Float, LangString, String
 from cognite.neat.core._data_model.models.entities import (
     ConceptEntity,
     ContainerEntity,
@@ -347,6 +347,8 @@ class _DMSExporter:
                             args["max_list_size"] = prop.max_count
                 if isinstance(prop.value_type, Double | Float) and isinstance(prop.value_type.unit, UnitEntity):
                     args["unit"] = prop.value_type.unit.as_reference()
+                if isinstance(prop.value_type, String | LangString) and prop.value_type.max_text_size is not None:
+                    args["max_text_size"] = prop.value_type.max_text_size
                 if isinstance(prop.value_type, Enum):
                     if prop.value_type.collection not in enum_values_by_collection:
                         raise ResourceNotFoundError(
