@@ -7,6 +7,8 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat import NeatSession
+from cognite.neat.core._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat.core._client.data_classes.schema import DMSSchema
 from cognite.neat.core._client.testing import monkeypatch_neat_client
 from cognite.neat.core._data_model import importers
 from cognite.neat.core._data_model.exporters import DMSExporter
@@ -110,3 +112,32 @@ class TestImportExportDMS:
         prop = container.properties["geoLocation"]
         assert isinstance(prop, dm.ContainerProperty)
         assert prop.type == dm.DirectRelation()
+
+    def test_import_export_dms_with_text_property(self) -> None:
+        space = "schema_space"
+        my_container = dm.ContainerApply(
+            space, "Container1", properties={"textProp": dm.ContainerProperty(type=dm.Text(max_text_size=42))}
+        )
+        my_view = dm.ViewApply(
+            space, "View1", "v1", properties={"textProp": dm.MappedPropertyApply(my_container.as_id(), "textProp")}
+        )
+        schema = DMSSchema(
+            data_model=dm.DataModelApply(
+                space=space, external_id="MyModel", version="0.1.0", views=[my_view.as_id()], description="Creator: me"
+            ),
+            spaces=SpaceApplyDict([dm.SpaceApply(space=space)]),
+            views=ViewApplyDict([my_view]),
+            containers=ContainerApplyDict([my_container]),
+        )
+
+        with catch_issues() as issues:
+            importer = importers.DMSImporter(schema)
+            rules = VerifyAnyDataModel().transform(importer.to_data_model())
+            if isinstance(rules, PhysicalDataModel):
+                dms_rules = rules
+            else:
+                pytest.fail(f"Unexpected rules type: {type(rules)}")
+        assert not issues.has_errors, f"Import failed with issues: {issues}"
+        exported = DMSExporter().export(dms_rules)
+        assert len(exported.views) == 1
+        assert exported.dump() == schema.dump(), "Exported schema should match the original schema"
