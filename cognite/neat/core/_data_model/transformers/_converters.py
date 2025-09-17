@@ -2249,16 +2249,35 @@ class SubsetPhysicalDataModel(VerifiedDataModelTransformer[PhysicalDataModel, Ph
 class SubsetConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel, ConceptualDataModel]):
     """Subsets Conceptual Data Model to only include the specified concepts."""
 
-    def __init__(self, concepts: set[ConceptEntity]):
+    def __init__(
+        self,
+        concepts: set[ConceptEntity],
+        include_different_space: bool = False,
+        include_ancestors: bool = False,
+        only_concepts_with_properties: bool = True,
+        include_dangling_properties: bool = False,
+    ):
         self._concepts = concepts
+        self._include_different_space = include_different_space
+        self._include_ancestors = include_ancestors
+        self._only_concepts_with_properties = only_concepts_with_properties
+        self._include_dangling_properties = include_dangling_properties
 
     def transform(self, data_model: ConceptualDataModel) -> ConceptualDataModel:
         analysis = DataModelAnalysis(conceptual=data_model)
 
         concept_by_concept_entity = analysis.concept_by_concept_entity
-        parent_entity_by_concept_entity = analysis.parents_by_concept()
+        parent_entity_by_concept_entity = (
+            analysis.parents_by_concept(include_different_space=self._include_different_space)
+            if self._include_ancestors
+            else {}
+        )
 
-        available = analysis.defined_concepts(include_ancestors=True)
+        available = (
+            analysis.defined_concepts(include_ancestors=True)
+            if self._only_concepts_with_properties
+            else set(concept_by_concept_entity.keys())
+        )
         subset = available.intersection(self._concepts)
 
         # need to add all the parent classes of the desired classes to the possible classes
@@ -2287,11 +2306,16 @@ class SubsetConceptualDataModel(VerifiedDataModelTransformer[ConceptualDataModel
         }
 
         for concept in subset:
-            subsetted_data_model["concepts"].append(concept_by_concept_entity[concept])
+            # we allow for open ended data model where parent concept my not be defined in the conceptual data model
+            if concept in concept_by_concept_entity:
+                subsetted_data_model["concepts"].append(concept_by_concept_entity[concept])
 
         for concept, properties in analysis.properties_by_concepts(include_ancestors=False).items():
-            if concept not in subset:
+            if (concept not in subset and not isinstance(concept, UnknownEntity)) or (
+                not self._include_dangling_properties and isinstance(concept, UnknownEntity)
+            ):
                 continue
+
             for property_ in properties:
                 # datatype property can be added directly
                 if (
