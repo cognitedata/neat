@@ -15,4 +15,3 @@ class _UnknownType(BaseModel):
 # This is a trick to make Undefined and Unknown singletons
 Undefined = _UndefinedType()
 Unknown = _UnknownType()
-_PARSE = object()
