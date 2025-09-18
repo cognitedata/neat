@@ -1,0 +1,168 @@
+rules:
+  containers:
+  - container: Documentation
+    name: Documentation
+    used_for: node
+  - container: Facility
+    name: Facility
+    used_for: node
+  - container: Pump
+    name: Pump
+    used_for: node
+  metadata:
+    created: '2025-02-06T13:51:14.977000'
+    creator: MISSING
+    external_id: TestMixedUpVersions
+    name: TestMixedUpVersions
+    role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Iteration_2
+    space: neat_playground
+    updated: '2025-02-06T13:51:14.977000'
+    version: v1
+  properties:
+  - container: Documentation
+    container_property: file
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: file
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Documentation/file
+    value_type: file
+    view: Documentation
+    view_property: file
+  - container: Documentation
+    container_property: name
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Documentation/name
+    value_type: text
+    view: Documentation
+    view_property: name
+  - connection: edge(direction=inwards,type=Pump.documentation)
+    max_count: .inf
+    name: relatedPumps
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Documentation/relatedPumps
+    value_type: Pump
+    view: Documentation
+    view_property: relatedPumps
+  - container: Facility
+    container_property: desc
+    immutable: false
+    max_count: 1
+    min_count: 1
+    name: desc
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Facility/desc
+    value_type: text
+    view: Facility
+    view_property: desc
+  - connection: reverse(property=livesIn)
+    max_count: .inf
+    name: hasPumps
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Facility/hasPumps
+    value_type: Pump
+    view: Facility
+    view_property: hasPumps
+  - container: Facility
+    container_property: name
+    immutable: false
+    max_count: 1
+    min_count: 1
+    name: name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Facility/name
+    value_type: text
+    view: Facility
+    view_property: name
+  - connection: edge
+    max_count: .inf
+    name: documentation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/documentation
+    value_type: Documentation
+    view: Pump
+    view_property: documentation
+  - connection: direct
+    container: Pump
+    container_property: livesIn
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: livesIn
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/livesIn
+    value_type: Facility
+    view: Pump
+    view_property: livesIn
+  - container: Pump
+    container_property: name
+    immutable: false
+    max_count: 1
+    min_count: 1
+    name: name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/name
+    value_type: text
+    view: Pump
+    view_property: name
+  - container: Pump
+    container_property: pressure
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: pressure
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/pressure
+    value_type: timeseries
+    view: Pump
+    view_property: pressure
+  - container: Pump
+    container_property: temperature
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: temperature
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/temperature
+    value_type: timeseries
+    view: Pump
+    view_property: temperature
+  - container: Pump
+    container_property: weight
+    description: this is a description of the field weight
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: weight
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/weight
+    value_type: float64
+    view: Pump
+    view_property: weight
+  - container: Pump
+    container_property: weightUnit
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: weightUnit
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/weightUnit
+    value_type: text
+    view: Pump
+    view_property: weightUnit
+  - container: Pump
+    container_property: year
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: year
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump/year
+    value_type: int32
+    view: Pump
+    view_property: year
+  views:
+  - in_model: true
+    name: Documentation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Documentation
+    view: Documentation
+  - in_model: true
+    name: Facility
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Facility
+    view: Facility
+  - in_model: true
+    name: Pump
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/TestMixedUpVersions/v1/Pump
+    view: Pump

@@ -1,0 +1,343 @@
+rules:
+  containers:
+  - container: NeatINCDocumentation
+    name: Documentation
+    used_for: node
+  - container: NeatINCFacility
+    name: Facility
+    used_for: node
+  - container: NeatINCPump
+    name: Pump
+    used_for: node
+  metadata:
+    created: '2024-09-19T00:00:00Z'
+    creator: Neat
+    external_id: NeatHelloWorld
+    name: Neat Hello World
+    role: DMS Architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Iteration_2
+    space: neat_playground
+    updated: '2024-09-19T00:00:00Z'
+    version: v1
+  properties:
+  - container: NeatINCDocumentation
+    container_property: doi
+    description: digital object identifier
+    immutable: false
+    max_count: 1
+    min_count: 0
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Documentation/doi
+    value_type: text
+    view: NeatINCDocumentation
+    view_property: doi
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Documentation/name
+    value_type: text
+    view: NeatINCDocumentation
+    view_property: name
+  - connection: direct
+    container: cdf_cdm:CogniteFile
+    container_property: assets
+    immutable: false
+    max_count: 100
+    min_count: 0
+    name: relatedPumps
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Documentation/relatedPumps
+    value_type: NeatINCPump
+    view: NeatINCDocumentation
+    view_property: relatedPumps
+  - container: NeatINCFacility
+    container_property: UUID
+    description: unique identifier
+    immutable: false
+    max_count: 1
+    min_count: 0
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Facility/UUID
+    value_type: text
+    view: NeatINCFacility
+    view_property: UUID
+  - container: cdf_cdm:CogniteDescribable
+    container_property: description
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: desc
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Facility/desc
+    value_type: text
+    view: NeatINCFacility
+    view_property: desc
+  - connection: reverse(property=livesIn)
+    name: hasPumps
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Facility/hasPumps
+    value_type: NeatINCPump
+    view: NeatINCFacility
+    view_property: hasPumps
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Facility/name
+    value_type: text
+    view: NeatINCFacility
+    view_property: name
+  - connection: reverse(property=relatedPumps)
+    name: documentation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/documentation
+    value_type: NeatINCDocumentation
+    view: NeatINCPump
+    view_property: documentation
+  - connection: direct
+    container: cdf_cdm:CogniteAsset
+    container_property: assetHierarchy_parent
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: livesIn
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/livesIn
+    value_type: NeatINCFacility
+    view: NeatINCPump
+    view_property: livesIn
+  - container: cdf_cdm:CogniteDescribable
+    container_property: name
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: name
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/name
+    value_type: text
+    view: NeatINCPump
+    view_property: name
+  - connection: direct
+    container: NeatINCPump
+    container_property: pressure
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: pressure
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/pressure
+    value_type: cdf_cdm:CogniteTimeSeries(version=v1)
+    view: NeatINCPump
+    view_property: pressure
+  - connection: direct
+    container: NeatINCPump
+    container_property: temperature
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: temperature
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/temperature
+    value_type: cdf_cdm:CogniteTimeSeries(version=v1)
+    view: NeatINCPump
+    view_property: temperature
+  - container: NeatINCPump
+    container_property: weight
+    description: this is a description of the field weight
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: weight
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/weight
+    value_type: float64(unit=mass:kilogm)
+    view: NeatINCPump
+    view_property: weight
+  - container: NeatINCPump
+    container_property: year
+    immutable: false
+    max_count: 1
+    min_count: 0
+    name: year
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump/year
+    value_type: int32
+    view: NeatINCPump
+    view_property: year
+  views:
+  - implements: cdf_cdm:Cognite3DTransformation(version=v1),cdf_cdm:CogniteCubeMap(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite360Image
+    view: cdf_cdm:Cognite360Image(version=v1)
+  - implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteAnnotation(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite360ImageAnnotation
+    view: cdf_cdm:Cognite360ImageAnnotation(version=v1)
+  - description: Represents a logical collection of Cognite360Image instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DRevision(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite360ImageCollection
+    view: cdf_cdm:Cognite360ImageCollection(version=v1)
+  - description: Navigational aid for traversing Cognite360ImageModel instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite360ImageModel
+    view: cdf_cdm:Cognite360ImageModel(version=v1)
+  - description: A way to group images across collections. Used for creating visual
+      scan history
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite360ImageStation
+    view: cdf_cdm:Cognite360ImageStation(version=v1)
+  - description: Groups revisions of 3D data of various kinds together (CAD, PointCloud,
+      Image360)
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite3DModel
+    view: cdf_cdm:Cognite3DModel(version=v1)
+  - description: This is the virtual position representation of an object in the physical
+      world, connecting an asset to one or more 3D resources
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite3DObject
+    view: cdf_cdm:Cognite3DObject(version=v1)
+  - description: Shared revision information for various 3D data types. Normally not
+      used directly, but through CognitePointCloudRevision, Image360Collection or
+      CogniteCADRevision
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite3DRevision
+    view: cdf_cdm:Cognite3DRevision(version=v1)
+  - description: The Cognite3DTransformation object defines a comprehensive 3D transformation,
+      enabling precise adjustments to an object's position, orientation, and size
+      in the 3D coordinate system. It allows for the translation of objects along
+      the three spatial axes, rotation around these axes using Euler angles, and scaling
+      along each axis to modify the object's dimensions. The object's transformation
+      is defined in "CDF space", a coordinate system where the positive Z axis is
+      the up direction
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Cognite3DTransformation
+    view: cdf_cdm:Cognite3DTransformation(version=v1)
+  - description: Represents activities. Activities typically happen over a period
+      and have a start and end time.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1),cdf_cdm:CogniteSchedulable(version=v1)
+    in_model: true
+    name: Activity
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteActivity
+    view: cdf_cdm:CogniteActivity(version=v1)
+  - description: Annotation represents contextualization results or links
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteAnnotation
+    view: cdf_cdm:CogniteAnnotation(version=v1)
+  - description: Assets represent systems that support industrial functions or processes.
+      Assets are often called 'functional location'.
+    implements: cdf_cdm:CogniteVisualizable(version=v1),cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: Asset
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteAsset
+    view: cdf_cdm:CogniteAsset(version=v1)
+  - description: Represents the class of an asset.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: Asset class
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteAssetClass
+    view: cdf_cdm:CogniteAssetClass(version=v1)
+  - description: Represents the type of an asset.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: Asset type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteAssetType
+    view: cdf_cdm:CogniteAssetType(version=v1)
+  - description: Navigational aid for traversing CogniteCADModel instances
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:Cognite3DModel(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteCADModel
+    view: cdf_cdm:CogniteCADModel(version=v1)
+  - description: Represents nodes from the 3D model that have been contextualized
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteCADNode
+    view: cdf_cdm:CogniteCADNode(version=v1)
+  - implements: cdf_cdm:Cognite3DRevision(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteCADRevision
+    view: cdf_cdm:CogniteCADRevision(version=v1)
+  - description: The cube map holds references to 6 images in used to visually represent
+      the surrounding environment
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteCubeMap
+    view: cdf_cdm:CogniteCubeMap(version=v1)
+  - description: The describable core concept is used as a standard way of holding
+      the bare minimum of information about the instance
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteDescribable
+    view: cdf_cdm:CogniteDescribable(version=v1)
+  - description: Equipment represents physical supplies or devices.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: Equipment
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteEquipment
+    view: cdf_cdm:CogniteEquipment(version=v1)
+  - description: Represents the type of equipment.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: Equipment type
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteEquipmentType
+    view: cdf_cdm:CogniteEquipmentType(version=v1)
+  - description: Represents files.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: File
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteFile
+    view: cdf_cdm:CogniteFile(version=v1)
+  - description: Represents the categories of files as determined by contextualization
+      or categorization.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    name: File category
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteFileCategory
+    view: cdf_cdm:CogniteFileCategory(version=v1)
+  - description: PointCloud volume definition
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CognitePointCloudVolume
+    view: cdf_cdm:CognitePointCloudVolume(version=v1)
+  - description: CogniteSchedulable represents the metadata about when an activity
+      (or similar) starts and ends.
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteSchedulable
+    view: cdf_cdm:CogniteSchedulable(version=v1)
+  - description: The CogniteSourceSystem core concept is used to standardize the way
+      source system is stored.
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteSourceSystem
+    view: cdf_cdm:CogniteSourceSystem(version=v1)
+  - in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteSourceable
+    view: cdf_cdm:CogniteSourceable(version=v1)
+  - description: Represents a series of data points in time order.
+    implements: cdf_cdm:CogniteDescribable(version=v1),cdf_cdm:CogniteSourceable(version=v1)
+    in_model: true
+    name: Time series
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteTimeSeries
+    view: cdf_cdm:CogniteTimeSeries(version=v1)
+  - description: Represents a single unit of measurement
+    implements: cdf_cdm:CogniteDescribable(version=v1)
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteUnit
+    view: cdf_cdm:CogniteUnit(version=v1)
+  - description: CogniteVisualizable defines the standard way to reference a related
+      3D resource
+    in_model: true
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/CogniteVisualizable
+    view: cdf_cdm:CogniteVisualizable(version=v1)
+  - implements: cdf_cdm:CogniteFile(version=v1)
+    in_model: true
+    name: Documentation
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Documentation
+    view: NeatINCDocumentation
+  - implements: cdf_cdm:CogniteAsset(version=v1)
+    in_model: true
+    name: Facility
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Facility
+    view: NeatINCFacility
+  - description: this is a description of the type Pump
+    implements: cdf_cdm:CogniteAsset(version=v1)
+    in_model: true
+    name: Pump
+    neatId: http://purl.org/cognite/neat/data-model/verified/physical/neat_playground/NeatHelloWorld/v1/Pump
+    view: NeatINCPump

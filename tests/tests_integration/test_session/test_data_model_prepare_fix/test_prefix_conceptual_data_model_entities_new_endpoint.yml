@@ -1,0 +1,383 @@
+rules:
+  concepts:
+  - concept: NeatINCClassicAsset
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset
+  - concept: NeatINCClassicDataSet
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet
+  - concept: NeatINCClassicEvent
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent
+  - concept: NeatINCClassicFile
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile
+  - concept: NeatINCClassicLabel
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel
+  - concept: NeatINCClassicRelationship
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship
+  - concept: NeatINCClassicSequence
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence
+  - concept: NeatINCClassicTimeSeries
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries
+  metadata:
+    created: '2024-09-19T00:00:00Z'
+    creator: Cognite
+    description: The data model matching the classic model in CDF
+    external_id: ClassicDataModel
+    name: ClassicDataModel
+    role: information architect
+    source_id: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/Iteration_2
+    space: neat_space
+    updated: '2024-09-19T00:00:00Z'
+    version: v1
+  prefixes:
+    prefix_1: http://purl.org/cognite/cdf-classic#
+    prefix_2: http://www.w3.org/2001/XMLSchema#
+  properties:
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/dataSetId
+    property_: dataSetId
+    value_type: NeatINCClassicDataSet
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/description
+    property_: description
+    value_type: string
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/geoLocation
+    property_: geoLocation
+    value_type: json
+  - concept: NeatINCClassicAsset
+    max_count: 10
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/labels
+    property_: labels
+    value_type: NeatINCClassicLabel
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/metadata
+    property_: metadata
+    value_type: json
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/name
+    property_: name
+    value_type: string
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/parentId
+    property_: parentId
+    value_type: NeatINCClassicAsset
+  - concept: NeatINCClassicAsset
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicAsset/source
+    property_: source
+    value_type: string
+  - concept: NeatINCClassicDataSet
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/description
+    property_: description
+    value_type: string
+  - concept: NeatINCClassicDataSet
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicDataSet
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/metadata
+    property_: metadata
+    value_type: json
+  - concept: NeatINCClassicDataSet
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/name
+    property_: name
+    value_type: string
+  - concept: NeatINCClassicDataSet
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicDataSet/writeProtected
+    property_: writeProtected
+    value_type: boolean
+  - concept: NeatINCClassicEvent
+    max_count: 1000
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/assetIds
+    property_: assetIds
+    value_type: NeatINCClassicAsset
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/dataSetId
+    property_: dataSetId
+    value_type: NeatINCClassicDataSet
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/description
+    property_: description
+    value_type: string
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/endTime
+    property_: endTime
+    value_type: dateTime
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/metadata
+    property_: metadata
+    value_type: json
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/source
+    property_: source
+    value_type: string
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/startTime
+    property_: startTime
+    value_type: dateTime
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/subtype
+    property_: subtype
+    value_type: string
+  - concept: NeatINCClassicEvent
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicEvent/type
+    property_: type
+    value_type: string
+  - concept: NeatINCClassicFile
+    max_count: 1000
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/assetIds
+    property_: assetIds
+    value_type: NeatINCClassicAsset
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/dataSetId
+    property_: dataSetId
+    value_type: NeatINCClassicDataSet
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/directory
+    property_: directory
+    value_type: string
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/geoLocation
+    property_: geoLocation
+    value_type: json
+  - concept: NeatINCClassicFile
+    max_count: 10
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/labels
+    property_: labels
+    value_type: NeatINCClassicLabel
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/metadata
+    property_: metadata
+    value_type: json
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/mimeType
+    property_: mimeType
+    value_type: string
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/name
+    property_: name
+    value_type: string
+  - concept: NeatINCClassicFile
+    max_count: 1000
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/securityCategories
+    property_: securityCategories
+    value_type: long
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/source
+    property_: source
+    value_type: string
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/sourceCreatedTime
+    property_: sourceCreatedTime
+    value_type: long
+  - concept: NeatINCClassicFile
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicFile/sourceModifiedTime
+    property_: sourceModifiedTime
+    value_type: long
+  - concept: NeatINCClassicLabel
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/dataSetId
+    property_: dataSetId
+    value_type: NeatINCClassicDataSet
+  - concept: NeatINCClassicLabel
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/description
+    property_: description
+    value_type: string
+  - concept: NeatINCClassicLabel
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicLabel
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicLabel/name
+    property_: name
+    value_type: string
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/confidence
+    property_: confidence
+    value_type: double
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/dataSetId
+    property_: dataSetId
+    value_type: NeatINCClassicDataSet
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/endTime
+    property_: endTime
+    value_type: dateTime
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicRelationship
+    max_count: 10
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/labels
+    property_: labels
+    value_type: NeatINCClassicLabel
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceExternalId
+    property_: sourceExternalId
+    value_type: anyURI
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/sourceType
+    property_: sourceType
+    value_type: string
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/startTime
+    property_: startTime
+    value_type: dateTime
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/targetExternalId
+    property_: targetExternalId
+    value_type: anyURI
+  - concept: NeatINCClassicRelationship
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicRelationship/targetType
+    property_: targetType
+    value_type: string
+  - concept: NeatINCClassicSequence
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/assetId
+    property_: assetId
+    value_type: NeatINCClassicAsset
+  - concept: NeatINCClassicSequence
+    max_count: 400
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/columns
+    property_: columns
+    value_type: json
+  - concept: NeatINCClassicSequence
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/dataSetId
+    property_: dataSetId
+    value_type: NeatINCClassicDataSet
+  - concept: NeatINCClassicSequence
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/description
+    property_: description
+    value_type: string
+  - concept: NeatINCClassicSequence
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicSequence
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/metadata
+    property_: metadata
+    value_type: json
+  - concept: NeatINCClassicSequence
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/name
+    property_: name
+    value_type: string
+  - concept: NeatINCClassicSequence
+    max_count: 1000
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicSequence/rows
+    property_: rows
+    value_type: json
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/assetId
+    property_: assetId
+    value_type: NeatINCClassicAsset
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/dataSetId
+    property_: dataSetId
+    value_type: NeatINCClassicDataSet
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/description
+    property_: description
+    value_type: string
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/externalId
+    property_: externalId
+    value_type: string
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isStep
+    property_: isStep
+    value_type: boolean
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/isString
+    property_: isString
+    value_type: boolean
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/metadata
+    property_: metadata
+    value_type: json
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/name
+    property_: name
+    value_type: string
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1000
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/securityCategories
+    property_: securityCategories
+    value_type: long
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unit
+    property_: unit
+    value_type: string
+  - concept: NeatINCClassicTimeSeries
+    max_count: 1
+    neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/neat_space/ClassicDataModel/v1/ClassicTimeSeries/unitExternalId
+    property_: unitExternalId
+    value_type: string
