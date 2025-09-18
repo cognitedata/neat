@@ -84,7 +84,7 @@ class TestDataModelPrepare:
 
         neat.prepare.data_model.prefix("NeatINC")
 
-        rules_str = neat.to.yaml(format="neat")
+        rules_str = neat.to.yaml(io=None, format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
         data_regression.check(
@@ -102,7 +102,7 @@ class TestDataModelPrepare:
 
         neat.data_model.transform.standardize_space_and_version()
 
-        rules_str = neat.to.yaml(format="neat")
+        rules_str = neat.to.yaml(io=None, format="neat")
 
         rules_dict = yaml.safe_load(rules_str)
         data_regression.check(
