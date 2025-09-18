@@ -11,6 +11,8 @@ from cognite.neat.core._data_model.importers._spreadsheet2data_model import Exce
 from cognite.neat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
+from cognite.neat.core._data_model.models.entities._single_value import ConceptualEntity
+from cognite.neat.core._data_model.transformers._converters import SubsetConceptualDataModel
 from cognite.neat.plugins import _manager
 from cognite.neat.plugins._issues import (
     PluginDuplicateError,
@@ -18,6 +20,7 @@ from cognite.neat.plugins._issues import (
 )
 from cognite.neat.plugins._manager import PluginManager
 from cognite.neat.plugins.data_model.importers import DataModelImporterPlugin
+from cognite.neat.plugins.data_model.transformers._base import DataModelTransformerPlugin
 from tests.data import SchemaData
 
 
@@ -35,6 +38,20 @@ class ExcelDataModelImporterPlugin(DataModelImporterPlugin):
         return ExcelImporter(filepath=io)
 
 
+class SubsetConceptualDataModelTransformerPlugin(DataModelTransformerPlugin):
+    """Real SubsetConceptualDataModelTransformer implementation for testing."""
+
+    def configure(self, **kwargs: Any) -> SubsetConceptualDataModel:
+        """
+        Configures Excel importer.
+
+        Args:
+            source (str): Path to the Excel file.
+        """
+
+        return SubsetConceptualDataModel(**kwargs)
+
+
 @pytest.fixture
 def neat_plugin_entry_points():
     """Create a mock entry point for testing."""
@@ -45,7 +62,12 @@ def neat_plugin_entry_points():
                 name="excel",
                 group="cognite.neat.plugins.data_model.importers",
                 value="tests.tests_unit.test_plugins:ExcelDataModelImporterPlugin",
-            )
+            ),
+            EntryPoint(
+                name="subset_conceptual",
+                group="cognite.neat.plugins.data_model.transformers",
+                value="tests.tests_unit.test_plugins:SubsetConceptualDataModelTransformerPlugin",
+            ),
         ]
     )
 
@@ -112,7 +134,7 @@ def mock_external_plugin(neat_plugin_entry_points):
 def test_load_neat_plugin(neat_plugin_entry_points):
     """Test ExternalPlugin initialization."""
     manager = PluginManager.load_plugins(neat_plugin_entry_points)
-    assert len(manager._plugins) == 1
+    assert len(manager._plugins) == 2
 
 
 def test_dont_load_none_neat_plugin(none_neat_plugin_entry_points):
@@ -158,7 +180,7 @@ def test_plugin_error_handling():
     )
 
 
-def test_plugin_read(mock_external_plugin):
+def test_data_model_plugins(mock_external_plugin):
     neat = NeatSession()
     neat.plugins.data_model.read("excel", SchemaData.Conceptual.info_arch_car_rules_xlsx)
 
@@ -175,3 +197,9 @@ def test_plugin_read(mock_external_plugin):
         neat._state.data_model_store.last_verified_conceptual_data_model,
         ConceptualDataModel,
     )
+
+    assert len(neat._state.data_model_store.last_verified_conceptual_data_model.concepts) == 3
+
+    neat.data_model.transform("subset_conceptual", concepts={ConceptualEntity(prefix="neat", suffix="Car")})
+
+    assert len(neat._state.data_model_store.last_verified_conceptual_data_model.concepts) == 1
