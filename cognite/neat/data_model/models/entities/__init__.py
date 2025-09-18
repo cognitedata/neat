@@ -1,9 +1,9 @@
 from ._constants import Undefined, Unknown
-from ._identifiers import URI, NameSpace
+from ._single_value import ConceptEntity, UnitEntity
 
 __all__ = [
-    "URI",
-    "NameSpace",
+    "ConceptEntity",
     "Undefined",
+    "UnitEntity",
     "Unknown",
 ]
