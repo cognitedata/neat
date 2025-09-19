@@ -63,13 +63,12 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         return hash(str(self))
 
     def __str__(self) -> str:
-        # We have overwritten the serialization to str, so we need to do it manually
-        model_dump = {k: v for k in self.model_fields if (v := getattr(self, k)) is not None}
-
-        # there are three cases to process model_dump:
+        # there are three cases for string representation:
         # 1. only suffix is present -> return str(suffix)
         # 2. prefix and suffix are present -> return "prefix:suffix"
         # 3. prefix, suffix and other fields are present -> return "prefix:suffix(field1=value1,field2=value2)"
+
+        model_dump = {k: v for k in self.model_fields if (v := getattr(self, k)) is not None}
 
         base_str = f"{self.prefix}:{self.suffix}" if not isinstance(self.prefix, _UndefinedType) else str(self.suffix)
 
