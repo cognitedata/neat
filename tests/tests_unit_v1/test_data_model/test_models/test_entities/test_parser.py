@@ -67,7 +67,7 @@ class TestEntityParser:
             ),
             pytest.param(
                 "asset:MyAsset(capacity=100,type=storage",
-                "Expected ')' to close properties at position 38",
+                r"Expected '\)' to close properties at position 39",
                 id="Missing closing parenthesis",
             ),
         ],

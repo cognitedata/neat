@@ -97,6 +97,10 @@ class EntityParser:
             elif self.peek() == ")":
                 break
 
+        # Check if we reached the end without finding a closing parenthesis
+        if self.pos >= self.length:
+            raise ValueError(f"Expected ')' to close properties at position {self.length}")
+
         # Skip closing parenthesis
         if self.peek() == ")":
             self.advance()
