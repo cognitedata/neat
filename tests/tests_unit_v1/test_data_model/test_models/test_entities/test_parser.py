@@ -51,3 +51,27 @@ class TestEntityParser:
         assert parsed_prefix == prefix
         assert parsed_suffix == suffix
         assert parsed_properties == properties
+
+    @pytest.mark.parametrize(
+        "entity_str, error_msg",
+        [
+            pytest.param(
+                "asset:MyAsset(capacity100,type=storage)",
+                "Expected '=' after property name 'capacity100' at position 25",
+                id="Missing '=' in property",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,type)",
+                "Expected '=' after property name 'type' at position 31",
+                id="Missing value in property",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,type=storage",
+                "Expected ')' to close properties at position 38",
+                id="Missing closing parenthesis",
+            ),
+        ],
+    )
+    def test_parse_entity_invalid_format(self, entity_str: str, error_msg: str) -> None:
+        with pytest.raises(ValueError, match=error_msg):
+            parse_entity(entity_str)
