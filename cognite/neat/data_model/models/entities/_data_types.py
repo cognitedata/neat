@@ -14,18 +14,14 @@ else:
     pass
 
 
-class UnitEntity(Entity):
-    prefix: str
-    suffix: str
+class UnitEntity(Entity): ...
 
 
-class EnumCollectionEntity(Entity):
-    prefix: str
-    suffix: str
+class EnumCollectionEntity(Entity): ...
 
 
 class DataType(Entity):
-    prefix: str = "xsd"
+    prefix: str = Field("xsd", frozen=True)
 
     @property
     def python(self) -> type:
@@ -37,7 +33,7 @@ class DataType(Entity):
 
 
 class Boolean(DataType):
-    suffix: str = "boolean"
+    suffix: str = Field("boolean", frozen=True)
 
     @property
     def python(self) -> type:
@@ -45,7 +41,7 @@ class Boolean(DataType):
 
 
 class Float(DataType):
-    suffix: str = "float"
+    suffix: str = Field("float", frozen=True)
     unit: UnitEntity | None = None
 
     @property
@@ -54,7 +50,7 @@ class Float(DataType):
 
 
 class Double(DataType):
-    suffix: str = "double"
+    suffix: str = Field("double", frozen=True)
     unit: UnitEntity | None = None
 
     @property
@@ -63,7 +59,7 @@ class Double(DataType):
 
 
 class Integer(DataType):
-    suffix: str = "integer"
+    suffix: str = Field("integer", frozen=True)
     unit: UnitEntity | None = None
 
     @property
@@ -72,7 +68,7 @@ class Integer(DataType):
 
 
 class Long(DataType):
-    suffix: str = "long"
+    suffix: str = Field("long", frozen=True)
     unit: UnitEntity | None = None
 
     @property
@@ -81,7 +77,7 @@ class Long(DataType):
 
 
 class String(DataType):
-    suffix: str = "string"
+    suffix: str = Field("string", frozen=True)
     max_text_size: int | None = Field(
         None,
         alias="maxTextSize",
@@ -94,7 +90,7 @@ class String(DataType):
 
 
 class AnyURI(DataType):
-    suffix: str = "anyURI"
+    suffix: str = Field("anyURI", frozen=True)
 
     @property
     def python(self) -> type:
@@ -102,7 +98,7 @@ class AnyURI(DataType):
 
 
 class Date(DataType):
-    suffix: str = "date"
+    suffix: str = Field("date", frozen=True)
 
     @property
     def python(self) -> type:
@@ -110,7 +106,7 @@ class Date(DataType):
 
 
 class DateTime(DataType):
-    suffix: str = "dateTime"
+    suffix: str = Field("dateTime", frozen=True)
 
     @property
     def python(self) -> type:
@@ -118,7 +114,7 @@ class DateTime(DataType):
 
 
 class DateTimeStamp(DataType):
-    suffix: str = "dateTimeStamp"
+    suffix: str = Field("dateTimeStamp", frozen=True)
 
     @property
     def python(self) -> type:
@@ -129,19 +125,19 @@ class DateTimeStamp(DataType):
 
 
 class Timeseries(DataType):
-    suffix: str = "timeseries"
+    suffix: str = Field("timeseries", frozen=True)
 
 
 class File(DataType):
-    suffix: str = "string"
+    suffix: str = Field("string", frozen=True)
 
 
 class Sequence(DataType):
-    suffix: str = "sequence"
+    suffix: str = Field("sequence", frozen=True)
 
 
 class Json(DataType):
-    suffix: str = "json"
+    suffix: str = Field("json", frozen=True)
 
     @property
     def python(self) -> type:
@@ -149,6 +145,6 @@ class Json(DataType):
 
 
 class Enum(DataType):
-    suffix: str = "enum"
+    suffix: str = Field("enum", frozen=True)
     collection: EnumCollectionEntity
     unknown_value: str | None = Field(None, alias="unknownValue")

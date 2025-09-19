@@ -1,11 +1,7 @@
 from functools import total_ordering
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import (
-    BaseModel,
-    field_validator,
-    model_serializer,
-)
+from pydantic import BaseModel, Field, field_validator, model_serializer
 
 from ._constants import (
     Undefined,
@@ -19,8 +15,11 @@ from ._constants import (
 class Entity(BaseModel, extra="ignore"):
     """Entity is a concept, class, property, datatype in semantics sense."""
 
-    prefix: str | _UndefinedType = Undefined
-    suffix: str
+    prefix: (
+        Annotated[str, Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$", min_length=1, max_length=43)]
+        | _UndefinedType
+    ) = Undefined
+    suffix: str = Field(min_length=1, max_length=255, pattern=r"^[a-zA-Z0-9._~?@!$&'*+,;=%-]+$")
 
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
