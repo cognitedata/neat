@@ -1,3 +1,141 @@
+class EntityParser:
+    """A parser for entity strings in the format 'prefix:suffix(prop1=val1,prop2=val2)'."""
+
+    def __init__(self, entity_string: str):
+        """Initialize the parser with the entity string to parse.
+
+        Args:
+            entity_string: The entity string to parse.
+        """
+        self.entity_string = entity_string.strip() if entity_string else ""
+        self.pos = 0
+        self.length = len(self.entity_string)
+
+    def peek(self) -> str:
+        """Peek at current character without advancing position."""
+        if self.pos >= self.length:
+            return ""
+        return self.entity_string[self.pos]
+
+    def advance(self) -> str:
+        """Get current character and advance position."""
+        if self.pos >= self.length:
+            return ""
+        char = self.entity_string[self.pos]
+        self.pos += 1
+        return char
+
+    def skip_whitespace(self) -> None:
+        """Skip whitespace characters."""
+        while self.pos < self.length and self.entity_string[self.pos].isspace():
+            self.pos += 1
+
+    def parse_identifier(self) -> str:
+        """Parse an identifier (letters, numbers, underscores, etc.)."""
+        start = self.pos
+        while self.pos < self.length and self.entity_string[self.pos] not in ":()=,":
+            self.pos += 1
+        return self.entity_string[start : self.pos].strip()
+
+    def parse_property_value(self) -> str:
+        """Parse a property value, handling nested parentheses."""
+        start = self.pos
+        paren_depth = 0
+
+        while self.pos < self.length:
+            char = self.entity_string[self.pos]
+            if char == "(":
+                paren_depth += 1
+            elif char == ")":
+                if paren_depth == 0:
+                    # This is the closing paren of the properties section
+                    break
+                paren_depth -= 1
+            elif char == "," and paren_depth == 0:
+                # This is a property separator, not part of the value
+                break
+            self.pos += 1
+
+        return self.entity_string[start : self.pos].strip()
+
+    def parse_properties(self) -> dict[str, str]:
+        """Parse properties within parentheses."""
+        properties = {}
+
+        # Skip opening parenthesis
+        if self.peek() == "(":
+            self.advance()
+
+        self.skip_whitespace()
+
+        while self.pos < self.length and self.peek() != ")":
+            # Parse property name
+            self.skip_whitespace()
+            if self.peek() == ")":
+                break
+
+            prop_name = self.parse_identifier()
+            self.skip_whitespace()
+
+            # Expect '='
+            if self.peek() != "=":
+                raise ValueError(f"Expected '=' after property name '{prop_name}' at position {self.pos}")
+            self.advance()  # consume '='
+
+            self.skip_whitespace()
+
+            # Parse property value (handles complex values)
+            prop_value = self.parse_property_value()
+
+            properties[prop_name] = prop_value
+
+            self.skip_whitespace()
+
+            # Check for comma or end
+            if self.peek() == ",":
+                self.advance()  # consume ','
+            elif self.peek() == ")":
+                break
+
+        # Skip closing parenthesis
+        if self.peek() == ")":
+            self.advance()
+
+        return properties
+
+    def parse(self) -> tuple[str, str, dict[str, str]]:
+        """Parse the entity string and return prefix, suffix, and properties.
+
+        Returns:
+            A tuple containing the prefix (or empty string if not present),
+            the suffix, and a dictionary of properties.
+        """
+        if not self.entity_string:
+            return "", "", {}
+
+        # Parse the main identifier (could be prefix:suffix or just suffix)
+        main_id = self.parse_identifier()
+
+        # Check if there's a colon (indicating prefix:suffix)
+        prefix = ""
+        suffix = ""
+
+        if self.peek() == ":":
+            self.advance()  # consume ':'
+            prefix = main_id
+            suffix = self.parse_identifier()
+        else:
+            suffix = main_id
+
+        # Check if there are properties
+        self.skip_whitespace()
+        properties = {}
+        if self.peek() == "(":
+            properties = self.parse_properties()
+
+        return prefix, suffix, properties
+
+
 def parse_entity(entity_string: str) -> tuple[str, str, dict[str, str]]:
     """Parse an entity string into its prefix, suffix, and properties.
 
@@ -9,135 +147,5 @@ def parse_entity(entity_string: str) -> tuple[str, str, dict[str, str]]:
         tuple[str, str, dict[str, str]]: A tuple containing the prefix (or an empty string if not present),
             the suffix, and a dictionary of properties.
     """
-    if not entity_string:
-        return "", "", {}
-
-    # Remove leading/trailing whitespace
-    entity_string = entity_string.strip()
-
-    # Initialize parser state
-    pos = 0
-    length = len(entity_string)
-
-    def peek() -> str:
-        """Peek at current character without advancing position"""
-        if pos >= length:
-            return ""
-        return entity_string[pos]
-
-    def advance() -> str:
-        """Get current character and advance position"""
-        nonlocal pos
-        if pos >= length:
-            return ""
-        char = entity_string[pos]
-        pos += 1
-        return char
-
-    def skip_whitespace() -> None:
-        """Skip whitespace characters"""
-        nonlocal pos
-        while pos < length and entity_string[pos].isspace():
-            pos += 1
-
-    def parse_identifier() -> str:
-        """Parse an identifier (letters, numbers, underscores, etc.)"""
-        nonlocal pos
-        start = pos
-        while pos < length and entity_string[pos] not in ":()=,":
-            pos += 1
-        return entity_string[start:pos].strip()
-
-    def parse_property_value() -> str:
-        """Parse a property value, handling nested parentheses"""
-        nonlocal pos
-        start = pos
-        paren_depth = 0
-
-        while pos < length:
-            char = entity_string[pos]
-            if char == "(":
-                paren_depth += 1
-            elif char == ")":
-                if paren_depth == 0:
-                    # This is the closing paren of the properties section
-                    break
-                paren_depth -= 1
-            elif char == "," and paren_depth == 0:
-                # This is a property separator, not part of the value
-                break
-            pos += 1
-
-        return entity_string[start:pos].strip()
-
-    def parse_properties() -> dict[str, str]:
-        """Parse properties within parentheses"""
-        nonlocal pos
-        properties = {}
-
-        # Skip opening parenthesis
-        if peek() == "(":
-            advance()
-
-        skip_whitespace()
-
-        while pos < length and peek() != ")":
-            # Parse property name
-            skip_whitespace()
-            if peek() == ")":
-                break
-
-            prop_name = parse_identifier()
-            skip_whitespace()
-
-            # Expect '='
-            if peek() != "=":
-                raise ValueError(f"Expected '=' after property name '{prop_name}' at position {pos}")
-            advance()  # consume '='
-
-            skip_whitespace()
-
-            # Parse property value (now handles complex values)
-            prop_value = parse_property_value()
-
-            properties[prop_name] = prop_value
-
-            skip_whitespace()
-
-            # Check for comma or end
-            if peek() == ",":
-                advance()  # consume ','
-            elif peek() == ")":
-                break
-            else:
-                # Continue to next property
-                pass
-
-        # Skip closing parenthesis
-        if peek() == ")":
-            advance()
-
-        return properties
-
-    # Start parsing
-    prefix = ""
-    suffix = ""
-    properties = {}
-
-    # Parse the main identifier (could be prefix:suffix or just suffix)
-    main_id = parse_identifier()
-
-    # Check if there's a colon (indicating prefix:suffix)
-    if peek() == ":":
-        advance()  # consume ':'
-        prefix = main_id
-        suffix = parse_identifier()
-    else:
-        suffix = main_id
-
-    # Check if there are properties
-    skip_whitespace()
-    if peek() == "(":
-        properties = parse_properties()
-
-    return prefix, suffix, properties
+    parser = EntityParser(entity_string)
+    return parser.parse()
