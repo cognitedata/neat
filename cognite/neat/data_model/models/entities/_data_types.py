@@ -1,4 +1,3 @@
-import sys
 from datetime import date, datetime
 
 from pydantic import Field
@@ -7,11 +6,6 @@ from cognite.neat.data_model._constants import XML_SCHEMA_NAMESPACE
 from cognite.neat.data_model._identifiers import URI
 
 from ._base import Entity
-
-if sys.version_info >= (3, 11):
-    pass
-else:
-    pass
 
 
 class UnitEntity(Entity): ...

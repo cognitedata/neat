@@ -48,14 +48,15 @@ class Entity(BaseModel, extra="ignore"):
             return self.prefix, str(self.suffix), *extra
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, type(self)):
+        if type(other) is not type(self):
             return NotImplemented
-        return self.as_tuple() < other.as_tuple()
+        return self.as_tuple() < other.as_tuple()  # type: ignore
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, type(self)):
-            return NotImplemented
-        return self.as_tuple() == other.as_tuple()
+        if type(other) is not type(self):
+            # requires explicit raising as NotImplemented would lead to running comparison
+            raise TypeError(f"'==' not supported between instances of {type(self).__name__} and {type(other).__name__}")
+        return self.as_tuple() == other.as_tuple()  # type: ignore
 
     def __hash__(self) -> int:
         return hash(str(self))
