@@ -1,7 +1,6 @@
 from functools import total_ordering
 from typing import Any
 
-from cognite.client.data_classes.data_modeling.data_types import UnitReference
 from pydantic import (
     BaseModel,
     field_validator,
@@ -17,8 +16,8 @@ from ._constants import (
 
 
 @total_ordering
-class ConceptualEntity(BaseModel, extra="ignore"):
-    """Conceptual Entity is a concept, class or property in semantics sense."""
+class Entity(BaseModel, extra="ignore"):
+    """Entity is a concept, class, property, datatype in semantics sense."""
 
     prefix: str | _UndefinedType = Undefined
     suffix: str
@@ -50,12 +49,12 @@ class ConceptualEntity(BaseModel, extra="ignore"):
             return self.prefix, str(self.suffix), *extra
 
     def __lt__(self, other: object) -> bool:
-        if not isinstance(other, ConceptualEntity):
+        if not isinstance(other, type(self)):
             return NotImplemented
         return self.as_tuple() < other.as_tuple()
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ConceptualEntity):
+        if not isinstance(other, type(self)):
             return NotImplemented
         return self.as_tuple() == other.as_tuple()
 
@@ -88,7 +87,7 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         return f"{type(self).__name__}({args})"
 
 
-class ConceptEntity(ConceptualEntity):
+class ConceptEntity(Entity):
     version: str | None = None
 
 
@@ -99,11 +98,3 @@ class UnknownEntity(ConceptEntity):
     @property
     def id(self) -> str:
         return str(Unknown)
-
-
-class UnitEntity(ConceptualEntity):
-    prefix: str
-    suffix: str
-
-    def as_reference(self) -> UnitReference:
-        return UnitReference(external_id=f"{self.prefix}:{self.suffix}")
