@@ -12,7 +12,7 @@ from ._constants import (
 
 
 @total_ordering
-class Entity(BaseModel, extra="ignore"):
+class Entity(BaseModel, extra="ignore", populate_by_name=True):
     """Entity is a concept, class, property, datatype in semantics sense."""
 
     prefix: (
@@ -71,9 +71,9 @@ class Entity(BaseModel, extra="ignore"):
 
         base_str = f"{self.prefix}:{self.suffix}" if not isinstance(self.prefix, _UndefinedType) else str(self.suffix)
 
-        # Get extra fields (excluding prefix and suffix)
-        extra_fields = {k: v for k, v in model_dump.items() if k not in {"prefix", "suffix"}}
-
+        extra_fields = {
+            (self.model_fields[k].alias or k): v for k, v in model_dump.items() if k not in {"prefix", "suffix"}
+        }
         if extra_fields:
             extra_str = ",".join([f"{k}={v}" for k, v in extra_fields.items()])
             return f"{base_str}({extra_str})"
