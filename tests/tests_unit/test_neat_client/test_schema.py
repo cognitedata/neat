@@ -1,7 +1,7 @@
 from cognite.client import data_modeling as dm
 
-from cognite.neat.core._client._api.schema import SchemaAPI
-from cognite.neat.core._client.data_classes.schema import DMSSchema
+from thisisneat.core._client._api.schema import SchemaAPI
+from thisisneat.core._client.data_classes.schema import DMSSchema
 
 
 class TestSchemaAPI:

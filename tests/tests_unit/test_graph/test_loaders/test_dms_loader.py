@@ -3,40 +3,40 @@ from cognite.client.data_classes import Asset, FileMetadata
 from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal
 
-from cognite.neat import NeatSession
-from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._constants import (
+from tests.data import InstanceData
+from thisisneat import NeatSession
+from thisisneat.core._client.testing import monkeypatch_neat_client
+from thisisneat.core._constants import (
     CLASSIC_CDF_NAMESPACE,
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat.core._data_model.importers import SubclassInferenceImporter
-from cognite.neat.core._data_model.models.entities._single_value import (
+from thisisneat.core._data_model.importers import SubclassInferenceImporter
+from thisisneat.core._data_model.models.entities._single_value import (
     ConceptEntity,
     ContainerEntity,
     ViewEntity,
 )
-from cognite.neat.core._data_model.models.physical import (
+from thisisneat.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.transformers import (
+from thisisneat.core._data_model.transformers import (
     ConceptualToPhysical,
     PhysicalToConceptual,
 )
-from cognite.neat.core._instances.extractors import (
+from thisisneat.core._instances.extractors import (
     AssetsExtractor,
     FilesExtractor,
 )
-from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
-from cognite.neat.core._issues import IssueList, NeatIssue
-from cognite.neat.core._issues.warnings import PropertyDirectRelationLimitWarning
-from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatInstanceStore
-from tests.data import InstanceData
+from thisisneat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
+from thisisneat.core._issues import IssueList, NeatIssue
+from thisisneat.core._issues.warnings import PropertyDirectRelationLimitWarning
+from thisisneat.core._shared import Triple
+from thisisneat.core._store import NeatInstanceStore
 
 
 def test_metadata_as_json_filed():

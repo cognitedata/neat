@@ -1,4 +1,4 @@
-from cognite.neat.core._store import NeatInstanceStore
+from thisisneat.core._store import NeatInstanceStore
 
 
 def test_provenance():

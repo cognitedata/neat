@@ -30,7 +30,7 @@ CDF Notebooks are a part of the Cognite Data Fusion (CDF) platform. These notebo
 
 ```python
 from cognite.client import CogniteClient
-from cognite.neat import NeatSession
+from thisisneat import NeatSession
 
 client = CogniteClient()
 
@@ -113,7 +113,7 @@ guide you through the installation process using [Jupyter Lab](https://jupyter.o
 In a notebook cell, you can now import `NeatSession` and `get_cognite_client` and start using it as shown below
 
 ```python
-from cognite.neat import NeatSession, get_cognite_client
+from thisisneat import NeatSession, get_cognite_client
 
 client = get_cognite_client(".env")
 

@@ -6,19 +6,19 @@ from typing import Any
 
 import pytest
 
-from cognite.neat import NeatSession
-from cognite.neat.core._data_model.importers._spreadsheet2data_model import ExcelImporter
-from cognite.neat.core._data_model.models.conceptual._verified import (
+from tests.data import SchemaData
+from thisisneat import NeatSession
+from thisisneat.core._data_model.importers._spreadsheet2data_model import ExcelImporter
+from thisisneat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
-from cognite.neat.plugins import _manager
-from cognite.neat.plugins._issues import (
+from thisisneat.plugins import _manager
+from thisisneat.plugins._issues import (
     PluginDuplicateError,
     PluginLoadingError,
 )
-from cognite.neat.plugins._manager import PluginManager
-from cognite.neat.plugins.data_model.importers import DataModelImporterPlugin
-from tests.data import SchemaData
+from thisisneat.plugins._manager import PluginManager
+from thisisneat.plugins.data_model.importers import DataModelImporterPlugin
 
 
 class ExcelDataModelImporterPlugin(DataModelImporterPlugin):

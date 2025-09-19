@@ -6,11 +6,11 @@ import yaml
 from cognite.client import data_modeling as dm
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model import importers
-from cognite.neat.core._issues.errors._general import NeatValueError
 from tests.data import GraphData, SchemaData
+from thisisneat import NeatSession
+from thisisneat.core._client import NeatClient
+from thisisneat.core._data_model import importers
+from thisisneat.core._issues.errors._general import NeatValueError
 
 
 def create_new_car_model(neat_client: NeatClient, schema_space: str, instance_space: str) -> dm.DataModelId:

@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat.core._utils.text import NamingStandardization, to_camel_case, to_words
+from thisisneat.core._utils.text import NamingStandardization, to_camel_case, to_words
 
 
 class TestToCamel:

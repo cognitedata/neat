@@ -11,8 +11,6 @@ dev-data/
 dev-data-*/
 tests/data/
 
-!cognite/neat/workflows/examples/config.yaml
-
 requirements.txt
 
 # C extensions
@@ -37,7 +35,6 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-!cognite/neat/workflows/steps/lib
 
 
 # PyInstaller
@@ -158,8 +155,6 @@ data/temp
 docker/vol_data/*
 docker/vol_shared/*
 
-cognite/neat/ui/neat-app/node_modules
-!cognite/neat/ui/neat-app/build
 
 
 # local notebooks

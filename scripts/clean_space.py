@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from cognite.neat import NeatSession, get_cognite_client
+from thisisneat import NeatSession, get_cognite_client
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

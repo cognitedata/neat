@@ -1,10 +1,10 @@
 from cognite.client.data_classes import AssetList
 from cognite.client.testing import monkeypatch_cognite_client
 
-from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._instances.extractors import AssetsExtractor
-from cognite.neat.core._store import NeatInstanceStore
 from tests.data import InstanceData
+from thisisneat.core._constants import DEFAULT_NAMESPACE
+from thisisneat.core._instances.extractors import AssetsExtractor
+from thisisneat.core._store import NeatInstanceStore
 
 
 def test_asset_extractor_with_lambda_unpacked_metadata():

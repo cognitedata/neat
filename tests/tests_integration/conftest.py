@@ -4,8 +4,8 @@ import pytest
 from cognite.client import CogniteClient
 from dotenv import load_dotenv
 
-from cognite.neat.core._client import NeatClient
 from tests.config import ROOT
+from thisisneat.core._client import NeatClient
 
 
 @pytest.fixture(scope="session")

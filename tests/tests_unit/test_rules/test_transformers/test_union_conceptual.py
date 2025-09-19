@@ -3,9 +3,9 @@ from collections.abc import Iterable
 import pytest
 from rdflib import URIRef
 
-from cognite.neat.core._data_model.models import SheetList
-from cognite.neat.core._data_model.models import data_types as dt
-from cognite.neat.core._data_model.models.conceptual import (
+from thisisneat.core._data_model.models import SheetList
+from thisisneat.core._data_model.models import data_types as dt
+from thisisneat.core._data_model.models.conceptual import (
     Concept,
     ConceptualProperty,
     UnverifiedConcept,
@@ -13,9 +13,13 @@ from cognite.neat.core._data_model.models.conceptual import (
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.core._data_model.models.data_types import DataType
-from cognite.neat.core._data_model.models.entities import ConceptEntity, MultiValueTypeInfo, UnknownEntity
-from cognite.neat.core._data_model.transformers import UnionConceptualDataModel
+from thisisneat.core._data_model.models.data_types import DataType
+from thisisneat.core._data_model.models.entities import (
+    ConceptEntity,
+    MultiValueTypeInfo,
+    UnknownEntity,
+)
+from thisisneat.core._data_model.transformers import UnionConceptualDataModel
 
 
 def union_model_test_cases() -> Iterable:

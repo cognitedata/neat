@@ -2,8 +2,8 @@ from cognite.client.data_classes import TimeSeriesList
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat.core._instances.extractors import TimeSeriesExtractor
 from tests.data import InstanceData
+from thisisneat.core._instances.extractors import TimeSeriesExtractor
 
 
 def test_timeseries_extractor():

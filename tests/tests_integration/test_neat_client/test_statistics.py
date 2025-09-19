@@ -1,7 +1,7 @@
 import pytest
 
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._client.data_classes.statistics import ProjectStatsAndLimits
+from thisisneat.core._client import NeatClient
+from thisisneat.core._client.data_classes.statistics import ProjectStatsAndLimits
 
 
 @pytest.fixture(scope="session")

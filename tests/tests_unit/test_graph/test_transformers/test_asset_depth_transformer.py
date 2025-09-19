@@ -1,8 +1,8 @@
-from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._instances import extractors, transformers
-from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._store import NeatInstanceStore
 from tests.data import InstanceData
+from thisisneat.core._constants import DEFAULT_NAMESPACE
+from thisisneat.core._instances import extractors, transformers
+from thisisneat.core._issues.errors import NeatValueError
+from thisisneat.core._store import NeatInstanceStore
 
 
 def test_asset_depth_transformer_without_typing():

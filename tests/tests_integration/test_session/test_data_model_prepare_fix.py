@@ -4,10 +4,10 @@ import yaml
 from cognite.client import CogniteClient
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
-from cognite.neat.core._data_model.catalog import classic_model
-from cognite.neat.core._data_model.models.entities._single_value import ViewEntity
 from tests.data import SchemaData
+from thisisneat import NeatSession
+from thisisneat.core._data_model.catalog import classic_model
+from thisisneat.core._data_model.models.entities._single_value import ViewEntity
 
 
 class TestDataModelPrepare:

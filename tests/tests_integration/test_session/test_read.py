@@ -5,12 +5,12 @@ import yaml
 from cognite.client import CogniteClient
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
-from cognite.neat.core._data_model.catalog import hello_world_pump
-from cognite.neat.core._issues.warnings.user_modeling import (
+from tests.data import SchemaData
+from thisisneat import NeatSession
+from thisisneat.core._data_model.catalog import hello_world_pump
+from thisisneat.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
 )
-from tests.data import SchemaData
 
 
 class TestRead:

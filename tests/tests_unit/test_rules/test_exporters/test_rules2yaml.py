@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from cognite.neat.core._data_model.exporters import YAMLExporter
-from cognite.neat.core._data_model.importers._dict2data_model import DictImporter
-from cognite.neat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from thisisneat.core._data_model.exporters import YAMLExporter
+from thisisneat.core._data_model.importers._dict2data_model import DictImporter
+from thisisneat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 
 
 class TestYAMLExporter:

@@ -9,7 +9,7 @@ from tests.config import ROOT
 
 def test_no_spaces_in_sub_folders() -> None:
     name_by_location: dict[Path, str] = {}
-    to_check = [ROOT / "cognite"]
+    to_check = [ROOT]
     while to_check:
         current = to_check.pop()
         for path in current.iterdir():

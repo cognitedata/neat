@@ -1,26 +1,26 @@
 import pytest
 from cognite.client.data_classes.data_modeling import ViewList
 
-from cognite.neat.core._client.data_classes.statistics import (
+from tests.data import GraphData
+from thisisneat.core._client.data_classes.statistics import (
     CountLimitPair,
     InstanceCountsLimits,
     ProjectStatsAndLimits,
 )
-from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._constants import DMS_INSTANCE_LIMIT_MARGIN
-from cognite.neat.core._data_model.importers import SubclassInferenceImporter
-from cognite.neat.core._data_model.models import PhysicalDataModel
-from cognite.neat.core._data_model.models.conceptual._verified import (
+from thisisneat.core._client.testing import monkeypatch_neat_client
+from thisisneat.core._constants import DMS_INSTANCE_LIMIT_MARGIN
+from thisisneat.core._data_model.importers import SubclassInferenceImporter
+from thisisneat.core._data_model.models import PhysicalDataModel
+from thisisneat.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
-from cognite.neat.core._data_model.transformers._converters import (
+from thisisneat.core._data_model.transformers._converters import (
     ToCompliantEntities,
 )
-from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
-from cognite.neat.core._issues import IssueList
-from cognite.neat.core._issues.errors import WillExceedLimitError
-from cognite.neat.core._store import NeatInstanceStore
-from tests.data import GraphData
+from thisisneat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
+from thisisneat.core._issues import IssueList
+from thisisneat.core._issues.errors import WillExceedLimitError
+from thisisneat.core._store import NeatInstanceStore
 
 
 @pytest.fixture()

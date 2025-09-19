@@ -1,12 +1,15 @@
-from cognite.neat.core._data_model import importers
-from cognite.neat.core._data_model._constants import EntityTypes
-from cognite.neat.core._data_model.analysis import DataModelAnalysis
-from cognite.neat.core._data_model.models.entities import ConceptEntity
-from cognite.neat.core._data_model.transformers._verification import VerifyAnyDataModel
-from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._issues.warnings._models import DanglingPropertyWarning, UndefinedConceptWarning
-from cognite.neat.core._issues.warnings._resources import ResourceRegexViolationWarning
 from tests.data import SchemaData
+from thisisneat.core._data_model import importers
+from thisisneat.core._data_model._constants import EntityTypes
+from thisisneat.core._data_model.analysis import DataModelAnalysis
+from thisisneat.core._data_model.models.entities import ConceptEntity
+from thisisneat.core._data_model.transformers._verification import VerifyAnyDataModel
+from thisisneat.core._issues import catch_issues
+from thisisneat.core._issues.warnings._models import (
+    DanglingPropertyWarning,
+    UndefinedConceptWarning,
+)
+from thisisneat.core._issues.warnings._resources import ResourceRegexViolationWarning
 
 
 def test_ill_formed_owl_importer():

@@ -3,10 +3,10 @@ import io
 
 from cognite.client.data_classes import Asset, FileMetadata
 
-from cognite.neat import NeatSession
-from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat.core._instances.extractors._classic_cdf._assets import AssetsExtractor
-from cognite.neat.core._instances.extractors._classic_cdf._files import FilesExtractor
+from thisisneat import NeatSession
+from thisisneat.core._constants import CLASSIC_CDF_NAMESPACE
+from thisisneat.core._instances.extractors._classic_cdf._assets import AssetsExtractor
+from thisisneat.core._instances.extractors._classic_cdf._files import FilesExtractor
 
 
 def test_exact_match() -> None:

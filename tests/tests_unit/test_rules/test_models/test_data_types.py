@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, Field
 
-from cognite.neat.core._data_model.models.data_types import (
+from thisisneat.core._data_model.models.data_types import (
     Boolean,
     DataType,
     Double,
@@ -13,7 +13,7 @@ from cognite.neat.core._data_model.models.data_types import (
     NonNegativeInteger,
     NonPositiveInteger,
 )
-from cognite.neat.core._data_model.models.entities import ConceptEntity, UnitEntity
+from thisisneat.core._data_model.models.entities import ConceptEntity, UnitEntity
 
 
 class DemoProperty(BaseModel):

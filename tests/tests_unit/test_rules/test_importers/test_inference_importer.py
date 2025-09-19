@@ -3,20 +3,20 @@ import urllib.parse
 from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat import NeatSession
-from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model.analysis import DataModelAnalysis
-from cognite.neat.core._data_model.importers import InferenceImporter
-from cognite.neat.core._data_model.models.data_types import DataType, Integer, Json, Long
-from cognite.neat.core._data_model.models.entities import MultiValueTypeInfo
-from cognite.neat.core._data_model.models.entities._single_value import UnknownEntity
-from cognite.neat.core._data_model.transformers import VerifyAnyDataModel
-from cognite.neat.core._instances.examples import nordic44_knowledge_graph
-from cognite.neat.core._instances.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
-from cognite.neat.core._issues import catch_issues
-from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData, InstanceData
+from thisisneat import NeatSession
+from thisisneat.core._constants import DEFAULT_NAMESPACE
+from thisisneat.core._data_model.analysis import DataModelAnalysis
+from thisisneat.core._data_model.importers import InferenceImporter
+from thisisneat.core._data_model.models.data_types import DataType, Integer, Json, Long
+from thisisneat.core._data_model.models.entities import MultiValueTypeInfo
+from thisisneat.core._data_model.models.entities._single_value import UnknownEntity
+from thisisneat.core._data_model.transformers import VerifyAnyDataModel
+from thisisneat.core._instances.examples import nordic44_knowledge_graph
+from thisisneat.core._instances.extractors import AssetsExtractor, RdfFileExtractor
+from thisisneat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
+from thisisneat.core._issues import catch_issues
+from thisisneat.core._store import NeatInstanceStore
 
 
 def test_rdf_inference():

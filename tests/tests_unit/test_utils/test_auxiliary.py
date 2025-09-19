@@ -2,8 +2,8 @@ from typing import Any, ClassVar
 
 import pytest
 
-from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._utils.auxiliary import (
+from thisisneat.core._data_model.importers import DMSImporter
+from thisisneat.core._utils.auxiliary import (
     get_classmethods,
     get_parameters_by_method,
 )

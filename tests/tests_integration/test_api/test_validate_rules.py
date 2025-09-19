@@ -5,11 +5,11 @@ from typing import Any
 import pytest
 import yaml
 
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model.importers import DictImporter
-from cognite.neat.core._data_model.transformers import VerifyPhysicalDataModel
-from cognite.neat.core._issues import catch_issues
 from tests.data import SchemaData
+from thisisneat.core._client import NeatClient
+from thisisneat.core._data_model.importers import DictImporter
+from thisisneat.core._data_model.transformers import VerifyPhysicalDataModel
+from thisisneat.core._issues import catch_issues
 
 
 class TestValidate:

@@ -8,9 +8,9 @@ from _pytest.mark import ParameterSet
 from pydantic import BaseModel
 from rdflib import URIRef
 
-from cognite.neat.core._data_model.models import SheetList
-from cognite.neat.core._data_model.models._base_unverified import UnverifiedDataModel
 from tests.utils import DataClassCreator, get_all_subclasses
+from thisisneat.core._data_model.models import SheetList
+from thisisneat.core._data_model.models._base_unverified import UnverifiedDataModel
 
 
 def input_rules_instances_iterator() -> Iterable[ParameterSet]:

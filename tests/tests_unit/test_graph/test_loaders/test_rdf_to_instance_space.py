@@ -6,14 +6,14 @@ from cognite.client.data_classes import AssetWriteList
 from cognite.client.data_classes.data_modeling import SpaceApply
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._constants import DEFAULT_NAMESPACE, DEFAULT_SPACE_URI
-from cognite.neat.core._instances.extractors import AssetsExtractor, BaseExtractor
-from cognite.neat.core._instances.loaders import InstanceSpaceLoader
-from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatInstanceStore
-from cognite.neat.core._utils.upload import UploadResult
 from tests.data import InstanceData
+from thisisneat.core._client.testing import monkeypatch_neat_client
+from thisisneat.core._constants import DEFAULT_NAMESPACE, DEFAULT_SPACE_URI
+from thisisneat.core._instances.extractors import AssetsExtractor, BaseExtractor
+from thisisneat.core._instances.loaders import InstanceSpaceLoader
+from thisisneat.core._shared import Triple
+from thisisneat.core._store import NeatInstanceStore
+from thisisneat.core._utils.upload import UploadResult
 
 
 def load_instance_spaces_test_cases() -> Iterable:

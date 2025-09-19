@@ -3,8 +3,9 @@ from typing import Any
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.core._data_model import importers
-from cognite.neat.core._data_model.models.entities import (
+from tests import config
+from thisisneat.core._data_model import importers
+from thisisneat.core._data_model.models.entities import (
     ContainerEntity,
     DMSFilter,
     DMSNodeEntity,
@@ -14,8 +15,7 @@ from cognite.neat.core._data_model.models.entities import (
     ViewEntity,
     WrappedEntity,
 )
-from cognite.neat.core._data_model.transformers import VerifyPhysicalDataModel
-from tests import config
+from thisisneat.core._data_model.transformers import VerifyPhysicalDataModel
 
 RAW_FILTER_EXAMPLE = """{"and": [
     {

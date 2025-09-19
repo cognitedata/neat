@@ -2,8 +2,8 @@ from cognite.client.data_classes import LabelDefinitionList
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat.core._instances.extractors import LabelsExtractor
 from tests.data import InstanceData
+from thisisneat.core._instances.extractors import LabelsExtractor
 
 
 def test_labels_extractor():

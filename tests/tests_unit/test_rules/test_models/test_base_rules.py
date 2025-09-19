@@ -1,4 +1,4 @@
-from cognite.neat.core._data_model.models.conceptual import (
+from thisisneat.core._data_model.models.conceptual import (
     Concept,
     ConceptualMetadata,
     UnverifiedConcept,

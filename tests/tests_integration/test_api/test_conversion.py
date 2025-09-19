@@ -3,15 +3,15 @@ from pathlib import Path
 import pytest
 import yaml
 
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model.importers import DictImporter
-from cognite.neat.core._data_model.models import PhysicalDataModel
-from cognite.neat.core._data_model.transformers import (
+from tests.data import SchemaData
+from thisisneat.core._client import NeatClient
+from thisisneat.core._data_model.importers import DictImporter
+from thisisneat.core._data_model.models import PhysicalDataModel
+from thisisneat.core._data_model.transformers import (
     ConceptualToPhysical,
     VerifyConceptualDataModel,
 )
-from cognite.neat.core._issues import catch_issues
-from tests.data import SchemaData
+from thisisneat.core._issues import catch_issues
 
 
 class TestValidate:

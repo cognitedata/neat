@@ -1,9 +1,9 @@
 from pathlib import Path
 from rich import print
 
-from cognite.neat.core._data_model.exporters import YAMLExporter
-from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.transformers import VerifyPhysicalDataModel
+from thisisneat.core._data_model.exporters import YAMLExporter
+from thisisneat.core._data_model.importers import ExcelImporter
+from thisisneat.core._data_model.transformers import VerifyPhysicalDataModel
 
 THIS_FOLDER = Path(__file__).resolve().parent
 XLSX_FILE = THIS_FOLDER / "core_classic_mapping.xlsx"

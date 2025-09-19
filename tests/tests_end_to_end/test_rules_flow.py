@@ -7,9 +7,9 @@ import requests
 import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
 from tests.config import DOC_RULES
 from tests.data import SchemaData
+from thisisneat import NeatSession
 
 
 class TestImportersToYAMLExporter:

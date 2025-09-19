@@ -2,8 +2,8 @@ from cognite.client.data_classes import EventList
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat.core._instances.extractors import EventsExtractor
 from tests.data import InstanceData
+from thisisneat.core._instances.extractors import EventsExtractor
 
 
 def test_events_extractor():

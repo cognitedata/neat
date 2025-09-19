@@ -1,12 +1,12 @@
 import pytest
 
-from cognite.neat.core._utils.reader import (
+from tests.data import GraphData
+from thisisneat.core._utils.reader import (
     GitHubReader,
     HttpFileReader,
     NeatReader,
     PathReader,
 )
-from tests.data import GraphData
 
 
 class TestNeatReader:

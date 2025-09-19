@@ -4,27 +4,27 @@ import pytest
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import Row
 
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model.exporters import DMSExporter
-from cognite.neat.core._data_model.importers import ExcelImporter
-from cognite.neat.core._data_model.models import (
+from tests.config import DOC_RULES
+from thisisneat.core._client import NeatClient
+from thisisneat.core._data_model.exporters import DMSExporter
+from thisisneat.core._data_model.importers import ExcelImporter
+from thisisneat.core._data_model.models import (
     ConceptualDataModel,
     PhysicalDataModel,
     SheetList,
 )
-from cognite.neat.core._data_model.models.conceptual import (
+from thisisneat.core._data_model.models.conceptual import (
     Concept,
     ConceptualMetadata,
     ConceptualProperty,
 )
-from cognite.neat.core._data_model.models.physical import (
+from thisisneat.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from tests.config import DOC_RULES
 
 
 @pytest.fixture(scope="session")

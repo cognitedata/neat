@@ -7,10 +7,10 @@ from cognite.client.data_classes import Source
 from cognite.client.data_classes.data_modeling.instances import Instance
 from requests import Response
 
-from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._instances.extractors import DMSGraphExtractor
 from tests.data import GraphData
 from tests.utils import as_read_containers, as_read_instance, as_read_space
+from thisisneat.core._client.testing import monkeypatch_neat_client
+from thisisneat.core._instances.extractors import DMSGraphExtractor
 
 
 def create_car_instance(max_run: int = 1) -> Callable:

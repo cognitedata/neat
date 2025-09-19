@@ -3,15 +3,15 @@ from collections.abc import Iterable
 
 import pytest
 
-from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat.core._data_model._shared import ImportedDataModel
-from cognite.neat.core._data_model.models import (
+from thisisneat.core._constants import CLASSIC_CDF_NAMESPACE
+from thisisneat.core._data_model._shared import ImportedDataModel
+from thisisneat.core._data_model.models import (
     ConceptualDataModel,
     PhysicalDataModel,
     UnverifiedConceptualDataModel,
     UnverifiedPhysicalDataModel,
 )
-from cognite.neat.core._data_model.transformers import (
+from thisisneat.core._data_model.transformers import (
     AddCogniteProperties,
     AddConceptImplements,
     ClassicPrepareCore,

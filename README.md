@@ -76,7 +76,7 @@ The user interface for `NEAT` is a notebook-based environment. Once you have set
 environment, you start by creating a `CogniteClient` and instantiate a `NeatSession` object.
 
 ```python
-from cognite.neat import NeatSession, get_cognite_client
+from thisisneat import NeatSession, get_cognite_client
 
 client = get_cognite_client(".env")
 

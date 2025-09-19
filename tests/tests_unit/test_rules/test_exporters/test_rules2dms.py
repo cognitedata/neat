@@ -6,20 +6,24 @@ from pathlib import Path
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat import NeatSession
-from cognite.neat.core._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat.core._client.data_classes.schema import DMSSchema
-from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._data_model import importers
-from cognite.neat.core._data_model.exporters import DMSExporter
-from cognite.neat.core._data_model.models import ConceptualDataModel
-from cognite.neat.core._data_model.models.physical import PhysicalDataModel
-from cognite.neat.core._data_model.transformers import (
+from tests.data import SchemaData
+from thisisneat import NeatSession
+from thisisneat.core._client.data_classes.data_modeling import (
+    ContainerApplyDict,
+    SpaceApplyDict,
+    ViewApplyDict,
+)
+from thisisneat.core._client.data_classes.schema import DMSSchema
+from thisisneat.core._client.testing import monkeypatch_neat_client
+from thisisneat.core._data_model import importers
+from thisisneat.core._data_model.exporters import DMSExporter
+from thisisneat.core._data_model.models import ConceptualDataModel
+from thisisneat.core._data_model.models.physical import PhysicalDataModel
+from thisisneat.core._data_model.transformers import (
     ConceptualToPhysical,
     VerifyAnyDataModel,
 )
-from cognite.neat.core._issues import catch_issues
-from tests.data import SchemaData
+from thisisneat.core._issues import catch_issues
 
 
 class TestDMSExporter:

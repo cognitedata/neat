@@ -3,10 +3,10 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.exceptions import CogniteAPIError
 
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._client._api.data_modeling_loaders import MultiCogniteAPIError
-from cognite.neat.core._client.data_classes.schema import DMSSchema
 from tests.data import SchemaData
+from thisisneat.core._client import NeatClient
+from thisisneat.core._client._api.data_modeling_loaders import MultiCogniteAPIError
+from thisisneat.core._client.data_classes.schema import DMSSchema
 
 
 @pytest.fixture(scope="session")

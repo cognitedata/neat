@@ -25,8 +25,8 @@ More details: https://github.com/oxigraph/oxigraph/tree/main/cli
 
 
 ```
-from cognite.neat.core._store import NeatGraphStore
-from cognite.neat import NeatSession
+from thisisneat.core._store import NeatGraphStore
+from thisisneat import NeatSession
 
 
 # Assumes that the server runs on localhost port 7878

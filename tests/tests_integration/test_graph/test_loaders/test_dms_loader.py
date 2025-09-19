@@ -4,13 +4,13 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from rdflib import RDF
 
-from cognite.neat import NeatSession
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._data_model.importers import InferenceImporter
-from cognite.neat.core._instances.loaders import DMSLoader
-from cognite.neat.core._store import NeatInstanceStore
 from tests.data import GraphData
+from thisisneat import NeatSession
+from thisisneat.core._client import NeatClient
+from thisisneat.core._constants import DEFAULT_NAMESPACE
+from thisisneat.core._data_model.importers import InferenceImporter
+from thisisneat.core._instances.loaders import DMSLoader
+from thisisneat.core._store import NeatInstanceStore
 
 
 @pytest.fixture()

@@ -1,13 +1,13 @@
 from cognite.client.data_classes import FileMetadataList, TimeSeriesList
 from cognite.client.data_classes.data_modeling import NodeId
 
-from cognite.neat import NeatSession
-from cognite.neat.core._client.testing import monkeypatch_neat_client
-from cognite.neat.core._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
-from cognite.neat.core._issues import NeatIssue
-from cognite.neat.core._issues.warnings import NeatValueWarning
 from tests.data import InstanceData
+from thisisneat import NeatSession
+from thisisneat.core._client.testing import monkeypatch_neat_client
+from thisisneat.core._constants import CLASSIC_CDF_NAMESPACE
+from thisisneat.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
+from thisisneat.core._issues import NeatIssue
+from thisisneat.core._issues.warnings import NeatValueWarning
 
 
 class TestReadClassicTimeSeries:

@@ -1,9 +1,9 @@
-from cognite.neat.core._data_model.analysis import DataModelAnalysis
-from cognite.neat.core._data_model.importers import InferenceImporter
-from cognite.neat.core._instances.examples import nordic44_knowledge_graph
-from cognite.neat.core._instances.extractors import RdfFileExtractor
-from cognite.neat.core._instances.transformers._value_type import SplitMultiValueProperty
-from cognite.neat.core._store import NeatInstanceStore
+from thisisneat.core._data_model.analysis import DataModelAnalysis
+from thisisneat.core._data_model.importers import InferenceImporter
+from thisisneat.core._instances.examples import nordic44_knowledge_graph
+from thisisneat.core._instances.extractors import RdfFileExtractor
+from thisisneat.core._instances.transformers._value_type import SplitMultiValueProperty
+from thisisneat.core._store import NeatInstanceStore
 
 
 def test_split_multi_value_property():

@@ -13,11 +13,11 @@ from cognite.client.data_classes.data_modeling import (
 )
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
-from cognite.neat.core._constants import COGNITE_SPACES
-from cognite.neat.core._data_model.models.entities import ContainerEntity
-from cognite.neat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 from tests.data import GraphData, SchemaData
+from thisisneat import NeatSession
+from thisisneat.core._constants import COGNITE_SPACES
+from thisisneat.core._data_model.models.entities import ContainerEntity
+from thisisneat.core._instances.loaders import DMSLoader, InstanceSpaceLoader
 
 RESERVED_PROPERTIES = frozenset(
     {

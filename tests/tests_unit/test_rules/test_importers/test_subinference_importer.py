@@ -1,9 +1,9 @@
 import yaml
 
-from cognite.neat import NeatSession
-from cognite.neat.core._data_model.catalog import classic_model
-from cognite.neat.core._instances.extractors import AssetsExtractor
 from tests.data import InstanceData
+from thisisneat import NeatSession
+from thisisneat.core._data_model.catalog import classic_model
+from thisisneat.core._instances.extractors import AssetsExtractor
 
 
 class TestSubInferenceImporter:
