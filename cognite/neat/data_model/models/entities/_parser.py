@@ -48,6 +48,28 @@ def parse_entity(entity_string: str) -> tuple[str, str, dict[str, str]]:
             pos += 1
         return entity_string[start:pos].strip()
 
+    def parse_property_value() -> str:
+        """Parse a property value, handling nested parentheses"""
+        nonlocal pos
+        start = pos
+        paren_depth = 0
+
+        while pos < length:
+            char = entity_string[pos]
+            if char == "(":
+                paren_depth += 1
+            elif char == ")":
+                if paren_depth == 0:
+                    # This is the closing paren of the properties section
+                    break
+                paren_depth -= 1
+            elif char == "," and paren_depth == 0:
+                # This is a property separator, not part of the value
+                break
+            pos += 1
+
+        return entity_string[start:pos].strip()
+
     def parse_properties() -> dict[str, str]:
         """Parse properties within parentheses"""
         nonlocal pos
@@ -75,8 +97,8 @@ def parse_entity(entity_string: str) -> tuple[str, str, dict[str, str]]:
 
             skip_whitespace()
 
-            # Parse property value
-            prop_value = parse_identifier()
+            # Parse property value (now handles complex values)
+            prop_value = parse_property_value()
 
             properties[prop_name] = prop_value
 
