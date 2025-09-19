@@ -123,8 +123,7 @@ class EntityParser:
         """Parse the entity string and return prefix, suffix, and properties.
 
         Returns:
-            A tuple containing the prefix (or empty string if not present),
-            the suffix, and a dictionary of properties.
+            A `ParsedEntity` object containing the parsed components of the entity string.
         """
         if not self.entity_string:
             return ParsedEntity(prefix="", suffix="", properties={})
@@ -160,8 +159,7 @@ def parse_entity(entity_string: str) -> ParsedEntity:
         or "suffix(prop1=val1,prop2=val2)" or just "suffix".
 
     Returns:
-        tuple[str, str, dict[str, str]]: A tuple containing the prefix (or an empty string if not present),
-            the suffix, and a dictionary of properties.
+        A `ParsedEntity` object containing the parsed components of the entity string.
     """
     parser = EntityParser(entity_string)
     return parser.parse()
