@@ -1,3 +1,3 @@
-from ._parser import parse_entity
+from ._parser import ParsedEntity, parse_entity
 
-__all__ = ["parse_entity"]
+__all__ = ["ParsedEntity", "parse_entity"]

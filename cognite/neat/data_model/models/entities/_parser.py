@@ -1,3 +1,15 @@
+from dataclasses import dataclass
+
+
+@dataclass
+class ParsedEntity:
+    """Represents a parsed entity string."""
+
+    prefix: str
+    suffix: str
+    properties: dict[str, str]
+
+
 class EntityParser:
     """A parser for entity strings in the format 'prefix:suffix(prop1=val1,prop2=val2)'."""
 
@@ -107,7 +119,7 @@ class EntityParser:
 
         return properties
 
-    def parse(self) -> tuple[str, str, dict[str, str]]:
+    def parse(self) -> ParsedEntity:
         """Parse the entity string and return prefix, suffix, and properties.
 
         Returns:
@@ -115,7 +127,7 @@ class EntityParser:
             the suffix, and a dictionary of properties.
         """
         if not self.entity_string:
-            return "", "", {}
+            return ParsedEntity(prefix="", suffix="", properties={})
 
         # Parse the main identifier (could be prefix:suffix or just suffix)
         main_id = self.parse_identifier()
@@ -137,10 +149,10 @@ class EntityParser:
         if self.peek() == "(":
             properties = self.parse_properties()
 
-        return prefix, suffix, properties
+        return ParsedEntity(prefix, suffix, properties)
 
 
-def parse_entity(entity_string: str) -> tuple[str, str, dict[str, str]]:
+def parse_entity(entity_string: str) -> ParsedEntity:
     """Parse an entity string into its prefix, suffix, and properties.
 
     Args:
