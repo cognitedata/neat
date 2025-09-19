@@ -30,6 +30,20 @@ class TestEntityParser:
                 {"unit": "si:C(m3/s)", "maxPressure": "5000"},
                 id="Entity with complex property values",
             ),
+            pytest.param(
+                "MyAsset(type=storage)",
+                "",
+                "MyAsset",
+                {"type": "storage"},
+                id="Entity without prefix but with properties",
+            ),
+            pytest.param(
+                "",
+                "",
+                "",
+                {},
+                id="Empty entity string",
+            ),
         ],
     )
     def test_parse_entity(self, entity_str: str, prefix: str, suffix: str, properties: dict[str, str]) -> None:
