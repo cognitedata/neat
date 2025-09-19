@@ -1,15 +1,11 @@
 from functools import total_ordering
-from typing import Any, ClassVar, TypeVar
+from typing import Any
 
 from cognite.client.data_classes.data_modeling.data_types import UnitReference
 from pydantic import (
     BaseModel,
     field_validator,
     model_serializer,
-)
-
-from cognite.neat.data_model._constants import (
-    EntityTypes,
 )
 
 from ._constants import (
@@ -24,7 +20,6 @@ from ._constants import (
 class ConceptualEntity(BaseModel, extra="ignore"):
     """Conceptual Entity is a concept, class or property in semantics sense."""
 
-    type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: str | _UndefinedType = Undefined
     suffix: str
 
@@ -39,9 +34,6 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         elif isinstance(value, list):
             return [entry.strip() if isinstance(entry, str) else entry for entry in value]
         return value
-
-    def dump(self, **defaults: Any) -> str:
-        return self._as_str(**defaults)
 
     def as_tuple(self) -> tuple[str, ...]:
         # We haver overwritten the serialization to str, so we need to do it manually
@@ -71,68 +63,37 @@ class ConceptualEntity(BaseModel, extra="ignore"):
         return hash(str(self))
 
     def __str__(self) -> str:
-        return self.id
+        # We have overwritten the serialization to str, so we need to do it manually
+        model_dump = {k: v for k in self.model_fields if (v := getattr(self, k)) is not None}
+
+        # there are three cases to process model_dump:
+        # 1. only suffix is present -> return str(suffix)
+        # 2. prefix and suffix are present -> return "prefix:suffix"
+        # 3. prefix, suffix and other fields are present -> return "prefix:suffix(field1=value1,field2=value2)"
+
+        base_str = f"{self.prefix}:{self.suffix}" if not isinstance(self.prefix, _UndefinedType) else str(self.suffix)
+
+        # Get extra fields (excluding prefix and suffix)
+        extra_fields = {k: v for k, v in model_dump.items() if k not in {"prefix", "suffix"}}
+
+        if extra_fields:
+            extra_str = ",".join([f"{k}={v}" for k, v in extra_fields.items()])
+            return f"{base_str}({extra_str})"
+        else:
+            return base_str
 
     def __repr__(self) -> str:
         # We have overwritten the serialization to str, so we need to do it manually
-        model_dump = ((k, v) for k in self.model_fields if (v := getattr(self, k)) is not None)
-        args = ",".join([f"{k}={v}" for k, v in model_dump])
-        return f"{self.type_.value}({args})"
-
-    @property
-    def id(self) -> str:
-        return self._as_str()
-
-    def _as_str(self, **defaults: Any) -> str:
-        # We have overwritten the serialization to str, so we need to do it manually
-        model_dump = {
-            field.alias or field_name: v.dump(**defaults) if isinstance(v, ConceptualEntity) else v
-            for field_name, field in self.model_fields.items()
-            if (v := getattr(self, field_name)) is not None and field_name not in {"prefix", "suffix"}
-        }
-        # We only remove the default values if all the fields are default
-        # For example, if we dump `cdf_cdm:CogniteAsset(version=v1)` and the default is `version=v1`,
-        # we should not remove it unless the space is `cdf_cdm`
-        to_delete: list[str] = []
-        is_removing_defaults = True
-        if isinstance(defaults, dict):
-            for key, value in defaults.items():
-                if key not in model_dump:
-                    continue
-                if model_dump[key] == value:
-                    to_delete.append(key)
-                else:
-                    # Not all fields are default. We should not remove any of them.
-                    is_removing_defaults = False
-                    break
-        if isinstance(defaults, dict) and self.prefix == defaults.get("prefix") and is_removing_defaults:
-            base_id = str(self.suffix)
-        elif self.prefix == Undefined:
-            base_id = str(self.suffix)
-        else:
-            is_removing_defaults = False
-            base_id = f"{self.prefix}:{self.suffix!s}"
-        if is_removing_defaults:
-            for key in to_delete:
-                del model_dump[key]
-        # Sorting to ensure deterministic order
-        args = ",".join(f"{k}={v}" for k, v in sorted(model_dump.items(), key=lambda x: x[0]))
-        if args:
-            return f"{base_id}({args})"
-        else:
-            return base_id
-
-
-T_Entity = TypeVar("T_Entity", bound=ConceptualEntity)
+        model_dump = {k: v for k in self.model_fields if (v := getattr(self, k)) is not None}
+        args = ",".join([f"{k}={v!r}" for k, v in model_dump.items()])
+        return f"{type(self).__name__}({args})"
 
 
 class ConceptEntity(ConceptualEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.concept
     version: str | None = None
 
 
 class UnknownEntity(ConceptEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.undefined
     prefix: _UndefinedType = Undefined
     suffix: _UnknownType = Unknown  # type: ignore[assignment]
 
@@ -142,7 +103,6 @@ class UnknownEntity(ConceptEntity):
 
 
 class UnitEntity(ConceptualEntity):
-    type_: ClassVar[EntityTypes] = EntityTypes.unit
     prefix: str
     suffix: str
 

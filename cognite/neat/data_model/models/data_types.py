@@ -6,10 +6,9 @@ from typing import Any, ClassVar
 
 from cognite.client.data_classes import data_modeling as dms
 from cognite.client.data_classes.data_modeling.data_types import Enum as DMSEnum
-from pydantic import BaseModel, Field, model_serializer, model_validator
-from pydantic.functional_validators import ModelWrapValidatorHandler
+from pydantic import BaseModel, Field, model_serializer
 
-from cognite.neat.data_model._constants import SPLIT_ON_COMMA_PATTERN, SPLIT_ON_EQUAL_PATTERN, XML_SCHEMA_NAMESPACE
+from cognite.neat.data_model._constants import XML_SCHEMA_NAMESPACE
 from cognite.neat.data_model._identifiers import URI
 from cognite.neat.data_model.models.entities import (
     ConceptEntity,
