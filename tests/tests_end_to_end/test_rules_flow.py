@@ -31,7 +31,7 @@ class TestImportersToYAMLExporter:
     def test_excel_importer_to_yaml_new_endpoint(self, data_regression: DataRegressionFixture) -> None:
         neat = NeatSession(verbose=False)
 
-        neat.data_model.read.excel(DOC_RULES / "information-architect-david.xlsx")
+        neat.conceptual_data_model.read.excel(DOC_RULES / "information-architect-david.xlsx")
 
         neat.convert()
 
@@ -60,7 +60,7 @@ class TestImportersToYAMLExporter:
     def test_prohibiting_conversion_with_nice_message_new_endpoint(self) -> None:
         neat = NeatSession()
 
-        neat.data_model.read.ontology(SchemaData.Conceptual.ontology_with_regex_warnings)
+        neat.conceptual_data_model.read.ontology(SchemaData.Conceptual.ontology_with_regex_warnings)
 
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
