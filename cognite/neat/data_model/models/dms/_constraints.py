@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -6,7 +7,7 @@ from ._base import BaseModelObject
 from ._references import ContainerReference
 
 
-class ConstraintDefinition(BaseModelObject):
+class ConstraintDefinition(BaseModelObject, ABC):
     constraint_type: str
 
 

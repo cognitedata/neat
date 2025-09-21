@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
@@ -9,11 +10,11 @@ from ._constants import ENUM_VALUE_IDENTIFIER_PATTERN, FORBIDDEN_ENUM_VALUES, IN
 from ._references import ContainerReference
 
 
-class PropertyTypeDefinition(BaseModelObject):
+class PropertyTypeDefinition(BaseModelObject, ABC):
     type: str
 
 
-class ListablePropertyTypeDefinition(PropertyTypeDefinition):
+class ListablePropertyTypeDefinition(PropertyTypeDefinition, ABC):
     list: bool | None = Field(
         default=None,
         description="Specifies that the data type is a list of values.",
@@ -49,7 +50,7 @@ class Unit(BaseModelObject):
     )
 
 
-class FloatPrimitiveProperty(ListablePropertyTypeDefinition):
+class FloatPrimitiveProperty(ListablePropertyTypeDefinition, ABC):
     unit: Unit | None = Field(default=None, description="The unit of the data stored in this property")
 
 

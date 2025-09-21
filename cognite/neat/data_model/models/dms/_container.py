@@ -1,4 +1,5 @@
 import re
+from abc import ABC
 from typing import Any, Literal
 
 from pydantic import Field, field_validator
@@ -50,7 +51,7 @@ class ContainerPropertyDefinition(BaseModelObject):
     type: DataType = Field(description="The type of data you can store in this property.")
 
 
-class Container(WriteableResource["ContainerRequest"]):
+class Container(WriteableResource["ContainerRequest"], ABC):
     space: str = Field(
         description="The workspace for the container, a unique identifier for the space.",
         min_length=1,
@@ -91,9 +92,11 @@ class Container(WriteableResource["ContainerRequest"]):
         max_length=10,
     )
 
-    @field_validator("indexes", "constraints")
-    def validate_key_length(cls, val: dict[str, Any], info: ValidationInfo) -> dict[str, Any]:
+    @field_validator("indexes", "constraints", mode="after")
+    def validate_key_length(cls, val: dict[str, Any] | None, info: ValidationInfo) -> dict[str, Any] | None:
         """Validate keys"""
+        if not isinstance(val, dict):
+            return val
         invalid_keys = {key for key in val.keys() if not (1 <= len(key) <= 43)}
         if invalid_keys:
             raise ValueError(

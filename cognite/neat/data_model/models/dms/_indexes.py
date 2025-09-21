@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -5,7 +6,7 @@ from pydantic import Field
 from ._base import BaseModelObject
 
 
-class IndexDefinition(BaseModelObject):
+class IndexDefinition(BaseModelObject, ABC):
     index_type: str
     properties: list[str] = Field(description="List of properties to define the index across.")
 
@@ -22,4 +23,4 @@ class InvertedIndex(IndexDefinition):
     index_type: Literal["inverted"] = "inverted"
 
 
-Index = Annotated[BtreeIndex | InvertedIndex, Field(discriminator="type")]
+Index = Annotated[BtreeIndex | InvertedIndex, Field(discriminator="index_type")]
