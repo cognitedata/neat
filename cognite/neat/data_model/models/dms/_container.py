@@ -16,7 +16,7 @@ from ._constants import (
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
 
 
-class Container(WriteableResource):
+class Container(WriteableResource["ContainerRequest"]):
     space: str = Field(
         description="The workspace for the container, a unique identifier for the space.",
         min_length=1,
@@ -55,9 +55,7 @@ class Container(WriteableResource):
         return val
 
     def as_request(self) -> "ContainerRequest":
-        return ContainerRequest.model_validate(
-            self.model_dump(by_alias=True, exclude={"created_time", "last_updated_time", "is_global"})
-        )
+        return ContainerRequest.model_validate(self.model_dump(by_alias=True))
 
 
 class ContainerResponse(Container):
