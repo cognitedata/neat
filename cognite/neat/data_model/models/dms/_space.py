@@ -8,7 +8,7 @@ from ._base import WriteableResource
 from ._constants import FORBIDDEN_SPACES, SPACE_FORMAT_PATTERN
 
 
-class Space(WriteableResource, ABC):
+class Space(WriteableResource["SpaceRequest"], ABC):
     space: str = Field(
         description="The Space identifier (id).",
         min_length=1,

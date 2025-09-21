@@ -135,6 +135,8 @@ disable_error_code = ["type-abstract"]
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
+# We use dynamic alias creation as much as possible. This is to ensure
+# all aliases are consistentenly camelCase.
 warn_required_dynamic_aliases = false
 
 [build-system]

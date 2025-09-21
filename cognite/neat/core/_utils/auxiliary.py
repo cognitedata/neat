@@ -191,7 +191,9 @@ def get_concrete_subclasses(base_cls: type[T_Cls], exclude_direct_abc_inheritanc
         for subclass in current_cls.__subclasses__():
             if subclass in seen:
                 continue
-            if (not inspect.isabstract(subclass)) and (not exclude_ABC_base or ABC not in subclass.__bases__):
+            if (not inspect.isabstract(subclass)) and (
+                not exclude_direct_abc_inheritance or ABC not in subclass.__bases__
+            ):
                 subclasses.append(subclass)
             seen.add(subclass)
             to_check.append(subclass)
