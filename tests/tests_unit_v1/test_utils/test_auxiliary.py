@@ -49,6 +49,13 @@ class MultiChild(Mixin1, Mixin2, GrandParent):
     def method(self) -> None:
         pass
 
+    def mixin_method(self) -> str:
+        return "Mixin method implementation"
+
+    @property
+    def mixin_property(self) -> str:
+        return "Mixin property implementation"
+
 
 class TestGetConcreteSubclasses:
     def test_get_concrete_subclasses(self) -> None:
