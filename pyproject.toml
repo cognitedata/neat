@@ -95,6 +95,7 @@ dev = [
     "tqdm>=4.67.1, <5",
     "deepdiff>=8.2.0, <9.0.0",
     "hypothesis>=6.135.0, <7.0.0",
+    "polyfactory>=2.22.2",
 ]
 
 [tool.uv]
