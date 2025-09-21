@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from cognite.neat.core._utils.text import to_camel_case
 
 
-class BaseModelObject(BaseModel, alias_generator=to_camel_case, extra="forbid"):
+class BaseModelObject(BaseModel, alias_generator=to_camel_case, extra="ignore"):
     """Base class for all object. This includes resources and nested objects."""
 
     ...
