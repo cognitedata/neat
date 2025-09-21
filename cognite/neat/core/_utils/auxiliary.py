@@ -173,13 +173,13 @@ def filter_kwargs_by_method(kwargs: dict[str, Any], method: Callable) -> dict[st
 T_Cls = TypeVar("T_Cls")
 
 
-def get_concrete_subclasses(base_cls: type[T_Cls], exclude_ABC_base: bool = True) -> list[type[T_Cls]]:
+def get_concrete_subclasses(base_cls: type[T_Cls], exclude_direct_abc_inheritance: bool = True) -> list[type[T_Cls]]:
     """
     Returns a list of all concrete subclasses of the given base class.
     Args:
         base_cls (type[T_Cls]): The base class to find subclasses for.
-        exclude_ABC_base (bool): If True, excludes subclasses of ABC base classes.
-            Defaults to True.
+        exclude_direct_abc_inheritance (bool): If True, excludes classes that directly inherit from `abc.ABC`.
+            This is used as a marker to filter out intermediate base classes. Defaults to True.
     Returns:
         list[type[T_Cls]]: A list of concrete subclasses of the base class.
     """
