@@ -22,7 +22,4 @@ class InvertedIndex(IndexDefinition):
     index_type: Literal["inverted"] = "inverted"
 
 
-Index = Annotated[
-    BtreeIndex | InvertedIndex,
-    Field(discriminator="type"),
-]
+Index = Annotated[BtreeIndex | InvertedIndex, Field(discriminator="type")]
