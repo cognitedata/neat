@@ -11,7 +11,12 @@ from typing import Any
 
 from cognite.client.exceptions import CogniteDuplicatedError, CogniteReadTimeout
 
+from cognite.neat import _version
 from cognite.neat.core._issues.errors._general import NeatImportError
+
+
+def get_current_neat_version() -> str:
+    return _version.__version__
 
 
 def local_import(module: str, extra: str) -> ModuleType:
