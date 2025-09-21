@@ -125,8 +125,8 @@ class EnumProperty(PropertyTypeDefinition):
     unknown_value: str | None = Field(
         default=None,
         description="TThe value to use when the enum value is unknown. This can optionally be used to "
-        "provide forward-compatibility, Specifying what value to use if the client does not r"
-        "ecognize the returned value. It is not possible to ingest the unknown value, "
+        "provide forward-compatibility, Specifying what value to use if the client does not "
+        "recognize the returned value. It is not possible to ingest the unknown value, "
         "but it must be part of the allowed values.",
     )
     values: dict[str, EnumValue] = Field(

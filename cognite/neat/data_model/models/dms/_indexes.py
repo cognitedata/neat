@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field
 
@@ -20,3 +20,9 @@ class BtreeIndex(IndexDefinition):
 
 class InvertedIndex(IndexDefinition):
     index_type: Literal["inverted"] = "inverted"
+
+
+Index = Annotated[
+    BtreeIndex | InvertedIndex,
+    Field(discriminator="type"),
+]
