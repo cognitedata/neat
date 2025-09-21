@@ -26,9 +26,7 @@ class Space(WriteableResource["SpaceRequest"], ABC):
         return val
 
     def as_request(self) -> "SpaceRequest":
-        return SpaceRequest.model_validate(
-            self.model_dump(by_alias=True, exclude={"created_time", "last_updated_time", "is_global"})
-        )
+        return SpaceRequest.model_validate(self.model_dump(by_alias=True))
 
 
 class SpaceResponse(Space):
