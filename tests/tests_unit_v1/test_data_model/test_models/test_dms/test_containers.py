@@ -1,4 +1,4 @@
-from typing import get_args
+from typing import Any, get_args
 
 from cognite.neat._data_model.models.dms import (
     Constraint,
@@ -40,3 +40,8 @@ def test_all_property_types_are_in_union() -> None:
         f"The following PropertyTypeDefinition subclasses are "
         f"missing from the DataType union: {humanize_collection([cls.__name__ for cls in missing])}"
     )
+
+
+class TestContainerRequest:
+    def test_invalid_container_definition(self, data: dict[str, Any], expected_errors: set[str]) -> None:
+        raise NotImplementedError("in progress")
