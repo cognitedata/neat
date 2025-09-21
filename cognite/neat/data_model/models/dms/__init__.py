@@ -1,6 +1,6 @@
 from ._base import Resource, WriteableResource
-from ._constraints import Constraint, RequiresConstraintDefinition, UniquenessConstraintDefinition
-from ._container import Container, ContainerPropertyDefinition, ContainerRequest
+from ._constraints import Constraint, ConstraintDefinition, RequiresConstraintDefinition, UniquenessConstraintDefinition
+from ._container import Container, ContainerPropertyDefinition, ContainerRequest, ContainerResponse
 from ._data_types import (
     BooleanPrimitiveProperty,
     DataType,
@@ -19,16 +19,18 @@ from ._data_types import (
     TimeseriesCDFExternalIdReference,
     TimestampPrimitiveProperty,
 )
-from ._indexes import BtreeIndex, Index, InvertedIndex
+from ._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
 from ._space import Space, SpaceRequest, SpaceResponse
 
 __all__ = [
     "BooleanPrimitiveProperty",
     "BtreeIndex",
     "Constraint",
+    "ConstraintDefinition",
     "Container",
     "ContainerPropertyDefinition",
     "ContainerRequest",
+    "ContainerResponse",
     "DataType",
     "DatePrimitiveProperty",
     "DirectNodeRelation",
@@ -36,6 +38,7 @@ __all__ = [
     "FileCDFExternalIdReference",
     "FloatPrimitiveProperty",
     "Index",
+    "IndexDefinition",
     "Int32PrimitiveProperty",
     "Int64PrimitiveProperty",
     "InvertedIndex",
