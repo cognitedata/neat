@@ -6,7 +6,7 @@ from cognite.neat.data_model.models.dms import Resource, WriteableResource
 
 
 def all_concrete_resources() -> list[type[WriteableResource]]:
-    return get_concrete_subclasses(WriteableResource, exclude_ABC_base=True)  # type: ignore[type-abstract]
+    return get_concrete_subclasses(WriteableResource, exclude_ABC_base=True)
 
 
 class TestAsRequest:

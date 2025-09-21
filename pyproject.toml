@@ -127,7 +127,10 @@ allow_redefinition = true
 namespace_packages = true
 show_error_codes = true
 plugins = ["pydantic.mypy"]
-
+# We use reflection a lot in this codebace, and mypy does not understand that
+# finding all subclasses of an abstract class gives you concrete implementations.
+# Thus, we disable the type-abstract error.
+disable_error_code = ["type-abstract"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
