@@ -127,7 +127,7 @@ allow_redefinition = true
 namespace_packages = true
 show_error_codes = true
 plugins = ["pydantic.mypy"]
-exclude = ["tests/*"]
+
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
