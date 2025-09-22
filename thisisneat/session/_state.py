@@ -4,6 +4,7 @@ from typing import Literal, cast
 from rdflib import URIRef
 
 from thisisneat.core._client import NeatClient
+from thisisneat.core._data_model.analysis._base import DataModelAnalysis
 from thisisneat.core._data_model.importers import BaseImporter, InferenceImporter
 from thisisneat.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from thisisneat.core._data_model.models.conceptual._validation import ConceptualValidation
@@ -75,18 +76,28 @@ class SessionState:
         client_required: bool = False,
         has_conceptual_data_model: bool | None = None,
         can_convert_to_physical_data_model: bool = False,
+        multi_value_type_properties_allowed: bool = False,
+        unknown_value_type_properties_allowed: bool = False,
         has_physical_data_model: bool | None = None,
     ) -> None:
         """Set conditions for raising an error in the session that are used by various methods in the session."""
         condition = set()
-        suggestion = set()
         try_again = True
         if client_required and not self.client:
-            condition.add(f"{activity} expects a client in NEAT session")
-            suggestion.add("Please provide a client")
+            condition.add(
+                (
+                    f"{activity} expects a client in NEAT session",
+                    "Please provide a client",
+                )
+            )
         if has_conceptual_data_model is True and self.data_model_store.try_get_last_conceptual_data_model is None:
-            condition.add(f"{activity} expects conceptual data model in NEAT session")
-            suggestion.add("Read in conceptual data model to neat session")
+            condition.add(
+                (
+                    f"{activity} expects conceptual data model in NEAT session",
+                    "Read in conceptual data model to neat session",
+                )
+            )
+
         if (
             can_convert_to_physical_data_model is True
             and (conceptual_model := self.data_model_store.try_get_last_conceptual_data_model)
@@ -94,28 +105,74 @@ class SessionState:
             .validate()
             .has_warning_type(ConversionToPhysicalModelImpossibleWarning)
         ):
-            condition.add(f"{activity} expects conceptual data model that can be converted to physical data model")
-            suggestion.add(
-                "Read in conceptual data model and ensure that warnings that prevent conversion are resolved"
+            condition.add(
+                (
+                    f"{activity} expects conceptual data model that can be converted to physical data model",
+                    "Read in conceptual data model and ensure that warnings that prevent conversion are resolved",
+                )
             )
         if has_physical_data_model is False and self.data_model_store.try_get_last_physical_data_model is not None:
-            condition.add(f"{activity} expects no physical data model in NEAT session")
-            suggestion.add("You already have a physical data model in the session")
+            condition.add(
+                (
+                    f"{activity} expects no physical data model in NEAT session",
+                    "You already have a physical data model in the session",
+                )
+            )
             try_again = False
         if empty_data_model_store_required and not self.data_model_store.empty:
-            condition.add(f"{activity} expects no data model in NEAT session")
-            suggestion.add("Start new session")
+            condition.add(
+                (
+                    f"{activity} expects no data model in NEAT session",
+                    "Start new session",
+                )
+            )
         if empty_instances_store_required and not self.instances.empty:
-            condition.add(f"{activity} expects no instances in NEAT session")
-            suggestion.add("Start new session")
+            condition.add(
+                (
+                    f"{activity} expects no instances in NEAT session",
+                    "Start new session",
+                )
+            )
         if instances_required and self.instances.empty:
-            condition.add(f"{activity} expects instances in NEAT session")
-            suggestion.add("Read in instances to neat session")
-
+            condition.add(
+                (
+                    f"{activity} expects instances in NEAT session",
+                    "Read in instances to neat session",
+                )
+            )
+        if (
+            not multi_value_type_properties_allowed
+            and (conceptual_model := self.data_model_store.try_get_last_conceptual_data_model)
+            and DataModelAnalysis(conceptual_model).multi_value_properties
+        ):
+            condition.add(
+                (
+                    f"{activity} expects no multi-value type properties in data model",
+                    "Export data model, and force single value type properties",
+                )
+            )
+        if (
+            not unknown_value_type_properties_allowed
+            and (conceptual_model := self.data_model_store.try_get_last_conceptual_data_model)
+            and DataModelAnalysis(conceptual_model).unknown_value_properties
+        ):
+            condition.add(
+                (
+                    f"{activity} expects properties to have defined value types in data model",
+                    "Export data model, and either define value types or remove properties",
+                )
+            )
         if condition:
-            message = ". ".join(condition) + ". " + ". ".join(suggestion) + "."
+            message = ""
+
+            for reason, suggestion in condition:
+                message += f"\nReason: {reason}"
+
+                message += f"\nSuggestion: {suggestion}"
+                message += "\n"
             if try_again:
-                message += " And try again."
+                message += "\nAnd try again."
+
             raise NeatSessionError(message)
 
 

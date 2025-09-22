@@ -113,5 +113,9 @@ class ValidateAPI:
         If None, neat should generate shacl shapes out of conpceptual data model in the session.
         and then validate against the instances in the graph store.
 
+        Conversion to shacl shapes should always aim at using instance source as
+        first choice when comes to the actual URI of the class to which shapes relates
+        to...
+
         """
         return None

@@ -454,6 +454,10 @@ class DataModelAnalysis:
         return [prop_ for prop_ in self.conceptual.properties if isinstance(prop_.value_type, MultiValueTypeInfo)]
 
     @property
+    def unknown_value_properties(self) -> list[ConceptualProperty]:
+        return [prop_ for prop_ in self.conceptual.properties if isinstance(prop_.value_type, UnknownEntity)]
+
+    @property
     def view_query_by_id(
         self,
     ) -> "ViewQueryDict":

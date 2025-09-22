@@ -33,6 +33,7 @@ dependencies = [
     "backports.strenum >=1.2, <2.0.0; python_version < '3.11'",
     "typing_extensions>=4.8.0, <5.0.0; python_version < '3.11'",
     "tomli>=2.0.1, <3.0.0; python_version < '3.11'",
+    "pyshacl>=0.30.1",
 ]
 [project.optional-dependencies]
 lxml = [

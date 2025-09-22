@@ -41,7 +41,7 @@ from ._template import TemplateAPI
 from ._to import ToAPI
 from .engine import load_neat_engine
 from .exceptions import session_class_wrapper
-from .new_session import ConceptualDataModelAPI
+from .new_session import ConceptualDataModelAPI, InstancesAPI
 
 
 @session_class_wrapper
@@ -118,6 +118,7 @@ class NeatSession:
 
         # new API for data model operations
         self.conceptual_data_model = ConceptualDataModelAPI(self._state)
+        self.instances = InstancesAPI(self._state)
 
     def _select_most_performant_store(self) -> Literal["memory", "oxigraph"]:
         """Select the most performant store based on the current environment."""

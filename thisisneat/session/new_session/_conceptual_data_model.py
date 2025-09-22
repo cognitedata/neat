@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import networkx as nx
+from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import DataModelIdentifier
 from IPython.display import HTML, display
 from pyvis.network import Network as PyVisNetwork  # type: ignore
@@ -18,8 +19,18 @@ from thisisneat.core._data_model.models.physical._verified import (
     PhysicalDataModel,
     PhysicalMetadata,
 )
+from thisisneat.core._data_model.transformers._converters import (
+    ConceptualToPhysical,
+    MergeConceptualDataModels,
+    MergePhysicalDataModels,
+    ToDMSCompliantEntities,
+)
+from thisisneat.core._data_model.transformers._verification import (
+    VerifyConceptualDataModel,
+)
 from thisisneat.core._issues._base import IssueList
 from thisisneat.core._issues._contextmanagers import catch_issues
+from thisisneat.core._store._data_model import DataModelEntity
 from thisisneat.core._utils.io_ import to_directory_compatible
 from thisisneat.core._utils.rdf_ import uri_display_name
 from thisisneat.core._utils.reader._base import NeatReader
@@ -46,13 +57,96 @@ class ConceptualDataModelAPI:
 
     def _repr_html_(self) -> str:
         if conceptual := self._state.data_model_store.try_get_last_conceptual_data_model:
-            return "<strong>No conceptual data model</strong>."
+            output = []
+            html = cast(ConceptualDataModel, conceptual)._repr_html_()
+            output.append(f"<H2>Data Model</H2><br />{html}")
 
-        output = []
-        html = cast(ConceptualDataModel, conceptual)._repr_html_()
-        output.append(f"<H2>Data Model</H2><br />{html}")
+            return "<br />".join(output)
 
-        return "<br />".join(output)
+        return "<strong>No conceptual data model</strong>."
+
+    def infer(
+        self,
+        model_id: dm.DataModelId | tuple[str, str, str] = (
+            "neat_space",
+            "NeatInferredDataModel",
+            "v1",
+        ),
+    ) -> IssueList:
+        """Data model inference from instances.
+
+        Args:
+            model_id: The ID of the inferred data model.
+
+        Example:
+            Infer a data model after reading a source file
+            ```python
+            # From an active NeatSession
+            ...
+            neat.read.xml.dexpi("url_or_path_to_dexpi_file")
+            neat.infer()
+            ```
+        """
+        self._state._raise_exception_if_condition_not_met("Data model inference", instances_required=True)
+        return self._infer_subclasses(model_id)
+
+    def _previous_inference(
+        self,
+        model_id: dm.DataModelId | tuple[str, str, str],
+        max_number_of_instance: int = 100,
+    ) -> IssueList:
+        # Temporary keeping the old inference method in case we need to revert back
+        model_id = dm.DataModelId.load(model_id)
+        importer = importers.InferenceImporter.from_graph_store(
+            store=self._state.instances.store,
+            max_number_of_instance=max_number_of_instance,
+            data_model_id=model_id,
+        )
+        return self._state.data_model_import(importer)
+
+    def _infer_subclasses(
+        self,
+        model_id: dm.DataModelId | tuple[str, str, str] = (
+            "neat_space",
+            "NeatInferredDataModel",
+            "v1",
+        ),
+    ) -> IssueList:
+        """Infer data model from instances."""
+        last_entity: DataModelEntity | None = None
+        if self._state.data_model_store.provenance:
+            last_entity = self._state.data_model_store.provenance[-1].target_entity
+
+        # Note that this importer behaves as a transformer in the data model store when there
+        # is an existing data model.
+        # We are essentially transforming the last entity's conceptual data model
+        # into a new conceptual data model.
+        importer = importers.SubclassInferenceImporter(
+            issue_list=IssueList(),
+            graph=self._state.instances.store.graph(),
+            data_model=last_entity.conceptual if last_entity is not None else None,
+            data_model_id=(dm.DataModelId.load(model_id) if last_entity is None else None),
+        )
+
+        def action() -> tuple[ConceptualDataModel, PhysicalDataModel | None]:
+            unverified_conceptual = importer.to_data_model()
+            unverified_conceptual = ToDMSCompliantEntities(rename_warning="raise").transform(unverified_conceptual)
+
+            extra_conceptual = VerifyConceptualDataModel().transform(unverified_conceptual)
+            if not last_entity:
+                return extra_conceptual, None
+            merged_conceptual = MergeConceptualDataModels(extra_conceptual).transform(last_entity.conceptual)
+            if not last_entity.physical:
+                return merged_conceptual, None
+
+            extra_physical = ConceptualToPhysical(reserved_properties="warning", client=self._state.client).transform(
+                extra_conceptual
+            )
+
+            merged_physical = MergePhysicalDataModels(extra_physical).transform(last_entity.physical)
+            return merged_conceptual, merged_physical
+
+        return self._state.data_model_store.do_activity(action, importer)
 
 
 @session_class_wrapper
@@ -275,7 +369,7 @@ class WriteAPI:
         self._state.data_model_store.export_to_file(exporter, filepath)
         return None
 
-    def shacl(self, io: str | Path) -> None:
+    def shacl(self, io: str | Path | None = None) -> None | str:
         """Write out data model as SHACL shapes.
 
         Args:
@@ -283,8 +377,17 @@ class WriteAPI:
 
         """
 
-        filepath = self._prepare_ttl_filepath(io)
+        self._state._raise_exception_if_condition_not_met(
+            "SHACL Export",
+            has_conceptual_data_model=True,
+            multi_value_type_properties_allowed=False,
+            unknown_value_type_properties_allowed=False,
+        )
         exporter = exporters.SHACLExporter()
+
+        if io is None:
+            return self._state.data_model_store.export(exporter).serialize(format="turtle")
+        filepath = self._prepare_ttl_filepath(io)
         self._state.data_model_store.export_to_file(exporter, filepath)
         return None
 
