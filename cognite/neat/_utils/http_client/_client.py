@@ -21,8 +21,8 @@ from cognite.neat._utils.http_client._data_classes import (
     RequestMessage,
     ResponseMessage,
 )
+from cognite.neat._utils.useful_types import JsonVal
 from cognite.neat.core._utils.auxiliary import get_current_neat_version
-from cognite.neat.core._utils.useful_types import JsonVal
 
 if sys.version_info >= (3, 11):
     from typing import Self

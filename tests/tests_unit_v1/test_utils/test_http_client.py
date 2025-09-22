@@ -25,7 +25,7 @@ from cognite.neat._utils.http_client import (
     UnknownRequestItem,
     UnknownResponseItem,
 )
-from cognite.neat.core._utils.useful_types import JsonVal
+from cognite.neat._utils.useful_types import JsonVal
 
 BASE_URL = "http://my_cluster.cognitedata.com"
 

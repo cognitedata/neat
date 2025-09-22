@@ -6,7 +6,7 @@ from typing import Generic, Literal, TypeAlias
 import httpx
 
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
-from cognite.neat.core._utils.useful_types import T_ID, JsonVal
+from cognite.neat._utils.useful_types import T_ID, JsonVal
 
 StatusCode: TypeAlias = int
 
