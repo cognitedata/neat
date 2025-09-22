@@ -129,7 +129,6 @@ class ConceptualEntity(BaseModel, extra="ignore"):
 
     @model_validator(mode="before")
     def _load(cls, data: Any) -> "dict | ConceptualEntity":
-        print(f"Here {data}")
         defaults = {}
         if isinstance(data, dict) and _PARSE in data:
             defaults = data.get("defaults", {})
