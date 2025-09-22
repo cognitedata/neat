@@ -11,6 +11,7 @@ import httpx
 from cognite.client import ClientConfig, global_config
 from cognite.client.utils import _json
 
+from cognite.neat._utils.auxiliary import get_current_neat_version
 from cognite.neat._utils.http_client._config import get_user_agent
 from cognite.neat._utils.http_client._data_classes import (
     BodyRequest,
@@ -22,7 +23,6 @@ from cognite.neat._utils.http_client._data_classes import (
     ResponseMessage,
 )
 from cognite.neat._utils.useful_types import JsonVal
-from cognite.neat.core._utils.auxiliary import get_current_neat_version
 
 if sys.version_info >= (3, 11):
     from typing import Self

@@ -1,7 +1,7 @@
 import functools
 import platform
 
-from cognite.neat.core._utils.auxiliary import get_current_neat_version
+from cognite.neat._utils.auxiliary import get_current_neat_version
 
 
 @functools.lru_cache(maxsize=1)
