@@ -9,7 +9,7 @@ import respx
 from cognite.client import ClientConfig, global_config
 from cognite.client.credentials import Token
 
-from cognite.neat.core._utils.http_client import (
+from cognite.neat._utils.http_client import (
     FailedItem,
     FailedRequestItem,
     FailedRequestMessage,
