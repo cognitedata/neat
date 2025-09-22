@@ -10,8 +10,7 @@ from cognite.neat.core._issues._base import IssueList
 from cognite.neat.core._issues.errors._general import NeatValueError
 from cognite.neat.core._issues.warnings._general import MissingCogniteClientWarning
 from cognite.neat.core._utils.reader._base import NeatReader
-from cognite.neat.plugins._manager import get_plugin_manager
-from cognite.neat.plugins.data_model.importers._base import DataModelImporterPlugin
+from cognite.neat.plugins import DataModelImporterPlugin, get_plugin_manager
 from cognite.neat.session._state import SessionState
 from cognite.neat.session.exceptions import NeatSessionError, session_class_wrapper
 
