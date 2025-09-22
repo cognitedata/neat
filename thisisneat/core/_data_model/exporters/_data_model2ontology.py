@@ -162,11 +162,12 @@ class Constraints(_BaseConfig):
             An instance of Ontology.
         """
         analysis = DataModelAnalysis(data_model)
-        concept_by_suffix = analysis.concept_by_suffix()
+        concept_by_concept_entity = analysis.concept_by_concept_entity
         return cls(
             shapes=[
                 SHACLNodeShape.from_data_model(
-                    concept_by_suffix[str(concept.suffix)],
+                    concept_by_concept_entity[concept],
+                    concept_by_concept_entity,
                     list(properties.values()),
                     data_model.metadata.namespace,
                 )
@@ -175,10 +176,11 @@ class Constraints(_BaseConfig):
             + [
                 SHACLNodeShape.from_data_model(
                     concept,
+                    concept_by_concept_entity,
                     [],
                     data_model.metadata.namespace,
                 )
-                for concept in concept_by_suffix.values()
+                for concept in concept_by_concept_entity.values()
             ],
             metadata=OWLMetadata(**data_model.metadata.model_dump()),
             prefixes=data_model.prefixes,
@@ -558,6 +560,7 @@ class SHACLNodeShape(_BaseConfig):
     def from_data_model(
         cls,
         concept_definition: Concept,
+        concept_definitions: dict[ConceptEntity, Concept],
         property_definitions: list[ConceptualProperty],
         namespace: Namespace,
     ) -> "SHACLNodeShape":
@@ -569,7 +572,7 @@ class SHACLNodeShape(_BaseConfig):
             id_=namespace[f"{concept_definition.concept.suffix!s}Shape"],
             target_class=concept_definition.instance_source or namespace[str(concept_definition.concept.suffix)],
             parent=parent,
-            property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
+            property_shapes=[SHACLPropertyShape.from_property(prop, concept_definitions, namespace) for prop in property_definitions],
             namespace=namespace,
         )
 
@@ -595,7 +598,7 @@ class SHACLPropertyShape(_BaseConfig):
         if self.node_kind == SHACL.Literal:
             triples.append((self.id_, SHACL.datatype, self.expected_value_type))
         else:
-            triples.append((self.id_, SHACL.node, self.expected_value_type))
+            triples.append((self.id_, SHACL["class"], self.expected_value_type))
 
         return triples
 
@@ -614,10 +617,11 @@ class SHACLPropertyShape(_BaseConfig):
         return self.path_triples + self.node_kind_triples + self.cardinality_triples
 
     @classmethod
-    def from_property(cls, definition: ConceptualProperty, namespace: Namespace) -> "SHACLPropertyShape":
+    def from_property(cls, definition: ConceptualProperty, concepts:dict[ConceptEntity, Concept], namespace: Namespace) -> "SHACLPropertyShape":
         # TODO requires PR to fix MultiValueType and UnknownValueType
         if isinstance(definition.value_type, ConceptEntity):
-            expected_value_type = namespace[f"{definition.value_type.suffix}Shape"]
+            instance_uri = concept.instance_source if (concept:=concepts.get(definition.value_type, None)) else None
+            expected_value_type = namespace[f"{definition.value_type.suffix}"] if not instance_uri else instance_uri
         elif isinstance(definition.value_type, DataType):
             expected_value_type = XSD[definition.value_type.xsd]
         else:

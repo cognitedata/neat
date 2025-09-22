@@ -127,6 +127,7 @@ class NEAT(DefinedNamespace):
 
     UnknownType: URIRef  # Unknown type used to express that the type of a subject is unknown
     EmptyType: URIRef  # Empty type used to express that the type of a subject is empty
+    ValidationGraph: URIRef  # Empty type used to express that the type of a subject is empty
 
 
 def get_default_prefixes_and_namespaces() -> dict[str, Namespace]:

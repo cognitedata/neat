@@ -41,7 +41,7 @@ from ._template import TemplateAPI
 from ._to import ToAPI
 from .engine import load_neat_engine
 from .exceptions import session_class_wrapper
-from .new_session import ConceptualDataModelAPI, InstancesAPI
+from .v1 import ConceptualDataModelAPI, InstancesAPI
 
 
 @session_class_wrapper

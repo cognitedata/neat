@@ -1,8 +1,10 @@
+from pathlib import Path
 from typing import Any, cast
 
 from cognite.client.utils.useful_types import SequenceNotStr
 
 from thisisneat.core._client import NeatClient
+from thisisneat.core._constants import NEAT
 from thisisneat.core._instances import examples as instances_examples
 from thisisneat.core._instances import extractors
 from thisisneat.core._issues import IssueList
@@ -118,4 +120,20 @@ class ValidateAPI:
         to...
 
         """
-        return None
+        reader = NeatReader.create(io)
+        import pyshacl
+        try:
+            self._state.instances.store.graph(NEAT.ValidationGraph).parse(data=io)
+
+        except Exception as e:
+            self._state.instances.store.graph(NEAT.ValidationGraph).parse(io)
+
+
+        conforms, report_graph, report_text= pyshacl.validate(
+                        data_graph=self._state.instances.store.graph(),
+                        shacl_graph=self._state.instances.store.graph(NEAT.ValidationGraph),
+                        inference="rdfs",
+                        debug=False,
+                        serialize_report_graph="ttl",
+                        )
+        return conforms, report_graph.decode("utf-8"), report_text
