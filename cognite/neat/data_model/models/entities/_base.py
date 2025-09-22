@@ -15,10 +15,7 @@ from ._constants import (
 class Entity(BaseModel, extra="ignore", populate_by_name=True):
     """Entity is a concept, class, property, datatype in semantics sense."""
 
-    prefix: (
-        Annotated[str, Field(pattern=r"^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$", min_length=1, max_length=43)]
-        | _UndefinedType
-    ) = Undefined
+    prefix: str |  _UndefinedType = Field(default=_UndefinedType, pattern=r"^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$", min_length=1, max_length=43)
     suffix: str = Field(min_length=1, max_length=255, pattern=r"^[a-zA-Z0-9._~?@!$&'*+,;=%-]+$")
 
     @model_serializer(when_used="unless-none", return_type=str)
