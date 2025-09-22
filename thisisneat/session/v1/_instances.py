@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import Any, cast
 
 from cognite.client.utils.useful_types import SequenceNotStr
@@ -108,7 +107,7 @@ class ValidateAPI:
     def __init__(self, state: SessionState) -> None:
         self._state = state
 
-    def __call__(self, io: Any) -> IssueList | None:
+    def __call__(self, io: Any) -> tuple[bool, str, str]:
         """Here we should pass io which contains either shacl string, file path to shacl,
         or a rdflib graph containing the shacl shapes.
 
@@ -120,20 +119,20 @@ class ValidateAPI:
         to...
 
         """
-        reader = NeatReader.create(io)
+
         import pyshacl
+
         try:
             self._state.instances.store.graph(NEAT.ValidationGraph).parse(data=io)
 
-        except Exception as e:
+        except Exception:
             self._state.instances.store.graph(NEAT.ValidationGraph).parse(io)
 
-
-        conforms, report_graph, report_text= pyshacl.validate(
-                        data_graph=self._state.instances.store.graph(),
-                        shacl_graph=self._state.instances.store.graph(NEAT.ValidationGraph),
-                        inference="rdfs",
-                        debug=False,
-                        serialize_report_graph="ttl",
-                        )
+        conforms, report_graph, report_text = pyshacl.validate(
+            data_graph=self._state.instances.store.graph(),
+            shacl_graph=self._state.instances.store.graph(NEAT.ValidationGraph),
+            inference="rdfs",
+            debug=False,
+            serialize_report_graph="ttl",
+        )
         return conforms, report_graph.decode("utf-8"), report_text

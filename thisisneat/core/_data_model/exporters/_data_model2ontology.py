@@ -572,7 +572,9 @@ class SHACLNodeShape(_BaseConfig):
             id_=namespace[f"{concept_definition.concept.suffix!s}Shape"],
             target_class=concept_definition.instance_source or namespace[str(concept_definition.concept.suffix)],
             parent=parent,
-            property_shapes=[SHACLPropertyShape.from_property(prop, concept_definitions, namespace) for prop in property_definitions],
+            property_shapes=[
+                SHACLPropertyShape.from_property(prop, concept_definitions, namespace) for prop in property_definitions
+            ],
             namespace=namespace,
         )
 
@@ -617,10 +619,12 @@ class SHACLPropertyShape(_BaseConfig):
         return self.path_triples + self.node_kind_triples + self.cardinality_triples
 
     @classmethod
-    def from_property(cls, definition: ConceptualProperty, concepts:dict[ConceptEntity, Concept], namespace: Namespace) -> "SHACLPropertyShape":
+    def from_property(
+        cls, definition: ConceptualProperty, concepts: dict[ConceptEntity, Concept], namespace: Namespace
+    ) -> "SHACLPropertyShape":
         # TODO requires PR to fix MultiValueType and UnknownValueType
         if isinstance(definition.value_type, ConceptEntity):
-            instance_uri = concept.instance_source if (concept:=concepts.get(definition.value_type, None)) else None
+            instance_uri = concept.instance_source if (concept := concepts.get(definition.value_type, None)) else None
             expected_value_type = namespace[f"{definition.value_type.suffix}"] if not instance_uri else instance_uri
         elif isinstance(definition.value_type, DataType):
             expected_value_type = XSD[definition.value_type.xsd]
