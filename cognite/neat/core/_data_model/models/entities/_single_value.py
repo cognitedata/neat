@@ -129,6 +129,7 @@ class ConceptualEntity(BaseModel, extra="ignore"):
 
     @model_validator(mode="before")
     def _load(cls, data: Any) -> "dict | ConceptualEntity":
+        print(f"Here {data}")
         defaults = {}
         if isinstance(data, dict) and _PARSE in data:
             defaults = data.get("defaults", {})
@@ -578,6 +579,13 @@ class EdgeEntity(PhysicalEntity[None]):
     edge_type: DMSNodeEntity | None = Field(None, alias="type")
     properties: ViewEntity | None = None
     direction: Literal["outwards", "inwards"] = "outwards"
+
+    @field_validator("direction", mode="before")
+    @classmethod
+    def _normalize_direction(cls, value: Any) -> str:
+        if isinstance(value, str):
+            return value.lower()
+        return value
 
     def dump(self, **defaults: Any) -> str:
         # Add default direction
