@@ -146,6 +146,11 @@ class EntityParser:
         if self.peek() == "(":
             properties = self.parse_properties()
 
+        # Check for unexpected trailing characters
+        self.skip_whitespace()
+        if self.pos < self.length:
+            raise ValueError(f"Unexpected characters after properties at position {self.pos}")
+
         return ParsedEntity(prefix, suffix, properties)
 
 
