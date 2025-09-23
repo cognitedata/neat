@@ -106,8 +106,6 @@ class EntityParser:
             # Check for comma or end
             if self.peek() == ",":
                 self.advance()  # consume ','
-            elif self.peek() == ")":
-                break
 
         # Check if we reached the end without finding a closing parenthesis
         if self.pos >= self.length:
