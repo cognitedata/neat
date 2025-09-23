@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from cognite.neat.core._utils.auxiliary import get_concrete_subclasses
+from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
 
 class GrandParent(ABC):
