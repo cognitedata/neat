@@ -10,7 +10,7 @@ class ParsedEntity:
     properties: dict[str, str]
 
 
-class EntityParser:
+class _EntityParser:
     """A parser for entity strings in the format 'prefix:suffix(prop1=val1,prop2=val2)'."""
 
     def __init__(self, entity_string: str):
@@ -163,6 +163,17 @@ def parse_entity(entity_string: str) -> ParsedEntity:
 
     Returns:
         A `ParsedEntity` object containing the parsed components of the entity string.
+
+
+    Raises:
+        ValueError: If the entity string is malformed.
+
+    This parser allows arbitrary characters in property values, including nested parentheses.
+    For example, it can parse:
+        - "asset:vehicle(type=car,details=(color=red,size=large))"
+        - "device(sensor(model=X100,features=(wifi,bluetooth)))"
+        - "location(city=New York,state=NY)"
+
     """
-    parser = EntityParser(entity_string)
+    parser = _EntityParser(entity_string)
     return parser.parse()
