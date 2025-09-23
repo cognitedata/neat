@@ -1,6 +1,6 @@
 from typing import get_args
 
-from cognite.neat.core._utils.auxiliary import get_concrete_subclasses
+from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat.core._utils.text import humanize_collection
 from cognite.neat.data_model.models.dms import (
     Constraint,
