@@ -6,7 +6,7 @@ from cognite.neat.core._utils.auxiliary import local_import
 class URI(RootModel[str]):
     def __init__(self, value: str):
         try:
-            # Use Pydantic's AnyUrl to validate the URI
+            # Use Pydantic's HttpUrl to validate the URI
             _ = HttpUrl(value)
         except ValidationError as e:
             raise ValueError(f"Invalid URI: {value}") from e
@@ -29,7 +29,7 @@ class URI(RootModel[str]):
 class NameSpace(RootModel[str]):
     def __init__(self, value: str):
         try:
-            # Use Pydantic's AnyUrl to validate the URI
+            # Use Pydantic's HttpUrl to validate the URI
             _ = HttpUrl(value)
         except ValidationError as e:
             raise ValueError(f"Invalid Namespace: {value}") from e
