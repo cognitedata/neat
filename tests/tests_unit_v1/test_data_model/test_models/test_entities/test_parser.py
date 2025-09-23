@@ -65,6 +65,11 @@ class TestEntityParser:
                 "Unexpected characters after properties at position 40",
                 id="Trailing characters after properties",
             ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,,type=storage)",
+                "Expected '=' after property name '' at position 27. Got ','",
+                id="Double comma in properties",
+            ),
         ],
     )
     def test_parse_entity_invalid_format(self, entity_str: str, error_msg: str) -> None:
