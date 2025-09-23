@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat.data_model.models.entities import ParsedEntity, parse_entity
+from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 
 
 class TestEntityParser:
@@ -59,6 +59,11 @@ class TestEntityParser:
                 "asset:MyAsset(capacity=100,type=storage",
                 r"Expected '\)' to close properties at position 39",
                 id="Missing closing parenthesis",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,type=storage)trailing",
+                "Unexpected characters after properties at position 40",
+                id="Trailing characters after properties",
             ),
         ],
     )
