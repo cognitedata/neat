@@ -91,7 +91,9 @@ class _EntityParser:
 
             # Expect '='
             if self.peek() != "=":
-                raise ValueError(f"Expected '=' after property name '{prop_name}' at position {self.pos}")
+                raise ValueError(
+                    f"Expected '=' after property name '{prop_name}' at position {self.pos}. Got {self.peek()!r}"
+                )
             self.advance()  # consume '='
 
             self.skip_whitespace()
