@@ -148,3 +148,29 @@ jobs:
             fs.writeFileSync('last_git_message.txt', description);
       - name: Validate Changelog section in PR description
         run: uv run python dev.py changelog
+
+  build_and_test_jupyter_pyodide:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.MAIN_PYTHON_VERSION }}
+
+      - name: Build package using uv
+        run: uv build
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install pyodide@0.27.6 # JupyterLite currently using pyodide 0.26.2
+      - name: Install neat in pyodide environment
+        run: |
+          whl_file=$(find dist -name "*.whl" | sed 's|^dist/||') # Find the built wheel file, remove dist/ prefix
+          echo "Found built wheel file: $whl_file"
+          NEAT_FILE_PATH=$whl_file \
+          PACKAGES="[\"pyodide-http\", \"pandas\", \"typing-extensions>=4.14.0\", \"http://localhost:3000/dist/$whl_file\"]" \
+          node test-pyodide.js
