@@ -1,10 +1,69 @@
-from ._base import Resource, WriteableResource
-from ._space import Space, SpaceRequest, SpaceResponse
+from cognite.neat._data_model.models.dms._base import Resource, WriteableResource
+from cognite.neat._data_model.models.dms._constraints import (
+    Constraint,
+    ConstraintDefinition,
+    RequiresConstraintDefinition,
+    UniquenessConstraintDefinition,
+)
+from cognite.neat._data_model.models.dms._container import (
+    Container,
+    ContainerPropertyDefinition,
+    ContainerRequest,
+    ContainerResponse,
+)
+from cognite.neat._data_model.models.dms._data_types import (
+    BooleanPrimitiveProperty,
+    DataType,
+    DatePrimitiveProperty,
+    DirectNodeRelation,
+    EnumProperty,
+    FileCDFExternalIdReference,
+    FloatPrimitiveProperty,
+    Int32PrimitiveProperty,
+    Int64PrimitiveProperty,
+    JSONPrimitiveProperty,
+    ListablePropertyTypeDefinition,
+    PropertyTypeDefinition,
+    SequenceCDFExternalIdReference,
+    TextProperty,
+    TimeseriesCDFExternalIdReference,
+    TimestampPrimitiveProperty,
+)
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
+from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
 __all__ = [
+    "BooleanPrimitiveProperty",
+    "BtreeIndex",
+    "Constraint",
+    "ConstraintDefinition",
+    "Container",
+    "ContainerPropertyDefinition",
+    "ContainerRequest",
+    "ContainerResponse",
+    "DataType",
+    "DatePrimitiveProperty",
+    "DirectNodeRelation",
+    "EnumProperty",
+    "FileCDFExternalIdReference",
+    "FloatPrimitiveProperty",
+    "Index",
+    "IndexDefinition",
+    "Int32PrimitiveProperty",
+    "Int64PrimitiveProperty",
+    "InvertedIndex",
+    "JSONPrimitiveProperty",
+    "ListablePropertyTypeDefinition",
+    "PropertyTypeDefinition",
+    "RequiresConstraintDefinition",
     "Resource",
+    "SequenceCDFExternalIdReference",
     "Space",
     "SpaceRequest",
     "SpaceResponse",
+    "TextProperty",
+    "TimeseriesCDFExternalIdReference",
+    "TimestampPrimitiveProperty",
+    "UniquenessConstraintDefinition",
     "WriteableResource",
 ]

@@ -1,7 +1,17 @@
-from ._base import Resource, WriteableResource
-from ._constraints import Constraint, ConstraintDefinition, RequiresConstraintDefinition, UniquenessConstraintDefinition
-from ._container import Container, ContainerPropertyDefinition, ContainerRequest, ContainerResponse
-from ._data_types import (
+from cognite.neat._data_model.models.dms._base import Resource, WriteableResource
+from cognite.neat._data_model.models.dms._constraints import (
+    Constraint,
+    ConstraintDefinition,
+    RequiresConstraintDefinition,
+    UniquenessConstraintDefinition,
+)
+from cognite.neat._data_model.models.dms._container import (
+    Container,
+    ContainerPropertyDefinition,
+    ContainerRequest,
+    ContainerResponse,
+)
+from cognite.neat._data_model.models.dms._data_types import (
     BooleanPrimitiveProperty,
     DataType,
     DatePrimitiveProperty,
@@ -19,8 +29,8 @@ from ._data_types import (
     TimeseriesCDFExternalIdReference,
     TimestampPrimitiveProperty,
 )
-from ._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
-from ._space import Space, SpaceRequest, SpaceResponse
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
+from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
 __all__ = [
     "BooleanPrimitiveProperty",
