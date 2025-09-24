@@ -80,7 +80,8 @@ class Container(WriteableResource["ContainerRequest"], ABC):
         description="Should this operation apply to nodes, edges or both.",
     )
     properties: dict[str, ContainerPropertyDefinition] = Field(
-        description="Set of properties to apply to the container."
+        description="Set of properties to apply to the container.",
+        min_length=1,
     )
     constraints: dict[str, Constraint] | None = Field(
         default=None,
