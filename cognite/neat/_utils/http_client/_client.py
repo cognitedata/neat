@@ -207,7 +207,11 @@ class HTTPClient:
         except ValueError as e:
             return request.create_responses(response, error_message=f"Invalid JSON response: {e!s}")
 
-        is_auto_retryable = body.get("error", {}).get("isAutoRetryable", False)
+        error_obj = body.get("error", {})
+        is_auto_retryable = False
+        if isinstance(error_obj, dict):
+            is_auto_retryable = error_obj.get("isAutoRetryable", False)
+
         if 200 <= response.status_code < 300:
             return request.create_responses(response, body)
         elif (

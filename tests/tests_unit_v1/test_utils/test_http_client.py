@@ -574,3 +574,25 @@ class TestHTTPClientItemRequests:
             )
         failures = Counter([type(results) for results in results])
         assert failures == {FailedItem: 3, SuccessItem: 997}
+
+    def test_response_auto_retryable(self, client_config: ClientConfig, rsps: respx.MockRouter) -> None:
+        with HTTPClient(client_config, max_retries=3, retry_status_codes=set()) as client:
+            rsps.post("https://example.com/api/resource").respond(
+                json={"error": {"message": "Server error", "isAutoRetryable": True}},
+                status_code=500,
+            )
+            with patch("time.sleep"):
+                results = client.request_with_retries(
+                    ItemsRequest[int](
+                        endpoint_url="https://example.com/api/resource",
+                        method="POST",
+                        items=[{"id": 1}],
+                        as_id=as_id,
+                    )
+                )
+            assert len(results) == 1
+            response = results[0]
+            assert isinstance(response, FailedItem)
+            assert response.status_code == 500
+            assert response.error == "Server error"
+            assert len(rsps.calls) == 4  # Retries 3 times
