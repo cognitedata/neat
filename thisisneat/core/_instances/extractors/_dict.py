@@ -46,8 +46,11 @@ class DictExtractor(BaseExtractor):
         if key in self.uri_ref_keys and not isinstance(value, dict | list):
             yield key, URIRef(self.namespace[urllib.parse.quote(value)])
         else:
-            if isinstance(value, str | float | bool | int):
+            if isinstance(value, float | bool | int):
                 yield key, Literal(value)
+            if isinstance(value, str):
+
+                yield key, Literal(string_to_ideal_type(value)) if self.str_to_ideal_type else Literal(value)
             elif isinstance(value, dict) and unpack_json:
                 yield from self._unpack_json(value)
             elif isinstance(value, dict):
