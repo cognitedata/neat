@@ -1,6 +1,9 @@
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
+from cognite.neat._data_model.models.entities._parser import SPECIAL_CHARACTERS
 
 
 class TestEntityParser:
@@ -80,3 +83,59 @@ class TestEntityParser:
     def test_parse_entity_invalid_format(self, entity_str: str, error_msg: str) -> None:
         with pytest.raises(ValueError, match=error_msg):
             parse_entity(entity_str)
+
+        # Strategy for valid prefixes and suffixes
+
+    valid_identifier = st.text(
+        alphabet=st.characters(blacklist_characters=SPECIAL_CHARACTERS),
+        min_size=0,
+        max_size=20,
+    ).map(lambda s: s.strip())
+
+    # Strategy for property names (avoid special characters)
+    property_name = st.text(
+        alphabet=st.characters(blacklist_characters=SPECIAL_CHARACTERS),
+        min_size=1,
+        max_size=10,
+    ).map(lambda s: s.strip())
+
+    # Strategy for property values (can be more complex)
+    property_value = st.text(alphabet=st.characters(), min_size=0, max_size=20).map(
+        lambda s: s.strip().replace(",", "_").replace(")", "_").replace("(", "_")
+    )
+
+    # Strategy for generating property dictionaries
+    properties = st.dictionaries(keys=property_name, values=property_value, max_size=5)
+
+    @given(prefix=valid_identifier, suffix=valid_identifier.filter(lambda s: s != ""), props=properties)
+    def test_entity_roundtrip(self, prefix: str, suffix: str, props: dict[str, str]) -> None:
+        """Test that entity strings can be parsed correctly and reconstruct to original data."""
+        # Build entity string from components
+        entity_str = prefix
+        if prefix:
+            entity_str += ":"
+        entity_str += suffix
+
+        if props:
+            prop_str = ",".join(f"{k}={v}" for k, v in props.items())
+            entity_str += f"({prop_str})"
+
+        # Parse and check that we get expected values
+        parsed = parse_entity(entity_str)
+
+        assert parsed.prefix == prefix
+        assert parsed.suffix == suffix
+        assert parsed.properties == props
+
+    @given(entity_str=st.text(max_size=50))
+    def test_entity_parser_handles_arbitrary_input(self, entity_str: str) -> None:
+        """Test that the parser either successfully parses or raises a clear ValueError."""
+        try:
+            parsed = parse_entity(entity_str)
+            # If parsing succeeded, verify some basic invariants
+            if entity_str.strip():
+                assert parsed.suffix != "" or entity_str.strip() == ""
+        except ValueError as e:
+            # Ensure error message is descriptive
+            assert str(e)
+            assert len(str(e)) > 10
