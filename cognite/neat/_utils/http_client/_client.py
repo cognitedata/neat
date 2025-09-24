@@ -53,7 +53,7 @@ class HTTPClient:
         max_retries: int = 10,
         pool_connections: int = 10,
         pool_maxsize: int = 20,
-        retry_status_codes: Set[int] = frozenset({408, 429, 502, 503, 504}),
+        retry_status_codes: Set[int] = frozenset({429, 502, 503, 504}),
         split_items_status_codes: Set[int] = frozenset({400, 408, 409, 422, 502, 503, 504}),
     ):
         self.config = config
@@ -207,6 +207,7 @@ class HTTPClient:
         except ValueError as e:
             return request.create_responses(response, error_message=f"Invalid JSON response: {e!s}")
 
+        is_auto_retryable = body.get("error", {}).get("isAutoRetryable", False)
         if 200 <= response.status_code < 300:
             return request.create_responses(response, body)
         elif (
@@ -223,7 +224,9 @@ class HTTPClient:
             if splits[0].tracker and splits[0].tracker.limit_reached():
                 return request.create_responses(response, body, self._get_error_message(body, response.text))
             return splits
-        elif request.status_attempt < self._max_retries and response.status_code in self._retry_status_codes:
+        elif request.status_attempt < self._max_retries and (
+            response.status_code in self._retry_status_codes or is_auto_retryable
+        ):
             request.status_attempt += 1
             time.sleep(self._backoff_time(request.total_attempts))
             return [request]
