@@ -383,7 +383,9 @@ class TestHTTPClientItemRequests:
             )
         )
         assert results == [
-            UnknownRequestItem(error="Error extracting ID: 'externalId'", item={"id": 1}),
+            UnknownRequestItem(
+                error="Error extracting ID: \"Item does not have a string 'externalId' field\"", item={"id": 1}
+            ),
             FailedRequestItem(id="duplicate", error="Duplicate item ID: 'duplicate'"),
             SuccessItem(status_code=200, id="duplicate", item={"externalId": "duplicate", "data": 123}),
         ]
@@ -419,8 +421,16 @@ class TestHTTPClientItemRequests:
             )
         )
         assert results == [
-            UnknownResponseItem(status_code=200, item={"uid": "a", "data": 1}, error="Error extracting ID: 'id'"),
-            UnknownResponseItem(status_code=200, item={"uid": "b", "data": 2}, error="Error extracting ID: 'id'"),
+            UnknownResponseItem(
+                status_code=200,
+                item={"uid": "a", "data": 1},
+                error="Error extracting ID: \"Item does not have an integer 'id' field\"",
+            ),
+            UnknownResponseItem(
+                status_code=200,
+                item={"uid": "b", "data": 2},
+                error="Error extracting ID: \"Item does not have an integer 'id' field\"",
+            ),
             MissingItem(status_code=200, id=1),
             MissingItem(status_code=200, id=2),
         ]
