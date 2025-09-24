@@ -1,5 +1,5 @@
 import pytest
-from polyfauvctory.factories.pydantic_factory import ModelFactory
+from polyfactory.factories.pydantic_factory import ModelFactory
 
 from cognite.neat._data_model.models.dms import Resource, WriteableResource
 from cognite.neat._utils.auxiliary import get_concrete_subclasses

@@ -49,7 +49,7 @@ def client_config() -> ClientConfig:
 
 
 @pytest.fixture
-def disable_gzip():
+def disable_gzip() -> Iterator[None]:
     old = global_config.disable_gzip
     global_config.disable_gzip = True
     yield
@@ -57,7 +57,7 @@ def disable_gzip():
 
 
 @pytest.fixture
-def disable_pypi_check():
+def disable_pypi_check() -> Iterator[None]:
     old = global_config.disable_pypi_version_check
     global_config.disable_pypi_version_check = True
     yield
@@ -246,6 +246,18 @@ class TestHTTPClient:
         assert rsps.calls[-1].request.headers["cdf-version"] == "alpha"
 
 
+def as_id(item: JsonVal) -> int:
+    if not isinstance(item, dict) or "id" not in item or not isinstance(item["id"], int):
+        raise KeyError("Item does not have an integer 'id' field")
+    return item["id"]
+
+
+def as_external_id(item: JsonVal) -> str:
+    if not isinstance(item, dict) or "externalId" not in item or not isinstance(item["externalId"], str):
+        raise KeyError("Item does not have a string 'externalId' field")
+    return item["externalId"]
+
+
 @pytest.mark.usefixtures("disable_pypi_check")
 class TestHTTPClientItemRequests:
     @pytest.mark.usefixtures("disable_gzip")
@@ -254,14 +266,14 @@ class TestHTTPClientItemRequests:
             json={"items": [{"id": 1, "value": 42}, {"id": 2, "value": 43}]},
             status_code=200,
         )
-        items = [{"name": "item1", "id": 1}, {"name": "item2", "id": 2}]
+        items: list[JsonVal] = [{"name": "item1", "id": 1}, {"name": "item2", "id": 2}]
         results = http_client.request(
             ItemsRequest[int](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=items,
                 extra_body_fields={"autoCreateDirectRelations": True},
-                as_id=lambda item: item["id"],
+                as_id=as_id,
             )
         )
         assert results == [
@@ -293,7 +305,7 @@ class TestHTTPClientItemRequests:
 
         rsps.post("https://example.com/api/resource").mock(side_effect=server_callback)
 
-        request_items = [
+        request_items: list[JsonVal] = [
             {"externalId": "success"},
             {"externalId": "missing"},
             {"externalId": "fail"},
@@ -303,7 +315,7 @@ class TestHTTPClientItemRequests:
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=request_items,
-                as_id=lambda item: item["externalId"],
+                as_id=as_external_id,
             )
         )
         assert results == [
@@ -334,13 +346,13 @@ class TestHTTPClientItemRequests:
             json={"error": "Unauthorized"},
             status_code=401,
         )
-        items = [{"name": "item1", "id": 1}, {"name": "item2", "id": 2}]
+        items: list[JsonVal] = [{"name": "item1", "id": 1}, {"name": "item2", "id": 2}]
         results = http_client.request(
             ItemsRequest[int](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=items,
-                as_id=lambda item: item["id"],
+                as_id=as_id,
             )
         )
         assert results == [
@@ -352,7 +364,7 @@ class TestHTTPClientItemRequests:
 
     def test_bad_request_items(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         # Test with non-serializable item
-        bad_items = [
+        bad_items: list[JsonVal] = [
             {"id": 1},
             {"externalId": "duplicate"},
             {"externalId": "duplicate"},
@@ -367,7 +379,7 @@ class TestHTTPClientItemRequests:
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=bad_items,
-                as_id=lambda item: item["externalId"],  # KeyError will occur here
+                as_id=as_external_id,  # This will raise a KeyError for the first item
             )
         )
         assert results == [
@@ -378,13 +390,13 @@ class TestHTTPClientItemRequests:
 
     def test_request_no_items_response(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         rsps.post("https://example.com/api/resource/delete").respond(status_code=200)
-        items = [{"id": 1}, {"id": 2}]
+        items: list[JsonVal] = [{"id": 1}, {"id": 2}]
         results = http_client.request(
             ItemsRequest[int](
                 endpoint_url="https://example.com/api/resource/delete",
                 method="POST",
                 items=items,
-                as_id=lambda item: item["id"],
+                as_id=as_id,
             )
         )
         assert results == [
@@ -397,13 +409,13 @@ class TestHTTPClientItemRequests:
             json={"items": [{"uid": "a", "data": 1}, {"uid": "b", "data": 2}]},
             status_code=200,
         )
-        items = [{"name": "itemA", "id": 1}, {"name": "itemB", "id": 2}]
+        items: list[JsonVal] = [{"name": "itemA", "id": 1}, {"name": "itemB", "id": 2}]
         results = http_client.request(
             ItemsRequest[int](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=items,
-                as_id=lambda item: item["id"],
+                as_id=as_id,
             )
         )
         assert results == [
@@ -422,7 +434,7 @@ class TestHTTPClientItemRequests:
                     endpoint_url="https://example.com/api/resource",
                     method="POST",
                     items=[{"id": 1}],
-                    as_id=lambda item: item["id"],
+                    as_id=as_id,
                 )
             )
         assert results == [
@@ -442,7 +454,7 @@ class TestHTTPClientItemRequests:
                     endpoint_url="https://example.com/api/resource",
                     method="POST",
                     items=[{"id": i} for i in range(1000)],
-                    as_id=lambda item: item["id"],
+                    as_id=as_id,
                     max_failures_before_abort=5,
                 )
             )
@@ -467,7 +479,7 @@ class TestHTTPClientItemRequests:
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=[{"id": i} for i in range(1000)],
-                as_id=lambda item: item["id"],
+                as_id=as_id,
                 max_failures_before_abort=1,
             )
         )
@@ -489,7 +501,7 @@ class TestHTTPClientItemRequests:
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=[{"id": i} for i in range(1000)],
-                as_id=lambda item: item["id"],
+                as_id=as_id,
                 max_failures_before_abort=2,
             )
         )
@@ -511,7 +523,7 @@ class TestHTTPClientItemRequests:
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 items=[{"id": i} for i in range(100)],
-                as_id=lambda item: item["id"],
+                as_id=as_id,
                 max_failures_before_abort=-1,  # Never abort
             )
         )
@@ -546,7 +558,7 @@ class TestHTTPClientItemRequests:
                     endpoint_url="https://example.com/api/resource",
                     method="POST",
                     items=[{"id": i} for i in range(1000)],
-                    as_id=lambda item: item["id"],
+                    as_id=as_id,
                     max_failures_before_abort=30,
                 )
             )
