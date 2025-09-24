@@ -25,7 +25,7 @@ def humanize_validation_error(error: ValidationError) -> list[str]:
             msg = f"Unused field: {loc[-1]!r}"
         elif error_type == "value_error":
             msg = str(item["ctx"]["error"])
-        elif error_type in {"literal_error", "list_type"}:
+        elif error_type == "literal_error":
             msg = f"{item['msg']}. Got {item['input']!r}."
         elif error_type == "string_type":
             msg = (
@@ -38,16 +38,7 @@ def humanize_validation_error(error: ValidationError) -> list[str]:
                 f"Input must be an object of type {model_name}. Got {item['input']!r} of "
                 f"type {type(item['input']).__name__}."
             )
-        elif error_type in {
-            "int_type",
-            "bool_type",
-            "datetime_type",
-            "decimal_type",
-            "float_type",
-            "time_type",
-            "timedelta_type",
-            "dict_type",
-        }:
+        elif error_type.endswith("_type"):
             msg = f"{item['msg']}. Got {item['input']!r} of type {type(item['input']).__name__}."
         else:
             # Default to the Pydantic error message
