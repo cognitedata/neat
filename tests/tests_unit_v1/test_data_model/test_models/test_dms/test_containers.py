@@ -1,14 +1,20 @@
+from collections.abc import Iterator
 from typing import Any, get_args
+
+import pytest
+from pydantic import ValidationError
 
 from cognite.neat._data_model.models.dms import (
     Constraint,
     ConstraintDefinition,
+    ContainerRequest,
     DataType,
     Index,
     IndexDefinition,
     PropertyTypeDefinition,
 )
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
+from cognite.neat._utils.validation import humanize_validation_error
 from cognite.neat.core._utils.text import humanize_collection
 
 
@@ -42,6 +48,23 @@ def test_all_property_types_are_in_union() -> None:
     )
 
 
+def invalid_container_definition_test_cases() -> Iterator:
+    yield pytest.param(
+        {"externalId": "MyContainer", "name": "way too long name" * 100, "usedFor": "not-instance", "properties": {}},
+        {
+            "In field name string should have at most 255 characters",
+            "In field properties dictionary should have at least 1 item after validation, not 0",
+            "In field usedFor input should be 'node', 'edge' or 'all'. Got 'not-instance'.",
+            "Missing required field: 'space'",
+        },
+        id="Multiple Issues. Missing required field, invalid name length, invalid value, and not properties",
+    )
+
+
 class TestContainerRequest:
+    @pytest.mark.parametrize("data,expected_errors", list(invalid_container_definition_test_cases()))
     def test_invalid_container_definition(self, data: dict[str, Any], expected_errors: set[str]) -> None:
-        raise NotImplementedError("in progress")
+        with pytest.raises(ValidationError) as excinfo:
+            ContainerRequest.model_validate(data)
+        errors = set(humanize_validation_error(excinfo.value))
+        assert errors == expected_errors
