@@ -2,7 +2,7 @@ from cognite.client.data_classes import RelationshipList
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat.core._instances.extractors import RelationshipsExtractor
+from cognite.neat.v0.core._instances.extractors import RelationshipsExtractor
 from tests.data import InstanceData
 
 

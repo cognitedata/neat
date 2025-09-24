@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from cognite.client.exceptions import CogniteAPIError
 from requests import Response
 
-from cognite.neat.core._client.testing import monkeypatch_neat_client
+from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
 
 
 class MockPerfCounter:

@@ -1,1 +1,1 @@
-::: cognite.neat.session.NeatSession
+::: cognite.neat.v0.session.NeatSession

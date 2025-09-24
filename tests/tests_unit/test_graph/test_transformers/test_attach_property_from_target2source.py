@@ -4,12 +4,12 @@ import pytest
 from _pytest.mark import ParameterSet
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat.core._constants import get_default_prefixes_and_namespaces
-from cognite.neat.core._instances.transformers._prune_graph import (
+from cognite.neat.v0.core._constants import get_default_prefixes_and_namespaces
+from cognite.neat.v0.core._instances.transformers._prune_graph import (
     AttachPropertyFromTargetToSource,
 )
-from cognite.neat.core._shared import Triple
-from cognite.neat.core._store import NeatInstanceStore
+from cognite.neat.v0.core._shared import Triple
+from cognite.neat.v0.core._store import NeatInstanceStore
 
 
 def generate_test_parameters_delete_target_node() -> Iterable[ParameterSet]:

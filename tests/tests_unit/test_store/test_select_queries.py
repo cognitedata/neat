@@ -1,7 +1,7 @@
 from rdflib import RDF, Literal
 
-from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._store import NeatInstanceStore
+from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
+from cognite.neat.v0.core._store import NeatInstanceStore
 
 
 class TestListInstanceObjectIds:

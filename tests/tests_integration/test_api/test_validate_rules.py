@@ -5,10 +5,10 @@ from typing import Any
 import pytest
 import yaml
 
-from cognite.neat.core._client import NeatClient
-from cognite.neat.core._data_model.importers import DictImporter
-from cognite.neat.core._data_model.transformers import VerifyPhysicalDataModel
-from cognite.neat.core._issues import catch_issues
+from cognite.neat.v0.core._client import NeatClient
+from cognite.neat.v0.core._data_model.importers import DictImporter
+from cognite.neat.v0.core._data_model.transformers import VerifyPhysicalDataModel
+from cognite.neat.v0.core._issues import catch_issues
 from tests.data import SchemaData
 
 

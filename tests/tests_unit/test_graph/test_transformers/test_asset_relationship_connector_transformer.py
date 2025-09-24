@@ -1,7 +1,7 @@
-from cognite.neat.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.core._instances import extractors, transformers
-from cognite.neat.core._issues.errors import NeatValueError
-from cognite.neat.core._store import NeatInstanceStore
+from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
+from cognite.neat.v0.core._instances import extractors, transformers
+from cognite.neat.v0.core._issues.errors import NeatValueError
+from cognite.neat.v0.core._store import NeatInstanceStore
 from tests.data import InstanceData
 
 

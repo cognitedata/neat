@@ -1,12 +1,12 @@
-from cognite.neat.core._data_model.models.entities import ContainerEntity, ViewEntity
-from cognite.neat.core._data_model.models.physical import (
+from cognite.neat.v0.core._data_model.models.entities import ContainerEntity, ViewEntity
+from cognite.neat.v0.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.core._data_model.transformers import PhysicalDataModelMapper
+from cognite.neat.v0.core._data_model.transformers import PhysicalDataModelMapper
 
 
 class TestClassicToCoreMapper:

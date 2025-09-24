@@ -1,8 +1,8 @@
 import pytest
 from rdflib import Namespace, URIRef
 
-from cognite.neat.core._constants import DEFAULT_SPACE_URI
-from cognite.neat.core._utils.rdf_ import uri_to_cdf_id, uri_to_entity_components
+from cognite.neat.v0.core._constants import DEFAULT_SPACE_URI
+from cognite.neat.v0.core._utils.rdf_ import uri_to_cdf_id, uri_to_entity_components
 
 
 class TestURIInstanceToDisplayName:

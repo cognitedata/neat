@@ -7,17 +7,17 @@ from typing import Any
 import pytest
 
 from cognite.neat import NeatSession
-from cognite.neat.core._data_model.importers._spreadsheet2data_model import ExcelImporter
-from cognite.neat.core._data_model.models.conceptual._verified import (
+from cognite.neat.v0.core._data_model.importers._spreadsheet2data_model import ExcelImporter
+from cognite.neat.v0.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
-from cognite.neat.plugins import _manager
-from cognite.neat.plugins._issues import (
+from cognite.neat.v0.plugins import _manager
+from cognite.neat.v0.plugins._issues import (
     PluginDuplicateError,
     PluginLoadingError,
 )
-from cognite.neat.plugins._manager import PluginManager
-from cognite.neat.plugins.data_model.importers import DataModelImporterPlugin
+from cognite.neat.v0.plugins._manager import PluginManager
+from cognite.neat.v0.plugins.data_model.importers import DataModelImporterPlugin
 from tests.data import SchemaData
 
 
@@ -43,7 +43,7 @@ def neat_plugin_entry_points():
         [
             EntryPoint(
                 name="excel",
-                group="cognite.neat.plugins.data_model.importers",
+                group="cognite.neat.v0.plugins.data_model.importers",
                 value="tests.tests_unit.test_plugins:ExcelDataModelImporterPlugin",
             )
         ]
@@ -67,12 +67,12 @@ def duplicated_neat_plugin():
         [
             EntryPoint(
                 name="excel",
-                group="cognite.neat.plugins.data_model.importers",
+                group="cognite.neat.v0.plugins.data_model.importers",
                 value="tests.tests_unit.test_plugins:ExcelDataModelImporterPlugin",
             ),
             EntryPoint(
                 name="excel",
-                group="cognite.neat.plugins.data_model.importers",
+                group="cognite.neat.v0.plugins.data_model.importers",
                 value="tests.test_plugins:ExcelDataModelImporterPlugin",
             ),
         ]
@@ -87,7 +87,7 @@ def non_loadable_neat_plugin():
         [
             EntryPoint(
                 name="excel",
-                group="cognite.neat.plugins.data_model.importers",
+                group="cognite.neat.v0.plugins.data_model.importers",
                 value="tests.test_plugins:ExcelDataModelImporterPlugin",
             )
         ]
