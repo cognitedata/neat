@@ -75,10 +75,11 @@ class InferenceImporter(BaseRDFImporter):
 
     """
 
-    overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
-        data_types.Integer.as_xml_uri_ref(): data_types.Long.as_xml_uri_ref(),
-        data_types.Float.as_xml_uri_ref(): data_types.Double.as_xml_uri_ref(),
-    }
+    # overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
+    #     data_types.Integer.as_xml_uri_ref(): data_types.Long.as_xml_uri_ref(),
+    #     data_types.Float.as_xml_uri_ref(): data_types.Double.as_xml_uri_ref(),
+    # }
+    overwrite_data_types: dict = {}
 
     @classmethod
     def from_graph_store(
@@ -315,10 +316,7 @@ class SubclassInferenceImporter(BaseRDFImporter):
         graph: Knowledge graph
     """
 
-    overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {
-        data_types.Integer.as_xml_uri_ref(): data_types.Long.as_xml_uri_ref(),
-        data_types.Float.as_xml_uri_ref(): data_types.Double.as_xml_uri_ref(),
-    }
+    overwrite_data_types: ClassVar[Mapping[URIRef, URIRef]] = {}
 
     _ordered_class_query = """SELECT DISTINCT ?class (count(?s) as ?instances )
                            WHERE { ?s a ?class }
