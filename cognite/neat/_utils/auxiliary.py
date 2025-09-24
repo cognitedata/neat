@@ -2,6 +2,13 @@ import inspect
 from abc import ABC
 from typing import TypeVar
 
+from cognite.neat import _version
+
+
+def get_current_neat_version() -> str:
+    return _version.__version__
+
+
 T_Cls = TypeVar("T_Cls")
 
 

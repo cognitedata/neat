@@ -41,7 +41,7 @@ class TestRead:
         neat = NeatSession(client=cognite_client)
         # The CogniteDescribable view is referenced in the REFERENCING_CORE model read below.
         # The data product should lookup the describable properties and include them.
-        neat.data_model.read.cdf(("cdf_cdm", "CogniteCore", "v1"))
+        neat.read.cdf.data_model(("cdf_cdm", "CogniteCore", "v1"))
 
         exported_yaml_str = neat.to.yaml()
         exported_rules = yaml.safe_load(exported_yaml_str)
