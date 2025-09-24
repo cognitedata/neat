@@ -44,7 +44,6 @@ class TestEntityParser:
                 ParsedEntity("ny!@#$%^&*_+-{}[]|;", "'<>.?/~`Asset", {"type": "storage"}),
                 id="Entity with special characters in name",
             ),
-            pytest.param("asset:()", ParsedEntity("asset", "", {}), id="Empty suffix with prefix and empty properties"),
             pytest.param(
                 "pump asset:My Asset(flow rate=1000, location=Plant 1)",
                 ParsedEntity("pump asset", "My Asset", {"flow rate": "1000", "location": "Plant 1"}),
@@ -69,6 +68,15 @@ class TestEntityParser:
                 "asset:MyAsset(capacity=100,type=storage,)",
                 ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
                 id="Trailing comma in properties",
+            ),
+            pytest.param(
+                "asset:MyAsset(storage=high=capacity:Storage(with=redundancy))",
+                ParsedEntity("asset", "MyAsset", {"storage": "high=capacity:Storage(with=redundancy)"}),
+            ),
+            pytest.param(
+                '0(""="")',
+                ParsedEntity("", "0", {'""': '""'}),
+                id="Entity with empty strings as names and values",
             ),
         ],
     )
@@ -101,8 +109,28 @@ class TestEntityParser:
             ),
             pytest.param(
                 "asset:MyAsset(capacity=100,,type=storage)",
-                "Expected '=' after property name '' at position 27. Got ','",
+                "Expected property name at position 27. Got ','",
                 id="Double comma in properties",
+            ),
+            pytest.param(
+                ":",
+                "Expected identifier at position 0",
+                id="Only colon, missing prefix and suffix",
+            ),
+            pytest.param(
+                "asset:MyAsset(()=())",
+                r"Expected property name at position 14. Got '\('",
+                id="Empty property name",
+            ),
+            pytest.param(
+                "asset:()",
+                "Expected identifier after ':' at position 6",
+                id="Missing suffix after prefix",
+            ),
+            pytest.param(
+                "centrifugal pump:Pump1()",
+                r"Expected property name at position  twenty-three. Got '\)'",
+                id="Empty properties",
             ),
         ],
     )
@@ -121,7 +149,7 @@ class TestEntityParser:
         alphabet=st.characters(blacklist_characters=SPECIAL_CHARACTERS),
         min_size=1,
         max_size=10,
-    ).map(lambda s: s.strip())
+    ).map(lambda s: "_" if s == " " else s.strip())
 
     # Strategy for property values (can be more complex)
     property_value = st.text(alphabet=st.characters(), min_size=0, max_size=20).map(
@@ -141,15 +169,16 @@ class TestEntityParser:
         entity_str += suffix
 
         if props:
-            prop_str = ",".join(f"{k}={v}" for k, v in props.items())
-            entity_str += f"({prop_str})"
+            prop_str = ",".join(f"{k}={v}" for k, v in props.items() if k)
+            if prop_str:
+                entity_str += f"({prop_str})"
 
         # Parse and check that we get expected values
         parsed = parse_entity(entity_str)
 
-        assert parsed.prefix == prefix
-        assert parsed.suffix == suffix
-        assert parsed.properties == props
+        assert parsed.prefix == prefix, f"Failed for entity string: {entity_str}"
+        assert parsed.suffix == suffix, f"Failed for entity string: {entity_str}"
+        assert parsed.properties == props, f"Failed for entity string: {entity_str}"
 
     @given(entity_str=st.text(min_size=1, max_size=50))
     def test_entity_parser_handles_arbitrary_input(self, entity_str: str) -> None:
