@@ -79,6 +79,8 @@ class _EntityParser:
         # Skip opening parenthesis
         if self.peek() == "(":
             self.advance()
+        else:
+            raise ValueError("expected `(`")
 
         self.skip_whitespace()
 
@@ -89,6 +91,8 @@ class _EntityParser:
                 break
 
             prop_name = self.parse_identifier()
+            if not prop_name:
+                raise ValueError(f"Expected property name at position {self.pos}. Got {self.peek()!r}")
             self.skip_whitespace()
 
             # Expect '='
@@ -129,6 +133,8 @@ class _EntityParser:
         """
         if not self.entity_string:
             return ParsedEntity(prefix="", suffix="", properties={})
+        if self.entity_string.strip() == ":":
+            raise ValueError("Expected identifier at position 0")
 
         # Parse the main identifier (could be prefix:suffix or just suffix)
         main_id = self.parse_identifier()
@@ -141,6 +147,8 @@ class _EntityParser:
             self.advance()  # consume ':'
             prefix = main_id
             suffix = self.parse_identifier()
+            if not suffix:
+                raise ValueError(f"Expected identifier after ':' at position {self.pos}")
         else:
             suffix = main_id
 
