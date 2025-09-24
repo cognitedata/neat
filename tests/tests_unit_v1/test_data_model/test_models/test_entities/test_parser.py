@@ -78,6 +78,11 @@ class TestEntityParser:
                 ParsedEntity("", "0", {'""': '""'}),
                 id="Entity with empty strings as names and values",
             ),
+            pytest.param(
+                "centrifugal pump:Pump1()",
+                ParsedEntity("centrifugal pump", "Pump1", {}),
+                id="Empty properties",
+            ),
         ],
     )
     def test_parse_entity(self, entity_str: str, expected: ParsedEntity) -> None:
@@ -127,11 +132,6 @@ class TestEntityParser:
                 "Expected identifier after ':' at position 6",
                 id="Missing suffix after prefix",
             ),
-            pytest.param(
-                "centrifugal pump:Pump1()",
-                r"Expected property name at position  twenty-three. Got '\)'",
-                id="Empty properties",
-            ),
         ],
     )
     def test_parse_entity_invalid_format(self, entity_str: str, error_msg: str) -> None:
@@ -149,7 +149,7 @@ class TestEntityParser:
         alphabet=st.characters(blacklist_characters=SPECIAL_CHARACTERS),
         min_size=1,
         max_size=10,
-    ).map(lambda s: "_" if s == " " else s.strip())
+    ).map(lambda s: s.strip())
 
     # Strategy for property values (can be more complex)
     property_value = st.text(alphabet=st.characters(), min_size=0, max_size=20).map(
