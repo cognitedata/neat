@@ -145,11 +145,15 @@ class TestEntityParser:
     ).map(lambda s: s.strip())
 
     # Strategy for property names (avoid special characters)
-    property_name = st.text(
-        alphabet=st.characters(blacklist_characters=SPECIAL_CHARACTERS),
-        min_size=1,
-        max_size=10,
-    ).map(lambda s: s.strip())
+    property_name = (
+        st.text(
+            alphabet=st.characters(blacklist_characters=SPECIAL_CHARACTERS),
+            min_size=1,
+            max_size=10,
+        )
+        .map(lambda s: s.strip())
+        .filter(lambda s: s != "")
+    )
 
     # Strategy for property values (can be more complex)
     property_value = st.text(alphabet=st.characters(), min_size=0, max_size=20).map(
@@ -169,9 +173,8 @@ class TestEntityParser:
         entity_str += suffix
 
         if props:
-            prop_str = ",".join(f"{k}={v}" for k, v in props.items() if k)
-            if prop_str:
-                entity_str += f"({prop_str})"
+            prop_str = ",".join(f"{k}={v}" for k, v in props.items())
+            entity_str += f"({prop_str})"
 
         # Parse and check that we get expected values
         parsed = parse_entity(entity_str)
