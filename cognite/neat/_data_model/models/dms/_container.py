@@ -12,6 +12,7 @@ from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
     FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS,
+    FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER,
     SPACE_FORMAT_PATTERN,
 )
 from ._constraints import Constraint
@@ -34,7 +35,7 @@ class ContainerPropertyDefinition(BaseModelObject):
         default=None,
         description="Increment the property based on its highest current value (max value).",
     )
-    default_value: str | int | bool | dict | None = Field(
+    default_value: str | int | bool | dict[str, Any] | None = Field(
         default=None,
         description="Default value to use when you do not specify a value for the property.",
     )
@@ -102,6 +103,21 @@ class Container(WriteableResource["ContainerRequest"], ABC):
             raise ValueError(
                 f"{info.field_name} keys must be between 1 and 43 characters long. Invalid keys: "
                 f"{humanize_collection(invalid_keys)}"
+            )
+        return val
+
+    @field_validator("properties", mode="after")
+    def validate_property_keys(cls, val: dict[str, Any]) -> dict[str, Any]:
+        """Validate property keys"""
+        if invalid_keys := {key for key in val if not KEY_PATTERN.match(key)}:
+            raise ValueError(
+                f"Property keys must match pattern '{CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN}'. "
+                f"Invalid keys: {humanize_collection(invalid_keys)}"
+            )
+
+        if forbidden_keys := set(val.keys()).intersection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER):
+            raise ValueError(
+                f"Property keys cannot be any of the following reserved values: {humanize_collection(forbidden_keys)}"
             )
         return val
 

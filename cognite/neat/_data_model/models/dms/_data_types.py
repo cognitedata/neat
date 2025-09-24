@@ -38,7 +38,7 @@ class TextProperty(ListablePropertyTypeDefinition):
 
 
 class Unit(BaseModelObject):
-    externalId: str = Field(
+    external_id: str = Field(
         description="The external ID of the unit. Must match the unit in the Cognite Unit catalog.",
         min_length=1,
         max_length=256,
