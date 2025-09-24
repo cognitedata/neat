@@ -268,6 +268,14 @@ class TestEntities:
         actual = cls_.load(raw, return_on_failure=True)
         assert actual == raw
 
+    def test_direction_case_insensitive(self) -> None:
+        defaults = {"space": DEFAULT_SPACE, "version": DEFAULT_VERSION}
+        e1 = EdgeEntity.load("edge(direction=INWardS,properties=StartEndTime)", **defaults)
+        e2 = EdgeEntity.load("edge(direction=OutWArds,properties=StartEndTime)", **defaults)
+
+        assert e1.direction == "inwards"
+        assert e2.direction == "outwards"
+
 
 class TestEntityPattern:
     @pytest.mark.parametrize(
