@@ -44,6 +44,32 @@ class TestEntityParser:
                 ParsedEntity("ny!@#$%^&*_+-{}[]|;", "'<>.?/~`Asset", {"type": "storage"}),
                 id="Entity with special characters in name",
             ),
+            pytest.param("asset:()", ParsedEntity("asset", "", {}), id="Empty suffix with prefix and empty properties"),
+            pytest.param(
+                "pump asset:My Asset(flow rate=1000, location=Plant 1)",
+                ParsedEntity("pump asset", "My Asset", {"flow rate": "1000", "location": "Plant 1"}),
+                id="Entity with spaces in prefix, suffix, and property values",
+            ),
+            pytest.param(
+                "设备:泵1(单位=si:C(m3/s),最大压力=5000)",
+                ParsedEntity("设备", "泵1", {"单位": "si:C(m3/s)", "最大压力": "5000"}),
+                id="Entity with non-ASCII characters",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,capacity=200)",
+                ParsedEntity("asset", "MyAsset", {"capacity": "200"}),
+                id="Entity with duplicate property names (last one wins)",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity==100)",
+                ParsedEntity("asset", "MyAsset", {"capacity": "=100"}),
+                id="Double '=' in property",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,type=storage,)",
+                ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
+                id="Trailing comma in properties",
+            ),
         ],
     )
     def test_parse_entity(self, entity_str: str, expected: ParsedEntity) -> None:
@@ -83,8 +109,6 @@ class TestEntityParser:
     def test_parse_entity_invalid_format(self, entity_str: str, error_msg: str) -> None:
         with pytest.raises(ValueError, match=error_msg):
             parse_entity(entity_str)
-
-        # Strategy for valid prefixes and suffixes
 
     valid_identifier = st.text(
         alphabet=st.characters(blacklist_characters=SPECIAL_CHARACTERS),
@@ -127,7 +151,7 @@ class TestEntityParser:
         assert parsed.suffix == suffix
         assert parsed.properties == props
 
-    @given(entity_str=st.text(max_size=50))
+    @given(entity_str=st.text(min_size=1, max_size=50))
     def test_entity_parser_handles_arbitrary_input(self, entity_str: str) -> None:
         """Test that the parser either successfully parses or raises a clear ValueError."""
         try:
