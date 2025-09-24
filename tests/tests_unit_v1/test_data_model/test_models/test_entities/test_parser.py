@@ -125,7 +125,7 @@ class TestEntityParser:
             pytest.param(
                 "asset:MyAsset(()=())",
                 r"Expected property name at position 14. Got '\('",
-                id="Empty property name",
+                id="Parentheses in property name",
             ),
             pytest.param(
                 "asset:()",
