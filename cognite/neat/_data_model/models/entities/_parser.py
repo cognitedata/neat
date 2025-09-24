@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+SPECIAL_CHARACTERS = ":()=,"
+
 
 @dataclass
 class ParsedEntity:
@@ -45,7 +47,7 @@ class _EntityParser:
     def parse_identifier(self) -> str:
         """Parse an identifier (letters, numbers, underscores, etc.)."""
         start = self.pos
-        while self.pos < self.length and self.entity_string[self.pos] not in ":()=,":
+        while self.pos < self.length and self.entity_string[self.pos] not in SPECIAL_CHARACTERS:
             self.pos += 1
         return self.entity_string[start : self.pos].strip()
 
