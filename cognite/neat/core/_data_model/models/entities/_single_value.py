@@ -579,6 +579,13 @@ class EdgeEntity(PhysicalEntity[None]):
     properties: ViewEntity | None = None
     direction: Literal["outwards", "inwards"] = "outwards"
 
+    @field_validator("direction", mode="before")
+    @classmethod
+    def _normalize_direction(cls, value: Any) -> str:
+        if isinstance(value, str):
+            return value.lower()
+        return value
+
     def dump(self, **defaults: Any) -> str:
         # Add default direction
         return super().dump(**defaults, direction="outwards")
