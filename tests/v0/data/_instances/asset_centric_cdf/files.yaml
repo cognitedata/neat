@@ -1,0 +1,24 @@
+- externalId: geo_located_area
+  name: geo_located_area.nc
+  source: ACME
+  dataSetId: 6931754270713290
+  id: 146805958863362
+  createdTime: 1668777262326
+  lastUpdatedTime: 1668778466394
+  uploaded: true
+  uploadedTime: 1668778540224
+  assetIds:
+    - 5132527530441957
+    - 78504378486679
+- externalId: geo_location_area2
+  name: geo_location_area2.nc
+  source: ACME
+  dataSetId: 6931754270713290
+  id: 146805958863362
+  createdTime: 1668777262326
+  lastUpdatedTime: 1668778466394
+  uploaded: true
+  uploadedTime: 1668778540224
+  assetIds:
+    - 5132527530441957
+    - 78504378486679

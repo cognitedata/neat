@@ -1,0 +1,42 @@
+concepts:
+- concept: Sensor
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor
+  physical: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor
+metadata:
+  created: '2025-04-01T12:42:41.515473'
+  creator: doctrino
+  external_id: vanillaModel
+  physical: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1
+  role: information architect
+  space: my_space
+  updated: '2025-04-01T12:42:41.515473'
+  version: v1
+prefixes:
+  aml: https://www.automationml.org/
+  dc: http://purl.org/dc/elements/1.1/
+  dcterms: http://purl.org/dc/terms/
+  dexpi: http://sandbox.dexpi.org/rdl/
+  foaf: http://xmlns.com/foaf/0.1/
+  imf: http://ns.imfid.org/imf#
+  iodd: http://www.io-link.com/IODD/2010/10/
+  owl: http://www.w3.org/2002/07/owl#
+  pav: http://purl.org/pav/
+  qudt: https://qudt.org/vocab/unit/
+  rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  rdfs: http://www.w3.org/2000/01/rdf-schema#
+  sh: http://www.w3.org/ns/shacl#
+  skos: http://www.w3.org/2004/02/skos/core#
+  xsd: http://www.w3.org/2001/XMLSchema#
+properties:
+- concept: Sensor
+  max_count: null
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/maxTemperature
+  physical: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/maxTemperature
+  property_: maxTemperature
+  value_type: double
+- concept: Sensor
+  max_count: null
+  neatId: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/minTemperature
+  physical: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/minTemperature
+  property_: minTemperature
+  value_type: double

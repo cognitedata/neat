@@ -1,0 +1,111 @@
+@prefix : <http://example.com/industrial#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://example.com/industrial#> .
+@prefix cdf_cdm: <https://cognitedata.com/cdf_cdm/CogniteCore/v1/> .
+
+<http://example.com/industrial> rdf:type owl:Ontology .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://example.com/industrial/has.Relation-Type(Generic):X~?@!$&'*+,;=%[]
+<http://example.com/industrial/has.Relation-Type(Generic):X~?@!$&'*+,;=%[]> rdf:type owl:ObjectProperty ;
+                                                                            rdfs:label "has generic relation" .
+
+
+###  http://example.com/industrial/has.Sensor-Unit(01):Temp~?@!$&'*+,;=%[]
+<http://example.com/industrial/has.Sensor-Unit(01):Temp~?@!$&'*+,;=%[]> rdf:type owl:ObjectProperty ;
+                                                                        rdfs:range <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]> ;
+                                                                        rdfs:label "has sensor unit" .
+
+
+###  http://example.com/industrial/is.Connected-To(Control):Panel~?@!$&'*+,;=%[]
+<http://example.com/industrial/is.Connected-To(Control):Panel~?@!$&'*+,;=%[]> rdf:type owl:ObjectProperty ;
+                                                                              rdfs:domain <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]> ;
+                                                                              rdfs:label "is connected to" .
+
+
+###  http://example.com/industrial/is.Controlled-By(Panel):Safety~?@!$&'*+,;=%[]
+<http://example.com/industrial/is.Controlled-By(Panel):Safety~?@!$&'*+,;=%[]> rdf:type owl:ObjectProperty ;
+                                                                              rdfs:domain <http://example.com/industrial/Machine.Type-A(01)~?@!$&'*+,;=%[]> ;
+                                                                              rdfs:range <http://example.com/industrial/Control.Panel-1(Safety)~?@!$&'*+,;=%[]> ;
+                                                                              rdfs:label "is controlled by" .
+
+
+###  http://example.com/industrial/links.Interface-Module(02):IO~?@!$&'*+,;=%[]
+<http://example.com/industrial/links.Interface-Module(02):IO~?@!$&'*+,;=%[]> rdf:type owl:ObjectProperty ;
+                                                                             rdfs:label "links interface module" .
+
+
+###  http://example.com/industrial/logs.Data-Stream(01):Raw~?@!$&'*+,;=%[]
+<http://example.com/industrial/logs.Data-Stream(01):Raw~?@!$&'*+,;=%[]> rdf:type owl:ObjectProperty ;
+                                                                        rdfs:label "logs raw data stream" .
+
+
+###  http://example.com/industrial/is.Controlled-By(Panel):Safety~?@!$&'*+,;=%[]
+<http://example.com/industrial/multiConnect> rdf:type owl:ObjectProperty ;
+                                             rdfs:domain [ owl:unionOf ( <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]>
+                                                                         <http://example.com/industrial/Sensor>
+                                                                        ) ;
+                                                         rdf:type owl:Class
+                                                         ] ;
+                                                                              rdfs:range [ owl:unionOf ( <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]>
+                                                                         <http://example.com/industrial/Sensor>
+                                                                             ) ;
+                                                         rdf:type owl:Class
+                                                         ] ;
+                                                                              rdfs:label "is multi connect" .
+
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://example.com/industrial/contains.Serial-Number(ID):X~?@!$&'*+,;=%[]
+<http://example.com/industrial/contains.Serial-Number(ID):X~?@!$&'*+,;=%[]> rdf:type owl:DatatypeProperty ;
+                                                                            rdfs:range xsd:string ;
+                                                                            rdfs:label "contains serial number" .
+
+
+###  http://example.com/industrial/has.Value-Reading(Temp):C~?@!$&'*+,;=%[]
+<http://example.com/industrial/has.Value-Reading(Temp):C~?@!$&'*+,;=%[]> rdf:type owl:DatatypeProperty ;
+                                                                         rdfs:domain <http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]> ;
+                                                                         rdfs:label "has temperature value (Celsius)" .
+
+
+###  http://example.com/industrial/reports.Status-Flag(OK):1~?@!$&'*+,;=%[]
+<http://example.com/industrial/reports.Status-Flag(OK):1~?@!$&'*+,;=%[]> rdf:type owl:DatatypeProperty ;
+                                                                         rdfs:label "reports status flag" .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://example.com/industrial/Control.Panel-1(Safety)~?@!$&'*+,;=%[]
+<http://example.com/industrial/Control.Panel-1(Safety)~?@!$&'*+,;=%[]> rdf:type owl:Class ;
+                                                                       rdfs:label "Safety Control Panel" .
+
+
+###  http://example.com/industrial/Machine.Type-A(01)~?@!$&'*+,;=%[]
+<http://example.com/industrial/Machine.Type-A(01)~?@!$&'*+,;=%[]> rdf:type owl:Class ;
+                                                                  rdfs:label "Machine Type A" .
+
+
+###  http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]
+<http://example.com/industrial/Sensor.Unit_01(Temp)~?@!$&'*+,;=%[]> rdf:type owl:Class ;
+                                                                    rdfs:label "Temperature Sensor Unit" .
+
+###  http://example.com/industrial/Sensor
+<http://example.com/industrial/Sensor> rdf:type owl:Class ;
+                                       rdfs:subClassOf cdf_cdm:CogniteAsset ;
+                                       rdfs:label "Temperature Sensor Unit" .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi

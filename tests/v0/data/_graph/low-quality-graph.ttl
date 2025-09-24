@@ -1,0 +1,30 @@
+@prefix cim: <http://iec.ch/TC57/2013/CIM-schema-cim16#> .
+@prefix entsoe: <http://entsoe.eu/CIM/SchemaExtension/3/1#> .
+@prefix neat: <http://purl.org/cognite/neat#> .
+
+neat:Bay_1 a cim:Bay ;
+    entsoe:IdentifiedObject.shortName "LA Bay" ;
+    cim:Bay.VoltageLevel neat:VoltageLevel_1 ;
+    cim:Bay.number "201" .
+
+neat:VoltageLevel_1 a cim:VoltageLevel ;
+    cim:IdentifiedObject.name "1kV Lazarevac" ;
+    cim:VoltageLevel.BaseVoltage neat:BaseVoltage_1 ;
+    cim:VoltageLevel.Substation neat:Substation_1 .
+
+neat:BaseVoltage_1 a cim:BaseVoltage ;
+    cim:BaseVoltage.nominalVoltage "220" ;
+    cim:IdentifiedObject.name "AC-220" .
+
+neat:Substation_1 a cim:Substation ;
+    entsoe:IdentifiedObject.shortName "Treca Mesna" ;
+    cim:PowerSystemResource.Location neat:Location_1 .
+
+neat:Point_1 a cim:PositionPoint ;
+    cim:PositionPoint.Location neat:Location_1 ;
+    cim:PositionPoint.xPosition "442203.66" ;
+    cim:PositionPoint.yPosition "4914942.48" .
+
+neat:Location_1 a cim:Location ;
+    cim:Location.CoordinateSystem neat:CoordinateSystem_1 .
+

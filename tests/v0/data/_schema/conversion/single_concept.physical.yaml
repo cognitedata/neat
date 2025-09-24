@@ -1,0 +1,36 @@
+containers:
+- container: Sensor
+  used_for: node
+metadata:
+  created: '2025-04-01T12:42:41.515473'
+  creator: doctrino
+  external_id: vanillaModel
+  conceptual: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1
+  role: DMS Architect
+  space: my_space
+  updated: '2025-04-01T12:42:41.515473'
+  version: v1
+properties:
+- container: Sensor
+  container_property: maxTemperature
+  conceptual: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/maxTemperature
+  max_count: .inf
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/maxTemperature
+  value_type: float64
+  view: Sensor
+  view_property: maxTemperature
+- container: Sensor
+  container_property: minTemperature
+  conceptual: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor/minTemperature
+  max_count: .inf
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor/minTemperature
+  value_type: float64
+  view: Sensor
+  view_property: minTemperature
+views:
+- implements: ''
+  conceptual: http://purl.org/cognite/neat/data-model/verified/conceptual/my_space/vanillaModel/v1/Sensor
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/my_space/vanillaModel/v1/Sensor
+  view: Sensor

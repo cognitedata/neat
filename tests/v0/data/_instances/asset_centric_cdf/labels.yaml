@@ -1,0 +1,36 @@
+- externalId: RootCIMNode
+  name: RootCIMNode
+  description: Root CIM Node is the root node of the CIM model
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074
+- externalId: GeographicalRegion
+  name: GeographicalRegion
+  description: GeographicalRegion is a geographical region in the CIM model
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074
+- externalId: SubGeographicalRegion
+  name: SubGeographicalRegion
+  description: SubGeographicalRegion is a sub-geographical region in the CIM model. It represents a region within a geographical region such as a state or province.
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074
+- externalId: Substation
+  name: Substation
+  description: Substation is a substation in the CIM model. It represents a collection of equipment that is used to switch or break the flow of electricity in an electrical power system.
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074
+- externalId: historic
+  name: historic
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074
+- externalId: non-historic
+  name: non-historic
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074
+- externalId: belongsTo
+  name: belongsTo
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074
+- externalId: connectsTo
+  name: connectsTo
+  dataSetId: 6931754270713290
+  createdTime: 1698070772074

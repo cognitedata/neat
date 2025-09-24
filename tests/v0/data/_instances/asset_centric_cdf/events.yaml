@@ -1,0 +1,20 @@
+- externalId: malmo-substation-outage
+  dataSetId: 6931754270713290
+  type: alarm
+  subtype: outage
+  description: Malmo substation outage due to power failure.
+  assetIds:
+    - 78504378486679
+  id: 381696371818828
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818
+- externalId: malmo-substation-cleanning
+  dataSetId: 6931754270713290
+  type: maintenance
+  subtype: cleaning
+  description: Malmo substation got cleaned.
+  assetIds:
+    - 78504378486679
+  id: 381696471818828
+  createdTime: 1676643802818
+  lastUpdatedTime: 1676643802818

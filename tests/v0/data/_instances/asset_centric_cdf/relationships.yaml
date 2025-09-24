@@ -1,0 +1,46 @@
+- externalId: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4:root-node
+  sourceExternalId: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
+  sourceType: asset
+  targetExternalId: room-cim-node
+  targetType: asset
+  startTime: 1698070775242
+  endTime: 1701870361607
+  dataSetId: 6931754270713290
+  labels:
+    - externalId: belongsTo
+    - externalId: GeographicalRegion
+    - externalId: historic
+  createdTime: 1698070776487
+  lastUpdatedTime: 1701870364163
+
+- externalId: f17696cf-9aeb-11e5-91da-b8763fd99c5f:2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
+  sourceExternalId: f17696cf-9aeb-11e5-91da-b8763fd99c5f
+  sourceType: asset
+  targetExternalId: 2dd9048c-bdfb-11e5-94fa-c8f73332c8f4
+  targetType: asset
+  startTime: 1698070775242
+  endTime: 1701870361607
+  dataSetId: 6931754270713290
+  labels:
+    - externalId: belongsTo
+    - externalId: GeographicalRegion
+    - externalId: historic
+    - externalId: SubGeographicalRegion
+  createdTime: 1698070776487
+  lastUpdatedTime: 1701870364163
+
+- externalId: f17696ca-9aeb-11e5-91da-b8763fd99c5f:f17696cf-9aeb-11e5-91da-b8763fd99c5f
+  sourceExternalId: f17696ca-9aeb-11e5-91da-b8763fd99c5f
+  sourceType: asset
+  targetExternalId: f17696cf-9aeb-11e5-91da-b8763fd99c5f
+  targetType: asset
+  startTime: 1698070775242
+  endTime: 1701870361607
+  dataSetId: 6931754270713290
+  labels:
+    - externalId: belongsTo
+    - externalId: Substation
+    - externalId: historic
+    - externalId: SubGeographicalRegion
+  createdTime: 1698070776487
+  lastUpdatedTime: 1701870364163
