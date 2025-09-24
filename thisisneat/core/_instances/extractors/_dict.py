@@ -36,7 +36,6 @@ class DictExtractor(BaseExtractor):
 
     def extract(self) -> Iterable[Triple]:
         for key, value in self.data.items():
-            print(key, value)
             for predicate_str, object_ in self._get_predicate_objects_pair(key, value, self.unpack_json):
                 yield self.id_, self.namespace[urllib.parse.quote(predicate_str)], object_
 
