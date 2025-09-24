@@ -50,39 +50,39 @@ class Unit(BaseModelObject):
     )
 
 
-class FloatPrimitiveProperty(ListablePropertyTypeDefinition, ABC):
+class FloatProperty(ListablePropertyTypeDefinition, ABC):
     unit: Unit | None = Field(default=None, description="The unit of the data stored in this property")
 
 
-class Float32PrimitiveProperty(FloatPrimitiveProperty):
+class Float32Property(FloatProperty):
     type: Literal["float32"] = "float32"
 
 
-class Float64PrimitiveProperty(FloatPrimitiveProperty):
+class Float64Property(FloatProperty):
     type: Literal["float64"] = "float64"
 
 
-class BooleanPrimitiveProperty(ListablePropertyTypeDefinition):
+class BooleanProperty(ListablePropertyTypeDefinition):
     type: Literal["boolean"] = "boolean"
 
 
-class Int32PrimitiveProperty(ListablePropertyTypeDefinition):
+class Int32Property(ListablePropertyTypeDefinition):
     type: Literal["int32"] = "int32"
 
 
-class Int64PrimitiveProperty(ListablePropertyTypeDefinition):
+class Int64Property(ListablePropertyTypeDefinition):
     type: Literal["int64"] = "int64"
 
 
-class TimestampPrimitiveProperty(ListablePropertyTypeDefinition):
+class TimestampProperty(ListablePropertyTypeDefinition):
     type: Literal["timestamp"] = "timestamp"
 
 
-class DatePrimitiveProperty(ListablePropertyTypeDefinition):
+class DateProperty(ListablePropertyTypeDefinition):
     type: Literal["date"] = "date"
 
 
-class JSONPrimitiveProperty(ListablePropertyTypeDefinition):
+class JSONProperty(ListablePropertyTypeDefinition):
     type: Literal["json"] = "json"
 
 
@@ -150,14 +150,14 @@ class EnumProperty(PropertyTypeDefinition):
 
 DataType = Annotated[
     TextProperty
-    | Float32PrimitiveProperty
-    | Float64PrimitiveProperty
-    | BooleanPrimitiveProperty
-    | Int32PrimitiveProperty
-    | Int64PrimitiveProperty
-    | TimestampPrimitiveProperty
-    | DatePrimitiveProperty
-    | JSONPrimitiveProperty
+    | Float32Property
+    | Float64Property
+    | BooleanProperty
+    | Int32Property
+    | Int64Property
+    | TimestampProperty
+    | DateProperty
+    | JSONProperty
     | TimeseriesCDFExternalIdReference
     | FileCDFExternalIdReference
     | SequenceCDFExternalIdReference
