@@ -1,7 +1,7 @@
 import pytest
 from rdflib import Namespace, URIRef
 
-from cognite.neat.data_model.models.entities import URI, NameSpace
+from cognite.neat._data_model.models.entities import URI, NameSpace
 
 
 class TestNameSpace:
