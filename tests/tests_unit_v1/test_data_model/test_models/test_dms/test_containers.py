@@ -60,6 +60,197 @@ def invalid_container_definition_test_cases() -> Iterator:
         id="Multiple Issues. Missing required field, invalid name length, invalid value, and not properties",
     )
 
+    # Test space validation
+    yield pytest.param(
+        {
+            "space": "",
+            "externalId": "MyContainer",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field space string should have at least 1 character",
+        },
+        id="Empty space field",
+    )
+
+    yield pytest.param(
+        {
+            "space": "a" * 44,  # Too long
+            "externalId": "MyContainer",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field space string should have at most 43 characters",
+        },
+        id="Space too long",
+    )
+
+    yield pytest.param(
+        {
+            "space": "123invalid",  # Must start with letter
+            "externalId": "MyContainer",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
+        },
+        id="Space invalid pattern - starts with number",
+    )
+
+    # Test external_id validation
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field externalId string should have at least 1 character",
+        },
+        id="Empty external_id",
+    )
+
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "a" * 256,  # Too long
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field externalId string should have at most 255 characters",
+        },
+        id="External_id too long",
+    )
+
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "123invalid",  # Must start with letter
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
+        },
+        id="External_id invalid pattern",
+    )
+
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "String",  # Forbidden external ID
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field externalId 'String' is a reserved container External ID. "
+            "Reserved External IDs are: Boolean, Date, File, Float, Float32, Float64, Int, "
+            "Int32, Int64, JSONObject, Mutation, Numeric, PageInfo, Query, Sequence, String, "
+            "Subscription, TimeSeries and Timestamp",
+        },
+        id="Forbidden external_id",
+    )
+
+    # Test description length
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "MyContainer",
+            "description": "a" * 1025,  # Too long
+            "properties": {"validProp": {"type": {"type": "text"}}},
+        },
+        {
+            "In field description string should have at most 1024 characters",
+        },
+        id="Description too long",
+    )
+
+    # Test property key validation
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "MyContainer",
+            "properties": {"space": {"type": {"type": "text"}}},  # Forbidden property key
+        },
+        {
+            "In field properties property keys cannot be any of the following reserved values: space",
+        },
+        id="Forbidden property key",
+    )
+
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "MyContainer",
+            "properties": {"invalid-key-!": {"type": {"type": "text"}}},  # Invalid pattern
+        },
+        {
+            "In field properties property keys must match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'. "
+            "Invalid keys: invalid-key-!",
+        },
+        id="Invalid property key pattern",
+    )
+
+    # Test constraints validation
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "MyContainer",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+            "constraints": {
+                f"constraint{i}": {"constraintType": "uniqueness", "properties": ["validProp"]} for i in range(11)
+            },  # Too many constraints
+        },
+        {
+            "In field constraints dictionary should have at most 10 items after validation, not 11",
+        },
+        id="Too many constraints",
+    )
+
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "MyContainer",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+            "constraints": {
+                "a" * 44: {"constraintType": "uniqueness", "properties": ["validProp"]}
+            },  # Constraint key too long
+        },
+        {
+            "In field constraints constraints keys must be between 1 and 43 characters long. "
+            "Invalid keys: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        },
+        id="Constraint key too long",
+    )
+
+    # Test indexes validation
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "MyContainer",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+            "indexes": {
+                f"index{i}": {"indexType": "btree", "properties": ["validProp"]} for i in range(11)
+            },  # Too many indexes
+        },
+        {
+            "In field indexes dictionary should have at most 10 items after validation, not 11",
+        },
+        id="Too many indexes",
+    )
+
+    yield pytest.param(
+        {
+            "space": "validSpace",
+            "externalId": "MyContainer",
+            "properties": {"validProp": {"type": {"type": "text"}}},
+            "indexes": {"a" * 44: {"indexType": "btree", "properties": ["validProp"]}},  # Index key too long
+        },
+        {
+            "In field indexes indexes keys must be between 1 and 43 characters long. "
+            "Invalid keys: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        },
+        id="Index key too long",
+    )
+
 
 class TestContainerRequest:
     @pytest.mark.parametrize("data,expected_errors", list(invalid_container_definition_test_cases()))
