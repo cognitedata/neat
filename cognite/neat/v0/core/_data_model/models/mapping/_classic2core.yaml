@@ -1,0 +1,608 @@
+containers:
+- container: ClassicEquipment
+  neatId: http://purl.org/cognite/neat/neatId_bb7e4121_bc17_46c7_a93d_c855f710ccbe
+  used_for: node
+- container: ClassicSourceSystem
+  used_for: node
+enum:
+- collection: timeseriesType
+  description: Time series with double floating point data points.
+  name: numeric
+  value: numeric
+- collection: timeseriesType
+  description: Time series with string data points.
+  name: string
+  value: string
+metadata:
+  created: '2024-08-29T13:49:56.696000'
+  creator: Anders Albert,Nikola Vasiljevic,Thorkild Stray
+  description: Mapping from Classic to Core
+  external_id: ClassicCoreMapping
+  name: data_product data model
+  role: DMS Architect
+  space: mapping
+  updated: '2024-08-29T13:49:56.696000'
+  version: v1.0
+properties:
+- connection: reverse(property=assets)
+  description: An automatically updated list of activities related to the asset.
+  max_count: .inf
+  min_count: 0
+  name: Activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/activities
+  value_type: ClassicEvent
+  view: ClassicAsset
+  view_property: activities
+- connection: reverse(property=parent)
+  description: An automatically updated list of assets with this asset as their parent.
+  max_count: .inf
+  min_count: 0
+  name: Children
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/children
+  value_type: ClassicAsset
+  view: ClassicAsset
+  view_property: children
+- container: cdf_cdm:CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/description
+  value_type: text
+  view: ClassicAsset
+  view_property: description
+- connection: reverse(property=asset)
+  description: An automatically updated list of equipment related to the asset.
+  max_count: .inf
+  min_count: 0
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/equipment
+  value_type: ClassicEquipment
+  view: ClassicAsset
+  view_property: equipment
+- connection: reverse(property=assets)
+  description: An automatically updated list of files related to the asset.
+  max_count: .inf
+  min_count: 0
+  name: Files
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/files
+  value_type: ClassicFile
+  view: ClassicAsset
+  view_property: files
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/labels
+  value_type: text
+  view: ClassicAsset
+  view_property: labels
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: name
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/name
+  value_type: text
+  view: ClassicAsset
+  view_property: name
+- connection: direct
+  container: cdf_cdm:CogniteAsset
+  container_property: assetHierarchy_parent
+  description: The parent of the asset.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Parent
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/parentId
+  value_type: ClassicAsset
+  view: ClassicAsset
+  view_property: parentId
+- connection: direct
+  container: cdf_cdm:CogniteAsset
+  container_property: assetHierarchy_path
+  description: An automatically updated ordered list of this asset's ancestors, starting
+    with the root asset. Enables subtree filtering to find all assets under a parent.
+  immutable: false
+  max_count: 100
+  min_count: 0
+  name: Path
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/path
+  value_type: ClassicAsset
+  view: ClassicAsset
+  view_property: path
+- connection: direct
+  container: cdf_cdm:CogniteAsset
+  container_property: assetHierarchy_root
+  description: An automatically updated reference to the top-level asset of the hierarchy.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Root
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/root
+  value_type: ClassicAsset
+  view: ClassicAsset
+  view_property: root
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/source
+  value_type: ClassicSourceSystem
+  view: ClassicAsset
+  view_property: source
+- connection: reverse(property=assets)
+  description: An automatically updated list of time series related to the asset.
+  max_count: .inf
+  min_count: 0
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset/timeSeries
+  value_type: ClassicTimeSeries
+  view: ClassicAsset
+  view_property: timeSeries
+- connection: reverse(property=equipment)
+  description: An automatically updated list of activities related to the equipment.
+  max_count: .inf
+  min_count: 0
+  name: Activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEquipment/activities
+  value_type: ClassicEvent
+  view: ClassicEquipment
+  view_property: activities
+- connection: direct
+  container: cdf_cdm:CogniteEquipment
+  container_property: asset
+  description: The asset the equipment is related to.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Asset
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEquipment/asset
+  value_type: ClassicAsset
+  view: ClassicEquipment
+  view_property: asset
+- container: ClassicEquipment
+  container_property: classicEquipmentGUID
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEquipment/classicEquipmentGUID
+  value_type: text
+  view: ClassicEquipment
+  view_property: classicEquipmentGUID
+- connection: direct
+  container: cdf_cdm:CogniteEquipment
+  container_property: files
+  description: A list of files the equipment relates to.
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  name: Files
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEquipment/files
+  value_type: ClassicFile
+  view: ClassicEquipment
+  view_property: files
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEquipment/source
+  value_type: ClassicSourceSystem
+  view: ClassicEquipment
+  view_property: source
+- connection: reverse(property=equipment)
+  description: An automatically updated list of time series related to the equipment.
+  max_count: .inf
+  min_count: 0
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEquipment/timeSeries
+  value_type: ClassicTimeSeries
+  view: ClassicEquipment
+  view_property: timeSeries
+- container: cdf_cdm:CogniteDescribable
+  container_property: aliases
+  description: Alternative names for the node
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/aliases
+  value_type: text
+  view: ClassicEvent
+  view_property: aliases
+- connection: direct
+  container: cdf_cdm:CogniteActivity
+  container_property: assets
+  description: A list of assets the activity is related to.
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  name: Assets
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/assetIds
+  value_type: ClassicAsset
+  view: ClassicEvent
+  view_property: assetIds
+- container: cdf_cdm:CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/description
+  value_type: text
+  view: ClassicEvent
+  view_property: description
+- container: cdf_cdm:CogniteSchedulable
+  container_property: endTime
+  description: The actual end time of an activity (or similar that extends this)
+  immutable: false
+  index: endTime
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/endTime
+  value_type: timestamp
+  view: ClassicEvent
+  view_property: endTime
+- connection: direct
+  container: cdf_cdm:CogniteActivity
+  container_property: equipment
+  description: A list of equipment the activity is related to.
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/equipment
+  value_type: ClassicEquipment
+  view: ClassicEvent
+  view_property: equipment
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/labels
+  value_type: text
+  view: ClassicEvent
+  view_property: labels
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/source
+  value_type: ClassicSourceSystem
+  view: ClassicEvent
+  view_property: source
+- container: cdf_cdm:CogniteSchedulable
+  container_property: startTime
+  description: The actual start time of an activity (or similar that extends this)
+  immutable: false
+  index: startTime
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/startTime
+  value_type: timestamp
+  view: ClassicEvent
+  view_property: startTime
+- connection: direct
+  container: cdf_cdm:CogniteActivity
+  container_property: timeSeries
+  description: A list of time series the activity is related to.
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent/timeSeries
+  value_type: ClassicTimeSeries
+  view: ClassicEvent
+  view_property: timeSeries
+- connection: direct
+  container: cdf_cdm:CogniteFile
+  container_property: assets
+  description: A list of assets this file is related to.
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  name: Assets
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/assetIds
+  value_type: ClassicAsset
+  view: ClassicFile
+  view_property: assetIds
+- container: cdf_cdm:CogniteFile
+  container_property: directory
+  description: Contains the path elements from the source (if the source system has
+    a file system hierarchy or similar.)
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Directory
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/directory
+  value_type: text
+  view: ClassicFile
+  view_property: directory
+- connection: reverse(property=files)
+  description: An automatically updated list of equipment this file is related to.
+  max_count: .inf
+  min_count: 0
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/equipment
+  value_type: ClassicEquipment
+  view: ClassicFile
+  view_property: equipment
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/labels
+  value_type: text
+  view: ClassicFile
+  view_property: labels
+- container: cdf_cdm:CogniteFile
+  container_property: mimeType
+  description: The MIME type of the file.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: MIME type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/mimeType
+  value_type: text
+  view: ClassicFile
+  view_property: mimeType
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: name
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/name
+  value_type: text
+  view: ClassicFile
+  view_property: name
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/source
+  value_type: ClassicSourceSystem
+  view: ClassicFile
+  view_property: source
+- container: cdf_cdm:CogniteSourceable
+  container_property: sourceCreatedTime
+  description: When the instance was created in source system (if available)
+  immutable: false
+  index: sourceCreatedTime
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/sourceCreatedTime
+  value_type: timestamp
+  view: ClassicFile
+  view_property: sourceCreatedTime
+- container: cdf_cdm:CogniteSourceable
+  container_property: sourceUpdatedTime
+  description: When the instance was last updated in the source system (if available)
+  immutable: false
+  index: sourceUpdatedTime
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile/sourceModifiedTime
+  value_type: timestamp
+  view: ClassicFile
+  view_property: sourceModifiedTime
+- container: ClassicSourceSystem
+  container_property: classicSourceSystemGUID
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicSourceSystem/classicSourceSystemGUID
+  value_type: text
+  view: ClassicSourceSystem
+  view_property: classicSourceSystemGUID
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicSourceSystem/name
+  value_type: text
+  view: ClassicSourceSystem
+  view_property: name
+- connection: reverse(property=timeSeries)
+  description: An automatically updated list of activities the time series is related
+    to.
+  max_count: .inf
+  min_count: 0
+  name: Activities
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/activities
+  value_type: ClassicEvent
+  view: ClassicTimeSeries
+  view_property: activities
+- connection: direct
+  container: cdf_cdm:CogniteTimeSeries
+  container_property: assets
+  description: A list of assets the time series is related to.
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  name: Assets
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/assetId
+  value_type: ClassicAsset
+  view: ClassicTimeSeries
+  view_property: assetId
+- container: cdf_cdm:CogniteDescribable
+  container_property: description
+  description: Description of the instance
+  immutable: false
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/description
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: description
+- connection: direct
+  container: cdf_cdm:CogniteTimeSeries
+  container_property: equipment
+  description: A list of equipment the time series is related to.
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/equipment
+  value_type: ClassicEquipment
+  view: ClassicTimeSeries
+  view_property: equipment
+- container: cdf_cdm:CogniteTimeSeries
+  container_property: isStep
+  default: false
+  description: Specifies whether the time series is a step time series or not.
+  immutable: false
+  max_count: 1
+  min_count: 1
+  name: Is step
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/isStep
+  value_type: boolean
+  view: ClassicTimeSeries
+  view_property: isStep
+- container: cdf_cdm:CogniteTimeSeries
+  container_property: type
+  description: Specifies the data type of the data points.
+  immutable: true
+  max_count: 1
+  min_count: 1
+  name: Type
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/isString
+  value_type: enum(collection=timeseriesType)
+  view: ClassicTimeSeries
+  view_property: isString
+- container: cdf_cdm:CogniteDescribable
+  container_property: aliases
+  description: Alternative names for the node
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/legacyName
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: legacyName
+- container: cdf_cdm:CogniteDescribable
+  container_property: name
+  description: Name of the instance
+  immutable: false
+  index: name
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/name
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: name
+- container: cdf_cdm:CogniteDescribable
+  container_property: tags
+  description: Text based labels for generic use, limited to 1000
+  immutable: false
+  max_count: 1000
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/securityCategories
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: securityCategories
+- connection: direct
+  container: cdf_cdm:CogniteSourceable
+  container_property: source
+  description: Direct relation to a source system
+  immutable: false
+  index: source
+  max_count: 1
+  min_count: 0
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/source
+  value_type: ClassicSourceSystem
+  view: ClassicTimeSeries
+  view_property: source
+- container: cdf_cdm:CogniteTimeSeries
+  container_property: sourceUnit
+  description: The unit specified in the source system.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Source unit
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/unit
+  value_type: text
+  view: ClassicTimeSeries
+  view_property: unit
+- connection: direct
+  container: cdf_cdm:CogniteTimeSeries
+  container_property: unit
+  description: The unit of the time series.
+  immutable: false
+  max_count: 1
+  min_count: 0
+  name: Unit
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries/unitExternalId
+  value_type: cdf_cdm:CogniteUnit(version=v1)
+  view: ClassicTimeSeries
+  view_property: unitExternalId
+views:
+- description: Represents a single unit of measurement
+  implements: cdf_cdm:CogniteDescribable(version=v1)
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/CogniteUnit
+  view: cdf_cdm:CogniteUnit(version=v1)
+- description: Assets represent systems that support industrial functions or processes.
+    Assets are often called 'functional location'.
+  implements: cdf_cdm:CogniteAsset(version=v1)
+  in_model: true
+  name: Asset
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicAsset
+  view: ClassicAsset
+- description: Equipment represents physical supplies or devices.
+  implements: cdf_cdm:CogniteEquipment(version=v1)
+  in_model: true
+  name: Equipment
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEquipment
+  view: ClassicEquipment
+- description: Represents activities. Activities typically happen over a period and
+    have a start and end time.
+  implements: cdf_cdm:CogniteActivity(version=v1)
+  in_model: true
+  name: Activity
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicEvent
+  view: ClassicEvent
+- description: Represents files.
+  implements: cdf_cdm:CogniteFile(version=v1)
+  in_model: true
+  name: File
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicFile
+  view: ClassicFile
+- description: The CogniteSourceSystem core concept is used to standardize the way
+    source system is stored.
+  implements: cdf_cdm:CogniteSourceSystem(version=v1)
+  in_model: true
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicSourceSystem
+  view: ClassicSourceSystem
+- description: Represents a series of data points in time order.
+  implements: cdf_cdm:CogniteTimeSeries(version=v1)
+  in_model: true
+  name: Time series
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/mapping/ClassicCoreMapping/v1.0/ClassicTimeSeries
+  view: ClassicTimeSeries
