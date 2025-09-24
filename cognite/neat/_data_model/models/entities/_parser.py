@@ -151,7 +151,7 @@ class _EntityParser:
         # Check for unexpected trailing characters
         self.skip_whitespace()
         if self.pos < self.length:
-            raise ValueError(f"Unexpected characters after properties at position {self.pos}")
+            raise ValueError(f"Unexpected characters after properties at position {self.pos}. Got {self.peek()!r}")
 
         return ParsedEntity(prefix, suffix, properties)
 
@@ -171,6 +171,9 @@ def parse_entity(entity_string: str) -> ParsedEntity:
         ValueError: If the entity string is malformed.
 
     This parser allows arbitrary characters in property values, including nested parentheses.
+    Reserved characters like '=', ',', '(', and ')' are used for parsing structure and cannot appear
+    unescaped in property names.
+
     For example, it can parse:
         - "asset:vehicle(type=car,details=(color=red,size=large))"
         - "device(sensor(model=X100,features=(wifi,bluetooth)))"

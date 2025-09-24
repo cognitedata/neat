@@ -36,6 +36,11 @@ class TestEntityParser:
                 ParsedEntity("", "", {}),
                 id="Empty entity string",
             ),
+            pytest.param(
+                "ny!@#$%^&*_+-{}[]|;:'<>.?/~`Asset(type=storage)",
+                ParsedEntity("ny!@#$%^&*_+-{}[]|;", "'<>.?/~`Asset", {"type": "storage"}),
+                id="Entity with special characters in name",
+            ),
         ],
     )
     def test_parse_entity(self, entity_str: str, expected: ParsedEntity) -> None:
