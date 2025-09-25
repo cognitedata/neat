@@ -4,8 +4,7 @@ from typing import Any
 
 from cognite.neat.v0.core._issues._base import IssueList
 from cognite.neat.v0.core._utils.reader._base import NeatReader
-from cognite.neat.v0.plugins import get_plugin_manager
-from cognite.neat.v0.plugins.data_model.importers._base import DataModelImporterPlugin
+from cognite.neat.v0.plugins import DataModelImporterPlugin, get_plugin_manager
 from cognite.neat.v0.session._experimental import ExperimentalFlags
 
 from ._state import SessionState

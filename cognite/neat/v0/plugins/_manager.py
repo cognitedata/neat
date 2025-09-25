@@ -1,21 +1,11 @@
 """Plugin manager for external plugins."""
 
 from importlib import metadata
-from typing import Any, ClassVar, TypeAlias, TypeVar, cast
+from typing import Any, ClassVar
 
+from ._base import NeatPlugin
+from ._data_model import DataModelImporterPlugin, DataModelTransformerPlugin
 from ._issues import PluginDuplicateError, PluginError, PluginLoadingError
-from .data_model.importers import DataModelImporterPlugin
-
-# Here we configure entry points where external plugins are going to be registered.
-plugins_entry_points = {
-    "cognite.neat.v0.plugins.data_model.importers": DataModelImporterPlugin,
-}
-
-#: Type alias for all supported plugin types
-NeatPlugin: TypeAlias = DataModelImporterPlugin
-
-# Generic type variable for plugin types
-T_NeatPlugin = TypeVar("T_NeatPlugin", bound=NeatPlugin)
 
 
 class Plugin:
@@ -48,12 +38,13 @@ class PluginManager:
 
     _plugins_entry_points: ClassVar[dict[str, type[NeatPlugin]]] = {
         "cognite.neat.v0.plugins.data_model.importers": DataModelImporterPlugin,
+        "cognite.neat.v0.plugins.data_model.transformers": DataModelTransformerPlugin,
     }
 
     def __init__(self, plugins: dict[tuple[str, type[NeatPlugin]], Any]) -> None:
         self._plugins = plugins
 
-    def get(self, name: str, type_: type[T_NeatPlugin]) -> type[T_NeatPlugin]:
+    def get(self, name: str, type_: type[NeatPlugin]) -> type[NeatPlugin]:
         """
         Returns desired plugin
 
@@ -63,7 +54,7 @@ class PluginManager:
         """
         try:
             plugin_class = self._plugins[(name, type_)]
-            return cast(type[T_NeatPlugin], plugin_class)
+            return plugin_class
         except KeyError:
             raise PluginError(plugin_name=name, plugin_type=type_.__name__) from None
 
