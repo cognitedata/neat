@@ -23,6 +23,7 @@ def humanize_collection(collection: Collection[Any], /, *, sort: bool = True, bi
         >>> humanize_collection(["a"])
         'a'
         >>> humanize_collection([])
+        ''
 
     """
     if not collection:
