@@ -5,7 +5,7 @@ from typing import Any, Literal
 from pydantic import Field, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from cognite.neat.core._utils.text import humanize_collection
+from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseModelObject, WriteableResource
 from ._constants import (

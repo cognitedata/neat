@@ -9,7 +9,7 @@ from cognite.neat._data_model.models.dms import (
     PropertyTypeDefinition,
 )
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
-from cognite.neat.core._utils.text import humanize_collection
+from cognite.neat._utils.text import humanize_collection
 
 
 def test_all_indices_are_in_union() -> None:

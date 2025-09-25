@@ -2,11 +2,10 @@ from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel
+from pydantic.alias_generators import to_camel
 
-from cognite.neat.core._utils.text import to_camel_case
 
-
-class BaseModelObject(BaseModel, alias_generator=to_camel_case, extra="ignore"):
+class BaseModelObject(BaseModel, alias_generator=to_camel, extra="ignore"):
     """Base class for all object. This includes resources and nested objects."""
 
     ...

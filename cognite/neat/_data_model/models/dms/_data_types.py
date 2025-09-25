@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
 
-from cognite.neat.core._utils.text import humanize_collection
+from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseModelObject
 from ._constants import ENUM_VALUE_IDENTIFIER_PATTERN, FORBIDDEN_ENUM_VALUES, INSTANCE_ID_PATTERN
