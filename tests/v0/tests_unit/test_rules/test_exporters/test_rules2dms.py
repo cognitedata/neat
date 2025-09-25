@@ -13,6 +13,7 @@ from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
 from cognite.neat.v0.core._data_model import importers
 from cognite.neat.v0.core._data_model.exporters import DMSExporter
 from cognite.neat.v0.core._data_model.models import ConceptualDataModel
+from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerEntity
 from cognite.neat.v0.core._data_model.models.physical import PhysicalDataModel
 from cognite.neat.v0.core._data_model.transformers import (
     ConceptualToPhysical,
@@ -41,6 +42,23 @@ class TestDMSExporter:
 
         first_container = next(iter(schema.containers.values()))
         assert first_container.properties["geoLocation"].default_value is None
+
+    def test_export_dms_schema_with_constraint_above_43_characters(self, alice_rules: PhysicalDataModel) -> None:
+        rules = alice_rules.model_copy(deep=True)
+
+        # purposely setting default value for connection that should not be
+        # considered when exporting DMS rules to DMS schema
+        rules.containers[0].constraint = [
+            ContainerEntity(
+                space="super-long-space-name-that-leads",
+                externalId="to-a-very-long-container-constraint-identifier-that-exceeds-43-characters",
+            )
+        ]
+
+        exporter = DMSExporter()
+        schema = exporter.export(rules)
+        first_container = schema.containers[rules.containers[0].container.as_id()]
+        assert list(first_container.constraints.keys()) == ["neat-c6748a558f135bb50692b72d03ae5d3f"]
 
     def test_export_dms_schema_to_zip(self, alice_rules: PhysicalDataModel, tmp_path: Path) -> None:
         exporter = DMSExporter()
