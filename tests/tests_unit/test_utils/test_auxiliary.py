@@ -1,69 +1,68 @@
-from typing import Any, ClassVar
+from abc import ABC, abstractmethod
 
-import pytest
-
-from cognite.neat.core._data_model.importers import DMSImporter
-from cognite.neat.core._utils.auxiliary import (
-    get_classmethods,
-    get_parameters_by_method,
-)
+from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
 
-@pytest.mark.parametrize(
-    "cls_, expected_methods",
-    [
-        (
-            DMSImporter,
-            [
-                DMSImporter.as_unverified_concept,
-                DMSImporter.as_unverified_conceptual_property,
-                DMSImporter.from_data_model,
-                DMSImporter.from_data_model_id,
-                DMSImporter.from_directory,
-                DMSImporter.from_path,
-                DMSImporter.from_zip_file,
-            ],
-        )
-    ],
-)
-def test_get_classmethods(cls_, expected_methods: list) -> None:
-    assert get_classmethods(cls_) == expected_methods
+class GrandParent(ABC):
+    @abstractmethod
+    def method(self) -> None:
+        pass
 
 
-class SubClass:
-    def verify(self) -> None: ...
+class Parent(GrandParent, ABC): ...
 
-    def do_something(self, a: int, b: bool) -> None: ...
+
+class Parent2(GrandParent):
+    def method(self) -> None:
+        print("Parent2 method implementation")
+
+
+class Child(Parent):
+    def method(self) -> None:
+        print("Child method implementation")
+
+
+class Child2(Parent):
+    def method(self) -> None:
+        print("Child2 method implementation")
+
+
+class Child3(Child, Parent2):
+    def method(self) -> None:
+        print("Child3 method implementation")
+
+
+class Mixin1(ABC):
+    @property
+    @abstractmethod
+    def mixin_property(self) -> str:
+        raise NotImplementedError()
+
+
+class Mixin2(ABC):
+    @abstractmethod
+    def mixin_method(self) -> str:
+        raise NotImplementedError()
+
+
+class MultiChild(Mixin1, Mixin2, GrandParent):
+    def method(self) -> None:
+        pass
+
+    def mixin_method(self) -> str:
+        return "Mixin method implementation"
 
     @property
-    def also_ignore_me(self) -> str: ...
-
-    def __call__(self, io: Any) -> None: ...
-
-
-class MyClass:
-    ignore_me: ClassVar[str] = "ignore"
-
-    def __init__(self) -> None:
-        self.sub_class = SubClass()
-
-    def action(self, values: tuple[int, ...]) -> None: ...
+    def mixin_property(self) -> str:
+        return "Mixin property implementation"
 
 
-@pytest.mark.parametrize(
-    "type_, expected_methods",
-    [
-        (
-            MyClass,
-            {
-                "action": {"values": tuple[int, ...]},
-                "sub_class.verify": {},
-                "sub_class.do_something": {"a": int, "b": bool},
-                "sub_class.__call__": {"io": Any},
-            },
-        )
-    ],
-)
-def test_get_parameters_by_method(type_: type, expected_methods: dict[str, dict[str, type]]) -> None:
-    obj = type_()
-    assert get_parameters_by_method(obj) == expected_methods
+class TestGetConcreteSubclasses:
+    def test_get_concrete_subclasses(self) -> None:
+        subclasses = get_concrete_subclasses(GrandParent)
+
+        assert set(subclasses) == {Parent2, Child, Child2, Child3, MultiChild}
+
+    def test_multiple_inheritance(self) -> None:
+        subclasses = get_concrete_subclasses(GrandParent)
+        assert len(subclasses) == len(set(subclasses)), "Subclasses should be unique"

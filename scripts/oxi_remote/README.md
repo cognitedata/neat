@@ -25,7 +25,7 @@ More details: https://github.com/oxigraph/oxigraph/tree/main/cli
 
 
 ```
-from cognite.neat.core._store import NeatGraphStore
+from cognite.neat.v0.core._store import NeatGraphStore
 from cognite.neat import NeatSession
 
 

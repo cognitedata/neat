@@ -1,6 +1,6 @@
 import yaml
 
-from tests.data import classic_windfarm
+from tests.v0.data import classic_windfarm
 from pathlib import Path
 from cognite.client.data_classes._base import WriteableCogniteResource
 from cognite_toolkit._cdf_tk.loaders import RESOURCE_LOADER_LIST
