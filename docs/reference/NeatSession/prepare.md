@@ -1,3 +1,3 @@
-::: cognite.neat.session._prepare.PrepareAPI
-::: cognite.neat.session._prepare.InstancePrepareAPI
-::: cognite.neat.session._prepare.DataModelPrepareAPI
+::: cognite.neat.v0.session._prepare.PrepareAPI
+::: cognite.neat.v0.session._prepare.InstancePrepareAPI
+::: cognite.neat.v0.session._prepare.DataModelPrepareAPI

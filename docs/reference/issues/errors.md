@@ -1,1 +1,1 @@
-::: cognite.neat.core._issues.errors
+::: cognite.neat.v0.core._issues.errors
