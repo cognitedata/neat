@@ -1,3 +1,3 @@
-::: cognite.neat.session._to.ToAPI
-::: cognite.neat.session._to.CDFToAPI
+::: cognite.neat.v0.session._to.ToAPI
+::: cognite.neat.v0.session._to.CDFToAPI
 
