@@ -46,8 +46,7 @@ class TestDMSExporter:
     def test_export_dms_schema_with_constraint_above_43_characters(self, alice_rules: PhysicalDataModel) -> None:
         rules = alice_rules.model_copy(deep=True)
 
-        # purposely setting default value for connection that should not be
-        # considered when exporting DMS rules to DMS schema
+        # purposely making the constraint name above 43 characters
         rules.containers[0].constraint = [
             ContainerEntity(
                 space="super-long-space-name-that-leads",
