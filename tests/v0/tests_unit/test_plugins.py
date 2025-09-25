@@ -11,13 +11,12 @@ from cognite.neat.v0.core._data_model.importers._spreadsheet2data_model import E
 from cognite.neat.v0.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
-from cognite.neat.v0.plugins import _manager
+from cognite.neat.v0.plugins import DataModelImporterPlugin, _manager
 from cognite.neat.v0.plugins._issues import (
     PluginDuplicateError,
     PluginLoadingError,
 )
 from cognite.neat.v0.plugins._manager import PluginManager
-from cognite.neat.v0.plugins.data_model.importers import DataModelImporterPlugin
 from tests.v0.data import SchemaData
 
 
