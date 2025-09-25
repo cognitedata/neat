@@ -9,7 +9,6 @@ real_data/
 data/
 dev-data/
 dev-data-*/
-!tests/v0/data/
 
 !cognite/neat/workflows/examples/config.yaml
 
