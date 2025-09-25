@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat.data_model.models.entities._base import ConceptEntity, Entity, UnknownEntity
-from cognite.neat.data_model.models.entities._constants import Undefined, Unknown
+from cognite.neat._data_model.models.entities._base import ConceptEntity, Entity, UnknownEntity
+from cognite.neat._data_model.models.entities._constants import Undefined, Unknown
 
 
 class TestEntity:
@@ -42,6 +42,14 @@ class TestEntity:
         entity2 = Entity(prefix="test", suffix="TestSuffix")
 
         assert hash(entity1) == hash(entity2)
+
+    def test_entity_hash_subclassing(self):
+        class SubEntity(Entity): ...
+
+        entity1 = Entity(prefix="test", suffix="TestSuffix")
+        entity2 = SubEntity(prefix="test", suffix="TestSuffix")
+
+        assert hash(entity1) != hash(entity2)
 
     def test_strip_string_validation(self):
         entity = Entity(prefix="  test  ", suffix="  TestSuffix  ")

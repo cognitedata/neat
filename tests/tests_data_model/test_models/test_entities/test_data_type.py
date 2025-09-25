@@ -1,5 +1,5 @@
-from cognite.neat.data_model._constants import XML_SCHEMA_NAMESPACE
-from cognite.neat.data_model.models.entities._data_types import Enum, EnumCollectionEntity, Long, UnitEntity
+from cognite.neat._data_model._constants import XML_SCHEMA_NAMESPACE
+from cognite.neat._data_model.models.entities._data_types import Enum, EnumCollectionEntity, Long, UnitEntity
 
 
 def test_long():
