@@ -1,3 +1,4 @@
+import hashlib
 import warnings
 from collections import defaultdict
 from collections.abc import Collection, Hashable, Sequence
@@ -25,6 +26,7 @@ from cognite.neat.v0.core._constants import (
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
     DMS_PRIMITIVE_LIST_DEFAULT_LIMIT,
 )
+from cognite.neat.v0.core._data_model._constants import CONSTRAINT_ID_MAX_LENGTH
 from cognite.neat.v0.core._data_model.models.data_types import DataType, Double, Enum, Float, LangString, String
 from cognite.neat.v0.core._data_model.models.entities import (
     ConceptEntity,
@@ -409,11 +411,18 @@ class _DMSExporter:
         for container in containers:
             if container.constraints:
                 container.constraints = {
-                    name: const
+                    self._truncate_constraint_name(name): const
                     for name, const in container.constraints.items()
                     if not (isinstance(const, dm.RequiresConstraint) and const.require in container_to_drop)
                 }
         return ContainerApplyDict([container for container in containers if container.as_id() not in container_to_drop])
+
+    @staticmethod
+    def _truncate_constraint_name(name: str) -> str:
+        if len(name) <= CONSTRAINT_ID_MAX_LENGTH:
+            return name
+        half_length = int(CONSTRAINT_ID_MAX_LENGTH / 2)
+        return f"{name[: half_length - 1]}{hashlib.md5(name.encode()).hexdigest()[:half_length]}"
 
     @staticmethod
     def _gather_properties(
