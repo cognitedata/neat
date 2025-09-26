@@ -18,6 +18,8 @@ from ._references import ContainerReference, ViewReference
 from ._view_property import (
     ConnectionRequestProperty,
     ConnectionResponseProperty,
+    MultiReverseDirectRelationPropertyResponse,
+    SingleReverseDirectRelationPropertyResponse,
     ViewCorePropertyRequest,
     ViewCorePropertyResponse,
 )
@@ -107,4 +109,16 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     )
 
     def as_request(self) -> ViewRequest:
-        return ViewRequest.model_validate(self.model_dump(by_alias=True))
+        dumped = self.model_dump(by_alias=True, exclude={"properties"})
+        dumped["properties"] = {
+            key: value.as_request().model_dump(by_alias=True)
+            if isinstance(
+                value,
+                ViewCorePropertyResponse
+                | MultiReverseDirectRelationPropertyResponse
+                | SingleReverseDirectRelationPropertyResponse,
+            )
+            else value.model_dump(by_alias=True)
+            for key, value in self.properties.items()
+        }
+        return ViewRequest.model_validate(dumped)
