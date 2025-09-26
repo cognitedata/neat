@@ -1,8 +1,8 @@
 import re
 from abc import ABC
-from typing import Any, Literal
+from typing import Literal, TypeVar
 
-from pydantic import Field, field_validator
+from pydantic import Field, Json, field_validator
 
 from cognite.neat._utils.text import humanize_collection
 
@@ -54,7 +54,7 @@ class View(Resource, ABC):
         description="Description of the view.",
         max_length=1024,
     )
-    filter: dict[str, Any] | None = Field(
+    filter: dict[str, Json] | None = Field(
         default=None,
         description="A filter Domain Specific Language (DSL) used to create advanced filter queries.",
     )
@@ -85,18 +85,7 @@ class ViewRequest(View):
         val: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty],
     ) -> dict[str, ViewCorePropertyRequest | ConnectionRequestProperty]:
         """Validate properties Identifier"""
-        errors: list[str] = []
-        for key in val.keys():
-            if not KEY_PATTERN.match(key):
-                errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
-            if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
-                errors.append(
-                    f"'{key}' is a reserved property identifier. Reserved identifiers are: "
-                    f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
-                )
-        if errors:
-            raise ValueError("; ".join(errors))
-        return val
+        return _validate_properties_keys(val)
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
@@ -131,18 +120,7 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
         cls, val: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]
     ) -> dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]:
         """Validate properties Identifier"""
-        errors: list[str] = []
-        for key in val.keys():
-            if not KEY_PATTERN.match(key):
-                errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
-            if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
-                errors.append(
-                    f"'{key}' is a reserved property identifier. Reserved identifiers are: "
-                    f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
-                )
-        if errors:
-            raise ValueError("; ".join(errors))
-        return val
+        return _validate_properties_keys(val)
 
     def as_request(self) -> ViewRequest:
         dumped = self.model_dump(by_alias=True, exclude={"properties"})
@@ -153,3 +131,22 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
             for key, value in self.properties.items()
         }
         return ViewRequest.model_validate(dumped)
+
+
+T_Property = TypeVar("T_Property")
+
+
+def _validate_properties_keys(properties: dict[str, T_Property]) -> dict[str, T_Property]:
+    """Validate keys of a properties dictionary."""
+    errors: list[str] = []
+    for key in properties:
+        if not KEY_PATTERN.match(key):
+            errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
+        if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
+            errors.append(
+                f"'{key}' is a reserved property identifier. Reserved identifiers are: "
+                f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
+            )
+    if errors:
+        raise ValueError("; ".join(errors))
+    return properties

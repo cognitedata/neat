@@ -1,7 +1,7 @@
 from abc import ABC
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, Json
 
 from ._base import BaseModelObject, Resource, WriteableResource
 from ._constants import CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN
@@ -67,7 +67,7 @@ class ViewCorePropertyResponse(ViewCoreProperty, WriteableResource[ViewCorePrope
         default=None,
         description="Increment the property based on its highest current value (max value).",
     )
-    default_value: str | int | bool | dict[str, Any] | None = Field(
+    default_value: str | int | bool | dict[str, Json] | None = Field(
         default=None,
         description="Default value to use when you do not specify a value for the property.",
     )
