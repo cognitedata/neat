@@ -41,15 +41,14 @@ The plot below shows the NEAT authorship from the start until present day.
 #### Current authors
 - [Nikola Vasiljević](www.linkedin.com/in/thisisnikola)
 - [Anders Albert](https://www.linkedin.com/in/anders-albert-00790483/)
-- [Rogerio Júnior](https://www.linkedin.com/in/rogerio-saboia-j%C3%BAnior-087118a7/)
 
 #### Former authors
 - [Aleksandrs Livincovs](https://www.linkedin.com/in/aleksandrslivincovs/)
 - [Julia Graham](https://www.linkedin.com/in/julia-graham-959a78a7/)
+- [Rogerio Júnior](https://www.linkedin.com/in/rogerio-saboia-j%C3%BAnior-087118a7/)
 
 ### Contributors
 We are very grateful for the contributions made by:
-
 
 - [Marie Solvik Lepoutre](https://www.linkedin.com/in/mslepoutre/), who improved RDF triples projections to Cognite Data Fusion
 - [Bård Henning Tvedt](https://www.linkedin.com/in/bhtvedt/), who implemented IMF importer
