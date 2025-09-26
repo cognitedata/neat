@@ -1,6 +1,6 @@
 import re
 from abc import ABC
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field, field_validator
 
@@ -14,7 +14,7 @@ from ._constants import (
     FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS,
     SPACE_FORMAT_PATTERN,
 )
-from ._references import ViewReference
+from ._references import ContainerReference, ViewReference
 
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
 
@@ -78,6 +78,19 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     last_updated_time: int = Field(
         description="When the view was last updated. The number of milliseconds since 00:00:00 Thursday, "
         "1 January 1970, Coordinated Universal Time (UTC), minus leap seconds."
+    )
+    writable: bool = Field(
+        description="oes the view support write operations, i.e. is it writable? "
+        "You can write to a view if the view maps all non-nullable properties."
+    )
+    queryable: bool = Field(
+        description="Does the view support queries, i.e. is it queryable? You can query a view if "
+        "it either has a filter or at least one property mapped to a container."
+    )
+    used_for: Literal["node", "edge", "all"] = Field(description="Should this operation apply to nodes, edges or both.")
+    is_global: bool = Field(description="Is this a global view.")
+    mapped_containers: list[ContainerReference] = Field(
+        description="List of containers with properties mapped by this view."
     )
 
     def as_request(self) -> ViewRequest:
