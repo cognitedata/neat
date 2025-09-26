@@ -300,9 +300,9 @@ class Token(DataType):
 
 class DateTime(DataType):
     python = datetime
-    dms = dms.Timestamp
+    dms = dms.Date
     graphql = "Timestamp"
-    xsd = "dateTimeStamp"
+    xsd = "dateTime"
     sql = "TIMESTAMP"
 
     name: typing.Literal["dateTime"] = "dateTime"
