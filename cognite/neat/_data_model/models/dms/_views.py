@@ -82,7 +82,7 @@ class ViewRequest(View):
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(cls, val: dict[str, str]) -> dict[str, str]:
+    def validate_properties_identifier(cls, val: dict[str, Any]) -> dict[str, Any]:
         """Validate properties Identifier"""
         errors: list[str] = []
         for key in val.keys():
