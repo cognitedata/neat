@@ -6,7 +6,6 @@ description = "Knowledge graph transformation"
 authors = [
     {name="Nikola Vasiljevic", email="nikola.vasiljevic@cognite.com"},
     {name="Anders Albert", email="anders.albert@cognite.com"},
-    {name="Rogerio Júnior", email="rogerio.junior@cognite.com"},
 ]
 license = "Apache-2.0"
 requires-python = ">=3.10"
