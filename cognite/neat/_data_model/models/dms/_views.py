@@ -84,14 +84,17 @@ class ViewRequest(View):
     @field_validator("properties", mode="after")
     def validate_properties_identifier(cls, val: dict[str, str]) -> dict[str, str]:
         """Validate properties Identifier"""
+        errors: list[str] = []
         for key in val.keys():
             if not KEY_PATTERN.match(key):
-                raise ValueError(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
+                errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
             if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
-                raise ValueError(
+                errors.append(
                     f"'{key}' is a reserved property identifier. Reserved identifiers are: "
                     f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
                 )
+        if errors:
+            raise ValueError("; ".join(errors))
         return val
 
 
@@ -125,14 +128,17 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     @field_validator("properties", mode="after")
     def validate_properties_identifier(cls, val: dict[str, str]) -> dict[str, str]:
         """Validate properties Identifier"""
+        errors: list[str] = []
         for key in val.keys():
             if not KEY_PATTERN.match(key):
-                raise ValueError(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
+                errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
             if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
-                raise ValueError(
+                errors.append(
                     f"'{key}' is a reserved property identifier. Reserved identifiers are: "
                     f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
                 )
+        if errors:
+            raise ValueError("; ".join(errors))
         return val
 
     def as_request(self) -> ViewRequest:
