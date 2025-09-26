@@ -49,15 +49,24 @@ class TestDMSExporter:
         # purposely making the constraint name above 43 characters
         rules.containers[0].constraint = [
             ContainerEntity(
-                space="super-long-space-name-that-leads",
-                externalId="to-a-very-long-container-constraint-identifier-that-exceeds-43-characters",
+                space="super-long-space-name-that-leads-to-a-very-long-container-constraint-identifier-that-exceeds-43-characters",
+                externalId="AlsoVeryLongContainerNameBecauseWhyNotSinceWeAreTestingEdgeCases",
+            )
+        ]
+        rules.containers[1].constraint = [
+            ContainerEntity(
+                space="super-long-space-name-that-leads-to-a-very-long-container-constraint-identifier-that-exceeds-43-characters",
+                externalId="AlsoVeryLongContainerNameBecauseWhyNotSinceWeAreTestingEdgeCasesW",
             )
         ]
 
         exporter = DMSExporter()
         schema = exporter.export(rules)
         first_container = schema.containers[rules.containers[0].container.as_id()]
-        assert list(first_container.constraints.keys()) == ["neat-c6748a558f135bb50692b72d03ae5d3f"]
+        assert list(first_container.constraints.keys()) == ["super-long-space-nam9ca8737c0d83dc22406be"]
+
+        second_container = schema.containers[rules.containers[1].container.as_id()]
+        assert next(iter(second_container.constraints.keys())) != next(iter(first_container.constraints.keys()))
 
     def test_export_dms_schema_to_zip(self, alice_rules: PhysicalDataModel, tmp_path: Path) -> None:
         exporter = DMSExporter()

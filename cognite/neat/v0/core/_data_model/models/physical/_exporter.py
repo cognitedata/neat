@@ -411,13 +411,18 @@ class _DMSExporter:
         for container in containers:
             if container.constraints:
                 container.constraints = {
-                    name
-                    if len(name) <= CONSTRAINT_ID_MAX_LENGTH
-                    else f"neat-{hashlib.md5(name.encode()).hexdigest()}": const
+                    self._truncate_constraint_name(name): const
                     for name, const in container.constraints.items()
                     if not (isinstance(const, dm.RequiresConstraint) and const.require in container_to_drop)
                 }
         return ContainerApplyDict([container for container in containers if container.as_id() not in container_to_drop])
+
+    @staticmethod
+    def _truncate_constraint_name(name: str) -> str:
+        if len(name) <= CONSTRAINT_ID_MAX_LENGTH:
+            return name
+        half_length = int(CONSTRAINT_ID_MAX_LENGTH / 2)
+        return f"{name[: half_length - 1]}{hashlib.md5(name.encode()).hexdigest()[:half_length]}"
 
     @staticmethod
     def _gather_properties(
