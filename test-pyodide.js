@@ -44,6 +44,7 @@ server.listen(PORT, () => {
       await micropip.install(pkg);
     }
     await pyodide.runPythonAsync("from cognite.neat import NeatSession");
+    await pyodide.runPythonAsync("from cognite.neat._data_model.models.dms import SpaceRequest");
 
     return pyodide.runPythonAsync('"Neat successfully installed and imported!"');
   }

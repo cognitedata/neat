@@ -1,10 +1,69 @@
-from ._base import Resource, WriteableResource
-from ._space import Space, SpaceRequest, SpaceResponse
+from cognite.neat._data_model.models.dms._base import Resource, WriteableResource
+from cognite.neat._data_model.models.dms._constraints import (
+    Constraint,
+    ConstraintDefinition,
+    RequiresConstraintDefinition,
+    UniquenessConstraintDefinition,
+)
+from cognite.neat._data_model.models.dms._container import (
+    Container,
+    ContainerPropertyDefinition,
+    ContainerRequest,
+    ContainerResponse,
+)
+from cognite.neat._data_model.models.dms._data_types import (
+    BooleanProperty,
+    DataType,
+    DateProperty,
+    DirectNodeRelation,
+    EnumProperty,
+    FileCDFExternalIdReference,
+    FloatProperty,
+    Int32Property,
+    Int64Property,
+    JSONProperty,
+    ListablePropertyTypeDefinition,
+    PropertyTypeDefinition,
+    SequenceCDFExternalIdReference,
+    TextProperty,
+    TimeseriesCDFExternalIdReference,
+    TimestampProperty,
+)
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
+from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
 __all__ = [
+    "BooleanProperty",
+    "BtreeIndex",
+    "Constraint",
+    "ConstraintDefinition",
+    "Container",
+    "ContainerPropertyDefinition",
+    "ContainerRequest",
+    "ContainerResponse",
+    "DataType",
+    "DateProperty",
+    "DirectNodeRelation",
+    "EnumProperty",
+    "FileCDFExternalIdReference",
+    "FloatProperty",
+    "Index",
+    "IndexDefinition",
+    "Int32Property",
+    "Int64Property",
+    "InvertedIndex",
+    "JSONProperty",
+    "ListablePropertyTypeDefinition",
+    "PropertyTypeDefinition",
+    "RequiresConstraintDefinition",
     "Resource",
+    "SequenceCDFExternalIdReference",
     "Space",
     "SpaceRequest",
     "SpaceResponse",
+    "TextProperty",
+    "TimeseriesCDFExternalIdReference",
+    "TimestampProperty",
+    "UniquenessConstraintDefinition",
     "WriteableResource",
 ]
