@@ -168,6 +168,8 @@ class MultiReverseDirectRelationPropertyResponse(
     )
 
     def as_request(self) -> MultiReverseDirectRelationPropertyRequest:
+        if isinstance(self.through, ViewDirectReference):
+            raise TypeError("Cannot convert to request when 'through' is a ViewDirectReference.")
         return MultiReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
 
 
