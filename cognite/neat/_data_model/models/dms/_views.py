@@ -12,6 +12,7 @@ from ._constants import (
     DM_EXTERNAL_ID_PATTERN,
     DM_VERSION_PATTERN,
     FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS,
+    FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER,
     SPACE_FORMAT_PATTERN,
 )
 from ._references import ContainerReference, ViewReference
@@ -75,10 +76,23 @@ class View(Resource, ABC):
         return val
 
 
-class ViewRequest(Resource):
+class ViewRequest(View):
     properties: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty] = Field(
         description="View with included properties and expected edges, indexed by a unique space-local identifier."
     )
+
+    @field_validator("properties", mode="after")
+    def validate_properties_identifier(cls, val: dict[str, str]) -> dict[str, str]:
+        """Validate properties Identifier"""
+        for key in val.keys():
+            if not KEY_PATTERN.match(key):
+                raise ValueError(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
+            if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
+                raise ValueError(
+                    f"'{key}' is a reserved property identifier. Reserved identifiers are: "
+                    f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
+                )
+        return val
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
@@ -107,6 +121,19 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     mapped_containers: list[ContainerReference] = Field(
         description="List of containers with properties mapped by this view."
     )
+
+    @field_validator("properties", mode="after")
+    def validate_properties_identifier(cls, val: dict[str, str]) -> dict[str, str]:
+        """Validate properties Identifier"""
+        for key in val.keys():
+            if not KEY_PATTERN.match(key):
+                raise ValueError(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
+            if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
+                raise ValueError(
+                    f"'{key}' is a reserved property identifier. Reserved identifiers are: "
+                    f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
+                )
+        return val
 
     def as_request(self) -> ViewRequest:
         dumped = self.model_dump(by_alias=True, exclude={"properties"})
