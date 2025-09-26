@@ -144,6 +144,8 @@ class SingleReverseDirectRelationPropertyResponse(
     )
 
     def as_request(self) -> SingleReverseDirectRelationPropertyRequest:
+        if isinstance(self.through, ViewDirectReference):
+            raise TypeError("Cannot convert to request when 'through' is a ViewDirectReference.")
         return SingleReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
 
 
