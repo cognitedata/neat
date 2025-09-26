@@ -45,7 +45,6 @@ jobs:
 
   checks:
     runs-on: ubuntu-latest
-    environment: dev
     strategy:
       fail-fast: false
       matrix:
@@ -70,7 +69,7 @@ jobs:
       - run: uv sync --all-extras
 
       - name: Run unit tests
-        run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest tests/tests_unit
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest tests/tests_unit tests/tests_unit_v1
 
   build-docs:
     runs-on: ubuntu-latest
@@ -92,9 +91,9 @@ jobs:
           mkdocs build
 
 
+
   coverage:
     runs-on: ubuntu-latest
-    environment: dev
     steps:
       - uses: actions/checkout@v3
 
