@@ -300,7 +300,7 @@ class Token(DataType):
 
 class DateTime(DataType):
     python = datetime
-    dms = dms.Date
+    dms = dms.Timestamp
     graphql = "Timestamp"
     xsd = "dateTime"
     sql = "TIMESTAMP"
