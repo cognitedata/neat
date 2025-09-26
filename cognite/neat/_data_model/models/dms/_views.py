@@ -15,6 +15,12 @@ from ._constants import (
     SPACE_FORMAT_PATTERN,
 )
 from ._references import ContainerReference, ViewReference
+from ._view_property import (
+    ConnectionRequestProperty,
+    ConnectionResponseProperty,
+    ViewCorePropertyRequest,
+    ViewCorePropertyResponse,
+)
 
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
 
@@ -68,13 +74,15 @@ class View(Resource, ABC):
 
 
 class ViewRequest(Resource):
-    properties: dict[str,] = Field(
+    properties: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty] = Field(
         description="View with included properties and expected edges, indexed by a unique space-local identifier."
     )
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
-    properties: dict[str,] = Field(description="List of properties and connections included in this view.")
+    properties: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty] = Field(
+        description="List of properties and connections included in this view."
+    )
 
     created_time: int = Field(
         description="When the view was created. The number of milliseconds since 00:00:00 Thursday, 1 January 1970, "

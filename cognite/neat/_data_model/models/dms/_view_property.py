@@ -1,15 +1,15 @@
 from abc import ABC
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field
 
 from ._base import BaseModelObject, Resource, WriteableResource
 from ._constants import CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN
 from ._data_types import DataType
-from ._references import ContainerReference, ViewReference
+from ._references import ContainerDirectReference, ContainerReference, NodeReference, ViewDirectReference, ViewReference
 
 
-class ViewProperty(Resource, ABC):
+class ViewCoreProperty(Resource, ABC):
     name: str | None = Field(
         default=None,
         description="Readable property name.",
@@ -31,27 +31,30 @@ class ViewProperty(Resource, ABC):
     )
     source: ViewReference | None = Field(
         default=None,
-        description="Indicates on what type a referenced direct relation is expected to be. Only applicable for direct relation properties.",
+        description="Indicates on what type a referenced direct relation is expected to be. "
+        "Only applicable for direct relation properties.",
     )
 
 
-class ViewPropertyRequest(ViewProperty): ...
+class ViewCorePropertyRequest(ViewCoreProperty): ...
 
 
 class ConstraintOrIndexState(BaseModelObject):
     nullability: Literal["current", "pending", "failed"] | None = Field(
-        description="""For properties that have isNullable set to false, this field describes the validity of the not-null constraint. It is not specified for nullable properties.
+        description="""For properties that have isNullable set to false, this field describes the validity of the
+not-null constraint. It is not specified for nullable properties.
 
 Possible values are:
 
-"failed": The property contains null values, violating the constraint. This can occur if a property with existing nulls was made non-nullable. New null values will still be rejected.
+"failed": The property contains null values, violating the constraint. This can occur if a property with
+          existing nulls was made non-nullable. New null values will still be rejected.
 "current": The constraint is satisfied; all values in the property are not null.
 "pending": The constraint validity has not yet been computed.
         """
     )
 
 
-class ViewPropertyResponse(ViewProperty, WriteableResource[ViewPropertyRequest]):
+class ViewCorePropertyResponse(ViewCoreProperty, WriteableResource[ViewCorePropertyRequest]):
     immutable: bool | None = Field(
         default=None,
         description="Should updates to this property be rejected after the initial population?",
@@ -73,5 +76,110 @@ class ViewPropertyResponse(ViewProperty, WriteableResource[ViewPropertyRequest])
     )
     type: DataType = Field(description="The type of data you can store in this property.")
 
-    def as_request(self) -> ViewPropertyRequest:
-        return ViewPropertyRequest.model_validate(self.model_dump(by_alias=True))
+    def as_request(self) -> ViewCorePropertyRequest:
+        return ViewCorePropertyRequest.model_validate(self.model_dump(by_alias=True))
+
+
+class ConnectionPropertyDefinition(Resource, ABC):
+    connection_type: str
+    name: str | None = Field(
+        default=None,
+        description="Readable property name.",
+        max_length=255,
+    )
+    description: str | None = Field(
+        default=None,
+        description="Description of the content and suggested use for this property..",
+        max_length=1024,
+    )
+
+
+class EdgeProperty(ConnectionPropertyDefinition, ABC):
+    source: ViewReference = Field(
+        description="The target node(s) of this connection can be read through the view specified in 'source'."
+    )
+    type: NodeReference = Field(
+        description="Reference to the node pointed to by the direct relation. The reference consists of a "
+        "space and an external-id."
+    )
+    edge_source: ViewReference | None = Field(
+        None, description="The edge(s) of this connection can be read through the view specified in 'edgeSource'."
+    )
+    direction: Literal["outwards", "inwards"] = Field(
+        "outwards", description="The direction of the edge(s) of this connection."
+    )
+
+
+class SingleEdgeProperty(EdgeProperty):
+    connection_type: Literal["single_edge_connection"] = "single_edge_connection"
+
+
+class MultiEdgeProperty(EdgeProperty):
+    connection_type: Literal["multi_edge_connection"] = "multi_edge_connection"
+
+
+class ReverseDirectRelationProperty(ConnectionPropertyDefinition, ABC):
+    source: ViewReference = Field(
+        description="The node(s) containing the direct relation property can be read "
+        "through the view specified in 'source'."
+    )
+
+
+class SingleReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
+    connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
+    # The API support through as either ViewDirectReference or ContainerDirectReference. However, in Neat
+    # we only use ContainerDirectReference. This is for simplicity and it improves performance as the server
+    # does not have to resolve the view to a container first.
+    through: ContainerDirectReference = Field(
+        description="The view of the node containing the direct relation property."
+    )
+
+
+class SingleReverseDirectRelationPropertyResponse(
+    ReverseDirectRelationProperty, WriteableResource[SingleReverseDirectRelationPropertyRequest]
+):
+    connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
+    through: ContainerDirectReference | ViewDirectReference = Field(
+        description="The view of the node containing the direct relation property."
+    )
+
+    def as_request(self) -> SingleReverseDirectRelationPropertyRequest:
+        return SingleReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
+
+
+class MultiReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
+    connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
+    # The API support through as either ViewDirectReference or ContainerDirectReference. However, in Neat
+    # we only use ContainerDirectReference. This is for simplicity and it improves performance as the server
+    # does not have to resolve the view to a container first.
+    through: ContainerDirectReference = Field(
+        description="The view of the node containing the direct relation property."
+    )
+
+
+class MultiReverseDirectRelationPropertyResponse(
+    ReverseDirectRelationProperty, WriteableResource[MultiReverseDirectRelationPropertyRequest]
+):
+    connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
+    through: ContainerDirectReference | ViewDirectReference = Field(
+        description="The view of the node containing the direct relation property."
+    )
+
+    def as_request(self) -> MultiReverseDirectRelationPropertyRequest:
+        return MultiReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
+
+
+ConnectionRequestProperty = Annotated[
+    SingleEdgeProperty
+    | MultiEdgeProperty
+    | SingleReverseDirectRelationPropertyRequest
+    | MultiReverseDirectRelationPropertyRequest,
+    Field(discriminator="connection_type"),
+]
+ConnectionResponseProperty = Annotated[
+    SingleEdgeProperty
+    | MultiEdgeProperty
+    | SingleReverseDirectRelationPropertyResponse
+    | MultiReverseDirectRelationPropertyResponse,
+    Field(discriminator="connection_type"),
+]
