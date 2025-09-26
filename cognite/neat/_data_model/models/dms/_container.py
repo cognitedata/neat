@@ -7,7 +7,7 @@ from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat._utils.text import humanize_collection
 
-from ._base import BaseModelObject, WriteableResource
+from ._base import BaseModelObject, Resource, WriteableResource
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
@@ -52,7 +52,7 @@ class ContainerPropertyDefinition(BaseModelObject):
     type: DataType = Field(description="The type of data you can store in this property.")
 
 
-class Container(WriteableResource["ContainerRequest"], ABC):
+class Container(Resource, ABC):
     space: str = Field(
         description="The workspace for the container, a unique identifier for the space.",
         min_length=1,
@@ -131,11 +131,11 @@ class Container(WriteableResource["ContainerRequest"], ABC):
             )
         return val
 
-    def as_request(self) -> "ContainerRequest":
-        return ContainerRequest.model_validate(self.model_dump(by_alias=True))
+
+class ContainerRequest(Container): ...
 
 
-class ContainerResponse(Container):
+class ContainerResponse(Container, WriteableResource[ContainerRequest]):
     created_time: int = Field(
         description="When the container was created. The number of milliseconds since 00:00:00 "
         "Thursday, 1 January 1970, "
@@ -147,5 +147,5 @@ class ContainerResponse(Container):
     )
     is_global: bool = Field(description="Whether the container is a global container.")
 
-
-class ContainerRequest(Container): ...
+    def as_request(self) -> "ContainerRequest":
+        return ContainerRequest.model_validate(self.model_dump(by_alias=True))
