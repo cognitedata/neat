@@ -1,1 +1,1 @@
-::: cognite.neat.session._subset.SubsetAPI
+::: cognite.neat.v0.session._subset.SubsetAPI
