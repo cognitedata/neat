@@ -80,7 +80,10 @@ class ViewRequest(View):
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(cls, val: dict[str, Any]) -> dict[str, Any]:
+    def validate_properties_identifier(
+        cls,
+        val: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty],
+    ) -> dict[str, ViewCorePropertyRequest | ConnectionRequestProperty]:
         """Validate properties Identifier"""
         errors: list[str] = []
         for key in val.keys():
