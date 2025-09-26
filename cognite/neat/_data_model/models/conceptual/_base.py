@@ -1,0 +1,16 @@
+from pydantic import BaseModel, Field
+from pydantic.alias_generators import to_camel
+
+from cognite.neat._data_model._identifiers import URI
+
+
+class BaseModelObject(BaseModel, alias_generator=to_camel, extra="ignore", populate_by_name=True):
+    """Base class for all object. This includes resources and nested objects."""
+
+    ...
+
+
+class ResourceMetadata(BaseModelObject):
+    name: str | None = Field(None, description="Name of the space.", max_length=1024)
+    description: str | None = Field(None, description="The description of the space.", max_length=255)
+    uri: URI | None = Field(None, description="The URI of the entity being described.")
