@@ -32,13 +32,46 @@ from cognite.neat._data_model.models.dms._data_types import (
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
+from ._references import (
+    ContainerDirectReference,
+    ContainerReference,
+    NodeReference,
+    ViewDirectReference,
+    ViewReference,
+)
+from ._view_property import (
+    ConnectionPropertyDefinition,
+    ConnectionRequestProperty,
+    ConnectionResponseProperty,
+    ConstraintOrIndexState,
+    MultiEdgeProperty,
+    MultiReverseDirectRelationPropertyRequest,
+    MultiReverseDirectRelationPropertyResponse,
+    SingleEdgeProperty,
+    SingleReverseDirectRelationPropertyRequest,
+    SingleReverseDirectRelationPropertyResponse,
+    ViewCorePropertyRequest,
+    ViewCorePropertyResponse,
+)
+from ._views import (
+    View,
+    ViewRequest,
+    ViewResponse,
+)
+
 __all__ = [
     "BooleanProperty",
     "BtreeIndex",
+    "ConnectionPropertyDefinition",
+    "ConnectionRequestProperty",
+    "ConnectionResponseProperty",
     "Constraint",
     "ConstraintDefinition",
+    "ConstraintOrIndexState",
     "Container",
+    "ContainerDirectReference",
     "ContainerPropertyDefinition",
+    "ContainerReference",
     "ContainerRequest",
     "ContainerResponse",
     "DataType",
@@ -54,10 +87,17 @@ __all__ = [
     "InvertedIndex",
     "JSONProperty",
     "ListablePropertyTypeDefinition",
+    "MultiEdgeProperty",
+    "MultiReverseDirectRelationPropertyRequest",
+    "MultiReverseDirectRelationPropertyResponse",
+    "NodeReference",
     "PropertyTypeDefinition",
     "RequiresConstraintDefinition",
     "Resource",
     "SequenceCDFExternalIdReference",
+    "SingleEdgeProperty",
+    "SingleReverseDirectRelationPropertyRequest",
+    "SingleReverseDirectRelationPropertyResponse",
     "Space",
     "SpaceRequest",
     "SpaceResponse",
@@ -65,5 +105,12 @@ __all__ = [
     "TimeseriesCDFExternalIdReference",
     "TimestampProperty",
     "UniquenessConstraintDefinition",
+    "View",
+    "ViewCorePropertyRequest",
+    "ViewCorePropertyResponse",
+    "ViewDirectReference",
+    "ViewReference",
+    "ViewRequest",
+    "ViewResponse",
     "WriteableResource",
 ]
