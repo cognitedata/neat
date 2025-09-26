@@ -10,6 +10,40 @@ env:
   PYTHON_VERSION: "3.11"
 
 jobs:
+  upload_coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up cache
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ hashFiles('pyproject.toml') }}-${{ hashFiles('uv.lock') }}
+
+      - run: uv sync --all-extras
+
+      - name: Create test coverage report
+        env:
+          CDF_CLUSTER: ${{ vars.CDF_CLUSTER }}
+          CDF_PROJECT: ${{ vars.CDF_PROJECT }}
+          IDP_CLIENT_ID: ${{ vars.IDP_CLIENT_ID }}
+          IDP_CLIENT_SECRET: ${{ secrets.IDP_CLIENT_SECRET }}
+          IDP_TENANT_ID: ${{ secrets.IDP_TENANT_ID }}
+        run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest --cov=cognite/ --cov-config=pyproject.toml --cov-report=xml:coverage.xml tests/
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: cognitedata/neat
+
+
   release-to-pypi:
     runs-on: ubuntu-latest
     environment: CD
