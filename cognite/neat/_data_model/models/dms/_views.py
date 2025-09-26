@@ -67,10 +67,15 @@ class View(Resource, ABC):
         return val
 
 
-class ViewRequest(Resource): ...
+class ViewRequest(Resource):
+    properties: dict[str,] = Field(
+        description="View with included properties and expected edges, indexed by a unique space-local identifier."
+    )
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
+    properties: dict[str,] = Field(description="List of properties and connections included in this view.")
+
     created_time: int = Field(
         description="When the view was created. The number of milliseconds since 00:00:00 Thursday, 1 January 1970, "
         "Coordinated Universal Time (UTC), minus leap seconds."
