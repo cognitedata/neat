@@ -1,3 +1,4 @@
+from ._base import ConceptEntity, UnknownEntity
 from ._constants import Undefined, Unknown
 from ._data_types import (
     AnyURI,
@@ -24,6 +25,7 @@ __all__ = [
     "URI",
     "AnyURI",
     "Boolean",
+    "ConceptEntity",
     "DataType",
     "Date",
     "DateTime",
@@ -42,5 +44,6 @@ __all__ = [
     "Timeseries",
     "Undefined",
     "Unknown",
+    "UnknownEntity",
     "parse_entity",
 ]
