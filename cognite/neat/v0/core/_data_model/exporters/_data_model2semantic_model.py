@@ -618,7 +618,9 @@ class SHACLPropertyShape(_ModelConfig):
 
         return cls(
             id_=BNode(),
-            path=namespace[definition.property_],
+            path=definition.instance_source[0]
+            if definition.instance_source and len(definition.instance_source) == 1
+            else namespace[definition.property_],
             node_kind=SHACL.IRI if definition.type_ == EntityTypes.object_property else SHACL.Literal,
             expected_value_type=expected_value_type,
             min_count=definition.min_count,
