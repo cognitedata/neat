@@ -560,7 +560,7 @@ class SHACLNodeShape(_ModelConfig):
             parent = None
         return cls(
             id_=namespace[f"{concept_definition.concept.suffix!s}Shape"],
-            target_class=namespace[str(concept_definition.concept.suffix)],
+            target_class=concept_definition.instance_source or namespace[str(concept_definition.concept.suffix)],
             parent=parent,
             property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
             namespace=namespace,
