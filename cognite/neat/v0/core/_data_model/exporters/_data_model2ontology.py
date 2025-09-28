@@ -32,6 +32,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+SHACL = Namespace("http://www.w3.org/ns/shacl#")
+
 
 class GraphExporter(BaseExporter[ConceptualDataModel, Graph], ABC):
     def export_to_file(self, data_model: ConceptualDataModel, filepath: Path) -> None:
@@ -42,7 +44,7 @@ class OWLExporter(GraphExporter):
     """Exports verified conceptual data model to an OWL ontology."""
 
     def export(self, data_model: ConceptualDataModel) -> Graph:
-        return Ontology.from_data_model(data_model).as_owl()
+        return Ontology.from_data_model(data_model).graph
 
     @property
     def description(self) -> str:
@@ -53,11 +55,11 @@ class SHACLExporter(GraphExporter):
     """Exports data_model to a SHACL graph."""
 
     def export(self, data_model: ConceptualDataModel) -> Graph:
-        return Ontology.from_data_model(data_model).as_shacl()
+        return ShaclShapes.from_data_model(data_model).graph
 
     @property
     def description(self) -> str:
-        return "Export verified information model to SHACL."
+        return "Export verified conceptual data model to SHACL."
 
 
 class _ModelConfig(BaseModel):
@@ -92,7 +94,6 @@ class Ontology(_ModelConfig):
             An instance of Ontology.
         """
         analysis = DataModelAnalysis(data_model)
-        concept_by_suffix = analysis.concept_by_suffix()
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(definition, data_model.metadata.namespace)
@@ -440,10 +441,73 @@ class OWLProperty(_ModelConfig):
         )
 
 
+class ShaclShapes(_ModelConfig):
+    """
+    Represents a SHACL shapes. This class is used to generate a SHACL graph from conceptual data model.
 
+    Args:
+        shapes: A list of SHACL node shapes.
+        prefixes: A dictionary of prefixes and namespaces.
+    """
 
+    shapes: list["SHACLNodeShape"]
+    prefixes: dict[str, Namespace]
 
-SHACL = Namespace("http://www.w3.org/ns/shacl#")
+    @classmethod
+    def from_data_model(cls, data_model: ConceptualDataModel) -> Self:
+        """
+        Generates shacl shapes from a conceptual data model.
+
+        Args:
+            data_model: The data_model to generate the shacl shapes from.
+
+        Returns:
+            An instance of ShaclShapes.
+        """
+        analysis = DataModelAnalysis(data_model)
+        concept_by_suffix = analysis.concept_by_suffix()
+        return cls(
+            shapes=[
+                SHACLNodeShape.from_data_model(
+                    concept_by_suffix[str(concept.suffix)],
+                    list(properties.values()),
+                    data_model.metadata.namespace,
+                )
+                for concept, properties in analysis.properties_by_id_by_concept().items()
+            ]
+            + [
+                SHACLNodeShape.from_data_model(
+                    concept,
+                    [],
+                    data_model.metadata.namespace,
+                )
+                for concept in concept_by_suffix.values()
+            ],
+            prefixes=data_model.prefixes,
+        )
+
+    @property
+    def graph(self) -> Graph:
+        """
+        Generates a SHACL graph from the class instance.
+
+        Returns:
+            A SHACL graph.
+        """
+
+        shacl = Graph()
+        for prefix, namespace in self.prefixes.items():
+            shacl.bind(prefix, namespace)
+
+        for shape in self.shapes:
+            for triple in shape.triples:
+                shacl.add(triple)  # type: ignore[arg-type]
+
+        return shacl
+
+    @property
+    def triples(self) -> list[tuple]:
+        return list(self.graph)
 
 
 class SHACLNodeShape(_ModelConfig):
