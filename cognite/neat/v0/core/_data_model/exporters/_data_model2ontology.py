@@ -60,37 +60,24 @@ class SHACLExporter(GraphExporter):
         return "Export verified information model to SHACL."
 
 
-class SemanticDataModelExporter(GraphExporter):
-    """Exports verified information model to a semantic data model."""
-
-    def export(self, data_model: ConceptualDataModel) -> Graph:
-        return Ontology.from_data_model(data_model).as_semantic_data_model()
-
-    @property
-    def description(self) -> str:
-        return "Export verified information model to a semantic data model."
-
-
-class OntologyModel(BaseModel):
+class _ModelConfig(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
 
-class Ontology(OntologyModel):
+class Ontology(_ModelConfig):
     """
     Represents an ontology. This class is used to generate an OWL ontology from conceptual data model.
 
     Args:
         properties: A list of OWL properties.
         classes: A list of OWL classes.
-        shapes: A list of SHACL node shapes.
         metadata: Metadata about the ontology.
         prefixes: A dictionary of prefixes and namespaces.
     """
 
+    metadata: "OWLMetadata"
     properties: list["OWLProperty"]
     classes: list["OWLClass"]
-    shapes: list["SHACLNodeShape"]
-    metadata: "OWLMetadata"
     prefixes: dict[str, Namespace]
 
     @classmethod
@@ -115,46 +102,12 @@ class Ontology(OntologyModel):
                 OWLClass.from_concept(definition, data_model.metadata.namespace, data_model.prefixes)
                 for definition in data_model.concepts
             ],
-            shapes=[
-                SHACLNodeShape.from_data_model(
-                    concept_by_suffix[str(concept.suffix)],
-                    list(properties.values()),
-                    data_model.metadata.namespace,
-                )
-                for concept, properties in analysis.properties_by_id_by_concept().items()
-            ]
-            + [
-                SHACLNodeShape.from_data_model(
-                    concept,
-                    [],
-                    data_model.metadata.namespace,
-                )
-                for concept in concept_by_suffix.values()
-            ],
             metadata=OWLMetadata(**data_model.metadata.model_dump()),
             prefixes=data_model.prefixes,
         )
 
-    def as_shacl(self) -> Graph:
-        """
-        Generates a SHACL graph from the ontology.
-
-        Returns:
-            A SHACL graph.
-        """
-
-        shacl = Graph()
-        shacl.bind(self.metadata.prefix, self.metadata.namespace)
-        for prefix, namespace in self.prefixes.items():
-            shacl.bind(prefix, namespace)
-
-        for shape in self.shapes:
-            for triple in shape.triples:
-                shacl.add(triple)  # type: ignore[arg-type]
-
-        return shacl
-
-    def as_owl(self) -> Graph:
+    @property
+    def graph(self) -> Graph:
         """
         Generates an OWL graph from the ontology.
 
@@ -180,32 +133,9 @@ class Ontology(OntologyModel):
 
         return owl
 
-    def as_semantic_data_model(self) -> Graph:
-        return self.as_owl() + self.as_shacl()
-
-    @property
-    def owl_triples(self) -> list[tuple]:
-        return list(self.as_owl())
-
-    @property
-    def shacl_triples(self) -> list[tuple]:
-        return list(self.as_shacl())
-
     @property
     def triples(self) -> list[tuple]:
-        return self.owl_triples + self.shacl_triples
-
-    @property
-    def ontology(self) -> str:
-        return self.as_owl().serialize()
-
-    @property
-    def constraints(self) -> str:
-        return self.as_shacl().serialize()
-
-    @property
-    def semantic_data_model(self) -> str:
-        return (self.as_owl() + self.as_shacl()).serialize()
+        return list(self.graph)
 
 
 class OWLMetadata(ConceptualMetadata):
@@ -233,7 +163,7 @@ class OWLMetadata(ConceptualMetadata):
         return triples
 
 
-class OWLClass(OntologyModel):
+class OWLClass(_ModelConfig):
     id_: URIRef
     type_: URIRef = OWL.Class
     label: str | None
@@ -306,7 +236,7 @@ class OWLClass(OntologyModel):
         )
 
 
-class OWLProperty(OntologyModel):
+class OWLProperty(_ModelConfig):
     id_: URIRef
     type_: set[URIRef]
     label: set[str]
@@ -510,10 +440,13 @@ class OWLProperty(OntologyModel):
         )
 
 
+
+
+
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
 
 
-class SHACLNodeShape(OntologyModel):
+class SHACLNodeShape(_ModelConfig):
     id_: URIRef
     type_: URIRef = SHACL.NodeShape
     target_class: URIRef
@@ -574,7 +507,7 @@ class SHACLNodeShape(OntologyModel):
         )
 
 
-class SHACLPropertyShape(OntologyModel):
+class SHACLPropertyShape(_ModelConfig):
     id_: BNode
     type_: URIRef = SHACL.property
     path: URIRef  # URIRef to property in OWL
