@@ -134,10 +134,6 @@ class Ontology(_ModelConfig):
 
         return owl
 
-    @property
-    def triples(self) -> list[tuple]:
-        return list(self.graph)
-
 
 class OWLMetadata(ConceptualMetadata):
     @property
@@ -508,10 +504,6 @@ class ShaclShapes(_ModelConfig):
                 shacl.add(triple)  # type: ignore[arg-type]
 
         return shacl
-
-    @property
-    def triples(self) -> list[tuple]:
-        return list(self.graph)
 
 
 class SHACLNodeShape(_ModelConfig):
