@@ -465,23 +465,27 @@ class ShaclShapes(_ModelConfig):
             An instance of ShaclShapes.
         """
         analysis = DataModelAnalysis(data_model)
-        concept_by_suffix = analysis.concept_by_suffix()
+        concepts_by_concept_entity = analysis.concept_by_concept_entity
+        properties_by_concept_entity = analysis.properties_by_id_by_concept()
         return cls(
             shapes=[
+                # shapes that have property shapes as well
                 SHACLNodeShape.from_data_model(
-                    concept_by_suffix[str(concept.suffix)],
+                    concepts_by_concept_entity[concept_entity],
                     list(properties.values()),
                     data_model.metadata.namespace,
                 )
-                for concept, properties in analysis.properties_by_id_by_concept().items()
+                for concept_entity, properties in properties_by_concept_entity.items()
             ]
             + [
+                # shapes without any property shapes
                 SHACLNodeShape.from_data_model(
                     concept,
                     [],
                     data_model.metadata.namespace,
                 )
-                for concept in concept_by_suffix.values()
+                for concept_entity, concept in concepts_by_concept_entity.items()
+                if concept_entity not in properties_by_concept_entity
             ],
             prefixes=data_model.prefixes,
         )
