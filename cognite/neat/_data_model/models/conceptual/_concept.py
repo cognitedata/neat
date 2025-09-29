@@ -1,4 +1,5 @@
-from pydantic import Field
+from pydantic import Field, ValidationInfo, field_validator
+from pyparsing import cast
 
 from cognite.neat._data_model.models.entities import ConceptEntity
 from cognite.neat._data_model.models.entities._constants import PREFIX_PATTERN, SUFFIX_PATTERN, VERSION_PATTERN
@@ -35,3 +36,35 @@ class Concept(ResourceMetadata):
     )
 
     properties: dict[str, Property] | None = Field(default=None, description="Properties associated with the concept.")
+
+    @field_validator("implements", mode="after")
+    def cannot_implement_itself(cls, value: list[ConceptEntity], info: ValidationInfo) -> list[ConceptEntity]:
+        if not value:
+            return value
+
+        this_concept = ConceptEntity(
+            prefix=cast(str, info.data.get("space")),
+            suffix=cast(str, info.data.get("external_id")),
+            version=cast(str, info.data.get("version")),
+        )
+
+        if this_concept in value:
+            raise ValueError("A concept cannot implement itself.")
+
+        return value
+
+    @field_validator("implements", mode="after")
+    def cannot_have_duplicates(cls, value: list[ConceptEntity], info: ValidationInfo) -> list[ConceptEntity]:
+        implements = set()
+        duplicates = set()
+
+        for implement in value:
+            if implement in implements:
+                duplicates.add(implement)
+            else:
+                implements.add(implement)
+
+        if duplicates:
+            raise ValueError(f"Duplicate concepts found: {duplicates}")
+
+        return value
