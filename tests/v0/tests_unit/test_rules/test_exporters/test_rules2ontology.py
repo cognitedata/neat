@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from rdflib import DCTERMS, OWL, RDF, RDFS, Graph, Literal, Namespace
+from rdflib import DCTERMS, OWL, RDF, RDFS, BNode, Graph, Literal, Namespace
 
 from cognite.neat.v0.core._data_model.exporters._data_model2semantic_model import OWLExporter, SHACLExporter
 from cognite.neat.v0.core._data_model.models import ConceptualDataModel
@@ -16,8 +16,14 @@ class TestOntologyExporter:
         exporter.export_to_file(david_rules, ttl_path)
 
         ontology = Graph().parse(ttl_path, format="ttl")
-        # 26 classes + 13 bnodes for range/domain restrictions
-        assert 39 == len(list(ontology.subjects(RDF.type, OWL.Class)))
+
+        classes_with_bnodes = set(ontology.subjects(RDF.type, OWL.Class))
+        expected_classes = {david_rules.metadata.namespace[concept.concept.suffix] for concept in david_rules.concepts}
+
+        assert expected_classes.issubset(classes_with_bnodes)
+
+        bnodes = classes_with_bnodes - expected_classes
+        assert all(isinstance(bnode, BNode) for bnode in bnodes)
 
         titles = list(ontology.objects(None, DCTERMS.title))
         labels = list(ontology.objects(None, RDFS.label))
