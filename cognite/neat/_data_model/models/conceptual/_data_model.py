@@ -32,7 +32,7 @@ class DataModel(ResourceMetadata):
     )
 
     @field_validator("concepts", mode="after")
-    def validate_concepts(cls, value: list[Concept], info: ValidationInfo) -> list[Concept]:
+    def cannot_have_duplicates(cls, value: list[Concept], info: ValidationInfo) -> list[Concept]:
         concept_ids = [(concept.space, concept.external_id, concept.version) for concept in value]
 
         concept_tuples = set()
