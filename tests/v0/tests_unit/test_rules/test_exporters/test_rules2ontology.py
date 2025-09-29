@@ -39,7 +39,7 @@ class TestOntologyExporter:
 
         actual_target_classes = set(shacl_shapes.objects(None, SHACL.targetClass))
         expected_target_classes = {
-            david_rules.metadata.namespace[concept.concept.suffix] for concept in david_rules.concepts
+            concept.instance_source or david_rules.metadata.namespace[concept.concept.suffix]
+            for concept in david_rules.concepts
         }
-
         assert actual_target_classes == expected_target_classes
