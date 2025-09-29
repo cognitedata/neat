@@ -624,10 +624,8 @@ class SHACLPropertyShape(_ModelConfig):
     ) -> "SHACLPropertyShape":
         if isinstance(property_.value_type, ConceptEntity):
             concept = concepts_by_concept_entity.get(property_.value_type)
-            valute_type_uri = (
-                concept.instance_source if (concept := concepts_by_concept_entity.get(property_.value_type)) else None
-            )
-            expected_value_type = valute_type_uri or namespace[f"{property_.value_type.suffix}"]
+            value_type_uri = concept.instance_source if concept else None
+            expected_value_type = value_type_uri or namespace[f"{property_.value_type.suffix}"]
         elif isinstance(property_.value_type, DataType):
             expected_value_type = XSD[property_.value_type.xsd]
         else:
