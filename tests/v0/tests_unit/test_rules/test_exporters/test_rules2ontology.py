@@ -35,4 +35,11 @@ class TestOntologyExporter:
         exporter.export_to_file(david_rules, ttl_path)
 
         shacl_shapes = Graph().parse(ttl_path, format="ttl")
-        assert 26 == len(list(shacl_shapes.subjects(RDF.type, SHACL.NodeShape)))
+        assert len(david_rules.concepts) == len(list(shacl_shapes.subjects(RDF.type, SHACL.NodeShape)))
+
+        actual_target_classes = set(shacl_shapes.objects(None, SHACL.targetClass))
+        expected_target_classes = {
+            david_rules.metadata.namespace[concept.concept.suffix] for concept in david_rules.concepts
+        }
+
+        assert actual_target_classes == expected_target_classes
