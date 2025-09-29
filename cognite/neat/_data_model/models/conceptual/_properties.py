@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import Field, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from cognite.neat._data_model.models.entities import URI, ConceptEntity, DataType, UnknownEntity
 
@@ -39,56 +39,67 @@ class Property(ResourceMetadata):
                 raise ValueError("min_count must be less than or equal to max_count")
         return self
 
-    @model_validator(mode="after")
-    def check_default_value_primitive_type(self) -> "Property":
-        if not self.default:
-            return self
+    @field_validator("default", mode="after")
+    def check_default_value_primitive_type(cls, value: Any, info: ValidationInfo) -> Any:
+        if not value:
+            return value
 
-        if not isinstance(self.value_type, DataType):
+        value_type = info.data.get("value_type")
+        if not isinstance(value_type, DataType):
             raise ValueError("Setting default value is only supported for primitive value types.")
-        return self
+        return value
 
-    @model_validator(mode="after")
-    def check_default_value_python_type_exists(self) -> "Property":
-        if not self.default:
-            return self
+    @field_validator("default", mode="after")
+    def check_default_value_python_type_exists(cls, value: Any, info: ValidationInfo) -> Any:
+        if not value:
+            return value
 
-        if isinstance(self.value_type, DataType) and not hasattr(self.value_type, "python"):
+        value_type = info.data.get("value_type")
+
+        if isinstance(value_type, DataType) and not hasattr(value_type, "python"):
             raise ValueError(
-                f"DataType {self.value_type} does not have a python type defined."
+                f"DataType {value_type} does not have a python type defined."
                 " Setting default value for property is not possible."
             )
-        return self
+        return value
 
-    @model_validator(mode="after")
-    def check_default_value_not_list(self) -> "Property":
-        if not self.default:
-            return self
+    @field_validator("default", mode="after")
+    def check_default_value_not_list(cls, value: Any, info: ValidationInfo) -> Any:
+        if not value:
+            return value
 
-        if isinstance(self.default, list):
+        if isinstance(value, list):
             raise ValueError("Setting list as default value is not supported.")
-        return self
+        return value
 
-    @model_validator(mode="after")
-    def check_default_value_single_valued(self) -> "Property":
-        if not self.default:
-            return self
+    @field_validator("default", mode="after")
+    def check_default_value_single_valued(cls, value: Any, info: ValidationInfo) -> Any:
+        if not value:
+            return value
 
-        if self.max_count is None or self.max_count > 1 or (self.min_count and self.min_count > 1):
+        max_count = info.data.get("max_count")
+        min_count = info.data.get("min_count")
+
+        if max_count is None or max_count > 1 or (min_count and min_count > 1):
             raise ValueError(
                 "Setting default value is only supported for single-valued properties."
-                f" Property has min_count={self.min_count} and max_count={self.max_count}."
+                f" Property has min_count={info.data.get('min_count')} and max_count={info.data.get('max_count')}."
             )
-        return self
+        return value
 
-    @model_validator(mode="after")
-    def check_default_value_type_match(self) -> "Property":
-        if not self.default:
-            return self
+    @field_validator("default", mode="after")
+    def check_default_value_type_match(cls, value: Any, info: ValidationInfo) -> Any:
+        if not value:
+            return value
 
-        if isinstance(self.value_type, DataType) and not isinstance(self.default, self.value_type.python):
+        value_type = info.data.get("value_type")
+
+        if (
+            isinstance(value_type, DataType)
+            and hasattr(value_type, "python")
+            and not isinstance(value, value_type.python)
+        ):
             raise ValueError(
-                f"Default value type is {type(self.default)}, which "
-                f"does not match expected value type {self.value_type.python}."
+                f"Default value type is {type(value)}, which does not match expected value type {value_type.python}."
             )
-        return self
+        return value
