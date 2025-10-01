@@ -39,7 +39,7 @@ from ._references import (
     ViewDirectReference,
     ViewReference,
 )
-from ._schema import RequestSchema, ResponseSchema
+from ._schema import RequestSchema
 from ._view_property import (
     ConnectionPropertyDefinition,
     ConnectionRequestProperty,
