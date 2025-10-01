@@ -73,6 +73,9 @@ class View(Resource, ABC):
             )
         return val
 
+    def as_reference(self) -> ViewReference:
+        return ViewReference(space=self.space, externalId=self.external_id, version=self.version)
+
 
 class ViewRequest(View):
     properties: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty] = Field(
