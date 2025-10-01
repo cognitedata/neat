@@ -15,6 +15,23 @@ class RequestSchema(Resource):
     spaces: dict[str, SpaceRequest] = Field(default_factory=dict)
     node_types: list[NodeReference] = Field(default_factory=list)
 
+    @classmethod
+    def from_lists(
+        cls,
+        data_model: DataModelRequest,
+        views: list[ViewRequest] | None = None,
+        containers: list[ContainerRequest] | None = None,
+        spaces: list[SpaceRequest] | None = None,
+        node_types: list[NodeReference] | None = None,
+    ) -> "RequestSchema":
+        return cls(
+            dataModel=data_model,
+            views={view.as_reference(): view for view in views or []},
+            containers={container.as_reference(): container for container in containers or []},
+            spaces={space.space: space for space in spaces or []},
+            nodeTypes=node_types or [],
+        )
+
 
 class ResponseSchema(WriteableResource[RequestSchema]):
     data_model: DataModelResponse
@@ -25,9 +42,9 @@ class ResponseSchema(WriteableResource[RequestSchema]):
 
     def as_request(self) -> RequestSchema:
         return RequestSchema(
-            data_model=self.data_model.as_request(),
+            dataModel=self.data_model.as_request(),
             views={view_ref: view.as_request() for view_ref, view in self.views.items()},
             containers={container_ref: container.as_request() for container_ref, container in self.containers.items()},
             spaces={space_name: space.as_request() for space_name, space in self.spaces.items()},
-            node_types=self.node_types,
+            nodeTypes=self.node_types,
         )

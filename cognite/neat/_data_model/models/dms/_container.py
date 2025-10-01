@@ -18,6 +18,7 @@ from ._constants import (
 from ._constraints import Constraint
 from ._data_types import DataType
 from ._indexes import Index
+from ._references import ContainerReference
 
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
 
@@ -130,6 +131,12 @@ class Container(Resource, ABC):
                 f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS)}"
             )
         return val
+
+    def as_reference(self) -> ContainerReference:
+        return ContainerReference(
+            space=self.space,
+            externalId=self.external_id,
+        )
 
 
 class ContainerRequest(Container): ...
