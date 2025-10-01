@@ -43,8 +43,8 @@ class Concept(ResourceMetadata):
             return value
 
         this_concept = ConceptEntity(
-            prefix=cast(str, info.data.get("space")),
-            suffix=cast(str, info.data.get("external_id")),
+            prefix=info.data["space"],
+            suffix=info.data["external_id"],
             version=cast(str, info.data.get("version")),
         )
 
