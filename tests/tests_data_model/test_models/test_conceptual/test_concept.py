@@ -28,6 +28,9 @@ class TestConcept:
                     ConceptEntity(prefix="other_space", suffix="other_concept"),
                     ConceptEntity(prefix="other_space", suffix="other_concept"),
                     ConceptEntity(prefix="another_space", suffix="another_concept"),
+                    ConceptEntity(prefix="another_space", suffix="another_concept"),
                 ],
             )
-        assert "Duplicate concepts found" in str(exc_info.value)
+        assert "Duplicate concepts found: another_space:another_concept and other_space:other_concept" in str(
+            exc_info.value
+        )
