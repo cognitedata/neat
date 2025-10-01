@@ -1,4 +1,4 @@
 from ._base import DMSImporter
-from ._dms_table_importer import DMSTableImporter
+from ._table_importer.importer import DMSTableImporter
 
 __all__ = ["DMSImporter", "DMSTableImporter"]

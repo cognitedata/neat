@@ -75,13 +75,7 @@ def test_valid_dms_table_format() -> Iterable[tuple]:
                 description="The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
                 views=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
             ),
-            spaces=[
-                SpaceRequest(
-                    space="cdf_cdm",
-                    name="Cognite Core Data Model",
-                    description="The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
-                )
-            ],
+            spaces=[SpaceRequest(space="cdf_cdm")],
             views=[
                 ViewRequest(
                     space="cdf_cdm",
