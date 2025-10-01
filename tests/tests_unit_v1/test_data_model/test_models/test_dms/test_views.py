@@ -61,10 +61,193 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
         id="Multiple Issues.",
     )
 
+    yield pytest.param(
+        {
+            "space": "String",
+            "externalId": "Query",
+            "version": "1",
+            "description": "x" * 1025,
+            "properties": {
+                "space": {
+                    "container": {"space": "my_space", "externalId": "MyContainer"},
+                    "containerPropertyIdentifier": "validProp",
+                },
+                "invalidProp#": {
+                    "container": {"space": "my_space", "externalId": "MyContainer"},
+                    "containerPropertyIdentifier": "validProp",
+                },
+            },
+        },
+        {
+            "In field description string should have at most 1024 characters",
+            "In field externalId 'Query' is a reserved view External ID. Reserved External IDs are: Boolean, "
+            "Date, File, Float, Float32, Float64, Int, Int32, Int64, JSONObject, Mutation, Numeric, PageInfo, Query, "
+            "Sequence, String, Subscription, TimeSeries and Timestamp",
+            "In field properties 'space' is a reserved property identifier. Reserved identifiers are: createdTime, "
+            "deletedTime, edge_id, extensions, externalId, lastUpdatedTime, node_id, project_id, property_group, "
+            "seq, space and tg_table_name; Property 'invalidProp#' does not match the "
+            "required pattern: ^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$",
+        },
+        id="Forbidden values and reserved identifiers.",
+    )
+
+    yield pytest.param(
+        {
+            "space": "",
+            "externalId": "123invalid",
+            "version": "x" * 44,
+            "name": "",
+            "properties": {
+                "multiEdge": {
+                    "connectionType": "multi_edge_connection",
+                    "source": {"space": "short", "externalId": "View"},
+                    "type": {"space": "my_space", "externalId": "Node"},
+                    "direction": "outwards",
+                },
+                "reverseDirect": {
+                    "connectionType": "single_reverse_direct_relation",
+                    "source": {"space": "my_space", "externalId": "View", "version": "1"},
+                    "through": {"source": {"space": "invalid-", "externalId": "Container"}, "identifier": ""},
+                },
+            },
+        },
+        {
+            "In field space string should have at least 1 character",
+            "In field externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
+            "In field version string should have at most 43 characters",
+            "In properties.multiEdge.multi_edge_connection.source missing required field: 'version'",
+            "In properties.reverseDirect.single_reverse_direct_relation.through.identifier "
+            "string should have at least 1 character",
+        },
+        id="Field length and pattern violations.",
+    )
+
+    yield pytest.param(
+        {
+            "space": "my_space",
+            "externalId": "MyView",
+            "version": "1",
+            "implements": [
+                {"space": "space1", "externalId": "View1"},
+                {"space": "123invalid", "externalId": "9invalid", "version": ".invalid"},
+            ],
+            "properties": {
+                "edgeProp": {
+                    "connectionType": "single_edge_connection",
+                    "source": {"space": "", "externalId": "", "version": ""},
+                    "type": {"space": "node_space", "externalId": ""},
+                    "edgeSource": {"space": "edge_space", "externalId": "EdgeView", "version": "1"},
+                    "direction": "inwards",
+                },
+            },
+        },
+        {
+            "In implements[1] missing required field: 'version'",
+            "In implements[2].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
+            "In implements[2].externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
+            "In implements[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
+            "In properties.edgeProp.single_edge_connection.source.space string should have at least 1 character",
+            "In properties.edgeProp.single_edge_connection.source.externalId string should have at least 1 character",
+            "In properties.edgeProp.single_edge_connection.source.version string should match pattern "
+            "'^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
+            "In properties.edgeProp.single_edge_connection.type.externalId string should have at least 1 character",
+        },
+        id="Empty fields and invalid implements.",
+    )
+
+    yield pytest.param(
+        {
+            "space": "my_space",
+            "externalId": "MyView",
+            "version": "1",
+            "properties": {
+                "containerProp": {
+                    "container": {"space": "container_space"},
+                    "containerPropertyIdentifier": "_invalid",
+                    "name": "x" * 256,
+                    "description": "x" * 1025,
+                },
+                "multiReverseDirect": {
+                    "connectionType": "multi_reverse_direct_relation",
+                    "source": {"space": "source_space", "externalId": "SourceView", "version": "invalid_version#"},
+                    "through": {
+                        "source": {"space": "through_space", "externalId": "ThroughContainer"},
+                        "identifier": "invalid#identifier",
+                    },
+                },
+            },
+        },
+        {
+            "In properties.containerProp.primary_property.container missing required field: 'externalId'",
+            "In properties.containerProp.primary_property.containerPropertyIdentifier string should match pattern "
+            "'^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
+            "In properties.containerProp.primary_property.name string should have at most 255 characters",
+            "In properties.containerProp.primary_property.description string should have at most 1024 characters",
+            "In properties.multiReverseDirect.multi_reverse_direct_relation.source.version string should match pattern "
+            "'^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
+            "In properties.multiReverseDirect.multi_reverse_direct_relation.through.identifier string "
+            "should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
+        },
+        id="Property validation errors.",
+    )
+
+    yield pytest.param(
+        {
+            "space": "my-space",
+            "externalId": "MyView_",
+            "version": "1",
+            "properties": {
+                "edgeSource": {
+                    "connectionType": "single_edge_connection",
+                    "source": {"space": "v", "externalId": "V", "version": "v"},
+                    "type": {"space": "n", "externalId": "N"},
+                    "direction": "inwards",
+                },
+                "externalId": {
+                    "container": {"space": "my_space", "externalId": "MyContainer"},
+                    "containerPropertyIdentifier": "prop",
+                },
+            },
+        },
+        {
+            "In field externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
+            "In field properties 'externalId' is a reserved property identifier. Reserved identifiers are: "
+            "createdTime, deletedTime, edge_id, extensions, externalId, lastUpdatedTime, node_id, project_id, "
+            "property_group, seq, space and tg_table_name",
+        },
+        id="Single reserved property identifier.",
+    )
+
+    yield pytest.param(
+        {
+            "space": "Boolean",
+            "externalId": "MyView",
+            "version": "v1.0.1",
+            "properties": {
+                "invalidContainer": {
+                    "container": {"space": "s", "externalId": ""},
+                    "containerPropertyIdentifier": "prop",
+                },
+                "invalidEdge": {
+                    "connectionType": "single_edge_connection",
+                    "source": {"space": "s", "externalId": "V", "version": "1"},
+                    "type": {"space": "", "externalId": "N"},
+                    "direction": "outwards",
+                },
+            },
+        },
+        {
+            "In properties.invalidContainer.primary_property.container.externalId "
+            "string should have at least 1 character",
+            "In properties.invalidEdge.single_edge_connection.type.space string should have at least 1 character",
+        },
+        id="Empty reference fields.",
+    )
+
 
 class TestViewRequests:
     @pytest.mark.parametrize("data,expected_errors", list(invalid_view_definition_test_cases()))
-    def test_invalid_container_definition(self, data: dict[str, Any], expected_errors: set[str]) -> None:
+    def test_invalid_definitions(self, data: dict[str, Any], expected_errors: set[str]) -> None:
         with pytest.raises(ValidationError) as excinfo:
             ViewRequest.model_validate(data)
         errors = set(humanize_validation_error(excinfo.value))
