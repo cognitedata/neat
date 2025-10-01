@@ -8,5 +8,9 @@ class DMSImporter(ABC):
 
     @abstractmethod
     def to_data_model(self) -> RequestSchema:
-        """Convert the imported data to a RequestSchema."""
+        """Convert the imported data to a RequestSchema.
+
+        Returns:
+            RequestSchema: The data model as a RequestSchema.
+        """
         raise NotImplementedError()
