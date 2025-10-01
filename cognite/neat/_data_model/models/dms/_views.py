@@ -2,7 +2,7 @@ import re
 from abc import ABC
 from typing import Literal, TypeVar
 
-from pydantic import Field, Json, field_validator
+from pydantic import Field, Json, field_validator, model_validator
 
 from cognite.neat._utils.text import humanize_collection
 
@@ -17,10 +17,8 @@ from ._constants import (
 )
 from ._references import ContainerReference, ViewReference
 from ._view_property import (
-    ConnectionRequestProperty,
-    ConnectionResponseProperty,
-    ViewCorePropertyRequest,
-    ViewCorePropertyResponse,
+    ViewRequestProperty,
+    ViewResponseProperty,
 )
 
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
@@ -63,6 +61,22 @@ class View(Resource, ABC):
         description="References to the views from where this view will inherit properties.",
     )
 
+    @model_validator(mode="before")
+    def set_connection_type_on_primary_properties(cls, data: dict) -> dict:
+        if "properties" not in data:
+            return data
+        properties = data["properties"]
+        if not isinstance(properties, dict):
+            return data
+        # We assume all properties without connectionType are core properties.
+        # The reason we set connectionType it easy for pydantic to discriminate the union.
+        # This also leads to better error messages, as if there is a union and pydantic do not know which
+        # type to pick it will give errors from all type in the union.
+        for prop in properties.values():
+            if isinstance(prop, dict) and "connectionType" not in prop:
+                prop["connectionType"] = "primary_property"
+        return data
+
     @field_validator("external_id", mode="after")
     def check_forbidden_external_id_value(cls, val: str) -> str:
         """Check the external_id not present in forbidden set"""
@@ -75,21 +89,18 @@ class View(Resource, ABC):
 
 
 class ViewRequest(View):
-    properties: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty] = Field(
+    properties: dict[str, ViewRequestProperty] = Field(
         description="View with included properties and expected edges, indexed by a unique space-local identifier."
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(
-        cls,
-        val: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty],
-    ) -> dict[str, ViewCorePropertyRequest | ConnectionRequestProperty]:
+    def validate_properties_identifier(cls, val: dict[str, ViewRequestProperty]) -> dict[str, ViewRequestProperty]:
         """Validate properties Identifier"""
         return _validate_properties_keys(val)
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
-    properties: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty] = Field(
+    properties: dict[str, ViewResponseProperty] = Field(
         description="List of properties and connections included in this view."
     )
 
@@ -116,9 +127,7 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(
-        cls, val: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]
-    ) -> dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]:
+    def validate_properties_identifier(cls, val: dict[str, ViewResponseProperty]) -> dict[str, ViewResponseProperty]:
         """Validate properties Identifier"""
         return _validate_properties_keys(val)
 
