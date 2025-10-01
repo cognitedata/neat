@@ -1,8 +1,11 @@
+from collections import Counter
+
 from pydantic import Field, ValidationInfo, field_validator
 from pyparsing import cast
 
 from cognite.neat._data_model.models.entities import ConceptEntity
 from cognite.neat._data_model.models.entities._constants import PREFIX_PATTERN, SUFFIX_PATTERN, VERSION_PATTERN
+from cognite.neat._utils.text import humanize_collection
 
 from ._base import ResourceMetadata
 from ._property import Property
@@ -43,8 +46,8 @@ class Concept(ResourceMetadata):
             return value
 
         this_concept = ConceptEntity(
-            prefix=cast(str, info.data.get("space")),
-            suffix=cast(str, info.data.get("external_id")),
+            prefix=info.data["space"],
+            suffix=info.data["external_id"],
             version=cast(str, info.data.get("version")),
         )
 
@@ -55,16 +58,10 @@ class Concept(ResourceMetadata):
 
     @field_validator("implements", mode="after")
     def cannot_have_duplicates(cls, value: list[ConceptEntity], info: ValidationInfo) -> list[ConceptEntity]:
-        implements = set()
-        duplicates = set()
-
-        for implement in value:
-            if implement in implements:
-                duplicates.add(implement)
-            else:
-                implements.add(implement)
+        counts = Counter(value)
+        duplicates = {concept for concept, count in counts.items() if count > 1}
 
         if duplicates:
-            raise ValueError(f"Duplicate concepts found: {duplicates}")
+            raise ValueError(f"Duplicate concepts found: {humanize_collection(duplicates)}")
 
         return value
