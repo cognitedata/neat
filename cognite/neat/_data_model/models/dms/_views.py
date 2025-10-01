@@ -17,10 +17,8 @@ from ._constants import (
 )
 from ._references import ContainerReference, ViewReference
 from ._view_property import (
-    ConnectionRequestProperty,
-    ConnectionResponseProperty,
-    ViewCorePropertyRequest,
-    ViewCorePropertyResponse,
+    ViewRequestProperty,
+    ViewResponseProperty,
 )
 
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
@@ -75,21 +73,21 @@ class View(Resource, ABC):
 
 
 class ViewRequest(View):
-    properties: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty] = Field(
+    properties: dict[str, ViewRequestProperty] = Field(
         description="View with included properties and expected edges, indexed by a unique space-local identifier."
     )
 
     @field_validator("properties", mode="after")
     def validate_properties_identifier(
         cls,
-        val: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty],
-    ) -> dict[str, ViewCorePropertyRequest | ConnectionRequestProperty]:
+        val: dict[str, ViewRequestProperty],
+    ) -> dict[str, ViewRequestProperty]:
         """Validate properties Identifier"""
         return _validate_properties_keys(val)
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
-    properties: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty] = Field(
+    properties: dict[str, ViewResponseProperty] = Field(
         description="List of properties and connections included in this view."
     )
 
@@ -116,9 +114,7 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(
-        cls, val: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]
-    ) -> dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]:
+    def validate_properties_identifier(cls, val: dict[str, ViewResponseProperty]) -> dict[str, ViewResponseProperty]:
         """Validate properties Identifier"""
         return _validate_properties_keys(val)
 

@@ -41,8 +41,6 @@ from ._references import (
 )
 from ._view_property import (
     ConnectionPropertyDefinition,
-    ConnectionRequestProperty,
-    ConnectionResponseProperty,
     ConstraintOrIndexState,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
@@ -52,6 +50,9 @@ from ._view_property import (
     SingleReverseDirectRelationPropertyResponse,
     ViewCorePropertyRequest,
     ViewCorePropertyResponse,
+    ViewPropertyDefinition,
+    ViewRequestProperty,
+    ViewResponseProperty,
 )
 from ._views import (
     View,
@@ -63,8 +64,6 @@ __all__ = [
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
-    "ConnectionRequestProperty",
-    "ConnectionResponseProperty",
     "Constraint",
     "ConstraintDefinition",
     "ConstraintOrIndexState",
@@ -114,8 +113,11 @@ __all__ = [
     "ViewCorePropertyRequest",
     "ViewCorePropertyResponse",
     "ViewDirectReference",
+    "ViewPropertyDefinition",
     "ViewReference",
     "ViewRequest",
+    "ViewRequestProperty",
     "ViewResponse",
+    "ViewResponseProperty",
     "WriteableResource",
 ]

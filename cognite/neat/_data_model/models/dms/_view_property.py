@@ -9,7 +9,12 @@ from ._data_types import DataType
 from ._references import ContainerDirectReference, ContainerReference, NodeReference, ViewDirectReference, ViewReference
 
 
-class ViewCoreProperty(Resource, ABC):
+class ViewPropertyDefinition(Resource, ABC):
+    connection_type: str
+
+
+class ViewCoreProperty(ViewPropertyDefinition, ABC):
+    connection_type: Literal["not_connection"] = "not_connection"
     name: str | None = Field(
         default=None,
         description="Readable property name.",
@@ -80,8 +85,7 @@ class ViewCorePropertyResponse(ViewCoreProperty, WriteableResource[ViewCorePrope
         return ViewCorePropertyRequest.model_validate(self.model_dump(by_alias=True))
 
 
-class ConnectionPropertyDefinition(Resource, ABC):
-    connection_type: str
+class ConnectionPropertyDefinition(ViewPropertyDefinition, ABC):
     name: str | None = Field(
         default=None,
         description="Readable property name.",
@@ -173,17 +177,19 @@ class MultiReverseDirectRelationPropertyResponse(
         return MultiReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
 
 
-ConnectionRequestProperty = Annotated[
+ViewRequestProperty = Annotated[
     SingleEdgeProperty
     | MultiEdgeProperty
     | SingleReverseDirectRelationPropertyRequest
-    | MultiReverseDirectRelationPropertyRequest,
+    | MultiReverseDirectRelationPropertyRequest
+    | ViewCorePropertyRequest,
     Field(discriminator="connection_type"),
 ]
-ConnectionResponseProperty = Annotated[
+ViewResponseProperty = Annotated[
     SingleEdgeProperty
     | MultiEdgeProperty
     | SingleReverseDirectRelationPropertyResponse
-    | MultiReverseDirectRelationPropertyResponse,
+    | MultiReverseDirectRelationPropertyResponse
+    | ViewCorePropertyResponse,
     Field(discriminator="connection_type"),
 ]
