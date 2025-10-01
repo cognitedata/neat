@@ -74,7 +74,7 @@ class View(Resource, ABC):
         # type to pick it will give errors from all type in the union.
         for prop in properties.values():
             if isinstance(prop, dict) and "connectionType" not in prop:
-                prop["connectionType"] = "not_connection"
+                prop["connectionType"] = "primary_property"
         return data
 
     @field_validator("external_id", mode="after")
