@@ -94,10 +94,7 @@ class ViewRequest(View):
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(
-        cls,
-        val: dict[str, ViewRequestProperty],
-    ) -> dict[str, ViewRequestProperty]:
+    def validate_properties_identifier(cls, val: dict[str, ViewRequestProperty]) -> dict[str, ViewRequestProperty]:
         """Validate properties Identifier"""
         return _validate_properties_keys(val)
 
