@@ -37,7 +37,7 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             "properties": {
                 "invalid-name": {
                     "container": {"space": "my_space", "externalId": "MyContainer"},
-                    "containerPropertyIdentifier": "containerProperty",
+                    "containerPropertyIdentifier": "invalid#name",
                 },
                 "valid_name": {
                     "connectionType": "single_edge_connection",
@@ -53,8 +53,9 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             "In field version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
             "In implements[1] missing required field: 'version'",
             "In implements[1].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
-            "In properties.valid_name.single_edge_connection.direction input should be 'outwards' or 'inwards'. "
-            "Got 'sideways'.",
+            "In properties.invalid-name.containerPropertyIdentifier string "
+            "should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
+            "In properties.valid_name.direction input should be 'outwards' or 'inwards'. Got 'sideways'.",
         },
         id="Multiple Issues.",
     )
