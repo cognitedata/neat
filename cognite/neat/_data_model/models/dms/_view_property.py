@@ -14,7 +14,7 @@ class ViewPropertyDefinition(Resource, ABC):
 
 
 class ViewCoreProperty(ViewPropertyDefinition, ABC):
-    connection_type: Literal["not_connection"] = "not_connection"
+    connection_type: Literal["not_connection"] = Field(default="not_connection", exclude=True)
     name: str | None = Field(
         default=None,
         description="Readable property name.",

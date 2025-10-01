@@ -2,7 +2,7 @@ import re
 from abc import ABC
 from typing import Literal, TypeVar
 
-from pydantic import Field, Json, field_validator
+from pydantic import Field, Json, field_validator, model_validator
 
 from cognite.neat._utils.text import humanize_collection
 
@@ -60,6 +60,22 @@ class View(Resource, ABC):
         default=None,
         description="References to the views from where this view will inherit properties.",
     )
+
+    @model_validator(mode="before")
+    def set_connection_type_on_primary_properties(cls, data: dict) -> dict:
+        if "properties" not in data:
+            return data
+        properties = data["properties"]
+        if not isinstance(properties, dict):
+            return data
+        # We assume all properties without connectionType are core properties.
+        # The reason we set connectionType it easy for pydantic to discriminate the union.
+        # This also leads to better error messages, as if there is a union and pydantic do not know which
+        # type to pick it will give errors from all type in the union.
+        for prop in properties.values():
+            if isinstance(prop, dict) and "connectionType" not in prop:
+                prop["connectionType"] = "not_connection"
+        return data
 
     @field_validator("external_id", mode="after")
     def check_forbidden_external_id_value(cls, val: str) -> str:
