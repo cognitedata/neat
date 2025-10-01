@@ -14,6 +14,9 @@ class ViewPropertyDefinition(Resource, ABC):
 
 
 class ViewCoreProperty(ViewPropertyDefinition, ABC):
+    # Core properties do not have connection type in the API, but we add it here such that
+    # we can use it as a discriminator in unions. The exclude=True ensures that it is not
+    # sent to the API.
     connection_type: Literal["not_connection"] = Field(default="not_connection", exclude=True)
     name: str | None = Field(
         default=None,
