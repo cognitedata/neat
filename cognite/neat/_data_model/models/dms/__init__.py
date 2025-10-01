@@ -32,6 +32,7 @@ from cognite.neat._data_model.models.dms._data_types import (
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
+from ._data_model import DataModelRequest, DataModelResponse
 from ._references import (
     ContainerDirectReference,
     ContainerReference,
@@ -74,6 +75,8 @@ __all__ = [
     "ContainerReference",
     "ContainerRequest",
     "ContainerResponse",
+    "DataModelRequest",
+    "DataModelResponse",
     "DataType",
     "DateProperty",
     "DirectNodeRelation",
