@@ -80,7 +80,8 @@ class Container(Resource, ABC):
         description="Should this operation apply to nodes, edges or both.",
     )
     properties: dict[str, ContainerPropertyDefinition] = Field(
-        description="Set of properties to apply to the container."
+        description="Set of properties to apply to the container.",
+        min_length=1,
     )
     constraints: dict[str, Constraint] | None = Field(
         default=None,
@@ -126,7 +127,7 @@ class Container(Resource, ABC):
         """Check the external_id not present in forbidden set"""
         if val in FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS:
             raise ValueError(
-                f"{val!r} is a reserved container External ID. Reserved External IDs are:"
+                f"{val!r} is a reserved container External ID. Reserved External IDs are: "
                 f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS)}"
             )
         return val
