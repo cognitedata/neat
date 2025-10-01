@@ -35,11 +35,11 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             "version": "#NotValid",
             "implements": [{"space": "*my_invalid_space", "externalId": "MyParent"}],
             "properties": {
-                "invalid#name": {
+                "containerProp": {
                     "container": {"space": "my_space", "externalId": "MyContainer"},
                     "containerPropertyIdentifier": "invalid#name",
                 },
-                "valid_name": {
+                "edgeProp": {
                     "connectionType": "single_edge_connection",
                     "source": {"space": "my_space", "externalId": "MySourceView", "version": "1"},
                     "type": {"space": "my_space", "externalId": "MyNode"},
@@ -53,9 +53,9 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             "In field version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
             "In implements[1] missing required field: 'version'",
             "In implements[1].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
-            "In properties.invalid#name.primary_property.containerPropertyIdentifier "
+            "In properties.containerProp.primary_property.containerPropertyIdentifier "
             "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
-            "In properties.valid_name.single_edge_connection.direction input should be "
+            "In properties.edgeProp.single_edge_connection.direction input should be "
             "'outwards' or 'inwards'. Got 'sideways'.",
         },
         id="Multiple Issues.",
