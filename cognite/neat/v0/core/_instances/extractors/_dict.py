@@ -45,19 +45,18 @@ class DictExtractor(BaseExtractor):
         if key in self.uri_ref_keys and not isinstance(value, dict | list):
             # exist if key is meant to form a URIRef
             yield key, URIRef(self.namespace[urllib.parse.quote(value)])
-        else:
-            if isinstance(value, float | bool | int):
-                yield key, Literal(value)
-            elif isinstance(value, str):
-                yield key, Literal(string_to_ideal_type(value)) if self.str_to_ideal_type else Literal(value)
-            elif isinstance(value, dict) and unpack_json:
-                yield from self._unpack_json(value)
-            elif isinstance(value, dict):
-                # This object is a json object.
-                yield key, Literal(json.dumps(value), datatype=XSD._NS["json"])
-            elif isinstance(value, list):
-                for item in value:
-                    yield from self._get_predicate_objects_pair(key, item, False)
+        elif isinstance(value, float | bool | int):
+            yield key, Literal(value)
+        elif isinstance(value, str):
+            yield key, Literal(string_to_ideal_type(value)) if self.str_to_ideal_type else Literal(value)
+        elif isinstance(value, dict) and unpack_json:
+            yield from self._unpack_json(value)
+        elif isinstance(value, dict):
+            # This object is a json object.
+            yield key, Literal(json.dumps(value), datatype=XSD._NS["json"])
+        elif isinstance(value, list):
+            for item in value:
+                yield from self._get_predicate_objects_pair(key, item, False)
 
     def _unpack_json(self, value: dict, parent: str | None = None) -> Iterable[tuple[str, Literal | URIRef]]:
         for sub_key, sub_value in value.items():
