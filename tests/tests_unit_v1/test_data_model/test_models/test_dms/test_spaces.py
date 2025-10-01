@@ -11,9 +11,7 @@ from cognite.neat._utils.validation import humanize_validation_error
 def invalid_space_definition_test_cases() -> Iterator[tuple]:
     yield pytest.param(
         {"space": "my_space", "name": "way too long name" * 50},
-        {
-            "In field name string should have at most 255 characters",
-        },
+        {"In field name string should have at most 255 characters"},
         id="Name above 255 characters",
     )
 
