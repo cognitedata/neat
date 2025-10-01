@@ -74,3 +74,10 @@ class TestContainerResponse:
         request = container_instance.as_request()
 
         assert isinstance(request, ContainerRequest)
+
+        dumped = request.model_dump()
+        response_dumped = container_instance.model_dump()
+        response_only_keys = set(ContainerResponse.model_fields.keys()) - set(ContainerRequest.model_fields.keys())
+        for keys in response_only_keys:
+            response_dumped.pop(keys, None)
+        assert dumped == response_dumped
