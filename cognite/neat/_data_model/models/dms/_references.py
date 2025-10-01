@@ -6,7 +6,10 @@ from ._base import BaseModelObject
 from ._constants import DM_EXTERNAL_ID_PATTERN, SPACE_FORMAT_PATTERN
 
 
-class ContainerReference(BaseModelObject):
+class ReferenceObject(BaseModelObject, frozen=True): ...
+
+
+class ContainerReference(ReferenceObject):
     type: Literal["container"] = "container"
     space: str = Field(
         description="Id of the space hosting (containing) the container.",
