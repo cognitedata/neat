@@ -1,5 +1,6 @@
 from cognite.client.data_classes import FileMetadataList, TimeSeriesList
 from cognite.client.data_classes.data_modeling import NodeId
+from rdflib import URIRef
 
 from cognite.neat import NeatSession
 from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
@@ -95,3 +96,24 @@ class TestReadClassicTimeSeries:
             )
         )
         assert instances_ids == expected
+
+
+def test_read_rdf_instances_with_named_graph(tmp_path) -> None:
+    """Test reading RDF instances into a named graph"""
+
+    ttl_file = tmp_path / "test.ttl"
+    ttl_file.write_text(
+        """
+        @prefix ex: <http://example.org/> .
+        ex:subject1 ex:predicate1 "value1" .
+        ex:subject2 ex:predicate2 "value2" .
+    """
+    )
+
+    neat = NeatSession()
+
+    graph_uri = URIRef("urn:test:mygraph")
+    issues = neat.read.rdf.instances(ttl_file, named_graph=graph_uri)
+
+    assert not issues.has_errors
+    assert len(neat._state.instances.store.graph(graph_uri)) == 2
