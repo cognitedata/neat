@@ -1,4 +1,4 @@
-from rdflib import RDF, Literal, URIRef, Namespace
+from rdflib import RDF, Literal, Namespace, URIRef
 
 from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.v0.core._store import NeatInstanceStore
@@ -23,6 +23,7 @@ class TestListInstanceObjectIds:
 
         assert len(result) == 1
         assert result[0] == my_other_entity
+
 
 def test_get_triples_to_delete() -> None:
     """Test finding triples that exist in old graph but not in new graph"""
@@ -59,6 +60,7 @@ def test_get_triples_to_delete() -> None:
     assert result[0][0] == example.subject3
     assert result[0][1] == example.pred3
     assert str(result[0][2]) == "value3"
+
 
 def test_get_triples_to_add() -> None:
     """Test finding triples that exist in new graph but not in old graph"""
