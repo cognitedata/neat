@@ -302,7 +302,7 @@ class DateTime(DataType):
     python = datetime
     dms = dms.Timestamp
     graphql = "Timestamp"
-    xsd = "dateTimeStamp"
+    xsd = "dateTime"
     sql = "TIMESTAMP"
 
     name: typing.Literal["dateTime"] = "dateTime"
