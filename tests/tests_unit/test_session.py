@@ -1,16 +1,12 @@
-from unittest.mock import Mock
-
 from cognite.neat._session._session import NeatSession
 from cognite.neat._session._state_machine import EmptyState
-from cognite.neat._utils.http_client._client import HTTPClient
 
 
 def test_init_with_client():
-    client = Mock(spec=HTTPClient)
-    session = NeatSession(client=client)
+    session = NeatSession()
 
     assert isinstance(session.state, EmptyState)
-    assert session.state._client is client
+    assert session.state._client is None
 
     workflow_steps = [
         ("read_instances", "📊 Load instance data"),
