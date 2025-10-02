@@ -451,6 +451,18 @@ class SelectQueries(BaseQuery):
             else:
                 yield instance_id, str(space)
 
+    def _get_graph_diff(self, source_graph: URIRef, target_graph: URIRef) -> list[ResultRow]:
+        query = f"""
+        SELECT ?s ?p ?o
+        WHERE {{
+        GRAPH <{source_graph}> {{ ?s ?p ?o }}
+        FILTER NOT EXISTS {{
+            GRAPH <{target_graph}> {{ ?s ?p ?o }}
+        }}
+        }}
+        """
+        return cast(list[ResultRow], list(self.dataset.query(query)))
+
     def get_triples_to_delete(self, old_graph: URIRef, new_graph: URIRef) -> list[ResultRow]:
         """Find triples that exist in old graph but not in new graph.
 
@@ -461,16 +473,7 @@ class SelectQueries(BaseQuery):
         Returns:
             List of triples (subject, predicate, object) to delete
         """
-        query = f"""
-        SELECT ?s ?p ?o
-        WHERE {{
-        GRAPH <{old_graph}> {{ ?s ?p ?o }}
-        FILTER NOT EXISTS {{ 
-            GRAPH <{new_graph}> {{ ?s ?p ?o }} 
-        }}
-        }}
-        """
-        return cast(list[ResultRow], list(self.dataset.query(query)))
+        return self._get_graph_diff(old_graph, new_graph)
 
     def get_triples_to_add(self, old_graph: URIRef, new_graph: URIRef) -> list[ResultRow]:
         """Find triples that exist in new graph but not in old graph.
@@ -480,15 +483,6 @@ class SelectQueries(BaseQuery):
             new_graph: URI of the new named graph
 
         Returns:
-            Iterable of triples (subject, predicate, object) to add
+            List of triples (subject, predicate, object) to add
         """
-        query = f"""
-        SELECT ?s ?p ?o
-        WHERE {{
-        GRAPH <{new_graph}> {{ ?s ?p ?o }}
-        FILTER NOT EXISTS {{ 
-            GRAPH <{old_graph}> {{ ?s ?p ?o }} 
-        }}
-        }}
-        """
-        return cast(list[ResultRow], list(self.dataset.query(query)))
+        return self._get_graph_diff(new_graph, old_graph)
