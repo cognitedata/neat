@@ -843,6 +843,7 @@ class RDFReadAPI(BaseReadAPI):
         io: Any,
         type: NeatObjectType | None = None,
         source: RDFFileType | None = None,
+        named_graph: str | URIRef | None = None,
     ) -> IssueList:
         if type is None:
             type = object_wizard()
@@ -861,7 +862,7 @@ class RDFReadAPI(BaseReadAPI):
                 raise ValueError(f"Expected ontology, imf types or instances, got {source}")
 
         elif type == "instances":
-            return self.instances(io)
+            return self.instances(io, named_graph=named_graph)
 
         else:
             raise NeatSessionError(f"Expected data model or instances, got {type}")
