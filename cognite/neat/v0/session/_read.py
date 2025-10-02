@@ -3,6 +3,7 @@ from typing import Any, Literal, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from cognite.client.utils.useful_types import SequenceNotStr
+from rdflib import URIRef
 
 from cognite.neat.v0.core._client import NeatClient
 from cognite.neat.v0.core._constants import (
@@ -826,13 +827,15 @@ class RDFReadAPI(BaseReadAPI):
         importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.data_model_import(importer)
 
-    def instances(self, io: Any) -> IssueList:
+    def instances(self, io: Any, named_graph: str | URIRef | None = None) -> IssueList:
         self._state._raise_exception_if_condition_not_met(
             "Read RDF Instances",
             empty_data_model_store_required=True,
         )
         reader = NeatReader.create(io)
-        self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()))
+
+        named_graph_uri = URIRef(named_graph) if named_graph else None
+        self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()), named_graph_uri)
         return IssueList()
 
     def __call__(
