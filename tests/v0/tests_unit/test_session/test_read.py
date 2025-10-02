@@ -1,10 +1,9 @@
 from cognite.client.data_classes import FileMetadataList, TimeSeriesList
 from cognite.client.data_classes.data_modeling import NodeId
-from rdflib import URIRef
 
 from cognite.neat import NeatSession
 from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat.v0.core._constants import CLASSIC_CDF_NAMESPACE, NAMED_GRAPH_NAMESPACE
 from cognite.neat.v0.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
 from cognite.neat.v0.core._issues import NeatIssue
 from cognite.neat.v0.core._issues.warnings import NeatValueWarning
@@ -112,8 +111,11 @@ def test_read_rdf_instances_with_named_graph(tmp_path) -> None:
 
     neat = NeatSession()
 
-    graph_uri = URIRef("urn:test:mygraph")
-    issues = neat.read.rdf.instances(ttl_file, named_graph=graph_uri)
-
+    # Test with string named_graph
+    issues = neat.read.rdf.instances(ttl_file, named_graph="my_test_graph")
     assert not issues.has_errors
-    assert len(neat._state.instances.store.graph(graph_uri)) == 2
+
+    expected_graph_uri = NAMED_GRAPH_NAMESPACE["my_test_graph"]
+    target_graph = neat._state.instances.store.graph(expected_graph_uri)
+
+    assert target_graph.identifier == expected_graph_uri

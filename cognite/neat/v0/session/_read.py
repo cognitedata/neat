@@ -1,3 +1,4 @@
+import re
 import warnings
 from typing import Any, Literal, cast
 
@@ -8,9 +9,11 @@ from rdflib import URIRef
 from cognite.neat.v0.core._client import NeatClient
 from cognite.neat.v0.core._constants import (
     CLASSIC_CDF_NAMESPACE,
+    NAMED_GRAPH_NAMESPACE,
     get_default_prefixes_and_namespaces,
 )
 from cognite.neat.v0.core._data_model import catalog, importers
+from cognite.neat.v0.core._data_model._constants import SPACE_COMPLIANCE_REGEX
 from cognite.neat.v0.core._data_model.importers import BaseImporter
 from cognite.neat.v0.core._data_model.models.entities._single_value import ViewEntity
 from cognite.neat.v0.core._data_model.transformers import ClassicPrepareCore
@@ -827,14 +830,20 @@ class RDFReadAPI(BaseReadAPI):
         importer = importers.OWLImporter.from_file(reader.materialize_path(), source_name=f"file {reader!s}")
         return self._state.data_model_import(importer)
 
-    def instances(self, io: Any, named_graph: str | URIRef | None = None) -> IssueList:
+    def instances(self, io: Any, named_graph: str | None = None) -> IssueList:
         self._state._raise_exception_if_condition_not_met(
             "Read RDF Instances",
             empty_data_model_store_required=True,
         )
         reader = NeatReader.create(io)
 
-        named_graph_uri = URIRef(named_graph) if named_graph else None
+        # validate and convert named_graph to URI
+        named_graph_uri = None
+        if named_graph:
+            if not re.match(SPACE_COMPLIANCE_REGEX, named_graph):
+                raise NeatValueError(f"Named graph '{named_graph}' does not comply with naming requirements. ")
+            named_graph_uri = NAMED_GRAPH_NAMESPACE[named_graph]
+
         self._state.instances.store.write(extractors.RdfFileExtractor(reader.materialize_path()), named_graph_uri)
         return IssueList()
 
