@@ -4,13 +4,17 @@ from ._state_machine import EmptyState, ForbiddenState, State
 
 
 class NeatSession:
+    """A session is an interface for neat operations. It works as
+    a manager for handling user interactions and orchestrating
+    the state machine for data model and instance operations.
+    """
+
     def __init__(self, client: HTTPClient | None = None):
         self.state: State = EmptyState(client=client)
 
     def execute_event(self, event: str) -> bool:
         """Place holder function for executing events and transitioning states.
         It will be modified to include actual logic as we progress with v1 of neat.
-
 
         """
         print(f"\n--- Executing event: '{event}' from {self.state} ---")
