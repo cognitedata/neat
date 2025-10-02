@@ -462,25 +462,27 @@ class ShaclShapes(_ModelConfig):
         """
         analysis = DataModelAnalysis(data_model)
         concepts_by_concept_entity = analysis.concept_by_concept_entity
-        properties_by_concept_entity = analysis.properties_by_id_by_concept()
+        properties_by_concept_entity = analysis.properties_by_concepts()
         return cls(
             shapes=[
                 # shapes that have property shapes as well
-                SHACLNodeShape.from_data_model(
-                    concepts_by_concept_entity[concept_entity],
-                    list(properties.values()),
+                SHACLNodeShape.from_concept(
+                    concept_entity,
+                    concepts_by_concept_entity,
+                    properties,
                     data_model.metadata.namespace,
                 )
                 for concept_entity, properties in properties_by_concept_entity.items()
             ]
             + [
                 # shapes without any property shapes
-                SHACLNodeShape.from_data_model(
-                    concept,
+                SHACLNodeShape.from_concept(
+                    concept_entity,
+                    concepts_by_concept_entity,
                     [],
                     data_model.metadata.namespace,
                 )
-                for concept_entity, concept in concepts_by_concept_entity.items()
+                for concept_entity in concepts_by_concept_entity.keys()
                 if concept_entity not in properties_by_concept_entity
             ],
             prefixes=data_model.prefixes,
@@ -548,21 +550,28 @@ class SHACLNodeShape(_ModelConfig):
         )
 
     @classmethod
-    def from_data_model(
+    def from_concept(
         cls,
-        concept_definition: Concept,
-        property_definitions: list[ConceptualProperty],
+        concept_entity: ConceptEntity,
+        concepts_by_concept_entity: dict[ConceptEntity, Concept],
+        properties: list[ConceptualProperty],
         namespace: Namespace,
     ) -> "SHACLNodeShape":
-        if concept_definition.implements:
-            parent = [namespace[str(parent.suffix) + "Shape"] for parent in concept_definition.implements]
+        if not (concept := concepts_by_concept_entity.get(concept_entity)):
+            raise ValueError(f"Concept {concept_entity} not found in data model!")
+
+        if concept.implements:
+            parent = [namespace[str(parent.suffix) + "Shape"] for parent in concept.implements]
         else:
             parent = None
         return cls(
-            id_=namespace[f"{concept_definition.concept.suffix!s}Shape"],
-            target_class=namespace[str(concept_definition.concept.suffix)],
+            id_=namespace[f"{concept.concept.suffix!s}Shape"],
+            target_class=concept.instance_source or namespace[str(concept.concept.suffix)],
             parent=parent,
-            property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
+            property_shapes=[
+                SHACLPropertyShape.from_property(property_, concepts_by_concept_entity, namespace)
+                for property_ in properties
+            ],
             namespace=namespace,
         )
 
@@ -607,23 +616,31 @@ class SHACLPropertyShape(_ModelConfig):
         return self.path_triples + self.node_kind_triples + self.cardinality_triples
 
     @classmethod
-    def from_property(cls, definition: ConceptualProperty, namespace: Namespace) -> "SHACLPropertyShape":
-        # TODO requires PR to fix MultiValueType and UnknownValueType
-        if isinstance(definition.value_type, ConceptEntity):
-            expected_value_type = namespace[f"{definition.value_type.suffix}Shape"]
-        elif isinstance(definition.value_type, DataType):
-            expected_value_type = XSD[definition.value_type.xsd]
+    def from_property(
+        cls,
+        property_: ConceptualProperty,
+        concepts_by_concept_entity: dict[ConceptEntity, Concept],
+        namespace: Namespace,
+    ) -> "SHACLPropertyShape":
+        if isinstance(property_.value_type, ConceptEntity):
+            concept = concepts_by_concept_entity.get(property_.value_type)
+            value_type_uri = concept.instance_source if concept else None
+            expected_value_type = value_type_uri or namespace[f"{property_.value_type.suffix}"]
+        elif isinstance(property_.value_type, DataType):
+            expected_value_type = XSD[property_.value_type.xsd]
         else:
-            raise ValueError(f"Value type {definition.value_type.type_} is not supported")
+            raise NotImplementedError(f"Value type {property_.value_type.type_} is not supported yet")
 
         return cls(
             id_=BNode(),
-            path=namespace[definition.property_],
-            node_kind=SHACL.IRI if definition.type_ == EntityTypes.object_property else SHACL.Literal,
+            path=property_.instance_source[0]
+            if property_.instance_source and len(property_.instance_source) == 1
+            else namespace[property_.property_],
+            node_kind=SHACL.IRI if property_.type_ == EntityTypes.object_property else SHACL.Literal,
             expected_value_type=expected_value_type,
-            min_count=definition.min_count,
+            min_count=property_.min_count,
             max_count=(
-                int(definition.max_count) if definition.max_count and definition.max_count != float("inf") else None
+                int(property_.max_count) if property_.max_count and property_.max_count != float("inf") else None
             ),
             namespace=namespace,
         )
