@@ -450,3 +450,49 @@ class SelectQueries(BaseQuery):
                 yield instance_id, str(space.toPython())
             else:
                 yield instance_id, str(space)
+
+    def get_triples_to_delete(
+        self, old_graph: URIRef, new_graph: URIRef
+    ) -> list[ResultRow]:
+        """Find triples that exist in old graph but not in new graph.
+        
+        Args:
+            old_graph: URI of the old named graph
+            new_graph: URI of the new named graph
+            
+        Returns:
+            List of triples (subject, predicate, object) to delete
+        """
+        query = f"""
+        SELECT ?s ?p ?o
+        WHERE {{
+        GRAPH <{old_graph}> {{ ?s ?p ?o }}
+        FILTER NOT EXISTS {{ 
+            GRAPH <{new_graph}> {{ ?s ?p ?o }} 
+        }}
+        }}
+        """
+        return cast(list[ResultRow], list(self.dataset.query(query)))
+    
+    def get_triples_to_add(
+        self, old_graph: URIRef, new_graph: URIRef
+    ) -> list[ResultRow]:
+        """Find triples that exist in new graph but not in old graph.
+        
+        Args:
+            old_graph: URI of the old named graph
+            new_graph: URI of the new named graph
+            
+        Returns:
+            Iterable of triples (subject, predicate, object) to add
+        """
+        query = f"""
+        SELECT ?s ?p ?o
+        WHERE {{
+        GRAPH <{new_graph}> {{ ?s ?p ?o }}
+        FILTER NOT EXISTS {{ 
+            GRAPH <{old_graph}> {{ ?s ?p ?o }} 
+        }}
+        }}
+        """
+        return cast(list[ResultRow], list(self.dataset.query(query)))
