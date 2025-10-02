@@ -96,7 +96,6 @@ __all__ = [
     "RequestSchema",
     "RequiresConstraintDefinition",
     "Resource",
-    "ResponseSchema",
     "SequenceCDFExternalIdReference",
     "SingleEdgeProperty",
     "SingleReverseDirectRelationPropertyRequest",
