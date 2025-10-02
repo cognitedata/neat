@@ -1,8 +1,8 @@
 import re
 from abc import ABC
-from typing import Any, Literal
+from typing import Literal, TypeVar
 
-from pydantic import Field, field_validator
+from pydantic import Field, Json, field_validator, model_validator
 
 from cognite.neat._utils.text import humanize_collection
 
@@ -17,10 +17,8 @@ from ._constants import (
 )
 from ._references import ContainerReference, ViewReference
 from ._view_property import (
-    ConnectionRequestProperty,
-    ConnectionResponseProperty,
-    ViewCorePropertyRequest,
-    ViewCorePropertyResponse,
+    ViewRequestProperty,
+    ViewResponseProperty,
 )
 
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
@@ -54,7 +52,7 @@ class View(Resource, ABC):
         description="Description of the view.",
         max_length=1024,
     )
-    filter: dict[str, Any] | None = Field(
+    filter: dict[str, Json] | None = Field(
         default=None,
         description="A filter Domain Specific Language (DSL) used to create advanced filter queries.",
     )
@@ -62,6 +60,22 @@ class View(Resource, ABC):
         default=None,
         description="References to the views from where this view will inherit properties.",
     )
+
+    @model_validator(mode="before")
+    def set_connection_type_on_primary_properties(cls, data: dict) -> dict:
+        if "properties" not in data:
+            return data
+        properties = data["properties"]
+        if not isinstance(properties, dict):
+            return data
+        # We assume all properties without connectionType are core properties.
+        # The reason we set connectionType it easy for pydantic to discriminate the union.
+        # This also leads to better error messages, as if there is a union and pydantic do not know which
+        # type to pick it will give errors from all type in the union.
+        for prop in properties.values():
+            if isinstance(prop, dict) and "connectionType" not in prop:
+                prop["connectionType"] = "primary_property"
+        return data
 
     @field_validator("external_id", mode="after")
     def check_forbidden_external_id_value(cls, val: str) -> str:
@@ -75,32 +89,18 @@ class View(Resource, ABC):
 
 
 class ViewRequest(View):
-    properties: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty] = Field(
+    properties: dict[str, ViewRequestProperty] = Field(
         description="View with included properties and expected edges, indexed by a unique space-local identifier."
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(
-        cls,
-        val: dict[str, ViewCorePropertyRequest | ConnectionRequestProperty],
-    ) -> dict[str, ViewCorePropertyRequest | ConnectionRequestProperty]:
+    def validate_properties_identifier(cls, val: dict[str, ViewRequestProperty]) -> dict[str, ViewRequestProperty]:
         """Validate properties Identifier"""
-        errors: list[str] = []
-        for key in val.keys():
-            if not KEY_PATTERN.match(key):
-                errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
-            if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
-                errors.append(
-                    f"'{key}' is a reserved property identifier. Reserved identifiers are: "
-                    f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
-                )
-        if errors:
-            raise ValueError("; ".join(errors))
-        return val
+        return _validate_properties_keys(val)
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
-    properties: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty] = Field(
+    properties: dict[str, ViewResponseProperty] = Field(
         description="List of properties and connections included in this view."
     )
 
@@ -127,22 +127,9 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     )
 
     @field_validator("properties", mode="after")
-    def validate_properties_identifier(
-        cls, val: dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]
-    ) -> dict[str, ViewCorePropertyResponse | ConnectionResponseProperty]:
+    def validate_properties_identifier(cls, val: dict[str, ViewResponseProperty]) -> dict[str, ViewResponseProperty]:
         """Validate properties Identifier"""
-        errors: list[str] = []
-        for key in val.keys():
-            if not KEY_PATTERN.match(key):
-                errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
-            if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
-                errors.append(
-                    f"'{key}' is a reserved property identifier. Reserved identifiers are: "
-                    f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
-                )
-        if errors:
-            raise ValueError("; ".join(errors))
-        return val
+        return _validate_properties_keys(val)
 
     def as_request(self) -> ViewRequest:
         dumped = self.model_dump(by_alias=True, exclude={"properties"})
@@ -153,3 +140,22 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
             for key, value in self.properties.items()
         }
         return ViewRequest.model_validate(dumped)
+
+
+T_Property = TypeVar("T_Property")
+
+
+def _validate_properties_keys(properties: dict[str, T_Property]) -> dict[str, T_Property]:
+    """Validate keys of a properties dictionary."""
+    errors: list[str] = []
+    for key in properties:
+        if not KEY_PATTERN.match(key):
+            errors.append(f"Property '{key}' does not match the required pattern: {KEY_PATTERN.pattern}")
+        if key in FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER:
+            errors.append(
+                f"'{key}' is a reserved property identifier. Reserved identifiers are: "
+                f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER)}"
+            )
+    if errors:
+        raise ValueError("; ".join(errors))
+    return properties
