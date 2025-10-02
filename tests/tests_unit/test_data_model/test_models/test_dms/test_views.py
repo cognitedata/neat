@@ -356,14 +356,19 @@ def view_strategy(draw: Callable) -> dict[str, Any]:
     prop_keys = draw(
         st.lists(
             st.from_regex(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN, fullmatch=True),
-            min_size=1,
-            max_size=5,
+            min_size=3,
+            max_size=6,
             unique=True,
         )
     )
+    # Ensure we get one of each property type
     properties = {
-        k: draw(st.one_of([edge_property(), reverse_direct_property(), primary_property()])) for k in prop_keys
+        prop_keys[0]: draw(edge_property()),
+        prop_keys[1]: draw(reverse_direct_property()),
+        prop_keys[2]: draw(primary_property()),
     }
+    for key in prop_keys[3:]:
+        properties[key] = draw(st.one_of([edge_property(), reverse_direct_property(), primary_property()]))
     mapped_containers = [prop["container"] for prop in properties.values() if "container" in prop]
     return dict(
         space=draw(st.from_regex(SPACE_FORMAT_PATTERN, fullmatch=True).filter(lambda s: 1 <= len(s) <= 43)),
