@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterator
-from typing import Any, get_args
+from typing import Any, Literal, get_args
 
 import hypothesis.strategies as st
 import pytest
@@ -320,9 +320,13 @@ def edge_property(draw: Callable) -> dict[str, Any]:
 
 
 @st.composite
-def reverse_direct_property(draw: Callable) -> dict[str, Any]:
+def reverse_direct_property(
+    draw: Callable,
+    connection_types: list[Literal["single_reverse_direct_relation", "multi_reverse_direct_relation"]] | None = None,
+) -> dict[str, Any]:
+    connection_types = connection_types or ["single_reverse_direct_relation", "multi_reverse_direct_relation"]
     return dict(
-        connectionType=draw(st.sampled_from(["single_reverse_direct_relation", "multi_reverse_direct_relation"])),
+        connectionType=draw(st.sampled_from(connection_types)),
         name=draw(st.text(max_size=255)),
         description=draw(st.text(max_size=1024)),
         source=draw(view_reference()),
@@ -356,7 +360,7 @@ def view_strategy(draw: Callable) -> dict[str, Any]:
     prop_keys = draw(
         st.lists(
             st.from_regex(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN, fullmatch=True),
-            min_size=3,
+            min_size=4,
             max_size=6,
             unique=True,
         )
@@ -364,8 +368,9 @@ def view_strategy(draw: Callable) -> dict[str, Any]:
     # Ensure we get one of each property type
     properties = {
         prop_keys[0]: draw(edge_property()),
-        prop_keys[1]: draw(reverse_direct_property()),
-        prop_keys[2]: draw(primary_property()),
+        prop_keys[1]: draw(reverse_direct_property(connection_types=["single_reverse_direct_relation"])),
+        prop_keys[2]: draw(reverse_direct_property(connection_types=["multi_reverse_direct_relation"])),
+        prop_keys[3]: draw(primary_property()),
     }
     for key in prop_keys[3:]:
         properties[key] = draw(st.one_of([edge_property(), reverse_direct_property(), primary_property()]))
