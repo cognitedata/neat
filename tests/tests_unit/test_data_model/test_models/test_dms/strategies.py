@@ -141,3 +141,19 @@ def view_strategy(draw: Callable) -> dict[str, Any]:
         writable=draw(st.booleans()),
         mappedContainers=mapped_containers,
     )
+
+
+@st.composite
+def data_model_strategy(draw: Callable) -> dict[str, Any]:
+    view_list = draw(st.lists(view_reference(), min_size=1, max_size=10, unique_by=lambda v: v["externalId"]))
+    return dict(
+        space=draw(st.from_regex(SPACE_FORMAT_PATTERN, fullmatch=True).filter(lambda s: 1 <= len(s) <= 43)),
+        externalId=draw(st.from_regex(DM_EXTERNAL_ID_PATTERN, fullmatch=True).filter(lambda s: 1 <= len(s) <= 255)),
+        version=draw(st.from_regex(DM_VERSION_PATTERN, fullmatch=True).filter(lambda s: len(s) <= 43)),
+        name=draw(st.one_of(st.none(), st.text(max_size=255))),
+        description=draw(st.one_of(st.none(), st.text(max_size=1024))),
+        views=view_list,
+        createdTime=draw(st.integers(min_value=0)),
+        lastUpdatedTime=draw(st.integers(min_value=0)),
+        isGlobal=draw(st.booleans()),
+    )
