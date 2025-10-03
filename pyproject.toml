@@ -117,6 +117,13 @@ target-version = "py310"
 exclude = ["scripts"]
 fix = true
 
+[tool.coverage.report]
+show_missing = true
+omit = [
+    # This contains the legacy code. We want to exclude it from coverage reports
+    # such that we can increase the coverage threshold for the new code.
+    "cognite/neat/v0/*",
+]
 
 [tool.mypy]
 pretty = true
