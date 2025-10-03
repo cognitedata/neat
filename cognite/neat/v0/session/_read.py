@@ -838,7 +838,7 @@ class RDFReadAPI(BaseReadAPI):
         reader = NeatReader.create(io)
 
         # validate and convert named_graph to URI
-        named_graph_uri = None
+        named_graph_uri: str | Namespace = None
         if named_graph:
             if not re.match(SPACE_COMPLIANCE_REGEX, named_graph):
                 raise NeatValueError(f"Named graph '{named_graph}' does not comply with naming requirements. ")
