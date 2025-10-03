@@ -4,6 +4,9 @@ from typing import Any
 from pydantic import BaseModel, Field, field_validator, model_serializer
 
 from ._constants import (
+    PREFIX_PATTERN,
+    SUFFIX_PATTERN,
+    VERSION_PATTERN,
     Undefined,
     Unknown,
     _UndefinedType,
@@ -15,10 +18,8 @@ from ._constants import (
 class Entity(BaseModel, extra="ignore", populate_by_name=True):
     """Entity is a concept, class, property, datatype in semantics sense."""
 
-    prefix: str | _UndefinedType = Field(
-        default=Undefined, pattern=r"^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$", min_length=1, max_length=43
-    )
-    suffix: str = Field(min_length=1, max_length=255, pattern=r"^[a-zA-Z0-9._~?@!$&'*+,;=%-]+$")
+    prefix: str | _UndefinedType = Field(default=Undefined, pattern=PREFIX_PATTERN, min_length=1, max_length=43)
+    suffix: str = Field(min_length=1, max_length=255, pattern=SUFFIX_PATTERN)
 
     @model_serializer(when_used="unless-none", return_type=str)
     def as_str(self) -> str:
@@ -88,7 +89,7 @@ class Entity(BaseModel, extra="ignore", populate_by_name=True):
 
 
 class ConceptEntity(Entity):
-    version: str | None = None
+    version: str | None = Field(default=None, pattern=VERSION_PATTERN, max_length=43)
 
 
 class UnknownEntity(ConceptEntity):

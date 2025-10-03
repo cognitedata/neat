@@ -15,3 +15,8 @@ class _UnknownType(BaseModel):
 # This is a trick to make Undefined and Unknown singletons
 Undefined = _UndefinedType()
 Unknown = _UnknownType()
+
+
+PREFIX_PATTERN = r"^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$"
+SUFFIX_PATTERN = r"^[a-zA-Z0-9._~?@!$&'*+,;=%-]+$"
+VERSION_PATTERN = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
