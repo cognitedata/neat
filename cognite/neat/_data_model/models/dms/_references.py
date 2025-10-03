@@ -12,7 +12,10 @@ from ._constants import (
 )
 
 
-class ContainerReference(BaseModelObject):
+class ReferenceObject(BaseModelObject, frozen=True): ...
+
+
+class ContainerReference(ReferenceObject):
     type: Literal["container"] = "container"
     space: str = Field(
         description="Id of the space hosting (containing) the container.",
