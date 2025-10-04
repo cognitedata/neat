@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from pydantic import ValidationError
 
 from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.models.dms import (
@@ -9,9 +9,8 @@ from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import CellValue
 from cognite.neat._utils.validation import humanize_validation_error
-from pydantic import ValidationError
 
-from .data_classes import TableDMS, MetadataValue
+from .data_classes import MetadataValue, TableDMS
 from .reader import DMSTableReader
 from .source import TableSource
 
@@ -28,11 +27,11 @@ class DMSTableImporter(DMSImporter):
         self._source = source or TableSource("Unknown")
 
     def to_data_model(self) -> RequestSchema:
-        table = self._read_tables()
+        tables = self._read_tables()
 
-        space, version = self._read_defaults(table.metadata)
+        space, version = self._read_defaults(tables.metadata)
         reader = DMSTableReader(space, version, self._source)
-        return reader.read_table(table)
+        return reader.read_tables(tables)
 
     def _read_tables(self) -> TableDMS:
         errors: list[ModelSyntaxError] = []
@@ -41,9 +40,11 @@ class DMSTableImporter(DMSImporter):
         }
         if unused_tables:
             # Todo Make this a warning instead? Or simply silently ignore?
-            errors.append(ModelSyntaxError(
+            errors.append(
+                ModelSyntaxError(
                     message=f"In {self._source.source} unused tables found: {humanize_collection(unused_tables)}"
-                ))
+                )
+            )
 
         try:
             # Check tables, columns, and entity syntax.
@@ -58,7 +59,8 @@ class DMSTableImporter(DMSImporter):
             raise ModelImportError(errors) from None
         return table
 
-    def _read_defaults(self, metadata: list[MetadataValue]) -> tuple[str, str]:
+    @staticmethod
+    def _read_defaults(metadata: list[MetadataValue]) -> tuple[str, str]:
         default_space: str | None = None
         default_version: str | None = None
         missing = {"space", "version"}
@@ -70,9 +72,7 @@ class DMSTableImporter(DMSImporter):
                 default_version = str(meta.value)
                 missing.remove("version")
         if missing:
-            error = ModelSyntaxError(
-                    message=f"{self._location_metadata((0,))} missing required fields: {humanize_collection(missing)}"
-                )
+            error = ModelSyntaxError(message=f"In Metadata missing required fields: {humanize_collection(missing)}")
             # If space or version is missing, we cannot continue parsing the model as these are used as defaults.
             raise ModelImportError([error]) from None
         return default_space, default_version

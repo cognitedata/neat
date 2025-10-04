@@ -39,7 +39,10 @@ class TableSource:
     source: str
     table_read: dict[str, SpreadsheetRead] = field(default_factory=dict)
 
-    def location(self, path: tuple[int | str, ...], ) -> str:
+    def location(
+        self,
+        path: tuple[int | str, ...],
+    ) -> str:
         if len(path) < 2:
             return f"in {self.source}"
         table_name = path[0]
@@ -56,4 +59,3 @@ class TableSource:
             return f"in {self.source}, table {table_name!r}, row {adjusted_row}"
         column = path[2]
         return f"in {self.source}, table {table_name!r}, row {adjusted_row}, column {column!r}"
-

@@ -1,10 +1,10 @@
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
+from typing import Any, TypeVar
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
-from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.models.dms import (
     DATA_TYPE_CLS_BY_TYPE,
     Constraint,
@@ -18,42 +18,29 @@ from cognite.neat._data_model.models.dms import (
     RequestSchema,
     SpaceRequest,
     ViewCorePropertyRequest,
-    ViewReference,
     ViewRequest,
     ViewRequestProperty,
 )
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 from cognite.neat._exceptions import ModelImportError
 from cognite.neat._issues import ModelSyntaxError
-from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import CellValue
 from cognite.neat._utils.validation import humanize_validation_error
 
-from .source import TableSource
 from .data_classes import DMSContainer, DMSProperty, DMSView, TableDMS
+from .source import TableSource
 
-@dataclass
-class ViewProperty:
-    reference: ViewReference
-    property: ViewRequestProperty
-    prop_id: str
+T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
 
 
 @dataclass
-class ContainerProperty:
-    reference: ContainerReference
-    property: ContainerPropertyDefinition
-    prop_id: str
-
-
-@dataclass
-class Properties:
-    container: dict[ContainerReference, dict[str, ContainerPropertyDefinition]] = field(
+class ReadProperties:
+    container: dict[ParsedEntity, dict[str, ContainerPropertyDefinition]] = field(
         default_factory=lambda: defaultdict(dict)
     )
-    view: dict[ViewReference, dict[str, ViewRequestProperty]] = field(default_factory=lambda: defaultdict(dict))
-    indices: dict[ContainerReference, dict[str, Index]] = field(default_factory=dict)
-    constraints: dict[ContainerReference, dict[str, Constraint]] = field(default_factory=dict)
+    view: dict[ParsedEntity, dict[str, ViewRequestProperty]] = field(default_factory=lambda: defaultdict(dict))
+    indices: dict[ParsedEntity, dict[str, Index]] = field(default_factory=dict)
+    constraints: dict[ParsedEntity, dict[str, Constraint]] = field(default_factory=dict)
 
 
 class DMSTableReader:
@@ -63,71 +50,73 @@ class DMSTableReader:
         self.source = source
         self.errors: list[ModelSyntaxError] = []
 
-    def read_table(self, table: TableDMS) -> RequestSchema:
-        space_request = self._read_space(self.default_space)
-        properties = self._read_properties(table.properties)
-        containers = self._read_containers(table.containers, properties)
-        views = self._read_views(table.views, properties.view)
+    def read_tables(self, tables: TableDMS) -> RequestSchema:
+        space_request = self.read_space(self.default_space)
+        properties = self.read_properties(tables.properties)
+        containers = self.read_containers(tables.containers, properties)
+        views = self.read_views(tables.views, properties.view)
+        data_model = self.read_data_model(tables)
 
-        metadata_kv = {meta.name: meta.value for meta in table.metadata}
-        data_model = self._read_data_model(
-            metadata_kv,
-            [
-                view.as_reference()
-                for view, table in zip(views, table.views, strict=False)
-                if table.in_model is not False
-            ],
-        )
         if self.errors:
             raise ModelImportError(self.errors) from None
-
         return RequestSchema(dataModel=data_model, views=views, containers=containers, spaces=[space_request])
 
-    def _read_space(self, space: str) -> SpaceRequest:
+    def read_space(self, space: str) -> SpaceRequest:
         try:
             return SpaceRequest(space=space)
         except ValidationError as e:
-            self._errors.extend(
-                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self._location_metadata)]
+            self.errors.extend(
+                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, lambda x: "In Metadata")]
             )
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
-            raise ModelImportError(self._errors) from None
+            raise ModelImportError(self.errors) from None
 
-    def _read_properties(self, properties: list[DMSProperty]) -> Properties:
-        parsed_properties = Properties()
-        indices: dict[ContainerReference, list[tuple[str, ParsedEntity]]] = defaultdict(list)
-        constraints: dict[ContainerReference, list[tuple[str, ParsedEntity]]] = defaultdict(list)
+    def read_properties(self, properties: list[DMSProperty]) -> ReadProperties:
+        parsed_properties = ReadProperties()
+        indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]] = defaultdict(list)
+        constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]] = defaultdict(list)
         for row_no, prop in enumerate(properties):
-            view = self._read_view_property(row_no, prop)
-            if view is not None:
-                # If view is None there was an error in parsing the view property,
-                # and the error has already been recorded.
-                parsed_properties.view[view.reference][view.prop_id] = view.property
+            try:
+                view_prop = self.read_view_property(prop)
+            except ValidationError as e:
+                self.errors.extend(
+                    [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+                )
+            else:
+                parsed_properties.view[prop.view][prop.view_property] = view_prop
 
-            container = self._read_container_property(row_no, prop)
-            if container is None:
-                # Connection property or error in parsing container property, and the error has already been recorded.
+            if prop.container is None:
                 continue
-            index = self._read_index(row_no, prop.index)
-            if index is not None:
-                indices[container.reference].append((container.prop_id, index))
-            constraint = self._read_constraint(row_no, prop.constraint)
-            if constraint is not None:
-                constraints[container.reference].append((container.prop_id, constraint))
 
-            container_properties = parsed_properties.container[container.reference]
-            if container.prop_id not in container_properties:
-                container_properties[container.prop_id] = container.property
-                continue
-            existing_prop = container_properties[container.prop_id]
-            self._validate_property_equality(existing_prop, container.property, row_no)
+            try:
+                container_prop = self.read_container_property(prop)
+            except ValidationError as e:
+                self.errors.extend(
+                    [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+                )
+            else:
+                container_properties = parsed_properties.container[prop.container]
+                existing_prop = container_properties.get(prop.container_property)
+                if existing_prop is None:
+                    container_properties[prop.container_property] = container_prop
+                else:
+                    self._validate_property_equality(existing_prop, container_prop, row_no)
 
-        parsed_properties.indices = self._parse_indices(indices)
-        parsed_properties.constraints = self._parse_constraints(constraints)
+            if prop.index is not None:
+                if self._valid_index_syntax(row_no, prop.index):
+                    indices[prop.container].append((prop.container_property, prop.index))
+
+            if prop.constraint is not None:
+                if self._valid_constraint_syntx(row_no, prop.constraint):
+                    constraints[prop.container].append((prop.container_property, prop.constraint))
+
+
+        parsed_properties.indices = self.create_indices(indices)
+        parsed_properties.constraints = self.create_constraints(constraints)
 
         return parsed_properties
 
-    def _read_view_property(self, prop_no: int, prop: DMSProperty) -> ViewProperty | None:
+    def read_view_property(self, prop: DMSProperty) -> ViewRequestProperty:
         """Reads a single view property from a given row in the properties table.
 
         The type of property (core, edge, reverse direct relation) is determined based on the connection column
@@ -141,77 +130,44 @@ class DMSTableReader:
             prop (DMSProperty): The property row to read.
 
         Returns:
-            ViewProperty: The parsed view property.
-
+            ViewRequestProperty: The parsed view property.
         """
-        if prop.connection is None or prop.connection == "direct":
-            request_prop = self._read_core_view_property(prop)
-        elif prop.connection.suffix == "edge":
-            request_prop = self._read_edge_view_property(prop)
-        elif prop.connection.suffix == "reverse":
-            request_prop = self._read_reverse_direct_relation_view_property(prop)
-        else:
-            self.errors.append(
-                ModelSyntaxError(
-                    message=(
-                        f"In  {self._location_table(('Properties', prop_no, 'Connection'))}'. Must be one of 'direct', 'edge', 'reverse' or empty. Got {prop.connection!r}."
-                    )
-                )
-            )
-            return None
-        view_ref = {
-            "space": prop.view.prefix or default_space,
-            "externalId": prop.view.suffix,
-            "version": prop.view.properties.get("version", default_version),
-        }
-        return ViewProperty(view_ref, request_prop, prop.view_property) if request_prop is not None else None
 
-    def _read_core_view_property(
-        self,
-        prop: DMSProperty,
-        default_space: str,
-        default_version: str,
-    ) -> ViewCorePropertyRequest | None:
-        parsed_container = self._parse_entity(prop.container, default_space)
-        if parsed_container is None:
-            return None
-        return ViewCorePropertyRequest.model_validate(
-            dict(
-                connection_type="primary_property",
-                name=prop.container_property_name,
-                description=prop.container_property_description,
-                container={
-                    "space": prop.container.prefix or default_space,
-                    "externalId": parsed_container.suffix,
-                },
-                container_property_identifier=prop.container_property,
-                source=None
-                if prop.connection is None
-                else {
-                    "space": prop.connection.prefix or default_space,
-                    "externalId": prop.connection.suffix,
-                    "version": prop.connection.properties.get("version", default_version),
-                },
-            )
+        if prop.connection is None or prop.connection == "direct":
+            return  self.create_core_view_property(prop)
+        elif prop.connection.suffix == "edge":
+            return self.create_edge_view_property(prop)
+        elif prop.connection.suffix == "reverse":
+            return self.create_reverse_direct_relation_view_property(prop)
+        else:
+            raise ValueError()
+
+
+    def create_core_view_property(self, prop: DMSProperty) -> ViewCorePropertyRequest:
+        return ViewCorePropertyRequest(
+            connectionType="primary_property",
+            name=prop.container_property_name,
+            description=prop.container_property_description,
+            container=self._create_container_ref(prop.container),
+            containerPropertyIdentifier=prop.container_property,
+            source=None if prop.connection is None else self._create_view_ref(prop.connection),
         )
 
-    def _read_edge_view_property(
+    def create_edge_view_property(
         self,
         prop: DMSProperty,
-        connection_entity: ParsedEntity,
-    ) -> ViewProperty | None:
+    ) -> ViewRequestProperty | None:
         # Implementation to read an edge view property from DMSProperty
         raise NotImplementedError()
 
-    def _read_reverse_direct_relation_view_property(
+    def create_reverse_direct_relation_view_property(
         self,
         prop: DMSProperty,
-        connection_entity: ParsedEntity,
-    ) -> ViewProperty | None:
+    ) -> ViewRequestProperty | None:
         # Implementation to read a reverse direct relation view property from DMSProperty
         raise NotImplementedError()
 
-    def _read_container_property(self, prop_id: int, prop: DMSProperty) -> ContainerProperty | None:
+    def read_container_property(self, prop: DMSProperty) -> ContainerPropertyDefinition | None:
         # Implementation to read a single container property from DMSProperty
         parsed_container = self._parse_entity(prop.container)
         if parsed_container is None:
@@ -220,13 +176,11 @@ class DMSTableReader:
             space=parsed_container.prefix, external_id=parsed_container.suffix
         )
 
-        container_type = self._read_container_type(prop, default_space)
+        container_type = self.read_container_type(prop)
         if container_type is None:
             return None
 
-        return ContainerProperty(
-            container_ref,
-            ContainerPropertyDefinition(
+        return ContainerPropertyDefinition(
                 immutable=prop.immutable,
                 nullable=prop.min_count == 0 or prop.min_count is None,
                 auto_increment=prop.auto_increment,
@@ -234,11 +188,9 @@ class DMSTableReader:
                 description=prop.container_property_description,
                 name=prop.container_property_name,
                 type=container_type,
-            ),
-            prop.container_property,
-        )
+            )
 
-    def _read_container_type(self, prop: DMSProperty, default_space: str) -> DataType | None:
+    def read_container_type(self, prop: DMSProperty) -> DataType | None:
         # Implementation to read the container property type from DMSProperty
         is_list = None if prop.max_count is None else prop.max_count > 1
         max_list_size: int | None = None
@@ -273,14 +225,14 @@ class DMSTableReader:
             if parsed_connection is None:
                 return None
             if "container" in parsed_connection.properties:
-                container = self._parse_entity(parsed_connection.properties["container"], default_space)
+                container = self._parse_entity(parsed_connection.properties["container"])
                 args["container"] = {"space": container.prefix, "externalId": container.suffix}
             return DirectNodeRelation(**args)
 
-    def _read_index(self, row_no: int, index_str: str | None) -> ParsedEntity | None:
+    def read_index(self, row_no: int, index_str: str | None) -> ParsedEntity | None:
         raise NotImplementedError()
 
-    def _read_constraint(self, row_no: int, constraint_str: str | None) -> ParsedEntity | None:
+    def read_constraint(self, row_no: int, constraint_str: str | None) -> ParsedEntity | None:
         raise NotImplementedError()
 
     def _validate_property_equality(
@@ -290,9 +242,9 @@ class DMSTableReader:
         raise NotImplementedError()
 
     def _parse_indices(
-        self, indices: dict[ContainerReference, list[tuple[str, ParsedEntity]]]
-    ) -> dict[ContainerReference, dict[str, Index]]:
-        result: dict[ContainerReference, dict[str, Index]] = {}
+        self, indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]]
+    ) -> dict[ParsedEntity, dict[str, Index]]:
+        result: dict[ParsedEntity, dict[str, Index]] = {}
         for container_ref, index_list in indices.items():
             created_indices = self._create_indices(index_list)
             if created_indices is not None:
@@ -307,89 +259,42 @@ class DMSTableReader:
     ) -> dict[ContainerReference, dict[str, Constraint]]:
         raise NotImplementedError()
 
-    def _read_containers(
-        self,
-        containers: list[DMSContainer],
-        default_space: str,
-        properties: Properties,
-    ) -> list[ContainerRequest]:
+    def read_containers(self, containers: list[DMSContainer], properties: ReadProperties) -> list[ContainerRequest]:
         # Implementation to read containers from DMSContainer list
         containers_requests: list[ContainerRequest] = []
         for row_no, container in enumerate(containers):
-            parsed_container = self._parse_entity(container.container, default_space)
-            if parsed_container is None:
-                continue
-            container_ref = ContainerReference.model_construct(
-                space=parsed_container.prefix, external_id=parsed_container.suffix
+            container_request = self._validate_obj(
+                ContainerRequest,
+                dict(
+                    **self._create_container_ref(container.container),
+                    usedFor=container.used_for,
+                    name=container.name,
+                    description=container.description,
+                    properties=properties.container[container.container],
+                    indexes=properties.indices.get(container.container),
+                    constraints=properties.constraints.get(container.container),
+                ),
+                row_no,
+                TableDMS.model_fields["containers"].validation_alias,
             )
-            if container_ref not in properties:
-                self._errors.append(
-                    ModelSyntaxError(
-                        message=(
-                            f"No properties defined for container '{container.container}' "
-                            f"in row {row_no + 1} of the containers table."
-                        )
-                    )
-                )
+            if container_request is None:
                 continue
-            container_request = ContainerRequest.model_construct(
-                space=container_ref.space,
-                external_id=container_ref.external_id,
-                used_for=container.used_for,
-                description=container.description,
-                properties=properties.container[container_ref],
-                indexes=properties.indices.get(container_ref),
-                constraints=properties.constraints.get(container_ref),
-            )
             containers_requests.append(container_request)
         return containers_requests
 
-    def _read_views(
+    def read_views(
         self,
         views: list[DMSView],
-        default_space: str,
-        default_version: str,
-        properties: dict[ViewReference, dict[str, ViewRequestProperty]],
+        properties: dict[ParsedEntity, dict[str, ViewRequestProperty]],
     ) -> list[ViewRequest]:
         views_requests: list[ViewRequest] = []
         for row_no, view in enumerate(views):
-            parsed_view = self._parse_entity(view.view, default_space, default_version)
-            if parsed_view is None:
-                continue
-            view_ref = ViewReference.model_construct(
-                space=parsed_view.prefix,
-                external_id=parsed_view.suffix,
-                version=parsed_view.properties.get("version"),
-            )
-            if view_ref not in properties:
-                self._errors.append(
-                    ModelSyntaxError(
-                        message=(
-                            f"No properties defined for view '{view.view}' in row {row_no + 1} of the views table."
-                        )
-                    )
-                )
-                continue
-            implements: list[ViewReference] | None = None
-            if view.implements is not None:
-                implements = []
-                for impl in view.implements.split(","):
-                    impl_entity = self._parse_entity(impl.strip(), default_space, default_version)
-                    if impl_entity is None:
-                        continue
-                    implements.append(
-                        ViewReference.model_construct(
-                            space=impl_entity.prefix,
-                            external_id=impl_entity.suffix,
-                            version=impl_entity.properties.get("version"),
-                        )
-                    )
-            filter_dict = None
+            filter_dict: dict[str, Any] | None = None
             if view.filter is not None:
                 try:
                     filter_dict = json.loads(view.filter)
                 except ValueError as e:
-                    self._errors.append(
+                    self.errors.append(
                         ModelSyntaxError(
                             message=(
                                 f"Invalid filter for view '{view.view}' in row {row_no + 1} of the views table: {e}"
@@ -397,46 +302,62 @@ class DMSTableReader:
                         )
                     )
                     continue
-
-            view_request = ViewRequest.model_construct(
-                space=view_ref.space,
-                external_id=view_ref.external_id,
-                version=view_ref.version,
-                name=view.name,
-                description=view.description,
-                implements=implements,
-                filter=filter_dict,
-                properties=properties[view_ref],
+            view_request = self._validate_obj(
+                ViewRequest,
+                dict(
+                    **self._create_view_ref(view.view),
+                    name=view.name,
+                    description=view.description,
+                    implements=[self._create_view_ref(impl) for impl in view.implements] if view.implements else None,
+                    filter=filter_dict,
+                    properties=properties.get(view.view, {}),
+                ),
+                row_no,
+                TableDMS.model_fields["views"].validation_alias,
             )
+            if view_request is None:
+                continue
             views_requests.append(view_request)
         return views_requests
 
-    def _read_data_model(self, metadata: dict[str, CellValue], views: list[ViewReference]) -> DataModelRequest:
+    def read_data_model(self, tables: TableDMS) -> DataModelRequest:
         try:
-            return DataModelRequest(**metadata, views=views)
+            return DataModelRequest.model_validate(
+                {
+                    **{meta.name: meta.value for meta in tables.metadata},
+                    "views": [self._create_view_ref(view.view) for view in tables.views if view.in_model is not False],
+                }
+            )
         except ValidationError as e:
-            self._errors.extend(
+            self.errors.extend(
                 [ModelSyntaxError(message=message) for message in humanize_validation_error(e, lambda x: "In Metadata")]
             )
-            raise ModelImportError(self._errors) from None
+            raise ModelImportError(self.errors) from None
 
-    def _location_table(self, json_path: tuple[str | int, ...]) -> str:
-        if not json_path:
-            return ""
-        table_name = json_path[0]
-        read = self._source.table_read.get(table_name)
-        if read is None:
-            return ""
-        if len(json_path) < 2 or not isinstance(json_path[1], int):
-            return f"In table '{table_name}'"
-        row_no = json_path[1]
-        adjusted_row_no = read.adjusted_row_number(row_no)
-        return f"In table '{table_name}', row {adjusted_row_no} "
+    def _create_view_ref(self, entity: ParsedEntity) -> dict[str, str | None]:
+        space, version = entity.prefix, entity.properties.get("version")
+        if space == "":
+            space = self.default_space
+            # Only if default space is used, we can use default version.
+            if version is None:
+                version = self.default_version
+        return {
+            "space": space,
+            "externalId": entity.suffix,
+            "version": version,
+        }
 
-    @staticmethod
-    def _location_metadata(json_path: tuple[str | int, ...]) -> str:
-        return "In Metadata"
+    def _create_container_ref(self, entity: ParsedEntity) -> dict[str, str]:
+        return {
+            "space": entity.prefix or self.default_space,
+            "externalId": entity.suffix,
+        }
 
-    def _location_source(self, json_path: tuple[str | int, ...]) -> str:
-        return f"In source {self._source.source!r}"
-
+    def _validate_obj(self, obj: type[T_BaseModel], data: dict, row_no: int, table_name: str) -> T_BaseModel | None:
+        try:
+            return obj.model_validate(data)
+        except ValidationError as e:
+            self.errors.extend(
+                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+            )
+            return None

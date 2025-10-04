@@ -12,6 +12,18 @@ class ParsedEntity:
     suffix: str
     properties: dict[str, str]
 
+    def __str__(self) -> str:
+        props_str = ""
+        if self.properties:
+            joined = ",".join(f"{k}={v}" for k, v in sorted(self.properties.items(), key=lambda x: x[0]))
+            props_str = f"({joined})"
+        if self.prefix:
+            return f"{self.prefix}:{self.suffix}{props_str}"
+        return f"{self.suffix}{props_str}"
+
+    def __hash__(self) -> int:
+        return hash(str(self))
+
 
 class _EntityParser:
     """A parser for entity strings in the format 'prefix:suffix(prop1=val1,prop2=val2)'."""
