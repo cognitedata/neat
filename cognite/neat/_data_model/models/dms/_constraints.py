@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 
 from ._base import BaseModelObject
 from ._references import ContainerReference
@@ -28,3 +28,5 @@ Constraint = Annotated[
     UniquenessConstraintDefinition | RequiresConstraintDefinition,
     Field(discriminator="constraint_type"),
 ]
+
+ConstraintAdapter: TypeAdapter[Constraint] = TypeAdapter(Constraint)

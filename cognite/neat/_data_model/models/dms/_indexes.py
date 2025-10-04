@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 
 from ._base import BaseModelObject
 
@@ -24,3 +24,5 @@ class InvertedIndex(IndexDefinition):
 
 
 Index = Annotated[BtreeIndex | InvertedIndex, Field(discriminator="index_type")]
+
+IndexAdapter: TypeAdapter[Index] = TypeAdapter(Index)

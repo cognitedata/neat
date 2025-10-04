@@ -6,14 +6,10 @@ from typing import Any, TypeVar
 from pydantic import BaseModel, ValidationError
 
 from cognite.neat._data_model.models.dms import (
-    DATA_TYPE_CLS_BY_TYPE,
     Constraint,
     ContainerPropertyDefinition,
-    ContainerReference,
     ContainerRequest,
     DataModelRequest,
-    DataType,
-    DirectNodeRelation,
     Index,
     RequestSchema,
     SpaceRequest,
@@ -21,10 +17,9 @@ from cognite.neat._data_model.models.dms import (
     ViewRequest,
     ViewRequestProperty,
 )
-from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
+from cognite.neat._data_model.models.entities import ParsedEntity
 from cognite.neat._exceptions import ModelImportError
 from cognite.neat._issues import ModelSyntaxError
-from cognite.neat._utils.useful_types import CellValue
 from cognite.neat._utils.validation import humanize_validation_error
 
 from .data_classes import DMSContainer, DMSProperty, DMSView, TableDMS
@@ -71,7 +66,6 @@ class DMSTableReader:
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
             raise ModelImportError(self.errors) from None
 
-
     def read_properties(self, properties: list[DMSProperty]) -> ReadProperties:
         parsed_properties = ReadProperties()
         indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]] = defaultdict(list)
@@ -116,17 +110,24 @@ class DMSTableReader:
         return None
 
     def _collect_indices_and_constraints(
-            self,
-            prop: DMSProperty,
-            indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
-            constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
-            row_no: int
+        self,
+        prop: DMSProperty,
+        indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
+        constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
+        row_no: int,
     ) -> None:
         if prop.index is not None and self._valid_index_syntax(row_no, prop.index):
             indices[prop.container].append((prop.container_property, prop.index))
 
-        if prop.constraint is not None and self._valid_constraint_syntx(row_no, prop.constraint):
+        if prop.constraint is not None and self._valid_constraint_syntax(row_no, prop.constraint):
             constraints[prop.container].append((prop.container_property, prop.constraint))
+
+    def _valid_index_syntax(self, row_no: int, index_list: list[ParsedEntity]) -> bool:
+        # Todo
+        return True
+
+    def _valid_constraint_syntax(self, row_no: int, constraint_list: list[ParsedEntity]) -> bool:
+        raise NotImplementedError()
 
     def read_view_property(self, prop: DMSProperty) -> ViewRequestProperty:
         """Reads a single view property from a given row in the properties table.
@@ -146,14 +147,13 @@ class DMSTableReader:
         """
 
         if prop.connection is None or prop.connection == "direct":
-            return  self.create_core_view_property(prop)
+            return self.create_core_view_property(prop)
         elif prop.connection.suffix == "edge":
             return self.create_edge_view_property(prop)
         elif prop.connection.suffix == "reverse":
             return self.create_reverse_direct_relation_view_property(prop)
         else:
             raise ValueError()
-
 
     def create_core_view_property(self, prop: DMSProperty) -> ViewCorePropertyRequest:
         return ViewCorePropertyRequest(
@@ -179,67 +179,38 @@ class DMSTableReader:
         # Implementation to read a reverse direct relation view property from DMSProperty
         raise NotImplementedError()
 
-    def read_container_property(self, prop: DMSProperty) -> ContainerPropertyDefinition | None:
-        # Implementation to read a single container property from DMSProperty
-        parsed_container = self._parse_entity(prop.container)
-        if parsed_container is None:
-            return None
-        container_ref = ContainerReference.model_construct(
-            space=parsed_container.prefix, external_id=parsed_container.suffix
+    def read_container_property(self, prop: DMSProperty) -> ContainerPropertyDefinition:
+        data_type = self._read_data_type(prop)
+        return ContainerPropertyDefinition(
+            immutable=prop.immutable,
+            nullable=prop.min_count == 0 or prop.min_count is None,
+            auto_increment=prop.auto_increment,
+            default_value=prop.default,
+            description=prop.container_property_description,
+            name=prop.container_property_name,
+            type=data_type,
         )
 
-        container_type = self.read_container_type(prop)
-        if container_type is None:
-            return None
-
-        return ContainerPropertyDefinition(
-                immutable=prop.immutable,
-                nullable=prop.min_count == 0 or prop.min_count is None,
-                auto_increment=prop.auto_increment,
-                default_value=prop.default,
-                description=prop.container_property_description,
-                name=prop.container_property_name,
-                type=container_type,
-            )
-
-    def read_container_type(self, prop: DMSProperty) -> DataType | None:
+    def _read_data_type(self, prop: DMSProperty) -> dict[str, Any]:
         # Implementation to read the container property type from DMSProperty
         is_list = None if prop.max_count is None else prop.max_count > 1
         max_list_size: int | None = None
         if is_list and prop.max_count is not None:
             max_list_size = prop.max_count
 
-        args: dict[str, CellValue] = {
+        args: dict[str, Any] = {
             "maxListSize": max_list_size,
             "list": is_list,
         }
 
         if prop.connection is None:
-            parsed_value_type = self._parse_entity(prop.value_type)
-            if parsed_value_type is None:
-                return None
-            type_ = parsed_value_type.suffix
-            if type_ not in DATA_TYPE_CLS_BY_TYPE:
-                self._errors.append(
-                    ModelSyntaxError(
-                        message=(
-                            f"Invalid data type '{type_}' for property '{prop.container_property}' "
-                            f"in container '{prop.container}'."
-                        )
-                    )
-                )
-                return None
-            cls_ = DATA_TYPE_CLS_BY_TYPE[type_]
-            args.update(parsed_value_type.properties)
-            return cls_(**args)
+            args["type"] = prop.value_type.suffix
+            args.update(prop.value_type.properties)
         else:
-            parsed_connection = parse_entity(prop.connection)
-            if parsed_connection is None:
-                return None
-            if "container" in parsed_connection.properties:
-                container = self._parse_entity(parsed_connection.properties["container"])
-                args["container"] = {"space": container.prefix, "externalId": container.suffix}
-            return DirectNodeRelation(**args)
+            args["type"] = "direct"
+            if "container" in prop.connection.properties:
+                args["container"] = self._create_container_ref(prop.connection.properties["container"])
+        return args
 
     def read_index(self, row_no: int, index_str: str | None) -> ParsedEntity | None:
         raise NotImplementedError()
@@ -253,22 +224,14 @@ class DMSTableReader:
         # Implementation to validate equality of two container properties
         raise NotImplementedError()
 
-    def _parse_indices(
-        self, indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]]
+    def create_indices(
+        self, index_list: dict[ParsedEntity, list[tuple[str, ParsedEntity]]]
     ) -> dict[ParsedEntity, dict[str, Index]]:
-        result: dict[ParsedEntity, dict[str, Index]] = {}
-        for container_ref, index_list in indices.items():
-            created_indices = self._create_indices(index_list)
-            if created_indices is not None:
-                result[container_ref] = created_indices
-        return result
-
-    def _create_indices(self, index_list: list[tuple[str, ParsedEntity]]) -> dict[str, Index]:
         raise NotImplementedError()
 
-    def _parse_constraints(
-        self, constraints: dict[ContainerReference, list[tuple[str, ParsedEntity]]]
-    ) -> dict[ContainerReference, dict[str, Constraint]]:
+    def create_constraints(
+        self, constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]]
+    ) -> dict[ParsedEntity, dict[str, Constraint]]:
         raise NotImplementedError()
 
     def read_containers(self, containers: list[DMSContainer], properties: ReadProperties) -> list[ContainerRequest]:

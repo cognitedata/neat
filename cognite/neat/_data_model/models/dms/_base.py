@@ -20,7 +20,7 @@ class Resource(BaseModelObject):
 T_Resource = TypeVar("T_Resource", bound=Resource)
 
 
-class WriteableResource(Generic[T_Resource], Resource, ABC):
+class WriteableResource(Resource, Generic[T_Resource], ABC):
     @abstractmethod
     def as_request(self) -> T_Resource:
         """Convert the response model to a request model by removing read-only fields."""

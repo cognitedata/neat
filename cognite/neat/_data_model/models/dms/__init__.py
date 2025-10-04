@@ -1,6 +1,7 @@
 from cognite.neat._data_model.models.dms._base import Resource, WriteableResource
 from cognite.neat._data_model.models.dms._constraints import (
     Constraint,
+    ConstraintAdapter,
     ConstraintDefinition,
     RequiresConstraintDefinition,
     UniquenessConstraintDefinition,
@@ -12,9 +13,9 @@ from cognite.neat._data_model.models.dms._container import (
     ContainerResponse,
 )
 from cognite.neat._data_model.models.dms._data_types import (
-    DATA_TYPE_CLS_BY_TYPE,
     BooleanProperty,
     DataType,
+    DataTypeAdapter,
     DateProperty,
     DirectNodeRelation,
     EnumProperty,
@@ -30,7 +31,7 @@ from cognite.neat._data_model.models.dms._data_types import (
     TimeseriesCDFExternalIdReference,
     TimestampProperty,
 )
-from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexAdapter, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
 from ._data_model import DataModelRequest, DataModelResponse
@@ -64,11 +65,11 @@ from ._views import (
 )
 
 __all__ = [
-    "DATA_TYPE_CLS_BY_TYPE",
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
     "Constraint",
+    "ConstraintAdapter",
     "ConstraintDefinition",
     "ConstraintOrIndexState",
     "Container",
@@ -80,6 +81,7 @@ __all__ = [
     "DataModelRequest",
     "DataModelResponse",
     "DataType",
+    "DataTypeAdapter",
     "DateProperty",
     "DirectNodeRelation",
     "EnumProperty",
@@ -87,6 +89,7 @@ __all__ = [
     "FloatProperty",
     "Index",
     "Index",
+    "IndexAdapter",
     "IndexDefinition",
     "Int32Property",
     "Int64Property",
