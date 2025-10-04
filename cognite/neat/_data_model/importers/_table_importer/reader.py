@@ -71,50 +71,62 @@ class DMSTableReader:
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
             raise ModelImportError(self.errors) from None
 
+
     def read_properties(self, properties: list[DMSProperty]) -> ReadProperties:
         parsed_properties = ReadProperties()
         indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]] = defaultdict(list)
         constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]] = defaultdict(list)
-        for row_no, prop in enumerate(properties):
-            try:
-                view_prop = self.read_view_property(prop)
-            except ValidationError as e:
-                self.errors.extend(
-                    [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
-                )
-            else:
-                parsed_properties.view[prop.view][prop.view_property] = view_prop
 
+        for row_no, prop in enumerate(properties):
+            self._process_view_property(prop, parsed_properties)
             if prop.container is None:
                 continue
-
-            try:
-                container_prop = self.read_container_property(prop)
-            except ValidationError as e:
-                self.errors.extend(
-                    [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
-                )
-            else:
-                container_properties = parsed_properties.container[prop.container]
-                existing_prop = container_properties.get(prop.container_property)
-                if existing_prop is None:
-                    container_properties[prop.container_property] = container_prop
-                else:
-                    self._validate_property_equality(existing_prop, container_prop, row_no)
-
-            if prop.index is not None:
-                if self._valid_index_syntax(row_no, prop.index):
-                    indices[prop.container].append((prop.container_property, prop.index))
-
-            if prop.constraint is not None:
-                if self._valid_constraint_syntx(row_no, prop.constraint):
-                    constraints[prop.container].append((prop.container_property, prop.constraint))
-
+            self._process_container_property(prop, parsed_properties, row_no)
+            self._collect_indices_and_constraints(prop, indices, constraints, row_no)
 
         parsed_properties.indices = self.create_indices(indices)
         parsed_properties.constraints = self.create_constraints(constraints)
-
         return parsed_properties
+
+    def _process_view_property(self, prop: DMSProperty, parsed_properties: ReadProperties) -> None:
+        try:
+            view_prop = self.read_view_property(prop)
+        except ValidationError as e:
+            self.errors.extend(
+                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+            )
+        else:
+            parsed_properties.view[prop.view][prop.view_property] = view_prop
+
+    def _process_container_property(self, prop: DMSProperty, parsed_properties: ReadProperties, row_no: int) -> None:
+        try:
+            container_prop = self.read_container_property(prop)
+        except ValidationError as e:
+            self.errors.extend(
+                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+            )
+            return None
+        container_properties = parsed_properties.container[prop.container]
+        existing_prop = container_properties.get(prop.container_property)
+
+        if existing_prop is None:
+            container_properties[prop.container_property] = container_prop
+        else:
+            self._validate_property_equality(existing_prop, container_prop, row_no)
+        return None
+
+    def _collect_indices_and_constraints(
+            self,
+            prop: DMSProperty,
+            indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
+            constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
+            row_no: int
+    ) -> None:
+        if prop.index is not None and self._valid_index_syntax(row_no, prop.index):
+            indices[prop.container].append((prop.container_property, prop.index))
+
+        if prop.constraint is not None and self._valid_constraint_syntx(row_no, prop.constraint):
+            constraints[prop.container].append((prop.container_property, prop.constraint))
 
     def read_view_property(self, prop: DMSProperty) -> ViewRequestProperty:
         """Reads a single view property from a given row in the properties table.
