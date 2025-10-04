@@ -260,9 +260,14 @@ class DMSTableImporter(DMSImporter):
 
     def _read_container_type(self, prop: DMSProperty, default_space: str) -> DataType | None:
         # Implementation to read the container property type from DMSProperty
+        is_list = None if prop.max_count is None else prop.max_count > 1
+        max_list_size: int | None = None
+        if is_list and prop.max_count is not None:
+            max_list_size = prop.max_count
+
         args: dict[str, CellValue] = {
-            "maxListSize": prop.max_count,
-            "list": None if prop.max_count is None else prop.max_count > 1,
+            "maxListSize": max_list_size,
+            "list": is_list,
         }
 
         if prop.connection is None:

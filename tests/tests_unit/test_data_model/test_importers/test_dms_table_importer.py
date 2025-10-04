@@ -4,6 +4,7 @@ import pytest
 
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.models.dms import (
+    BtreeIndex,
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
@@ -118,13 +119,16 @@ def test_valid_dms_table_format() -> Iterable[tuple]:
                     properties={
                         "name": ContainerPropertyDefinition(
                             immutable=False,
-                            nullable=False,
+                            nullable=True,
                             autoIncrement=None,
                             defaultValue=None,
                             description=None,
                             name=None,
-                            type=TextProperty(),
+                            type=TextProperty(list=False),
                         )
+                    },
+                    indexes={
+                        "name": BtreeIndex(properties=["name"], cursorable=False),
                     },
                 )
             ],
