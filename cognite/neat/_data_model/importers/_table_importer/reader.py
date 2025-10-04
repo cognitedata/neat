@@ -163,7 +163,7 @@ class DMSTableReader:
             return
         for index in prop.index:
             try:
-                created = self.create_index(index, prop.container_property)
+                created = self.read_index(index, prop.container_property)
             except ValidationError as e:
                 self.errors.extend(
                     [
@@ -178,7 +178,7 @@ class DMSTableReader:
             read.indices[(prop.container, index)].append(created)
 
     @staticmethod
-    def create_index(index: ParsedEntity, prop_id: str) -> ReadIndex:
+    def read_index(index: ParsedEntity, prop_id: str) -> ReadIndex:
         return ReadIndex(
             prop_id=prop_id,
             order=int(index.properties.get("order", 999)),
@@ -196,7 +196,7 @@ class DMSTableReader:
             return
         for constraint in prop.constraint:
             try:
-                created = self.create_constraint(constraint, prop.container_property)
+                created = self.read_constraint(constraint, prop.container_property)
             except ValidationError as e:
                 self.errors.extend(
                     [
@@ -211,7 +211,7 @@ class DMSTableReader:
             read.constraints[(prop.container, constraint)].append(created)
 
     @staticmethod
-    def create_constraint(constraint: ParsedEntity, prop_id: str) -> ReadConstraint:
+    def read_constraint(constraint: ParsedEntity, prop_id: str) -> ReadConstraint:
         return ReadConstraint(
             prop_id=prop_id,
             order=int(constraint.properties.get("order", 999)),
@@ -239,15 +239,15 @@ class DMSTableReader:
         """
 
         if prop.connection is None or prop.connection == "direct":
-            return self.create_core_view_property(prop)
+            return self.read_core_view_property(prop)
         elif prop.connection.suffix == "edge":
-            return self.create_edge_view_property(prop)
+            return self.read_edge_view_property(prop)
         elif prop.connection.suffix == "reverse":
-            return self.create_reverse_direct_relation_view_property(prop)
+            return self.read_reverse_direct_relation_view_property(prop)
         else:
             raise ValueError()
 
-    def create_core_view_property(self, prop: DMSProperty) -> ViewCorePropertyRequest:
+    def read_core_view_property(self, prop: DMSProperty) -> ViewCorePropertyRequest:
         return ViewCorePropertyRequest(
             connectionType="primary_property",
             name=prop.container_property_name,
@@ -257,14 +257,14 @@ class DMSTableReader:
             source=None if prop.connection is None else self._create_view_ref(prop.connection),
         )
 
-    def create_edge_view_property(
+    def read_edge_view_property(
         self,
         prop: DMSProperty,
     ) -> ViewRequestProperty | None:
         # Implementation to read an edge view property from DMSProperty
         raise NotImplementedError()
 
-    def create_reverse_direct_relation_view_property(
+    def read_reverse_direct_relation_view_property(
         self,
         prop: DMSProperty,
     ) -> ViewRequestProperty | None:
@@ -304,27 +304,7 @@ class DMSTableReader:
                 args["container"] = self._create_container_ref(prop.connection.properties["container"])
         return args
 
-    def read_index(self, row_no: int, index_str: str | None) -> ParsedEntity | None:
-        raise NotImplementedError()
 
-    def read_constraint(self, row_no: int, constraint_str: str | None) -> ParsedEntity | None:
-        raise NotImplementedError()
-
-    def _validate_property_equality(
-        self, existing_prop: ContainerPropertyDefinition, new_prop: ContainerPropertyDefinition, row_no: int
-    ) -> None:
-        # Implementation to validate equality of two container properties
-        raise NotImplementedError()
-
-    def create_indices(
-        self, index_list: dict[ParsedEntity, list[tuple[str, ParsedEntity]]]
-    ) -> dict[ParsedEntity, dict[str, Index]]:
-        raise NotImplementedError()
-
-    def create_constraints(
-        self, constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]]
-    ) -> dict[ParsedEntity, dict[str, Constraint]]:
-        raise NotImplementedError()
 
     def read_containers(
         self, containers: list[DMSContainer], properties: ProcessedProperties
