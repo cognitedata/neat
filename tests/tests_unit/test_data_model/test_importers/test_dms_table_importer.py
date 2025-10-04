@@ -21,13 +21,28 @@ from cognite.neat._utils.useful_types import CellValue
 def test_valid_dms_table_format() -> Iterable[tuple]:
     yield pytest.param(
         {
-            "Metadata": {
-                "space": "cdf_cdm",
-                "externalId": "CogniteCore",
-                "version": "v1",
-                "name": "Cognite Core Data Model",
-                "description": "The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
-            },
+            "Metadata": [
+                {
+                    "Name": "space",
+                    "Value": "cdf_cdm",
+                },
+                {
+                    "Name": "externalId",
+                    "Value": "CogniteCore",
+                },
+                {
+                    "Name": "version",
+                    "Value": "v1",
+                },
+                {
+                    "Name": "name",
+                    "Value": "Cognite Core Data Model",
+                },
+                {
+                    "Name": "description",
+                    "Value": "The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
+                },
+            ],
             "Properties": [
                 {
                     "View": "CogniteDescribable",
@@ -53,7 +68,7 @@ def test_valid_dms_table_format() -> Iterable[tuple]:
                     "Description": "The describable core concept is used as a standard way of "
                     "holding the bare minimum of information about the instance",
                     "Implements": None,
-                    "Filter": True,
+                    "Filter": None,
                 }
             ],
             "Containers": [

@@ -28,8 +28,10 @@ class DMSTableImporter(DMSImporter):
         try:
             # Check tables and columns are correct.
             table = TableDMS.model_validate(self._table)
-        except ValidationError:
-            raise NotImplementedError("Error handling is not yet implemented.") from None
+        except ValidationError as e:
+            raise NotImplementedError(
+                f"Error handling is not yet implemented. Got {';'.join(map(str, e.errors()))}"
+            ) from e
 
         default_space, default_version = self._get_defaults(table.metadata)
 
@@ -53,19 +55,19 @@ class DMSTableImporter(DMSImporter):
 
     def _get_defaults(self, metadata: list[Metadata]) -> tuple[str, str]:
         # Implementation to extract default space and version from metadata
-        pass
+        raise NotImplementedError()
 
     def _read_data_model(self, metadata: list[Metadata]) -> DataModelRequest:
         # Implementation to read data model from metadata
-        pass
+        raise NotImplementedError()
 
     def _read_views(self, views: list[DMSView], default_space: str, default_version: str) -> list[ViewRequest]:
         # Implementation to read views from DMSView list
-        pass
+        raise NotImplementedError()
 
     def _read_containers(self, containers: list[DMSContainer], default_space: str) -> list[ContainerRequest]:
         # Implementation to read containers from DMSContainer list
-        pass
+        raise NotImplementedError()
 
     def _create_container_property(self, prop: DMSProperty) -> ContainerPropertyDefinition:
         raise NotImplementedError()
