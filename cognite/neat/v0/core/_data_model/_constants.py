@@ -128,6 +128,8 @@ SPLIT_ON_EQUAL_PATTERN = re.compile(r"=(?![^(]*\))")
 # Very special Edge Entity parsing
 SPLIT_ON_EDGE_ENTITY_ARGS_PATTERN = re.compile(r"(\btype\b|\bproperties\b|\bdirection\b)\s*=\s*([^,]+)")
 
+CONSTRAINT_ID_MAX_LENGTH = 43
+
 
 class _Patterns:
     @cached_property

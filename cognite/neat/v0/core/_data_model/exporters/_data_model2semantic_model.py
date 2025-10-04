@@ -32,6 +32,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+SHACL = Namespace("http://www.w3.org/ns/shacl#")
+
 
 class GraphExporter(BaseExporter[ConceptualDataModel, Graph], ABC):
     def export_to_file(self, data_model: ConceptualDataModel, filepath: Path) -> None:
@@ -42,7 +44,7 @@ class OWLExporter(GraphExporter):
     """Exports verified conceptual data model to an OWL ontology."""
 
     def export(self, data_model: ConceptualDataModel) -> Graph:
-        return Ontology.from_data_model(data_model).as_owl()
+        return Ontology.from_data_model(data_model).graph
 
     @property
     def description(self) -> str:
@@ -53,44 +55,31 @@ class SHACLExporter(GraphExporter):
     """Exports data_model to a SHACL graph."""
 
     def export(self, data_model: ConceptualDataModel) -> Graph:
-        return Ontology.from_data_model(data_model).as_shacl()
+        return ShaclShapes.from_data_model(data_model).graph
 
     @property
     def description(self) -> str:
-        return "Export verified information model to SHACL."
+        return "Export verified conceptual data model to SHACL."
 
 
-class SemanticDataModelExporter(GraphExporter):
-    """Exports verified information model to a semantic data model."""
-
-    def export(self, data_model: ConceptualDataModel) -> Graph:
-        return Ontology.from_data_model(data_model).as_semantic_data_model()
-
-    @property
-    def description(self) -> str:
-        return "Export verified information model to a semantic data model."
-
-
-class OntologyModel(BaseModel):
+class _ModelConfig(BaseModel):
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True, strict=False, extra="allow")
 
 
-class Ontology(OntologyModel):
+class Ontology(_ModelConfig):
     """
     Represents an ontology. This class is used to generate an OWL ontology from conceptual data model.
 
     Args:
         properties: A list of OWL properties.
         classes: A list of OWL classes.
-        shapes: A list of SHACL node shapes.
         metadata: Metadata about the ontology.
         prefixes: A dictionary of prefixes and namespaces.
     """
 
+    metadata: "OWLMetadata"
     properties: list["OWLProperty"]
     classes: list["OWLClass"]
-    shapes: list["SHACLNodeShape"]
-    metadata: "OWLMetadata"
     prefixes: dict[str, Namespace]
 
     @classmethod
@@ -105,7 +94,6 @@ class Ontology(OntologyModel):
             An instance of Ontology.
         """
         analysis = DataModelAnalysis(data_model)
-        concept_by_suffix = analysis.concept_by_suffix()
         return cls(
             properties=[
                 OWLProperty.from_list_of_properties(definition, data_model.metadata.namespace)
@@ -115,46 +103,12 @@ class Ontology(OntologyModel):
                 OWLClass.from_concept(definition, data_model.metadata.namespace, data_model.prefixes)
                 for definition in data_model.concepts
             ],
-            shapes=[
-                SHACLNodeShape.from_data_model(
-                    concept_by_suffix[str(concept.suffix)],
-                    list(properties.values()),
-                    data_model.metadata.namespace,
-                )
-                for concept, properties in analysis.properties_by_id_by_concept().items()
-            ]
-            + [
-                SHACLNodeShape.from_data_model(
-                    concept,
-                    [],
-                    data_model.metadata.namespace,
-                )
-                for concept in concept_by_suffix.values()
-            ],
             metadata=OWLMetadata(**data_model.metadata.model_dump()),
             prefixes=data_model.prefixes,
         )
 
-    def as_shacl(self) -> Graph:
-        """
-        Generates a SHACL graph from the ontology.
-
-        Returns:
-            A SHACL graph.
-        """
-
-        shacl = Graph()
-        shacl.bind(self.metadata.prefix, self.metadata.namespace)
-        for prefix, namespace in self.prefixes.items():
-            shacl.bind(prefix, namespace)
-
-        for shape in self.shapes:
-            for triple in shape.triples:
-                shacl.add(triple)  # type: ignore[arg-type]
-
-        return shacl
-
-    def as_owl(self) -> Graph:
+    @property
+    def graph(self) -> Graph:
         """
         Generates an OWL graph from the ontology.
 
@@ -179,33 +133,6 @@ class Ontology(OntologyModel):
             owl.add(triple)  # type: ignore[arg-type]
 
         return owl
-
-    def as_semantic_data_model(self) -> Graph:
-        return self.as_owl() + self.as_shacl()
-
-    @property
-    def owl_triples(self) -> list[tuple]:
-        return list(self.as_owl())
-
-    @property
-    def shacl_triples(self) -> list[tuple]:
-        return list(self.as_shacl())
-
-    @property
-    def triples(self) -> list[tuple]:
-        return self.owl_triples + self.shacl_triples
-
-    @property
-    def ontology(self) -> str:
-        return self.as_owl().serialize()
-
-    @property
-    def constraints(self) -> str:
-        return self.as_shacl().serialize()
-
-    @property
-    def semantic_data_model(self) -> str:
-        return (self.as_owl() + self.as_shacl()).serialize()
 
 
 class OWLMetadata(ConceptualMetadata):
@@ -233,7 +160,7 @@ class OWLMetadata(ConceptualMetadata):
         return triples
 
 
-class OWLClass(OntologyModel):
+class OWLClass(_ModelConfig):
     id_: URIRef
     type_: URIRef = OWL.Class
     label: str | None
@@ -306,7 +233,7 @@ class OWLClass(OntologyModel):
         )
 
 
-class OWLProperty(OntologyModel):
+class OWLProperty(_ModelConfig):
     id_: URIRef
     type_: set[URIRef]
     label: set[str]
@@ -510,10 +437,78 @@ class OWLProperty(OntologyModel):
         )
 
 
-SHACL = Namespace("http://www.w3.org/ns/shacl#")
+class ShaclShapes(_ModelConfig):
+    """
+    Represents a SHACL shapes. This class is used to generate a SHACL graph from conceptual data model.
+
+    Args:
+        shapes: A list of SHACL node shapes.
+        prefixes: A dictionary of prefixes and namespaces.
+    """
+
+    shapes: list["SHACLNodeShape"]
+    prefixes: dict[str, Namespace]
+
+    @classmethod
+    def from_data_model(cls, data_model: ConceptualDataModel) -> Self:
+        """
+        Generates shacl shapes from a conceptual data model.
+
+        Args:
+            data_model: The data_model to generate the shacl shapes from.
+
+        Returns:
+            An instance of ShaclShapes.
+        """
+        analysis = DataModelAnalysis(data_model)
+        concepts_by_concept_entity = analysis.concept_by_concept_entity
+        properties_by_concept_entity = analysis.properties_by_concepts()
+        return cls(
+            shapes=[
+                # shapes that have property shapes as well
+                SHACLNodeShape.from_concept(
+                    concept_entity,
+                    concepts_by_concept_entity,
+                    properties,
+                    data_model.metadata.namespace,
+                )
+                for concept_entity, properties in properties_by_concept_entity.items()
+            ]
+            + [
+                # shapes without any property shapes
+                SHACLNodeShape.from_concept(
+                    concept_entity,
+                    concepts_by_concept_entity,
+                    [],
+                    data_model.metadata.namespace,
+                )
+                for concept_entity in concepts_by_concept_entity.keys()
+                if concept_entity not in properties_by_concept_entity
+            ],
+            prefixes=data_model.prefixes,
+        )
+
+    @property
+    def graph(self) -> Graph:
+        """
+        Generates a SHACL graph from the class instance.
+
+        Returns:
+            A SHACL graph.
+        """
+
+        shacl = Graph()
+        for prefix, namespace in self.prefixes.items():
+            shacl.bind(prefix, namespace)
+
+        for shape in self.shapes:
+            for triple in shape.triples:
+                shacl.add(triple)  # type: ignore[arg-type]
+
+        return shacl
 
 
-class SHACLNodeShape(OntologyModel):
+class SHACLNodeShape(_ModelConfig):
     id_: URIRef
     type_: URIRef = SHACL.NodeShape
     target_class: URIRef
@@ -555,26 +550,33 @@ class SHACLNodeShape(OntologyModel):
         )
 
     @classmethod
-    def from_data_model(
+    def from_concept(
         cls,
-        concept_definition: Concept,
-        property_definitions: list[ConceptualProperty],
+        concept_entity: ConceptEntity,
+        concepts_by_concept_entity: dict[ConceptEntity, Concept],
+        properties: list[ConceptualProperty],
         namespace: Namespace,
     ) -> "SHACLNodeShape":
-        if concept_definition.implements:
-            parent = [namespace[str(parent.suffix) + "Shape"] for parent in concept_definition.implements]
+        if not (concept := concepts_by_concept_entity.get(concept_entity)):
+            raise ValueError(f"Concept {concept_entity} not found in data model!")
+
+        if concept.implements:
+            parent = [namespace[str(parent.suffix) + "Shape"] for parent in concept.implements]
         else:
             parent = None
         return cls(
-            id_=namespace[f"{concept_definition.concept.suffix!s}Shape"],
-            target_class=namespace[str(concept_definition.concept.suffix)],
+            id_=namespace[f"{concept.concept.suffix!s}Shape"],
+            target_class=concept.instance_source or namespace[str(concept.concept.suffix)],
             parent=parent,
-            property_shapes=[SHACLPropertyShape.from_property(prop, namespace) for prop in property_definitions],
+            property_shapes=[
+                SHACLPropertyShape.from_property(property_, concepts_by_concept_entity, namespace)
+                for property_ in properties
+            ],
             namespace=namespace,
         )
 
 
-class SHACLPropertyShape(OntologyModel):
+class SHACLPropertyShape(_ModelConfig):
     id_: BNode
     type_: URIRef = SHACL.property
     path: URIRef  # URIRef to property in OWL
@@ -614,23 +616,31 @@ class SHACLPropertyShape(OntologyModel):
         return self.path_triples + self.node_kind_triples + self.cardinality_triples
 
     @classmethod
-    def from_property(cls, definition: ConceptualProperty, namespace: Namespace) -> "SHACLPropertyShape":
-        # TODO requires PR to fix MultiValueType and UnknownValueType
-        if isinstance(definition.value_type, ConceptEntity):
-            expected_value_type = namespace[f"{definition.value_type.suffix}Shape"]
-        elif isinstance(definition.value_type, DataType):
-            expected_value_type = XSD[definition.value_type.xsd]
+    def from_property(
+        cls,
+        property_: ConceptualProperty,
+        concepts_by_concept_entity: dict[ConceptEntity, Concept],
+        namespace: Namespace,
+    ) -> "SHACLPropertyShape":
+        if isinstance(property_.value_type, ConceptEntity):
+            concept = concepts_by_concept_entity.get(property_.value_type)
+            value_type_uri = concept.instance_source if concept else None
+            expected_value_type = value_type_uri or namespace[f"{property_.value_type.suffix}"]
+        elif isinstance(property_.value_type, DataType):
+            expected_value_type = XSD[property_.value_type.xsd]
         else:
-            raise ValueError(f"Value type {definition.value_type.type_} is not supported")
+            raise NotImplementedError(f"Value type {property_.value_type.type_} is not supported yet")
 
         return cls(
             id_=BNode(),
-            path=namespace[definition.property_],
-            node_kind=SHACL.IRI if definition.type_ == EntityTypes.object_property else SHACL.Literal,
+            path=property_.instance_source[0]
+            if property_.instance_source and len(property_.instance_source) == 1
+            else namespace[property_.property_],
+            node_kind=SHACL.IRI if property_.type_ == EntityTypes.object_property else SHACL.Literal,
             expected_value_type=expected_value_type,
-            min_count=definition.min_count,
+            min_count=property_.min_count,
             max_count=(
-                int(definition.max_count) if definition.max_count and definition.max_count != float("inf") else None
+                int(property_.max_count) if property_.max_count and property_.max_count != float("inf") else None
             ),
             namespace=namespace,
         )

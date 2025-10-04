@@ -32,6 +32,7 @@ from cognite.neat._data_model.models.dms._data_types import (
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
+from ._data_model import DataModelRequest, DataModelResponse
 from ._references import (
     ContainerDirectReference,
     ContainerReference,
@@ -42,8 +43,6 @@ from ._references import (
 from ._schema import RequestSchema
 from ._view_property import (
     ConnectionPropertyDefinition,
-    ConnectionRequestProperty,
-    ConnectionResponseProperty,
     ConstraintOrIndexState,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
@@ -53,6 +52,9 @@ from ._view_property import (
     SingleReverseDirectRelationPropertyResponse,
     ViewCorePropertyRequest,
     ViewCorePropertyResponse,
+    ViewPropertyDefinition,
+    ViewRequestProperty,
+    ViewResponseProperty,
 )
 from ._views import (
     View,
@@ -64,8 +66,6 @@ __all__ = [
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
-    "ConnectionRequestProperty",
-    "ConnectionResponseProperty",
     "Constraint",
     "ConstraintDefinition",
     "ConstraintOrIndexState",
@@ -75,6 +75,8 @@ __all__ = [
     "ContainerReference",
     "ContainerRequest",
     "ContainerResponse",
+    "DataModelRequest",
+    "DataModelResponse",
     "DataType",
     "DateProperty",
     "DirectNodeRelation",
@@ -97,6 +99,7 @@ __all__ = [
     "RequiresConstraintDefinition",
     "Resource",
     "SequenceCDFExternalIdReference",
+    "SequenceCDFExternalIdReference",
     "SingleEdgeProperty",
     "SingleReverseDirectRelationPropertyRequest",
     "SingleReverseDirectRelationPropertyResponse",
@@ -104,15 +107,22 @@ __all__ = [
     "SpaceRequest",
     "SpaceResponse",
     "TextProperty",
+    "TextProperty",
+    "TimeseriesCDFExternalIdReference",
     "TimeseriesCDFExternalIdReference",
     "TimestampProperty",
+    "TimestampProperty",
+    "UniquenessConstraintDefinition",
     "UniquenessConstraintDefinition",
     "View",
     "ViewCorePropertyRequest",
     "ViewCorePropertyResponse",
     "ViewDirectReference",
+    "ViewPropertyDefinition",
     "ViewReference",
     "ViewRequest",
+    "ViewRequestProperty",
     "ViewResponse",
+    "ViewResponseProperty",
     "WriteableResource",
 ]
