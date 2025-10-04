@@ -7,10 +7,12 @@ from pydantic import BaseModel, ValidationError
 
 from cognite.neat._data_model.models.dms import (
     Constraint,
+    ConstraintAdapter,
     ContainerPropertyDefinition,
     ContainerRequest,
     DataModelRequest,
     Index,
+    IndexAdapter,
     RequestSchema,
     SpaceRequest,
     ViewCorePropertyRequest,
@@ -29,13 +31,64 @@ T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
 
 
 @dataclass
+class ReadViewProperty:
+    prop_id: str
+    row_no: int
+    view_property: ViewRequestProperty
+
+
+@dataclass
+class ReadContainerProperty:
+    prop_id: str
+    row_no: int
+    container_property: ContainerPropertyDefinition
+
+
+@dataclass
+class ReadIndex:
+    prop_id: str
+    order: int
+    row_no: int
+    index_id: str
+    index: Index
+
+
+@dataclass
+class ReadConstraint:
+    prop_id: str
+    order: int
+    row_no: int
+    constraint_id: str
+    constraint: Constraint
+
+
+@dataclass
 class ReadProperties:
+    """Read properties from the properties table.
+
+    Attributes:
+        container: A mapping from container entity to a mapping of property identifier to container property definition.
+        view: A mapping from view entity to a mapping of property identifier to view property definition.
+        indices: A mapping from (container entity, index identifier) to a list of read indices
+        constraints: A mapping from (container entity, constraint identifier) to a list of read constraints
+    """
+
+    container: dict[tuple[ParsedEntity, str], list[ReadContainerProperty]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
+    view: dict[tuple[ParsedEntity, str], list[ReadViewProperty]] = field(default_factory=lambda: defaultdict(list))
+    indices: dict[tuple[ParsedEntity, str], list[ReadIndex]] = field(default_factory=lambda: defaultdict(list))
+    constraints: dict[tuple[ParsedEntity, str], list[ReadConstraint]] = field(default_factory=lambda: defaultdict(list))
+
+
+@dataclass
+class ProcessedProperties:
     container: dict[ParsedEntity, dict[str, ContainerPropertyDefinition]] = field(
         default_factory=lambda: defaultdict(dict)
     )
     view: dict[ParsedEntity, dict[str, ViewRequestProperty]] = field(default_factory=lambda: defaultdict(dict))
-    indices: dict[ParsedEntity, dict[str, Index]] = field(default_factory=dict)
-    constraints: dict[ParsedEntity, dict[str, Constraint]] = field(default_factory=dict)
+    indices: dict[ParsedEntity, dict[str, Index]] = field(default_factory=lambda: defaultdict(dict))
+    constraints: dict[ParsedEntity, dict[str, Constraint]] = field(default_factory=lambda: defaultdict(dict))
 
 
 class DMSTableReader:
@@ -47,9 +100,10 @@ class DMSTableReader:
 
     def read_tables(self, tables: TableDMS) -> RequestSchema:
         space_request = self.read_space(self.default_space)
-        properties = self.read_properties(tables.properties)
-        containers = self.read_containers(tables.containers, properties)
-        views = self.read_views(tables.views, properties.view)
+        read = self.read_properties(tables.properties)
+        processed = self.process_properties(read)
+        containers = self.read_containers(tables.containers, processed)
+        views = self.read_views(tables.views, processed.view)
         data_model = self.read_data_model(tables)
 
         if self.errors:
@@ -67,22 +121,20 @@ class DMSTableReader:
             raise ModelImportError(self.errors) from None
 
     def read_properties(self, properties: list[DMSProperty]) -> ReadProperties:
-        parsed_properties = ReadProperties()
-        indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]] = defaultdict(list)
-        constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]] = defaultdict(list)
-
+        read = ReadProperties()
         for row_no, prop in enumerate(properties):
-            self._process_view_property(prop, parsed_properties)
-            if prop.container is None:
+            self._process_view_property(prop, read, row_no)
+            if prop.container is None or prop.container_property is None:
                 continue
-            self._process_container_property(prop, parsed_properties, row_no)
-            self._collect_indices_and_constraints(prop, indices, constraints, row_no)
+            self._process_container_property(prop, read, row_no)
+            self._process_index(prop, read, row_no)
+            self._process_constraint(prop, read, row_no)
+        return read
 
-        parsed_properties.indices = self.create_indices(indices)
-        parsed_properties.constraints = self.create_constraints(constraints)
-        return parsed_properties
+    def process_properties(self, read: ReadProperties) -> ProcessedProperties:
+        return ProcessedProperties()
 
-    def _process_view_property(self, prop: DMSProperty, parsed_properties: ReadProperties) -> None:
+    def _process_view_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
         try:
             view_prop = self.read_view_property(prop)
         except ValidationError as e:
@@ -90,9 +142,11 @@ class DMSTableReader:
                 [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
             )
         else:
-            parsed_properties.view[prop.view][prop.view_property] = view_prop
+            read.view[(prop.view, prop.container_property)].append(
+                ReadViewProperty(prop.container_property, row_no, view_prop)
+            )
 
-    def _process_container_property(self, prop: DMSProperty, parsed_properties: ReadProperties, row_no: int) -> None:
+    def _process_container_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
         try:
             container_prop = self.read_container_property(prop)
         except ValidationError as e:
@@ -100,34 +154,72 @@ class DMSTableReader:
                 [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
             )
             return None
-        container_properties = parsed_properties.container[prop.container]
-        existing_prop = container_properties.get(prop.container_property)
+        read.container[(prop.container, prop.container_property)].append(
+            ReadContainerProperty(prop.container_property, row_no, container_prop)
+        )
 
-        if existing_prop is None:
-            container_properties[prop.container_property] = container_prop
-        else:
-            self._validate_property_equality(existing_prop, container_prop, row_no)
-        return None
+    def _process_index(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
+        if prop.index is None:
+            return
+        for index in prop.index:
+            try:
+                created = self.create_index(index, prop.container_property)
+            except ValidationError as e:
+                self.errors.extend(
+                    [
+                        ModelSyntaxError(message=message)
+                        for message in humanize_validation_error(e, self.source.location)
+                    ]
+                )
+                return
+            except ValueError as e:
+                self.errors.append(ModelSyntaxError(message=str(e)))
+                return
+            read.indices[(prop.container, index)].append(created)
 
-    def _collect_indices_and_constraints(
-        self,
-        prop: DMSProperty,
-        indices: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
-        constraints: dict[ParsedEntity, list[tuple[str, ParsedEntity]]],
-        row_no: int,
-    ) -> None:
-        if prop.index is not None and self._valid_index_syntax(row_no, prop.index):
-            indices[prop.container].append((prop.container_property, prop.index))
+    @staticmethod
+    def create_index(index: ParsedEntity, prop_id: str) -> ReadIndex:
+        return ReadIndex(
+            prop_id=prop_id,
+            order=int(index.properties.get("order", 999)),
+            index_id=index.suffix,
+            index=IndexAdapter.validate_python(
+                {
+                    "indexType": index.prefix,
+                    **index.properties,
+                }
+            ),
+        )
 
-        if prop.constraint is not None and self._valid_constraint_syntax(row_no, prop.constraint):
-            constraints[prop.container].append((prop.container_property, prop.constraint))
+    def _process_constraint(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
+        if prop.constraint is None:
+            return
+        for constraint in prop.constraint:
+            try:
+                created = self.create_constraint(constraint, prop.container_property)
+            except ValidationError as e:
+                self.errors.extend(
+                    [
+                        ModelSyntaxError(message=message)
+                        for message in humanize_validation_error(e, self.source.location)
+                    ]
+                )
+                return
+            except ValueError as e:
+                self.errors.append(ModelSyntaxError(message=str(e)))
+                return
+            read.constraints[(prop.container, constraint)].append(created)
 
-    def _valid_index_syntax(self, row_no: int, index_list: list[ParsedEntity]) -> bool:
-        # Todo
-        return True
-
-    def _valid_constraint_syntax(self, row_no: int, constraint_list: list[ParsedEntity]) -> bool:
-        raise NotImplementedError()
+    @staticmethod
+    def create_constraint(constraint: ParsedEntity, prop_id: str) -> ReadConstraint:
+        return ReadConstraint(
+            prop_id=prop_id,
+            order=int(constraint.properties.get("order", 999)),
+            constraint_id=constraint.suffix,
+            constraint=ConstraintAdapter.validate_python(
+                {"constraintType": constraint.prefix, **constraint.properties}
+            ),
+        )
 
     def read_view_property(self, prop: DMSProperty) -> ViewRequestProperty:
         """Reads a single view property from a given row in the properties table.
@@ -234,9 +326,12 @@ class DMSTableReader:
     ) -> dict[ParsedEntity, dict[str, Constraint]]:
         raise NotImplementedError()
 
-    def read_containers(self, containers: list[DMSContainer], properties: ReadProperties) -> list[ContainerRequest]:
+    def read_containers(
+        self, containers: list[DMSContainer], properties: ProcessedProperties
+    ) -> list[ContainerRequest]:
         # Implementation to read containers from DMSContainer list
         containers_requests: list[ContainerRequest] = []
+        rows_by_seen: dict[ParsedEntity, list[int]] = defaultdict(list)
         for row_no, container in enumerate(containers):
             container_request = self._validate_obj(
                 ContainerRequest,
@@ -254,7 +349,21 @@ class DMSTableReader:
             )
             if container_request is None:
                 continue
-            containers_requests.append(container_request)
+            if container.container in rows_by_seen:
+                rows_by_seen[container.container].append(row_no)
+            else:
+                containers_requests.append(container_request)
+                rows_by_seen[container.container] = [row_no]
+        for entity, rows in rows_by_seen.items():
+            if len(rows) > 1:
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"Duplicate container '{entity}' found in rows "
+                            f"{', '.join(str(r + 1) for r in rows)} of the containers table."
+                        )
+                    )
+                )
         return containers_requests
 
     def read_views(
@@ -263,6 +372,7 @@ class DMSTableReader:
         properties: dict[ParsedEntity, dict[str, ViewRequestProperty]],
     ) -> list[ViewRequest]:
         views_requests: list[ViewRequest] = []
+        rows_by_seen: dict[ParsedEntity, list[int]] = defaultdict(list)
         for row_no, view in enumerate(views):
             filter_dict: dict[str, Any] | None = None
             if view.filter is not None:
@@ -292,7 +402,21 @@ class DMSTableReader:
             )
             if view_request is None:
                 continue
-            views_requests.append(view_request)
+            if view.view in rows_by_seen:
+                rows_by_seen[view.view].append(row_no)
+            else:
+                views_requests.append(view_request)
+                rows_by_seen[view.view] = [row_no]
+        for entity, rows in rows_by_seen.items():
+            if len(rows) > 1:
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"Duplicate view '{entity!s}' found in rows "
+                            f"{', '.join(str(r + 1) for r in rows)} of the views table."
+                        )
+                    )
+                )
         return views_requests
 
     def read_data_model(self, tables: TableDMS) -> DataModelRequest:
