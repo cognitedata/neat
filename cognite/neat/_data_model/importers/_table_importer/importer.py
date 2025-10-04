@@ -75,7 +75,11 @@ class DMSTableImporter(DMSImporter):
         data_model = self._read_data_model(
             metadata_kv,
             [
-                view.as_reference()
+                {
+                    "space": view.space,
+                    "externalId": view.external_id,
+                    "version": view.version,
+                }
                 for view, table in zip(views, table.views, strict=False)
                 if table.in_model is not False
             ],
@@ -104,7 +108,7 @@ class DMSTableImporter(DMSImporter):
             self._errors.extend([ModelSyntaxError(message=message) for message in humanize_validation_error(e)])
             raise ModelImportError(self._errors) from None
         unused_tables = set(self._table.keys()) - {
-            field_.alias or table_id for table_id, field_ in TableDMS.model_fields.items()
+            field_.validation_alias or table_id for table_id, field_ in TableDMS.model_fields.items()
         }
         if unused_tables:
             self._errors.append(ModelSyntaxError(message=f"Unused tables found: {humanize_collection(unused_tables)}"))
@@ -301,7 +305,33 @@ class DMSTableImporter(DMSImporter):
         properties: dict[ContainerReference, dict[str, ContainerPropertyDefinition]],
     ) -> list[ContainerRequest]:
         # Implementation to read containers from DMSContainer list
-        raise NotImplementedError()
+        containers_requests: list[ContainerRequest] = []
+        for row_no, container in enumerate(containers):
+            parsed_container = self._parse_entity(container.container, default_space)
+            if parsed_container is None:
+                continue
+            container_ref = ContainerReference.model_construct(
+                space=parsed_container.prefix, external_id=parsed_container.suffix
+            )
+            if container_ref not in properties:
+                self._errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"No properties defined for container '{container.container}' "
+                            f"in row {row_no + 1} of the containers table."
+                        )
+                    )
+                )
+                continue
+            container_request = ContainerRequest.model_construct(
+                space=container_ref.space,
+                external_id=container_ref.external_id,
+                used_for=container.used_for,
+                description=container.description,
+                properties=properties[container_ref],
+            )
+            containers_requests.append(container_request)
+        return containers_requests
 
     def _read_views(
         self,
@@ -310,11 +340,70 @@ class DMSTableImporter(DMSImporter):
         default_version: str,
         properties: dict[ViewReference, dict[str, ViewRequestProperty]],
     ) -> list[ViewRequest]:
-        # Implementation to read views from DMSView list
-        raise NotImplementedError()
+        views_requests: list[ViewRequest] = []
+        for row_no, view in enumerate(views):
+            parsed_view = self._parse_entity(view.view, default_space, default_version)
+            if parsed_view is None:
+                continue
+            view_ref = ViewReference.model_construct(
+                space=parsed_view.prefix,
+                external_id=parsed_view.suffix,
+                version=parsed_view.properties.get("version"),
+            )
+            if view_ref not in properties:
+                self._errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"No properties defined for view '{view.view}' in row {row_no + 1} of the views table."
+                        )
+                    )
+                )
+                continue
+            implements: list[ViewReference] | None = None
+            if view.implements is not None:
+                implements = []
+                for impl in view.implements.split(","):
+                    impl_entity = self._parse_entity(impl.strip(), default_space, default_version)
+                    if impl_entity is None:
+                        continue
+                    implements.append(
+                        ViewReference.model_construct(
+                            space=impl_entity.prefix,
+                            external_id=impl_entity.suffix,
+                            version=impl_entity.properties.get("version"),
+                        )
+                    )
+            filter_dict = None
+            if view.filter is not None:
+                try:
+                    filter_dict = eval(view.filter)  # nosec
+                    if not isinstance(filter_dict, dict):
+                        raise ValueError("Filter must evaluate to a dictionary.")
+                except Exception as e:
+                    self._errors.append(
+                        ModelSyntaxError(
+                            message=(
+                                f"Invalid filter for view '{view.view}' in row {row_no + 1} of the views table: {e}"
+                            )
+                        )
+                    )
+                    continue
+
+            view_request = ViewRequest.model_construct(
+                space=view_ref.space,
+                external_id=view_ref.external_id,
+                version=view_ref.version,
+                name=view.name,
+                description=view.description,
+                implements=implements,
+                filter=filter_dict,
+                properties=properties[view_ref],
+            )
+            views_requests.append(view_request)
+        return views_requests
 
     @staticmethod
-    def _read_data_model(metadata: dict[str, CellValue], views: list[ViewReference]) -> DataModelRequest:
+    def _read_data_model(metadata: dict[str, CellValue], views: list[dict]) -> DataModelRequest:
         return DataModelRequest.model_construct(**metadata, views=views)  # type: ignore[arg-type]
 
     def _parse_entity(
@@ -329,6 +418,6 @@ class DMSTableImporter(DMSImporter):
             return entity
         if entity.prefix == "":
             entity.prefix = default_prefix
-            if default_version is None and "version" not in entity.properties:
+            if default_version is not None and "version" not in entity.properties:
                 entity.properties["version"] = default_version
         return entity
