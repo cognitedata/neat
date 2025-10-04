@@ -66,7 +66,7 @@ def test_valid_dms_table_format() -> Iterable[tuple]:
                 }
             ],
         },
-        RequestSchema.from_lists(
+        RequestSchema(
             data_model=DataModelRequest(
                 space="cdf_cdm",
                 externalId="CogniteCore",

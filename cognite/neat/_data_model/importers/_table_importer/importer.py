@@ -69,3 +69,13 @@ class DMSTableImporter(DMSImporter):
 
     def _create_container_property(self, prop: DMSProperty) -> ContainerPropertyDefinition:
         raise NotImplementedError()
+
+    def _populate_properties(
+        self,
+        views: list[ViewRequest],
+        containers: list[ContainerRequest],
+        properties: list[DMSProperty],
+        default_space: str,
+        default_version: str,
+    ) -> None:
+        raise NotImplementedError()
