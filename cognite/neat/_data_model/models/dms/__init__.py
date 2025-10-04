@@ -86,6 +86,7 @@ __all__ = [
     "FileCDFExternalIdReference",
     "FloatProperty",
     "Index",
+    "Index",
     "IndexDefinition",
     "Int32Property",
     "Int64Property",

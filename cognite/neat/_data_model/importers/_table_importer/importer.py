@@ -1,17 +1,19 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from pydantic import ValidationError
 
 from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.models.dms import (
     DATA_TYPE_CLS_BY_TYPE,
+    Constraint,
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
     DataModelRequest,
     DataType,
     DirectNodeRelation,
+    Index,
     RequestSchema,
     SpaceRequest,
     ViewCorePropertyRequest,
@@ -43,6 +45,16 @@ class ContainerProperty:
     prop_id: str
 
 
+@dataclass
+class Properties:
+    container: dict[ContainerReference, dict[str, ContainerPropertyDefinition]] = field(
+        default_factory=lambda: defaultdict(dict)
+    )
+    view: dict[ViewReference, dict[str, ViewRequestProperty]] = field(default_factory=lambda: defaultdict(dict))
+    indices: dict[ContainerReference, dict[str, Index]] = field(default_factory=dict)
+    constraints: dict[ContainerReference, dict[str, Constraint]] = field(default_factory=dict)
+
+
 class DMSTableImporter(DMSImporter):
     """Imports DMS from a table structure.
 
@@ -67,10 +79,10 @@ class DMSTableImporter(DMSImporter):
             raise ModelImportError(self._errors) from None
 
         space, version = str(default_space), str(default_version)
-        container_properties, view_properties = self._read_properties(table.properties, space, version)
+        properties = self._read_properties(table.properties, space, version)
 
-        containers = self._read_containers(table.containers, space, container_properties)
-        views = self._read_views(table.views, space, version, view_properties)
+        containers = self._read_containers(table.containers, space, properties)
+        views = self._read_views(table.views, space, version, properties.view)
 
         data_model = self._read_data_model(
             metadata_kv,
@@ -119,32 +131,41 @@ class DMSTableImporter(DMSImporter):
         properties: list[DMSProperty],
         default_space: str,
         default_version: str,
-    ) -> tuple[
-        dict[ContainerReference, dict[str, ContainerPropertyDefinition]],
-        dict[ViewReference, dict[str, ViewRequestProperty]],
-    ]:
-        all_container_properties: dict[ContainerReference, dict[str, ContainerPropertyDefinition]] = defaultdict(dict)
-        all_view_properties: dict[ViewReference, dict[str, ViewRequestProperty]] = defaultdict(dict)
+    ) -> Properties:
+        parsed_properties = Properties()
+        indices: dict[ContainerReference, list[tuple[str, ParsedEntity]]] = defaultdict(list)
+        constraints: dict[ContainerReference, list[tuple[str, ParsedEntity]]] = defaultdict(list)
         for row_no, prop in enumerate(properties):
             view = self._read_view_property(prop, default_space, default_version)
             if view is not None:
                 # If view is None there was an error in parsing the view property,
                 # and the error has already been recorded.
-                all_view_properties[view.reference][view.prop_id] = view.property
+                parsed_properties.view[view.reference][view.prop_id] = view.property
 
             container = self._read_container_property(prop, default_space)
             if container is None:
                 # Connection property or error in parsing container property, and the error has already been recorded.
                 continue
+            if prop.index is not None:
+                parsed_index = self._parse_entity(prop.index)
+                if parsed_index is not None:
+                    indices[container.reference].append((container.prop_id, parsed_index))
+            if prop.constraint is not None:
+                prop_constraint = self._parse_entity(prop.constraint)
+                if prop_constraint is not None:
+                    constraints[container.reference].append((container.prop_id, prop_constraint))
 
-            container_properties = all_container_properties[container.reference]
+            container_properties = parsed_properties.container[container.reference]
             if container.prop_id not in container_properties:
                 container_properties[container.prop_id] = container.property
                 continue
             existing_prop = container_properties[container.prop_id]
             self._validate_property_equality(existing_prop, container.property, row_no)
 
-        return all_container_properties, all_view_properties
+        parsed_properties.indices = self._parse_indices(indices)
+        parsed_properties.constraints = self._parse_constraints(constraints)
+
+        return parsed_properties
 
     def _read_view_property(self, prop: DMSProperty, default_space: str, default_version: str) -> ViewProperty | None:
         """Reads a single view property from a given row in the properties table.
@@ -303,11 +324,21 @@ class DMSTableImporter(DMSImporter):
         # Implementation to validate equality of two container properties
         raise NotImplementedError()
 
+    def _parse_indices(
+        self, indices: dict[ContainerReference, list[tuple[str, ParsedEntity]]]
+    ) -> dict[ContainerReference, dict[str, Index]]:
+        raise NotImplementedError()
+
+    def _parse_constraints(
+        self, constraints: dict[ContainerReference, list[tuple[str, ParsedEntity]]]
+    ) -> dict[ContainerReference, dict[str, Constraint]]:
+        raise NotImplementedError()
+
     def _read_containers(
         self,
         containers: list[DMSContainer],
         default_space: str,
-        properties: dict[ContainerReference, dict[str, ContainerPropertyDefinition]],
+        properties: Properties,
     ) -> list[ContainerRequest]:
         # Implementation to read containers from DMSContainer list
         containers_requests: list[ContainerRequest] = []
@@ -333,7 +364,9 @@ class DMSTableImporter(DMSImporter):
                 external_id=container_ref.external_id,
                 used_for=container.used_for,
                 description=container.description,
-                properties=properties[container_ref],
+                properties=properties.container[container_ref],
+                indexes=properties.indices.get(container_ref),
+                constraints=properties.constraints.get(container_ref),
             )
             containers_requests.append(container_request)
         return containers_requests
