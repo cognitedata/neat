@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
 
+from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.text import humanize_collection
 
 from ._base import BaseModelObject
@@ -165,3 +166,7 @@ DataType = Annotated[
     | EnumProperty,
     Field(discriminator="type"),
 ]
+
+DATA_TYPE_CLS_BY_TYPE = {
+    cls.model_fields["type"].default: cls for cls in get_concrete_subclasses(PropertyTypeDefinition)
+}

@@ -12,6 +12,7 @@ from cognite.neat._data_model.models.dms._container import (
     ContainerResponse,
 )
 from cognite.neat._data_model.models.dms._data_types import (
+    DATA_TYPE_CLS_BY_TYPE,
     BooleanProperty,
     DataType,
     DateProperty,
@@ -32,6 +33,7 @@ from cognite.neat._data_model.models.dms._data_types import (
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
+from ._data_model import DataModelRequest, DataModelResponse
 from ._references import (
     ContainerDirectReference,
     ContainerReference,
@@ -39,6 +41,7 @@ from ._references import (
     ViewDirectReference,
     ViewReference,
 )
+from ._schema import RequestSchema
 from ._view_property import (
     ConnectionPropertyDefinition,
     ConstraintOrIndexState,
@@ -61,6 +64,7 @@ from ._views import (
 )
 
 __all__ = [
+    "DATA_TYPE_CLS_BY_TYPE",
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
@@ -73,6 +77,8 @@ __all__ = [
     "ContainerReference",
     "ContainerRequest",
     "ContainerResponse",
+    "DataModelRequest",
+    "DataModelResponse",
     "DataType",
     "DateProperty",
     "DirectNodeRelation",
@@ -91,6 +97,7 @@ __all__ = [
     "MultiReverseDirectRelationPropertyResponse",
     "NodeReference",
     "PropertyTypeDefinition",
+    "RequestSchema",
     "RequiresConstraintDefinition",
     "Resource",
     "SequenceCDFExternalIdReference",
