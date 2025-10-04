@@ -1,14 +1,21 @@
+from collections.abc import Callable
+
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 
-def humanize_validation_error(error: ValidationError) -> list[str]:
+def humanize_validation_error(
+    error: ValidationError, location_fun: Callable[[tuple[int | str, ...]], str] | None = None
+) -> list[str]:
     """Converts a ValidationError to a human-readable format.
 
     This overwrites the default error messages from Pydantic to be better suited for Toolkit users.
 
     Args:
         error: The ValidationError to convert.
+        location_fun: Optional function to convert the location tuple to a string prefix for each error message.
+            If provided, this function will be called with the location tuple and should return a string.
+            This is useful for example if the json path should be translated to row/column in a table.
 
     Returns:
         A list of human-readable error messages.
@@ -50,13 +57,17 @@ def humanize_validation_error(error: ValidationError) -> list[str]:
             #  This is hard to read, so we simplify it to just the field name.
             loc = tuple(["dict" if isinstance(x, str) and "json-or-python" in x else x for x in loc])
 
-        if len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
+        error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
+        if location_fun is not None:
+            prefix = location_fun(loc)
+            msg = f"{prefix} {error_suffix}"
+        elif len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
             # We skip the last element as this is in the message already
-            msg = f"In {as_json_path(loc[:-1])} {msg[:1].casefold()}{msg[1:]}"
+            msg = f"In {as_json_path(loc[:-1])} {error_suffix}"
         elif len(loc) > 1:
-            msg = f"In {as_json_path(loc)} {msg[:1].casefold()}{msg[1:]}"
+            msg = f"In {as_json_path(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
-            msg = f"In field {loc[0]} {msg[:1].casefold()}{msg[1:]}"
+            msg = f"In field {loc[0]} {error_suffix}"
         errors.append(msg)
     return errors
 
