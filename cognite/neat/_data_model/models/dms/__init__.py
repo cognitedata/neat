@@ -40,6 +40,7 @@ from ._references import (
     ViewDirectReference,
     ViewReference,
 )
+from ._schema import RequestSchema
 from ._view_property import (
     ConnectionPropertyDefinition,
     ConstraintOrIndexState,
@@ -94,6 +95,7 @@ __all__ = [
     "MultiReverseDirectRelationPropertyResponse",
     "NodeReference",
     "PropertyTypeDefinition",
+    "RequestSchema",
     "RequiresConstraintDefinition",
     "Resource",
     "SequenceCDFExternalIdReference",
