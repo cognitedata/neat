@@ -61,6 +61,9 @@ class View(Resource, ABC):
         description="References to the views from where this view will inherit properties.",
     )
 
+    def as_reference(self) -> ViewReference:
+        return ViewReference(space=self.space, external_id=self.external_id, version=self.version)
+
     @model_validator(mode="before")
     def set_connection_type_on_primary_properties(cls, data: dict) -> dict:
         if "properties" not in data:
