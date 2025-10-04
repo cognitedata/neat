@@ -25,12 +25,13 @@ class DMSProperty(TableObj):
     view_property: str
     name: str | None = None
     description: str | None = None
-    connection: str | None = None
+    connection: str | None
     value_type: str
     min_count: int | None
     max_count: int | None
     immutable: bool | None = None
     default: CellValue | None = None
+    auto_increment: bool | None = None
     container: str
     container_property: str
     container_property_name: str | None = None
