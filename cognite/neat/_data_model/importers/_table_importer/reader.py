@@ -47,7 +47,7 @@ class ReadContainerProperty:
 @dataclass
 class ReadIndex:
     prop_id: str
-    order: int
+    order: int | None
     row_no: int
     index_id: str
     index: Index
@@ -56,7 +56,7 @@ class ReadIndex:
 @dataclass
 class ReadConstraint:
     prop_id: str
-    order: int
+    order: int | None
     row_no: int
     constraint_id: str
     constraint: Constraint
@@ -132,7 +132,68 @@ class DMSTableReader:
         return read
 
     def process_properties(self, read: ReadProperties) -> ProcessedProperties:
-        return ProcessedProperties()
+        return ProcessedProperties(
+            container=self.create_container_properties(read),
+            view=self.create_view_properties(read),
+            indices=self.create_indices(read),
+            constraints=self.create_constraints(read),
+        )
+
+    def create_container_properties(
+        self, read: ReadProperties
+    ) -> dict[ParsedEntity, dict[str, ContainerPropertyDefinition]]:
+        container_props: dict[ParsedEntity, dict[str, ContainerPropertyDefinition]] = defaultdict(dict)
+        for (container_entity, prop_id), prop_list in read.container.items():
+            if len(prop_list) == 0:
+                # Should not happen
+                continue
+            container_props[container_entity][prop_id] = prop_list[0].container_property
+            if len(prop_list) > 1:
+                raise NotImplementedError()
+
+        return container_props
+
+    def create_view_properties(self, read: ReadProperties) -> dict[ParsedEntity, dict[str, ViewRequestProperty]]:
+        view_props: dict[ParsedEntity, dict[str, ViewRequestProperty]] = defaultdict(dict)
+        for (view_entity, prop_id), prop_list in read.view.items():
+            if len(prop_list) == 0:
+                # Should not happen
+                continue
+            view_props[view_entity][prop_id] = prop_list[0].view_property
+            if len(prop_list) > 1:
+                raise NotImplementedError()
+
+        return view_props
+
+    def create_indices(self, read: ReadProperties) -> dict[ParsedEntity, dict[str, Index]]:
+        indices: dict[ParsedEntity, dict[str, Index]] = defaultdict(dict)
+        for (container_entity, index_id), index_list in read.indices.items():
+            if len(index_list) == 0:
+                continue
+            index = index_list[0].index
+            if len(index_list) == 1:
+                indices[container_entity][index_id] = index
+                continue
+            if missing_order := [idx for idx in index_list if idx.order is None]:
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"Index '{index_id}' on container '{container_entity}' is defined on multiple properties "
+                            f"but some of them are missing the 'order' attribute (rows "
+                            f"{', '.join(str(idx.row_no + 1) for idx in missing_order)} in the properties table)."
+                        )
+                    )
+                )
+                continue
+            index.properties = [idx.prop_id for idx in sorted(index_list, key=lambda x: x.order)]
+            indices[container_entity][index_id] = index
+        return indices
+
+    def create_constraints(self, read: ReadProperties) -> dict[ParsedEntity, dict[str, Constraint]]:
+        constraints: dict[ParsedEntity, dict[str, Constraint]] = defaultdict(dict)
+        for (container_entity, constraint_id), constraint_list in read.constraints.items():
+            raise NotImplementedError()
+        return constraints
 
     def _process_view_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
         try:
@@ -163,7 +224,7 @@ class DMSTableReader:
             return
         for index in prop.index:
             try:
-                created = self.read_index(index, prop.container_property)
+                created = self.read_index(index, prop.container_property, row_no)
             except ValidationError as e:
                 self.errors.extend(
                     [
@@ -175,17 +236,19 @@ class DMSTableReader:
             except ValueError as e:
                 self.errors.append(ModelSyntaxError(message=str(e)))
                 return
-            read.indices[(prop.container, index)].append(created)
+            read.indices[(prop.container, index.suffix)].append(created)
 
     @staticmethod
-    def read_index(index: ParsedEntity, prop_id: str) -> ReadIndex:
+    def read_index(index: ParsedEntity, prop_id: str, row_no: int) -> ReadIndex:
         return ReadIndex(
             prop_id=prop_id,
-            order=int(index.properties.get("order", 999)),
+            order=int(index.properties["order"]) if "order" in index.properties else None,
+            row_no=row_no,
             index_id=index.suffix,
             index=IndexAdapter.validate_python(
                 {
                     "indexType": index.prefix,
+                    "properties": [prop_id],
                     **index.properties,
                 }
             ),
@@ -196,7 +259,7 @@ class DMSTableReader:
             return
         for constraint in prop.constraint:
             try:
-                created = self.read_constraint(constraint, prop.container_property)
+                created = self.read_constraint(constraint, prop.container_property, row_no)
             except ValidationError as e:
                 self.errors.extend(
                     [
@@ -208,16 +271,17 @@ class DMSTableReader:
             except ValueError as e:
                 self.errors.append(ModelSyntaxError(message=str(e)))
                 return
-            read.constraints[(prop.container, constraint)].append(created)
+            read.constraints[(prop.container, constraint.suffix)].append(created)
 
     @staticmethod
-    def read_constraint(constraint: ParsedEntity, prop_id: str) -> ReadConstraint:
+    def read_constraint(constraint: ParsedEntity, prop_id: str, row_no: int) -> ReadConstraint:
         return ReadConstraint(
             prop_id=prop_id,
-            order=int(constraint.properties.get("order", 999)),
+            order=int(constraint.properties["order"]) if "order" in constraint.properties else None,
             constraint_id=constraint.suffix,
+            row_no=row_no,
             constraint=ConstraintAdapter.validate_python(
-                {"constraintType": constraint.prefix, **constraint.properties}
+                {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}
             ),
         )
 
@@ -303,8 +367,6 @@ class DMSTableReader:
             if "container" in prop.connection.properties:
                 args["container"] = self._create_container_ref(prop.connection.properties["container"])
         return args
-
-
 
     def read_containers(
         self, containers: list[DMSContainer], properties: ProcessedProperties
