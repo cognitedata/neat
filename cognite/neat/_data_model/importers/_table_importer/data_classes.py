@@ -15,9 +15,9 @@ class TableObj(
 ): ...
 
 
-class Metadata(TableObj):
+class MetadataValue(TableObj):
     name: str
-    value: str
+    value: CellValue
 
 
 class DMSProperty(TableObj):
@@ -57,7 +57,7 @@ class DMSContainer(TableObj):
 
 
 class TableDMS(TableObj):
-    metadata: list[Metadata]
+    metadata: list[MetadataValue]
     properties: list[DMSProperty]
     views: list[DMSView]
     containers: list[DMSContainer] = Field(default_factory=list)
