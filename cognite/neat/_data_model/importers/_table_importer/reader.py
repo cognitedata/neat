@@ -156,6 +156,7 @@ class DMSTableReader:
                 continue
             container_props[container_entity][prop_id] = prop_list[0].container_property
             if len(prop_list) > 1:
+                # Todo; Check that the definitions are identical.
                 raise NotImplementedError()
 
         return container_props
@@ -168,6 +169,7 @@ class DMSTableReader:
                 continue
             view_props[view_entity][prop_id] = prop_list[0].view_property
             if len(prop_list) > 1:
+                # Todo Check for duplicate definitions.
                 raise NotImplementedError()
 
         return view_props
