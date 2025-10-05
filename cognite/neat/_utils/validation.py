@@ -92,5 +92,3 @@ def humanize_validation_error(
             msg = f"In field {loc[0]} {error_suffix}"
         errors.append(msg)
     return errors
-
-
