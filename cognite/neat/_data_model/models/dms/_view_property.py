@@ -197,4 +197,4 @@ ViewResponseProperty = Annotated[
     Field(discriminator="connection_type"),
 ]
 
-ViewRequestPropertyAdapter: TypeAdapter[ViewResponseProperty] = TypeAdapter(ViewResponseProperty)
+ViewRequestPropertyAdapter: TypeAdapter[ViewRequestProperty] = TypeAdapter(ViewRequestProperty)
