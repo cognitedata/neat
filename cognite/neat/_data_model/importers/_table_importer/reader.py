@@ -352,8 +352,19 @@ class DMSTableReader:
         self,
         prop: DMSProperty,
     ) -> dict[str, Any]:
-        # Implementation to read a reverse direct relation view property from DMSProperty
-        raise NotImplementedError()
+        if prop.connection is None:
+            return {}
+        view_ref = self._create_view_ref(prop.value_type)
+        return dict(
+            connectionType="single_reverse_direct_relation" if prop.max_count == 1 else "multi_reverse_direct_relation",
+            name=prop.name,
+            description=prop.description,
+            source=view_ref,
+            through={
+                "source": view_ref,
+                "identifier": prop.connection.properties.get("property"),
+            },
+        )
 
     def read_container_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
         data_type = self._read_data_type(prop, loc)
