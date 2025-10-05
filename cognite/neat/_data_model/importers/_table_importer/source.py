@@ -40,4 +40,28 @@ class TableSource:
     table_read: dict[str, SpreadsheetRead] = field(default_factory=dict)
 
     def location(self, path: tuple[int | str, ...]) -> str:
-        raise NotImplementedError()
+        table_id: str | None = None
+        row_no: int | None = None
+        column: str | None = None
+        if len(path) >= 1 and isinstance(path[0], str):
+            table_id = path[0]
+        if len(path) >= 2 and isinstance(path[1], int):
+            row_no = path[1]
+        if len(path) >= 3 and isinstance(path[2], str):
+            column = path[2]
+        table_read = table_id and self.table_read.get(table_id)
+        if table_read and isinstance(row_no, int):
+            row_no = table_read.adjusted_row_number(row_no)
+        elif isinstance(row_no, int):
+            row_no = row_no + 1  # Convert to 1-indexed if no table read info is available
+        location_parts = []
+        if table_id is not None:
+            location_parts.append(f"table '{table_id}'")
+        if row_no is not None:
+            location_parts.append(f"row {row_no}")
+        if column is not None:
+            location_parts.append(f"column {column}")
+        if len(path) > 4:
+            location_parts.append("-> " + ".".join(str(p) for p in path[3:]))
+
+        return " ".join(location_parts)

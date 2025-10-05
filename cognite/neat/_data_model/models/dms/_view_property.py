@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Annotated, Literal
 
-from pydantic import Field, Json
+from pydantic import Field, Json, TypeAdapter
 
 from ._base import BaseModelObject, Resource, WriteableResource
 from ._constants import CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN
@@ -196,3 +196,5 @@ ViewResponseProperty = Annotated[
     | ViewCorePropertyResponse,
     Field(discriminator="connection_type"),
 ]
+
+ViewRequestPropertyAdapter: TypeAdapter[ViewResponseProperty] = TypeAdapter(ViewResponseProperty)

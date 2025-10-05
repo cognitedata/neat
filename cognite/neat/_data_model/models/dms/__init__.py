@@ -46,9 +46,11 @@ from ._schema import RequestSchema
 from ._view_property import (
     ConnectionPropertyDefinition,
     ConstraintOrIndexState,
+    EdgeProperty,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
     MultiReverseDirectRelationPropertyResponse,
+    ReverseDirectRelationProperty,
     SingleEdgeProperty,
     SingleReverseDirectRelationPropertyRequest,
     SingleReverseDirectRelationPropertyResponse,
@@ -56,6 +58,7 @@ from ._view_property import (
     ViewCorePropertyResponse,
     ViewPropertyDefinition,
     ViewRequestProperty,
+    ViewRequestPropertyAdapter,
     ViewResponseProperty,
 )
 from ._views import (
@@ -84,6 +87,7 @@ __all__ = [
     "DataTypeAdapter",
     "DateProperty",
     "DirectNodeRelation",
+    "EdgeProperty",
     "EnumProperty",
     "FileCDFExternalIdReference",
     "FloatProperty",
@@ -104,6 +108,7 @@ __all__ = [
     "RequestSchema",
     "RequiresConstraintDefinition",
     "Resource",
+    "ReverseDirectRelationProperty",
     "SequenceCDFExternalIdReference",
     "SequenceCDFExternalIdReference",
     "SingleEdgeProperty",
@@ -128,6 +133,7 @@ __all__ = [
     "ViewReference",
     "ViewRequest",
     "ViewRequestProperty",
+    "ViewRequestPropertyAdapter",
     "ViewResponse",
     "ViewResponseProperty",
     "WriteableResource",

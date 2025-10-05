@@ -1,7 +1,7 @@
 from abc import ABC
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field, TypeAdapter, field_validator
 
 from ._base import BaseModelObject
 
@@ -17,6 +17,15 @@ class BtreeIndex(IndexDefinition):
     cursorable: bool | None = Field(
         default=None, description="Whether the index can be used for cursor-based pagination."
     )
+
+    @field_validator("cursorable", mode="before")
+    def string_to_bool(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            if value.lower() in {"true", "yes", "1"}:
+                return True
+            elif value.lower() in {"false", "no", "0"}:
+                return False
+        return value
 
 
 class InvertedIndex(IndexDefinition):

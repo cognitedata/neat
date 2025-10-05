@@ -36,7 +36,7 @@ class DMSTableImporter(DMSImporter):
     def _read_tables(self) -> TableDMS:
         errors: list[ModelSyntaxError] = []
         unused_tables = set(self._table.keys()) - {
-            field_.validation_alias or table_id for table_id, field_ in TableDMS.model_fields.items()
+            str(field_.validation_alias or table_id) for table_id, field_ in TableDMS.model_fields.items()
         }
         if unused_tables:
             # Todo Make this a warning instead? Or simply silently ignore?
@@ -74,4 +74,4 @@ class DMSTableImporter(DMSImporter):
             error = ModelSyntaxError(message=f"In Metadata missing required fields: {humanize_collection(missing)}")
             # If space or version is missing, we cannot continue parsing the model as these are used as defaults.
             raise ModelImportError([error]) from None
-        return default_space, default_version
+        return str(default_space), str(default_version)
