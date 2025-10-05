@@ -39,23 +39,5 @@ class TableSource:
     source: str
     table_read: dict[str, SpreadsheetRead] = field(default_factory=dict)
 
-    def location(
-        self,
-        path: tuple[int | str, ...],
-    ) -> str:
-        if len(path) < 2:
-            return f"in {self.source}"
-        table_name = path[0]
-        if table_name not in self.table_read:
-            return f"in {self.source}, table {table_name!r}"
-        table_info = self.table_read[table_name]
-        if len(path) == 2:
-            return f"in {self.source}, table {table_name!r}"
-        row = path[1]
-        if not isinstance(row, int):
-            return f"in {self.source}, table {table_name!r}"
-        adjusted_row = table_info.adjusted_row_number(row)
-        if len(path) == 3:
-            return f"in {self.source}, table {table_name!r}, row {adjusted_row}"
-        column = path[2]
-        return f"in {self.source}, table {table_name!r}, row {adjusted_row}, column {column!r}"
+    def location(self, path: tuple[int | str, ...]) -> str:
+        raise NotImplementedError()

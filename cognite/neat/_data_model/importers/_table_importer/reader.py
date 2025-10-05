@@ -3,7 +3,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from cognite.neat._data_model.models.dms import (
     Constraint,
@@ -117,17 +117,11 @@ class DMSTableReader:
         return RequestSchema(dataModel=data_model, views=views, containers=containers, spaces=[space_request])
 
     def read_space(self, space: str) -> SpaceRequest:
-        try:
-            return SpaceRequest(space=space)
-        except ValidationError as e:
-            self.errors.extend(
-                [
-                    ModelSyntaxError(message=message)
-                    for message in humanize_validation_error(e, parent_loc=(self.Sheet.metadata,))
-                ]
-            )
+        space_request = self._validate_obj(SpaceRequest, {"space": space}, (self.Sheet.metadata,))
+        if space_request is None:
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
             raise ModelImportError(self.errors) from None
+        return space_request
 
     def read_properties(self, properties: list[DMSProperty]) -> ReadProperties:
         read = ReadProperties()
@@ -205,103 +199,84 @@ class DMSTableReader:
         return constraints
 
     def _process_view_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
-        try:
-            view_prop = self.read_view_property(prop)
-        except ValidationError as e:
-            self.errors.extend(
-                [
-                    ModelSyntaxError(message=message)
-                    for message in humanize_validation_error(e, parent_loc=(self.Sheet.properties, row_no))
-                ]
-            )
-        else:
+        prop_type, data = self.read_view_property(prop)
+        view_prop = self._validate_obj(prop_type, data, (self.Sheet.properties, row_no))
+        if view_prop is not None:
             read.view[(prop.view, prop.container_property)].append(
                 ReadViewProperty(prop.container_property, row_no, view_prop)
             )
+        return None
 
     def _process_container_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
-        try:
-            container_prop = self.read_container_property(prop)
-        except ValidationError as e:
-            self.errors.extend(
-                [
-                    ModelSyntaxError(message=message)
-                    for message in humanize_validation_error(e, (self.Sheet.properties, row_no))
-                ]
+        data = self.read_container_property(prop)
+        container_prop = self._validate_obj(ContainerPropertyDefinition, data, (self.Sheet.properties, row_no))
+        if container_prop is not None:
+            read.container[(prop.container, prop.container_property)].append(
+                ReadContainerProperty(prop.container_property, row_no, container_prop)
             )
-            return None
-        read.container[(prop.container, prop.container_property)].append(
-            ReadContainerProperty(prop.container_property, row_no, container_prop)
-        )
+        return None
 
     def _process_index(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
         if prop.index is None:
             return
+
         for index in prop.index:
-            try:
-                created = self.read_index(index, prop.container_property, row_no)
-            except ValidationError as e:
-                self.errors.extend(
-                    [
-                        ModelSyntaxError(message=message)
-                        for message in humanize_validation_error(e, (self.Sheet.properties, row_no))
-                    ]
+            data = self.read_index(index, prop.container_property)
+            created = self._validate_adapter(IndexAdapter, data, (self.Sheet.properties, row_no))
+            if created is None:
+                continue
+            order = self._read_order(index.properties, (self.Sheet.properties, row_no))
+            read.indices[(prop.container, index.suffix)].append(
+                ReadIndex(
+                    prop_id=prop.container_property, order=order, row_no=row_no, index_id=index.suffix, index=created
                 )
-                return
-            except ValueError as e:
-                self.errors.append(ModelSyntaxError(message=str(e)))
-                return
-            read.indices[(prop.container, index.suffix)].append(created)
+            )
+
+    def _read_order(self, properties: dict[str, Any], loc: tuple[str | int, ...]) -> int | None:
+        if "order" not in properties:
+            return None
+        try:
+            return int(properties["order"])
+        except ValueError:
+            self.errors.append(
+                ModelSyntaxError(
+                    message=f"In {self.source.location(loc)} invalid order value '{properties['order']}'. Must be an integer."
+                )
+            )
+            return None
 
     @staticmethod
-    def read_index(index: ParsedEntity, prop_id: str, row_no: int) -> ReadIndex:
-        return ReadIndex(
-            prop_id=prop_id,
-            order=int(index.properties["order"]) if "order" in index.properties else None,
-            row_no=row_no,
-            index_id=index.suffix,
-            index=IndexAdapter.validate_python(
-                {
-                    "indexType": index.prefix,
-                    "properties": [prop_id],
-                    **index.properties,
-                },
-                strict=True,
-            ),
-        )
+    def read_index(index: ParsedEntity, prop_id: str) -> dict[str, Any]:
+        return {
+            "indexType": index.prefix,
+            "properties": [prop_id],
+            **index.properties,
+        }
 
     def _process_constraint(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
         if prop.constraint is None:
             return
         for constraint in prop.constraint:
-            try:
-                created = self.read_constraint(constraint, prop.container_property, row_no)
-            except ValidationError as e:
-                self.errors.extend(
-                    [
-                        ModelSyntaxError(message=message)
-                        for message in humanize_validation_error(e, (self.Sheet.properties, row_no))
-                    ]
+            data = self.read_constraint(constraint, prop.container_property)
+            created = self._validate_adapter(ConstraintAdapter, data, (self.Sheet.properties, row_no))
+            if created is None:
+                continue
+            order = self._read_order(constraint.properties, (self.Sheet.properties, row_no))
+            read.constraints[(prop.container, constraint.suffix)].append(
+                ReadConstraint(
+                    prop_id=prop.container_property,
+                    order=order,
+                    constraint_id=constraint.suffix,
+                    row_no=row_no,
+                    constraint=created,
                 )
-                return
-            except ValueError as e:
-                self.errors.append(ModelSyntaxError(message=str(e)))
-                return
-            read.constraints[(prop.container, constraint.suffix)].append(created)
+            )
 
     @staticmethod
-    def read_constraint(constraint: ParsedEntity, prop_id: str, row_no: int) -> ReadConstraint:
-        return ReadConstraint(
-            prop_id=prop_id,
-            order=int(constraint.properties["order"]) if "order" in constraint.properties else None,
-            constraint_id=constraint.suffix,
-            row_no=row_no,
-            constraint=ConstraintAdapter.validate_python(
-                {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}, strict=True
-            ),
-        )
+    def read_constraint(constraint: ParsedEntity, prop_id: str) -> dict[str, Any]:
+        return {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}
 
-    def read_view_property(self, prop: DMSProperty) -> ViewRequestProperty:
+    def read_view_property(self, prop: DMSProperty) -> tuple[type[ViewRequestProperty], dict[str, Any]]:
         """Reads a single view property from a given row in the properties table.
 
         The type of property (core, edge, reverse direct relation) is determined based on the connection column
@@ -319,16 +294,16 @@ class DMSTableReader:
         """
 
         if prop.connection is None or prop.connection == "direct":
-            return self.read_core_view_property(prop)
+            return ViewCorePropertyRequest, self.read_core_view_property(prop)
         elif prop.connection.suffix == "edge":
-            return self.read_edge_view_property(prop)
+            return ViewRequestProperty, self.read_edge_view_property(prop)
         elif prop.connection.suffix == "reverse":
-            return self.read_reverse_direct_relation_view_property(prop)
+            return ViewRequestProperty, self.read_reverse_direct_relation_view_property(prop)
         else:
             raise ValueError()
 
-    def read_core_view_property(self, prop: DMSProperty) -> ViewCorePropertyRequest:
-        return ViewCorePropertyRequest(
+    def read_core_view_property(self, prop: DMSProperty) -> dict[str, Any]:
+        return dict(
             connectionType="primary_property",
             name=prop.container_property_name,
             description=prop.container_property_description,
@@ -340,20 +315,20 @@ class DMSTableReader:
     def read_edge_view_property(
         self,
         prop: DMSProperty,
-    ) -> ViewRequestProperty | None:
+    ) -> dict[str, Any]:
         # Implementation to read an edge view property from DMSProperty
         raise NotImplementedError()
 
     def read_reverse_direct_relation_view_property(
         self,
         prop: DMSProperty,
-    ) -> ViewRequestProperty | None:
+    ) -> dict[str, Any]:
         # Implementation to read a reverse direct relation view property from DMSProperty
         raise NotImplementedError()
 
-    def read_container_property(self, prop: DMSProperty) -> ContainerPropertyDefinition:
+    def read_container_property(self, prop: DMSProperty) -> dict[str, Any]:
         data_type = self._read_data_type(prop)
-        return ContainerPropertyDefinition(
+        return dict(
             immutable=prop.immutable,
             nullable=prop.min_count == 0 or prop.min_count is None,
             auto_increment=prop.auto_increment,
@@ -513,14 +488,24 @@ class DMSTableReader:
             "externalId": entity.suffix,
         }
 
-    def _validate_obj(self, obj: type[T_BaseModel], data: dict, row_no: int, table_name: str) -> T_BaseModel | None:
+    def _validate_obj(
+        self, obj: type[T_BaseModel], data: dict, parent_loc: tuple[str | int, ...]
+    ) -> T_BaseModel | None:
         try:
             return obj.model_validate(data)
         except ValidationError as e:
             self.errors.extend(
-                [
-                    ModelSyntaxError(message=message)
-                    for message in humanize_validation_error(e, parent_loc=(table_name, row_no))
-                ]
+                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, parent_loc=parent_loc)]
+            )
+            return None
+
+    def _validate_adapter(
+        self, adapter: TypeAdapter[T_BaseModel], data: dict[str, Any], parent_loc: tuple[str | int, ...]
+    ) -> T_BaseModel | None:
+        try:
+            return adapter.validate_python(data, strict=True)
+        except ValidationError as e:
+            self.errors.extend(
+                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, parent_loc=parent_loc)]
             )
             return None
