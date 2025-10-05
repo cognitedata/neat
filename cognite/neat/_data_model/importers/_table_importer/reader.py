@@ -99,6 +99,7 @@ class DMSTableReader:
         views = cast(str, TableDMS.model_fields["views"].validation_alias)
 
     class PropertyColumn:
+        connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
         index = cast(str, DMSProperty.model_fields["index"].validation_alias)
         constraint = cast(str, DMSProperty.model_fields["constraint"].validation_alias)
 
@@ -203,23 +204,21 @@ class DMSTableReader:
         return constraints
 
     def _process_view_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
-        data = self.read_view_property(prop)
-        view_prop = self._validate_adapter(ViewRequestPropertyAdapter, data, (self.Sheet.properties, row_no))
+        loc = (self.Sheet.properties, row_no)
+        data = self.read_view_property(prop, loc)
+        view_prop = self._validate_adapter(ViewRequestPropertyAdapter, data, loc)
         if view_prop is not None:
             read.view[(prop.view, prop.view_property)].append(
-                # MyPy has a very strange complaint here:
-                # has incompatible type "SingleEdgeProperty | MultiEdgeProperty |
-                # SingleReverseDirectRelationPropertyResponse | MultiReverseDirectRelationPropertyResponse |
-                # ViewCorePropertyResponse"; expected "SingleEdgeProperty | MultiEdgeProperty |
-                # SingleReverseDirectRelationPropertyRequest | MultiReverseDirectRelationPropertyRequest |
-                # ViewCorePropertyRequest
+                # MyPy has a very strange complaint here. It complains that given type is not expected type,
+                # even though they are exactly the same.
                 ReadViewProperty(prop.container_property, row_no, view_prop)  # type: ignore[arg-type]
             )
         return None
 
     def _process_container_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
-        data = self.read_container_property(prop)
-        container_prop = self._validate_obj(ContainerPropertyDefinition, data, (self.Sheet.properties, row_no))
+        loc = (self.Sheet.properties, row_no)
+        data = self.read_container_property(prop, loc=loc)
+        container_prop = self._validate_obj(ContainerPropertyDefinition, data, loc)
         if container_prop is not None and prop.container and prop.container_property:
             read.container[(prop.container, prop.container_property)].append(
                 ReadContainerProperty(prop.container_property, row_no, container_prop)
@@ -289,7 +288,7 @@ class DMSTableReader:
     def read_constraint(constraint: ParsedEntity, prop_id: str) -> dict[str, Any]:
         return {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}
 
-    def read_view_property(self, prop: DMSProperty) -> dict[str, Any]:
+    def read_view_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
         """Reads a single view property from a given row in the properties table.
 
         The type of property (core, edge, reverse direct relation) is determined based on the connection column
@@ -301,6 +300,7 @@ class DMSTableReader:
 
         Args:
             prop (DMSProperty): The property row to read.
+            loc (tuple[str | int, ...]): The location of the property in the source for error reporting.
 
         Returns:
             ViewRequestProperty: The parsed view property.
@@ -309,7 +309,7 @@ class DMSTableReader:
         if prop.connection is None or prop.connection.suffix == "direct":
             return self.read_core_view_property(prop)
         elif prop.connection.suffix == "edge":
-            return self.read_edge_view_property(prop)
+            return self.read_edge_view_property(prop, loc)
         elif prop.connection.suffix == "reverse":
             return self.read_reverse_direct_relation_view_property(prop)
         else:
@@ -325,12 +325,28 @@ class DMSTableReader:
             source=None if prop.connection is None else self._create_view_ref(prop.value_type),
         )
 
-    def read_edge_view_property(
-        self,
-        prop: DMSProperty,
-    ) -> dict[str, Any]:
-        # Implementation to read an edge view property from DMSProperty
-        raise NotImplementedError()
+    def read_edge_view_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
+        if prop.connection is None:
+            return {}
+        edge_source: dict[str, str | None] | None = None
+        if "edgeSource" in prop.connection.properties:
+            edge_source = self._create_view_ref_unparsed(
+                prop.connection.properties["edgeSource"], (*loc, self.PropertyColumn.connection, "edgeSource")
+            )
+        return dict(
+            connectionType="single_edge_connection" if prop.max_count == 1 else "multi_edge_connection",
+            name=prop.name,
+            description=prop.description,
+            source=self._create_view_ref(prop.value_type),
+            type=self._create_node_ref_unparsed(
+                prop.connection.properties.get("type"),
+                prop.view,
+                prop.view_property,
+                (*loc, self.PropertyColumn.connection, "type"),
+            ),
+            edgeSource=edge_source,
+            direction=prop.connection.properties.get("direction", "outwards"),
+        )
 
     def read_reverse_direct_relation_view_property(
         self,
@@ -339,8 +355,8 @@ class DMSTableReader:
         # Implementation to read a reverse direct relation view property from DMSProperty
         raise NotImplementedError()
 
-    def read_container_property(self, prop: DMSProperty) -> dict[str, Any]:
-        data_type = self._read_data_type(prop)
+    def read_container_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
+        data_type = self._read_data_type(prop, loc)
         return dict(
             immutable=prop.immutable,
             nullable=prop.min_count == 0 or prop.min_count is None,
@@ -351,7 +367,7 @@ class DMSTableReader:
             type=data_type,
         )
 
-    def _read_data_type(self, prop: DMSProperty) -> dict[str, Any]:
+    def _read_data_type(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
         # Implementation to read the container property type from DMSProperty
         is_list = None if prop.max_count is None else prop.max_count > 1
         max_list_size: int | None = None
@@ -369,8 +385,9 @@ class DMSTableReader:
         else:
             args["type"] = "direct"
             if "container" in prop.connection.properties:
-                # Todo: Error handling if parser fails.
-                args["container"] = self._create_container_ref(parse_entity(prop.connection.properties["container"]))
+                args["container"] = self._create_container_ref_unparsed(
+                    prop.connection.properties["container"], (*loc, self.PropertyColumn.connection, "container")
+                )
         return args
 
     def read_containers(
@@ -479,6 +496,22 @@ class DMSTableReader:
             raise ModelImportError(self.errors) from None
         return model
 
+    def _parse_entity(self, entity: str, loc: tuple[str | int, ...]) -> ParsedEntity | None:
+        try:
+            parsed = parse_entity(entity)
+        except ValueError as e:
+            self.errors.append(
+                ModelSyntaxError(message=f"In {self.source.location(loc)} failed to parse entity '{entity}': {e!s}")
+            )
+            return None
+        return parsed
+
+    def _create_view_ref_unparsed(self, entity: str, loc: tuple[str | int, ...]) -> dict[str, str | None]:
+        parsed = self._parse_entity(entity, loc)
+        if parsed is None:
+            return dict()
+        return self._create_view_ref(parsed)
+
     def _create_view_ref(self, entity: ParsedEntity | None) -> dict[str, str | None]:
         if entity is None or entity.suffix == "":
             # If no suffix is given, we cannot create a valid reference.
@@ -495,10 +528,41 @@ class DMSTableReader:
             "version": version,
         }
 
+    def _create_container_ref_unparsed(self, entity: str, loc: tuple[str | int, ...]) -> dict[str, str]:
+        parsed = self._parse_entity(entity, loc)
+        if parsed is None:
+            return dict()
+        return self._create_container_ref(parsed)
+
     def _create_container_ref(self, entity: ParsedEntity | None) -> dict[str, str]:
         if entity is None or entity.suffix == "":
             # If no suffix is given, we cannot create a valid reference.
             return dict()
+        return {
+            "space": entity.prefix or self.default_space,
+            "externalId": entity.suffix,
+        }
+
+    def _create_node_ref_unparsed(
+        self, entity: str | None, view: ParsedEntity, view_prop: str, loc: tuple[str | int, ...]
+    ) -> dict[str, str | None]:
+        if entity is None:
+            # Use default
+            return self._create_node_ref(None, view, view_prop)
+        parsed = self._parse_entity(entity, loc)
+        if parsed is None:
+            return dict()
+        return self._create_node_ref(parsed, view, view_prop)
+
+    def _create_node_ref(
+        self, entity: ParsedEntity | None, view: ParsedEntity, view_prop: str
+    ) -> dict[str, str | None]:
+        if entity is None or entity.suffix == "":
+            # If no suffix is given, we fallback to the view's property
+            return {
+                "space": view.prefix or self.default_space,
+                "externalId": f"{view.suffix}.{view_prop}",
+            }
         return {
             "space": entity.prefix or self.default_space,
             "externalId": entity.suffix,
