@@ -532,7 +532,11 @@ class DMSTableReader:
     ) -> None:
         seen: set[str] = set()
         for message in humanize_validation_error(
-            error, parent_loc=parent_loc, humanize_location=self.source.location, field_name=field_name
+            error,
+            parent_loc=parent_loc,
+            humanize_location=self.source.location,
+            field_name=field_name,
+            field_renaming=self.source.field_mapping(parent_loc[0]),
         ):
             if message in seen:
                 continue

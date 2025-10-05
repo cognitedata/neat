@@ -1,4 +1,7 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
+
+from .data_classes import DMS_API_MAPPING
 
 
 @dataclass
@@ -49,6 +52,7 @@ class TableSource:
             row_no = path[1]
         if len(path) >= 3 and isinstance(path[2], str):
             column = path[2]
+            column = self.field_to_column(table_id, column)
         table_read = table_id and self.table_read.get(table_id)
         if table_read and isinstance(row_no, int):
             row_no = table_read.adjusted_row_number(row_no)
@@ -56,12 +60,26 @@ class TableSource:
             row_no = row_no + 1  # Convert to 1-indexed if no table read info is available
         location_parts = []
         if table_id is not None:
-            location_parts.append(f"table '{table_id}'")
+            location_parts.append(f"table {table_id!r}")
         if row_no is not None:
             location_parts.append(f"row {row_no}")
         if column is not None:
-            location_parts.append(f"column {column}")
+            location_parts.append(f"column {column!r}")
         if len(path) > 4:
             location_parts.append("-> " + ".".join(str(p) for p in path[3:]))
 
         return " ".join(location_parts)
+
+    @classmethod
+    def field_to_column(cls, table_id: str | None, field_: str) -> str:
+        """Maps the field name used in the DMS API to the column named used by Neat."""
+        mapping = cls.field_mapping(table_id)
+        if mapping is not None:
+            return mapping.get(field_, field_)
+        return field_
+
+    @classmethod
+    def field_mapping(cls, table_id: str | int | None) -> Mapping[str, str] | None:
+        if not isinstance(table_id, str):
+            return None
+        return DMS_API_MAPPING.get(table_id)

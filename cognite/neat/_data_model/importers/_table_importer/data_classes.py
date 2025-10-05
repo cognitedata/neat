@@ -1,4 +1,5 @@
-from typing import Annotated
+from collections.abc import Mapping
+from typing import Annotated, cast
 
 from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field
 from pydantic.alias_generators import to_camel
@@ -68,3 +69,26 @@ class TableDMS(TableObj):
     properties: list[DMSProperty]
     views: list[DMSView]
     containers: list[DMSContainer] = Field(default_factory=list)
+
+
+DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
+    "Views": {
+        "space": "View",
+        "externalId": "View",
+        "version": "View",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSView.model_fields.items()
+            if field_id != "View"
+        },
+    },
+    "Containers": {
+        "space": "Container",
+        "externalId": "Container",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSContainer.model_fields.items()
+            if field_id != "Container"
+        },
+    },
+}

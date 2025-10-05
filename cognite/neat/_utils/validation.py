@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Literal
 
 from pydantic import ValidationError
@@ -30,6 +30,7 @@ def humanize_validation_error(
     parent_loc: tuple[int | str, ...] = tuple(),
     humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path,
     field_name: Literal["field", "column", "value"] = "field",
+    field_renaming: Mapping[str, str] | None = None,
 ) -> list[str]:
     """Converts a ValidationError to a human-readable format.
 
@@ -45,12 +46,16 @@ def humanize_validation_error(
             This can for example be replaced when the location comes from an Excel table.
         field_name: The name use for "field" in error messages. Default is "field". This can be changed to
             "column" or "property" to better fit the context.
+        field_renaming: Optional mapping of field names to source names.
+            This is useful when the field names in the model are different from the names in the source.
+            For example, if the model field is "asset_id" but the source column is "Asset ID",
+            you can provide a mapping {"asset_id": "Asset ID"} to have the error messages use the source names.
     Returns:
         A list of human-readable error messages.
     """
     errors: list[str] = []
     item: ErrorDetails
-
+    field_renaming = field_renaming or {}
     for item in error.errors(include_input=True, include_url=False):
         loc = (*parent_loc, *item["loc"])
         error_type = item["type"]
@@ -89,9 +94,12 @@ def humanize_validation_error(
         if len(loc) > 1 and error_type in {"extra_forbidden", "missing"} and field_name != "column":
             # We skip the last element as this is in the message already
             msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
-        elif len(loc) > 1 and error_type in {"missing"}:
+        elif len(loc) > 1 and error_type in {"missing"} and field_name == "column":
             # This is a table so we modify the error message.
-            msg = f"In {humanize_location(loc[:-1])} the column {loc[-1]!r} cannot be empty."
+            msg = (
+                f"In {humanize_location(loc[:-1])} the column {field_renaming.get(str(loc[-1]), loc[-1])!r} "
+                "cannot be empty."
+            )
         elif len(loc) > 1:
             msg = f"In {humanize_location(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
