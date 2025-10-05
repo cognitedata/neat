@@ -204,7 +204,7 @@ class DMSTableReader:
         data = self.read_view_property(prop)
         view_prop = self._validate_adapter(ViewRequestPropertyAdapter, data, (self.Sheet.properties, row_no))
         if view_prop is not None:
-            read.view[(prop.view, prop.container_property)].append(
+            read.view[(prop.view, prop.view_property)].append(
                 # MyPy has a very strange complaint here:
                 # has incompatible type "SingleEdgeProperty | MultiEdgeProperty |
                 # SingleReverseDirectRelationPropertyResponse | MultiReverseDirectRelationPropertyResponse |
@@ -218,14 +218,14 @@ class DMSTableReader:
     def _process_container_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
         data = self.read_container_property(prop)
         container_prop = self._validate_obj(ContainerPropertyDefinition, data, (self.Sheet.properties, row_no))
-        if container_prop is not None:
+        if container_prop is not None and prop.container and prop.container_property:
             read.container[(prop.container, prop.container_property)].append(
                 ReadContainerProperty(prop.container_property, row_no, container_prop)
             )
         return None
 
     def _process_index(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
-        if prop.index is None:
+        if prop.index is None or prop.container_property is None or prop.container is None:
             return
 
         loc = (self.Sheet.properties, row_no, self.PropertyColumn.index)
@@ -264,7 +264,7 @@ class DMSTableReader:
         }
 
     def _process_constraint(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
-        if prop.constraint is None:
+        if prop.constraint is None or prop.container_property is None or prop.container is None:
             return
         loc = (self.Sheet.properties, row_no, self.PropertyColumn.constraint)
         for constraint in prop.constraint:
@@ -477,8 +477,8 @@ class DMSTableReader:
             raise ModelImportError(self.errors) from None
         return model
 
-    def _create_view_ref(self, entity: ParsedEntity) -> dict[str, str | None]:
-        if entity.suffix == "":
+    def _create_view_ref(self, entity: ParsedEntity | None) -> dict[str, str | None]:
+        if entity is None or entity.suffix == "":
             # If no suffix is given, we cannot create a valid reference.
             return dict()
         space, version = entity.prefix, entity.properties.get("version")
@@ -493,8 +493,8 @@ class DMSTableReader:
             "version": version,
         }
 
-    def _create_container_ref(self, entity: ParsedEntity) -> dict[str, str]:
-        if entity.suffix == "":
+    def _create_container_ref(self, entity: ParsedEntity | None) -> dict[str, str]:
+        if entity is None or entity.suffix == "":
             # If no suffix is given, we cannot create a valid reference.
             return dict()
         return {

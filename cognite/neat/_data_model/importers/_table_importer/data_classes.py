@@ -38,8 +38,8 @@ class DMSProperty(TableObj):
     immutable: bool | None = None
     default: CellValue | None = None
     auto_increment: bool | None = None
-    container: Entity
-    container_property: str
+    container: Entity | None = None
+    container_property: str | None = None
     container_property_name: str | None = None
     container_property_description: str | None = None
     index: EntityList | None = None
