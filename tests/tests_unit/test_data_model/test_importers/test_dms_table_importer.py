@@ -62,7 +62,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Name": None,
                     "Description": None,
                     "Connection": None,
-                    "Value Type": "text",
+                    "Value Type": "text(maxTextSize=400)",
                     "Min Count": 0,
                     "Max Count": 1,
                     "Immutable": False,
@@ -299,7 +299,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             defaultValue=None,
                             description=None,
                             name=None,
-                            type=TextProperty(list=False),
+                            type=TextProperty(list=False, maxTextSize=400),
                         )
                     },
                     indexes={
@@ -325,7 +325,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             defaultValue=None,
                             description=None,
                             name=None,
-                            type=DirectNodeRelation(max_list_size=1200),
+                            type=DirectNodeRelation(maxListSize=1200, list=True),
                         )
                     },
                 ),
@@ -341,7 +341,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             defaultValue=None,
                             description=None,
                             name=None,
-                            type=Float32Property(),
+                            type=Float32Property(list=False),
                         )
                     },
                 ),

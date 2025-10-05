@@ -392,8 +392,8 @@ class DMSTableReader:
         return dict(
             immutable=prop.immutable,
             nullable=prop.min_count == 0 or prop.min_count is None,
-            auto_increment=prop.auto_increment,
-            default_value=prop.default,
+            autoIncrement=prop.auto_increment,
+            defaultValue=prop.default,
             description=prop.container_property_description,
             name=prop.container_property_name,
             type=data_type,
