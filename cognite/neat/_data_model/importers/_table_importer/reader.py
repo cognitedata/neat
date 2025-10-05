@@ -306,7 +306,7 @@ class DMSTableReader:
             ViewRequestProperty: The parsed view property.
         """
 
-        if prop.connection is None or prop.connection == "direct":
+        if prop.connection is None or prop.connection.suffix == "direct":
             return self.read_core_view_property(prop)
         elif prop.connection.suffix == "edge":
             return self.read_edge_view_property(prop)

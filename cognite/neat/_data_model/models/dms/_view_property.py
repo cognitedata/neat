@@ -143,6 +143,9 @@ class SingleReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[SingleReverseDirectRelationPropertyRequest]
 ):
     connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
+    target_list: bool = Field(
+        description="Whether or not this reverse direct relation targets a list of direct relations.",
+    )
 
     def as_request(self) -> SingleReverseDirectRelationPropertyRequest:
         return SingleReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
@@ -150,9 +153,6 @@ class SingleReverseDirectRelationPropertyResponse(
 
 class MultiReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
     connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
-    target_list: bool = Field(
-        description="Whether or not this reverse direct relation targets a list of direct relations.",
-    )
 
 
 class MultiReverseDirectRelationPropertyResponse(
