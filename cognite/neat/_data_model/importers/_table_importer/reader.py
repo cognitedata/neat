@@ -512,14 +512,7 @@ class DMSTableReader:
         try:
             return obj.model_validate(data)
         except ValidationError as e:
-            self.errors.extend(
-                [
-                    ModelSyntaxError(message=message)
-                    for message in humanize_validation_error(
-                        e, parent_loc=parent_loc, humanize_location=self.source.location, field_name=field_name
-                    )
-                ]
-            )
+            self._add_error_messages(e, parent_loc, field_name=field_name)
             return None
 
     def _validate_adapter(
@@ -528,12 +521,20 @@ class DMSTableReader:
         try:
             return adapter.validate_python(data, strict=True)
         except ValidationError as e:
-            self.errors.extend(
-                [
-                    ModelSyntaxError(message=message)
-                    for message in humanize_validation_error(
-                        e, parent_loc=parent_loc, humanize_location=self.source.location, field_name="column"
-                    )
-                ]
-            )
+            self._add_error_messages(e, parent_loc, field_name="column")
             return None
+
+    def _add_error_messages(
+        self,
+        error: ValidationError,
+        parent_loc: tuple[str | int, ...],
+        field_name: Literal["field", "column", "value"] = "column",
+    ) -> None:
+        seen: set[str] = set()
+        for message in humanize_validation_error(
+            error, parent_loc=parent_loc, humanize_location=self.source.location, field_name=field_name
+        ):
+            if message in seen:
+                continue
+            seen.add(message)
+            self.errors.append(ModelSyntaxError(message=message))

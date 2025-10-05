@@ -91,7 +91,7 @@ def humanize_validation_error(
             msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
         elif len(loc) > 1 and error_type in {"missing"}:
             # This is a table so we modify the error message.
-            msg = f"In {humanize_location(loc[:-1])} the column {loc[-1]} cannot be empty."
+            msg = f"In {humanize_location(loc[:-1])} the column {loc[-1]!r} cannot be empty."
         elif len(loc) > 1:
             msg = f"In {humanize_location(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
