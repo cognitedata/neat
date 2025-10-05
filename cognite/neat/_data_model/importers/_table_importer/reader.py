@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -503,7 +503,11 @@ class DMSTableReader:
         }
 
     def _validate_obj(
-        self, obj: type[T_BaseModel], data: dict, parent_loc: tuple[str | int, ...], field_name: str = "column"
+        self,
+        obj: type[T_BaseModel],
+        data: dict,
+        parent_loc: tuple[str | int, ...],
+        field_name: Literal["field", "column", "value"] = "column",
     ) -> T_BaseModel | None:
         try:
             return obj.model_validate(data)

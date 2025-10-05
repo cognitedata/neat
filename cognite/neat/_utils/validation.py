@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Literal
 
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
@@ -28,7 +29,7 @@ def humanize_validation_error(
     error: ValidationError,
     parent_loc: tuple[int | str, ...] = tuple(),
     humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path,
-    field_name: str = "field",
+    field_name: Literal["field", "column", "value"] = "field",
 ) -> list[str]:
     """Converts a ValidationError to a human-readable format.
 
@@ -85,9 +86,12 @@ def humanize_validation_error(
             loc = tuple(["dict" if isinstance(x, str) and "json-or-python" in x else x for x in loc])
 
         error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
-        if len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
+        if len(loc) > 1 and error_type in {"extra_forbidden", "missing"} and field_name != "column":
             # We skip the last element as this is in the message already
             msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
+        elif len(loc) > 1 and error_type in {"missing"}:
+            # This is a table so we modify the error message.
+            msg = f"In {humanize_location(loc[:-1])} the column {loc[-1]} cannot be empty."
         elif len(loc) > 1:
             msg = f"In {humanize_location(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
