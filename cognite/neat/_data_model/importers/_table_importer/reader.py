@@ -92,6 +92,12 @@ class ProcessedProperties:
 
 
 class DMSTableReader:
+    class Sheet:
+        metadata = TableDMS.model_fields["metadata"].validation_alias
+        properties = TableDMS.model_fields["properties"].validation_alias
+        containers = TableDMS.model_fields["containers"].validation_alias
+        views = TableDMS.model_fields["views"].validation_alias
+
     def __init__(self, default_space: str, default_version: str, source: TableSource) -> None:
         self.default_space = default_space
         self.default_version = default_version
@@ -115,7 +121,10 @@ class DMSTableReader:
             return SpaceRequest(space=space)
         except ValidationError as e:
             self.errors.extend(
-                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, lambda x: "In Metadata")]
+                [
+                    ModelSyntaxError(message=message)
+                    for message in humanize_validation_error(e, parent_loc=(self.Sheet.metadata,))
+                ]
             )
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
             raise ModelImportError(self.errors) from None
@@ -200,7 +209,10 @@ class DMSTableReader:
             view_prop = self.read_view_property(prop)
         except ValidationError as e:
             self.errors.extend(
-                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+                [
+                    ModelSyntaxError(message=message)
+                    for message in humanize_validation_error(e, parent_loc=(self.Sheet.properties, row_no))
+                ]
             )
         else:
             read.view[(prop.view, prop.container_property)].append(
@@ -212,7 +224,10 @@ class DMSTableReader:
             container_prop = self.read_container_property(prop)
         except ValidationError as e:
             self.errors.extend(
-                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+                [
+                    ModelSyntaxError(message=message)
+                    for message in humanize_validation_error(e, (self.Sheet.properties, row_no))
+                ]
             )
             return None
         read.container[(prop.container, prop.container_property)].append(
@@ -229,7 +244,7 @@ class DMSTableReader:
                 self.errors.extend(
                     [
                         ModelSyntaxError(message=message)
-                        for message in humanize_validation_error(e, self.source.location)
+                        for message in humanize_validation_error(e, (self.Sheet.properties, row_no))
                     ]
                 )
                 return
@@ -250,7 +265,8 @@ class DMSTableReader:
                     "indexType": index.prefix,
                     "properties": [prop_id],
                     **index.properties,
-                }
+                },
+                strict=True,
             ),
         )
 
@@ -264,7 +280,7 @@ class DMSTableReader:
                 self.errors.extend(
                     [
                         ModelSyntaxError(message=message)
-                        for message in humanize_validation_error(e, self.source.location)
+                        for message in humanize_validation_error(e, (self.Sheet.properties, row_no))
                     ]
                 )
                 return
@@ -281,7 +297,7 @@ class DMSTableReader:
             constraint_id=constraint.suffix,
             row_no=row_no,
             constraint=ConstraintAdapter.validate_python(
-                {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}
+                {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}, strict=True
             ),
         )
 
@@ -318,7 +334,7 @@ class DMSTableReader:
             description=prop.container_property_description,
             container=self._create_container_ref(prop.container),
             containerPropertyIdentifier=prop.container_property,
-            source=None if prop.connection is None else self._create_view_ref(prop.connection),
+            source=None if prop.connection is None else self._create_view_ref(prop.value_type),
         )
 
     def read_edge_view_property(
@@ -387,7 +403,7 @@ class DMSTableReader:
                     constraints=properties.constraints.get(container.container),
                 ),
                 row_no,
-                TableDMS.model_fields["containers"].validation_alias,
+                self.Sheet.containers,
             )
             if container_request is None:
                 continue
@@ -440,7 +456,7 @@ class DMSTableReader:
                     properties=properties.get(view.view, {}),
                 ),
                 row_no,
-                TableDMS.model_fields["views"].validation_alias,
+                self.Sheet.views,
             )
             if view_request is None:
                 continue
@@ -471,7 +487,10 @@ class DMSTableReader:
             )
         except ValidationError as e:
             self.errors.extend(
-                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, lambda x: "In Metadata")]
+                [
+                    ModelSyntaxError(message=message)
+                    for message in humanize_validation_error(e, parent_loc=(self.Sheet.metadata,))
+                ]
             )
             raise ModelImportError(self.errors) from None
 
@@ -499,6 +518,9 @@ class DMSTableReader:
             return obj.model_validate(data)
         except ValidationError as e:
             self.errors.extend(
-                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self.source.location)]
+                [
+                    ModelSyntaxError(message=message)
+                    for message in humanize_validation_error(e, parent_loc=(table_name, row_no))
+                ]
             )
             return None

@@ -3,6 +3,7 @@ from collections.abc import Iterable
 import pytest
 
 from cognite.neat._data_model.importers import DMSTableImporter
+from cognite.neat._data_model.importers._table_importer.source import TableSource
 from cognite.neat._data_model.models.dms import (
     BtreeIndex,
     ContainerPropertyDefinition,
@@ -16,10 +17,13 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
+from cognite.neat._exceptions import ModelImportError
 from cognite.neat._utils.useful_types import CellValue
 
+SOURCE = "pytest.xlsx"
 
-def test_valid_dms_table_format() -> Iterable[tuple]:
+
+def valid_dms_table_formats() -> Iterable[tuple]:
     yield pytest.param(
         {
             "Metadata": [
@@ -137,9 +141,78 @@ def test_valid_dms_table_format() -> Iterable[tuple]:
     )
 
 
+def invalid_tmd_table_formats() -> Iterable[tuple]:
+    yield pytest.param(
+        {
+            "Metadata": [
+                {
+                    "Name": "space",
+                    "Value": "cdf_cdm",
+                },
+                {
+                    "Name": "version",
+                    "Value": "v1",
+                },
+            ],
+            "Properties": [
+                {
+                    "View": "CogniteDescribable",
+                    "View Property": "name",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": "CogniteDescribable",
+                    "Container Property": "name",
+                    "Index": "btree:name(cursorable=invalid)",
+                    "Constraint": None,
+                }
+            ],
+            "Views": [
+                {
+                    "View": None,
+                    "Name": "Cognite Describable",
+                    "Description": "The describable core concept is used as a standard way of "
+                    "holding the bare minimum of information about the instance",
+                    "Implements": None,
+                    "Filter": None,
+                }
+            ],
+            "Containers": [
+                {
+                    "Container": "CogniteDescribable",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": None,
+                    "Used For": "all",
+                }
+            ],
+        },
+        {
+            "In Metadata sheet missing required field: 'externalId'",
+            "In Views sheet row 1 missing required field: 'View'",
+        },
+        id="Missing required metadata fields",
+    )
+
+
 class TestDMSTableImporter:
-    @pytest.mark.parametrize("data,expected", list(test_valid_dms_table_format()))
+    @pytest.mark.parametrize("data,expected", list(valid_dms_table_formats()))
     def test_import(self, data: dict[str, list[dict[str, CellValue]]], expected: RequestSchema) -> None:
         importer = DMSTableImporter(data)
         result = importer.to_data_model()
         assert result.model_dump() == expected.model_dump()
+
+    @pytest.mark.parametrize("data,expected_errors", list(invalid_tmd_table_formats()))
+    def test_import_errors(self, data: dict[str, list[dict[str, CellValue]]], expected_errors: set[str]) -> None:
+        importer = DMSTableImporter(data, source=TableSource(source=SOURCE, table_read={}))
+        with pytest.raises(ModelImportError) as e:
+            _ = importer.to_data_model()
+
+        result_errors = {err.message for err in e.value.errors}
+
+        assert result_errors == expected_errors

@@ -47,12 +47,10 @@ class DMSTableImporter(DMSImporter):
             )
 
         try:
-            # Check tables, columns, and entity syntax.
+            # Check tables, columns, data type and entity syntax.
             table = TableDMS.model_validate(self._table)
         except ValidationError as e:
-            errors.extend(
-                [ModelSyntaxError(message=message) for message in humanize_validation_error(e, self._source.location)]
-            )
+            errors.extend([ModelSyntaxError(message=message) for message in humanize_validation_error(e)])
             raise ModelImportError(errors) from None
 
         if errors:
@@ -61,6 +59,7 @@ class DMSTableImporter(DMSImporter):
 
     @staticmethod
     def _read_defaults(metadata: list[MetadataValue]) -> tuple[str, str]:
+        """Reads the space and version from the metadata table."""
         default_space: str | None = None
         default_version: str | None = None
         missing = {"space", "version"}
