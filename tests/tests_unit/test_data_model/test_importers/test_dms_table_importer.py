@@ -10,10 +10,17 @@ from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
     DataModelRequest,
+    DirectNodeRelation,
+    Float32Property,
+    MultiEdgeProperty,
+    MultiReverseDirectRelationPropertyRequest,
+    NodeReference,
     RequestSchema,
     SpaceRequest,
     TextProperty,
+    UniquenessConstraintDefinition,
     ViewCorePropertyRequest,
+    ViewDirectReference,
     ViewReference,
     ViewRequest,
 )
@@ -63,8 +70,72 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Container": "CogniteDescribable",
                     "Container Property": "name",
                     "Index": "btree:name(cursorable=False)",
+                    "Constraint": "uniqueness:uniqueName(bySpace=True)",
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "assets",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": "direct",
+                    "Value Type": "CogniteAsset",
+                    "Min Count": 0,
+                    "Max Count": 1200,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": "CogniteFile",
+                    "Container Property": "assets",
+                    "Index": None,
                     "Constraint": None,
-                }
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "assetAnnotations",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": "edge(edgeSource=FileAnnotation,direction=outwards,type=diagramAnnotation)",
+                    "Value Type": "CogniteAsset",
+                    "Min Count": 0,
+                    "Max Count": None,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": None,
+                    "Container Property": None,
+                    "Index": None,
+                    "Constraint": None,
+                },
+                {
+                    "View": "CogniteAsset",
+                    "View Property": "files",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": "reverse(property=assets)",
+                    "Value Type": "CogniteFile",
+                    "Min Count": 0,
+                    "Max Count": None,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": None,
+                    "Container Property": None,
+                    "Index": None,
+                    "Constraint": None,
+                },
+                {
+                    "View": "FileAnnotation",
+                    "View Property": "confidence",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": None,
+                    "Value Type": "float32",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": True,
+                    "Default": None,
+                    "Container": "FileAnnotation",
+                    "Container Property": "confidence",
+                    "Index": None,
+                    "Constraint": None,
+                },
             ],
             "Views": [
                 {
@@ -74,7 +145,28 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "holding the bare minimum of information about the instance",
                     "Implements": None,
                     "Filter": None,
-                }
+                },
+                {
+                    "View": "CogniteAsset",
+                    "Name": "Cognite Asset",
+                    "Description": None,
+                    "Implements": "CogniteDescribable",
+                    "Filter": None,
+                },
+                {
+                    "View": "CogniteFile",
+                    "Name": "Cognite File",
+                    "Description": None,
+                    "Implements": "CogniteDescribable",
+                    "Filter": None,
+                },
+                {
+                    "View": "FileAnnotation",
+                    "Name": "File Annotation",
+                    "Description": None,
+                    "Implements": "CogniteDescribable",
+                    "Filter": None,
+                },
             ],
             "Containers": [
                 {
@@ -83,7 +175,21 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                     "Constraint": None,
                     "Used For": "all",
-                }
+                },
+                {
+                    "Container": "CogniteFile",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": "CogniteDescribable",
+                    "Used For": "node",
+                },
+                {
+                    "Container": "FileAnnotation",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": "CogniteDescribable",
+                    "Used For": "edge",
+                },
             ],
         },
         RequestSchema(
@@ -93,7 +199,12 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 version="v1",
                 name="Cognite Core Data Model",
                 description="The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
-                views=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                views=[
+                    ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1"),
+                    ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
+                    ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                    ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
+                ],
             ),
             spaces=[SpaceRequest(space="cdf_cdm")],
             views=[
@@ -113,7 +224,66 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             containerPropertyIdentifier="name",
                         ),
                     },
-                )
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteAsset",
+                    version="v1",
+                    name="Cognite Asset",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    properties={
+                        "files": MultiReverseDirectRelationPropertyRequest(
+                            name=None,
+                            description=None,
+                            source=ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                            through=ViewDirectReference(
+                                source=ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                                identifier="assets",
+                            ),
+                        ),
+                    },
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteFile",
+                    version="v1",
+                    name="Cognite File",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    properties={
+                        "assets": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", externalId="CogniteFile"),
+                            containerPropertyIdentifier="assets",
+                        ),
+                        "assetAnnotations": MultiEdgeProperty(
+                            name=None,
+                            description=None,
+                            source=ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
+                            edge_source=ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
+                            direction="outwards",
+                            type=NodeReference(space="cdf_cdm", externalId="diagramAnnotation"),
+                        ),
+                    },
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="FileAnnotation",
+                    version="v1",
+                    name="File Annotation",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    properties={
+                        "confidence": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", externalId="FileAnnotation"),
+                            containerPropertyIdentifier="confidence",
+                        ),
+                    },
+                ),
             ],
             containers=[
                 ContainerRequest(
@@ -134,10 +304,49 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     indexes={
                         "name": BtreeIndex(properties=["name"], cursorable=False),
                     },
-                )
+                    constraints={
+                        "uniqueName": UniquenessConstraintDefinition(
+                            constraint_type="uniqueness",
+                            properties=["name"],
+                            by_space=True,
+                        )
+                    },
+                ),
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteFile",
+                    usedFor="node",
+                    properties={
+                        "assets": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=DirectNodeRelation(max_list_size=1200),
+                        )
+                    },
+                ),
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="FileAnnotation",
+                    usedFor="edge",
+                    properties={
+                        "confidence": ContainerPropertyDefinition(
+                            immutable=True,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=Float32Property(),
+                        )
+                    },
+                ),
             ],
         ),
-        id="One view, one container, one property",
+        id="Full example",
     )
 
 
