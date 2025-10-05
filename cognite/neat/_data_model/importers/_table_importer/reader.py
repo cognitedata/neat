@@ -409,17 +409,13 @@ class DMSTableReader:
         args: dict[str, Any] = {
             "maxListSize": max_list_size,
             "list": is_list,
+            "type": "direct" if prop.connection is not None else prop.value_type.suffix,
         }
-
-        if prop.connection is None:
-            args["type"] = prop.value_type.suffix
-            args.update(prop.value_type.properties)
-        else:
-            args["type"] = "direct"
-            if "container" in prop.connection.properties:
-                args["container"] = self._create_container_ref_unparsed(
-                    prop.connection.properties["container"], (*loc, self.PropertyColumn.connection, "container")
-                )
+        args.update(prop.value_type.properties)
+        if "container" in args and prop.connection is not None:
+            args["container"] = self._create_container_ref_unparsed(
+                prop.connection.properties["container"], (*loc, self.PropertyColumn.connection, "container")
+            )
         return args
 
     def read_containers(
