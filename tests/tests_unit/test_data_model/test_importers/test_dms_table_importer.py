@@ -257,12 +257,13 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             description=None,
                             container=ContainerReference(space="cdf_cdm", externalId="CogniteFile"),
                             containerPropertyIdentifier="assets",
+                            source=ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
                         ),
                         "assetAnnotations": MultiEdgeProperty(
                             name=None,
                             description=None,
                             source=ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
-                            edge_source=ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
+                            edgeSource=ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
                             direction="outwards",
                             type=NodeReference(space="cdf_cdm", externalId="diagramAnnotation"),
                         ),
@@ -308,7 +309,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                         "uniqueName": UniquenessConstraintDefinition(
                             constraint_type="uniqueness",
                             properties=["name"],
-                            by_space=True,
+                            bySpace=True,
                         )
                     },
                 ),
