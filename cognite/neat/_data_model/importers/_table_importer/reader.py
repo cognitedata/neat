@@ -413,6 +413,7 @@ class DMSTableReader:
         }
         args.update(prop.value_type.properties)
         if "container" in args and prop.connection is not None:
+            # Direct relation constraint.
             args["container"] = self._create_container_ref_unparsed(
                 prop.connection.properties["container"], (*loc, self.PropertyColumn.connection, "container")
             )
