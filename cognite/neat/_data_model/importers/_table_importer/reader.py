@@ -15,6 +15,7 @@ from cognite.neat._data_model.models.dms import (
     IndexAdapter,
     RequestSchema,
     SpaceRequest,
+    UniquenessConstraintDefinition,
     ViewRequest,
     ViewRequestProperty,
     ViewRequestPropertyAdapter,
@@ -201,6 +202,26 @@ class DMSTableReader:
 
     def create_constraints(self, read: ReadProperties) -> dict[ParsedEntity, dict[str, Constraint]]:
         constraints: dict[ParsedEntity, dict[str, Constraint]] = defaultdict(dict)
+        for (container_entity, constraint_id), constraint_list in read.constraints.items():
+            if len(constraint_list) == 0:
+                continue
+            constraint = constraint_list[0].constraint
+            if len(constraint_list) == 1 or not isinstance(constraint, UniquenessConstraintDefinition):
+                constraints[container_entity][constraint_id] = constraint
+                continue
+            if missing_order := [c for c in constraint_list if c.order is None]:
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"Constraint '{constraint_id}' on container '{container_entity}' is defined on multiple "
+                            f"properties but some of them are missing the 'order' attribute (rows "
+                            f"{', '.join(str(c.row_no + 1) for c in missing_order)} in the properties table)."
+                        )
+                    )
+                )
+                continue
+            constraint.properties = [c.prop_id for c in sorted(constraint_list, key=lambda x: x.order or 999)]
+            constraints[container_entity][constraint_id] = constraint
         return constraints
 
     def _process_view_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
