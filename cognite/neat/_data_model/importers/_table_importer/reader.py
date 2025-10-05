@@ -121,7 +121,7 @@ class DMSTableReader:
         return RequestSchema(dataModel=data_model, views=views, containers=containers, spaces=[space_request])
 
     def read_space(self, space: str) -> SpaceRequest:
-        space_request = self._validate_obj(SpaceRequest, {"space": space}, (self.Sheet.metadata,))
+        space_request = self._validate_obj(SpaceRequest, {"space": space}, (self.Sheet.metadata,), field_name="value")
         if space_request is None:
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
             raise ModelImportError(self.errors) from None
@@ -471,7 +471,7 @@ class DMSTableReader:
                 if view.in_model is not False and view.view in valid_view_entities
             ],
         }
-        model = self._validate_obj(DataModelRequest, data, (self.Sheet.metadata,))
+        model = self._validate_obj(DataModelRequest, data, (self.Sheet.metadata,), field_name="value")
         if model is None:
             # This is the last step, so we can raise the error here.
             raise ModelImportError(self.errors) from None
@@ -503,7 +503,7 @@ class DMSTableReader:
         }
 
     def _validate_obj(
-        self, obj: type[T_BaseModel], data: dict, parent_loc: tuple[str | int, ...]
+        self, obj: type[T_BaseModel], data: dict, parent_loc: tuple[str | int, ...], field_name: str = "column"
     ) -> T_BaseModel | None:
         try:
             return obj.model_validate(data)
@@ -512,7 +512,7 @@ class DMSTableReader:
                 [
                     ModelSyntaxError(message=message)
                     for message in humanize_validation_error(
-                        e, parent_loc=parent_loc, humanize_location=self.source.location
+                        e, parent_loc=parent_loc, humanize_location=self.source.location, field_name=field_name
                     )
                 ]
             )
@@ -528,7 +528,7 @@ class DMSTableReader:
                 [
                     ModelSyntaxError(message=message)
                     for message in humanize_validation_error(
-                        e, parent_loc=parent_loc, humanize_location=self.source.location
+                        e, parent_loc=parent_loc, humanize_location=self.source.location, field_name="column"
                     )
                 ]
             )

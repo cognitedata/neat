@@ -28,6 +28,7 @@ def humanize_validation_error(
     error: ValidationError,
     parent_loc: tuple[int | str, ...] = tuple(),
     humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path,
+    field_name: str = "field",
 ) -> list[str]:
     """Converts a ValidationError to a human-readable format.
 
@@ -41,7 +42,8 @@ def humanize_validation_error(
         humanize_location: A function that converts a location tuple to a human-readable string.
             The default is `as_json_path`, which converts the location to a JSON path.
             This can for example be replaced when the location comes from an Excel table.
-
+        field_name: The name use for "field" in error messages. Default is "field". This can be changed to
+            "column" or "property" to better fit the context.
     Returns:
         A list of human-readable error messages.
     """
@@ -85,12 +87,10 @@ def humanize_validation_error(
         error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
         if len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
             # We skip the last element as this is in the message already
-            msg = f"In {humanize_location(loc[:-1])} {error_suffix}"
+            msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
         elif len(loc) > 1:
             msg = f"In {humanize_location(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
-            msg = f"In field {loc[0]} {error_suffix}"
+            msg = f"In {field_name} {loc[0]} {error_suffix}"
         errors.append(msg)
     return errors
-
-
