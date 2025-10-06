@@ -103,6 +103,8 @@ class DMSTableReader:
         nodes = cast(str, TableDMS.model_fields["nodes"].validation_alias)
 
     class PropertyColumn:
+        view = cast(str, DMSProperty.model_fields["view"].validation_alias)
+        view_property = cast(str, DMSProperty.model_fields["view_property"].validation_alias)
         connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
         index = cast(str, DMSProperty.model_fields["index"].validation_alias)
         constraint = cast(str, DMSProperty.model_fields["constraint"].validation_alias)
@@ -112,6 +114,7 @@ class DMSTableReader:
 
     class ViewColumn:
         view = cast(str, DMSView.model_fields["view"].validation_alias)
+        filter = cast(str, DMSView.model_fields["filter"].validation_alias)
 
     def __init__(self, default_space: str, default_version: str, source: TableSource) -> None:
         self.default_space = default_space
@@ -205,8 +208,19 @@ class DMSTableReader:
                 continue
             view_props[view_entity][prop_id] = prop_list[0].view_property
             if len(prop_list) > 1:
-                # Todo Check for duplicate definitions.
-                raise NotImplementedError()
+                rows_str = humanize_collection(
+                    [self.source.adjust_row_number(self.Sheet.properties, p.row_no) for p in prop_list]
+                )
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {self.source.location((self.Sheet.properties,))} the combination of columns "
+                            f"{self.PropertyColumn.view!r} and {self.PropertyColumn.view_property!r} must be unique. "
+                            f"Duplicated entries for view '{view_entity!s}' and "
+                            f"property '{prop_id!s}' found in rows {rows_str}."
+                        )
+                    )
+                )
 
         return view_props
 
@@ -526,11 +540,11 @@ class DMSTableReader:
                     self.errors.append(
                         ModelSyntaxError(
                             message=(
-                                f"Invalid filter for view '{view.view}' in row {row_no + 1} of the views table: {e}"
+                                f"In {self.source.location((self.Sheet.views, row_no, self.ViewColumn.filter))} "
+                                f"must be valid json. Got error {e!s}"
                             )
                         )
                     )
-                    continue
             view_request = self._validate_obj(
                 ViewRequest,
                 dict(
