@@ -11,6 +11,8 @@ from cognite.neat._data_model.models.dms import (
     ContainerRequest,
     DataModelRequest,
     DirectNodeRelation,
+    EnumProperty,
+    EnumValue,
     Float32Property,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
@@ -105,6 +107,23 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Constraint": None,
                 },
                 {
+                    "View": "CogniteFile",
+                    "View Property": "category",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": None,
+                    "Value Type": "enum(collection=CogniteFile.category,unknownValue=other)",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": "CogniteFile",
+                    "Container Property": "category",
+                    "Container Property Name": "category_405",
+                    "Index": None,
+                    "Constraint": None,
+                },
+                {
                     "View": "CogniteAsset",
                     "View Property": "files",
                     "Name": None,
@@ -191,6 +210,31 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Used For": "edge",
                 },
             ],
+            "Enum": [
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "blueprint",
+                    "Name": "Blueprint",
+                    "Description": "A technical drawing",
+                },
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "document",
+                    "Name": None,
+                    "Description": None,
+                },
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "other",
+                    "Name": None,
+                    "Description": None,
+                },
+            ],
+            "nodes": [
+                {
+                    "node": "diagramAnnotation",
+                }
+            ],
         },
         RequestSchema(
             dataModel=DataModelRequest(
@@ -267,6 +311,12 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             direction="outwards",
                             type=NodeReference(space="cdf_cdm", externalId="diagramAnnotation"),
                         ),
+                        "category": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", externalId="CogniteFile"),
+                            containerPropertyIdentifier="category",
+                        ),
                     },
                 ),
                 ViewRequest(
@@ -326,7 +376,23 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             description=None,
                             name=None,
                             type=DirectNodeRelation(maxListSize=1200, list=True),
-                        )
+                        ),
+                        "category": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name="category_405",
+                            type=EnumProperty(
+                                unknownValue="other",
+                                values={
+                                    "blueprint": EnumValue(name="Blueprint", description="A technical drawing"),
+                                    "document": EnumValue(name="Document"),
+                                    "other": EnumValue(name="Other"),
+                                },
+                            ),
+                        ),
                     },
                 ),
                 ContainerRequest(
@@ -346,6 +412,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     },
                 ),
             ],
+            nodeTypes=[NodeReference(space="cdf_cdm", externalId="diagramAnnotation")],
         ),
         id="Full example",
     )
