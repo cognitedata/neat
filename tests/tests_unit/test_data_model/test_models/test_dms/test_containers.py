@@ -2,14 +2,22 @@ from collections.abc import Callable
 from typing import Any
 
 import hypothesis.strategies as st
+import pytest
 from hypothesis import given, settings
 
 from cognite.neat._data_model.models.dms import (
+    BtreeIndex,
+    ConstraintAdapter,
+    ConstraintDefinition,
     ContainerRequest,
     ContainerResponse,
     DataTypeAdapter,
     EnumProperty,
+    IndexAdapter,
+    IndexDefinition,
+    InvertedIndex,
     PropertyTypeDefinition,
+    UniquenessConstraintDefinition,
 )
 from cognite.neat._data_model.models.dms._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
@@ -126,3 +134,83 @@ class TestDataTypeAdapter:
         assert isinstance(validated, PropertyTypeDefinition)
 
         assert validated.model_dump(exclude_unset=True, by_alias=True) == data_type
+
+
+class TestConstraint:
+    @pytest.mark.parametrize(
+        "data,expected_cls,expected_dump",
+        [
+            pytest.param(
+                {
+                    "constraintType": "uniqueness",
+                    "properties": ["validProperty1", "validProperty_2"],
+                    "bySpace": "True",
+                },
+                UniquenessConstraintDefinition,
+                {
+                    "constraintType": "uniqueness",
+                    "properties": ["validProperty1", "validProperty_2"],
+                    "bySpace": True,
+                },
+                id="Uniqueness constraint with bySpace as string",
+            ),
+            pytest.param(
+                {
+                    "constraintType": "uniqueness",
+                    "properties": ["validProperty1"],
+                },
+                UniquenessConstraintDefinition,
+                {
+                    "bySpace": None,
+                    "constraintType": "uniqueness",
+                    "properties": ["validProperty1"],
+                },
+                id="Uniqueness constraint without bySpace (defaults to False)",
+            ),
+        ],
+    )
+    def test_parse_constraint(
+        self, data: dict[str, Any], expected_cls: type[ConstraintDefinition], expected_dump: dict[str, Any]
+    ) -> None:
+        validated = ConstraintAdapter.validate_python(data)
+
+        assert isinstance(validated, expected_cls)
+        assert validated.model_dump(by_alias=True) == expected_dump
+
+
+class TestIndex:
+    @pytest.mark.parametrize(
+        "data,expected_cls,expected_dump",
+        [
+            pytest.param(
+                {
+                    "indexType": "inverted",
+                    "properties": ["validProperty1", "validProperty_2"],
+                },
+                InvertedIndex,
+                {
+                    "indexType": "inverted",
+                    "properties": ["validProperty1", "validProperty_2"],
+                },
+                id="Inverted index with multiple properties",
+            ),
+            pytest.param(
+                {"indexType": "btree", "properties": ["validProperty1"], "cursorable": None, "bySpace": "False"},
+                BtreeIndex,
+                {
+                    "indexType": "btree",
+                    "properties": ["validProperty1"],
+                    "cursorable": None,
+                    "bySpace": False,
+                },
+                id="Btree index with bySpace as string and cursorable as None",
+            ),
+        ],
+    )
+    def test_parse_index(
+        self, data: dict[str, Any], expected_cls: type[IndexDefinition], expected_dump: dict[str, Any]
+    ) -> None:
+        validated = IndexAdapter.validate_python(data)
+
+        assert isinstance(validated, expected_cls)
+        assert validated.model_dump(by_alias=True) == expected_dump
