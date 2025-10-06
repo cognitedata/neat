@@ -82,6 +82,7 @@ def reverse_direct_property(
         description=draw(st.text(max_size=1024)),
         source=draw(view_reference()),
         through=draw(container_direct_reference()),
+        targetList=draw(st.booleans()),
     )
 
 
