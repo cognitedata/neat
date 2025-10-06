@@ -1,12 +1,8 @@
-from pyparsing import ABC, abstractmethod
-
-from cognite.neat._utils.http_client._client import HTTPClient
+from abc import ABC, abstractmethod
 
 
 class State(ABC):
-    def __init__(self, client: HTTPClient | None = None) -> None:
-        self._client = client
-
+    def __init__(self) -> None:
         # this will be reference to the actual store in the session
         # used to store data models and instances, here only as a placeholder
         self._store = None

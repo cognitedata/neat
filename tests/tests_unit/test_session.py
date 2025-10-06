@@ -2,11 +2,10 @@ from cognite.neat._session._session import NeatSession
 from cognite.neat._session._state_machine import EmptyState
 
 
-def test_init_with_client():
+def test_init_with_client() -> None:
     session = NeatSession()
 
     assert isinstance(session.state, EmptyState)
-    assert session.state._client is None
 
     workflow_steps = [
         ("read_instances", "📊 Load instance data"),
@@ -23,7 +22,7 @@ def test_init_with_client():
     ]
 
     for event, description in workflow_steps:
-        success = session.execute_event(event)
+        success = session._execute_event(event)
         if "❌" in description:
             assert not success, f"Event '{event}' should be forbidden."
         else:

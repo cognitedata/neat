@@ -1,5 +1,3 @@
-from cognite.neat._utils.http_client._client import HTTPClient
-
 from ._state_machine import EmptyState, ForbiddenState, State
 
 
@@ -9,10 +7,10 @@ class NeatSession:
     the state machine for data model and instance operations.
     """
 
-    def __init__(self, client: HTTPClient | None = None):
-        self.state: State = EmptyState(client=client)
+    def __init__(self) -> None:
+        self.state: State = EmptyState()
 
-    def execute_event(self, event: str) -> bool:
+    def _execute_event(self, event: str) -> bool:
         """Place holder function for executing events and transitioning states.
         It will be modified to include actual logic as we progress with v1 of neat.
 
