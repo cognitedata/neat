@@ -286,3 +286,26 @@ class TestEntityParser:
     def test_parse_entities(self, entity_str: str, expected_entities: list[ParsedEntity] | None) -> None:
         parsed_entities = parse_entities(entity_str)
         assert parsed_entities == expected_entities
+
+    @pytest.mark.parametrize(
+        "entity, expected_str",
+        [
+            pytest.param(
+                ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
+                "asset:MyAsset(capacity=100,type=storage)",
+                id="Entity with properties",
+            ),
+            pytest.param(
+                ParsedEntity("", "MyAsset", {}),
+                "MyAsset",
+                id="Entity without prefix and properties",
+            ),
+            pytest.param(
+                ParsedEntity("asset", "MyAsset", {}),
+                "asset:MyAsset",
+                id="Entity with prefix but no properties",
+            ),
+        ],
+    )
+    def test_entity_str_representation(self, entity: ParsedEntity, expected_str: str) -> None:
+        assert str(entity) == expected_str
