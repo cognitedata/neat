@@ -24,6 +24,7 @@ from cognite.neat._data_model.models.dms import (
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 from cognite.neat._exceptions import ModelImportError
 from cognite.neat._issues import ModelSyntaxError
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.validation import humanize_validation_error
 
 from .data_classes import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
@@ -105,6 +106,12 @@ class DMSTableReader:
         connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
         index = cast(str, DMSProperty.model_fields["index"].validation_alias)
         constraint = cast(str, DMSProperty.model_fields["constraint"].validation_alias)
+
+    class ContainerColumn:
+        container = cast(str, DMSContainer.model_fields["container"].validation_alias)
+
+    class ViewColumn:
+        view = cast(str, DMSView.model_fields["view"].validation_alias)
 
     def __init__(self, default_space: str, default_version: str, source: TableSource) -> None:
         self.default_space = default_space
@@ -213,12 +220,16 @@ class DMSTableReader:
                 indices[container_entity][index_id] = index
                 continue
             if missing_order := [idx for idx in index_list if idx.order is None]:
+                row_str = humanize_collection(
+                    [self.source.adjust_row_number(self.Sheet.properties, idx.row_no) for idx in missing_order]
+                )
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"Index '{index_id}' on container '{container_entity}' is defined on multiple properties "
-                            f"but some of them are missing the 'order' attribute (rows "
-                            f"{', '.join(str(idx.row_no + 1) for idx in missing_order)} in the properties table)."
+                            f"In table {self.Sheet.properties!r} column {self.PropertyColumn.index!r}: "
+                            f"the index {index_id!r} on container {container_entity!s} is defined on multiple "
+                            f"properties. This requires the 'order' attribute to be set. It is missing in rows "
+                            f"{row_str}."
                         )
                     )
                 )
@@ -237,12 +248,16 @@ class DMSTableReader:
                 constraints[container_entity][constraint_id] = constraint
                 continue
             if missing_order := [c for c in constraint_list if c.order is None]:
+                row_str = humanize_collection(
+                    [self.source.adjust_row_number(self.Sheet.properties, c.row_no) for c in missing_order]
+                )
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"Constraint '{constraint_id}' on container '{container_entity}' is defined on multiple "
-                            f"properties but some of them are missing the 'order' attribute (rows "
-                            f"{', '.join(str(c.row_no + 1) for c in missing_order)} in the properties table)."
+                            f"In table {self.Sheet.properties!r} column {self.PropertyColumn.constraint!r}: "
+                            f"the uniqueness constraint {constraint_id!r} on container {container_entity!s} is defined "
+                            f"on multiple properties. This requires the 'order' attribute to be set. It is missing in "
+                            f"rows {row_str}."
                         )
                     )
                 )
@@ -483,11 +498,13 @@ class DMSTableReader:
                 rows_by_seen[container.container] = [row_no]
         for entity, rows in rows_by_seen.items():
             if len(rows) > 1:
+                rows_str = humanize_collection([self.source.adjust_row_number(self.Sheet.containers, r) for r in rows])
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"Duplicate container '{entity}' found in rows "
-                            f"{', '.join(str(r + 1) for r in rows)} of the containers table."
+                            f"In {self.source.location((self.Sheet.containers,))} the values in "
+                            f"column {self.ContainerColumn.container!r} must be unique. "
+                            f"Duplicated entries for container '{entity!s}' found in rows {rows_str}."
                         )
                     )
                 )
@@ -535,11 +552,13 @@ class DMSTableReader:
                 rows_by_seen[view.view] = [row_no]
         for entity, rows in rows_by_seen.items():
             if len(rows) > 1:
+                rows_str = humanize_collection([self.source.adjust_row_number(self.Sheet.views, r) for r in rows])
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"Duplicate view '{entity!s}' found in rows "
-                            f"{', '.join(str(r + 1) for r in rows)} of the views table."
+                            f"In {self.source.location((self.Sheet.views,))} the values in "
+                            f"column {self.ViewColumn.view!r} must be unique. "
+                            f"Duplicated entries for view '{entity!s}' found in rows {rows_str}."
                         )
                     )
                 )

@@ -53,11 +53,8 @@ class TableSource:
         if len(path) >= 3 and isinstance(path[2], str):
             column = path[2]
             column = self.field_to_column(table_id, column)
-        table_read = table_id and self.table_read.get(table_id)
-        if table_read and isinstance(row_no, int):
-            row_no = table_read.adjusted_row_number(row_no)
-        elif isinstance(row_no, int):
-            row_no = row_no + 1  # Convert to 1-indexed if no table read info is available
+        if isinstance(row_no, int):
+            row_no = self.adjust_row_number(table_id, row_no)
         location_parts = []
         if table_id is not None:
             location_parts.append(f"table {table_id!r}")
@@ -69,6 +66,12 @@ class TableSource:
             location_parts.append("-> " + ".".join(str(p) for p in path[3:]))
 
         return " ".join(location_parts)
+
+    def adjust_row_number(self, table_id: str | None, row_no: int) -> int:
+        table_read = table_id and self.table_read.get(table_id)
+        if table_read:
+            return table_read.adjusted_row_number(row_no)
+        return row_no + 1  # Convert to 1-indexed if no table read info is available
 
     @classmethod
     def field_to_column(cls, table_id: str | None, field_: str) -> str:
