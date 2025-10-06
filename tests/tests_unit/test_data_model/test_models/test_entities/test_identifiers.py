@@ -5,7 +5,7 @@ from cognite.neat._data_model.models.entities import URI, NameSpace
 
 
 class TestNameSpace:
-    def test_valid_namespace_creation(self):
+    def test_valid_namespace_creation(self) -> None:
         """Test creating a NameSpace with valid URIs."""
         valid_namespaces = [
             "http://example.com/",
@@ -19,7 +19,7 @@ class TestNameSpace:
             assert str(ns) == namespace_str
             assert ns.root == namespace_str
 
-    def test_invalid_namespace_creation(self):
+    def test_invalid_namespace_creation(self) -> None:
         """Test that invalid URIs raise ValueError."""
         invalid_namespaces = [
             "not-a-uri",
@@ -34,12 +34,12 @@ class TestNameSpace:
             with pytest.raises(ValueError, match="Invalid Namespace"):
                 NameSpace(invalid_ns)
 
-    def test_namespace_repr(self):
+    def test_namespace_repr(self) -> None:
         """Test string representation of NameSpace."""
         ns = NameSpace("http://example.com/")
         assert repr(ns) == "NameSpace('http://example.com/')"
 
-    def test_term_method(self):
+    def test_term_method(self) -> None:
         """Test creating terms using the term method."""
         ns = NameSpace("http://example.com/vocab#")
 
@@ -50,7 +50,7 @@ class TestNameSpace:
         term = ns.term("hasName")
         assert str(term) == "http://example.com/vocab#hasName"
 
-    def test_getitem_method(self):
+    def test_getitem_method(self) -> None:
         """Test creating terms using bracket notation."""
         ns = NameSpace("http://example.com/vocab#")
 
@@ -61,7 +61,7 @@ class TestNameSpace:
         term = ns["hasAge"]
         assert str(term) == "http://example.com/vocab#hasAge"
 
-    def test_getattr_method(self):
+    def test_getattr_method(self) -> None:
         """Test creating terms using attribute access."""
         ns = NameSpace("http://example.com/vocab#")
 
@@ -72,14 +72,14 @@ class TestNameSpace:
         term = ns.hasName
         assert str(term) == "http://example.com/vocab#hasName"
 
-    def test_getattr_special_names(self):
+    def test_getattr_special_names(self) -> None:
         """Test that special Python names raise AttributeError."""
         ns = NameSpace("http://example.com/vocab#")
 
         with pytest.raises(AttributeError):
             _ = ns.__special__
 
-    def test_as_rdflib_namespace(self):
+    def test_as_rdflib_namespace(self) -> None:
         """Test conversion to rdflib Namespace."""
         pytest.importorskip("rdflib")
 
@@ -101,7 +101,7 @@ class TestNameSpace:
             "kebab-case",
         ],
     )
-    def test_various_term_names(self, term_name: str):
+    def test_various_term_names(self, term_name: str) -> None:
         """Test creating terms with various naming conventions."""
         ns = NameSpace("http://example.com/vocab#")
 
@@ -117,7 +117,7 @@ class TestNameSpace:
 
 
 class TestURI:
-    def test_valid_uri_creation(self):
+    def test_valid_uri_creation(self) -> None:
         """Test creating URI with valid URIs."""
         valid_uris = [
             "http://example.com",
@@ -131,7 +131,7 @@ class TestURI:
             assert str(uri) == uri_str
             assert uri.root == uri_str
 
-    def test_invalid_uri_creation(self):
+    def test_invalid_uri_creation(self) -> None:
         """Test that invalid URIs raise ValueError."""
         invalid_uris = [
             "not-a-uri",
@@ -148,12 +148,12 @@ class TestURI:
             with pytest.raises(ValueError, match="Invalid URI"):
                 URI(invalid_uri)
 
-    def test_uri_repr(self):
+    def test_uri_repr(self) -> None:
         """Test string representation of URI."""
         uri = URI("http://example.com/Person")
         assert repr(uri) == "URI('http://example.com/Person')"
 
-    def test_as_rdflib_uriref(self):
+    def test_as_rdflib_uriref(self) -> None:
         """Test conversion to rdflib URIRef."""
         pytest.importorskip("rdflib")
 
@@ -172,7 +172,7 @@ class TestURI:
             "http://xmlns.com/foaf/0.1/name",
         ],
     )
-    def test_various_uri_formats(self, uri_str: str):
+    def test_various_uri_formats(self, uri_str: str) -> None:
         """Test creating URIs with various formats."""
         uri = URI(uri_str)
         assert str(uri) == uri_str

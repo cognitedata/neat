@@ -2,7 +2,7 @@ from cognite.neat._data_model._constants import XML_SCHEMA_NAMESPACE
 from cognite.neat._data_model.models.entities._data_types import Enum, EnumCollectionEntity, Long, UnitEntity
 
 
-def test_long():
+def test_long() -> None:
     long_type = Long(unit=UnitEntity(prefix="qudt", suffix="meter"))
     assert long_type.suffix == "long"
     assert long_type.prefix == "xsd"
@@ -11,7 +11,7 @@ def test_long():
     assert str(long_type) == "xsd:long(unit=qudt:meter)"
 
 
-def test_enum():
+def test_enum() -> None:
     collection = EnumCollectionEntity(prefix="cdf", suffix="assetTypes")
     enum_type = Enum(collection=collection, unknown_value="pump")
     assert enum_type.suffix == "enum"
