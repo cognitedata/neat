@@ -368,8 +368,8 @@ class DMSTableReader:
     def read_core_view_property(self, prop: DMSProperty) -> dict[str, Any]:
         return dict(
             connectionType="primary_property",
-            name=prop.container_property_name,
-            description=prop.container_property_description,
+            name=prop.name,
+            description=prop.description,
             container=self._create_container_ref(prop.container),
             containerPropertyIdentifier=prop.container_property,
             source=None if prop.connection is None else self._create_view_ref(prop.value_type),
