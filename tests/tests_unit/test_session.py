@@ -1,5 +1,10 @@
 from cognite.neat._session._session import NeatSession
-from cognite.neat._session._state_machine import EmptyState
+from cognite.neat._session._state_machine import (
+    EmptyState,
+    InstancesConceptualPhysicalState,
+    InstancesConceptualState,
+    InstancesState,
+)
 
 
 def test_init_with_client() -> None:
@@ -8,22 +13,23 @@ def test_init_with_client() -> None:
     assert isinstance(session.state, EmptyState)
 
     workflow_steps = [
-        ("read_instances", "📊 Load instance data"),
-        ("transform_instances", "🔄 transform instances"),
-        ("infer_conceptual", "🧠 Infer conceptual model from instances"),
-        ("transform_conceptual", "✏️  Refine conceptual model"),
-        ("convert_physical", "🏗️  Convert to physical model"),
-        ("write_physical", "💾 Export physical model"),
-        ("write_conceptual", "💾 Export conceptual model"),
-        ("write_instances", "💾 Export instances"),
+        ("read_instances", InstancesState, "📊 Load instance data"),
+        ("transform_instances", InstancesState, "🔄 transform instances"),
+        ("infer_conceptual", InstancesConceptualState, "🧠 Infer conceptual model from instances"),
+        ("transform_conceptual", InstancesConceptualState, "✏️  Refine conceptual model"),
+        ("convert_physical", InstancesConceptualPhysicalState, "🏗️  Convert to physical model"),
+        ("write_physical", InstancesConceptualPhysicalState, "💾 Export physical model"),
+        ("write_conceptual", InstancesConceptualPhysicalState, "💾 Export conceptual model"),
+        ("write_instances", InstancesConceptualPhysicalState, "💾 Export instances"),
         # Now try some forbidden operations
-        ("read_instances", "❌ Try to read more instances"),
-        ("infer_conceptual", "❌ Try to infer again"),
+        ("read_instances", InstancesConceptualPhysicalState, "❌ Try to read more instances"),
+        ("infer_conceptual", InstancesConceptualPhysicalState, "❌ Try to infer again"),
     ]
 
-    for event, description in workflow_steps:
+    for event, state, description in workflow_steps:
         success = session._execute_event(event)
         if "❌" in description:
             assert not success, f"Event '{event}' should be forbidden."
         else:
             assert success, f"Event '{event}' should be allowed."
+            assert isinstance(session.state, state)
