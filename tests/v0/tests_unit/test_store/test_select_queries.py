@@ -1,4 +1,5 @@
 from rdflib import RDF, Literal, Namespace, URIRef
+from rdflib.namespace import XSD
 
 from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.v0.core._store import NeatInstanceStore
@@ -57,9 +58,11 @@ def test_get_triples_to_delete() -> None:
     result = list(store.queries.select.get_triples_to_delete(old_graph, new_graph))
 
     assert len(result) == 1
-    assert result[0][0] == example.subject3
-    assert result[0][1] == example.pred3
-    assert str(result[0][2]) == "value3"
+    assert tuple(result[0]) == (
+        example.subject3,
+        example.pred3,
+        Literal("value3", datatype=XSD.string),
+    )
 
 
 def test_get_triples_to_add() -> None:
@@ -94,6 +97,8 @@ def test_get_triples_to_add() -> None:
     result = list(store.queries.select.get_triples_to_add(old_graph, new_graph))
 
     assert len(result) == 1
-    assert result[0][0] == example.subject3
-    assert result[0][1] == example.pred3
-    assert str(result[0][2]) == "value3"
+    assert tuple(result[0]) == (
+        example.subject3,
+        example.pred3,
+        Literal("value3", datatype=XSD.string),
+    )
