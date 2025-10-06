@@ -451,7 +451,9 @@ class SelectQueries(BaseQuery):
             else:
                 yield instance_id, str(space)
 
-    def _get_graph_diff(self, source_graph: URIRef, target_graph: URIRef) -> list[ResultRow]:
+    def _get_graph_diff(
+        self, source_graph: URIRef, target_graph: URIRef
+    ) -> Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]]:
         query = f"""
         SELECT ?s ?p ?o
         WHERE {{
@@ -461,9 +463,11 @@ class SelectQueries(BaseQuery):
         }}
         }}
         """
-        return cast(list[ResultRow], list(self.dataset.query(query)))
+        return cast(Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]], self.dataset.query(query))
 
-    def get_triples_to_delete(self, old_graph: URIRef, new_graph: URIRef) -> list[ResultRow]:
+    def get_triples_to_delete(
+        self, old_graph: URIRef, new_graph: URIRef
+    ) -> Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]]:
         """Find triples that exist in old graph but not in new graph.
 
         Args:
@@ -475,7 +479,9 @@ class SelectQueries(BaseQuery):
         """
         return self._get_graph_diff(old_graph, new_graph)
 
-    def get_triples_to_add(self, old_graph: URIRef, new_graph: URIRef) -> list[ResultRow]:
+    def get_triples_to_add(
+        self, old_graph: URIRef, new_graph: URIRef
+    ) -> Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]]:
         """Find triples that exist in new graph but not in old graph.
 
         Args:
