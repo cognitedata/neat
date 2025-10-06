@@ -139,6 +139,10 @@ class SingleReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
     connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
 
 
+class MultiReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
+    connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
+
+
 class SingleReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[SingleReverseDirectRelationPropertyRequest]
 ):
@@ -149,16 +153,6 @@ class SingleReverseDirectRelationPropertyResponse(
 
     def as_request(self) -> SingleReverseDirectRelationPropertyRequest:
         return SingleReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
-
-
-class MultiReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
-    connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
-    # The API support through as either ViewDirectReference or ContainerDirectReference. However, in Neat
-    # we only use ContainerDirectReference. This is for simplicity and it improves performance as the server
-    # does not have to resolve the view to a container first.
-    through: ContainerDirectReference = Field(
-        description="The view of the node containing the direct relation property."
-    )
 
 
 class MultiReverseDirectRelationPropertyResponse(
