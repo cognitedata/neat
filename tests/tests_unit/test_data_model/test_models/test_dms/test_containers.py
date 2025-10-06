@@ -7,22 +7,56 @@ from hypothesis import given, settings
 from cognite.neat._data_model.models.dms import (
     ContainerRequest,
     ContainerResponse,
+    DataTypeAdapter,
     EnumProperty,
     PropertyTypeDefinition,
 )
 from cognite.neat._data_model.models.dms._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
+    ENUM_VALUE_IDENTIFIER_PATTERN,
     SPACE_FORMAT_PATTERN,
 )
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
-AVAILABLE_PROPERTY_TYPES = [
+DATA_TYPE_CLS_BY_TYPE = {
     # Skipping enum as it requires special handling
-    subclass.model_fields["type"].default
+    subclass.model_fields["type"].default: subclass
     for subclass in get_concrete_subclasses(PropertyTypeDefinition)
     if subclass is not EnumProperty
-]
+}
+
+
+@st.composite
+def data_type_strategy(draw: Callable) -> dict[str, Any]:
+    # Generate property keys matching the pattern
+    type_ = draw(st.sampled_from(list(DATA_TYPE_CLS_BY_TYPE.keys())))
+    if type_ == "enum":
+        enum_values = draw(
+            st.lists(
+                st.from_regex(ENUM_VALUE_IDENTIFIER_PATTERN, fullmatch=True),
+                min_size=1,
+                max_size=12,
+                unique=True,
+            )
+        )
+        return {
+            "type": type_,
+            "values": {
+                key: {
+                    "name": draw(st.one_of(st.none(), st.text(min_size=1, max_size=255))),
+                    "description": draw(st.one_of(st.none(), st.text(max_size=1024))),
+                }
+                for key in enum_values
+            },
+            "unknownValue": draw(st.one_of(st.none(), st.text(min_size=1, max_size=255))),
+        }
+    else:
+        return {
+            "type": type_,
+            "list": draw(st.one_of(st.none(), st.booleans())),
+            "maxListSize": draw(st.one_of(st.none(), st.integers(min_value=1, max_value=2000))),
+        }
 
 
 @st.composite
@@ -36,7 +70,7 @@ def container_property_definition_strategy(draw: Callable) -> dict[str, Any]:
         ),
         description=draw(st.one_of(st.none(), st.text(max_size=1024))),
         name=draw(st.one_of(st.none(), st.text(max_size=255))),
-        type={"type": draw(st.sampled_from(AVAILABLE_PROPERTY_TYPES))},
+        type=draw(data_type_strategy()),
     )
 
 
@@ -81,3 +115,14 @@ class TestContainerResponse:
         for keys in response_only_keys:
             response_dumped.pop(keys, None)
         assert dumped == response_dumped
+
+
+class TestDataTypeAdapter:
+    @settings(max_examples=10)
+    @given(data_type_strategy())
+    def test_enum_values(self, data_type: dict[str, Any]) -> None:
+        validated = DataTypeAdapter.validate_python(data_type)
+
+        assert isinstance(validated, PropertyTypeDefinition)
+
+        assert validated.model_dump(exclude_unset=True, by_alias=True) == data_type
