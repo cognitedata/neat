@@ -39,7 +39,7 @@ class DMSTableImporter(DMSImporter):
             str(field_.validation_alias or table_id) for table_id, field_ in TableDMS.model_fields.items()
         }
         if unused_tables:
-            # Todo Make this a warning instead? Or simply silently ignore?
+            # Todo Make this a warning instead? Or simply silently ignore? Silent ignote, case insensitive.
             errors.append(
                 ModelSyntaxError(
                     message=f"In {self._source.source} unused tables found: {humanize_collection(unused_tables)}"
@@ -71,7 +71,7 @@ class DMSTableImporter(DMSImporter):
                 default_version = str(meta.value)
                 missing.remove("version")
         if missing:
-            error = ModelSyntaxError(message=f"In Metadata missing required fields: {humanize_collection(missing)}")
+            error = ModelSyntaxError(message=f"In Metadata missing required values: {humanize_collection(missing)}")
             # If space or version is missing, we cannot continue parsing the model as these are used as defaults.
             raise ModelImportError([error]) from None
         return str(default_space), str(default_version)
