@@ -230,9 +230,9 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                 },
             ],
-            "nodes": [
+            "Nodes": [
                 {
-                    "node": "diagramAnnotation",
+                    "Node": "diagramAnnotation",
                 }
             ],
         },
@@ -388,8 +388,8 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                                 unknownValue="other",
                                 values={
                                     "blueprint": EnumValue(name="Blueprint", description="A technical drawing"),
-                                    "document": EnumValue(name="Document"),
-                                    "other": EnumValue(name="Other"),
+                                    "document": EnumValue(),
+                                    "other": EnumValue(),
                                 },
                             ),
                         ),

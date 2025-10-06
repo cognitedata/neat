@@ -26,7 +26,7 @@ from cognite.neat._exceptions import ModelImportError
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.validation import humanize_validation_error
 
-from .data_classes import DMSContainer, DMSNode, DMSProperty, DMSView, TableDMS
+from .data_classes import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
 from .source import TableSource
 
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
@@ -115,7 +115,8 @@ class DMSTableReader:
     def read_tables(self, tables: TableDMS) -> RequestSchema:
         space_request = self.read_space(self.default_space)
         node_types = self.read_nodes(tables.nodes)
-        read = self.read_properties(tables.properties)
+        enum_collections = self.read_enum_collections(tables.enum)
+        read = self.read_properties(tables.properties, enum_collections)
         processed = self.process_properties(read)
         containers = self.read_containers(tables.containers, processed)
         views, valid_view_entities = self.read_views(tables.views, processed.view)
@@ -124,7 +125,7 @@ class DMSTableReader:
         if self.errors:
             raise ModelImportError(self.errors) from None
         return RequestSchema(
-            dataModel=data_model, views=views, containers=containers, spaces=[space_request], node_types=node_types
+            dataModel=data_model, views=views, containers=containers, spaces=[space_request], nodeTypes=node_types
         )
 
     def read_space(self, space: str) -> SpaceRequest:
@@ -143,13 +144,25 @@ class DMSTableReader:
                 node_refs.append(parsed)
         return node_refs
 
-    def read_properties(self, properties: list[DMSProperty]) -> ReadProperties:
+    @staticmethod
+    def read_enum_collections(enum_rows: list[DMSEnum]) -> dict[str, dict[str, Any]]:
+        enum_collections: dict[str, dict[str, Any]] = defaultdict(dict)
+        for row in enum_rows:
+            enum_collections[row.collection][row.value] = {
+                "name": row.name,
+                "description": row.description,
+            }
+        return enum_collections
+
+    def read_properties(
+        self, properties: list[DMSProperty], enum_collections: dict[str, dict[str, Any]]
+    ) -> ReadProperties:
         read = ReadProperties()
         for row_no, prop in enumerate(properties):
             self._process_view_property(prop, read, row_no)
             if prop.container is None or prop.container_property is None:
                 continue
-            self._process_container_property(prop, read, row_no)
+            self._process_container_property(prop, read, enum_collections, row_no)
             self._process_index(prop, read, row_no)
             self._process_constraint(prop, read, row_no)
         return read
@@ -250,9 +263,11 @@ class DMSTableReader:
             )
         return None
 
-    def _process_container_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
+    def _process_container_property(
+        self, prop: DMSProperty, read: ReadProperties, enum_collections: dict[str, dict[str, Any]], row_no: int
+    ) -> None:
         loc = (self.Sheet.properties, row_no)
-        data = self.read_container_property(prop, loc=loc)
+        data = self.read_container_property(prop, enum_collections, loc=loc)
         container_prop = self._validate_obj(ContainerPropertyDefinition, data, loc)
         if container_prop is not None and prop.container and prop.container_property:
             read.container[(prop.container, prop.container_property)].append(
@@ -401,8 +416,10 @@ class DMSTableReader:
             },
         )
 
-    def read_container_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
-        data_type = self._read_data_type(prop, loc)
+    def read_container_property(
+        self, prop: DMSProperty, enum_collections: dict[str, dict[str, Any]], loc: tuple[str | int, ...]
+    ) -> dict[str, Any]:
+        data_type = self._read_data_type(prop, enum_collections, loc)
         return dict(
             immutable=prop.immutable,
             nullable=prop.min_count == 0 or prop.min_count is None,
@@ -413,7 +430,9 @@ class DMSTableReader:
             type=data_type,
         )
 
-    def _read_data_type(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
+    def _read_data_type(
+        self, prop: DMSProperty, enum_collections: dict[str, dict[str, Any]], loc: tuple[str | int, ...]
+    ) -> dict[str, Any]:
         # Implementation to read the container property type from DMSProperty
         is_list = None if prop.max_count is None else prop.max_count > 1
         max_list_size: int | None = None
@@ -431,6 +450,8 @@ class DMSTableReader:
             args["container"] = self._create_container_ref_unparsed(
                 prop.connection.properties["container"], (*loc, self.PropertyColumn.connection, "container")
             )
+        if args["type"] == "enum" and "collection" in prop.value_type.properties:
+            args["values"] = enum_collections.get(prop.value_type.properties["collection"], {})
         return args
 
     def read_containers(

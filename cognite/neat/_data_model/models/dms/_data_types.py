@@ -110,6 +110,7 @@ class DirectNodeRelation(ListablePropertyTypeDefinition):
 
 class EnumValue(BaseModelObject):
     name: str | None = Field(
+        default=None,
         max_length=255,
         description="The name of the enum value.",
     )
