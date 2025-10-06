@@ -106,6 +106,17 @@ class DMSTableReader:
         view = cast(str, DMSProperty.model_fields["view"].validation_alias)
         view_property = cast(str, DMSProperty.model_fields["view_property"].validation_alias)
         connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
+        value_type = cast(str, DMSProperty.model_fields["value_type"].validation_alias)
+        min_count = cast(str, DMSProperty.model_fields["min_count"].validation_alias)
+        max_count = cast(str, DMSProperty.model_fields["max_count"].validation_alias)
+        default = cast(str, DMSProperty.model_fields["default"].validation_alias)
+        auto_increment = cast(str, DMSProperty.model_fields["auto_increment"].validation_alias)
+        container = cast(str, DMSProperty.model_fields["container"].validation_alias)
+        container_property = cast(str, DMSProperty.model_fields["container_property"].validation_alias)
+        container_property_name = cast(str, DMSProperty.model_fields["container_property_name"].validation_alias)
+        container_property_description = cast(
+            str, DMSProperty.model_fields["container_property_description"].validation_alias
+        )
         index = cast(str, DMSProperty.model_fields["index"].validation_alias)
         constraint = cast(str, DMSProperty.model_fields["constraint"].validation_alias)
 
@@ -194,11 +205,46 @@ class DMSTableReader:
                 # Should not happen
                 continue
             container_props[container_entity][prop_id] = prop_list[0].container_property
-            if len(prop_list) > 1:
-                # Todo; Check that the definitions are identical.
-                raise NotImplementedError()
-
+            if len(prop_list) > 1 and self._are_definitions_different(prop_list):
+                rows_str = humanize_collection(
+                    [self.source.adjust_row_number(self.Sheet.properties, p.row_no) for p in prop_list]
+                )
+                container_columns_str = humanize_collection(
+                    [
+                        self.PropertyColumn.connection,
+                        self.PropertyColumn.value_type,
+                        self.PropertyColumn.min_count,
+                        self.PropertyColumn.max_count,
+                        self.PropertyColumn.default,
+                        self.PropertyColumn.auto_increment,
+                        self.PropertyColumn.container_property_name,
+                        self.PropertyColumn.container_property_description,
+                        self.PropertyColumn.index,
+                        self.PropertyColumn.constraint,
+                    ]
+                )
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {self.source.location((self.Sheet.properties,))} "
+                            f"when the column {self.PropertyColumn.container!r} and "
+                            f"{self.PropertyColumn.container_property!r} are the same, "
+                            f"all the container columns ({container_columns_str}) must be the same. "
+                            f"Inconsistent definitions for container '{container_entity!s} "
+                            f"and {prop_id!r}' found in rows {rows_str}."
+                        )
+                    )
+                )
         return container_props
+
+    def _are_definitions_different(self, prop_list: list[ReadContainerProperty]) -> bool:
+        if len(prop_list) < 2:
+            return False
+        first_def = prop_list[0].container_property
+        for prop in prop_list[1:]:
+            if first_def != prop.container_property:
+                return True
+        return False
 
     def create_view_properties(self, read: ReadProperties) -> dict[ParsedEntity, dict[str, ViewRequestProperty]]:
         view_props: dict[ParsedEntity, dict[str, ViewRequestProperty]] = defaultdict(dict)
