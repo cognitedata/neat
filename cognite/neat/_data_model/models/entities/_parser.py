@@ -207,17 +207,17 @@ def parse_entity(entity_string: str) -> ParsedEntity:
     return parser.parse()
 
 
-def parse_entities(entities_str: str, seperator: str = ",") -> list[ParsedEntity] | None:
+def parse_entities(entities_str: str, separator: str = ",") -> list[ParsedEntity] | None:
     """Parse a comma-separated string of entities.
 
     Args:
         entities_str: A comma-separated string of entities.
-        seperator: The separator used to split entities. Default is comma (`,`).
+        separator: The separator used to split entities. Default is comma (`,`).
     Returns:
-        A list of `ParsedEntity` objects.
+        A list of `ParsedEntity` objects or None if the input string is empty.
     """
     if not entities_str.strip():
         return None
-    pattern = rf"{seperator}(?![^()]*\))"
+    pattern = rf"{separator}(?![^()]*\))"
     parts = re.split(pattern, entities_str)
     return [parse_entity(part.strip()) for part in parts if part.strip()]
