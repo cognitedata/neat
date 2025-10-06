@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 
 SPECIAL_CHARACTERS = ":()=,"
@@ -10,6 +11,18 @@ class ParsedEntity:
     prefix: str
     suffix: str
     properties: dict[str, str]
+
+    def __str__(self) -> str:
+        props_str = ""
+        if self.properties:
+            joined = ",".join(f"{k}={v}" for k, v in sorted(self.properties.items(), key=lambda x: x[0]))
+            props_str = f"({joined})"
+        if self.prefix:
+            return f"{self.prefix}:{self.suffix}{props_str}"
+        return f"{self.suffix}{props_str}"
+
+    def __hash__(self) -> int:
+        return hash(str(self))
 
 
 class _EntityParser:
@@ -192,3 +205,19 @@ def parse_entity(entity_string: str) -> ParsedEntity:
     """
     parser = _EntityParser(entity_string)
     return parser.parse()
+
+
+def parse_entities(entities_str: str, seperator: str = ",") -> list[ParsedEntity] | None:
+    """Parse a comma-separated string of entities.
+
+    Args:
+        entities_str: A comma-separated string of entities.
+        seperator: The separator used to split entities. Default is comma (`,`).
+    Returns:
+        A list of `ParsedEntity` objects.
+    """
+    if not entities_str.strip():
+        return None
+    pattern = rf"{seperator}(?![^()]*\))"
+    parts = re.split(pattern, entities_str)
+    return [parse_entity(part.strip()) for part in parts if part.strip()]

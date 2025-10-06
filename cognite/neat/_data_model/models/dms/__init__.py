@@ -1,6 +1,7 @@
 from cognite.neat._data_model.models.dms._base import Resource, WriteableResource
 from cognite.neat._data_model.models.dms._constraints import (
     Constraint,
+    ConstraintAdapter,
     ConstraintDefinition,
     RequiresConstraintDefinition,
     UniquenessConstraintDefinition,
@@ -14,10 +15,14 @@ from cognite.neat._data_model.models.dms._container import (
 from cognite.neat._data_model.models.dms._data_types import (
     BooleanProperty,
     DataType,
+    DataTypeAdapter,
     DateProperty,
     DirectNodeRelation,
     EnumProperty,
+    EnumValue,
     FileCDFExternalIdReference,
+    Float32Property,
+    Float64Property,
     FloatProperty,
     Int32Property,
     Int64Property,
@@ -29,7 +34,7 @@ from cognite.neat._data_model.models.dms._data_types import (
     TimeseriesCDFExternalIdReference,
     TimestampProperty,
 )
-from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexDefinition, InvertedIndex
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexAdapter, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
 from ._data_model import DataModelRequest, DataModelResponse
@@ -40,12 +45,15 @@ from ._references import (
     ViewDirectReference,
     ViewReference,
 )
+from ._schema import RequestSchema
 from ._view_property import (
     ConnectionPropertyDefinition,
     ConstraintOrIndexState,
+    EdgeProperty,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
     MultiReverseDirectRelationPropertyResponse,
+    ReverseDirectRelationProperty,
     SingleEdgeProperty,
     SingleReverseDirectRelationPropertyRequest,
     SingleReverseDirectRelationPropertyResponse,
@@ -53,6 +61,7 @@ from ._view_property import (
     ViewCorePropertyResponse,
     ViewPropertyDefinition,
     ViewRequestProperty,
+    ViewRequestPropertyAdapter,
     ViewResponseProperty,
 )
 from ._views import (
@@ -66,6 +75,7 @@ __all__ = [
     "BtreeIndex",
     "ConnectionPropertyDefinition",
     "Constraint",
+    "ConstraintAdapter",
     "ConstraintDefinition",
     "ConstraintOrIndexState",
     "Container",
@@ -77,12 +87,19 @@ __all__ = [
     "DataModelRequest",
     "DataModelResponse",
     "DataType",
+    "DataTypeAdapter",
     "DateProperty",
     "DirectNodeRelation",
+    "EdgeProperty",
     "EnumProperty",
+    "EnumValue",
     "FileCDFExternalIdReference",
+    "Float32Property",
+    "Float64Property",
     "FloatProperty",
     "Index",
+    "Index",
+    "IndexAdapter",
     "IndexDefinition",
     "Int32Property",
     "Int64Property",
@@ -94,8 +111,10 @@ __all__ = [
     "MultiReverseDirectRelationPropertyResponse",
     "NodeReference",
     "PropertyTypeDefinition",
+    "RequestSchema",
     "RequiresConstraintDefinition",
     "Resource",
+    "ReverseDirectRelationProperty",
     "SequenceCDFExternalIdReference",
     "SequenceCDFExternalIdReference",
     "SingleEdgeProperty",
@@ -120,6 +139,7 @@ __all__ = [
     "ViewReference",
     "ViewRequest",
     "ViewRequestProperty",
+    "ViewRequestPropertyAdapter",
     "ViewResponse",
     "ViewResponseProperty",
     "WriteableResource",
