@@ -1,10 +1,11 @@
 from abc import ABC
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 
 from ._base import BaseModelObject
 from ._references import ContainerReference
+from ._types import Bool
 
 
 class ConstraintDefinition(BaseModelObject, ABC):
@@ -16,7 +17,7 @@ class UniquenessConstraintDefinition(ConstraintDefinition):
     properties: list[str] = Field(
         description="List of properties included in the constraint.", min_length=1, max_length=10
     )
-    by_space: bool | None = Field(default=None, description="Whether to make the constraint space-specific.")
+    by_space: Bool | None = Field(default=None, description="Whether to make the constraint space-specific.")
 
 
 class RequiresConstraintDefinition(ConstraintDefinition):
@@ -28,3 +29,5 @@ Constraint = Annotated[
     UniquenessConstraintDefinition | RequiresConstraintDefinition,
     Field(discriminator="constraint_type"),
 ]
+
+ConstraintAdapter: TypeAdapter[Constraint] = TypeAdapter(Constraint)
