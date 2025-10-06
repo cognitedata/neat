@@ -45,7 +45,7 @@ def humanize_validation_error(
             The default is `as_json_path`, which converts the location to a JSON path.
             This can for example be replaced when the location comes from an Excel table.
         field_name: The name use for "field" in error messages. Default is "field". This can be changed to
-            "column" or "property" to better fit the context.
+            "column" or "value" to better fit the context.
         field_renaming: Optional mapping of field names to source names.
             This is useful when the field names in the model are different from the names in the source.
             For example, if the model field is "asset_id" but the source column is "Asset ID",
