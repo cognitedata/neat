@@ -36,6 +36,7 @@ from ._data_model import DataModelRequest, DataModelResponse
 from ._references import (
     ContainerDirectReference,
     ContainerReference,
+    DataModelReference,
     NodeReference,
     ViewDirectReference,
     ViewReference,
@@ -74,6 +75,7 @@ __all__ = [
     "ContainerReference",
     "ContainerRequest",
     "ContainerResponse",
+    "DataModelReference",
     "DataModelRequest",
     "DataModelResponse",
     "DataType",
