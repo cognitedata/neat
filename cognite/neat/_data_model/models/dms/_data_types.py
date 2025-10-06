@@ -132,6 +132,9 @@ class EnumProperty(PropertyTypeDefinition):
         "provide forward-compatibility, Specifying what value to use if the client does not "
         "recognize the returned value. It is not possible to ingest the unknown value, "
         "but it must be part of the allowed values.",
+        min_length=1,
+        max_length=128,
+        pattern=ENUM_VALUE_IDENTIFIER_PATTERN,
     )
     values: dict[str, EnumValue] = Field(
         description="A set of all possible values for the enum property.",
