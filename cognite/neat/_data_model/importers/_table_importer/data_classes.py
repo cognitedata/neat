@@ -64,11 +64,24 @@ class DMSContainer(TableObj):
     used_for: str | None = None
 
 
+class DMSEnum(TableObj):
+    collection: str
+    value: str
+    name: str | None = None
+    description: str | None = None
+
+
+class DMSNode(TableObj):
+    node: Entity
+
+
 class TableDMS(TableObj):
     metadata: list[MetadataValue]
     properties: list[DMSProperty]
     views: list[DMSView]
     containers: list[DMSContainer] = Field(default_factory=list)
+    enum: list[DMSEnum] = Field(default_factory=list)
+    nodes: list[DMSNode] = Field(default_factory=list)
 
 
 DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
