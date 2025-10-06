@@ -10,6 +10,7 @@ def str_as_bool(value: Any) -> Any:
             return True
         if val in {"false", "0", "no"}:
             return False
+    # All other cases are handled by Pydantic's built-in bool validator
     return value
 
 
