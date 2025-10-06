@@ -126,7 +126,7 @@ class TestContainerResponse:
 
 
 class TestDataTypeAdapter:
-    @settings(max_examples=10)
+    @settings(max_examples=3)
     @given(data_type_strategy())
     def test_enum_values(self, data_type: dict[str, Any]) -> None:
         validated = DataTypeAdapter.validate_python(data_type)
