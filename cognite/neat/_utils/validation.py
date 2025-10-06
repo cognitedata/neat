@@ -91,15 +91,16 @@ def humanize_validation_error(
             loc = tuple(["dict" if isinstance(x, str) and "json-or-python" in x else x for x in loc])
 
         error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
-        if len(loc) > 1 and error_type in {"extra_forbidden", "missing"} and field_name != "column":
-            # We skip the last element as this is in the message already
-            msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
-        elif len(loc) > 1 and error_type in {"missing"} and field_name == "column":
-            # This is a table so we modify the error message.
-            msg = (
-                f"In {humanize_location(loc[:-1])} the column {field_renaming.get(str(loc[-1]), loc[-1])!r} "
-                "cannot be empty."
-            )
+        if len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
+            if field_name == "column":
+                # This is a table so we modify the error message.
+                msg = (
+                    f"In {humanize_location(loc[:-1])} the column {field_renaming.get(str(loc[-1]), loc[-1])!r} "
+                    "cannot be empty."
+                )
+            else:
+                # We skip the last element as this is in the message already
+                msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
         elif len(loc) > 1:
             msg = f"In {humanize_location(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
