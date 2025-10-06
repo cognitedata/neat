@@ -1,7 +1,7 @@
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Literal, TypeVar, cast
+from typing import Any, Literal, TypeVar, cast, overload
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
@@ -13,6 +13,7 @@ from cognite.neat._data_model.models.dms import (
     DataModelRequest,
     Index,
     IndexAdapter,
+    NodeReference,
     RequestSchema,
     SpaceRequest,
     UniquenessConstraintDefinition,
@@ -25,7 +26,7 @@ from cognite.neat._exceptions import ModelImportError
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.validation import humanize_validation_error
 
-from .data_classes import DMSContainer, DMSProperty, DMSView, TableDMS
+from .data_classes import DMSContainer, DMSNode, DMSProperty, DMSView, TableDMS
 from .source import TableSource
 
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
@@ -98,6 +99,7 @@ class DMSTableReader:
         properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
         containers = cast(str, TableDMS.model_fields["containers"].validation_alias)
         views = cast(str, TableDMS.model_fields["views"].validation_alias)
+        nodes = cast(str, TableDMS.model_fields["nodes"].validation_alias)
 
     class PropertyColumn:
         connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
@@ -112,6 +114,7 @@ class DMSTableReader:
 
     def read_tables(self, tables: TableDMS) -> RequestSchema:
         space_request = self.read_space(self.default_space)
+        node_types = self.read_nodes(tables.nodes)
         read = self.read_properties(tables.properties)
         processed = self.process_properties(read)
         containers = self.read_containers(tables.containers, processed)
@@ -120,7 +123,9 @@ class DMSTableReader:
 
         if self.errors:
             raise ModelImportError(self.errors) from None
-        return RequestSchema(dataModel=data_model, views=views, containers=containers, spaces=[space_request])
+        return RequestSchema(
+            dataModel=data_model, views=views, containers=containers, spaces=[space_request], node_types=node_types
+        )
 
     def read_space(self, space: str) -> SpaceRequest:
         space_request = self._validate_obj(SpaceRequest, {"space": space}, (self.Sheet.metadata,), field_name="value")
@@ -128,6 +133,15 @@ class DMSTableReader:
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
             raise ModelImportError(self.errors) from None
         return space_request
+
+    def read_nodes(self, nodes: list[DMSNode]) -> list[NodeReference]:
+        node_refs: list[NodeReference] = []
+        for row_no, row in enumerate(nodes):
+            data = self._create_node_ref(row.node)
+            parsed = self._validate_obj(NodeReference, data, (self.Sheet.nodes, row_no))
+            if parsed is not None:
+                node_refs.append(parsed)
+        return node_refs
 
     def read_properties(self, properties: list[DMSProperty]) -> ReadProperties:
         read = ReadProperties()
@@ -583,10 +597,22 @@ class DMSTableReader:
             return dict()
         return self._create_node_ref(parsed, view, view_prop)
 
+    @overload
+    def _create_node_ref(
+        self, entity: ParsedEntity, *, view: None = None, view_prop: None = None
+    ) -> dict[str, str | None]: ...
+
+    @overload
     def _create_node_ref(
         self, entity: ParsedEntity | None, view: ParsedEntity, view_prop: str
+    ) -> dict[str, str | None]: ...
+
+    def _create_node_ref(
+        self, entity: ParsedEntity | None, view: ParsedEntity | None = None, view_prop: str | None = None
     ) -> dict[str, str | None]:
         if entity is None or entity.suffix == "":
+            if view is None or view_prop is None:
+                return dict()
             # If no suffix is given, we fallback to the view's property
             return {
                 "space": view.prefix or self.default_space,
