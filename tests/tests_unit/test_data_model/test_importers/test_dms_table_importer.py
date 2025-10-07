@@ -16,7 +16,7 @@ def invalid_test_cases() -> Iterable[tuple]:
                     "Value": "my_space",
                 }
             ],
-            "Properties": [
+            "properties": [
                 {
                     "View": "MyView",
                     "View Property": "prop1",
@@ -25,21 +25,22 @@ def invalid_test_cases() -> Iterable[tuple]:
                     "Max Count": 1,
                 },
                 {
-                    "View": "MyView",
+                    "View": "asset:MyAsset(capacity=100,type=storage)trailing",
                     "View Property": "prop2",
-                    "Value Type": "number",
-                    "Min Count": 0,
+                    "Value Type": "int32",
+                    "Min Count": "not_an_int",
                     "Max Count": 1,
                 },
             ],
-            "Views": [
-                {
-                    "View": "ValidView",
-                    "Name": "A valid view",
-                }
-            ],
         },
-        {"In Properties sheet missing required column: 'Connection'"},
+        {
+            "In Properties sheet missing required column: 'Connection'",
+            "In in Properties sheet row 2 column 'View' invalid entity syntax: Unexpected "
+            "characters after properties at position 40. Got 't'",
+            "In in Properties sheet row 2 column 'Min Count' input should be a valid "
+            "integer, unable to parse string as an integer",
+            "Missing required sheet: 'Views'",
+        },
         id="Missing required column in Properties table",
     )
 
