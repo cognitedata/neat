@@ -31,9 +31,31 @@ class DMSTableImporter(DMSImporter):
             # Check tables, columns, data type and entity syntax.
             table = TableDMS.model_validate(self._table)
         except ValidationError as e:
-            errors.extend([ModelSyntaxError(message=message) for message in humanize_validation_error(e)])
+            errors = self._create_error_messages(e)
             raise ModelImportError(errors) from None
 
         if errors:
             raise ModelImportError(errors) from None
         return table
+
+    def _create_error_messages(self, error: ValidationError) -> list[ModelSyntaxError]:
+        errors: list[ModelSyntaxError] = []
+        seen: set[str] = set()
+        for message in humanize_validation_error(
+            error,
+            humanize_location=self._spreadsheet_location,
+            field_name="column",
+            missing_required="missing",
+        ):
+            if message in seen:
+                # We treat all rows as the same, so we get duplicated errors for each row.
+                continue
+            seen.add(message)
+            errors.append(ModelSyntaxError(message=message))
+        return errors
+
+    @staticmethod
+    def _spreadsheet_location(loc: tuple[str | int, ...]) -> str:
+        if isinstance(loc[0], str) and len(loc) == 2:  # Sheet + row.
+            return f"{loc[0]} sheet"
+        raise NotImplementedError()
