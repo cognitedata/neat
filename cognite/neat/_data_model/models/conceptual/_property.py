@@ -78,11 +78,12 @@ class Property(ResourceMetadata):
             return value
 
         max_count = info.data.get("max_count")
+        min_count = info.data.get("min_count")
 
-        if max_count is None or max_count > 1:
+        if max_count is None or max_count > 1 or (min_count and min_count > 1):
             raise ValueError(
                 "Setting default value is only supported for single-valued properties."
-                f" Property has max_count={max_count or 'Inf'}."
+                f" Property has min_count={info.data.get('min_count')} and max_count={info.data.get('max_count')}."
             )
         return value
 
