@@ -3,7 +3,7 @@ from cognite.client.data_classes.data_modeling import NodeId
 
 from cognite.neat import NeatSession
 from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat.v0.core._constants import CLASSIC_CDF_NAMESPACE, NAMED_GRAPH_NAMESPACE
 from cognite.neat.v0.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
 from cognite.neat.v0.core._issues import NeatIssue
 from cognite.neat.v0.core._issues.warnings import NeatValueWarning
@@ -95,3 +95,27 @@ class TestReadClassicTimeSeries:
             )
         )
         assert instances_ids == expected
+
+
+def test_read_rdf_instances_with_named_graph(tmp_path) -> None:
+    """Test reading RDF instances into a named graph"""
+
+    ttl_file = tmp_path / "test.ttl"
+    ttl_file.write_text(
+        """
+        @prefix ex: <http://example.org/> .
+        ex:subject1 ex:predicate1 "value1" .
+        ex:subject2 ex:predicate2 "value2" .
+    """
+    )
+
+    neat = NeatSession()
+
+    # Test with string named_graph
+    issues = neat.read.rdf.instances(ttl_file, named_graph="my_test_graph")
+    assert not issues.has_errors
+
+    expected_graph_uri = NAMED_GRAPH_NAMESPACE["my_test_graph"]
+    target_graph = neat._state.instances.store.graph(expected_graph_uri)
+
+    assert target_graph.identifier == expected_graph_uri
