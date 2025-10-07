@@ -71,6 +71,9 @@ def test_defined_state_transitions_from_markdown() -> None:
             if isinstance(new_state, states.ForbiddenState):
                 assert new_state.previous_state == current_state
 
+                # Testing that any event from ForbiddenState returns to previous state
+                assert new_state.on_event("any_event") == current_state
+
 
 def test_defined_state_transitions_from_mermaid() -> None:
     state_transition_state = mermaid_to_dict(DATA_FOLDER / "_misc" / "state_machine_diagram.md")
