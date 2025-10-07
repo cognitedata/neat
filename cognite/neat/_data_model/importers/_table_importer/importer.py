@@ -1,3 +1,6 @@
+from collections.abc import Mapping
+from typing import ClassVar, cast
+
 from pydantic import ValidationError
 
 from cognite.neat._data_model.importers._base import DMSImporter
@@ -7,7 +10,7 @@ from cognite.neat._data_model.models.dms import (
 from cognite.neat._exceptions import ModelImportError
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.useful_types import CellValue
-from cognite.neat._utils.validation import humanize_validation_error
+from cognite.neat._utils.validation import as_json_path, humanize_validation_error
 
 from .data_classes import TableDMS
 
@@ -18,6 +21,14 @@ class DMSTableImporter(DMSImporter):
     The tables can are expected to be a dictionary where the keys are the table names and the values
     are lists of dictionaries representing the rows in the table.
     """
+
+    # We can safely cast as we know the validation_alias is always set to a str.
+    REQUIRED_SHEETS = (
+        cast(str, field_.validation_alias) for field_ in TableDMS.model_fields.values() if field_.is_required()
+    )
+    REQUIRED_SHEET_MESSAGES: ClassVar[Mapping[str, str]] = {
+        f"Missing required column: {sheet!r}": f"Missing required sheet: {sheet!r}" for sheet in REQUIRED_SHEETS
+    }
 
     def __init__(self, tables: dict[str, list[dict[str, CellValue]]]) -> None:
         self._table = tables
@@ -46,8 +57,9 @@ class DMSTableImporter(DMSImporter):
             humanize_location=self._spreadsheet_location,
             field_name="column",
             missing_required="missing",
-            field_renaming={"field": "sheet"},
         ):
+            # Replace messages about missing required columns with missing required sheets.
+            message = self.REQUIRED_SHEET_MESSAGES.get(message, message)
             if message in seen:
                 # We treat all rows as the same, so we get duplicated errors for each row.
                 continue
@@ -58,7 +70,11 @@ class DMSTableImporter(DMSImporter):
     @staticmethod
     def _spreadsheet_location(loc: tuple[str | int, ...]) -> str:
         if isinstance(loc[0], str) and len(loc) == 2:  # Sheet + row.
+            # We skip the row as we treat all rows as the same. For example, if a required column is missing in one
+            # row, it is missing in all rows.
             return f"{loc[0]} sheet"
-        if len(loc) == 3 and isinstance(loc[0], str) and isinstance(loc[1], int):  # Sheet + row + column.
+        elif len(loc) == 3 and isinstance(loc[0], str) and isinstance(loc[1], int) and isinstance(loc[2], str):
+            # This means there is something wrong in a specific cell.
             return f"in {loc[0]} sheet row {loc[1] + 1} column {loc[2]!r}"
-        raise NotImplementedError()
+        # This should be unreachable as the TableDMS model only has 2 levels.
+        return as_json_path(loc)
