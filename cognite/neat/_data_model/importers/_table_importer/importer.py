@@ -6,11 +6,10 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._exceptions import ModelImportError
 from cognite.neat._issues import ModelSyntaxError
-from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import CellValue
 from cognite.neat._utils.validation import humanize_validation_error
 
-from .data_classes import MetadataValue, TableDMS
+from .data_classes import TableDMS
 
 
 class DMSTableImporter(DMSImporter):
@@ -38,22 +37,3 @@ class DMSTableImporter(DMSImporter):
         if errors:
             raise ModelImportError(errors) from None
         return table
-
-    @staticmethod
-    def _read_defaults(metadata: list[MetadataValue]) -> tuple[str, str]:
-        """Reads the space and version from the metadata table."""
-        default_space: str | None = None
-        default_version: str | None = None
-        missing = {"space", "version"}
-        for meta in metadata:
-            if meta.name == "space":
-                default_space = str(meta.value)
-                missing.remove("space")
-            elif meta.name == "version":
-                default_version = str(meta.value)
-                missing.remove("version")
-        if missing:
-            error = ModelSyntaxError(message=f"In Metadata missing required values: {humanize_collection(missing)}")
-            # If space or version is missing, we cannot continue parsing the model as these are used as defaults.
-            raise ModelImportError([error]) from None
-        return str(default_space), str(default_version)
