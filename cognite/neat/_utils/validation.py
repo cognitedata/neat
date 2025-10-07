@@ -63,9 +63,9 @@ def humanize_validation_error(
         loc = (*parent_loc, *item["loc"])
         error_type = item["type"]
         if error_type == "missing":
-            msg = f"Missing required field: {loc[-1]!r}"
+            msg = f"Missing required {field_name}: {loc[-1]!r}"
         elif error_type == "extra_forbidden":
-            msg = f"Unused field: {loc[-1]!r}"
+            msg = f"Unused {field_name}: {loc[-1]!r}"
         elif error_type == "value_error":
             msg = str(item["ctx"]["error"])
         elif error_type == "literal_error":

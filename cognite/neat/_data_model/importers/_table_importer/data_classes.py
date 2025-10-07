@@ -1,14 +1,29 @@
 from typing import Annotated
 
-from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field
+from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
 from cognite.neat._utils.useful_types import CellValue
 
-Entity = Annotated[ParsedEntity, BeforeValidator(parse_entity, str)]
-EntityList = Annotated[list[ParsedEntity], BeforeValidator(parse_entities, str)]
+
+def parse_entity_str(v: str) -> ParsedEntity:
+    try:
+        return parse_entity(v)
+    except ValueError as e:
+        raise ValueError(f"Invalid entity syntax: {e}") from e
+
+
+def parse_entities_str(v: str) -> list[ParsedEntity] | None:
+    try:
+        return parse_entities(v)
+    except ValueError as e:
+        raise ValueError(f"Invalid entity list syntax: {e}") from e
+
+
+Entity = Annotated[ParsedEntity, BeforeValidator(parse_entity_str, str)]
+EntityList = Annotated[list[ParsedEntity], BeforeValidator(parse_entities_str, str)]
 
 
 class TableObj(
@@ -81,3 +96,10 @@ class TableDMS(TableObj):
     containers: list[DMSContainer] = Field(default_factory=list)
     enum: list[DMSEnum] = Field(default_factory=list)
     nodes: list[DMSNode] = Field(default_factory=list)
+
+    @model_validator(mode="before")
+    def _title_case_keys(cls, data: dict[str, list[dict[str, CellValue]]]) -> dict[str, list[dict[str, CellValue]]]:
+        if isinstance(data, dict):
+            # We are case-insensitive on the table names.
+            return {title_case(k): v for k, v in data.items()}
+        return data

@@ -46,6 +46,7 @@ class DMSTableImporter(DMSImporter):
             humanize_location=self._spreadsheet_location,
             field_name="column",
             missing_required="missing",
+            field_renaming={"field": "sheet"},
         ):
             if message in seen:
                 # We treat all rows as the same, so we get duplicated errors for each row.
@@ -58,4 +59,6 @@ class DMSTableImporter(DMSImporter):
     def _spreadsheet_location(loc: tuple[str | int, ...]) -> str:
         if isinstance(loc[0], str) and len(loc) == 2:  # Sheet + row.
             return f"{loc[0]} sheet"
+        if len(loc) == 3 and isinstance(loc[0], str) and isinstance(loc[1], int):  # Sheet + row + column.
+            return f"in {loc[0]} sheet row {loc[1] + 1} column {loc[2]!r}"
         raise NotImplementedError()
