@@ -36,10 +36,12 @@ from ._data_model import DataModelRequest, DataModelResponse
 from ._references import (
     ContainerDirectReference,
     ContainerReference,
+    DataModelReference,
     NodeReference,
     ViewDirectReference,
     ViewReference,
 )
+from ._schema import RequestSchema
 from ._view_property import (
     ConnectionPropertyDefinition,
     ConstraintOrIndexState,
@@ -74,6 +76,7 @@ __all__ = [
     "ContainerReference",
     "ContainerRequest",
     "ContainerResponse",
+    "DataModelReference",
     "DataModelRequest",
     "DataModelResponse",
     "DataType",
@@ -94,6 +97,7 @@ __all__ = [
     "MultiReverseDirectRelationPropertyResponse",
     "NodeReference",
     "PropertyTypeDefinition",
+    "RequestSchema",
     "RequiresConstraintDefinition",
     "Resource",
     "SequenceCDFExternalIdReference",
