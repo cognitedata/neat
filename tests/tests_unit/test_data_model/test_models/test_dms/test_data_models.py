@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given, settings
 from pydantic import ValidationError
 
-from cognite.neat._data_model.models.dms import DataModelRequest, DataModelResponse
+from cognite.neat._data_model.models.dms import DataModelReference, DataModelRequest, DataModelResponse
 from cognite.neat._utils.validation import humanize_validation_error
 
 from .strategies import data_model_strategy
@@ -163,6 +163,9 @@ class TestDataModelResponse:
 
         request = response.as_request()
         assert isinstance(request, DataModelRequest)
+
+        reference = response.as_reference()
+        assert isinstance(reference, DataModelReference)
 
         dumped = request.model_dump()
         response_dumped = response.model_dump()

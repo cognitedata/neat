@@ -274,3 +274,5 @@ DMS_RESERVED_PROPERTIES = frozenset(
         "endNode",
     }
 )
+
+NAMED_GRAPH_NAMESPACE = Namespace("http://thisisneat.io/namedgraph/")
