@@ -75,6 +75,6 @@ class DMSTableImporter(DMSImporter):
             return f"{loc[0]} sheet"
         elif len(loc) == 3 and isinstance(loc[0], str) and isinstance(loc[1], int) and isinstance(loc[2], str):
             # This means there is something wrong in a specific cell.
-            return f"in {loc[0]} sheet row {loc[1] + 1} column {loc[2]!r}"
+            return f"{loc[0]} sheet row {loc[1] + 1} column {loc[2]!r}"
         # This should be unreachable as the TableDMS model only has 2 levels.
         return as_json_path(loc)
