@@ -6,7 +6,7 @@ from cognite.neat._data_model.models.conceptual._data_model import DataModel
 
 
 class TestDataModel:
-    def test_cannot_have_duplicates_validator_with_duplicates(self):
+    def test_cannot_have_duplicates_validator_with_duplicates(self) -> None:
         """Test that validator raises error when there are duplicate concepts."""
         concepts = [
             Concept(space="space1", external_id="concept1", version="v1"),
@@ -21,7 +21,7 @@ class TestDataModel:
         assert "Duplicate concepts found" in error_message
         assert "space1:concept1(version=v1)" in error_message
 
-    def test_cannot_have_duplicates_validator_multiple_duplicates(self):
+    def test_cannot_have_duplicates_validator_multiple_duplicates(self) -> None:
         """Test that validator identifies multiple duplicate concepts."""
         concepts = [
             Concept(space="space1", external_id="concept1", version="v1"),

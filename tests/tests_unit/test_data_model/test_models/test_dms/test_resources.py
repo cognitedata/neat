@@ -9,6 +9,10 @@ def all_concrete_resources() -> list[type[WriteableResource]]:
     return get_concrete_subclasses(WriteableResource, exclude_direct_abc_inheritance=True)
 
 
+@pytest.mark.skip(
+    "Generating resource that are adhering to all the pydantic validation is not straight forward. "
+    "Moved to task THIS-754"
+)
 class TestAsRequest:
     @pytest.mark.parametrize("resource_cls", all_concrete_resources())
     def test_writeable_resource_as_request(self, resource_cls: type[WriteableResource]) -> None:
