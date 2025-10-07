@@ -7,6 +7,7 @@ from pydantic import ValidationError
 
 from cognite.neat._data_model.models.dms import (
     ViewPropertyDefinition,
+    ViewReference,
     ViewRequest,
     ViewRequestProperty,
     ViewResponse,
@@ -284,6 +285,9 @@ class TestViewResponse:
 
         request = response.as_request()
         assert isinstance(request, ViewRequest)
+
+        reference = response.as_reference()
+        assert isinstance(reference, ViewReference)
 
         # Properties have differences in request and response, so we need to compare them
         # separately

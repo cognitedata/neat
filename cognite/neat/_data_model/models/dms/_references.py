@@ -31,7 +31,7 @@ class ContainerReference(ReferenceObject):
     )
 
 
-class ViewReference(BaseModelObject):
+class ViewReference(ReferenceObject):
     type: Literal["view"] = "view"
     space: str = Field(
         description="Id of the space that the view belongs to.",
@@ -52,7 +52,27 @@ class ViewReference(BaseModelObject):
     )
 
 
-class NodeReference(BaseModelObject):
+class DataModelReference(ReferenceObject):
+    space: str = Field(
+        description="Id of the space that the data model belongs to.",
+        min_length=1,
+        max_length=43,
+        pattern=SPACE_FORMAT_PATTERN,
+    )
+    external_id: str = Field(
+        description="External-id of the data model.",
+        min_length=1,
+        max_length=255,
+        pattern=DM_EXTERNAL_ID_PATTERN,
+    )
+    version: str = Field(
+        description="Version of the data model.",
+        max_length=43,
+        pattern=DM_VERSION_PATTERN,
+    )
+
+
+class NodeReference(ReferenceObject):
     space: str = Field(
         description="Id of the space hosting (containing) the node.",
         min_length=1,
@@ -67,7 +87,7 @@ class NodeReference(BaseModelObject):
     )
 
 
-class ContainerDirectReference(BaseModelObject):
+class ContainerDirectReference(ReferenceObject):
     source: ContainerReference = Field(
         description="Reference to the container from where this relation is inherited.",
     )
@@ -79,7 +99,7 @@ class ContainerDirectReference(BaseModelObject):
     )
 
 
-class ViewDirectReference(BaseModelObject):
+class ViewDirectReference(ReferenceObject):
     source: ViewReference = Field(
         description="Reference to the view from where this relation is inherited.",
     )

@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat._data_model.models.conceptual._properties import Property
+from cognite.neat._data_model.models.conceptual._property import Property
 from cognite.neat._data_model.models.entities import ConceptEntity, String
 from cognite.neat._data_model.models.entities._data_types import Integer
 

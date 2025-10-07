@@ -8,7 +8,7 @@ from ._constants import (
     DM_VERSION_PATTERN,
     SPACE_FORMAT_PATTERN,
 )
-from ._references import ViewReference
+from ._references import DataModelReference, ViewReference
 
 
 class DataModel(Resource, ABC):
@@ -51,6 +51,13 @@ class DataModel(Resource, ABC):
         description="List of views included in this data model.",
         default=None,
     )
+
+    def as_reference(self) -> DataModelReference:
+        return DataModelReference(
+            space=self.space,
+            externalId=self.external_id,
+            version=self.version,
+        )
 
 
 class DataModelRequest(DataModel): ...
