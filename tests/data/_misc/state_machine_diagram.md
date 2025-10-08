@@ -11,17 +11,17 @@ stateDiagram-v2
     Instances --> Instances : Write Instances
     Conceptual --> Conceptual : Read Conceptual
     Conceptual --> ConceptualPhysical : Read Physical
-    Conceptual --> ConceptualPhysical : Convert Conceptual
+    Conceptual --> ConceptualPhysical : Convert To Physical
     Conceptual --> Conceptual : Transform Conceptual
     Conceptual --> Conceptual : Write Conceptual
     Physical --> ConceptualPhysical : Read Conceptual
     Physical --> Physical : Read Physical
-    Physical --> ConceptualPhysical : Convert Physical
+    Physical --> ConceptualPhysical : Convert To Conceptual
     Physical --> Physical : Transform Physical
     Physical --> Physical : Write Physical
     InstancesConceptual --> InstancesConceptual : Read Conceptual
     InstancesConceptual --> InstancesConceptualPhysical : Read Physical
-    InstancesConceptual --> InstancesConceptualPhysical : Convert Physical
+    InstancesConceptual --> InstancesConceptualPhysical : Convert To Physical
     InstancesConceptual --> InstancesConceptual : Transform Conceptual
     InstancesConceptual --> InstancesConceptual : Write Instances
     InstancesConceptual --> InstancesConceptual : Write Conceptual

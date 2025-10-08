@@ -103,7 +103,7 @@ def test_one_end_to_end_workflow() -> None:
         ("transform_instances", states.InstancesState, "🔄 transform instances"),
         ("infer_conceptual", states.InstancesConceptualState, "🧠 Infer conceptual model from instances"),
         ("transform_conceptual", states.InstancesConceptualState, "✏️  Refine conceptual model"),
-        ("convert_physical", states.InstancesConceptualPhysicalState, "🏗️  Convert to physical model"),
+        ("convert_to_physical", states.InstancesConceptualPhysicalState, "🏗️  Convert to physical model"),
         ("write_physical", states.InstancesConceptualPhysicalState, "💾 Export physical model"),
         ("write_conceptual", states.InstancesConceptualPhysicalState, "💾 Export conceptual model"),
         ("write_instances", states.InstancesConceptualPhysicalState, "💾 Export instances"),

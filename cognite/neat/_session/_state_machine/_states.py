@@ -56,7 +56,7 @@ class ConceptualState(State):
 
         # when reading: requires linking between models
         # when converting: links are automatically created
-        elif event == "read_physical" or event == "convert_conceptual":
+        elif event == "read_physical" or event == "convert_to_physical":
             return ConceptualPhysicalState()
         elif event == "transform_conceptual":
             return ConceptualState()
@@ -78,7 +78,7 @@ class PhysicalState(State):
             return PhysicalState()
         elif event == "write_physical":
             return PhysicalState()
-        elif event == "convert_physical" or event == "read_conceptual":
+        elif event == "convert_to_conceptual" or event == "read_conceptual":
             return ConceptualPhysicalState()
 
         return ForbiddenState(self)
@@ -96,7 +96,7 @@ class InstancesConceptualState(State):
             return InstancesConceptualState()
         elif event in ["write_instances", "write_conceptual"]:
             return InstancesConceptualState()
-        elif event in ["read_physical", "convert_physical"]:
+        elif event in ["read_physical", "convert_to_physical"]:
             return InstancesConceptualPhysicalState()
 
         return ForbiddenState(self)
