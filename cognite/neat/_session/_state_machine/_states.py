@@ -144,5 +144,7 @@ class ForbiddenState(State):
         print(f"Forbidden action attempted. Returning to previous state: {previous_state}")
 
     def on_event(self, event: str) -> State:
-        # All events from forbidden state return to previous state
-        return self.previous_state
+        # only "undo" to trigger going back to previous state
+        if event.strip().lower() == "undo":
+            return self.previous_state
+        return self

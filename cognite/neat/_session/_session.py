@@ -24,7 +24,7 @@ class NeatSession:
         if isinstance(new_state, ForbiddenState):
             print(f"❌ Event '{event}' is FORBIDDEN from {old_state}")
             # Return to previous state (as per your table logic)
-            self.state = new_state.previous_state
+            self.state = new_state.on_event("undo")
             print(f"↩️  Returned to: {self.state}")
             return False
         else:
