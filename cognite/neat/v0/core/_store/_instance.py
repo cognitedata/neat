@@ -12,6 +12,7 @@ from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
+from cognite.neat.v0.core._constants import NAMED_GRAPH_NAMESPACE
 from cognite.neat.v0.core._instances._shared import quad_formats, rdflib_to_oxi_type
 from cognite.neat.v0.core._instances.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.v0.core._instances.queries import Queries
@@ -450,3 +451,12 @@ class NeatInstanceStore:
     def empty(self) -> bool:
         """Cheap way to check if the graph store is empty."""
         return not self.queries.select.has_data()
+
+    def diff(self, old_named_graph: URIRef, new_named_graph: URIRef, *args: tuple[Any, ...]) -> None:
+        add_triples = cast(Iterable[Triple], self.queries.select.get_triples_to_add(old_named_graph, new_named_graph))
+        delete_triples = cast(
+            Iterable[Triple], self.queries.select.get_triples_to_delete(old_named_graph, new_named_graph)
+        )
+
+        self._add_triples(add_triples, named_graph=NAMED_GRAPH_NAMESPACE["DIFF_ADD"])
+        self._add_triples(delete_triples, named_graph=NAMED_GRAPH_NAMESPACE["DIFF_DELETE"])
