@@ -146,10 +146,14 @@ class TestTableSource:
                 id="with_extra_path_elements",
             ),
             pytest.param((123, 5, "field"), {}, "row 6 column 'field'", id="non_string_table_id"),
-            pytest.param(("MyTable", "not_int", "field"), {}, "table 'MyTable' column 'field'", id="non_int_row_number"),
+            pytest.param(
+                ("MyTable", "not_int", "field"), {}, "table 'MyTable' column 'field'", id="non_int_row_number"
+            ),
             pytest.param((0, 5), {}, "row 6", id="row_only"),
             pytest.param((0, "not_int", "field"), {}, "column 'field'", id="column_only"),
-            pytest.param(("MyTable", 1, "field", "extra"), {}, "table 'MyTable' row 2 column 'field'", id="path_length_exactly_4"),
+            pytest.param(
+                ("MyTable", 1, "field", "extra"), {}, "table 'MyTable' row 2 column 'field'", id="path_length_exactly_4"
+            ),
             pytest.param(
                 ("MyTable", 1, "field", "a", "b", "c"),
                 {},
@@ -158,7 +162,7 @@ class TestTableSource:
             ),
         ],
     )
-    def test_location(self, path, table_read, expected):
+    def test_location(self, path: tuple[int | str, ...], table_read: dict[str, SpreadsheetRead], expected: str) -> None:
         source = TableSource("test_source", table_read)
         assert source.location(path) == expected
 
@@ -177,7 +181,9 @@ class TestTableSource:
             pytest.param("", 3, {"": SpreadsheetRead(header_row=5)}, 4, id="falsy_table_id"),
         ],
     )
-    def test_adjust_row_number(self, table_id, row_no, table_read, expected):
+    def test_adjust_row_number(
+        self, table_id: str | None, row_no: int, table_read: dict[str, SpreadsheetRead], expected: int
+    ) -> None:
         source = TableSource("test_source", table_read)
         assert source.adjust_row_number(table_id, row_no) == expected
 
@@ -191,7 +197,7 @@ class TestTableSource:
             pytest.param("Views", "unmappedField", "unmappedField", id="unmapped_field_in_mapped_table"),
         ],
     )
-    def test_field_to_column(self, table_id, field, expected):
+    def test_field_to_column(self, table_id: str | None, field: str, expected: str) -> None:
         assert TableSource.field_to_column(table_id, field) == expected
 
     @pytest.mark.parametrize(
@@ -203,7 +209,9 @@ class TestTableSource:
             pytest.param("UnknownTable", False, None, id="unknown_table"),
         ],
     )
-    def test_field_mapping(self, table_id, expected_has_mapping, expected_external_id):
+    def test_field_mapping(
+        self, table_id: str | int | None, expected_has_mapping: bool, expected_external_id: str | None
+    ) -> None:
         mapping = TableSource.field_mapping(table_id)
         if expected_has_mapping:
             assert mapping is not None
