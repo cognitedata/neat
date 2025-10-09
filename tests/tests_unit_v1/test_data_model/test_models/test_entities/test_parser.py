@@ -2,7 +2,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
+from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._data_model.models.entities._parser import SPECIAL_CHARACTERS
 
 
@@ -195,3 +195,117 @@ class TestEntityParser:
             # Ensure error message is descriptive
             assert str(e)
             assert len(str(e)) > 10
+
+    @pytest.mark.parametrize(
+        "entity_str, expected_entities",
+        [
+            pytest.param(
+                "asset:MyAsset(capacity=100,type=storage),equipment:Pump1(unit=si:C(m3/s),maxPressure=5000)",
+                [
+                    ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
+                    ParsedEntity("equipment", "Pump1", {"unit": "si:C(m3/s)", "maxPressure": "5000"}),
+                ],
+                id="Multiple entities with properties",
+            ),
+            pytest.param(
+                "MyAsset,AnotherAsset",
+                [
+                    ParsedEntity("", "MyAsset", {}),
+                    ParsedEntity("", "AnotherAsset", {}),
+                ],
+                id="Multiple entities without prefixes and properties",
+            ),
+            pytest.param(
+                "asset:MyAsset,equipment:Pump1",
+                [
+                    ParsedEntity("asset", "MyAsset", {}),
+                    ParsedEntity("equipment", "Pump1", {}),
+                ],
+                id="Multiple entities with prefixes but no properties",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,type=storage) , equipment:Pump1(unit=si:C(m3/s),maxPressure=5000)",
+                [
+                    ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
+                    ParsedEntity("equipment", "Pump1", {"unit": "si:C(m3/s)", "maxPressure": "5000"}),
+                ],
+                id="Multiple entities with properties and extra spaces",
+            ),
+            pytest.param(
+                "MyAsset(type=storage),AnotherAsset(location=Plant1)",
+                [
+                    ParsedEntity("", "MyAsset", {"type": "storage"}),
+                    ParsedEntity("", "AnotherAsset", {"location": "Plant1"}),
+                ],
+                id="Multiple entities without prefixes but with properties",
+            ),
+            pytest.param(
+                "",
+                None,
+                id="Empty entity string",
+            ),
+            pytest.param(
+                "SingleEntity",
+                [ParsedEntity("", "SingleEntity", {})],
+                id="Single entity without prefix and properties",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,type=storage),,equipment:Pump1(unit=si:C(m3/s),maxPressure=5000)",
+                [
+                    ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
+                    ParsedEntity("equipment", "Pump1", {"unit": "si:C(m3/s)", "maxPressure": "5000"}),
+                ],
+                id="Double comma between entities",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity=100,type=storage),equipment:Pump1(unit=si:C(m3/s),maxPressure=5000),",
+                [
+                    ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
+                    ParsedEntity("equipment", "Pump1", {"unit": "si:C(m3/s)", "maxPressure": "5000"}),
+                ],
+                id="Trailing comma after last entity",
+            ),
+            pytest.param(
+                "asset:MyAsset(capacity==100),equipment:Pump1(unit=si:C(m3/s),maxPressure=5000)",
+                [
+                    ParsedEntity("asset", "MyAsset", {"capacity": "=100"}),
+                    ParsedEntity("equipment", "Pump1", {"unit": "si:C(m3/s)", "maxPressure": "5000"}),
+                ],
+                id="Double '=' in property of first entity",
+            ),
+            pytest.param(
+                '0(""=""),1(name=Test)',
+                [
+                    ParsedEntity("", "0", {'""': '""'}),
+                    ParsedEntity("", "1", {"name": "Test"}),
+                ],
+                id="Entities with empty strings as names and values",
+            ),
+        ],
+    )
+    def test_parse_entities(self, entity_str: str, expected_entities: list[ParsedEntity] | None) -> None:
+        parsed_entities = parse_entities(entity_str)
+        assert parsed_entities == expected_entities
+
+    @pytest.mark.parametrize(
+        "entity, expected_str",
+        [
+            pytest.param(
+                ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
+                "asset:MyAsset(capacity=100,type=storage)",
+                id="Entity with properties",
+            ),
+            pytest.param(
+                ParsedEntity("", "MyAsset", {}),
+                "MyAsset",
+                id="Entity without prefix and properties",
+            ),
+            pytest.param(
+                ParsedEntity("asset", "MyAsset", {}),
+                "asset:MyAsset",
+                id="Entity with prefix but no properties",
+            ),
+        ],
+    )
+    def test_entity_str_representation(self, entity: ParsedEntity, expected_str: str) -> None:
+        assert str(entity) == expected_str

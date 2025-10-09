@@ -1,4 +1,6 @@
+import re
 from dataclasses import dataclass
+from typing import Literal
 
 SPECIAL_CHARACTERS = ":()=,"
 
@@ -10,6 +12,18 @@ class ParsedEntity:
     prefix: str
     suffix: str
     properties: dict[str, str]
+
+    def __str__(self) -> str:
+        props_str = ""
+        if self.properties:
+            joined = ",".join(f"{k}={v}" for k, v in sorted(self.properties.items(), key=lambda x: x[0]))
+            props_str = f"({joined})"
+        if self.prefix:
+            return f"{self.prefix}:{self.suffix}{props_str}"
+        return f"{self.suffix}{props_str}"
+
+    def __hash__(self) -> int:
+        return hash(str(self))
 
 
 class _EntityParser:
@@ -192,3 +206,21 @@ def parse_entity(entity_string: str) -> ParsedEntity:
     """
     parser = _EntityParser(entity_string)
     return parser.parse()
+
+
+def parse_entities(entities_str: str, separator: Literal[","] = ",") -> list[ParsedEntity] | None:
+    """Parse a comma-separated string of entities.
+
+    Args:
+        entities_str: A comma-separated string of entities.
+        separator: The separator used to split entities.
+        A list of `ParsedEntity` objects or None if the input string is empty.
+    """
+    if not entities_str.strip():
+        return None
+    if separator != ",":
+        raise ValueError("Only ',' is supported as a separator currently.")
+    # Regex to split on the separator but ignore separators within parentheses
+    pattern = rf"{separator}(?![^()]*\))"
+    parts = re.split(pattern, entities_str)
+    return [parse_entity(part.strip()) for part in parts if part.strip()]
