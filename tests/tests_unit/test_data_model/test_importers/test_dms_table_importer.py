@@ -34,12 +34,12 @@ def invalid_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In Properties sheet missing required column: 'Connection'",
-            "In Properties sheet row 2 column 'View' invalid entity syntax: Unexpected "
-            "characters after properties at position 40. Got 't'",
+            "In Properties sheet missing required column: 'Connection'.",
             "In Properties sheet row 2 column 'Min Count' input should be a valid "
-            "integer, unable to parse string as an integer",
-            "Missing required sheet: 'Views'",
+            "integer, unable to parse string as an integer.",
+            "In Properties sheet row 2 column 'View' invalid entity syntax: Unexpected "
+            "characters after properties at position 40. Got 't'.",
+            "Missing required column: 'Views'.",
         },
         id="Missing required column in Properties table",
     )
@@ -71,12 +71,12 @@ def invalid_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In Properties sheet missing required column: 'Max Count'",
-            "In Properties sheet missing required column: 'Min Count'",
+            "In Properties sheet missing required column: 'Max Count'.",
+            "In Properties sheet missing required column: 'Min Count'.",
             "In Properties sheet row 1 column 'Auto Increment' input should be a valid "
-            "boolean, unable to interpret input",
-            "In Properties sheet row 1 column 'Immutable' input should be a valid boolean, unable to interpret input",
-            "In Views sheet row 1 column 'In Model' input should be a valid boolean, unable to interpret input",
+            "boolean, unable to interpret input.",
+            "In Properties sheet row 1 column 'Immutable' input should be a valid boolean, unable to interpret input.",
+            "In Views sheet row 1 column 'In Model' input should be a valid boolean, unable to interpret input.",
         },
         id="Invalid boolean and entity list values",
     )
@@ -103,11 +103,11 @@ def invalid_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In Metadata sheet missing required column: 'Name'",
-            "In Properties sheet missing required column: 'Max Count'",
-            "In Properties sheet missing required column: 'Min Count'",
-            "In Properties sheet missing required column: 'View Property'",
-            "In Views sheet missing required column: 'View'",
+            "In Metadata sheet missing required column: 'Name'.",
+            "In Properties sheet missing required column: 'Max Count'.",
+            "In Properties sheet missing required column: 'Min Count'.",
+            "In Properties sheet missing required column: 'View Property'.",
+            "In Views sheet missing required column: 'View'.",
         },
         id="Missing required fields in various sheets",
     )
