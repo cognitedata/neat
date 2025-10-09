@@ -53,15 +53,15 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "Missing required field: 'space'",
-            "In field name string should have at most 255 characters",
-            "In field version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In implements[1] missing required field: 'version'",
-            "In implements[1].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
+            "In field 'name', string should have at most 255 characters.",
+            "In field 'version', string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In implements[1] missing required field: 'version'.",
+            "In implements[1].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'.",
             "In properties.containerProp.primary_property.containerPropertyIdentifier "
-            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
+            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'.",
             "In properties.edgeProp.single_edge_connection.direction input should be "
             "'outwards' or 'inwards'. Got 'sideways'.",
+            "Missing required field: 'space'.",
         },
         id="Multiple Issues.",
     )
@@ -84,14 +84,16 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In field description string should have at most 1024 characters",
-            "In field externalId 'Query' is a reserved view External ID. Reserved External IDs are: Boolean, "
-            "Date, File, Float, Float32, Float64, Int, Int32, Int64, JSONObject, Mutation, Numeric, PageInfo, Query, "
-            "Sequence, String, Subscription, TimeSeries and Timestamp",
-            "In field properties 'space' is a reserved property identifier. Reserved identifiers are: createdTime, "
-            "deletedTime, edge_id, extensions, externalId, lastUpdatedTime, node_id, project_id, property_group, "
-            "seq, space and tg_table_name; Property 'invalidProp#' does not match the "
-            "required pattern: ^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$",
+            "In field 'description', string should have at most 1024 characters.",
+            "In field 'externalId', 'Query' is a reserved view External ID. Reserved "
+            "External IDs are: Boolean, Date, File, Float, Float32, Float64, Int, Int32, "
+            "Int64, JSONObject, Mutation, Numeric, PageInfo, Query, Sequence, String, "
+            "Subscription, TimeSeries and Timestamp.",
+            "In field 'properties', 'space' is a reserved property identifier. Reserved "
+            "identifiers are: createdTime, deletedTime, edge_id, extensions, externalId, "
+            "lastUpdatedTime, node_id, project_id, property_group, seq, space and "
+            "tg_table_name; Property 'invalidProp#' does not match the required pattern: "
+            "^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$.",
         },
         id="Forbidden values and reserved identifiers.",
     )
@@ -147,15 +149,13 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In implements[1] missing required field: 'version'",
-            "In implements[2].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
-            "In implements[2].externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
-            "In implements[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In properties.edgeProp.single_edge_connection.source.space string should have at least 1 character",
-            "In properties.edgeProp.single_edge_connection.source.externalId string should have at least 1 character",
-            "In properties.edgeProp.single_edge_connection.source.version string should match pattern "
-            "'^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In properties.edgeProp.single_edge_connection.type.externalId string should have at least 1 character",
+            "In field 'externalId', string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
+            "In field 'space', string should have at least 1 character.",
+            "In field 'version', string should have at most 43 characters.",
+            "In properties.multiEdge.multi_edge_connection.source missing required field: 'version'.",
+            "In "
+            "properties.reverseDirect.single_reverse_direct_relation.through.identifier "
+            "string should have at least 1 character.",
         },
         id="Empty fields and invalid implements.",
     )
@@ -183,15 +183,18 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In properties.containerProp.primary_property.container missing required field: 'externalId'",
-            "In properties.containerProp.primary_property.containerPropertyIdentifier string should match pattern "
-            "'^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
-            "In properties.containerProp.primary_property.name string should have at most 255 characters",
-            "In properties.containerProp.primary_property.description string should have at most 1024 characters",
-            "In properties.multiReverseDirect.multi_reverse_direct_relation.source.version string should match pattern "
-            "'^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In properties.multiReverseDirect.multi_reverse_direct_relation.through.identifier string "
-            "should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
+            "In properties.containerProp.primary_property.container missing required field: 'externalId'.",
+            "In properties.containerProp.primary_property.containerPropertyIdentifier "
+            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'.",
+            "In properties.containerProp.primary_property.description string should have at most 1024 characters.",
+            "In properties.containerProp.primary_property.name string should have at most 255 characters.",
+            "In "
+            "properties.multiReverseDirect.multi_reverse_direct_relation.source.version "
+            "string should match pattern "
+            "'^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In "
+            "properties.multiReverseDirect.multi_reverse_direct_relation.through.identifier "
+            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'.",
         },
         id="Property validation errors.",
     )
@@ -215,10 +218,11 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In field externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
-            "In field properties 'externalId' is a reserved property identifier. Reserved identifiers are: "
-            "createdTime, deletedTime, edge_id, extensions, externalId, lastUpdatedTime, node_id, project_id, "
-            "property_group, seq, space and tg_table_name",
+            "In field 'externalId', string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
+            "In field 'properties', 'externalId' is a reserved property identifier. "
+            "Reserved identifiers are: createdTime, deletedTime, edge_id, extensions, "
+            "externalId, lastUpdatedTime, node_id, project_id, property_group, seq, space "
+            "and tg_table_name.",
         },
         id="Single reserved property identifier.",
     )
@@ -242,9 +246,9 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In properties.invalidContainer.primary_property.container.externalId "
-            "string should have at least 1 character",
-            "In properties.invalidEdge.single_edge_connection.type.space string should have at least 1 character",
+            "In properties.invalidContainer.primary_property.container.externalId string "
+            "should have at least 1 character.",
+            "In properties.invalidEdge.single_edge_connection.type.space string should have at least 1 character.",
         },
         id="Empty reference fields.",
     )
