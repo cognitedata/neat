@@ -23,7 +23,7 @@ class DMSTableImporter(DMSImporter):
     """
 
     # We can safely cast as we know the validation_alias is always set to a str.
-    REQUIRED_SHEETS = (
+    REQUIRED_SHEETS = tuple(
         cast(str, field_.validation_alias) for field_ in TableDMS.model_fields.values() if field_.is_required()
     )
     REQUIRED_SHEET_MESSAGES: ClassVar[Mapping[str, str]] = {
