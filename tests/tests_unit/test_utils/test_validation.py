@@ -29,7 +29,7 @@ class TestHumanizeValidationError:
             pytest.param(
                 {"name": "Bob", "age": "twenty"},
                 {},
-                {"In field age input should be a valid integer, unable to parse string as an integer"},
+                {"In field 'age', input should be a valid integer: unable to parse string as an integer."},
                 id="Type error with default formatting",
             ),
             pytest.param(

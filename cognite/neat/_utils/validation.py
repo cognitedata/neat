@@ -19,7 +19,7 @@ def as_json_path(loc: tuple[str | int, ...]) -> str:
     # +1 to convert from 0-based to 1-based indexing
     prefix = ""
     if isinstance(loc[0], int):
-        prefix = "item "
+        prefix = "item"
 
     suffix = ".".join([str(x) if isinstance(x, str) else f"[{x + 1}]" for x in loc]).replace(".[", "[")
     return f"{prefix}{suffix}"
