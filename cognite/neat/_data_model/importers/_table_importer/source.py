@@ -18,7 +18,8 @@ class SpreadsheetRead:
     is_one_indexed: bool = True
 
     def __post_init__(self) -> None:
-        self.empty_rows = sorted(self.empty_rows)
+        self.empty_rows.sort()
+        self.skipped_rows.sort()
 
     def adjusted_row_number(self, row_no: int) -> int:
         output = row_no
