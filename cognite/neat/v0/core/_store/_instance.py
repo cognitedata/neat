@@ -476,5 +476,9 @@ class NeatInstanceStore:
             Iterable[Triple], self.queries.select.get_triples_to_delete(old_named_graph, new_named_graph)
         )
 
+        # Clear previous diff results
+        self.graph(NAMED_GRAPH_NAMESPACE["DIFF_ADD"]).remove((None, None, None))
+        self.graph(NAMED_GRAPH_NAMESPACE["DIFF_DELETE"]).remove((None, None, None))
+
         self._add_triples(add_triples, named_graph=NAMED_GRAPH_NAMESPACE["DIFF_ADD"])
         self._add_triples(delete_triples, named_graph=NAMED_GRAPH_NAMESPACE["DIFF_DELETE"])
