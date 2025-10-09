@@ -1,4 +1,5 @@
-from typing import Annotated
+from collections.abc import Mapping
+from typing import Annotated, cast
 
 from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, model_validator
 from pydantic.alias_generators import to_camel
@@ -103,3 +104,36 @@ class TableDMS(TableObj):
             # We are case-insensitive on the table names.
             return {title_case(k): v for k, v in data.items()}
         return data
+
+
+DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
+    "Views": {
+        "space": "View",
+        "externalId": "View",
+        "version": "View",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSView.model_fields.items()
+            if field_id != "View"
+        },
+    },
+    "Containers": {
+        "space": "Container",
+        "externalId": "Container",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSContainer.model_fields.items()
+            if field_id != "Container"
+        },
+    },
+    "Properties": {
+        "space": "View",
+        "externalId": "View",
+        "property": "ViewProperty",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSProperty.model_fields.items()
+            if field_id not in ("View", "ViewProperty")
+        },
+    },
+}
