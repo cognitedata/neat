@@ -465,9 +465,10 @@ class NeatInstanceStore:
         Raises:
             NeatValueError: If either named graph doesn't exist in the store
         """
-        if old_named_graph not in self.named_graphs:
+        existing_graphs = self.named_graphs
+        if old_named_graph not in existing_graphs:
             raise NeatValueError(f"Old named graph not found: {old_named_graph}")
-        if new_named_graph not in self.named_graphs:
+        if new_named_graph not in existing_graphs:
             raise NeatValueError(f"New named graph not found: {new_named_graph}")
 
         add_triples = cast(Iterable[Triple], self.queries.select.get_triples_to_add(old_named_graph, new_named_graph))
