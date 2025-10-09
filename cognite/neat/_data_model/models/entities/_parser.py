@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 SPECIAL_CHARACTERS = ":()=,"
 
@@ -207,17 +208,19 @@ def parse_entity(entity_string: str) -> ParsedEntity:
     return parser.parse()
 
 
-def parse_entities(entities_str: str, separator: str = ",") -> list[ParsedEntity] | None:
+def parse_entities(entities_str: str, separator: Literal[","] = ",") -> list[ParsedEntity] | None:
     """Parse a comma-separated string of entities.
 
     Args:
         entities_str: A comma-separated string of entities.
-        separator: The separator used to split entities. Default is comma (`,`).
-    Returns:
+        separator: The separator used to split entities.
         A list of `ParsedEntity` objects or None if the input string is empty.
     """
     if not entities_str.strip():
         return None
+    if separator != ",":
+        raise ValueError("Only ',' is supported as a separator currently.")
+    # Regex to split on the separator but ignore separators within parentheses
     pattern = rf"{separator}(?![^()]*\))"
     parts = re.split(pattern, entities_str)
     return [parse_entity(part.strip()) for part in parts if part.strip()]

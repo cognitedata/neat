@@ -1,9 +1,10 @@
 from abc import ABC
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 
 from ._base import BaseModelObject
+from ._types import Bool
 
 
 class IndexDefinition(BaseModelObject, ABC):
@@ -13,8 +14,8 @@ class IndexDefinition(BaseModelObject, ABC):
 
 class BtreeIndex(IndexDefinition):
     index_type: Literal["btree"] = "btree"
-    by_space: bool | None = Field(default=None, description="Whether to make the index space-specific.")
-    cursorable: bool | None = Field(
+    by_space: Bool | None = Field(default=None, description="Whether to make the index space-specific.")
+    cursorable: Bool | None = Field(
         default=None, description="Whether the index can be used for cursor-based pagination."
     )
 
@@ -24,3 +25,5 @@ class InvertedIndex(IndexDefinition):
 
 
 Index = Annotated[BtreeIndex | InvertedIndex, Field(discriminator="index_type")]
+
+IndexAdapter: TypeAdapter[Index] = TypeAdapter(Index)
