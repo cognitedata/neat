@@ -3,6 +3,7 @@ from collections.abc import Iterable
 import pytest
 
 from cognite.neat._data_model.importers import DMSTableImporter
+from cognite.neat._data_model.importers._table_importer.source import SpreadsheetRead, TableSource
 from cognite.neat._exceptions import ModelImportError
 from cognite.neat._utils.useful_types import CellValue
 
@@ -121,3 +122,110 @@ class TestDMSTableImporter:
             importer._read_tables()
         actual_errors = {err.message for err in exc_info.value.errors}
         assert actual_errors == expected_errors
+
+
+class TestTableSource:
+    def test_location_empty_path(self):
+        source = TableSource("test_source")
+        assert source.location(()) == ""
+
+    def test_location_table_only(self):
+        source = TableSource("test_source")
+        assert source.location(("MyTable",)) == "table 'MyTable'"
+
+    def test_location_table_and_row(self):
+        source = TableSource("test_source")
+        assert source.location(("MyTable", 5)) == "table 'MyTable' row 6"
+
+    def test_location_table_row_column(self):
+        source = TableSource("test_source")
+        assert source.location(("MyTable", 5, "field")) == "table 'MyTable' row 6 column 'field'"
+
+    def test_location_with_spreadsheet_read(self):
+        source = TableSource(
+            "test_source", {"MyTable": SpreadsheetRead(header_row=2, empty_rows=[3, 5], is_one_indexed=True)}
+        )
+        # Row 5 should be adjusted for header_row=2, empty_rows=[3,5], and 1-indexing
+        assert source.location(("MyTable", 5)) == "table 'MyTable' row 10"
+
+    def test_location_with_field_mapping(self):
+        source = TableSource("test_source")
+        # Test with a table that has field mapping (Views table)
+        assert source.location(("Views", 1, "externalId")) == "table 'Views' row 2 column 'View'"
+
+    def test_location_with_extra_path_elements(self):
+        source = TableSource("test_source")
+        assert (
+            source.location(("MyTable", 1, "field", "nested", "path"))
+            == "table 'MyTable' row 2 column 'field' -> nested.path"
+        )
+
+    def test_location_non_string_table_id(self):
+        source = TableSource("test_source")
+        assert source.location((123, 5, "field")) == "row 6 column 'field'"
+
+    def test_location_non_int_row_number(self):
+        source = TableSource("test_source")
+        assert source.location(("MyTable", "not_int", "field")) == "table 'MyTable' column 'field'"
+
+    def test_adjust_row_number_with_table_read(self):
+        spreadsheet_read = SpreadsheetRead(header_row=2, empty_rows=[1, 3])
+        source = TableSource("test_source", {"MyTable": spreadsheet_read})
+        assert source.adjust_row_number("MyTable", 5) == 10
+
+    def test_adjust_row_number_without_table_read(self):
+        source = TableSource("test_source")
+        assert source.adjust_row_number("MyTable", 5) == 6
+
+    def test_adjust_row_number_none_table_id(self):
+        source = TableSource("test_source")
+        assert source.adjust_row_number(None, 5) == 6
+
+    def test_field_to_column_with_mapping(self):
+        # Test Views table which has field mapping
+        assert TableSource.field_to_column("Views", "externalId") == "View"
+        assert TableSource.field_to_column("Views", "space") == "View"
+
+    def test_field_to_column_without_mapping(self):
+        assert TableSource.field_to_column("UnknownTable", "someField") == "someField"
+        assert TableSource.field_to_column(None, "someField") == "someField"
+
+    def test_field_mapping_with_string_table_id(self):
+        mapping = TableSource.field_mapping("Views")
+        assert mapping is not None
+        assert "externalId" in mapping
+        assert mapping["externalId"] == "View"
+
+    def test_field_mapping_with_non_string_table_id(self):
+        assert TableSource.field_mapping(123) is None
+        assert TableSource.field_mapping(None) is None
+
+    def test_field_mapping_with_unknown_table(self):
+        assert TableSource.field_mapping("UnknownTable") is None
+
+    def test_location_row_only(self):
+        source = TableSource("test_source")
+        assert source.location((0, 5)) == "row 6"
+
+    def test_location_column_only(self):
+        source = TableSource("test_source")
+        assert source.location((0, "not_int", "field")) == "column 'field'"
+
+    def test_location_path_length_exactly_4(self):
+        source = TableSource("test_source")
+        assert source.location(("MyTable", 1, "field", "extra")) == "table 'MyTable' row 2 column 'field'"
+
+    def test_location_path_length_greater_than_4(self):
+        source = TableSource("test_source")
+        assert (
+            source.location(("MyTable", 1, "field", "a", "b", "c")) == "table 'MyTable' row 2 column 'field' -> a.b.c"
+        )
+
+    def test_field_to_column_unmapped_field_in_mapped_table(self):
+        # Test field that doesn't exist in the mapping for a mapped table
+        assert TableSource.field_to_column("Views", "unmappedField") == "unmappedField"
+
+    def test_adjust_row_number_with_falsy_table_id(self):
+        source = TableSource("test_source", {"": SpreadsheetRead(header_row=5)})
+        # Empty string is falsy, so should use default behavior
+        assert source.adjust_row_number("", 3) == 4
