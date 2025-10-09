@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Annotated, Literal
 
-from pydantic import Field, Json
+from pydantic import Field, Json, TypeAdapter
 
 from ._base import BaseModelObject, Resource, WriteableResource
 from ._constants import CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN
@@ -130,53 +130,40 @@ class ReverseDirectRelationProperty(ConnectionPropertyDefinition, ABC):
         description="The node(s) containing the direct relation property can be read "
         "through the view specified in 'source'."
     )
+    through: ContainerDirectReference | ViewDirectReference = Field(
+        description="The view of the node containing the direct relation property."
+    )
 
 
 class SingleReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
     connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
-    # The API support through as either ViewDirectReference or ContainerDirectReference. However, in Neat
-    # we only use ContainerDirectReference. This is for simplicity and it improves performance as the server
-    # does not have to resolve the view to a container first.
-    through: ContainerDirectReference = Field(
-        description="The view of the node containing the direct relation property."
-    )
+
+
+class MultiReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
+    connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
 
 
 class SingleReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[SingleReverseDirectRelationPropertyRequest]
 ):
     connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
-    through: ContainerDirectReference | ViewDirectReference = Field(
-        description="The view of the node containing the direct relation property."
+    target_list: bool = Field(
+        description="Whether or not this reverse direct relation targets a list of direct relations.",
     )
 
     def as_request(self) -> SingleReverseDirectRelationPropertyRequest:
-        if isinstance(self.through, ViewDirectReference):
-            raise TypeError("Cannot convert to request when 'through' is a ViewDirectReference.")
         return SingleReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
-
-
-class MultiReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
-    connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
-    # The API support through as either ViewDirectReference or ContainerDirectReference. However, in Neat
-    # we only use ContainerDirectReference. This is for simplicity and it improves performance as the server
-    # does not have to resolve the view to a container first.
-    through: ContainerDirectReference = Field(
-        description="The view of the node containing the direct relation property."
-    )
 
 
 class MultiReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[MultiReverseDirectRelationPropertyRequest]
 ):
     connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
-    through: ContainerDirectReference | ViewDirectReference = Field(
-        description="The view of the node containing the direct relation property."
+    target_list: bool = Field(
+        description="Whether or not this reverse direct relation targets a list of direct relations.",
     )
 
     def as_request(self) -> MultiReverseDirectRelationPropertyRequest:
-        if isinstance(self.through, ViewDirectReference):
-            raise TypeError("Cannot convert to request when 'through' is a ViewDirectReference.")
         return MultiReverseDirectRelationPropertyRequest.model_validate(self.model_dump(by_alias=True))
 
 
@@ -196,3 +183,5 @@ ViewResponseProperty = Annotated[
     | ViewCorePropertyResponse,
     Field(discriminator="connection_type"),
 ]
+
+ViewRequestPropertyAdapter: TypeAdapter[ViewRequestProperty] = TypeAdapter(ViewRequestProperty)
