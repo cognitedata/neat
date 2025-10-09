@@ -37,15 +37,11 @@ class DMSTableImporter(DMSImporter):
         raise NotImplementedError()
 
     def _read_tables(self) -> TableDMS:
-        errors: list[ModelSyntaxError] = []
         try:
             # Check tables, columns, data type and entity syntax.
             table = TableDMS.model_validate(self._table)
         except ValidationError as e:
             errors = self._create_error_messages(e)
-            raise ModelImportError(errors) from None
-
-        if errors:
             raise ModelImportError(errors) from None
         return table
 
