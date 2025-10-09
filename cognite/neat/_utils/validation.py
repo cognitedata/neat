@@ -1,23 +1,63 @@
+from collections.abc import Callable, Mapping
+from typing import Literal
+
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 
-def humanize_validation_error(error: ValidationError) -> list[str]:
+def as_json_path(loc: tuple[str | int, ...]) -> str:
+    """Converts a location tuple to a JSON path.
+
+    Args:
+        loc: The location tuple to convert.
+
+    Returns:
+        A JSON path string.
+    """
+    if not loc:
+        return ""
+    # +1 to convert from 0-based to 1-based indexing
+    prefix = ""
+    if isinstance(loc[0], int):
+        prefix = "item"
+
+    suffix = ".".join([str(x) if isinstance(x, str) else f"[{x + 1}]" for x in loc]).replace(".[", "[")
+    return f"{prefix}{suffix}"
+
+
+def humanize_validation_error(
+    error: ValidationError,
+    parent_loc: tuple[int | str, ...] = tuple(),
+    humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path,
+    field_name: Literal["field", "column", "value"] = "field",
+    field_renaming: Mapping[str, str] | None = None,
+) -> list[str]:
     """Converts a ValidationError to a human-readable format.
 
     This overwrites the default error messages from Pydantic to be better suited for Toolkit users.
 
     Args:
         error: The ValidationError to convert.
-
+        parent_loc: Optional location tuple to prepend to each error location.
+            This is useful when the error is for a nested model and you want to include the location
+            of the parent model.
+        humanize_location: A function that converts a location tuple to a human-readable string.
+            The default is `as_json_path`, which converts the location to a JSON path.
+            This can for example be replaced when the location comes from an Excel table.
+        field_name: The name use for "field" in error messages. Default is "field". This can be changed to
+            "column" or "value" to better fit the context.
+        field_renaming: Optional mapping of field names to source names.
+            This is useful when the field names in the model are different from the names in the source.
+            For example, if the model field is "asset_id" but the source column is "Asset ID",
+            you can provide a mapping {"asset_id": "Asset ID"} to have the error messages use the source names.
     Returns:
         A list of human-readable error messages.
     """
     errors: list[str] = []
     item: ErrorDetails
-
+    field_renaming = field_renaming or {}
     for item in error.errors(include_input=True, include_url=False):
-        loc = item["loc"]
+        loc = (*parent_loc, *item["loc"])
         error_type = item["type"]
         if error_type == "missing":
             msg = f"Missing required field: {loc[-1]!r}"
@@ -50,32 +90,22 @@ def humanize_validation_error(error: ValidationError) -> list[str]:
             #  This is hard to read, so we simplify it to just the field name.
             loc = tuple(["dict" if isinstance(x, str) and "json-or-python" in x else x for x in loc])
 
+        error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
         if len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
-            # We skip the last element as this is in the message already
-            msg = f"In {as_json_path(loc[:-1])} {msg[:1].casefold()}{msg[1:]}"
+            if field_name == "column":
+                # This is a table so we modify the error message.
+                msg = (
+                    f"In {humanize_location(loc[:-1])} the column {field_renaming.get(str(loc[-1]), loc[-1])!r} "
+                    "cannot be empty."
+                )
+            else:
+                # We skip the last element as this is in the message already
+                msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
         elif len(loc) > 1:
-            msg = f"In {as_json_path(loc)} {msg[:1].casefold()}{msg[1:]}"
+            msg = f"In {humanize_location(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
-            msg = f"In field {loc[0]} {msg[:1].casefold()}{msg[1:]}"
+            msg = f"In {field_name} {loc[0]!r}, {error_suffix}"
+        if not msg.endswith("."):
+            msg += "."
         errors.append(msg)
     return errors
-
-
-def as_json_path(loc: tuple[str | int, ...]) -> str:
-    """Converts a location tuple to a JSON path.
-
-    Args:
-        loc: The location tuple to convert.
-
-    Returns:
-        A JSON path string.
-    """
-    if not loc:
-        return ""
-    # +1 to convert from 0-based to 1-based indexing
-    prefix = ""
-    if isinstance(loc[0], int):
-        prefix = "item "
-
-    suffix = ".".join([str(x) if isinstance(x, str) else f"[{x + 1}]" for x in loc]).replace(".[", "[")
-    return f"{prefix}{suffix}"

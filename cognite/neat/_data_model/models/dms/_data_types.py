@@ -1,9 +1,8 @@
+import re
 from abc import ABC
 from typing import Annotated, Literal
 
-from pydantic import Field, field_validator
-
-from cognite.neat._utils.text import humanize_collection
+from pydantic import Field, TypeAdapter, field_validator
 
 from ._base import BaseModelObject
 from ._constants import ENUM_VALUE_IDENTIFIER_PATTERN, FORBIDDEN_ENUM_VALUES, INSTANCE_ID_PATTERN
@@ -111,6 +110,7 @@ class DirectNodeRelation(ListablePropertyTypeDefinition):
 
 class EnumValue(BaseModelObject):
     name: str | None = Field(
+        None,
         max_length=255,
         description="The name of the enum value.",
     )
@@ -121,6 +121,9 @@ class EnumValue(BaseModelObject):
     )
 
 
+_ENUM_KEY = re.compile(ENUM_VALUE_IDENTIFIER_PATTERN)
+
+
 class EnumProperty(PropertyTypeDefinition):
     type: Literal["enum"] = "enum"
     unknown_value: str | None = Field(
@@ -129,22 +132,33 @@ class EnumProperty(PropertyTypeDefinition):
         "provide forward-compatibility, Specifying what value to use if the client does not "
         "recognize the returned value. It is not possible to ingest the unknown value, "
         "but it must be part of the allowed values.",
+        min_length=1,
+        max_length=128,
+        pattern=ENUM_VALUE_IDENTIFIER_PATTERN,
     )
     values: dict[str, EnumValue] = Field(
         description="A set of all possible values for the enum property.",
         min_length=1,
         max_length=32,
-        pattern=ENUM_VALUE_IDENTIFIER_PATTERN,
     )
 
     @field_validator("values", mode="after")
     def _valid_enum_value(cls, val: dict[str, EnumValue]) -> dict[str, EnumValue]:
-        invalid_enum_values = set(val.keys()).intersection(FORBIDDEN_ENUM_VALUES)
-        if invalid_enum_values:
-            raise ValueError(
-                "Enum values cannot be any of the following reserved values: "
-                f"{humanize_collection(invalid_enum_values)}"
-            )
+        errors: list[str] = []
+        for key in val.keys():
+            if not _ENUM_KEY.match(key):
+                errors.append(
+                    f"Enum value {key!r} is not valid. Enum values must match "
+                    f"the pattern: {ENUM_VALUE_IDENTIFIER_PATTERN}"
+                )
+            if len(key) > 128 or len(key) < 1:
+                errors.append(f"Enum value {key!r} must be between 1 and 128 characters long.")
+            if key.lower() in FORBIDDEN_ENUM_VALUES:
+                errors.append(
+                    f"Enum value {key!r} cannot be any of the following reserved values: {FORBIDDEN_ENUM_VALUES}"
+                )
+        if errors:
+            raise ValueError(";".join(errors))
         return val
 
 
@@ -165,3 +179,5 @@ DataType = Annotated[
     | EnumProperty,
     Field(discriminator="type"),
 ]
+
+DataTypeAdapter: TypeAdapter[DataType] = TypeAdapter(DataType)
