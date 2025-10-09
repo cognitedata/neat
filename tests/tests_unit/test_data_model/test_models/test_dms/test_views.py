@@ -119,12 +119,13 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In field space string should have at least 1 character",
-            "In field externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
-            "In field version string should have at most 43 characters",
-            "In properties.multiEdge.multi_edge_connection.source missing required field: 'version'",
-            "In properties.reverseDirect.single_reverse_direct_relation.through.identifier "
-            "string should have at least 1 character",
+            "In field 'externalId', string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
+            "In field 'space', string should have at least 1 character.",
+            "In field 'version', string should have at most 43 characters.",
+            "In properties.multiEdge.multi_edge_connection.source missing required field: 'version'.",
+            "In "
+            "properties.reverseDirect.single_reverse_direct_relation.through.identifier "
+            "string should have at least 1 character.",
         },
         id="Field length and pattern violations.",
     )
@@ -149,13 +150,15 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In field 'externalId', string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
-            "In field 'space', string should have at least 1 character.",
-            "In field 'version', string should have at most 43 characters.",
-            "In properties.multiEdge.multi_edge_connection.source missing required field: 'version'.",
-            "In "
-            "properties.reverseDirect.single_reverse_direct_relation.through.identifier "
-            "string should have at least 1 character.",
+            "In implements[1] missing required field: 'version'.",
+            "In implements[2].externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
+            "In implements[2].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'.",
+            "In implements[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In properties.edgeProp.single_edge_connection.source.externalId string should have at least 1 character.",
+            "In properties.edgeProp.single_edge_connection.source.space string should have at least 1 character.",
+            "In properties.edgeProp.single_edge_connection.source.version string should "
+            "match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In properties.edgeProp.single_edge_connection.type.externalId string should have at least 1 character.",
         },
         id="Empty fields and invalid implements.",
     )
