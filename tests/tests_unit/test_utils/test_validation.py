@@ -29,15 +29,15 @@ class TestHumanizeValidationError:
             pytest.param(
                 {"name": "Bob", "age": "twenty"},
                 {},
-                {"In field 'age', input should be a valid integer: unable to parse string as an integer."},
+                {"In field 'age', input should be a valid integer, unable to parse string as an integer."},
                 id="Type error with default formatting",
             ),
             pytest.param(
                 {"name": 123, "age": 40},
                 {"field_name": "value"},
                 {
-                    "In value name input should be a valid string. Got 123 of type int. Hint: Use "
-                    "double quotes to force string."
+                    "In value 'name', input should be a valid string. Got 123 of type int. Hint: "
+                    "Use double quotes to force string."
                 },
                 id="String type error with custom field_name",
             ),
@@ -47,13 +47,13 @@ class TestHumanizeValidationError:
                     "parent_loc": ("Employees", 0),
                     "humanize_location": lambda loc: f"employee {loc[1]} in {loc[0]}",
                 },
-                {"In employee 0 in Employees input should be greater than 0"},
+                {"In employee 0 in Employees input should be greater than 0."},
                 id="Custom location formatting",
             ),
             pytest.param(
                 {"name": "Eve"},
                 {"field_renaming": {"name": "Full Name", "age": "Years Old"}},
-                {"Missing required field: 'age'"},
+                {"Missing required field: 'age'."},
                 id="Field renaming for error message",
             ),
             pytest.param(
@@ -64,7 +64,7 @@ class TestHumanizeValidationError:
                     "field_name": "column",
                     "field_renaming": {"age": "Years"},
                 },
-                {"In at position 2 in Data input should be a valid integer, unable to parse string as an integer"},
+                {"In at position 2 in Data input should be a valid integer, unable to parse string as an integer."},
                 id="Combined custom parameters",
             ),
         ],

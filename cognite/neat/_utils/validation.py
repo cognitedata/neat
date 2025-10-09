@@ -104,6 +104,8 @@ def humanize_validation_error(
         elif len(loc) > 1:
             msg = f"In {humanize_location(loc)} {error_suffix}"
         elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
-            msg = f"In {field_name} {loc[0]} {error_suffix}"
+            msg = f"In {field_name} {loc[0]!r}, {error_suffix}"
+        if not msg.endswith("."):
+            msg += "."
         errors.append(msg)
     return errors
