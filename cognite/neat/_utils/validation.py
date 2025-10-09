@@ -31,7 +31,7 @@ def humanize_validation_error(
     humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path,
     field_name: Literal["field", "column", "value"] = "field",
     field_renaming: Mapping[str, str] | None = None,
-    missing_required: Literal["emtpy", "missing"] = "missing",
+    missing_required: Literal["empty", "missing"] = "missing",
 ) -> list[str]:
     """Converts a ValidationError to a human-readable format.
 
