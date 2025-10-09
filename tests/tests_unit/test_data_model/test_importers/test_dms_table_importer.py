@@ -173,7 +173,7 @@ class TestTableSource:
                 "MyTable",
                 5,
                 {"MyTable": SpreadsheetRead(header_row=2, empty_rows=[1, 3])},
-                10,
+                10,  # 5 + 2 (header) + 2 (empty rows before 5) + 1 (1-indexed)
                 id="with_table_read",
             ),
             pytest.param("MyTable", 5, {}, 6, id="without_table_read"),
@@ -219,3 +219,37 @@ class TestTableSource:
             assert mapping["externalId"] == expected_external_id
         else:
             assert mapping is None
+
+
+class TestSpreadsheetRead:
+    @pytest.mark.parametrize(
+        "row,read,expected",
+        [
+            pytest.param(
+                5,
+                SpreadsheetRead(header_row=1, empty_rows=[], skipped_rows=[], is_one_indexed=True),
+                7,  # 5 + 1 (header) + 1 (one_indexed)
+                id="basic_case_with_one_indexing",
+            ),
+            pytest.param(
+                5,
+                SpreadsheetRead(header_row=2, empty_rows=[1, 3, 6], skipped_rows=[], is_one_indexed=True),
+                11,  # 5->6 (empty 1)->7 (empty 3)->8 (empty 6) + 2 (header) + 1 (one_indexed)
+                id="with_empty_rows",
+            ),
+            pytest.param(
+                3,
+                SpreadsheetRead(header_row=1, empty_rows=[2], skipped_rows=[1, 4], is_one_indexed=False),
+                7,  # 3->4 (empty 2)->5 (skipped 1) + 1 (header) + 0 (zero_indexed)
+                id="with_empty_and_skipped_rows_zero_indexed",
+            ),
+            pytest.param(
+                2,
+                SpreadsheetRead(header_row=3, empty_rows=[1, 5], skipped_rows=[2, 6], is_one_indexed=True),
+                8,  # 2->3 (empty 1)->4 (skipped 2) + 3 (header) + 1 (one_indexed)
+                id="complex_case_with_all_adjustments",
+            ),
+        ],
+    )
+    def test_adjusted_row_number(self, row: int, read: SpreadsheetRead, expected: int) -> None:
+        assert read.adjusted_row_number(row) == expected
