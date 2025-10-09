@@ -452,7 +452,24 @@ class NeatInstanceStore:
         """Cheap way to check if the graph store is empty."""
         return not self.queries.select.has_data()
 
-    def diff(self, old_named_graph: URIRef, new_named_graph: URIRef, *args: tuple[Any, ...]) -> None:
+    def diff(self, old_named_graph: URIRef, new_named_graph: URIRef) -> None:
+        """
+        Compare two named graphs and store diff results in dedicated named graphs.
+
+        Stores triples to add in DIFF_ADD and triples to delete in DIFF_DELETE.
+
+        Args:
+            old_named_graph: URI of the old/current named graph
+            new_named_graph: URI of the new/updated named graph
+
+        Raises:
+            NeatValueError: If either named graph doesn't exist in the store
+        """
+        if old_named_graph not in self.named_graphs:
+            raise NeatValueError(f"Old named graph not found: {old_named_graph}")
+        if new_named_graph not in self.named_graphs:
+            raise NeatValueError(f"New named graph not found: {new_named_graph}")
+
         add_triples = cast(Iterable[Triple], self.queries.select.get_triples_to_add(old_named_graph, new_named_graph))
         delete_triples = cast(
             Iterable[Triple], self.queries.select.get_triples_to_delete(old_named_graph, new_named_graph)
