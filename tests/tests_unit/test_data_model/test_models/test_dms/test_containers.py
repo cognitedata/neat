@@ -144,18 +144,18 @@ class TestDataTypeAdapter:
                 {"type": "enum", "values": {"validValue1": {}, "invalid-value": {}}},
                 {
                     "In enum.values enum value 'invalid-value' is not valid. Enum values must "
-                    "match the pattern: ^[_A-Za-z][_0-9A-Za-z]{0,127}$"
+                    "match the pattern: ^[_A-Za-z][_0-9A-Za-z]{0,127}$."
                 },
                 id="Enum with invalid value key",
             ),
             pytest.param(
                 {"type": "enum", "values": {}},
-                {"In enum.values dictionary should have at least 1 item after validation, not 0"},
+                {"In enum.values dictionary should have at least 1 item after validation, not 0."},
                 id="Enum with empty values",
             ),
             pytest.param(
                 {"type": "enum", "values": {"validValue1": {}}, "unknownValue": ""},
-                {"In enum.unknownValue string should have at least 1 character"},
+                {"In enum.unknownValue string should have at least 1 character."},
                 id="Enum with empty unknownValue",
             ),
         ],

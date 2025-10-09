@@ -124,8 +124,14 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             "In field 'version', string should have at most 43 characters.",
             "In properties.multiEdge.multi_edge_connection.source missing required field: 'version'.",
             "In "
-            "properties.reverseDirect.single_reverse_direct_relation.through.identifier "
+            "properties.reverseDirect.single_reverse_direct_relation.through.ContainerDirectReference.identifier "
             "string should have at least 1 character.",
+            "In "
+            "properties.reverseDirect.single_reverse_direct_relation.through.ViewDirectReference.identifier "
+            "string should have at least 1 character.",
+            "In "
+            "properties.reverseDirect.single_reverse_direct_relation.through.ViewDirectReference.source "
+            "missing required field: 'version'.",
         },
         id="Field length and pattern violations.",
     )
@@ -186,24 +192,24 @@ def invalid_view_definition_test_cases() -> Iterator[tuple]:
             },
         },
         {
-            "In properties.containerProp.primary_property.container missing required field: 'externalId'",
+            "In properties.containerProp.primary_property.container missing required field: 'externalId'.",
             "In properties.containerProp.primary_property.containerPropertyIdentifier "
-            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
-            "In properties.containerProp.primary_property.description string should have at most 1024 characters",
-            "In properties.containerProp.primary_property.name string should have at most 255 characters",
+            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'.",
+            "In properties.containerProp.primary_property.description string should have at most 1024 characters.",
+            "In properties.containerProp.primary_property.name string should have at most 255 characters.",
             "In "
             "properties.multiReverseDirect.multi_reverse_direct_relation.source.version "
             "string should match pattern "
-            "'^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
+            "'^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
             "In "
             "properties.multiReverseDirect.multi_reverse_direct_relation.through.ContainerDirectReference.identifier "
-            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
+            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'.",
             "In "
             "properties.multiReverseDirect.multi_reverse_direct_relation.through.ViewDirectReference.identifier "
-            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'",
+            "string should match pattern '^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$'.",
             "In "
             "properties.multiReverseDirect.multi_reverse_direct_relation.through.ViewDirectReference.source "
-            "missing required field: 'version'",
+            "missing required field: 'version'.",
         },
         id="Property validation errors.",
     )
