@@ -3,7 +3,7 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, Field, ValidationError
 
-from cognite.neat._utils.validation import humanize_validation_error
+from cognite.neat._utils.validation import as_json_path, humanize_validation_error
 
 
 class Person(BaseModel):
@@ -77,3 +77,18 @@ class TestHumanizeValidationError:
 
         errors = humanize_validation_error(exc_info.value, **args)
         assert set(errors) == expected_errors
+
+
+class TestAsJsonPath:
+    @pytest.mark.parametrize(
+        "path,expected",
+        [
+            (("data", 0, "attributes", "name"), "data[1].attributes.name"),
+            (("items", 2, "details", 5, "value"), "items[3].details[6].value"),
+            (("root", "level1", "level2", 3, "level3"), "root.level1.level2[4].level3"),
+            (("a", "b-c", 1, "d.e", 0), "a.b-c[2].d.e[1]"),
+            ((), ""),
+        ],
+    )
+    def test_as_json_path(self, path: tuple[str | int, ...], expected: str) -> None:
+        assert as_json_path(path) == expected
