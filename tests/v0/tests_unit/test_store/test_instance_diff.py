@@ -10,7 +10,7 @@ def test_diff_instances() -> None:
     store = NeatInstanceStore.from_oxi_local_store()
     ex = Namespace("http://example.org/")
 
-    old_graph = URIRef("urn:test:old")
+    current_graph = URIRef("urn:test:current")
     new_graph = URIRef("urn:test:new")
 
     store._add_triples(
@@ -19,7 +19,7 @@ def test_diff_instances() -> None:
             (ex.instance1, ex.prop, Literal("v1")),
             (ex.instance2, RDF.type, ex.Type1),
         ],
-        named_graph=old_graph,
+        named_graph=current_graph,
     )
 
     # NEW: 1 modified + 1 new (instance2 deleted)
@@ -32,7 +32,7 @@ def test_diff_instances() -> None:
         named_graph=new_graph,
     )
 
-    store.diff(old_graph, new_graph)
+    store.diff(current_graph, new_graph)
 
     add_graph = store.graph(NAMED_GRAPH_NAMESPACE["DIFF_ADD"])
     delete_graph = store.graph(NAMED_GRAPH_NAMESPACE["DIFF_DELETE"])
@@ -55,7 +55,7 @@ def test_diff_validation() -> None:
         named_graph=existing,
     )
 
-    with pytest.raises(NeatValueError, match="Old named graph not found"):
+    with pytest.raises(NeatValueError, match="Current named graph not found"):
         store.diff(nonexistent, existing)
 
     with pytest.raises(NeatValueError, match="New named graph not found"):
@@ -67,21 +67,21 @@ def test_diff_clears_previous_results() -> None:
     store = NeatInstanceStore.from_oxi_local_store()
     ex = Namespace("http://example.org/")
 
-    old1, new1 = URIRef("urn:old1"), URIRef("urn:new1")
-    old2, new2 = URIRef("urn:old2"), URIRef("urn:new2")
+    current1, new1 = URIRef("urn:current1"), URIRef("urn:new1")
+    current2, new2 = URIRef("urn:current2"), URIRef("urn:new2")
 
     # First diff
-    store._add_triples([(ex.a, RDF.type, ex.T1)], named_graph=old1)
+    store._add_triples([(ex.a, RDF.type, ex.T1)], named_graph=current1)
     store._add_triples([(ex.b, RDF.type, ex.T1)], named_graph=new1)
-    store.diff(old1, new1)
+    store.diff(current1, new1)
 
     assert (ex.b, RDF.type, ex.T1) in store.graph(NAMED_GRAPH_NAMESPACE["DIFF_ADD"])
     assert (ex.a, RDF.type, ex.T1) in store.graph(NAMED_GRAPH_NAMESPACE["DIFF_DELETE"])
 
     # Second diff - should clear first results
-    store._add_triples([(ex.c, RDF.type, ex.T2)], named_graph=old2)
+    store._add_triples([(ex.c, RDF.type, ex.T2)], named_graph=current2)
     store._add_triples([(ex.d, RDF.type, ex.T2)], named_graph=new2)
-    store.diff(old2, new2)
+    store.diff(current2, new2)
 
     add_graph = store.graph(NAMED_GRAPH_NAMESPACE["DIFF_ADD"])
     delete_graph = store.graph(NAMED_GRAPH_NAMESPACE["DIFF_DELETE"])
