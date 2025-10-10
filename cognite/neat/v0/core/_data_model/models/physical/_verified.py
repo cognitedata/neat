@@ -26,13 +26,12 @@ from cognite.neat.v0.core._data_model.models._types import (
     ContainerEntityType,
     PhysicalPropertyType,
     URIRefType,
-    ViewEntityType
+    ViewEntityType,
 )
 from cognite.neat.v0.core._data_model.models.data_types import DataType
 from cognite.neat.v0.core._data_model.models.entities import (
     ConceptualEntity,
     ContainerIndexEntity,
-    ContainerConstraintEntity,
     DMSNodeEntity,
     EdgeEntity,
     HasDataFilter,
@@ -43,11 +42,12 @@ from cognite.neat.v0.core._data_model.models.entities import (
     ReverseConnectionEntity,
     Undefined,
     ViewEntity,
-    ViewEntityList,  
+    ViewEntityList,
 )
-
-from cognite.neat.v0.core._data_model.models.entities._types import ContainerEntityList, ContainerIndexListType, ContainerConstraintListType
-
+from cognite.neat.v0.core._data_model.models.entities._types import (
+    ContainerConstraintListType,
+    ContainerIndexListType,
+)
 from cognite.neat.v0.core._issues.errors import NeatValueError
 from cognite.neat.v0.core._issues.warnings import NeatValueWarning, PropertyDefinitionWarning
 
@@ -308,7 +308,6 @@ class PhysicalProperty(SheetRow):
                 )
         return value
 
-
     @field_validator("constraint", mode="after")
     @classmethod
     def constraint_set_correctly(cls, value: ContainerConstraintListType | None, info: ValidationInfo) -> Any:
@@ -319,10 +318,13 @@ class PhysicalProperty(SheetRow):
             container_property = str(info.data["container_property"])
         except KeyError:
             raise ValueError("Container and container property must be set to use constraint") from None
-        
+
         for constraint in value:
             if constraint.prefix != "uniqueness":
-                message = f"Unsupported constraint type on container property '{constraint.prefix}'. Currently only 'uniqueness' is supported."
+                message = (
+                    f"Unsupported constraint type on container property"
+                    f" '{constraint.prefix}'. Currently only 'uniqueness' is supported."
+                )
                 raise ValueError(message) from None
             elif constraint.prefix is Undefined:
                 message = f"The type of constraint is not defined. Please set 'uniqueness:{value!s}'."
@@ -379,7 +381,6 @@ class PhysicalContainer(SheetRow):
     description: str | None = Field(
         alias="Description", default=None, description="Short description of the node being defined."
     )
-    # constraint: Any | None = None
     constraint: ContainerConstraintListType | None = Field(
         None, alias="Constraint", description="List of required (comma separated) constraints for the container"
     )
@@ -395,12 +396,18 @@ class PhysicalContainer(SheetRow):
 
         for constraint in value:
             if constraint.prefix != "requires":
-                message = f"Unsupported constraint type on container as the whole '{constraint.prefix}'. Currently only 'requires' is supported."
+                message = (
+                    f"Unsupported constraint type on container as "
+                    f"the whole '{constraint.prefix}'. Currently only 'requires' is supported."
+                )
                 raise ValueError(message) from None
             elif constraint.container is None:
-                message = f"Container constraint must have a container set. Please set 'requires:{constraint!s}(container=space:external_id)'."
+                message = (
+                    f"Container constraint must have a container set. "
+                    f"Please set 'requires:{constraint!s}(container=space:external_id)'."
+                )
                 raise ValueError(message) from None
-            
+
             elif constraint.prefix is Undefined:
                 message = f"The type of constraint is not defined. Please set 'requires:{constraint!s}'."
                 warnings.warn(
@@ -408,7 +415,7 @@ class PhysicalContainer(SheetRow):
                     stacklevel=2,
                 )
 
-        return value    
+        return value
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.container,)
@@ -417,8 +424,10 @@ class PhysicalContainer(SheetRow):
         container_id = self.container.as_id()
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
+            if constraint.container is None:
+                continue
             requires = dm.RequiresConstraint(constraint.container.as_id())
-            constraints[constraint.prefix] = requires
+            constraints[constraint.suffix] = requires
 
         return dm.ContainerApply(
             space=container_id.space,

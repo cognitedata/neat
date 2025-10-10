@@ -803,7 +803,9 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalContainer(
                     container="sp_core:Asset",
                 ),
-                UnverifiedPhysicalContainer(container="GeneratingUnit", constraint="sp_core:Asset"),
+                UnverifiedPhysicalContainer(
+                    container="GeneratingUnit", constraint="requires:sp_core_Asset(container=sp_core:Asset)"
+                ),
             ],
             views=[
                 UnverifiedPhysicalView(view="sp_core:Asset(version=1)"),
@@ -894,7 +896,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
             ],
             containers=[
                 UnverifiedPhysicalContainer(container="Asset"),
-                UnverifiedPhysicalContainer(container="Plant", constraint="Asset"),
+                UnverifiedPhysicalContainer(container="Plant", constraint="requires:my_space_Asset(container=Asset)"),
             ],
             views=[
                 UnverifiedPhysicalView(view="Asset"),
