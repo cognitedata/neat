@@ -572,7 +572,7 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
                 index.append(ContainerIndexEntity(prefix="inverted", suffix=index_name, order=order))
         return index or None
 
-    def _get_constraint(self, prop: ViewPropertyApply, prop_id: str) -> list[str] | None:
+    def _get_constraint(self, prop: ViewPropertyApply, prop_id: str) -> list[ContainerConstraintEntity] | None:
         if not isinstance(prop, dm.MappedPropertyApply):
             return None
         container = self._all_containers_by_id[prop.container]
