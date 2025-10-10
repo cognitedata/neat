@@ -381,7 +381,8 @@ class _DMSExporter:
             for prop in container_properties:
                 if prop.container_property is not None:
                     for constraint in prop.constraint or []:
-                        uniqueness_properties[constraint].add(prop.container_property)
+                        uniqueness_properties[constraint.prefix].add(prop.container_property)
+                        
             for constraint_name, properties in uniqueness_properties.items():
                 container.constraints = container.constraints or {}
                 container.constraints[constraint_name] = dm.UniquenessConstraint(properties=list(properties))

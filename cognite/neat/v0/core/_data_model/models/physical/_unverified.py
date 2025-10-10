@@ -23,6 +23,7 @@ from cognite.neat.v0.core._data_model.models.data_types import DataType
 from cognite.neat.v0.core._data_model.models.entities import (
     ContainerEntity,
     ContainerIndexEntity,
+    ContainerConstraintEntity,
     DMSNodeEntity,
     EdgeEntity,
     PhysicalUnknownEntity,
@@ -138,7 +139,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     container: str | None = None
     container_property: str | None = None
     index: str | list[str | ContainerIndexEntity] | ContainerIndexEntity | None = None
-    constraint: str | list[str] | None = None
+    constraint: str | list[str | ContainerConstraintEntity] | ContainerConstraintEntity | None = None
     neatId: str | URIRef | None = None
     conceptual: str | URIRef | None = None
 
@@ -197,6 +198,31 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
                 else:
                     raise TypeError(f"Unexpected type for index: {type(index)}")
             output["Index"] = index_list
+
+        if isinstance(self.constraint, ContainerConstraintEntity) or (isinstance(self.constraint, str) and "," not in self.constraint):
+            output["Constraint"] = [ContainerConstraintEntity.load(self.constraint, return_on_failure=True)]
+        elif isinstance(self.constraint, str):
+            output["Constraint"] = [
+                ContainerConstraintEntity.load(constraint.strip(), return_on_failure=True)
+                for constraint in SPLIT_ON_COMMA_PATTERN.split(self.constraint)
+                if constraint.strip()
+            ]
+        elif isinstance(self.constraint, list):
+            constraint_list: list[ContainerConstraintEntity | PhysicalUnknownEntity] = []
+            for constraint in self.constraint:
+                if isinstance(constraint, ContainerConstraintEntity):
+                    constraint_list.append(constraint)
+                elif isinstance(constraint, str):
+                    constraint_list.extend(
+                        [
+                            ContainerConstraintEntity.load(idx.strip(), return_on_failure=True)
+                            for idx in SPLIT_ON_COMMA_PATTERN.split(constraint)
+                            if idx.strip()
+                        ]
+                    )
+                else:
+                    raise TypeError(f"Unexpected type for constraint: {type(constraint)}")
+            output["Constraint"] = constraint_list
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
@@ -249,7 +275,7 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     container: str
     name: str | None = None
     description: str | None = None
-    constraint: str | None = None
+    constraint: str | list[str | ContainerConstraintEntity] | ContainerConstraintEntity | None = None
     neatId: str | URIRef | None = None
     used_for: Literal["node", "edge", "all"] | None = None
 
@@ -260,14 +286,30 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
         output["Container"] = self.as_entity_id(default_space, return_on_failure=True)
-        output["Constraint"] = (
-            [
-                ContainerEntity.load(constraint.strip(), space=default_space, return_on_failure=True)
-                for constraint in self.constraint.split(",")
+        if isinstance(self.constraint, ContainerConstraintEntity) or (isinstance(self.constraint, str) and "," not in self.constraint):
+            output["Constraint"] = [ContainerConstraintEntity.load(self.constraint, return_on_failure=True)]
+        elif isinstance(self.constraint, str):
+            output["Constraint"] = [
+                ContainerConstraintEntity.load(constraint.strip(), return_on_failure=True)
+                for constraint in SPLIT_ON_COMMA_PATTERN.split(self.constraint)
+                if constraint.strip()
             ]
-            if self.constraint
-            else None
-        )
+        elif isinstance(self.constraint, list):
+            constraint_list: list[ContainerConstraintEntity | PhysicalUnknownEntity] = []
+            for constraint in self.constraint:
+                if isinstance(constraint, ContainerConstraintEntity):
+                    constraint_list.append(constraint)
+                elif isinstance(constraint, str):
+                    constraint_list.extend(
+                        [
+                            ContainerConstraintEntity.load(idx.strip(), return_on_failure=True)
+                            for idx in SPLIT_ON_COMMA_PATTERN.split(constraint)
+                            if idx.strip()
+                        ]
+                    )
+                else:
+                    raise TypeError(f"Unexpected type for constraint: {type(constraint)}")
+            output["Constraint"] = constraint_list
         return output
 
     @overload
@@ -285,10 +327,14 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
 
     @classmethod
     def from_container(cls, container: dm.ContainerApply) -> "UnverifiedPhysicalContainer":
-        constraints: list[str] = []
-        for _, constraint_obj in (container.constraints or {}).items():
+        constraints: list[ContainerConstraintEntity] = []
+        for constraint_name, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
-                constraints.append(str(ContainerEntity.from_id(constraint_obj.require)))
+                constraint = ContainerConstraintEntity(prefix="requires",
+                                                suffix=constraint_name,
+                                                container=ContainerEntity.from_id(constraint_obj.require))
+                # print(constraint)
+                constraints.append(str(constraint))
             # UniquenessConstraint it handled in the properties
         container_entity = ContainerEntity.from_id(container.as_id())
         return cls(

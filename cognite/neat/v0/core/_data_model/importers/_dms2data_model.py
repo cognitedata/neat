@@ -54,6 +54,7 @@ from cognite.neat.v0.core._data_model.models.entities import (
     ReverseConnectionEntity,
     ViewEntity,
 )
+from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerConstraintEntity
 from cognite.neat.v0.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalEnum,
@@ -575,13 +576,13 @@ class DMSImporter(BaseImporter[UnverifiedPhysicalDataModel]):
         if not isinstance(prop, dm.MappedPropertyApply):
             return None
         container = self._all_containers_by_id[prop.container]
-        unique_constraints: list[str] = []
+        unique_constraints: list[ContainerConstraintEntity] = []
         for constraint_name, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
                 # This is handled in the .from_container method of DMSContainer
                 continue
             elif isinstance(constraint_obj, dm.UniquenessConstraint) and prop_id in constraint_obj.properties:
-                unique_constraints.append(constraint_name)
+                unique_constraints.append(ContainerConstraintEntity(prefix="uniqueness", suffix=constraint_name))
             elif isinstance(constraint_obj, dm.UniquenessConstraint):
                 # This does not apply to this property
                 continue

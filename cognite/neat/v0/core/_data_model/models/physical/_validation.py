@@ -121,9 +121,9 @@ class PhysicalValidation:
             view_with_properties.add(prop.view)
 
         for container in self._containers or []:
-            for required in container.constraint or []:
-                if required not in existing_containers:
-                    imported_containers.add(required)
+            for constraint in container.constraint or []:
+                if constraint.container not in existing_containers:
+                    imported_containers.add(constraint.container)
 
         if include_views_with_no_properties:
             extra_views = existing_views - view_with_properties
