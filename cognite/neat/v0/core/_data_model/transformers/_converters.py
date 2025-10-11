@@ -72,6 +72,7 @@ from cognite.neat.v0.core._data_model.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
+from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerConstraintEntity
 from cognite.neat.v0.core._data_model.models.physical import (
     PhysicalMetadata,
     PhysicalProperty,
@@ -1638,14 +1639,20 @@ class _ConceptualDataModelConverter:
         default_space: str,
         concept_by_concept_entity: dict[ConceptEntity, Concept],
         referenced_containers: Collection[ContainerEntity],
-    ) -> list[ContainerEntity]:
-        constrains: list[ContainerEntity] = []
+    ) -> list[ContainerConstraintEntity]:
+        constrains: list[ContainerConstraintEntity] = []
         for entity in concept_entities:
             concept = concept_by_concept_entity[entity]
             for parent in concept.implements or []:
                 parent_entity = parent.as_container_entity(default_space)
                 if parent_entity in referenced_containers:
-                    constrains.append(parent_entity)
+                    constrains.append(
+                        ContainerConstraintEntity(
+                            prefix="requires",
+                            suffix=f"{parent_entity.space}_{parent_entity.external_id}",
+                            container=parent_entity,
+                        )
+                    )
         return constrains
 
     @classmethod

@@ -25,9 +25,6 @@ class TestImportersToYAMLExporter:
         exported_rules = yaml.safe_load(exported_yaml_str)
         data_regression.check(exported_rules)
 
-        exported_rules = yaml.safe_load(exported_yaml_str)
-        data_regression.check(exported_rules)
-
     def test_prohibiting_conversion_with_nice_message(self) -> None:
         neat = NeatSession()
 
