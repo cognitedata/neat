@@ -321,7 +321,13 @@ class PhysicalProperty(SheetRow):
             raise ValueError("Container and container property must be set to use constraint") from None
 
         for constraint in value:
-            if constraint.prefix != "uniqueness":
+            if constraint.prefix is Undefined:
+                message = f"The type of constraint is not defined. Please set 'uniqueness:{value!s}'."
+                warnings.warn(
+                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    stacklevel=2,
+                )
+            elif constraint.prefix != "uniqueness":
                 message = (
                     f"Unsupported constraint type on container property"
                     f" '{constraint.prefix}'. Currently only 'uniqueness' is supported."
@@ -330,12 +336,6 @@ class PhysicalProperty(SheetRow):
             elif len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
                 message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
                 raise ValueError(message) from None
-            elif constraint.prefix is Undefined:
-                message = f"The type of constraint is not defined. Please set 'uniqueness:{value!s}'."
-                warnings.warn(
-                    PropertyDefinitionWarning(container, "container property", container_property, message),
-                    stacklevel=2,
-                )
 
         return value
 
@@ -399,28 +399,29 @@ class PhysicalContainer(SheetRow):
             return value
 
         for constraint in value:
-            if constraint.prefix != "requires":
-                message = (
-                    f"Unsupported constraint type on container as "
-                    f"the whole '{constraint.prefix}'. Currently only 'requires' is supported."
-                )
-                raise ValueError(message) from None
-            elif len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
-                message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
-                raise ValueError(message) from None
-            elif constraint.container is None:
-                message = (
-                    f"Container constraint must have a container set. "
-                    f"Please set 'requires:{constraint!s}(container=space:external_id)'."
-                )
-                raise ValueError(message) from None
-
-            elif constraint.prefix is Undefined:
+            if constraint.prefix is Undefined:
                 message = f"The type of constraint is not defined. Please set 'requires:{constraint!s}'."
                 warnings.warn(
                     message,
                     stacklevel=2,
                 )
+            elif constraint.prefix != "requires":
+                message = (
+                    f"Unsupported constraint type on container as "
+                    f"the whole '{constraint.prefix}'. Currently only 'requires' is supported."
+                )
+                raise ValueError(message) from None
+
+            if len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
+                message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
+                raise ValueError(message) from None
+
+            if constraint.container is None:
+                message = (
+                    f"Container constraint must have a container set. "
+                    f"Please set 'requires:{constraint!s}(container=space:external_id)'."
+                )
+                raise ValueError(message) from None
 
         return value
 

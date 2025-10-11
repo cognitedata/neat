@@ -1,22 +1,22 @@
 containers:
-- constraint: CogniteDescribable,CogniteSourceable,CogniteSchedulable
+- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable),requires:schedulablePresent(container=CogniteSchedulable)
   container: CogniteActivity
   description: Represent an activity
   used_for: node
-- constraint: CogniteDescribable,CogniteSourceable
+- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
   container: CogniteAnnotation
   description: Annotation represents contextualization results or links
   used_for: edge
-- constraint: CogniteDescribable,CogniteVisualizable,CogniteSourceable
+- constraint: requires:describablePresent(container=CogniteDescribable),requires:visualizablePresent(container=CogniteVisualizable),requires:sourceablePresent(container=CogniteSourceable)
   container: CogniteAsset
   description: The asset is the bare bone representation of assets in our asset centric
     world
   used_for: node
-- constraint: CogniteDescribable
+- constraint: requires:describablePresent(container=CogniteDescribable)
   container: CogniteAssetClass
   description: This identifies the class of an asset
   used_for: node
-- constraint: CogniteDescribable
+- constraint: requires:describablePresent(container=CogniteDescribable)
   container: CogniteAssetType
   description: This identifies the type of an asset
   used_for: node
@@ -24,22 +24,22 @@ containers:
   description: The describable core concept is used as a standard way of holding the
     bare minimum of information about the instance.
   used_for: all
-- constraint: CogniteDescribable,CogniteSourceable,CogniteAnnotation
+- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable),requires:annotationPresent(container=CogniteAnnotation)
   container: CogniteDiagramAnnotation
   used_for: edge
-- constraint: CogniteDescribable,CogniteSourceable
+- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
   container: CogniteEquipment
   description: Represent a physical piece of equipment
   used_for: node
-- constraint: CogniteDescribable
+- constraint: requires:describablePresent(container=CogniteDescribable)
   container: CogniteEquipmentType
   description: This identifies the type of an equipment
   used_for: node
-- constraint: CogniteDescribable,CogniteSourceable
+- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
   container: CogniteFile
   description: This concept models the underlying file from the Files resource type
   used_for: node
-- constraint: CogniteDescribable
+- constraint: requires:describablePresent(container=CogniteDescribable)
   container: CogniteFileCategory
   description: Specifies the category for a file (as a result of categorization/classification))
   used_for: node
@@ -55,10 +55,10 @@ containers:
   description: The CogniteSourceable core concept is used to standardize the way source
     information is stored.
   used_for: all
-- constraint: CogniteDescribable,CogniteSourceable
+- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
   container: CogniteTimeSeries
   used_for: node
-- constraint: CogniteDescribable
+- constraint: requires:describablePresent(container=CogniteDescribable)
   container: CogniteUnit
   description: Represents a single unit of measurement
   used_for: node
@@ -649,7 +649,7 @@ properties:
   value_type: CogniteAssetType
   view: CogniteAsset
   view_property: type
-- constraint: uniqueCodeConstraint
+- constraint: uniqueness:uniqueCodeConstraint
   container: CogniteAssetClass
   container_property: code
   description: A unique identifier for the class of asset.
@@ -661,7 +661,7 @@ properties:
   value_type: text
   view: CogniteAssetClass
   view_property: code
-- constraint: uniqueCodeConstraint
+- constraint: uniqueness:uniqueCodeConstraint
   container: CogniteAssetClass
   container_property: standard
   description: A text string to specify which standard the class is from.
@@ -1123,7 +1123,7 @@ properties:
   value_type: CogniteTimeSeries
   view: CogniteEquipment
   view_property: timeSeries
-- constraint: uniqueCodeConstraint
+- constraint: uniqueness:uniqueCodeConstraint
   container: CogniteEquipmentType
   container_property: code
   description: A unique identifier for the type of equipment.
@@ -1146,7 +1146,7 @@ properties:
   value_type: text
   view: CogniteEquipmentType
   view_property: equipmentClass
-- constraint: uniqueCodeConstraint
+- constraint: uniqueness:uniqueCodeConstraint
   container: CogniteEquipmentType
   container_property: standard
   description: An identifier for the standard this equipment type is sourced from,
@@ -1250,7 +1250,7 @@ properties:
   value_type: timestamp
   view: CogniteFile
   view_property: uploadedTime
-- constraint: uniqueCodeConstraint
+- constraint: uniqueness:uniqueCodeConstraint
   container: CogniteFileCategory
   container_property: code
   description: An identifier for the category, for example, 'AA' for Accounting (from
@@ -1263,7 +1263,7 @@ properties:
   value_type: text
   view: CogniteFileCategory
   view_property: code
-- constraint: uniqueCodeConstraint
+- constraint: uniqueness:uniqueCodeConstraint
   container: CogniteFileCategory
   container_property: standard
   description: The name of the standard the category originates from, for example,
@@ -1653,7 +1653,7 @@ properties:
   view: CogniteUnit
   view_property: symbol
 - connection: direct
-  constraint: uniqueObject3D
+  constraint: uniqueness:uniqueObject3D
   container: CogniteVisualizable
   container_property: object3D
   description: Direct relation to an Object3D instance representing the 3D resource

@@ -12,6 +12,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 from pandas import ExcelFile
 from rdflib import Namespace, URIRef
 
+from cognite.neat.v0.core._data_model._constants import SPLIT_ON_COMMA_PATTERN
 from cognite.neat.v0.core._data_model._shared import (
     ImportedDataModel,
     T_UnverifiedDataModel,
@@ -23,6 +24,7 @@ from cognite.neat.v0.core._data_model.models import (
     SchemaCompleteness,
 )
 from cognite.neat.v0.core._data_model.models._import_contexts import SpreadsheetContext
+from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerEntity
 from cognite.neat.v0.core._issues import IssueList, MultiValueError
 from cognite.neat.v0.core._issues.errors import (
     FileMissingRequiredFieldError,
@@ -30,7 +32,11 @@ from cognite.neat.v0.core._issues.errors import (
     FileReadError,
 )
 from cognite.neat.v0.core._issues.warnings import FileMissingRequiredFieldWarning
-from cognite.neat.v0.core._utils.spreadsheet import SpreadsheetRead, read_individual_sheet
+from cognite.neat.v0.core._utils.spreadsheet import (
+    SpreadsheetRead,
+    find_column_and_row_with_value,
+    read_individual_sheet,
+)
 from cognite.neat.v0.core._utils.text import humanize_collection
 
 from ._base import BaseImporter
@@ -323,12 +329,15 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
             if "Properties" in workbook.sheetnames:
                 _replace_class_with_concept_cell(workbook["Properties"])
 
-            with tempfile.NamedTemporaryFile(prefix="temp_neat_file", suffix=".xlsx", delete=False) as temp_file:
-                workbook.save(temp_file.name)
-                return Path(temp_file.name)
+        elif "Containers" in workbook.sheetnames:
+            _replace_old_to_new_form_of_require_constainers(workbook["Containers"])
 
         else:
             return filepath
+
+        with tempfile.NamedTemporaryFile(prefix="temp_neat_file", suffix=".xlsx", delete=False) as temp_file:
+            workbook.save(temp_file.name)
+            return Path(temp_file.name)
 
 
 def _replace_class_with_concept_cell(sheet: Worksheet) -> None:
@@ -342,3 +351,48 @@ def _replace_class_with_concept_cell(sheet: Worksheet) -> None:
         for cell in row:
             if cell.value == "Class":
                 cell.value = "Concept"
+
+
+def _replace_old_to_new_form_of_require_constainers(sheet: Worksheet) -> None:
+    """
+    Replaces the old form of require containers with the new form in the given sheet.
+
+    Args:
+        sheet (Worksheet): The sheet in which to replace the old form of require containers.
+    """
+    column, row = find_column_and_row_with_value(sheet, "Constraint", False)
+
+    if not column or not row:
+        return None
+    # Iterate over values in the constraint column
+
+    replaced: bool = False
+    for cell_row in sheet.iter_rows(min_row=row + 1, min_col=column, max_col=column):
+        cell = cell_row[0]
+        if cell.value is not None:  # Skip empty cells
+            if "container" in str(cell.value).lower():
+                continue
+
+            constraints = []
+            for constraint in SPLIT_ON_COMMA_PATTERN.split(str(cell.value)):
+                try:
+                    container = ContainerEntity.load(constraint, space="default")
+                    container_str = container.external_id if container.space == "default" else str(container)
+                    updated_constraint = (
+                        f"requires:{container.space}_{container.external_id}(container={container_str})"
+                    )
+                except Exception:
+                    updated_constraint = constraint
+
+                constraints.append(updated_constraint)
+            cell.value = ",".join(constraints)
+            replaced = True
+
+    if replaced:
+        print(
+            (
+                "You are using a legacy spreadsheet format for defining container constraints, "
+                "which we will support until v1.0 of neat."
+                " Please update your spreadsheet to the new format."
+            ),
+        )

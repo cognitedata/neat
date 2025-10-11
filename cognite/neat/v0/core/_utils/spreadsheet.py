@@ -143,13 +143,27 @@ def _get_row_number(sheet: Worksheet, values_to_find: list[str]) -> int | None:
     return None
 
 
-def find_column_with_value(sheet: Worksheet, value: Any) -> str | None:
+@overload
+def find_column_and_row_with_value(
+    sheet: Worksheet, value: Any, column_letter: Literal[True] = True
+) -> tuple[str, int] | tuple[None, None]: ...
+
+
+@overload
+def find_column_and_row_with_value(
+    sheet: Worksheet, value: Any, column_letter: Literal[False]
+) -> tuple[int, int] | tuple[None, None]: ...
+
+
+def find_column_and_row_with_value(
+    sheet: Worksheet, value: Any, column_letter: bool = True
+) -> tuple[int, int] | tuple[str, int] | tuple[None, None]:
     for row in sheet.iter_rows():
         for cell in row:
             if cell.value and isinstance(cell.value, str) and cell.value.lower() == value.lower():
-                return cell.column_letter  # type: ignore
+                return (cell.column_letter, cell.row) if column_letter else (cell.column, cell.row)
 
-    return None
+    return None, None
 
 
 def generate_data_validation(sheet: str, column: str, total_header_rows: int, validation_range: int) -> DataValidation:
