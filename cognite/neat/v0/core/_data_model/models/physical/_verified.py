@@ -10,6 +10,7 @@ from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.v0.core._client.data_classes.schema import DMSSchema
 from cognite.neat.v0.core._constants import DMS_CONTAINER_LIST_MAX_LIMIT
+from cognite.neat.v0.core._data_model._constants import CONSTRAINT_ID_MAX_LENGTH
 from cognite.neat.v0.core._data_model.models._base_verified import (
     BaseVerifiedDataModel,
     BaseVerifiedMetadata,
@@ -326,6 +327,9 @@ class PhysicalProperty(SheetRow):
                     f" '{constraint.prefix}'. Currently only 'uniqueness' is supported."
                 )
                 raise ValueError(message) from None
+            elif len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
+                message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
+                raise ValueError(message) from None
             elif constraint.prefix is Undefined:
                 message = f"The type of constraint is not defined. Please set 'uniqueness:{value!s}'."
                 warnings.warn(
@@ -400,6 +404,9 @@ class PhysicalContainer(SheetRow):
                     f"Unsupported constraint type on container as "
                     f"the whole '{constraint.prefix}'. Currently only 'requires' is supported."
                 )
+                raise ValueError(message) from None
+            elif len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
+                message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
                 raise ValueError(message) from None
             elif constraint.container is None:
                 message = (
