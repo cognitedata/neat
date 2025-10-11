@@ -29,7 +29,7 @@ from cognite.neat.v0.core._constants import (
     DMS_RESERVED_PROPERTIES,
     get_default_prefixes_and_namespaces,
 )
-from cognite.neat.v0.core._data_model._constants import PATTERNS, get_reserved_words
+from cognite.neat.v0.core._data_model._constants import CONSTRAINT_ID_MAX_LENGTH, PATTERNS, get_reserved_words
 from cognite.neat.v0.core._data_model._shared import (
     ImportContext,
     ImportedDataModel,
@@ -1649,7 +1649,7 @@ class _ConceptualDataModelConverter:
                     constrains.append(
                         ContainerConstraintEntity(
                             prefix="requires",
-                            suffix=f"{parent_entity.space}_{parent_entity.external_id}",
+                            suffix=f"{parent_entity.space}_{parent_entity.external_id}"[:CONSTRAINT_ID_MAX_LENGTH],
                             container=parent_entity,
                         )
                     )
