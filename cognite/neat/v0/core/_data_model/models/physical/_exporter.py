@@ -379,7 +379,7 @@ class _DMSExporter:
             for prop in container_properties:
                 if prop.container_property is not None:
                     for constraint in prop.constraint or []:
-                        uniqueness_properties[cast(str, constraint.prefix)].add(prop.container_property)
+                        uniqueness_properties[cast(str, constraint.suffix)].add(prop.container_property)
 
             for constraint_name, properties in uniqueness_properties.items():
                 container.constraints = container.constraints or {}

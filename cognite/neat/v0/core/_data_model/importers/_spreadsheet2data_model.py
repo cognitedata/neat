@@ -312,7 +312,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
 
         """
 
-        workbook = load_workbook(filepath)
+        workbook = load_workbook(filepath, data_only=True)
 
         if "Classes" in workbook.sheetnames:
             print(
@@ -337,6 +337,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
 
         with tempfile.NamedTemporaryFile(prefix="temp_neat_file", suffix=".xlsx", delete=False) as temp_file:
             workbook.save(temp_file.name)
+            print(temp_file.name)
             return Path(temp_file.name)
 
 
@@ -364,8 +365,8 @@ def _replace_old_to_new_form_of_require_constainers(sheet: Worksheet) -> None:
 
     if not column or not row:
         return None
-    # Iterate over values in the constraint column
 
+    # Iterate over values in the constraint column and replace old form with new form
     replaced: bool = False
     for cell_row in sheet.iter_rows(min_row=row + 1, min_col=column, max_col=column):
         cell = cell_row[0]
