@@ -661,6 +661,7 @@ class ContainerIndexEntity(PhysicalEntity[None]):
     def from_id(cls, id: None) -> Self:
         return cls(suffix="dummy")
 
+
 class ContainerConstraintEntity(PhysicalEntity[None]):
     type_: ClassVar[EntityTypes] = EntityTypes.constainer_constraint
     prefix: _UndefinedType | Literal["uniqueness", "requires"] = Undefined  # type: ignore[assignment]

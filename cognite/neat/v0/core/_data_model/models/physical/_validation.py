@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 from collections.abc import Mapping
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import cast
 
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import ContainerList, ViewId, ViewList
@@ -123,7 +124,7 @@ class PhysicalValidation:
         for container in self._containers or []:
             for constraint in container.constraint or []:
                 if constraint.container not in existing_containers:
-                    imported_containers.add(constraint.container)
+                    imported_containers.add(cast(ContainerEntity, constraint.container))
 
         if include_views_with_no_properties:
             extra_views = existing_views - view_with_properties
@@ -470,9 +471,13 @@ class PhysicalValidation:
                     )
                 )
             constraint_definitions = {
-                ",".join(prop.constraint) for _, prop in properties if prop.constraint is not None
+                ",".join([str(constraint) for constraint in prop.constraint])
+                for _, prop in properties
+                if prop.constraint is not None
             }
+
             if len(constraint_definitions) > 1:
+                print(constraint_definitions)
                 errors.append(
                     PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,

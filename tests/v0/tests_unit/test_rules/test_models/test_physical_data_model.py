@@ -90,7 +90,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalContainer(
                     container="Asset",
                 ),
-                UnverifiedPhysicalContainer(container="GeneratingUnit", constraint="Asset"),
+                UnverifiedPhysicalContainer(
+                    container="GeneratingUnit", constraint="requires:my_space_Asset(container=Asset)"
+                ),
             ],
             views=[
                 UnverifiedPhysicalView("Asset"),
@@ -225,7 +227,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ],
         containers=[
             UnverifiedPhysicalContainer(container="Asset"),
-            UnverifiedPhysicalContainer(container="WindFarm", constraint="Asset"),
+            UnverifiedPhysicalContainer(
+                container="WindFarm", constraint="requires:my_space_Asset(container=my_space:Asset)"
+            ),
         ],
     )
     expected_schema = DMSSchema(
@@ -294,6 +298,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ),
         node_types=NodeApplyDict([]),
     )
+
     yield pytest.param(
         dms_rules,
         expected_schema,
@@ -331,7 +336,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ],
         containers=[
             UnverifiedPhysicalContainer(container="Asset"),
-            UnverifiedPhysicalContainer(container="WindTurbine", constraint="Asset"),
+            UnverifiedPhysicalContainer(
+                container="WindTurbine", constraint="requires:my_space_Asset(container=my_space:Asset)"
+            ),
         ],
     )
     expected_schema = DMSSchema(
@@ -766,7 +773,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
                 UnverifiedPhysicalContainer(
                     container="GeneratingUnit",
-                    constraint="sp_core:Asset",
+                    constraint="requires:sp_core_Asset(container=sp_core:Asset)",
                 ),
             ],
             views=[
@@ -852,7 +859,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalContainer(container="Asset"),
                 UnverifiedPhysicalContainer(
                     container="Plant",
-                    constraint="Asset",
+                    constraint="requires:my_space_Asset(container=Asset)",
                 ),
             ],
             views=[
@@ -1252,7 +1259,8 @@ def case_unknown_value_types():
 
 class TestDMSRules:
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_data_model()
+        unverified = UnverifiedPhysicalDataModel.load(alice_spreadsheet)
+        valid_rules = unverified.as_verified_data_model()
 
         assert isinstance(valid_rules, PhysicalDataModel)
 
@@ -1324,7 +1332,7 @@ class TestDMSRules:
         actual_schema.data_model.views = sorted(actual_schema.data_model.views, key=lambda v: v.external_id)
         expected_schema.data_model.views = sorted(expected_schema.data_model.views, key=lambda v: v.external_id)
         assert actual_schema.data_model.dump() == expected_schema.data_model.dump()
-        assert actual_schema.containers.dump() == expected_schema.containers.dump()
+        assert actual_schema.data_model.dump() == expected_schema.data_model.dump()
 
         actual_schema.views = ViewApplyDict(sorted(actual_schema.views.values(), key=lambda v: v.external_id))
         expected_schema.views = ViewApplyDict(sorted(expected_schema.views.values(), key=lambda v: v.external_id))
@@ -1369,7 +1377,12 @@ class TestDMSRules:
                 UnverifiedPhysicalView(view="cdf_cdm:Sourceable(version=v1)"),
                 UnverifiedPhysicalView(view="cdf_cdm:Describable(version=v1)"),
             ],
-            containers=[UnverifiedPhysicalContainer(container="Asset", constraint="Sourceable,Describable")],
+            containers=[
+                UnverifiedPhysicalContainer(
+                    container="Asset",
+                    constraint="requires:src(container=Sourceable),requires:desc(container=Describable)",
+                )
+            ],
         ).as_verified_data_model()
 
         normalize_neat_id_in_rules(dms_rules)
@@ -1412,7 +1425,7 @@ class TestDMSRules:
             "containers": [
                 {
                     "container": "Asset",
-                    "constraint": "Sourceable,Describable",
+                    "constraint": "requires:src(container=Sourceable),requires:desc(container=Describable)",
                     "neatId": "http://purl.org/cognite/neat/Container_0",
                 }
             ],
@@ -1787,7 +1800,11 @@ class TestDMSValidation:
                         ),
                     ],
                     views=[UnverifiedPhysicalView("MyView")],
-                    containers=[UnverifiedPhysicalContainer("MyContainer", constraint="cdf_cdm:CogniteDescribable")],
+                    containers=[
+                        UnverifiedPhysicalContainer(
+                            "MyContainer", constraint="requires:desc(container=cdf_cdm:CogniteDescribable)"
+                        )
+                    ],
                 ),
                 set(),
                 {ContainerEntity(space="cdf_cdm", externalId="CogniteDescribable")},
