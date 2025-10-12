@@ -1266,11 +1266,12 @@ class TestDMSRules:
             _ = VerifyAnyDataModel().transform(unverified)
 
         assert issues.has_errors
-        assert len(issues) == 10
+        assert len(issues) == 13
 
         constraint_missing_container_issues = []
         index_missing_container_issues = []
         max_id_length_issues = []
+        unsupported_constraint_type = []
         for issue in issues.errors:
             if "set to use constraint" in issue.error.raw_message:
                 constraint_missing_container_issues.append(issue)
@@ -1278,10 +1279,13 @@ class TestDMSRules:
                 index_missing_container_issues.append(issue)
             if "exceeds maximum length of" in issue.error.raw_message:
                 max_id_length_issues.append(issue)
+            if "Unsupported constraint type" in issue.error.raw_message:
+                unsupported_constraint_type.append(issue)
 
         assert len(constraint_missing_container_issues) == 4
         assert len(index_missing_container_issues) == 4
-        assert len(max_id_length_issues) == 1
+        assert len(max_id_length_issues) == 2
+        assert len(unsupported_constraint_type) == 2
         assert "The type of constraint is not defined" in issues.warnings[0].reason
 
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
