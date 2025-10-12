@@ -199,32 +199,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
                     raise TypeError(f"Unexpected type for index: {type(index)}")
             output["Index"] = index_list
 
-        if isinstance(self.constraint, ContainerConstraintEntity) or (
-            isinstance(self.constraint, str) and "," not in self.constraint
-        ):
-            output["Constraint"] = [ContainerConstraintEntity.load(self.constraint, return_on_failure=True)]
-        elif isinstance(self.constraint, str):
-            output["Constraint"] = [
-                ContainerConstraintEntity.load(constraint.strip(), return_on_failure=True)
-                for constraint in SPLIT_ON_COMMA_PATTERN.split(self.constraint)
-                if constraint.strip()
-            ]
-        elif isinstance(self.constraint, list):
-            constraint_list: list[ContainerConstraintEntity | PhysicalUnknownEntity] = []
-            for constraint in self.constraint:
-                if isinstance(constraint, ContainerConstraintEntity):
-                    constraint_list.append(constraint)
-                elif isinstance(constraint, str):
-                    constraint_list.extend(
-                        [
-                            ContainerConstraintEntity.load(idx.strip(), return_on_failure=True)
-                            for idx in SPLIT_ON_COMMA_PATTERN.split(constraint)
-                            if idx.strip()
-                        ]
-                    )
-                else:
-                    raise TypeError(f"Unexpected type for constraint: {type(constraint)}")
-            output["Constraint"] = constraint_list
+            output["Constraint"] = _parse_constraints(self.constraint, default_space)
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
@@ -288,34 +263,7 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
         output["Container"] = self.as_entity_id(default_space, return_on_failure=True)
-        if isinstance(self.constraint, ContainerConstraintEntity) or (
-            isinstance(self.constraint, str) and "," not in self.constraint
-        ):
-            output["Constraint"] = [
-                ContainerConstraintEntity.load(self.constraint, return_on_failure=True, space=default_space)
-            ]
-        elif isinstance(self.constraint, str):
-            output["Constraint"] = [
-                ContainerConstraintEntity.load(constraint.strip(), return_on_failure=True, space=default_space)
-                for constraint in SPLIT_ON_COMMA_PATTERN.split(self.constraint)
-                if constraint.strip()
-            ]
-        elif isinstance(self.constraint, list):
-            constraint_list: list[ContainerConstraintEntity | PhysicalUnknownEntity] = []
-            for constraint in self.constraint:
-                if isinstance(constraint, ContainerConstraintEntity):
-                    constraint_list.append(constraint)
-                elif isinstance(constraint, str):
-                    constraint_list.extend(
-                        [
-                            ContainerConstraintEntity.load(idx.strip(), return_on_failure=True, space=default_space)
-                            for idx in SPLIT_ON_COMMA_PATTERN.split(constraint)
-                            if idx.strip()
-                        ]
-                    )
-                else:
-                    raise TypeError(f"Unexpected type for constraint: {type(constraint)}")
-            output["Constraint"] = constraint_list
+        output["Constraint"] = _parse_constraints(self.constraint, default_space)
         return output
 
     @overload
@@ -558,3 +506,52 @@ class UnverifiedPhysicalDataModel(UnverifiedDataModel[PhysicalDataModel]):
     def imported_views_and_containers_ids(self) -> tuple[set[ViewId], set[ContainerId]]:
         views, containers = self.imported_views_and_containers()
         return {view.as_id() for view in views}, {container.as_id() for container in containers}
+
+
+def _parse_constraints(
+    constraint: str | list[str] | list[ContainerConstraintEntity] | ContainerConstraintEntity | None,
+    default_space: str | None = None,
+) -> list[ContainerConstraintEntity | PhysicalUnknownEntity] | None:
+    """Parse constraint input into a standardized list of ContainerConstraintEntity objects.
+
+    Args:
+        constraint: The constraint input in various formats
+        default_space: Default space to use when loading constraint entities
+
+    Returns:
+        List of parsed constraint entities, or None if no constraints
+    """
+    if constraint is None:
+        return None
+
+    if isinstance(constraint, ContainerConstraintEntity):
+        return [constraint]
+
+    if isinstance(constraint, str) and "," not in constraint:
+        return [ContainerConstraintEntity.load(constraint, return_on_failure=True, space=default_space)]
+
+    if isinstance(constraint, str):
+        return [
+            ContainerConstraintEntity.load(constraint_item.strip(), return_on_failure=True, space=default_space)
+            for constraint_item in SPLIT_ON_COMMA_PATTERN.split(constraint)
+            if constraint_item.strip()
+        ]
+
+    if isinstance(constraint, list):
+        constraint_list: list[ContainerConstraintEntity | PhysicalUnknownEntity] = []
+        for constraint_item in constraint:
+            if isinstance(constraint_item, ContainerConstraintEntity):
+                constraint_list.append(constraint_item)
+            elif isinstance(constraint_item, str):
+                constraint_list.extend(
+                    [
+                        ContainerConstraintEntity.load(idx.strip(), return_on_failure=True, space=default_space)
+                        for idx in SPLIT_ON_COMMA_PATTERN.split(constraint_item)
+                        if idx.strip()
+                    ]
+                )
+            else:
+                raise TypeError(f"Unexpected type for constraint: {type(constraint_item)}")
+        return constraint_list
+
+    raise TypeError(f"Unexpected type for constraint: {type(constraint)}")
