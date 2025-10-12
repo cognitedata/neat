@@ -16,6 +16,7 @@ from cognite.neat.v0.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.v0.core._data_model._shared import ImportedDataModel
 from cognite.neat.v0.core._data_model.importers import DMSImporter
+from cognite.neat.v0.core._data_model.importers._spreadsheet2data_model import ExcelImporter
 from cognite.neat.v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.v0.core._data_model.models.data_types import String
 from cognite.neat.v0.core._data_model.models.entities._single_value import (
@@ -42,13 +43,14 @@ from cognite.neat.v0.core._data_model.transformers import (
     PhysicalToConceptual,
     VerifyPhysicalDataModel,
 )
+from cognite.neat.v0.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.v0.core._issues import MultiValueError, NeatError, catch_issues
 from cognite.neat.v0.core._issues.errors import PropertyDefinitionDuplicatedError, PropertyValueError
 from cognite.neat.v0.core._issues.errors._resources import ResourceDuplicatedError
 from cognite.neat.v0.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
 )
-from tests.v0.data import GraphData
+from tests.v0.data import GraphData, SchemaData
 from tests.v0.utils import normalize_neat_id_in_rules
 
 
@@ -1258,6 +1260,20 @@ def case_unknown_value_types():
 
 
 class TestDMSRules:
+    def test_missing_container_for_index_constraint(self) -> None:
+        unverified = ExcelImporter(SchemaData.PhysicalInvalid.missing_container_for_index_constraint).to_data_model()
+        with catch_issues() as issues:
+            _ = VerifyAnyDataModel().transform(unverified)
+
+        assert issues.has_errors
+        assert len(issues) == 8
+
+        for issue in issues:
+            if issue.column.lower() == "constraint":
+                assert "Container and container property must be set to use constraint" in issue.error.raw_message
+            else:
+                assert "Container and container property must be set to use index" in issue.error.raw_message
+
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         unverified = UnverifiedPhysicalDataModel.load(alice_spreadsheet)
         valid_rules = unverified.as_verified_data_model()
