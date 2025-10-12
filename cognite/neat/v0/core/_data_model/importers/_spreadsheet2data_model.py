@@ -337,7 +337,6 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
 
         with tempfile.NamedTemporaryFile(prefix="temp_neat_file", suffix=".xlsx", delete=False) as temp_file:
             workbook.save(temp_file.name)
-            print(temp_file.name)
             return Path(temp_file.name)
 
 
