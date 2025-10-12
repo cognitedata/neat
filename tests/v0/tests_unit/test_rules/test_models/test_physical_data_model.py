@@ -1266,13 +1266,23 @@ class TestDMSRules:
             _ = VerifyAnyDataModel().transform(unverified)
 
         assert issues.has_errors
-        assert len(issues) == 8
+        assert len(issues) == 10
 
-        for issue in issues:
-            if issue.column.lower() == "constraint":
-                assert "Container and container property must be set to use constraint" in issue.error.raw_message
-            else:
-                assert "Container and container property must be set to use index" in issue.error.raw_message
+        constraint_missing_container_issues = []
+        index_missing_container_issues = []
+        max_id_length_issues = []
+        for issue in issues.errors:
+            if "set to use constraint" in issue.error.raw_message:
+                constraint_missing_container_issues.append(issue)
+            if "set to use index" in issue.error.raw_message:
+                index_missing_container_issues.append(issue)
+            if "exceeds maximum length of" in issue.error.raw_message:
+                max_id_length_issues.append(issue)
+
+        assert len(constraint_missing_container_issues) == 4
+        assert len(index_missing_container_issues) == 4
+        assert len(max_id_length_issues) == 1
+        assert "The type of constraint is not defined" in issues.warnings[0].reason
 
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         unverified = UnverifiedPhysicalDataModel.load(alice_spreadsheet)

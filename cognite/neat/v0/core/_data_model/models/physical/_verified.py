@@ -335,7 +335,8 @@ class PhysicalProperty(SheetRow):
                     f" '{constraint.prefix}'. Currently only 'uniqueness' is supported."
                 )
                 raise ValueError(message) from None
-            elif len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
+
+            if len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
                 message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
                 raise ValueError(message) from None
 
