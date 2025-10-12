@@ -330,7 +330,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
                 _replace_class_with_concept_cell(workbook["Properties"])
 
         elif "Containers" in workbook.sheetnames:
-            _replace_legacy_form_of_required_constraint(workbook["Containers"])
+            _replace_legacy_constraint_form(workbook["Containers"])
 
         else:
             return filepath
@@ -353,12 +353,12 @@ def _replace_class_with_concept_cell(sheet: Worksheet) -> None:
                 cell.value = "Concept"
 
 
-def _replace_legacy_form_of_required_constraint(sheet: Worksheet) -> None:
+def _replace_legacy_constraint_form(sheet: Worksheet) -> None:
     """
-    Replaces the old form of require containers with the new form in the given sheet.
+    Replaces the legacy form of container constraints with the new form in the given sheet.
 
     Args:
-        sheet (Worksheet): The sheet in which to replace the old form of require containers.
+        sheet (Worksheet): The sheet in which to replace the old form of container constraints.
     """
     column, row = find_column_and_row_with_value(sheet, "Constraint", False)
 
