@@ -1332,7 +1332,7 @@ class TestDMSRules:
         actual_schema.data_model.views = sorted(actual_schema.data_model.views, key=lambda v: v.external_id)
         expected_schema.data_model.views = sorted(expected_schema.data_model.views, key=lambda v: v.external_id)
         assert actual_schema.data_model.dump() == expected_schema.data_model.dump()
-        assert actual_schema.data_model.dump() == expected_schema.data_model.dump()
+        assert actual_schema.containers.dump() == expected_schema.containers.dump()
 
         actual_schema.views = ViewApplyDict(sorted(actual_schema.views.values(), key=lambda v: v.external_id))
         expected_schema.views = ViewApplyDict(sorted(expected_schema.views.values(), key=lambda v: v.external_id))
