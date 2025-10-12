@@ -663,7 +663,7 @@ class ContainerIndexEntity(PhysicalEntity[None]):
 
 
 class ContainerConstraintEntity(PhysicalEntity[None]):
-    type_: ClassVar[EntityTypes] = EntityTypes.constainer_constraint
+    type_: ClassVar[EntityTypes] = EntityTypes.container_constraint
     prefix: _UndefinedType | Literal["uniqueness", "requires"] = Undefined  # type: ignore[assignment]
     suffix: str
     container: ContainerEntity | None = None
