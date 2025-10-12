@@ -381,7 +381,7 @@ def _replace_legacy_form_of_required_constraint(sheet: Worksheet) -> None:
                     updated_constraint = (
                         f"requires:{container.space}_{container.external_id}(container={container_str})"
                     )
-                except Exception:
+                except ValueError:
                     updated_constraint = constraint
 
                 constraints.append(updated_constraint)
