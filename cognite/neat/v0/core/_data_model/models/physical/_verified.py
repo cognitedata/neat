@@ -322,7 +322,7 @@ class PhysicalProperty(SheetRow):
 
         for constraint in value:
             if constraint.prefix is Undefined:
-                message = f"The type of constraint is not defined. Please set 'uniqueness:{value!s}'."
+                message = f"The type of constraint is not defined. Please set 'uniqueness:{constraint!s}'."
                 warnings.warn(
                     PropertyDefinitionWarning(container, "container property", container_property, message),
                     stacklevel=2,
