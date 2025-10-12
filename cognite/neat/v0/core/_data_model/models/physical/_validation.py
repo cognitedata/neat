@@ -477,7 +477,6 @@ class PhysicalValidation:
             }
 
             if len(constraint_definitions) > 1:
-                print(constraint_definitions)
                 errors.append(
                     PropertyDefinitionDuplicatedError[dm.ContainerId](
                         container_id,
