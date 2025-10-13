@@ -4,8 +4,8 @@ import pytest
 
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.importers._table_importer.source import SpreadsheetRead, TableSource
-from cognite.neat._exceptions import ModelImportError
-from cognite.neat._utils.useful_types import CellValue
+from cognite.neat._exceptions import DataModelImportError
+from cognite.neat._utils.useful_types import CellValueType
 
 
 def invalid_test_cases() -> Iterable[tuple]:
@@ -13,7 +13,7 @@ def invalid_test_cases() -> Iterable[tuple]:
         {
             "Metadata": [
                 {
-                    "Name": "space",
+                    "Key": "space",
                     "Value": "my_space",
                 }
             ],
@@ -49,7 +49,7 @@ def invalid_test_cases() -> Iterable[tuple]:
         {
             "Metadata": [
                 {
-                    "Name": "space",
+                    "Key": "space",
                     "Value": "my_space",
                 }
             ],
@@ -86,7 +86,7 @@ def invalid_test_cases() -> Iterable[tuple]:
         {
             "Metadata": [
                 {
-                    "Value": "my_space",  # Missing required "Name" field
+                    "Value": "my_space",  # Missing required "Key" field
                 }
             ],
             "Properties": [
@@ -104,7 +104,7 @@ def invalid_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In Metadata sheet missing required column: 'Name'.",
+            "In Metadata sheet missing required column: 'Key'.",
             "In Properties sheet missing required column: 'Max Count'.",
             "In Properties sheet missing required column: 'Min Count'.",
             "In Properties sheet missing required column: 'View Property'.",
@@ -116,9 +116,11 @@ def invalid_test_cases() -> Iterable[tuple]:
 
 class TestDMSTableImporter:
     @pytest.mark.parametrize("data, expected_errors", list(invalid_test_cases()))
-    def test_read_invalid_tables(self, data: dict[str, list[dict[str, CellValue]]], expected_errors: set[str]) -> None:
+    def test_read_invalid_tables(
+        self, data: dict[str, list[dict[str, CellValueType]]], expected_errors: set[str]
+    ) -> None:
         importer = DMSTableImporter(data)
-        with pytest.raises(ModelImportError) as exc_info:
+        with pytest.raises(DataModelImportError) as exc_info:
             importer._read_tables()
         actual_errors = {err.message for err in exc_info.value.errors}
         assert actual_errors == expected_errors
