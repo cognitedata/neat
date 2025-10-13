@@ -19,7 +19,7 @@ from ._data_types import (
     Timeseries,
 )
 from ._identifiers import URI, NameSpace
-from ._parser import ParsedEntity, parse_entity
+from ._parser import ParsedEntity, parse_entities, parse_entity
 
 __all__ = [
     "URI",
@@ -45,5 +45,6 @@ __all__ = [
     "Undefined",
     "Unknown",
     "UnknownEntity",
+    "parse_entities",
     "parse_entity",
 ]

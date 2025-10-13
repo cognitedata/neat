@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given, settings
 from pydantic import ValidationError
 
-from cognite.neat._data_model.models.dms import DataModelRequest, DataModelResponse
+from cognite.neat._data_model.models.dms import DataModelReference, DataModelRequest, DataModelResponse
 from cognite.neat._utils.validation import humanize_validation_error
 
 from .strategies import data_model_strategy
@@ -22,10 +22,10 @@ def invalid_data_model_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In field version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In views[1] missing required field: 'version'",
-            "In views[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "Missing required field: 'space'",
+            "In field 'version', string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In views[1] missing required field: 'version'.",
+            "In views[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "Missing required field: 'space'.",
         },
         id="Multiple errors in different fields",
     )
@@ -46,13 +46,13 @@ def invalid_data_model_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In field description string should have at most 1024 characters",
-            "In field externalId string should have at least 1 character",
-            "In field name string should have at most 255 characters",
-            "In field version string should have at most 43 characters",
-            "In views[1].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
-            "In views[2].space string should have at least 1 character",
-            "In views[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
+            "In field 'description', string should have at most 1024 characters.",
+            "In field 'externalId', string should have at least 1 character.",
+            "In field 'name', string should have at most 255 characters.",
+            "In field 'version', string should have at most 43 characters.",
+            "In views[1].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'.",
+            "In views[2].space string should have at least 1 character.",
+            "In views[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
         },
         id="Length violations, forbidden values, and pattern errors",
     )
@@ -76,14 +76,14 @@ def invalid_data_model_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In field externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
-            "In field space string should have at most 43 characters",
-            "In field version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In views[1] missing required field: 'externalId'",
-            "In views[1] missing required field: 'space'",
-            "In views[1] missing required field: 'version'",
-            "In views[2].externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
-            "In views[3].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
+            "In field 'externalId', string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
+            "In field 'space', string should have at most 43 characters.",
+            "In field 'version', string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In views[1] missing required field: 'externalId'.",
+            "In views[1] missing required field: 'space'.",
+            "In views[1] missing required field: 'version'.",
+            "In views[2].externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
+            "In views[3].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
         },
         id="Boundary length errors, pattern violations, and missing required fields",
     )
@@ -105,8 +105,8 @@ def invalid_data_model_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In views[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In views[3].externalId string should have at most 255 characters",
+            "In views[2].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In views[3].externalId string should have at most 255 characters.",
         },
         id="Forbidden values and edge cases with minimal valid fields",
     )
@@ -133,12 +133,12 @@ def invalid_data_model_test_cases() -> Iterable[tuple]:
             ],
         },
         {
-            "In field externalId string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
-            "In field space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
-            "In field version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In views[1].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'",
-            "In views[2].version string should have at most 43 characters",
-            "In views[3].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'",
+            "In field 'externalId', string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'.",
+            "In field 'space', string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'.",
+            "In field 'version', string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In views[1].version string should match pattern '^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$'.",
+            "In views[2].version string should have at most 43 characters.",
+            "In views[3].space string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'.",
         },
         id="Pattern validation failures and complex nested errors",
     )
@@ -163,6 +163,9 @@ class TestDataModelResponse:
 
         request = response.as_request()
         assert isinstance(request, DataModelRequest)
+
+        reference = response.as_reference()
+        assert isinstance(reference, DataModelReference)
 
         dumped = request.model_dump()
         response_dumped = response.model_dump()
