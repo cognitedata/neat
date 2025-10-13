@@ -3,7 +3,7 @@ from collections.abc import Iterable
 import pytest
 
 from cognite.neat._data_model.importers import DMSTableImporter
-from cognite.neat._data_model.importers._table_importer.source import SpreadsheetRead, TableSource
+from cognite.neat._data_model.importers._table_importer.source import SpreadsheetReadContext, TableSource
 from cognite.neat._exceptions import DataModelImportError
 from cognite.neat._utils.useful_types import CellValueType
 
@@ -136,7 +136,7 @@ class TestTableSource:
             pytest.param(("MyTable", 5, "field"), {}, "table 'MyTable' row 6 column 'field'", id="table_row_column"),
             pytest.param(
                 ("MyTable", 5),
-                {"MyTable": SpreadsheetRead(header_row=2, empty_rows=[3, 5], is_one_indexed=True)},
+                {"MyTable": SpreadsheetReadContext(header_row=2, empty_rows=[3, 5], is_one_indexed=True)},
                 "table 'MyTable' row 10",
                 id="with_spreadsheet_read",
             ),
@@ -164,7 +164,9 @@ class TestTableSource:
             ),
         ],
     )
-    def test_location(self, path: tuple[int | str, ...], table_read: dict[str, SpreadsheetRead], expected: str) -> None:
+    def test_location(
+        self, path: tuple[int | str, ...], table_read: dict[str, SpreadsheetReadContext], expected: str
+    ) -> None:
         source = TableSource("test_source", table_read)
         assert source.location(path) == expected
 
@@ -174,17 +176,17 @@ class TestTableSource:
             pytest.param(
                 "MyTable",
                 5,
-                {"MyTable": SpreadsheetRead(header_row=2, empty_rows=[1, 3])},
+                {"MyTable": SpreadsheetReadContext(header_row=2, empty_rows=[1, 3])},
                 10,  # 5 + 2 (header) + 2 (empty rows before 5) + 1 (1-indexed)
                 id="with_table_read",
             ),
             pytest.param("MyTable", 5, {}, 6, id="without_table_read"),
             pytest.param(None, 5, {}, 6, id="none_table_id"),
-            pytest.param("", 3, {"": SpreadsheetRead(header_row=5)}, 4, id="falsy_table_id"),
+            pytest.param("", 3, {"": SpreadsheetReadContext(header_row=5)}, 4, id="falsy_table_id"),
         ],
     )
     def test_adjust_row_number(
-        self, table_id: str | None, row_no: int, table_read: dict[str, SpreadsheetRead], expected: int
+        self, table_id: str | None, row_no: int, table_read: dict[str, SpreadsheetReadContext], expected: int
     ) -> None:
         source = TableSource("test_source", table_read)
         assert source.adjust_row_number(table_id, row_no) == expected
@@ -229,29 +231,29 @@ class TestSpreadsheetRead:
         [
             pytest.param(
                 5,
-                SpreadsheetRead(header_row=1, empty_rows=[], skipped_rows=[], is_one_indexed=True),
+                SpreadsheetReadContext(header_row=1, empty_rows=[], skipped_rows=[], is_one_indexed=True),
                 7,  # 5 + 1 (header) + 1 (one_indexed)
                 id="basic_case_with_one_indexing",
             ),
             pytest.param(
                 5,
-                SpreadsheetRead(header_row=2, empty_rows=[1, 3, 6], skipped_rows=[], is_one_indexed=True),
+                SpreadsheetReadContext(header_row=2, empty_rows=[1, 3, 6], skipped_rows=[], is_one_indexed=True),
                 11,  # 5->6 (empty 1)->7 (empty 3)->8 (empty 6) + 2 (header) + 1 (one_indexed)
                 id="with_empty_rows",
             ),
             pytest.param(
                 3,
-                SpreadsheetRead(header_row=1, empty_rows=[2], skipped_rows=[1, 4], is_one_indexed=False),
+                SpreadsheetReadContext(header_row=1, empty_rows=[2], skipped_rows=[1, 4], is_one_indexed=False),
                 7,  # 3->4 (empty 2)->5 (skipped 1) + 1 (header) + 0 (zero_indexed)
                 id="with_empty_and_skipped_rows_zero_indexed",
             ),
             pytest.param(
                 2,
-                SpreadsheetRead(header_row=3, empty_rows=[1, 5], skipped_rows=[2, 6], is_one_indexed=True),
+                SpreadsheetReadContext(header_row=3, empty_rows=[1, 5], skipped_rows=[2, 6], is_one_indexed=True),
                 8,  # 2->3 (empty 1)->4 (skipped 2) + 3 (header) + 1 (one_indexed)
                 id="complex_case_with_all_adjustments",
             ),
         ],
     )
-    def test_adjusted_row_number(self, row: int, read: SpreadsheetRead, expected: int) -> None:
+    def test_adjusted_row_number(self, row: int, read: SpreadsheetReadContext, expected: int) -> None:
         assert read.adjusted_row_number(row) == expected

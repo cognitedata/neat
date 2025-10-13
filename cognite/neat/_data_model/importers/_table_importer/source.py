@@ -5,7 +5,7 @@ from .data_classes import DMS_API_MAPPING
 
 
 @dataclass
-class SpreadsheetRead:
+class SpreadsheetReadContext:
     """This class is used to store information about the source spreadsheet.
 
     It is used to adjust row numbers to account for header rows and empty rows
@@ -41,7 +41,7 @@ class SpreadsheetRead:
 @dataclass
 class TableSource:
     source: str
-    table_read: dict[str, SpreadsheetRead] = field(default_factory=dict)
+    table_read: dict[str, SpreadsheetReadContext] = field(default_factory=dict)
 
     def location(self, path: tuple[int | str, ...]) -> str:
         table_id: str | None = None
