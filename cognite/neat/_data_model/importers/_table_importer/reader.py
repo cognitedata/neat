@@ -438,7 +438,12 @@ class DMSTableReader:
         elif prop.connection.suffix == "reverse":
             return self.read_reverse_direct_relation_view_property(prop)
         else:
-            raise ValueError()
+            self.errors.append(
+                ModelSyntaxError(
+                    message=f"In {self.source.location(loc)} invalid connection type '{prop.connection.suffix}'. "
+                )
+            )
+            return {}
 
     def read_core_view_property(self, prop: DMSProperty) -> dict[str, Any]:
         return dict(
