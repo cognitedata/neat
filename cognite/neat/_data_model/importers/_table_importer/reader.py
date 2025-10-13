@@ -758,6 +758,7 @@ class DMSTableReader:
             humanize_location=self.source.location,
             field_name=field_name,
             field_renaming=self.source.field_mapping(parent_loc[0]),
+            missing_required_descriptor="empty" if field_name == "column" else "missing",
         ):
             if message in seen:
                 continue
