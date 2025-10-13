@@ -470,7 +470,7 @@ def invalid_tmd_table_formats() -> Iterable[tuple]:
             ],
         },
         {
-            "In table 'Metadata' missing required value: 'externalId'",
+            "In table 'Metadata' missing required value: 'externalId'.",
             "In table 'Properties' row 1 column 'Index' -> btree.cursorable input should be "
             "a valid boolean. Got 'invalid' of type str.",
             "In table 'Views' row 1 the column 'View' cannot be empty.",
