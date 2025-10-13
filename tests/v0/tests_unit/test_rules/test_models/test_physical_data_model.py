@@ -1266,7 +1266,7 @@ class TestDMSRules:
             _ = VerifyAnyDataModel().transform(unverified)
 
         assert issues.has_errors
-        assert len(issues) == 13
+        assert len(issues) == 12
 
         constraint_missing_container_issues = []
         index_missing_container_issues = []
@@ -1286,7 +1286,6 @@ class TestDMSRules:
         assert len(index_missing_container_issues) == 4
         assert len(max_id_length_issues) == 2
         assert len(unsupported_constraint_type) == 2
-        assert "The type of constraint is not defined" in issues.warnings[0].reason
 
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
         unverified = UnverifiedPhysicalDataModel.load(alice_spreadsheet)

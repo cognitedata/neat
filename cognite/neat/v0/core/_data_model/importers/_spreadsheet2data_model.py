@@ -10,6 +10,7 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from pandas import ExcelFile
+from pydantic import ValidationError
 from rdflib import Namespace, URIRef
 
 from cognite.neat.v0.core._data_model._constants import SPLIT_ON_COMMA_PATTERN
@@ -24,7 +25,7 @@ from cognite.neat.v0.core._data_model.models import (
     SchemaCompleteness,
 )
 from cognite.neat.v0.core._data_model.models._import_contexts import SpreadsheetContext
-from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerEntity
+from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerConstraintEntity, ContainerEntity
 from cognite.neat.v0.core._issues import IssueList, MultiValueError
 from cognite.neat.v0.core._issues.errors import (
     FileMissingRequiredFieldError,
@@ -331,6 +332,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
 
         elif "Containers" in workbook.sheetnames:
             _replace_legacy_constraint_form(workbook["Containers"])
+            _replace_legacy_constraint_form(workbook["Properties"])
 
         else:
             return filepath
@@ -370,29 +372,53 @@ def _replace_legacy_constraint_form(sheet: Worksheet) -> None:
     for cell_row in sheet.iter_rows(min_row=row + 1, min_col=column, max_col=column):
         cell = cell_row[0]
         if cell.value is not None:  # Skip empty cells
-            if "container" in str(cell.value).lower():
-                continue
+            # Container sheet update
+            if sheet.title.lower() == "containers":
+                constraints = []
+                for constraint in SPLIT_ON_COMMA_PATTERN.split(str(cell.value)):
+                    # latest format, do nothing
+                    if "container" in constraint.lower():
+                        constraints.append(constraint)
+                        continue
 
-            constraints = []
-            for constraint in SPLIT_ON_COMMA_PATTERN.split(str(cell.value)):
-                try:
-                    container = ContainerEntity.load(constraint, space="default")
-                    container_str = container.external_id if container.space == "default" else str(container)
-                    updated_constraint = (
-                        f"requires:{container.space}_{container.external_id}(container={container_str})"
-                    )
-                except ValueError:
-                    updated_constraint = constraint
+                    try:
+                        container = ContainerEntity.load(constraint, space="default")
+                        container_str = container.external_id if container.space == "default" else str(container)
+                        constraints.append(
+                            f"requires:{container.space}_{container.external_id}(container={container_str})"
+                        )
+                        replaced = True
+                    except ValidationError:
+                        constraints.append(constraint)
 
-                constraints.append(updated_constraint)
-            cell.value = ",".join(constraints)
-            replaced = True
+                cell.value = ",".join(constraints)
+
+            # Properties sheet update
+            elif sheet.title.lower() == "properties":
+                constraints = []
+                for constraint in SPLIT_ON_COMMA_PATTERN.split(str(cell.value)):
+                    try:
+                        constraint_entity = ContainerConstraintEntity.load(constraint)
+
+                        if constraint_entity.prefix in ["uniqueness", "requires"]:
+                            constraints.append(constraint)
+
+                        # Replace old format with new format
+                        else:
+                            constraints.append(f"uniqueness:{constraint}")
+                            replaced = True
+
+                    # If the constraint is not valid, we keep it as is
+                    # to be caught by validation later
+                    except ValidationError:
+                        constraints.append(constraint)
+
+                cell.value = ",".join(constraints)
 
     if replaced:
         print(
             (
-                "You are using a legacy spreadsheet format for defining container constraints, "
-                "which we will support until v1.0 of neat."
-                " Please update your spreadsheet to the new format."
+                "You are using a legacy container constraints format "
+                f"in the {sheet.title} sheet. Please update to the latest format."
             ),
         )
