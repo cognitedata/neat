@@ -38,3 +38,25 @@ def humanize_collection(collection: Collection[Any], /, *, sort: bool = True, bi
         sequence = list(strings)
 
     return f"{', '.join(sequence[:-1])} {bind_word} {sequence[-1]}"
+
+
+def title_case(s: str) -> str:
+    """Convert a string to title case, handling underscores and hyphens.
+
+    Args:
+        s: The string to convert.
+    Returns:
+        The title-cased string.
+    Examples:
+        >>> title_case("hello world")
+        'Hello World'
+        >>> title_case("hello_world")
+        'Hello World'
+        >>> title_case("hello-world")
+        'Hello World'
+        >>> title_case("hello_world-and-universe")
+        'Hello World And Universe'
+        >>> title_case("HELLO WORLD")
+        'Hello World'
+    """
+    return " ".join(word.capitalize() for word in s.replace("_", " ").replace("-", " ").split())
