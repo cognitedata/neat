@@ -22,7 +22,7 @@ class TestHumanizeValidationError:
                     "humanize_location": lambda loc: f"row {loc[1] + 1} at table {loc[0]!r}",
                     "field_name": "column",
                     "field_renaming": {"age": "Age"},
-                    "missing_required": "empty",
+                    "missing_required_descriptor": "empty",
                 },
                 {"In row 2 at table 'People' the column 'Age' cannot be empty."},
                 id="Missing required in table",

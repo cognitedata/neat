@@ -1,11 +1,12 @@
-from typing import Annotated
+from collections.abc import Mapping
+from typing import Annotated, cast
 
 from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, model_validator
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
-from cognite.neat._utils.useful_types import CellValue
+from cognite.neat._utils.useful_types import CellValueType
 
 
 def parse_entity_str(v: str) -> ParsedEntity:
@@ -37,8 +38,8 @@ class TableObj(
 
 
 class MetadataValue(TableObj):
-    name: str
-    value: CellValue
+    key: str
+    value: CellValueType
 
 
 class DMSProperty(TableObj):
@@ -51,7 +52,7 @@ class DMSProperty(TableObj):
     min_count: int | None
     max_count: int | None
     immutable: bool | None = None
-    default: CellValue | None = None
+    default: CellValueType | None = None
     auto_increment: bool | None = None
     container: Entity | None = None
     container_property: str | None = None
@@ -98,8 +99,43 @@ class TableDMS(TableObj):
     nodes: list[DMSNode] = Field(default_factory=list)
 
     @model_validator(mode="before")
-    def _title_case_keys(cls, data: dict[str, list[dict[str, CellValue]]]) -> dict[str, list[dict[str, CellValue]]]:
+    def _title_case_keys(
+        cls, data: dict[str, list[dict[str, CellValueType]]]
+    ) -> dict[str, list[dict[str, CellValueType]]]:
         if isinstance(data, dict):
             # We are case-insensitive on the table names.
             return {title_case(k): v for k, v in data.items()}
         return data
+
+
+DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
+    "Views": {
+        "space": "View",
+        "externalId": "View",
+        "version": "View",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSView.model_fields.items()
+            if field_id != "View"
+        },
+    },
+    "Containers": {
+        "space": "Container",
+        "externalId": "Container",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSContainer.model_fields.items()
+            if field_id != "Container"
+        },
+    },
+    "Properties": {
+        "space": "View",
+        "externalId": "View",
+        "property": "ViewProperty",
+        **{
+            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            for field_id, field_ in DMSProperty.model_fields.items()
+            if field_id not in ("View", "ViewProperty")
+        },
+    },
+}

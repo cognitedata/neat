@@ -7,9 +7,9 @@ from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.models.dms import (
     RequestSchema,
 )
-from cognite.neat._exceptions import ModelImportError
+from cognite.neat._exceptions import DataModelImportError
 from cognite.neat._issues import ModelSyntaxError
-from cognite.neat._utils.useful_types import CellValue
+from cognite.neat._utils.useful_types import CellValueType
 from cognite.neat._utils.validation import as_json_path, humanize_validation_error
 
 from .data_classes import TableDMS
@@ -30,7 +30,7 @@ class DMSTableImporter(DMSImporter):
         f"Missing required column: {sheet!r}": f"Missing required sheet: {sheet!r}" for sheet in REQUIRED_SHEETS
     }
 
-    def __init__(self, tables: dict[str, list[dict[str, CellValue]]]) -> None:
+    def __init__(self, tables: dict[str, list[dict[str, CellValueType]]]) -> None:
         self._table = tables
 
     def to_data_model(self) -> RequestSchema:
@@ -42,7 +42,7 @@ class DMSTableImporter(DMSImporter):
             table = TableDMS.model_validate(self._table)
         except ValidationError as e:
             errors = self._create_error_messages(e)
-            raise ModelImportError(errors) from None
+            raise DataModelImportError(errors) from None
         return table
 
     def _create_error_messages(self, error: ValidationError) -> list[ModelSyntaxError]:
@@ -50,9 +50,9 @@ class DMSTableImporter(DMSImporter):
         seen: set[str] = set()
         for message in humanize_validation_error(
             error,
-            humanize_location=self._spreadsheet_location,
+            humanize_location=self._location,
             field_name="column",
-            missing_required="missing",
+            missing_required_descriptor="missing",
         ):
             # Replace messages about missing required columns with missing required sheets.
             message = self.REQUIRED_SHEET_MESSAGES.get(message, message)
@@ -64,7 +64,7 @@ class DMSTableImporter(DMSImporter):
         return errors
 
     @staticmethod
-    def _spreadsheet_location(loc: tuple[str | int, ...]) -> str:
+    def _location(loc: tuple[str | int, ...]) -> str:
         if isinstance(loc[0], str) and len(loc) == 2:  # Sheet + row.
             # We skip the row as we treat all rows as the same. For example, if a required column is missing in one
             # row, it is missing in all rows.
