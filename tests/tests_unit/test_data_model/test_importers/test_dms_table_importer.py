@@ -416,9 +416,136 @@ def valid_dms_table_formats() -> Iterable[tuple]:
         ),
         id="Full example",
     )
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "multiIndex",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIndex",
+                    "Index": "btree:compositeIdx(order=1)",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiIndex2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIndex2",
+                    "Index": "btree:compositeIdx(order=2)",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiConstraint",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConstraint",
+                    "Constraint": "uniqueness:compositeUnique(order=1)",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiConstraint2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConstraint2",
+                    "Constraint": "uniqueness:compositeUnique(order=2)",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        RequestSchema(
+            dataModel=DataModelRequest(
+                space="test_space",
+                externalId="TestModel",
+                version="v1",
+                views=[ViewReference(space="test_space", externalId="TestView", version="v1")],
+            ),
+            spaces=[SpaceRequest(space="test_space")],
+            views=[
+                ViewRequest(
+                    space="test_space",
+                    externalId="TestView",
+                    version="v1",
+                    properties={
+                        "multiIndex": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiIndex",
+                        ),
+                        "multiIndex2": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiIndex2",
+                        ),
+                        "multiConstraint": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiConstraint",
+                        ),
+                        "multiConstraint2": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiConstraint2",
+                        ),
+                    },
+                )
+            ],
+            containers=[
+                ContainerRequest(
+                    space="test_space",
+                    externalId="TestContainer",
+                    usedFor="node",
+                    properties={
+                        "multiIndex": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                        "multiIndex2": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                        "multiConstraint": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                        "multiConstraint2": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                    },
+                    indexes={
+                        "compositeIdx": BtreeIndex(properties=["multiIndex", "multiIndex2"], cursorable=None),
+                    },
+                    constraints={
+                        "compositeUnique": UniquenessConstraintDefinition(
+                            constraint_type="uniqueness",
+                            properties=["multiConstraint", "multiConstraint2"],
+                        )
+                    },
+                )
+            ],
+            nodeTypes=[],
+        ),
+        id="Multi-property indices and constraints",
+    )
 
 
-def invalid_tmd_table_formats() -> Iterable[tuple]:
+def invalid_dms_table_formats() -> Iterable[tuple]:
     yield pytest.param(
         {
             "Metadata": [
@@ -477,6 +604,260 @@ def invalid_tmd_table_formats() -> Iterable[tuple]:
             "In table 'Containers' row 1 column 'Used For' input should be 'node', 'edge' or 'all'. Got 'Instances'.",
         },
         id="Missing required metadata fields",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "prop1",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "sameProp",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "prop2",
+                    "Connection": None,
+                    "Value Type": "int32",
+                    "Min Count": 1,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "sameProp",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {
+            "In table 'Properties' when the column 'Container' and 'Container Property' "
+            "are the same, all the container columns (Auto Increment, Connection, "
+            "Constraint, Container Property Description, Container Property Name, "
+            "Default, Index, Max Count, Min Count and Value Type) must be the same. "
+            "Inconsistent definitions for container 'TestContainer and 'sameProp'' found "
+            "in rows 1 and 2."
+        },
+        id="Inconsistent container property definitions",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "duplicate",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "duplicate",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "duplicate",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "duplicate",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [],
+        },
+        {
+            "In table 'Properties' the combination of columns 'View' and 'View Property' "
+            "must be unique. Duplicated entries for view 'TestView' and property "
+            "'duplicate' found in rows 1 and 2."
+        },
+        id="Duplicate view properties",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "prop1",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "prop1",
+                }
+            ],
+            "Views": [
+                {"View": "TestView"},
+                {"View": "TestView"},
+            ],
+            "Containers": [
+                {"Container": "TestContainer", "Used For": "node"},
+                {"Container": "TestContainer", "Used For": "edge"},
+            ],
+        },
+        {
+            "In table 'Containers' the values in column 'Container' must be unique. "
+            "Duplicated entries for container 'TestContainer' found in rows 1 and 2.",
+            "In table 'Views' the values in column 'View' must be unique. Duplicated "
+            "entries for view 'TestView' found in rows 1 and 2.",
+        },
+        id="Duplicate views and containers",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "multiIdx",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIdx",
+                    "Index": "btree:compositeIdx",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiIdx2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIdx2",
+                    "Index": "btree:compositeIdx",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {
+            "In table 'Properties' column 'Index': the index 'compositeIdx' on container TestContainer "
+            "is defined on multiple properties. This requires the 'order' attribute to be set. "
+            "It is missing in rows 1 and 2.",
+        },
+        id="Multi-property index missing order",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "multiConst",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConst",
+                    "Constraint": "uniqueness:compositeConst",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiConst2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConst2",
+                    "Constraint": "uniqueness:compositeConst",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {
+            "In table 'Properties' column 'Constraint': the uniqueness constraint 'compositeConst' "
+            "on container TestContainer is defined on multiple properties. This requires the 'order' "
+            "attribute to be set. It is missing in rows 1 and 2.",
+        },
+        id="Multi-property constraint missing order",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [],
+            "Views": [
+                {
+                    "View": "TestView",
+                    "Filter": "invalid json{",
+                }
+            ],
+            "Containers": [],
+        },
+        {
+            "In table 'Views' row 1 column 'Filter' must be valid json. Got error "
+            "Expecting value: line 1 column 1 (char 0)"
+        },
+        id="Invalid JSON filter",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "badOrder",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "badOrder",
+                    "Index": "btree:testIdx(order=not_an_int)",
+                }
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {"In table 'Properties' row 1 column 'Index' invalid order value 'not_an_int'. Must be an integer."},
+        id="Invalid order value in index",
     )
 
 
@@ -558,7 +939,7 @@ def invalid_test_cases() -> Iterable[tuple]:
         {
             "Metadata": [
                 {
-                    "Value": "my_space",  # Missing required "Key" field
+                    "Value": "my_space",
                 }
             ],
             "Properties": [
@@ -603,7 +984,7 @@ class TestDMSTableImporter:
         result = importer.to_data_model()
         assert result.model_dump() == expected.model_dump()
 
-    @pytest.mark.parametrize("data,expected_errors", list(invalid_tmd_table_formats()))
+    @pytest.mark.parametrize("data,expected_errors", list(invalid_dms_table_formats()))
     def test_import_errors(self, data: dict[str, list[dict[str, CellValueType]]], expected_errors: set[str]) -> None:
         importer = DMSTableImporter(data, source=TableSource(source=SOURCE, table_read={}))
         with pytest.raises(DataModelImportError) as e:
