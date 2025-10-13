@@ -31,7 +31,7 @@ def humanize_validation_error(
     humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path,
     field_name: Literal["field", "column", "value"] = "field",
     field_renaming: Mapping[str, str] | None = None,
-    missing_required: Literal["empty", "missing"] = "missing",
+    missing_required_descriptor: Literal["empty", "missing"] = "missing",
 ) -> list[str]:
     """Converts a ValidationError to a human-readable format.
 
@@ -51,8 +51,8 @@ def humanize_validation_error(
             This is useful when the field names in the model are different from the names in the source.
             For example, if the model field is "asset_id" but the source column is "Asset ID",
             you can provide a mapping {"asset_id": "Asset ID"} to have the error messages use the source names.
-        missing_required: How to describe missing required fields. Default is "missing". Other option is "empty" which
-            can be more suitable for table data.
+        missing_required_descriptor: How to describe missing required fields. Default is "missing".
+            Other option is "empty" which can be more suitable for table data.
     Returns:
         A list of human-readable error messages.
     """
@@ -95,7 +95,7 @@ def humanize_validation_error(
 
         error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
         if len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
-            if missing_required == "empty" and error_type == "missing":
+            if missing_required_descriptor == "empty" and error_type == "missing":
                 # This is a table so we modify the error message.
                 msg = (
                     f"In {humanize_location(loc[:-1])} the {field_name} {field_renaming.get(str(loc[-1]), loc[-1])!r} "
