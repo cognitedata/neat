@@ -105,6 +105,7 @@ class TableDMS(TableObj):
             return {title_case(k): v for k, v in data.items()}
         return data
 
+
 DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
     "Views": {
         "space": "View",
