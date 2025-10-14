@@ -23,6 +23,7 @@ from cognite.neat._data_model.models.dms import (
     ListablePropertyTypeDefinition,
     NodeReference,
     RequestSchema,
+    RequiresConstraintDefinition,
     UniquenessConstraintDefinition,
     ViewCorePropertyRequest,
     ViewReference,
@@ -347,7 +348,17 @@ class DMSTableWriter:
             raise ValueError(f"Unknown view property type: {type(prop)}")
 
     def _create_container_constraints(self, container: ContainerRequest) -> list[ParsedEntity] | None:
-        raise NotImplementedError()
+        if not container.constraints:
+            return None
+        output: list[ParsedEntity] = []
+        for constraint_id, constraint in container.constraints.items():
+            if not isinstance(constraint, RequiresConstraintDefinition):
+                continue
+            entity_properties = {"require": str(self._create_container_entity(constraint.require))}
+            output.append(
+                ParsedEntity(prefix=constraint.constraint_type, suffix=constraint_id, properties=entity_properties)
+            )
+        return output or None
 
     def _create_view_entity(self, view: ViewRequest | ViewReference) -> ParsedEntity:
         prefix = view.space
