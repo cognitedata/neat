@@ -95,14 +95,43 @@ class ProcessedProperties:
 
 
 class DMSTableReader:
-    class Sheet:
+    """Reads a TableDMS object and converts it to a RequestSchema.
+
+
+    Args:
+        default_space (str): The default space to use when no space is given in an entity.
+        default_version (str): The default version to use when no version is given in an entity.
+        source (TableSource): The source of the table data, used for error reporting.
+
+    Raises:
+        DataModelImportError: If there are any errors in the data model.
+
+    Attributes:
+        errors (list[ModelSyntaxError]): A list of errors encountered during parsing.
+
+    Class Attributes:
+        Sheets: This is used to create error messages. It ensures that the column names matches
+            the names in the table, even if they are renamed in the code.
+        PropertyColumns: This is used to create error messages for the properties table.
+            It ensures that the column names matches the names in the table, even if they are renamed in the code.
+        ContainerColumns: This is used to create error messages for the containers table.
+            It ensures that the column names matches the names in the table, even if they are renamed in the code.
+        ViewColumns: This is used to create error messages for the views table.
+            It ensures that the column names matches the names in the table, even if they are renamed in the code.
+
+    """
+
+    # The following classes are used when creating error messages. They ensure that the column names
+    # matches the names in the table, even if they are renamed in the code.
+    # Note that this is not a complete list of all columns, only those that are used in error messages.
+    class Sheets:
         metadata = cast(str, TableDMS.model_fields["metadata"].validation_alias)
         properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
         containers = cast(str, TableDMS.model_fields["containers"].validation_alias)
         views = cast(str, TableDMS.model_fields["views"].validation_alias)
         nodes = cast(str, TableDMS.model_fields["nodes"].validation_alias)
 
-    class PropertyColumn:
+    class PropertyColumns:
         view = cast(str, DMSProperty.model_fields["view"].validation_alias)
         view_property = cast(str, DMSProperty.model_fields["view_property"].validation_alias)
         connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
@@ -120,10 +149,10 @@ class DMSTableReader:
         index = cast(str, DMSProperty.model_fields["index"].validation_alias)
         constraint = cast(str, DMSProperty.model_fields["constraint"].validation_alias)
 
-    class ContainerColumn:
+    class ContainerColumns:
         container = cast(str, DMSContainer.model_fields["container"].validation_alias)
 
-    class ViewColumn:
+    class ViewColumns:
         view = cast(str, DMSView.model_fields["view"].validation_alias)
         filter = cast(str, DMSView.model_fields["filter"].validation_alias)
 
@@ -150,7 +179,7 @@ class DMSTableReader:
         )
 
     def read_space(self, space: str) -> SpaceRequest:
-        space_request = self._validate_obj(SpaceRequest, {"space": space}, (self.Sheet.metadata,), field_name="value")
+        space_request = self._validate_obj(SpaceRequest, {"space": space}, (self.Sheets.metadata,), field_name="value")
         if space_request is None:
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
             raise DataModelImportError(self.errors) from None
@@ -160,9 +189,9 @@ class DMSTableReader:
         node_refs: list[NodeReference] = []
         for row_no, row in enumerate(nodes):
             data = self._create_node_ref(row.node)
-            parsed = self._validate_obj(NodeReference, data, (self.Sheet.nodes, row_no))
-            if parsed is not None:
-                node_refs.append(parsed)
+            instantiated = self._validate_obj(NodeReference, data, (self.Sheets.nodes, row_no))
+            if instantiated is not None:
+                node_refs.append(instantiated)
         return node_refs
 
     @staticmethod
@@ -206,29 +235,31 @@ class DMSTableReader:
                 continue
             container_props[container_entity][prop_id] = prop_list[0].container_property
             if len(prop_list) > 1 and self._are_definitions_different(prop_list):
+                # If multiple view properties are mapping to the same container property,
+                # the container property definitions must be the same.
                 rows_str = humanize_collection(
-                    [self.source.adjust_row_number(self.Sheet.properties, p.row_no) for p in prop_list]
+                    [self.source.adjust_row_number(self.Sheets.properties, p.row_no) for p in prop_list]
                 )
                 container_columns_str = humanize_collection(
                     [
-                        self.PropertyColumn.connection,
-                        self.PropertyColumn.value_type,
-                        self.PropertyColumn.min_count,
-                        self.PropertyColumn.max_count,
-                        self.PropertyColumn.default,
-                        self.PropertyColumn.auto_increment,
-                        self.PropertyColumn.container_property_name,
-                        self.PropertyColumn.container_property_description,
-                        self.PropertyColumn.index,
-                        self.PropertyColumn.constraint,
+                        self.PropertyColumns.connection,
+                        self.PropertyColumns.value_type,
+                        self.PropertyColumns.min_count,
+                        self.PropertyColumns.max_count,
+                        self.PropertyColumns.default,
+                        self.PropertyColumns.auto_increment,
+                        self.PropertyColumns.container_property_name,
+                        self.PropertyColumns.container_property_description,
+                        self.PropertyColumns.index,
+                        self.PropertyColumns.constraint,
                     ]
                 )
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"In {self.source.location((self.Sheet.properties,))} "
-                            f"when the column {self.PropertyColumn.container!r} and "
-                            f"{self.PropertyColumn.container_property!r} are the same, "
+                            f"In {self.source.location((self.Sheets.properties,))} "
+                            f"when the column {self.PropertyColumns.container!r} and "
+                            f"{self.PropertyColumns.container_property!r} are the same, "
                             f"all the container columns ({container_columns_str}) must be the same. "
                             f"Inconsistent definitions for container '{container_entity!s} "
                             f"and {prop_id!r}' found in rows {rows_str}."
@@ -255,13 +286,13 @@ class DMSTableReader:
             view_props[view_entity][prop_id] = prop_list[0].view_property
             if len(prop_list) > 1:
                 rows_str = humanize_collection(
-                    [self.source.adjust_row_number(self.Sheet.properties, p.row_no) for p in prop_list]
+                    [self.source.adjust_row_number(self.Sheets.properties, p.row_no) for p in prop_list]
                 )
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"In {self.source.location((self.Sheet.properties,))} the combination of columns "
-                            f"{self.PropertyColumn.view!r} and {self.PropertyColumn.view_property!r} must be unique. "
+                            f"In {self.source.location((self.Sheets.properties,))} the combination of columns "
+                            f"{self.PropertyColumns.view!r} and {self.PropertyColumns.view_property!r} must be unique. "
                             f"Duplicated entries for view '{view_entity!s}' and "
                             f"property '{prop_id!s}' found in rows {rows_str}."
                         )
@@ -281,12 +312,12 @@ class DMSTableReader:
                 continue
             if missing_order := [idx for idx in index_list if idx.order is None]:
                 row_str = humanize_collection(
-                    [self.source.adjust_row_number(self.Sheet.properties, idx.row_no) for idx in missing_order]
+                    [self.source.adjust_row_number(self.Sheets.properties, idx.row_no) for idx in missing_order]
                 )
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"In table {self.Sheet.properties!r} column {self.PropertyColumn.index!r}: "
+                            f"In table {self.Sheets.properties!r} column {self.PropertyColumns.index!r}: "
                             f"the index {index_id!r} on container {container_entity!s} is defined on multiple "
                             f"properties. This requires the 'order' attribute to be set. It is missing in rows "
                             f"{row_str}."
@@ -309,12 +340,12 @@ class DMSTableReader:
                 continue
             if missing_order := [c for c in constraint_list if c.order is None]:
                 row_str = humanize_collection(
-                    [self.source.adjust_row_number(self.Sheet.properties, c.row_no) for c in missing_order]
+                    [self.source.adjust_row_number(self.Sheets.properties, c.row_no) for c in missing_order]
                 )
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"In table {self.Sheet.properties!r} column {self.PropertyColumn.constraint!r}: "
+                            f"In table {self.Sheets.properties!r} column {self.PropertyColumns.constraint!r}: "
                             f"the uniqueness constraint {constraint_id!r} on container {container_entity!s} is defined "
                             f"on multiple properties. This requires the 'order' attribute to be set. It is missing in "
                             f"rows {row_str}."
@@ -327,7 +358,7 @@ class DMSTableReader:
         return constraints
 
     def _process_view_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
-        loc = (self.Sheet.properties, row_no)
+        loc = (self.Sheets.properties, row_no)
         data = self.read_view_property(prop, loc)
         view_prop = self._validate_adapter(ViewRequestPropertyAdapter, data, loc)
         if view_prop is not None:
@@ -341,7 +372,7 @@ class DMSTableReader:
     def _process_container_property(
         self, prop: DMSProperty, read: ReadProperties, enum_collections: dict[str, dict[str, Any]], row_no: int
     ) -> None:
-        loc = (self.Sheet.properties, row_no)
+        loc = (self.Sheets.properties, row_no)
         data = self.read_container_property(prop, enum_collections, loc=loc)
         container_prop = self._validate_obj(ContainerPropertyDefinition, data, loc)
         if container_prop is not None and prop.container and prop.container_property:
@@ -354,7 +385,7 @@ class DMSTableReader:
         if prop.index is None or prop.container_property is None or prop.container is None:
             return
 
-        loc = (self.Sheet.properties, row_no, self.PropertyColumn.index)
+        loc = (self.Sheets.properties, row_no, self.PropertyColumns.index)
         for index in prop.index:
             data = self.read_index(index, prop.container_property)
             created = self._validate_adapter(IndexAdapter, data, loc)
@@ -392,7 +423,7 @@ class DMSTableReader:
     def _process_constraint(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
         if prop.constraint is None or prop.container_property is None or prop.container is None:
             return
-        loc = (self.Sheet.properties, row_no, self.PropertyColumn.constraint)
+        loc = (self.Sheets.properties, row_no, self.PropertyColumns.constraint)
         for constraint in prop.constraint:
             data = self.read_constraint(constraint, prop.container_property)
             created = self._validate_adapter(ConstraintAdapter, data, loc)
@@ -461,7 +492,7 @@ class DMSTableReader:
         edge_source: dict[str, str | None] | None = None
         if "edgeSource" in prop.connection.properties:
             edge_source = self._create_view_ref_unparsed(
-                prop.connection.properties["edgeSource"], (*loc, self.PropertyColumn.connection, "edgeSource")
+                prop.connection.properties["edgeSource"], (*loc, self.PropertyColumns.connection, "edgeSource")
             )
         return dict(
             connectionType="single_edge_connection" if prop.max_count == 1 else "multi_edge_connection",
@@ -472,7 +503,7 @@ class DMSTableReader:
                 prop.connection.properties.get("type"),
                 prop.view,
                 prop.view_property,
-                (*loc, self.PropertyColumn.connection, "type"),
+                (*loc, self.PropertyColumns.connection, "type"),
             ),
             edgeSource=edge_source,
             direction=prop.connection.properties.get("direction", "outwards"),
@@ -528,7 +559,7 @@ class DMSTableReader:
         if "container" in args and prop.connection is not None:
             # Direct relation constraint.
             args["container"] = self._create_container_ref_unparsed(
-                prop.connection.properties["container"], (*loc, self.PropertyColumn.connection, "container")
+                prop.connection.properties["container"], (*loc, self.PropertyColumns.connection, "container")
             )
         if args["type"] == "enum" and "collection" in prop.value_type.properties:
             args["values"] = enum_collections.get(prop.value_type.properties["collection"], {})
@@ -552,7 +583,7 @@ class DMSTableReader:
                     indexes=properties.indices.get(container.container),
                     constraints=properties.constraints.get(container.container),
                 ),
-                (self.Sheet.containers, row_no),
+                (self.Sheets.containers, row_no),
             )
             if container_request is None:
                 continue
@@ -563,12 +594,12 @@ class DMSTableReader:
                 rows_by_seen[container.container] = [row_no]
         for entity, rows in rows_by_seen.items():
             if len(rows) > 1:
-                rows_str = humanize_collection([self.source.adjust_row_number(self.Sheet.containers, r) for r in rows])
+                rows_str = humanize_collection([self.source.adjust_row_number(self.Sheets.containers, r) for r in rows])
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"In {self.source.location((self.Sheet.containers,))} the values in "
-                            f"column {self.ContainerColumn.container!r} must be unique. "
+                            f"In {self.source.location((self.Sheets.containers,))} the values in "
+                            f"column {self.ContainerColumns.container!r} must be unique. "
                             f"Duplicated entries for container '{entity!s}' found in rows {rows_str}."
                         )
                     )
@@ -591,7 +622,7 @@ class DMSTableReader:
                     self.errors.append(
                         ModelSyntaxError(
                             message=(
-                                f"In {self.source.location((self.Sheet.views, row_no, self.ViewColumn.filter))} "
+                                f"In {self.source.location((self.Sheets.views, row_no, self.ViewColumns.filter))} "
                                 f"must be valid json. Got error {e!s}"
                             )
                         )
@@ -606,7 +637,7 @@ class DMSTableReader:
                     filter=filter_dict,
                     properties=properties.get(view.view, {}),
                 ),
-                (self.Sheet.views, row_no),
+                (self.Sheets.views, row_no),
             )
             if view_request is None:
                 continue
@@ -617,12 +648,12 @@ class DMSTableReader:
                 rows_by_seen[view.view] = [row_no]
         for entity, rows in rows_by_seen.items():
             if len(rows) > 1:
-                rows_str = humanize_collection([self.source.adjust_row_number(self.Sheet.views, r) for r in rows])
+                rows_str = humanize_collection([self.source.adjust_row_number(self.Sheets.views, r) for r in rows])
                 self.errors.append(
                     ModelSyntaxError(
                         message=(
-                            f"In {self.source.location((self.Sheet.views,))} the values in "
-                            f"column {self.ViewColumn.view!r} must be unique. "
+                            f"In {self.source.location((self.Sheets.views,))} the values in "
+                            f"column {self.ViewColumns.view!r} must be unique. "
                             f"Duplicated entries for view '{entity!s}' found in rows {rows_str}."
                         )
                     )
@@ -638,7 +669,7 @@ class DMSTableReader:
                 if view.in_model is not False and view.view in valid_view_entities
             ],
         }
-        model = self._validate_obj(DataModelRequest, data, (self.Sheet.metadata,), field_name="value")
+        model = self._validate_obj(DataModelRequest, data, (self.Sheets.metadata,), field_name="value")
         if model is None:
             # This is the last step, so we can raise the error here.
             raise DataModelImportError(self.errors) from None
