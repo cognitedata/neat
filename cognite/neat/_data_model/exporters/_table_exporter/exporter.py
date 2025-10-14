@@ -29,10 +29,19 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
         raise NotImplementedError()
 
     def as_yaml(self, data_model: RequestSchema, file_path: Path) -> None:
-        """Exports the data model as a YAML file.
+        """Exports the data model as a flat YAML file, which is identical to the spreadsheet representation
 
         Args:
             data_model (RequestSchema): The data model to export.
             file_path (Path): The path to the YAML file to create.
+        """
+        raise NotImplementedError()
+
+    def as_csvs(self, data_model: RequestSchema, directory_path: Path) -> None:
+        """Exports the data model as a set of CSV files, one for each table.
+
+        Args:
+            data_model (RequestSchema): The data model to export.
+            directory_path (Path): The path to the directory to create the CSV files in.
         """
         raise NotImplementedError()
