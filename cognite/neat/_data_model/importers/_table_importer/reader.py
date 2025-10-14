@@ -631,6 +631,18 @@ class DMSTableReader:
             return constraints
         for entity in container.constraint:
             loc = self.Sheets.containers, row_no, self.ContainerColumns.constraint
+            if entity.prefix != "requires":
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {self.source.location(loc)} the constraint '{entity.suffix}' on container "
+                            f"'{container.container!s}' has an invalid type '{entity.prefix}'. Only 'requires' "
+                            f"constraints are supported at the container level."
+                        )
+                    )
+                )
+                continue
+
             if "require" not in entity.properties:
                 self.errors.append(
                     ModelSyntaxError(
