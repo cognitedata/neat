@@ -451,9 +451,21 @@ class SelectQueries(BaseQuery):
             else:
                 yield instance_id, str(space)
 
-    def _get_graph_diff(
+    def get_graph_diff(
         self, source_graph: URIRef, target_graph: URIRef
     ) -> Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]]:
+        """Return triples that exist in the source graph but not in the target graph.
+
+        This method compares two named graphs within the dataset and identifies all triples
+        that are present in the `source_graph` but are missing from the `target_graph`.
+
+        Args:
+            source_graph: URI of the graph to compare from.
+            target_graph: URI of the graph to compare against.
+
+        Returns:
+            Iterable of triples (subject, predicate, object)
+        """
         query = f"""
         SELECT ?s ?p ?o
         WHERE {{
@@ -464,31 +476,3 @@ class SelectQueries(BaseQuery):
         }}
         """
         return cast(Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]], self.dataset.query(query))
-
-    def get_triples_to_delete(
-        self, old_graph: URIRef, new_graph: URIRef
-    ) -> Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]]:
-        """Find triples that exist in old graph but not in new graph.
-
-        Args:
-            old_graph: URI of the old named graph
-            new_graph: URI of the new named graph
-
-        Returns:
-            List of triples (subject, predicate, object) to delete
-        """
-        return self._get_graph_diff(old_graph, new_graph)
-
-    def get_triples_to_add(
-        self, old_graph: URIRef, new_graph: URIRef
-    ) -> Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]]:
-        """Find triples that exist in new graph but not in old graph.
-
-        Args:
-            old_graph: URI of the old named graph
-            new_graph: URI of the new named graph
-
-        Returns:
-            List of triples (subject, predicate, object) to add
-        """
-        return self._get_graph_diff(new_graph, old_graph)

@@ -476,10 +476,10 @@ class NeatInstanceStore:
 
         # Store new diff results
         self._add_triples(
-            self.queries.select.get_triples_to_add(current_named_graph, new_named_graph),
+            self.queries.select.get_graph_diff(new_named_graph, current_named_graph),
             named_graph=NAMED_GRAPH_NAMESPACE["DIFF_ADD"],
         )
         self._add_triples(
-            self.queries.select.get_triples_to_delete(current_named_graph, new_named_graph),
+            self.queries.select.get_graph_diff(current_named_graph, new_named_graph),
             named_graph=NAMED_GRAPH_NAMESPACE["DIFF_DELETE"],
         )
