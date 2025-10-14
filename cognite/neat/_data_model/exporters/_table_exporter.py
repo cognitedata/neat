@@ -9,7 +9,7 @@ from ._base import DMSExporter
 class DMSTableExporter(DMSExporter[DataModelTableType]):
     """Exports DMS to a table structure.
 
-    The tables can are expected to be a dictionary where the keys are the table names and the values
+    The tables are expected to be a dictionary where the keys are the table names and the values
     are lists of dictionaries representing the rows in the table.
     """
 
