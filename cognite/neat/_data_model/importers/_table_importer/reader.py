@@ -428,7 +428,7 @@ class DMSTableReader:
             return
         loc = (self.Sheets.properties, row_no, self.PropertyColumns.constraint)
         for constraint in prop.constraint:
-            data = self.read_constraint(constraint, prop.container_property)
+            data = self.read_property_constraint(constraint, prop.container_property)
             created = self._validate_adapter(ConstraintAdapter, data, loc)
             if created is None:
                 continue
@@ -444,11 +444,8 @@ class DMSTableReader:
             )
 
     @staticmethod
-    def read_constraint(constraint: ParsedEntity, prop_id: str | None = None) -> dict[str, Any]:
-        output: dict[str, Any] = {"constraintType": constraint.prefix, **constraint.properties}
-        if prop_id is not None:
-            output["properties"] = [prop_id]
-        return output
+    def read_property_constraint(constraint: ParsedEntity, prop_id: str) -> dict[str, Any]:
+        return {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}
 
     def read_view_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
         """Reads a single view property from a given row in the properties table.
@@ -579,7 +576,7 @@ class DMSTableReader:
         rows_by_seen: dict[ParsedEntity, list[int]] = defaultdict(list)
         for row_no, container in enumerate(containers):
             property_constraints = properties.constraints.get(container.container, {})
-            require_constraints = self.read_container_constraints(container)
+            require_constraints = self.read_container_constraints(container, row_no)
             if conflict := set(property_constraints.keys()).intersection(set(require_constraints.keys())):
                 conflict_str = humanize_collection(conflict)
                 location_str = self.source.location((self.Sheets.containers, row_no, self.ContainerColumns.constraint))
@@ -628,13 +625,28 @@ class DMSTableReader:
                 )
         return containers_requests
 
-    def read_container_constraints(self, container: DMSContainer) -> dict[str, Constraint]:
+    def read_container_constraints(self, container: DMSContainer, row_no: int) -> dict[str, Constraint]:
         constraints: dict[str, Constraint] = {}
         if not container.constraint:
             return constraints
         for entity in container.constraint:
-            data = self.read_constraint(entity)
-            created = self._validate_adapter(ConstraintAdapter, data, (self.Sheets.containers,))
+            loc = self.Sheets.containers, row_no, self.ContainerColumns.constraint
+            if "require" not in entity.properties:
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {self.source.location(loc)} the constraint '{entity.suffix}' on container "
+                            f"'{container.container!s}' is missing the "
+                            f"'require' property which is required for container level constraints."
+                        )
+                    )
+                )
+                continue
+            data = {
+                "constraintType": entity.prefix,
+                "require": self._create_container_ref_unparsed(entity.properties["require"], loc),
+            }
+            created = self._validate_adapter(ConstraintAdapter, data, loc)
             if created is None:
                 continue
             constraints[entity.suffix] = created
