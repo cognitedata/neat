@@ -116,7 +116,7 @@ class DMSTableWriter:
             for index_id, index in container.indexes.items():
                 for order, prop_id in enumerate(index.properties, 1):
                     entity_properties = index.model_dump(
-                        mode="json", by_alias=True, exclude={"indexType", "properties"}, exclude_none=True
+                        mode="json", by_alias=True, exclude={"index_type", "properties"}, exclude_none=True
                     )
                     if len(index.properties) > 1:
                         entity_properties["order"] = str(order)
@@ -142,7 +142,7 @@ class DMSTableWriter:
                     continue
                 for order, prop_id in enumerate(constraint.properties, 1):
                     entity_properties = constraint.model_dump(
-                        mode="json", by_alias=True, exclude={"constraintType", "properties"}, exclude_none=True
+                        mode="json", by_alias=True, exclude={"constraint_type", "properties"}, exclude_none=True
                     )
                     if len(constraint.properties) > 1:
                         entity_properties["order"] = str(order)
@@ -200,7 +200,7 @@ class DMSTableWriter:
         elif isinstance(prop.type, ListablePropertyTypeDefinition):
             # List and maxListSize are included in the maxCount of the property, so we exclude them here.
             entity_properties = prop.type.model_dump(
-                mode="json", by_alias=True, exclude={"list", "maxListSize"}, exclude_none=True
+                mode="json", by_alias=True, exclude={"list", "maxListSize", "type"}, exclude_none=True
             )
             return ParsedEntity("", prop.type.type, properties=entity_properties)
         else:
