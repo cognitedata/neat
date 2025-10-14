@@ -151,6 +151,7 @@ class DMSTableReader:
 
     class ContainerColumns:
         container = cast(str, DMSContainer.model_fields["container"].validation_alias)
+        constraint = cast(str, DMSContainer.model_fields["constraint"].validation_alias)
 
     class ViewColumns:
         view = cast(str, DMSView.model_fields["view"].validation_alias)
@@ -427,7 +428,7 @@ class DMSTableReader:
             return
         loc = (self.Sheets.properties, row_no, self.PropertyColumns.constraint)
         for constraint in prop.constraint:
-            data = self.read_constraint(constraint, prop.container_property)
+            data = self.read_property_constraint(constraint, prop.container_property)
             created = self._validate_adapter(ConstraintAdapter, data, loc)
             if created is None:
                 continue
@@ -443,7 +444,7 @@ class DMSTableReader:
             )
 
     @staticmethod
-    def read_constraint(constraint: ParsedEntity, prop_id: str) -> dict[str, Any]:
+    def read_property_constraint(constraint: ParsedEntity, prop_id: str) -> dict[str, Any]:
         return {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}
 
     def read_view_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
@@ -574,6 +575,22 @@ class DMSTableReader:
         containers_requests: list[ContainerRequest] = []
         rows_by_seen: dict[ParsedEntity, list[int]] = defaultdict(list)
         for row_no, container in enumerate(containers):
+            property_constraints = properties.constraints.get(container.container, {})
+            require_constraints = self.read_container_constraints(container, row_no)
+            if conflict := set(property_constraints.keys()).intersection(set(require_constraints.keys())):
+                conflict_str = humanize_collection(conflict)
+                location_str = self.source.location((self.Sheets.containers, row_no, self.ContainerColumns.constraint))
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {location_str} the container '{container.container!s}' has constraints defined "
+                            f"with the same identifier(s) as the uniqueness constraint defined in the "
+                            f"{self.Sheets.properties} sheet. Ensure that the identifiers are unique. "
+                            f"Conflicting identifiers: {conflict_str}. "
+                        )
+                    )
+                )
+            constraints = {**property_constraints, **require_constraints}
             container_request = self._validate_obj(
                 ContainerRequest,
                 dict(
@@ -583,7 +600,7 @@ class DMSTableReader:
                     description=container.description,
                     properties=properties.container[container.container],
                     indexes=properties.indices.get(container.container),
-                    constraints=properties.constraints.get(container.container),
+                    constraints=constraints or None,
                 ),
                 (self.Sheets.containers, row_no),
             )
@@ -607,6 +624,45 @@ class DMSTableReader:
                     )
                 )
         return containers_requests
+
+    def read_container_constraints(self, container: DMSContainer, row_no: int) -> dict[str, Constraint]:
+        constraints: dict[str, Constraint] = {}
+        if not container.constraint:
+            return constraints
+        for entity in container.constraint:
+            loc = self.Sheets.containers, row_no, self.ContainerColumns.constraint
+            if entity.prefix != "requires":
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {self.source.location(loc)} the constraint '{entity.suffix}' on container "
+                            f"'{container.container!s}' has an invalid type '{entity.prefix}'. Only 'requires' "
+                            f"constraints are supported at the container level."
+                        )
+                    )
+                )
+                continue
+
+            if "require" not in entity.properties:
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {self.source.location(loc)} the constraint '{entity.suffix}' on container "
+                            f"'{container.container!s}' is missing the "
+                            f"'require' property which is required for container level constraints."
+                        )
+                    )
+                )
+                continue
+            data = {
+                "constraintType": entity.prefix,
+                "require": self._create_container_ref_unparsed(entity.properties["require"], loc),
+            }
+            created = self._validate_adapter(ConstraintAdapter, data, loc)
+            if created is None:
+                continue
+            constraints[entity.suffix] = created
+        return constraints
 
     def read_views(
         self,
