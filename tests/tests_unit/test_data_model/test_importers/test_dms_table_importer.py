@@ -834,12 +834,16 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
                 },
             ],
             "Views": [{"View": "TestView"}],
-            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node", "Constraint": "requires:TestConst"}],
         },
         {
-            "In table 'Properties' column 'Constraint': the uniqueness constraint 'compositeConst' "
-            "on container TestContainer is defined on multiple properties. This requires the 'order' "
-            "attribute to be set. It is missing in rows 1 and 2.",
+            "In table 'Containers' row 1 column 'Constraint' the constraint 'TestConst' "
+            "on container 'TestContainer' is missing the 'require' property which is "
+            "required for container level constraints.",
+            "In table 'Properties' column 'Constraint': the uniqueness constraint "
+            "'compositeConst' on container TestContainer is defined on multiple "
+            "properties. This requires the 'order' attribute to be set. It is missing in "
+            "rows 1 and 2.",
         },
         id="Multi-property constraint missing order",
     )
