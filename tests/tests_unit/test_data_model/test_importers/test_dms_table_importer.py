@@ -4,8 +4,861 @@ import pytest
 
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.importers._table_importer.source import SpreadsheetReadContext, TableSource
+from cognite.neat._data_model.models.dms import (
+    BtreeIndex,
+    ContainerPropertyDefinition,
+    ContainerReference,
+    ContainerRequest,
+    DataModelRequest,
+    DirectNodeRelation,
+    EnumProperty,
+    EnumValue,
+    Float32Property,
+    MultiEdgeProperty,
+    MultiReverseDirectRelationPropertyRequest,
+    NodeReference,
+    RequestSchema,
+    SpaceRequest,
+    TextProperty,
+    UniquenessConstraintDefinition,
+    ViewCorePropertyRequest,
+    ViewDirectReference,
+    ViewReference,
+    ViewRequest,
+)
 from cognite.neat._exceptions import DataModelImportError
 from cognite.neat._utils.useful_types import CellValueType
+
+SOURCE = "pytest.xlsx"
+
+
+def valid_dms_table_formats() -> Iterable[tuple]:
+    yield pytest.param(
+        {
+            "Metadata": [
+                {
+                    "Key": "space",
+                    "Value": "cdf_cdm",
+                },
+                {
+                    "Key": "externalId",
+                    "Value": "CogniteCore",
+                },
+                {
+                    "Key": "version",
+                    "Value": "v1",
+                },
+                {
+                    "Key": "name",
+                    "Value": "Cognite Core Data Model",
+                },
+                {
+                    "Key": "description",
+                    "Value": "The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
+                },
+            ],
+            "Properties": [
+                {
+                    "View": "CogniteDescribable",
+                    "View Property": "name",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": None,
+                    "Value Type": "text(maxTextSize=400)",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": "CogniteDescribable",
+                    "Container Property": "name",
+                    "Index": "btree:name(cursorable=False)",
+                    "Constraint": "uniqueness:uniqueName(bySpace=True)",
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "assets",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": "direct",
+                    "Value Type": "CogniteAsset",
+                    "Min Count": 0,
+                    "Max Count": 1200,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": "CogniteFile",
+                    "Container Property": "assets",
+                    "Index": None,
+                    "Constraint": None,
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "assetAnnotations",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": "edge(edgeSource=FileAnnotation,direction=outwards,type=diagramAnnotation)",
+                    "Value Type": "CogniteAsset",
+                    "Min Count": 0,
+                    "Max Count": None,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": None,
+                    "Container Property": None,
+                    "Index": None,
+                    "Constraint": None,
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "category",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": None,
+                    "Value Type": "enum(collection=CogniteFile.category,unknownValue=other)",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": "CogniteFile",
+                    "Container Property": "category",
+                    "Container Property Name": "category_405",
+                    "Index": None,
+                    "Constraint": None,
+                },
+                {
+                    "View": "CogniteAsset",
+                    "View Property": "files",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": "reverse(property=assets)",
+                    "Value Type": "CogniteFile",
+                    "Min Count": 0,
+                    "Max Count": None,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": None,
+                    "Container Property": None,
+                    "Index": None,
+                    "Constraint": None,
+                },
+                {
+                    "View": "FileAnnotation",
+                    "View Property": "confidence",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": None,
+                    "Value Type": "float32",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": True,
+                    "Default": None,
+                    "Container": "FileAnnotation",
+                    "Container Property": "confidence",
+                    "Index": None,
+                    "Constraint": None,
+                },
+            ],
+            "Views": [
+                {
+                    "View": "CogniteDescribable",
+                    "Name": "Cognite Describable",
+                    "Description": "The describable core concept is used as a standard way of "
+                    "holding the bare minimum of information about the instance",
+                    "Implements": None,
+                    "Filter": None,
+                },
+                {
+                    "View": "CogniteAsset",
+                    "Name": "Cognite Asset",
+                    "Description": None,
+                    "Implements": "CogniteDescribable",
+                    "Filter": None,
+                },
+                {
+                    "View": "CogniteFile",
+                    "Name": "Cognite File",
+                    "Description": None,
+                    "Implements": "CogniteDescribable",
+                    "Filter": None,
+                },
+                {
+                    "View": "FileAnnotation",
+                    "Name": "File Annotation",
+                    "Description": None,
+                    "Implements": "CogniteDescribable",
+                    "Filter": None,
+                },
+            ],
+            "Containers": [
+                {
+                    "Container": "CogniteDescribable",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": None,
+                    "Used For": "all",
+                },
+                {
+                    "Container": "CogniteFile",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": "CogniteDescribable",
+                    "Used For": "node",
+                },
+                {
+                    "Container": "FileAnnotation",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": "CogniteDescribable",
+                    "Used For": "edge",
+                },
+            ],
+            "Enum": [
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "blueprint",
+                    "Name": "Blueprint",
+                    "Description": "A technical drawing",
+                },
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "document",
+                    "Name": None,
+                    "Description": None,
+                },
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "other",
+                    "Name": None,
+                    "Description": None,
+                },
+            ],
+            "Nodes": [
+                {
+                    "Node": "diagramAnnotation",
+                }
+            ],
+        },
+        RequestSchema(
+            dataModel=DataModelRequest(
+                space="cdf_cdm",
+                externalId="CogniteCore",
+                version="v1",
+                name="Cognite Core Data Model",
+                description="The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
+                views=[
+                    ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1"),
+                    ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
+                    ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                    ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
+                ],
+            ),
+            spaces=[SpaceRequest(space="cdf_cdm")],
+            views=[
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteDescribable",
+                    version="v1",
+                    name="Cognite Describable",
+                    description="The describable core concept is used as a standard way of holding the bare minimum "
+                    "of information about the instance",
+                    implements=None,
+                    properties={
+                        "name": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable"),
+                            containerPropertyIdentifier="name",
+                        ),
+                    },
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteAsset",
+                    version="v1",
+                    name="Cognite Asset",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    properties={
+                        "files": MultiReverseDirectRelationPropertyRequest(
+                            name=None,
+                            description=None,
+                            source=ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                            through=ViewDirectReference(
+                                source=ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                                identifier="assets",
+                            ),
+                        ),
+                    },
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteFile",
+                    version="v1",
+                    name="Cognite File",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    properties={
+                        "assets": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", externalId="CogniteFile"),
+                            containerPropertyIdentifier="assets",
+                            source=ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
+                        ),
+                        "assetAnnotations": MultiEdgeProperty(
+                            name=None,
+                            description=None,
+                            source=ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
+                            edgeSource=ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
+                            direction="outwards",
+                            type=NodeReference(space="cdf_cdm", externalId="diagramAnnotation"),
+                        ),
+                        "category": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", externalId="CogniteFile"),
+                            containerPropertyIdentifier="category",
+                        ),
+                    },
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="FileAnnotation",
+                    version="v1",
+                    name="File Annotation",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    properties={
+                        "confidence": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", externalId="FileAnnotation"),
+                            containerPropertyIdentifier="confidence",
+                        ),
+                    },
+                ),
+            ],
+            containers=[
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteDescribable",
+                    usedFor="all",
+                    properties={
+                        "name": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=TextProperty(list=False, maxTextSize=400),
+                        )
+                    },
+                    indexes={
+                        "name": BtreeIndex(properties=["name"], cursorable=False),
+                    },
+                    constraints={
+                        "uniqueName": UniquenessConstraintDefinition(
+                            constraint_type="uniqueness",
+                            properties=["name"],
+                            bySpace=True,
+                        )
+                    },
+                ),
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteFile",
+                    usedFor="node",
+                    properties={
+                        "assets": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=DirectNodeRelation(maxListSize=1200, list=True),
+                        ),
+                        "category": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name="category_405",
+                            type=EnumProperty(
+                                unknownValue="other",
+                                values={
+                                    "blueprint": EnumValue(name="Blueprint", description="A technical drawing"),
+                                    "document": EnumValue(),
+                                    "other": EnumValue(),
+                                },
+                            ),
+                        ),
+                    },
+                ),
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="FileAnnotation",
+                    usedFor="edge",
+                    properties={
+                        "confidence": ContainerPropertyDefinition(
+                            immutable=True,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=Float32Property(list=False),
+                        )
+                    },
+                ),
+            ],
+            nodeTypes=[NodeReference(space="cdf_cdm", externalId="diagramAnnotation")],
+        ),
+        id="Full example",
+    )
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "multiIndex",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIndex",
+                    "Index": "btree:compositeIdx(order=1)",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiIndex2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIndex2",
+                    "Index": "btree:compositeIdx(order=2)",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiConstraint",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConstraint",
+                    "Constraint": "uniqueness:compositeUnique(order=1)",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiConstraint2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConstraint2",
+                    "Constraint": "uniqueness:compositeUnique(order=2)",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        RequestSchema(
+            dataModel=DataModelRequest(
+                space="test_space",
+                externalId="TestModel",
+                version="v1",
+                views=[ViewReference(space="test_space", externalId="TestView", version="v1")],
+            ),
+            spaces=[SpaceRequest(space="test_space")],
+            views=[
+                ViewRequest(
+                    space="test_space",
+                    externalId="TestView",
+                    version="v1",
+                    properties={
+                        "multiIndex": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiIndex",
+                        ),
+                        "multiIndex2": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiIndex2",
+                        ),
+                        "multiConstraint": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiConstraint",
+                        ),
+                        "multiConstraint2": ViewCorePropertyRequest(
+                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            containerPropertyIdentifier="multiConstraint2",
+                        ),
+                    },
+                )
+            ],
+            containers=[
+                ContainerRequest(
+                    space="test_space",
+                    externalId="TestContainer",
+                    usedFor="node",
+                    properties={
+                        "multiIndex": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                        "multiIndex2": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                        "multiConstraint": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                        "multiConstraint2": ContainerPropertyDefinition(
+                            type=TextProperty(list=False),
+                            nullable=True,
+                        ),
+                    },
+                    indexes={
+                        "compositeIdx": BtreeIndex(properties=["multiIndex", "multiIndex2"], cursorable=None),
+                    },
+                    constraints={
+                        "compositeUnique": UniquenessConstraintDefinition(
+                            constraint_type="uniqueness",
+                            properties=["multiConstraint", "multiConstraint2"],
+                        )
+                    },
+                )
+            ],
+            nodeTypes=[],
+        ),
+        id="Multi-property indices and constraints",
+    )
+
+
+def invalid_dms_table_formats() -> Iterable[tuple]:
+    yield pytest.param(
+        {
+            "Metadata": [
+                {
+                    "Key": "space",
+                    "Value": "cdf_cdm",
+                },
+                {
+                    "Key": "version",
+                    "Value": "v1",
+                },
+            ],
+            "Properties": [
+                {
+                    "View": "CogniteDescribable",
+                    "View Property": "name",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Default": None,
+                    "Container": "CogniteDescribable",
+                    "Container Property": "name",
+                    "Index": "btree:name(cursorable=invalid)",
+                    "Constraint": None,
+                }
+            ],
+            "Views": [
+                {
+                    "View": None,
+                    "Name": "Cognite Describable",
+                    "Description": "The describable core concept is used as a standard way of "
+                    "holding the bare minimum of information about the instance",
+                    "Implements": None,
+                    "Filter": None,
+                }
+            ],
+            "Containers": [
+                {
+                    "Container": "CogniteDescribable",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": None,
+                    "Used For": "Instances",
+                }
+            ],
+        },
+        {
+            "In table 'Metadata' missing required value: 'externalId'.",
+            "In table 'Properties' row 1 column 'Index' -> btree.cursorable input should be "
+            "a valid boolean. Got 'invalid' of type str.",
+            "In table 'Views' row 1 the column 'View' cannot be empty.",
+            "In table 'Containers' row 1 column 'Used For' input should be 'node', 'edge' or 'all'. Got 'Instances'.",
+        },
+        id="Missing required metadata fields",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "prop1",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "sameProp",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "prop2",
+                    "Connection": None,
+                    "Value Type": "int32",
+                    "Min Count": 1,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "sameProp",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {
+            "In table 'Properties' when the column 'Container' and 'Container Property' "
+            "are the same, all the container columns (Auto Increment, Connection, "
+            "Constraint, Container Property Description, Container Property Name, "
+            "Default, Index, Max Count, Min Count and Value Type) must be the same. "
+            "Inconsistent definitions for container 'TestContainer and 'sameProp'' found "
+            "in rows 1 and 2."
+        },
+        id="Inconsistent container property definitions",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "duplicate",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "duplicate",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "duplicate",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "duplicate",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [],
+        },
+        {
+            "In table 'Properties' the combination of columns 'View' and 'View Property' "
+            "must be unique. Duplicated entries for view 'TestView' and property "
+            "'duplicate' found in rows 1 and 2."
+        },
+        id="Duplicate view properties",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "prop1",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "prop1",
+                }
+            ],
+            "Views": [
+                {"View": "TestView"},
+                {"View": "TestView"},
+            ],
+            "Containers": [
+                {"Container": "TestContainer", "Used For": "node"},
+                {"Container": "TestContainer", "Used For": "edge"},
+            ],
+        },
+        {
+            "In table 'Containers' the values in column 'Container' must be unique. "
+            "Duplicated entries for container 'TestContainer' found in rows 1 and 2.",
+            "In table 'Views' the values in column 'View' must be unique. Duplicated "
+            "entries for view 'TestView' found in rows 1 and 2.",
+        },
+        id="Duplicate views and containers",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "multiIdx",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIdx",
+                    "Index": "btree:compositeIdx",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiIdx2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiIdx2",
+                    "Index": "btree:compositeIdx",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {
+            "In table 'Properties' column 'Index': the index 'compositeIdx' on container TestContainer "
+            "is defined on multiple properties. This requires the 'order' attribute to be set. "
+            "It is missing in rows 1 and 2.",
+        },
+        id="Multi-property index missing order",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "multiConst",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConst",
+                    "Constraint": "uniqueness:compositeConst",
+                },
+                {
+                    "View": "TestView",
+                    "View Property": "multiConst2",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "multiConst2",
+                    "Constraint": "uniqueness:compositeConst",
+                },
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {
+            "In table 'Properties' column 'Constraint': the uniqueness constraint 'compositeConst' "
+            "on container TestContainer is defined on multiple properties. This requires the 'order' "
+            "attribute to be set. It is missing in rows 1 and 2.",
+        },
+        id="Multi-property constraint missing order",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [],
+            "Views": [
+                {
+                    "View": "TestView",
+                    "Filter": "invalid json{",
+                }
+            ],
+            "Containers": [],
+        },
+        {
+            "In table 'Views' row 1 column 'Filter' must be valid json. Got error "
+            "Expecting value: line 1 column 1 (char 0)"
+        },
+        id="Invalid JSON filter",
+    )
+
+    yield pytest.param(
+        {
+            "Metadata": [
+                {"Key": "space", "Value": "test_space"},
+                {"Key": "externalId", "Value": "TestModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            "Properties": [
+                {
+                    "View": "TestView",
+                    "View Property": "badOrder",
+                    "Connection": None,
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Container": "TestContainer",
+                    "Container Property": "badOrder",
+                    "Index": "btree:testIdx(order=not_an_int)",
+                }
+            ],
+            "Views": [{"View": "TestView"}],
+            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+        },
+        {"In table 'Properties' row 1 column 'Index' invalid order value 'not_an_int'. Must be an integer."},
+        id="Invalid order value in index",
+    )
 
 
 def invalid_test_cases() -> Iterable[tuple]:
@@ -86,7 +939,7 @@ def invalid_test_cases() -> Iterable[tuple]:
         {
             "Metadata": [
                 {
-                    "Value": "my_space",  # Missing required "Key" field
+                    "Value": "my_space",
                 }
             ],
             "Properties": [
@@ -124,6 +977,22 @@ class TestDMSTableImporter:
             importer._read_tables()
         actual_errors = {err.message for err in exc_info.value.errors}
         assert actual_errors == expected_errors
+
+    @pytest.mark.parametrize("data,expected", list(valid_dms_table_formats()))
+    def test_import(self, data: dict[str, list[dict[str, CellValueType]]], expected: RequestSchema) -> None:
+        importer = DMSTableImporter(data)
+        result = importer.to_data_model()
+        assert result.model_dump() == expected.model_dump()
+
+    @pytest.mark.parametrize("data,expected_errors", list(invalid_dms_table_formats()))
+    def test_import_errors(self, data: dict[str, list[dict[str, CellValueType]]], expected_errors: set[str]) -> None:
+        importer = DMSTableImporter(data, source=TableSource(source=SOURCE, table_read={}))
+        with pytest.raises(DataModelImportError) as e:
+            _ = importer.to_data_model()
+
+        result_errors = {err.message for err in e.value.errors}
+
+        assert result_errors == expected_errors
 
 
 class TestTableSource:

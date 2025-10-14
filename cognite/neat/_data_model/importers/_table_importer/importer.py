@@ -9,10 +9,13 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._exceptions import DataModelImportError
 from cognite.neat._issues import ModelSyntaxError
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import DataModelTableType
 from cognite.neat._utils.validation import as_json_path, humanize_validation_error
 
-from .data_classes import TableDMS
+from .data_classes import MetadataValue, TableDMS
+from .reader import DMSTableReader
+from .source import TableSource
 
 
 class DMSTableImporter(DMSImporter):
@@ -30,11 +33,16 @@ class DMSTableImporter(DMSImporter):
         f"Missing required column: {sheet!r}": f"Missing required sheet: {sheet!r}" for sheet in REQUIRED_SHEETS
     }
 
-    def __init__(self, tables: DataModelTableType) -> None:
+    def __init__(self, tables: DataModelTableType, source: TableSource | None = None) -> None:
         self._table = tables
+        self._source = source or TableSource("Unknown")
 
     def to_data_model(self) -> RequestSchema:
-        raise NotImplementedError()
+        tables = self._read_tables()
+
+        space, version = self._read_defaults(tables.metadata)
+        reader = DMSTableReader(space, version, self._source)
+        return reader.read_tables(tables)
 
     def _read_tables(self) -> TableDMS:
         try:
@@ -74,3 +82,22 @@ class DMSTableImporter(DMSImporter):
             return f"{loc[0]} sheet row {loc[1] + 1} column {loc[2]!r}"
         # This should be unreachable as the TableDMS model only has 2 levels.
         return as_json_path(loc)
+
+    @staticmethod
+    def _read_defaults(metadata: list[MetadataValue]) -> tuple[str, str]:
+        """Reads the space and version from the metadata table."""
+        default_space: str | None = None
+        default_version: str | None = None
+        missing = {"space", "version"}
+        for meta in metadata:
+            if meta.key == "space":
+                default_space = str(meta.value)
+                missing.remove("space")
+            elif meta.key == "version":
+                default_version = str(meta.value)
+                missing.remove("version")
+        if missing:
+            error = ModelSyntaxError(message=f"In Metadata missing required values: {humanize_collection(missing)}")
+            # If space or version is missing, we cannot continue parsing the model as these are used as defaults.
+            raise DataModelImportError([error]) from None
+        return str(default_space), str(default_version)
