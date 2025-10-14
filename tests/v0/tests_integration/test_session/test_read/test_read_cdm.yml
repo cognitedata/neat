@@ -1,22 +1,22 @@
 containers:
-- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable),requires:schedulablePresent(container=CogniteSchedulable)
+- constraint: requires:describablePresent(require=CogniteDescribable),requires:sourceablePresent(require=CogniteSourceable),requires:schedulablePresent(require=CogniteSchedulable)
   container: CogniteActivity
   description: Represent an activity
   used_for: node
-- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
+- constraint: requires:describablePresent(require=CogniteDescribable),requires:sourceablePresent(require=CogniteSourceable)
   container: CogniteAnnotation
   description: Annotation represents contextualization results or links
   used_for: edge
-- constraint: requires:describablePresent(container=CogniteDescribable),requires:visualizablePresent(container=CogniteVisualizable),requires:sourceablePresent(container=CogniteSourceable)
+- constraint: requires:describablePresent(require=CogniteDescribable),requires:visualizablePresent(require=CogniteVisualizable),requires:sourceablePresent(require=CogniteSourceable)
   container: CogniteAsset
   description: The asset is the bare bone representation of assets in our asset centric
     world
   used_for: node
-- constraint: requires:describablePresent(container=CogniteDescribable)
+- constraint: requires:describablePresent(require=CogniteDescribable)
   container: CogniteAssetClass
   description: This identifies the class of an asset
   used_for: node
-- constraint: requires:describablePresent(container=CogniteDescribable)
+- constraint: requires:describablePresent(require=CogniteDescribable)
   container: CogniteAssetType
   description: This identifies the type of an asset
   used_for: node
@@ -24,22 +24,22 @@ containers:
   description: The describable core concept is used as a standard way of holding the
     bare minimum of information about the instance.
   used_for: all
-- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable),requires:annotationPresent(container=CogniteAnnotation)
+- constraint: requires:describablePresent(require=CogniteDescribable),requires:sourceablePresent(require=CogniteSourceable),requires:annotationPresent(require=CogniteAnnotation)
   container: CogniteDiagramAnnotation
   used_for: edge
-- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
+- constraint: requires:describablePresent(require=CogniteDescribable),requires:sourceablePresent(require=CogniteSourceable)
   container: CogniteEquipment
   description: Represent a physical piece of equipment
   used_for: node
-- constraint: requires:describablePresent(container=CogniteDescribable)
+- constraint: requires:describablePresent(require=CogniteDescribable)
   container: CogniteEquipmentType
   description: This identifies the type of an equipment
   used_for: node
-- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
+- constraint: requires:describablePresent(require=CogniteDescribable),requires:sourceablePresent(require=CogniteSourceable)
   container: CogniteFile
   description: This concept models the underlying file from the Files resource type
   used_for: node
-- constraint: requires:describablePresent(container=CogniteDescribable)
+- constraint: requires:describablePresent(require=CogniteDescribable)
   container: CogniteFileCategory
   description: Specifies the category for a file (as a result of categorization/classification))
   used_for: node
@@ -55,10 +55,10 @@ containers:
   description: The CogniteSourceable core concept is used to standardize the way source
     information is stored.
   used_for: all
-- constraint: requires:describablePresent(container=CogniteDescribable),requires:sourceablePresent(container=CogniteSourceable)
+- constraint: requires:describablePresent(require=CogniteDescribable),requires:sourceablePresent(require=CogniteSourceable)
   container: CogniteTimeSeries
   used_for: node
-- constraint: requires:describablePresent(container=CogniteDescribable)
+- constraint: requires:describablePresent(require=CogniteDescribable)
   container: CogniteUnit
   description: Represents a single unit of measurement
   used_for: node
@@ -143,6 +143,10 @@ enum:
   description: Time series with double floating point data points.
   name: numeric
   value: numeric
+- collection: CogniteTimeSeries.type
+  description: Time series with state data points.
+  name: state
+  value: state
 - collection: CogniteTimeSeries.type
   description: Time series with string data points.
   name: string
@@ -1589,6 +1593,20 @@ properties:
   value_type: text
   view: CogniteTimeSeries
   view_property: sourceUnit
+- connection: direct
+  container: CogniteTimeSeries
+  container_property: stateSet
+  description: The state set of the time series. It is only in effect when the type
+    is 'state'.
+  immutable: false
+  index: btree:stateSet(cursorable=True)
+  max_count: 1
+  min_count: 0
+  name: State set
+  neatId: http://purl.org/cognite/neat/data-model/verified/physical/cdf_cdm/CogniteCore/v1/CogniteTimeSeries/stateSet
+  value_type: '#N/A'
+  view: CogniteTimeSeries
+  view_property: stateSet
 - container: CogniteTimeSeries
   container_property: type
   description: Specifies the data type of the data points.

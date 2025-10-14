@@ -377,7 +377,7 @@ def _replace_legacy_constraint_form(sheet: Worksheet) -> None:
                 constraints = []
                 for constraint in SPLIT_ON_COMMA_PATTERN.split(str(cell.value)):
                     # latest format, do nothing
-                    if "container" in constraint.lower():
+                    if "require" in constraint.lower():
                         constraints.append(constraint)
                         continue
 
@@ -385,7 +385,7 @@ def _replace_legacy_constraint_form(sheet: Worksheet) -> None:
                         container = ContainerEntity.load(constraint, space="default")
                         container_str = container.external_id if container.space == "default" else str(container)
                         constraints.append(
-                            f"requires:{container.space}_{container.external_id}(container={container_str})"
+                            f"requires:{container.space}_{container.external_id}(require={container_str})"
                         )
                         replaced = True
                     except ValidationError:

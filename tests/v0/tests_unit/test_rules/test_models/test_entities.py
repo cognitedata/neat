@@ -36,9 +36,9 @@ TEST_CASES = [
     ),
     (
         ContainerConstraintEntity,
-        "requires:my_space_Asset(container=my_space:Asset)",
+        "requires:my_space_Asset(require=my_space:Asset)",
         ContainerConstraintEntity(
-            prefix="requires", suffix="my_space_Asset", container=ContainerEntity(space="my_space", externalId="Asset")
+            prefix="requires", suffix="my_space_Asset", require=ContainerEntity(space="my_space", externalId="Asset")
         ),
     ),
     (

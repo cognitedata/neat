@@ -93,7 +93,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                     container="Asset",
                 ),
                 UnverifiedPhysicalContainer(
-                    container="GeneratingUnit", constraint="requires:my_space_Asset(container=Asset)"
+                    container="GeneratingUnit", constraint="requires:my_space_Asset(require=Asset)"
                 ),
             ],
             views=[
@@ -230,7 +230,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         containers=[
             UnverifiedPhysicalContainer(container="Asset"),
             UnverifiedPhysicalContainer(
-                container="WindFarm", constraint="requires:my_space_Asset(container=my_space:Asset)"
+                container="WindFarm", constraint="requires:my_space_Asset(require=my_space:Asset)"
             ),
         ],
     )
@@ -339,7 +339,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         containers=[
             UnverifiedPhysicalContainer(container="Asset"),
             UnverifiedPhysicalContainer(
-                container="WindTurbine", constraint="requires:my_space_Asset(container=my_space:Asset)"
+                container="WindTurbine", constraint="requires:my_space_Asset(require=my_space:Asset)"
             ),
         ],
     )
@@ -775,7 +775,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
                 UnverifiedPhysicalContainer(
                     container="GeneratingUnit",
-                    constraint="requires:sp_core_Asset(container=sp_core:Asset)",
+                    constraint="requires:sp_core_Asset(require=sp_core:Asset)",
                 ),
             ],
             views=[
@@ -813,7 +813,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                     container="sp_core:Asset",
                 ),
                 UnverifiedPhysicalContainer(
-                    container="GeneratingUnit", constraint="requires:sp_core_Asset(container=sp_core:Asset)"
+                    container="GeneratingUnit", constraint="requires:sp_core_Asset(require=sp_core:Asset)"
                 ),
             ],
             views=[
@@ -861,7 +861,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalContainer(container="Asset"),
                 UnverifiedPhysicalContainer(
                     container="Plant",
-                    constraint="requires:my_space_Asset(container=Asset)",
+                    constraint="requires:my_space_Asset(require=Asset)",
                 ),
             ],
             views=[
@@ -905,7 +905,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
             ],
             containers=[
                 UnverifiedPhysicalContainer(container="Asset"),
-                UnverifiedPhysicalContainer(container="Plant", constraint="requires:my_space_Asset(container=Asset)"),
+                UnverifiedPhysicalContainer(container="Plant", constraint="requires:my_space_Asset(require=Asset)"),
             ],
             views=[
                 UnverifiedPhysicalView(view="Asset"),
@@ -1409,7 +1409,7 @@ class TestDMSRules:
             containers=[
                 UnverifiedPhysicalContainer(
                     container="Asset",
-                    constraint="requires:src(container=Sourceable),requires:desc(container=Describable)",
+                    constraint="requires:src(require=Sourceable),requires:desc(require=Describable)",
                 )
             ],
         ).as_verified_data_model()
@@ -1454,7 +1454,7 @@ class TestDMSRules:
             "containers": [
                 {
                     "container": "Asset",
-                    "constraint": "requires:src(container=Sourceable),requires:desc(container=Describable)",
+                    "constraint": "requires:src(require=Sourceable),requires:desc(require=Describable)",
                     "neatId": "http://purl.org/cognite/neat/Container_0",
                 }
             ],
@@ -1831,7 +1831,7 @@ class TestDMSValidation:
                     views=[UnverifiedPhysicalView("MyView")],
                     containers=[
                         UnverifiedPhysicalContainer(
-                            "MyContainer", constraint="requires:desc(container=cdf_cdm:CogniteDescribable)"
+                            "MyContainer", constraint="requires:desc(require=cdf_cdm:CogniteDescribable)"
                         )
                     ],
                 ),

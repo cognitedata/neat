@@ -285,7 +285,7 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
         for constraint_name, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
                 constraint = ContainerConstraintEntity(
-                    prefix="requires", suffix=constraint_name, container=ContainerEntity.from_id(constraint_obj.require)
+                    prefix="requires", suffix=constraint_name, require=ContainerEntity.from_id(constraint_obj.require)
                 )
                 constraints.append(str(constraint))
 
