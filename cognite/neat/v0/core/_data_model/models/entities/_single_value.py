@@ -666,7 +666,7 @@ class ContainerConstraintEntity(PhysicalEntity[None]):
     type_: ClassVar[EntityTypes] = EntityTypes.container_constraint
     prefix: _UndefinedType | Literal["uniqueness", "requires"] = Undefined  # type: ignore[assignment]
     suffix: str
-    container: ContainerEntity | None = None
+    require: ContainerEntity | None = None
 
     def as_id(self) -> None:
         return None
