@@ -18,6 +18,7 @@ from cognite.neat._data_model.models.dms import (
     MultiReverseDirectRelationPropertyRequest,
     NodeReference,
     RequestSchema,
+    RequiresConstraintDefinition,
     SpaceRequest,
     TextProperty,
     UniquenessConstraintDefinition,
@@ -68,11 +69,33 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Min Count": 0,
                     "Max Count": 1,
                     "Immutable": False,
+                    "Auto Increment": None,
                     "Default": None,
                     "Container": "CogniteDescribable",
                     "Container Property": "name",
+                    "Container Property Description": None,
+                    "Container Property Name": None,
                     "Index": "btree:name(cursorable=False)",
                     "Constraint": "uniqueness:uniqueName(bySpace=True)",
+                },
+                {
+                    "View": "CogniteAsset",
+                    "View Property": "files",
+                    "Name": None,
+                    "Description": None,
+                    "Connection": "reverse(property=assets)",
+                    "Value Type": "CogniteFile",
+                    "Min Count": 0,
+                    "Max Count": None,
+                    "Immutable": None,
+                    "Default": None,
+                    "Auto Increment": None,
+                    "Container": None,
+                    "Container Property": None,
+                    "Container Property Description": None,
+                    "Container Property Name": None,
+                    "Index": None,
+                    "Constraint": None,
                 },
                 {
                     "View": "CogniteFile",
@@ -84,9 +107,12 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Min Count": 0,
                     "Max Count": 1200,
                     "Immutable": False,
+                    "Auto Increment": None,
                     "Default": None,
                     "Container": "CogniteFile",
                     "Container Property": "assets",
+                    "Container Property Description": None,
+                    "Container Property Name": None,
                     "Index": None,
                     "Constraint": None,
                 },
@@ -95,14 +121,17 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "View Property": "assetAnnotations",
                     "Name": None,
                     "Description": None,
-                    "Connection": "edge(edgeSource=FileAnnotation,direction=outwards,type=diagramAnnotation)",
+                    "Connection": "edge(edgeSource=FileAnnotation,type=diagramAnnotation)",
                     "Value Type": "CogniteAsset",
                     "Min Count": 0,
                     "Max Count": None,
-                    "Immutable": False,
+                    "Auto Increment": None,
+                    "Immutable": None,
                     "Default": None,
                     "Container": None,
                     "Container Property": None,
+                    "Container Property Description": None,
+                    "Container Property Name": None,
                     "Index": None,
                     "Constraint": None,
                 },
@@ -116,26 +145,12 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Min Count": 0,
                     "Max Count": 1,
                     "Immutable": False,
+                    "Auto Increment": None,
                     "Default": None,
                     "Container": "CogniteFile",
                     "Container Property": "category",
                     "Container Property Name": "category_405",
-                    "Index": None,
-                    "Constraint": None,
-                },
-                {
-                    "View": "CogniteAsset",
-                    "View Property": "files",
-                    "Name": None,
-                    "Description": None,
-                    "Connection": "reverse(property=assets)",
-                    "Value Type": "CogniteFile",
-                    "Min Count": 0,
-                    "Max Count": None,
-                    "Immutable": False,
-                    "Default": None,
-                    "Container": None,
-                    "Container Property": None,
+                    "Container Property Description": None,
                     "Index": None,
                     "Constraint": None,
                 },
@@ -150,8 +165,11 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Max Count": 1,
                     "Immutable": True,
                     "Default": None,
+                    "Auto Increment": None,
                     "Container": "FileAnnotation",
                     "Container Property": "confidence",
+                    "Container Property Description": None,
+                    "Container Property Name": None,
                     "Index": None,
                     "Constraint": None,
                 },
@@ -164,6 +182,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "holding the bare minimum of information about the instance",
                     "Implements": None,
                     "Filter": None,
+                    "In Model": None,
                 },
                 {
                     "View": "CogniteAsset",
@@ -171,6 +190,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                     "Implements": "CogniteDescribable",
                     "Filter": None,
+                    "In Model": None,
                 },
                 {
                     "View": "CogniteFile",
@@ -178,6 +198,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                     "Implements": "CogniteDescribable",
                     "Filter": None,
+                    "In Model": None,
                 },
                 {
                     "View": "FileAnnotation",
@@ -185,6 +206,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                     "Implements": "CogniteDescribable",
                     "Filter": None,
+                    "In Model": None,
                 },
             ],
             "Containers": [
@@ -199,14 +221,14 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Container": "CogniteFile",
                     "Name": None,
                     "Description": None,
-                    "Constraint": "CogniteDescribable",
+                    "Constraint": "requires:describablePresent(require=CogniteDescribable)",
                     "Used For": "node",
                 },
                 {
                     "Container": "FileAnnotation",
                     "Name": None,
                     "Description": None,
-                    "Constraint": "CogniteDescribable",
+                    "Constraint": "requires:describablePresent(require=CogniteDescribable)",
                     "Used For": "edge",
                 },
             ],
@@ -236,6 +258,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 }
             ],
         },
+        False,
         RequestSchema(
             dataModel=DataModelRequest(
                 space="cdf_cdm",
@@ -394,6 +417,11 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             ),
                         ),
                     },
+                    constraints={
+                        "describablePresent": RequiresConstraintDefinition(
+                            require=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable")
+                        )
+                    },
                 ),
                 ContainerRequest(
                     space="cdf_cdm",
@@ -408,6 +436,11 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             description=None,
                             name=None,
                             type=Float32Property(list=False),
+                        )
+                    },
+                    constraints={
+                        "describablePresent": RequiresConstraintDefinition(
+                            require=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable")
                         )
                     },
                 ),
@@ -472,6 +505,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
             "Views": [{"View": "TestView"}],
             "Containers": [{"Container": "TestContainer", "Used For": "node"}],
         },
+        True,
         RequestSchema(
             dataModel=DataModelRequest(
                 space="test_space",
@@ -978,8 +1012,10 @@ class TestDMSTableImporter:
         actual_errors = {err.message for err in exc_info.value.errors}
         assert actual_errors == expected_errors
 
-    @pytest.mark.parametrize("data,expected", list(valid_dms_table_formats()))
-    def test_import(self, data: dict[str, list[dict[str, CellValueType]]], expected: RequestSchema) -> None:
+    @pytest.mark.parametrize("data,exclude_none,expected", list(valid_dms_table_formats()))
+    def test_import(
+        self, data: dict[str, list[dict[str, CellValueType]]], exclude_none: bool, expected: RequestSchema
+    ) -> None:
         importer = DMSTableImporter(data)
         result = importer.to_data_model()
         assert result.model_dump() == expected.model_dump()
