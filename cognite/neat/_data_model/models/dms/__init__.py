@@ -60,6 +60,7 @@ from ._view_property import (
     ViewCorePropertyResponse,
     ViewPropertyDefinition,
     ViewRequestProperty,
+    ViewRequestPropertyAdapter,
     ViewResponseProperty,
 )
 from ._views import (
@@ -135,6 +136,7 @@ __all__ = [
     "ViewReference",
     "ViewRequest",
     "ViewRequestProperty",
+    "ViewRequestPropertyAdapter",
     "ViewResponse",
     "ViewResponseProperty",
     "WriteableResource",
