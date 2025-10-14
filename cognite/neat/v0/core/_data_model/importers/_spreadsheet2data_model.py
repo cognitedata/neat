@@ -10,8 +10,10 @@ import pandas as pd
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from pandas import ExcelFile
+from pydantic import ValidationError
 from rdflib import Namespace, URIRef
 
+from cognite.neat.v0.core._data_model._constants import SPLIT_ON_COMMA_PATTERN
 from cognite.neat.v0.core._data_model._shared import (
     ImportedDataModel,
     T_UnverifiedDataModel,
@@ -23,6 +25,7 @@ from cognite.neat.v0.core._data_model.models import (
     SchemaCompleteness,
 )
 from cognite.neat.v0.core._data_model.models._import_contexts import SpreadsheetContext
+from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerConstraintEntity, ContainerEntity
 from cognite.neat.v0.core._issues import IssueList, MultiValueError
 from cognite.neat.v0.core._issues.errors import (
     FileMissingRequiredFieldError,
@@ -30,7 +33,11 @@ from cognite.neat.v0.core._issues.errors import (
     FileReadError,
 )
 from cognite.neat.v0.core._issues.warnings import FileMissingRequiredFieldWarning
-from cognite.neat.v0.core._utils.spreadsheet import SpreadsheetRead, read_individual_sheet
+from cognite.neat.v0.core._utils.spreadsheet import (
+    SpreadsheetRead,
+    find_column_and_row_with_value,
+    read_individual_sheet,
+)
 from cognite.neat.v0.core._utils.text import humanize_collection
 
 from ._base import BaseImporter
@@ -306,7 +313,7 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
 
         """
 
-        workbook = load_workbook(filepath)
+        workbook = load_workbook(filepath, data_only=True)
 
         if "Classes" in workbook.sheetnames:
             print(
@@ -323,12 +330,16 @@ class ExcelImporter(BaseImporter[T_UnverifiedDataModel]):
             if "Properties" in workbook.sheetnames:
                 _replace_class_with_concept_cell(workbook["Properties"])
 
-            with tempfile.NamedTemporaryFile(prefix="temp_neat_file", suffix=".xlsx", delete=False) as temp_file:
-                workbook.save(temp_file.name)
-                return Path(temp_file.name)
+        elif "Containers" in workbook.sheetnames:
+            _replace_legacy_constraint_form(workbook["Containers"])
+            _replace_legacy_constraint_form(workbook["Properties"])
 
         else:
             return filepath
+
+        with tempfile.NamedTemporaryFile(prefix="temp_neat_file", suffix=".xlsx", delete=False) as temp_file:
+            workbook.save(temp_file.name)
+            return Path(temp_file.name)
 
 
 def _replace_class_with_concept_cell(sheet: Worksheet) -> None:
@@ -342,3 +353,72 @@ def _replace_class_with_concept_cell(sheet: Worksheet) -> None:
         for cell in row:
             if cell.value == "Class":
                 cell.value = "Concept"
+
+
+def _replace_legacy_constraint_form(sheet: Worksheet) -> None:
+    """
+    Replaces the legacy form of container constraints with the new form in the given sheet.
+
+    Args:
+        sheet (Worksheet): The sheet in which to replace the old form of container constraints.
+    """
+    column, row = find_column_and_row_with_value(sheet, "Constraint", False)
+
+    if not column or not row:
+        return None
+
+    # Iterate over values in the constraint column and replace old form with new form
+    replaced: bool = False
+    for cell_row in sheet.iter_rows(min_row=row + 1, min_col=column, max_col=column):
+        cell = cell_row[0]
+        if cell.value is not None:  # Skip empty cells
+            # Container sheet update
+            if sheet.title.lower() == "containers":
+                constraints = []
+                for constraint in SPLIT_ON_COMMA_PATTERN.split(str(cell.value)):
+                    # latest format, do nothing
+                    if "container" in constraint.lower():
+                        constraints.append(constraint)
+                        continue
+
+                    try:
+                        container = ContainerEntity.load(constraint, space="default")
+                        container_str = container.external_id if container.space == "default" else str(container)
+                        constraints.append(
+                            f"requires:{container.space}_{container.external_id}(container={container_str})"
+                        )
+                        replaced = True
+                    except ValidationError:
+                        constraints.append(constraint)
+
+                cell.value = ",".join(constraints)
+
+            # Properties sheet update
+            elif sheet.title.lower() == "properties":
+                constraints = []
+                for constraint in SPLIT_ON_COMMA_PATTERN.split(str(cell.value)):
+                    try:
+                        constraint_entity = ContainerConstraintEntity.load(constraint)
+
+                        if constraint_entity.prefix in ["uniqueness", "requires"]:
+                            constraints.append(constraint)
+
+                        # Replace old format with new format
+                        else:
+                            constraints.append(f"uniqueness:{constraint}")
+                            replaced = True
+
+                    # If the constraint is not valid, we keep it as is
+                    # to be caught by validation later
+                    except ValidationError:
+                        constraints.append(constraint)
+
+                cell.value = ",".join(constraints)
+
+    if replaced:
+        print(
+            (
+                "You are using a legacy container constraints format "
+                f"in the {sheet.title} sheet. Please update to the latest format."
+            ),
+        )

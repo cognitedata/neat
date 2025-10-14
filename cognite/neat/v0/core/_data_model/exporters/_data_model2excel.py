@@ -32,7 +32,7 @@ from cognite.neat.v0.core._data_model.models.data_types import (
 )
 from cognite.neat.v0.core._data_model.models.physical._verified import PhysicalDataModel
 from cognite.neat.v0.core._utils.spreadsheet import (
-    find_column_with_value,
+    find_column_and_row_with_value,
     generate_data_validation,
 )
 
@@ -217,7 +217,7 @@ class ExcelExporter(BaseExporter[VerifiedDataModel, Workbook]):
                 continue
             ws = workbook[sheet]
             for col in get_internal_properties():
-                column_letter = find_column_with_value(ws, col)
+                column_letter = find_column_and_row_with_value(ws, col)[0]
                 if column_letter:
                     ws.column_dimensions[column_letter].hidden = True
 
@@ -451,7 +451,7 @@ class ExcelExporter(BaseExporter[VerifiedDataModel, Workbook]):
         workbook[sheet_name].add_data_validation(data_validators[data_validator_name])
 
         # APPLY VALIDATOR TO SPECIFIC COLUMN
-        if column_letter := find_column_with_value(workbook[sheet_name], column_name):
+        if column_letter := find_column_and_row_with_value(workbook[sheet_name], column_name)[0]:
             data_validators[data_validator_name].add(f"{column_letter}{3}:{column_letter}{3 + total_rows}")
 
     def _create_sheet_with_header(
