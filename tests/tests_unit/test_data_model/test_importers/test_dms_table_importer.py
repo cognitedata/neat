@@ -895,7 +895,8 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
     )
 
 
-def invalid_test_cases() -> Iterable[tuple]:
+def invalid_dms_table() -> Iterable[tuple]:
+    """This tests cases are designed to fail the initial validation in the DMSTableImporter"""
     yield pytest.param(
         {
             "Metadata": [
@@ -1002,7 +1003,7 @@ def invalid_test_cases() -> Iterable[tuple]:
 
 
 class TestDMSTableImporter:
-    @pytest.mark.parametrize("data, expected_errors", list(invalid_test_cases()))
+    @pytest.mark.parametrize("data, expected_errors", list(invalid_dms_table()))
     def test_read_invalid_tables(
         self, data: dict[str, list[dict[str, CellValueType]]], expected_errors: set[str]
     ) -> None:
