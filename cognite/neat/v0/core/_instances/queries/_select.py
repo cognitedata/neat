@@ -456,8 +456,8 @@ class SelectQueries(BaseQuery):
     ) -> Iterable[tuple[URIRef, URIRef, URIRef | RdfLiteral]]:
         """Return triples that exist in the source graph but not in the target graph.
 
-        This method compares two named graphs within the dataset and identifies
-        all triples that are present in one but missing from the other.
+        This method compares two named graphs within the dataset and identifies all triples
+        that are present in the `source_graph` but are missing from the `target_graph`.
 
         Args:
             source_graph: URI of the graph to compare from.

@@ -27,7 +27,7 @@ class TestListInstanceObjectIds:
 
 
 def test_get_graph_diff() -> None:
-    """Test finding triples that exist in current graph but not in new graph"""
+    """Test finding triple differences between two graphs."""
     store = NeatInstanceStore.from_oxi_local_store()
     example = Namespace("http://example.org/")
 
