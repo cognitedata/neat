@@ -83,7 +83,7 @@ class TestRead:
 
         issues = neat.read.examples.core_data_model()
 
-        assert len(issues) == 0
+        assert not issues.has_errors
 
     def test_read_classic_graph(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(client=cognite_client)

@@ -1650,7 +1650,7 @@ class _ConceptualDataModelConverter:
                         ContainerConstraintEntity(
                             prefix="requires",
                             suffix=f"{parent_entity.space}_{parent_entity.external_id}"[:CONSTRAINT_ID_MAX_LENGTH],
-                            container=parent_entity,
+                            require=parent_entity,
                         )
                     )
         return constrains

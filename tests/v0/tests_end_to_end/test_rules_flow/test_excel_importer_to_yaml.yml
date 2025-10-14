@@ -5,7 +5,7 @@ containers:
   used_for: node
 - container: DisconnectSwitch
   used_for: node
-- constraint: requires:power_Substation(container=Substation)
+- constraint: requires:power_Substation(require=Substation)
   container: DistributionSubstation
   used_for: node
 - container: EnergyArea
@@ -20,12 +20,12 @@ containers:
   used_for: node
 - container: Meter
   used_for: node
-- constraint: requires:power_Substation(container=Substation)
+- constraint: requires:power_Substation(require=Substation)
   container: OffshoreSubstation
   used_for: node
 - container: OnshoreSubstation
   used_for: node
-- constraint: requires:power_GeoLocation(container=GeoLocation)
+- constraint: requires:power_GeoLocation(require=GeoLocation)
   container: Point
   used_for: node
 - container: PowerLine
@@ -36,11 +36,11 @@ containers:
   used_for: node
 - container: VoltageTransformer
   used_for: node
-- constraint: requires:power_EnergyArea(container=EnergyArea)
+- constraint: requires:power_EnergyArea(require=EnergyArea)
   container: WindFarm
   name: Wind Farm
   used_for: node
-- constraint: requires:power_GeneratingUnit(container=GeneratingUnit)
+- constraint: requires:power_GeneratingUnit(require=GeneratingUnit)
   container: WindTurbine
   name: Wind Turbine
   used_for: node

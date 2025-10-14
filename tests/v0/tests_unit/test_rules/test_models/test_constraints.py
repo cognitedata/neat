@@ -26,12 +26,12 @@ class TestParseConstraints:
 
     def test_parse_constraints_single_string_with_container(self):
         """Test parsing a single string constraint with container specification."""
-        result = _parse_constraints("requires:my_space_Asset(container=my_space:Asset)", default_space="default_space")
+        result = _parse_constraints("requires:my_space_Asset(require=my_space:Asset)", default_space="default_space")
         assert len(result) == 1
         assert isinstance(result[0], ContainerConstraintEntity)
         assert result[0].prefix == "requires"
         assert result[0].suffix == "my_space_Asset"
-        assert isinstance(result[0].container, ContainerEntity)
+        assert isinstance(result[0].require, ContainerEntity)
 
     def test_parse_constraints_comma_separated_string(self):
         """Test parsing comma-separated string constraints."""

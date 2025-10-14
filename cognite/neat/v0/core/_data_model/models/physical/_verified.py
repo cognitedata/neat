@@ -419,7 +419,7 @@ class PhysicalContainer(SheetRow):
                 message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
                 raise ValueError(message) from None
 
-            if constraint.container is None:
+            if constraint.require is None:
                 message = (
                     f"Container constraint must have a container set. "
                     f"Please set 'requires:{constraint!s}(container=space:external_id)'."
@@ -435,9 +435,9 @@ class PhysicalContainer(SheetRow):
         container_id = self.container.as_id()
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
-            if constraint.container is None:
+            if constraint.require is None:
                 continue
-            requires = dm.RequiresConstraint(constraint.container.as_id())
+            requires = dm.RequiresConstraint(constraint.require.as_id())
             constraints[constraint.suffix] = requires
 
         return dm.ContainerApply(
