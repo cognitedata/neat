@@ -999,7 +999,7 @@ class TestDMSTableImporter:
 class TestDMSTableExporter:
     @pytest.mark.parametrize("expected,schema", list(valid_dms_table_formats()))
     def test_export(self, expected: dict[str, list[dict[str, CellValueType]]], schema: RequestSchema) -> None:
-        result = DMSTableExporter().export(schema)
+        result = DMSTableExporter(exclude_none=True).export(schema)
         assert result == expected
 
 
