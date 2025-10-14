@@ -240,7 +240,12 @@ class DMSTableWriter:
                 continue
             for prop_id, prop in view.properties.items():
                 output.properties.append(self._write_property(view, prop_id, prop, container))
+                if isinstance(prop, EdgeProperty):
+                    output.nodes.append(self._write_node(prop))
         return output
+
+    def _write_node(self, prop: EdgeProperty) -> DMSNode:
+        return DMSNode(node=self._create_node_entity(prop.type))
 
     def write_views(self, views: list[ViewRequest], model_views: set[ViewReference]) -> list[DMSView]:
         return [
