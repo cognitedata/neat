@@ -19,6 +19,7 @@ from cognite.neat._data_model.models.dms import (
     MultiReverseDirectRelationPropertyRequest,
     NodeReference,
     RequestSchema,
+    RequiresConstraintDefinition,
     SpaceRequest,
     TextProperty,
     UniquenessConstraintDefinition,
@@ -96,7 +97,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "View Property": "assetAnnotations",
                     "Name": None,
                     "Description": None,
-                    "Connection": "edge(edgeSource=FileAnnotation,direction=outwards,type=diagramAnnotation)",
+                    "Connection": "edge(edgeSource=FileAnnotation,type=diagramAnnotation)",
                     "Value Type": "CogniteAsset",
                     "Min Count": 0,
                     "Max Count": None,
@@ -172,6 +173,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                     "Implements": "CogniteDescribable",
                     "Filter": None,
+                    "In Model": None,
                 },
                 {
                     "View": "CogniteFile",
@@ -179,6 +181,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                     "Implements": "CogniteDescribable",
                     "Filter": None,
+                    "In Model": None,
                 },
                 {
                     "View": "FileAnnotation",
@@ -186,6 +189,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Description": None,
                     "Implements": "CogniteDescribable",
                     "Filter": None,
+                    "In Model": None,
                 },
             ],
             "Containers": [
@@ -200,14 +204,14 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Container": "CogniteFile",
                     "Name": None,
                     "Description": None,
-                    "Constraint": "CogniteDescribable",
+                    "Constraint": "requires:describablePresent(require=CogniteDescribable)",
                     "Used For": "node",
                 },
                 {
                     "Container": "FileAnnotation",
                     "Name": None,
                     "Description": None,
-                    "Constraint": "CogniteDescribable",
+                    "Constraint": "requires:describablePresent(require=CogniteDescribable)",
                     "Used For": "edge",
                 },
             ],
@@ -229,6 +233,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Value": "other",
                     "Name": None,
                     "Description": None,
+                    "In Model": None,
                 },
             ],
             "Nodes": [
@@ -396,6 +401,11 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             ),
                         ),
                     },
+                    constraints={
+                        "describablePresent": RequiresConstraintDefinition(
+                            require=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable")
+                        )
+                    },
                 ),
                 ContainerRequest(
                     space="cdf_cdm",
@@ -410,6 +420,11 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             description=None,
                             name=None,
                             type=Float32Property(list=False),
+                        )
+                    },
+                    constraints={
+                        "describablePresent": RequiresConstraintDefinition(
+                            require=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable")
                         )
                     },
                 ),
