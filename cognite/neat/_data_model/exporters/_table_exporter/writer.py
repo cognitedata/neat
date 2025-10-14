@@ -252,7 +252,7 @@ class DMSTableWriter:
                 if view.implements
                 else None,
                 filter=json.dumps(view.filter) if view.filter else None,
-                in_model=view.as_reference() in model_views,
+                in_model=None if view.as_reference() in model_views else False,
             )
             for view in views
         ]

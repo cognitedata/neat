@@ -237,6 +237,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 }
             ],
         },
+        False,
         RequestSchema(
             dataModel=DataModelRequest(
                 space="cdf_cdm",
@@ -473,6 +474,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
             "Views": [{"View": "TestView"}],
             "Containers": [{"Container": "TestContainer", "Used For": "node"}],
         },
+        True,
         RequestSchema(
             dataModel=DataModelRequest(
                 space="test_space",
@@ -979,8 +981,10 @@ class TestDMSTableImporter:
         actual_errors = {err.message for err in exc_info.value.errors}
         assert actual_errors == expected_errors
 
-    @pytest.mark.parametrize("data,expected", list(valid_dms_table_formats()))
-    def test_import(self, data: dict[str, list[dict[str, CellValueType]]], expected: RequestSchema) -> None:
+    @pytest.mark.parametrize("data,exclude_none,expected", list(valid_dms_table_formats()))
+    def test_import(
+        self, data: dict[str, list[dict[str, CellValueType]]], exclude_none: bool, expected: RequestSchema
+    ) -> None:
         importer = DMSTableImporter(data)
         result = importer.to_data_model()
         assert result.model_dump() == expected.model_dump()
@@ -997,9 +1001,11 @@ class TestDMSTableImporter:
 
 
 class TestDMSTableExporter:
-    @pytest.mark.parametrize("expected,schema", list(valid_dms_table_formats()))
-    def test_export(self, expected: dict[str, list[dict[str, CellValueType]]], schema: RequestSchema) -> None:
-        result = DMSTableExporter(exclude_none=True).export(schema)
+    @pytest.mark.parametrize("expected,exclude_none,schema", list(valid_dms_table_formats()))
+    def test_export(
+        self, expected: dict[str, list[dict[str, CellValueType]]], exclude_none: bool, schema: RequestSchema
+    ) -> None:
+        result = DMSTableExporter(exclude_none=exclude_none).export(schema)
         assert result == expected
 
 
