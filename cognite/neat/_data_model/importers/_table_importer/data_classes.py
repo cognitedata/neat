@@ -31,9 +31,11 @@ class TableObj(
     BaseModel,
     extra="ignore",
     alias_generator=AliasGenerator(
+        alias=to_camel,
         validation_alias=title_case,
-        serialization_alias=to_camel,
+        serialization_alias=title_case,
     ),
+    populate_by_name=True,
 ): ...
 
 
@@ -114,7 +116,7 @@ DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
         "externalId": "View",
         "version": "View",
         **{
-            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            cast(str, field_.alias): cast(str, field_.validation_alias)
             for field_id, field_ in DMSView.model_fields.items()
             if field_id != "View"
         },
@@ -123,7 +125,7 @@ DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
         "space": "Container",
         "externalId": "Container",
         **{
-            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            cast(str, field_.alias): cast(str, field_.validation_alias)
             for field_id, field_ in DMSContainer.model_fields.items()
             if field_id != "Container"
         },
@@ -133,7 +135,7 @@ DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
         "externalId": "View",
         "property": "ViewProperty",
         **{
-            cast(str, field_.serialization_alias): cast(str, field_.validation_alias)
+            cast(str, field_.alias): cast(str, field_.validation_alias)
             for field_id, field_ in DMSProperty.model_fields.items()
             if field_id not in ("View", "ViewProperty")
         },
