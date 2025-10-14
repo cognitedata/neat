@@ -885,12 +885,25 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
                     "Container": "TestContainer",
                     "Container Property": "badOrder",
                     "Index": "btree:testIdx(order=not_an_int)",
+                    "Constraint": "uniqueness:testConst",
                 }
             ],
             "Views": [{"View": "TestView"}],
-            "Containers": [{"Container": "TestContainer", "Used For": "node"}],
+            "Containers": [
+                {
+                    "Container": "TestContainer",
+                    "Used For": "node",
+                    "Constraint": "requires:testConst(require=cdf_cdm:CogniteDescribable)",
+                }
+            ],
         },
-        {"In table 'Properties' row 1 column 'Index' invalid order value 'not_an_int'. Must be an integer."},
+        {
+            "In table 'Containers' row 1 column 'Constraint' the container "
+            "'TestContainer' has constraints defined with the same identifier(s) as the "
+            "uniqueness constraint defined in the Properties sheet. Ensure that the "
+            "identifiers are unique. Conflicting identifiers: testConst. ",
+            "In table 'Properties' row 1 column 'Index' invalid order value 'not_an_int'. Must be an integer.",
+        },
         id="Invalid order value in index",
     )
 
