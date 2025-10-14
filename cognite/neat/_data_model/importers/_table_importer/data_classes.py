@@ -1,7 +1,7 @@
 from collections.abc import Mapping
 from typing import Annotated, cast
 
-from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, model_validator
+from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
@@ -10,6 +10,8 @@ from cognite.neat._utils.useful_types import CellValueType
 
 
 def parse_entity_str(v: str) -> ParsedEntity:
+    if isinstance(v, ParsedEntity):
+        return v
     try:
         return parse_entity(v)
     except ValueError as e:
@@ -17,14 +19,20 @@ def parse_entity_str(v: str) -> ParsedEntity:
 
 
 def parse_entities_str(v: str) -> list[ParsedEntity] | None:
+    if isinstance(v, list) and all(isinstance(item, ParsedEntity) for item in v):
+        return v
     try:
         return parse_entities(v)
     except ValueError as e:
         raise ValueError(f"Invalid entity list syntax: {e}") from e
 
 
-Entity = Annotated[ParsedEntity, BeforeValidator(parse_entity_str, str)]
-EntityList = Annotated[list[ParsedEntity], BeforeValidator(parse_entities_str, str)]
+Entity = Annotated[ParsedEntity, BeforeValidator(parse_entity_str, str), PlainSerializer(func=str)]
+EntityList = Annotated[
+    list[ParsedEntity],
+    BeforeValidator(parse_entities_str, str),
+    PlainSerializer(func=lambda v: ",".join([str(item) for item in v])),
+]
 
 
 class TableObj(

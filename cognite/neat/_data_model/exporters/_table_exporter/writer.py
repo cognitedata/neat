@@ -277,26 +277,23 @@ class DMSTableWriter:
             identifier = (prop.container, prop.container_property_identifier)
             if identifier in container.properties_by_id:
                 container_properties = container.properties_by_id[identifier].model_dump()
-        view_properties: dict[str, Any] = {}
+        view_properties: dict[str, Any] = dict(
+            view=self._create_view_entity(view), view_property=prop_id, name=prop.name, description=prop.description
+        )
         if connection := self._write_view_property_connection(prop):
             view_properties["connection"] = connection
         if view_value_type := self._write_view_property_value_type(prop):
             view_properties["value_type"] = view_value_type
-        if view_min_count := self._write_view_property_min_count(prop):
+        view_min_count = self._write_view_property_min_count(prop)
+        if view_min_count is not None:
             view_properties["min_count"] = view_min_count
         view_max_count = self._write_view_property_max_count(prop)
         if view_max_count != "container":
             view_properties["max_count"] = view_max_count
 
-        # Container properties are overwritten by view properties if they exist.
-        return DMSProperty(
-            **container_properties,
-            view=self._create_view_entity(view),
-            view_property=prop_id,
-            name=prop.name,
-            description=prop.description,
-            **view_properties,
-        )
+        # Overwrite container properties with view properties where relevant.
+        args = container_properties | view_properties
+        return DMSProperty(**args)
 
     def _write_view_property_connection(self, prop: ViewRequestProperty) -> ParsedEntity | None:
         if isinstance(prop, ViewCorePropertyRequest):

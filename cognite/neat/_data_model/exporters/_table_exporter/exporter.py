@@ -17,7 +17,7 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
     def export(self, data_model: RequestSchema) -> DataModelTableType:
         model = data_model.data_model
         tables = DMSTableWriter(model.space, model.external_id).write_tables(data_model)
-        return tables.model_dump(mode="json")
+        return tables.model_dump(mode="json", by_alias=True)
 
     def as_excel(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as an Excel file.
