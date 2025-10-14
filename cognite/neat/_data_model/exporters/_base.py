@@ -7,7 +7,7 @@ T_Export = TypeVar("T_Export")
 
 
 class DMSExporter(ABC, Generic[T_Export]):
-    """This is the base class for all DMS importers."""
+    """This is the base class for all DMS exporters."""
 
     NEW_LINE = "\n"
     ENCODING = "utf-8"
