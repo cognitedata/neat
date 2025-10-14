@@ -1,9 +1,10 @@
 from pathlib import Path
 
+from cognite.neat._data_model.exporters._base import DMSExporter
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._utils.useful_types import DataModelTableType
 
-from ._base import DMSExporter
+from .writer import DMSTableWriter
 
 
 class DMSTableExporter(DMSExporter[DataModelTableType]):
@@ -14,7 +15,9 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
     """
 
     def export(self, data_model: RequestSchema) -> DataModelTableType:
-        raise NotImplementedError()
+        model = data_model.data_model
+        tables = DMSTableWriter(model.space, model.external_id).write_tables(data_model)
+        return tables.model_dump(mode="json")
 
     def as_excel(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as an Excel file.
