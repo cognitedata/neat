@@ -1,6 +1,8 @@
 from pathlib import Path
+from typing import cast
 
 from cognite.neat._data_model.exporters._base import DMSExporter
+from cognite.neat._data_model.importers._table_importer.data_classes import DMSProperty, TableDMS
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._utils.useful_types import DataModelTableType
 
@@ -13,6 +15,9 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
     The tables can are expected to be a dictionary where the keys are the table names and the values
     are lists of dictionaries representing the rows in the table.
     """
+
+    class Sheets:
+        properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
 
     def __init__(self, exclude_none: bool = False) -> None:
         self._exclude_none = exclude_none
@@ -28,7 +33,18 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
                 exclude.add("nodes")
             if not tables.containers:
                 exclude.add("containers")
-        return tables.model_dump(mode="json", by_alias=True, exclude_none=self._exclude_none, exclude=exclude)
+
+        output = tables.model_dump(mode="json", by_alias=True, exclude_none=self._exclude_none, exclude=exclude)
+        # When we have exclude_none we only want to exclude none of optional properties, not required.
+        # Thus, we do the implementation below
+        required_properties = [
+            field_.serialization_alias for field_ in DMSProperty.model_fields.values() if field_.is_required()
+        ]
+        for row in output[self.Sheets.properties]:
+            for prop in required_properties:
+                if prop not in row:
+                    row[prop] = None
+        return output
 
     def as_excel(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as an Excel file.
