@@ -10,7 +10,7 @@ from cognite.neat._data_model.models.dms import (
 from cognite.neat._exceptions import DataModelImportError
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat._utils.useful_types import CellValueType
+from cognite.neat._utils.useful_types import DataModelTableType
 from cognite.neat._utils.validation import as_json_path, humanize_validation_error
 
 from .data_classes import MetadataValue, TableDMS
@@ -33,7 +33,7 @@ class DMSTableImporter(DMSImporter):
         f"Missing required column: {sheet!r}": f"Missing required sheet: {sheet!r}" for sheet in REQUIRED_SHEETS
     }
 
-    def __init__(self, tables: dict[str, list[dict[str, CellValueType]]], source: TableSource | None = None) -> None:
+    def __init__(self, tables: DataModelTableType, source: TableSource | None = None) -> None:
         self._table = tables
         self._source = source or TableSource("Unknown")
 

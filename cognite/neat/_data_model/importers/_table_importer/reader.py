@@ -211,6 +211,7 @@ class DMSTableReader:
         for row_no, prop in enumerate(properties):
             self._process_view_property(prop, read, row_no)
             if prop.container is None or prop.container_property is None:
+                # This is when the property is an edge or reverse direct relation property.
                 continue
             self._process_container_property(prop, read, enum_collections, row_no)
             self._process_index(prop, read, row_no)
