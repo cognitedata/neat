@@ -151,6 +151,7 @@ class DMSTableReader:
 
     class ContainerColumns:
         container = cast(str, DMSContainer.model_fields["container"].validation_alias)
+        constraint = cast(str, DMSContainer.model_fields["constraint"].validation_alias)
 
     class ViewColumns:
         view = cast(str, DMSView.model_fields["view"].validation_alias)
@@ -443,8 +444,11 @@ class DMSTableReader:
             )
 
     @staticmethod
-    def read_constraint(constraint: ParsedEntity, prop_id: str) -> dict[str, Any]:
-        return {"constraintType": constraint.prefix, "properties": [prop_id], **constraint.properties}
+    def read_constraint(constraint: ParsedEntity, prop_id: str | None = None) -> dict[str, Any]:
+        output: dict[str, Any] = {"constraintType": constraint.prefix, **constraint.properties}
+        if prop_id is not None:
+            output["properties"] = [prop_id]
+        return output
 
     def read_view_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
         """Reads a single view property from a given row in the properties table.
@@ -574,6 +578,22 @@ class DMSTableReader:
         containers_requests: list[ContainerRequest] = []
         rows_by_seen: dict[ParsedEntity, list[int]] = defaultdict(list)
         for row_no, container in enumerate(containers):
+            property_constraints = properties.constraints.get(container.container, {})
+            require_constraints = self.read_container_constraints(container)
+            if conflict := set(property_constraints.keys()).intersection(set(require_constraints.keys())):
+                conflict_str = humanize_collection(conflict)
+                location_str = self.source.location((self.Sheets.containers, row_no, self.ContainerColumns.constraint))
+                self.errors.append(
+                    ModelSyntaxError(
+                        message=(
+                            f"In {location_str} the container '{container.container!s}' has constraints defined "
+                            f"with the same identifier(s) as the uniqueness constraint defined in the "
+                            f"{self.Sheets.properties} sheet. Ensure that the identifiers are unique. "
+                            f"Conflicting identifiers: {conflict_str}. "
+                        )
+                    )
+                )
+            constraints = {**property_constraints, **require_constraints}
             container_request = self._validate_obj(
                 ContainerRequest,
                 dict(
@@ -583,7 +603,7 @@ class DMSTableReader:
                     description=container.description,
                     properties=properties.container[container.container],
                     indexes=properties.indices.get(container.container),
-                    constraints=properties.constraints.get(container.container),
+                    constraints=constraints or None,
                 ),
                 (self.Sheets.containers, row_no),
             )
@@ -607,6 +627,18 @@ class DMSTableReader:
                     )
                 )
         return containers_requests
+
+    def read_container_constraints(self, container: DMSContainer) -> dict[str, Constraint]:
+        constraints: dict[str, Constraint] = {}
+        if not container.constraint:
+            return constraints
+        for entity in container.constraint:
+            data = self.read_constraint(entity)
+            created = self._validate_adapter(ConstraintAdapter, data, (self.Sheets.containers,))
+            if created is None:
+                continue
+            constraints[entity.suffix] = created
+        return constraints
 
     def read_views(
         self,
