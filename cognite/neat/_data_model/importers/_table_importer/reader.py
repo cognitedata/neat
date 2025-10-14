@@ -286,6 +286,7 @@ class DMSTableReader:
                 continue
             view_props[view_entity][prop_id] = prop_list[0].view_property
             if len(prop_list) > 1:
+                # Safeguard against duplicated rows for view properties.
                 rows_str = humanize_collection(
                     [self.source.adjust_row_number(self.Sheets.properties, p.row_no) for p in prop_list]
                 )
