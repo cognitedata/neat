@@ -28,13 +28,7 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
                 exclude.add("nodes")
             if not tables.containers:
                 exclude.add("containers")
-        output = tables.model_dump(mode="json", by_alias=True, exclude_none=self._exclude_none, exclude=exclude)
-        for prop in output["Properties"]:
-            if "Connection" not in prop:
-                # Ensure the Connection column is always present. Even when we drop None fields we want to have the
-                # column present.
-                prop["Connection"] = None
-        return output
+        return tables.model_dump(mode="json", by_alias=True, exclude_none=self._exclude_none, exclude=exclude)
 
     def as_excel(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as an Excel file.

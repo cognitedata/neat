@@ -49,7 +49,7 @@ class ViewProperties:
 
 @dataclass
 class ContainerProperties:
-    properties_by_id: dict[tuple[ContainerReference, str], DMSProperty] = field(default_factory=dict)
+    properties_by_id: dict[tuple[ContainerReference, str], dict] = field(default_factory=dict)
     enum_collections: list[DMSEnum] = field(default_factory=list)
 
 
@@ -90,14 +90,14 @@ class DMSTableWriter:
         output = ContainerProperties()
         for container in containers:
             for prop_id, prop in container.properties.items():
-                dms_property = self._write_container_property(
+                container_property = self._write_container_property(
                     container.as_reference(),
                     prop_id,
                     prop,
                     indices_by_container_property,
                     constraints_by_container_property,
                 )
-                output.properties_by_id[(container.as_reference(), prop_id)] = dms_property
+                output.properties_by_id[(container.as_reference(), prop_id)] = container_property
                 if isinstance(prop.type, EnumProperty):
                     output.enum_collections.extend(
                         self._write_enum_collection(container.as_reference(), prop_id, prop.type)
@@ -157,12 +157,8 @@ class DMSTableWriter:
         prop: ContainerPropertyDefinition,
         indices_by_container_property: dict[tuple[ContainerReference, str], list[ParsedEntity]],
         constraints_by_container_property: dict[tuple[ContainerReference, str], list[ParsedEntity]],
-    ) -> DMSProperty:
-        return DMSProperty(
-            view=ParsedEntity("", "WillBeOverwritten", properties={}),
-            view_property="WillBeOverwritten",
-            name="WillBeOverwritten",
-            description="WillBeOverwritten",
+    ) -> dict[str, Any]:
+        return dict(
             connection=self._write_container_property_connection(prop.type),
             value_type=self._write_container_property_value_type(prop, prop_id, container_ref),
             min_count=0 if prop.nullable else 1,
@@ -281,7 +277,7 @@ class DMSTableWriter:
         if isinstance(prop, ViewCorePropertyRequest):
             identifier = (prop.container, prop.container_property_identifier)
             if identifier in container.properties_by_id:
-                container_properties = container.properties_by_id[identifier].model_dump()
+                container_properties = container.properties_by_id[identifier]
         view_properties: dict[str, Any] = dict(
             view=self._create_view_entity(view), view_property=prop_id, name=prop.name, description=prop.description
         )
