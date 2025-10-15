@@ -2,6 +2,7 @@ from collections.abc import Iterable
 
 import pytest
 
+from cognite.neat._data_model.exporters import DMSTableExporter
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.importers._table_importer.source import SpreadsheetReadContext, TableSource
 from cognite.neat._data_model.models.dms import (
@@ -1047,6 +1048,15 @@ class TestDMSTableImporter:
         result_errors = {err.message for err in e.value.errors}
 
         assert result_errors == expected_errors
+
+
+class TestDMSTableExporter:
+    @pytest.mark.parametrize("expected,exclude_none,schema", list(valid_dms_table_formats()))
+    def test_export(
+        self, expected: dict[str, list[dict[str, CellValueType]]], exclude_none: bool, schema: RequestSchema
+    ) -> None:
+        result = DMSTableExporter(exclude_none=exclude_none).export(schema)
+        assert result == expected
 
 
 class TestTableSource:
