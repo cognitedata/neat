@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from pathlib import Path
 from typing import ClassVar, cast
 
 from pydantic import ValidationError
@@ -101,3 +102,8 @@ class DMSTableImporter(DMSImporter):
             # If space or version is missing, we cannot continue parsing the model as these are used as defaults.
             raise DataModelImportError([error]) from None
         return str(default_space), str(default_version)
+
+    @classmethod
+    def from_yaml(cls, yaml_file: Path) -> "DMSTableImporter":
+        """Create a DMSTableImporter from a YAML file."""
+        raise NotImplementedError()
