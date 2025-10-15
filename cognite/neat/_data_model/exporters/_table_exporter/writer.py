@@ -58,6 +58,7 @@ class DMSTableWriter:
         self.default_space = default_space
         self.default_version = default_version
 
+    ## Main Entry Point ###
     def write_tables(self, schema: RequestSchema) -> TableDMS:
         metadata = self.write_metadata(schema.data_model)
         container_properties = self.write_container_properties(schema.containers)
@@ -74,6 +75,7 @@ class DMSTableWriter:
             nodes=view_properties.nodes,
         )
 
+    ### Metadata Sheet ###
     @staticmethod
     def write_metadata(data_model: DataModelRequest) -> list[MetadataValue]:
         return [
@@ -81,6 +83,20 @@ class DMSTableWriter:
             for key, value in data_model.model_dump(
                 mode="json", by_alias=True, exclude_none=True, exclude={"views"}
             ).items()
+        ]
+
+    ### Container Properties Sheet ###
+
+    def write_containers(self, containers: list[ContainerRequest]) -> list[DMSContainer]:
+        return [
+            DMSContainer(
+                container=self._create_container_entity(container),
+                name=container.name,
+                description=container.description,
+                constraint=self._create_container_constraints(container),
+                used_for=container.used_for,
+            )
+            for container in containers
         ]
 
     def write_container_properties(self, containers: list[ContainerRequest]) -> ContainerProperties:
@@ -103,52 +119,6 @@ class DMSTableWriter:
                         self._write_enum_collection(container.as_reference(), prop_id, prop.type)
                     )
         return output
-
-    @staticmethod
-    def _write_container_indices(
-        containers: list[ContainerRequest],
-    ) -> dict[tuple[ContainerReference, str], list[ParsedEntity]]:
-        """Writes container indices and groups them by (container_reference, property_id)."""
-        indices_by_id: dict[tuple[ContainerReference, str], list[ParsedEntity]] = defaultdict(list)
-        for container in containers:
-            if not container.indexes:
-                continue
-            for index_id, index in container.indexes.items():
-                for order, prop_id in enumerate(index.properties, 1):
-                    entity_properties = index.model_dump(
-                        mode="json", by_alias=True, exclude={"index_type", "properties"}, exclude_none=True
-                    )
-                    if len(index.properties) > 1:
-                        entity_properties["order"] = str(order)
-                    entity = ParsedEntity(index.index_type, index_id, properties=entity_properties)
-                    indices_by_id[(container.as_reference(), prop_id)].append(entity)
-        return indices_by_id
-
-    @staticmethod
-    def _write_container_property_constraints(
-        containers: list[ContainerRequest],
-    ) -> dict[tuple[ContainerReference, str], list[ParsedEntity]]:
-        """Writes container constraints and groups them by (container_reference, property_id).
-
-        Note this only includes uniqueness constraints, the require constraints is handled
-        in the writing of the container itself.
-        """
-        constraints_by_id: dict[tuple[ContainerReference, str], list[ParsedEntity]] = defaultdict(list)
-        for container in containers:
-            if not container.constraints:
-                continue
-            for constraint_id, constraint in container.constraints.items():
-                if not isinstance(constraint, UniquenessConstraintDefinition):
-                    continue
-                for order, prop_id in enumerate(constraint.properties, 1):
-                    entity_properties = constraint.model_dump(
-                        mode="json", by_alias=True, exclude={"constraint_type", "properties"}, exclude_none=True
-                    )
-                    if len(constraint.properties) > 1:
-                        entity_properties["order"] = str(order)
-                    entity = ParsedEntity(constraint.constraint_type, constraint_id, properties=entity_properties)
-                    constraints_by_id[(container.as_reference(), prop_id)].append(entity)
-        return constraints_by_id
 
     def _write_container_property(
         self,
@@ -210,6 +180,66 @@ class DMSTableWriter:
         return 1
 
     @staticmethod
+    def _write_container_indices(
+        containers: list[ContainerRequest],
+    ) -> dict[tuple[ContainerReference, str], list[ParsedEntity]]:
+        """Writes container indices and groups them by (container_reference, property_id)."""
+        indices_by_id: dict[tuple[ContainerReference, str], list[ParsedEntity]] = defaultdict(list)
+        for container in containers:
+            if not container.indexes:
+                continue
+            for index_id, index in container.indexes.items():
+                for order, prop_id in enumerate(index.properties, 1):
+                    entity_properties = index.model_dump(
+                        mode="json", by_alias=True, exclude={"index_type", "properties"}, exclude_none=True
+                    )
+                    if len(index.properties) > 1:
+                        entity_properties["order"] = str(order)
+                    entity = ParsedEntity(index.index_type, index_id, properties=entity_properties)
+                    indices_by_id[(container.as_reference(), prop_id)].append(entity)
+        return indices_by_id
+
+    @staticmethod
+    def _write_container_property_constraints(
+        containers: list[ContainerRequest],
+    ) -> dict[tuple[ContainerReference, str], list[ParsedEntity]]:
+        """Writes container constraints and groups them by (container_reference, property_id).
+
+        Note this only includes uniqueness constraints, the require constraints is handled
+        in the writing of the container itself.
+        """
+        constraints_by_id: dict[tuple[ContainerReference, str], list[ParsedEntity]] = defaultdict(list)
+        for container in containers:
+            if not container.constraints:
+                continue
+            for constraint_id, constraint in container.constraints.items():
+                if not isinstance(constraint, UniquenessConstraintDefinition):
+                    continue
+                for order, prop_id in enumerate(constraint.properties, 1):
+                    entity_properties = constraint.model_dump(
+                        mode="json", by_alias=True, exclude={"constraint_type", "properties"}, exclude_none=True
+                    )
+                    if len(constraint.properties) > 1:
+                        entity_properties["order"] = str(order)
+                    entity = ParsedEntity(constraint.constraint_type, constraint_id, properties=entity_properties)
+                    constraints_by_id[(container.as_reference(), prop_id)].append(entity)
+        return constraints_by_id
+
+    def _create_container_constraints(self, container: ContainerRequest) -> list[ParsedEntity] | None:
+        if not container.constraints:
+            return None
+        output: list[ParsedEntity] = []
+        for constraint_id, constraint in container.constraints.items():
+            if not isinstance(constraint, RequiresConstraintDefinition):
+                continue
+            entity_properties = {"require": str(self._create_container_entity(constraint.require))}
+            output.append(
+                ParsedEntity(prefix=constraint.constraint_type, suffix=constraint_id, properties=entity_properties)
+            )
+        return output or None
+
+    ### Enum Sheet ###
+    @staticmethod
     def _enum_collection_name(container_ref: ContainerReference, prop_id: str) -> str:
         return f"{container_ref.external_id}.{prop_id}"
 
@@ -229,20 +259,7 @@ class DMSTableWriter:
             )
         return output
 
-    def write_view_properties(self, views: list[ViewRequest], container: ContainerProperties) -> ViewProperties:
-        output = ViewProperties()
-        for view in views:
-            if not view.properties:
-                continue
-            for prop_id, prop in view.properties.items():
-                output.properties.append(self._write_property(view, prop_id, prop, container))
-                if isinstance(prop, EdgeProperty):
-                    output.nodes.append(self._write_node(prop))
-        return output
-
-    def _write_node(self, prop: EdgeProperty) -> DMSNode:
-        return DMSNode(node=self._create_node_entity(prop.type))
-
+    ### View Sheet ###
     def write_views(self, views: list[ViewRequest], model_views: set[ViewReference]) -> list[DMSView]:
         return [
             DMSView(
@@ -258,19 +275,18 @@ class DMSTableWriter:
             for view in views
         ]
 
-    def write_containers(self, containers: list[ContainerRequest]) -> list[DMSContainer]:
-        return [
-            DMSContainer(
-                container=self._create_container_entity(container),
-                name=container.name,
-                description=container.description,
-                constraint=self._create_container_constraints(container),
-                used_for=container.used_for,
-            )
-            for container in containers
-        ]
+    def write_view_properties(self, views: list[ViewRequest], container: ContainerProperties) -> ViewProperties:
+        output = ViewProperties()
+        for view in views:
+            if not view.properties:
+                continue
+            for prop_id, prop in view.properties.items():
+                output.properties.append(self._write_view_property(view, prop_id, prop, container))
+                if isinstance(prop, EdgeProperty):
+                    output.nodes.append(self._write_node(prop))
+        return output
 
-    def _write_property(
+    def _write_view_property(
         self, view: ViewRequest, prop_id: str, prop: ViewRequestProperty, container: ContainerProperties
     ) -> DMSProperty:
         container_properties: dict[str, Any] = {}
@@ -345,18 +361,12 @@ class DMSTableWriter:
         else:
             raise ValueError(f"Unknown view property type: {type(prop)}")
 
-    def _create_container_constraints(self, container: ContainerRequest) -> list[ParsedEntity] | None:
-        if not container.constraints:
-            return None
-        output: list[ParsedEntity] = []
-        for constraint_id, constraint in container.constraints.items():
-            if not isinstance(constraint, RequiresConstraintDefinition):
-                continue
-            entity_properties = {"require": str(self._create_container_entity(constraint.require))}
-            output.append(
-                ParsedEntity(prefix=constraint.constraint_type, suffix=constraint_id, properties=entity_properties)
-            )
-        return output or None
+    ### Node Sheet ###
+
+    def _write_node(self, prop: EdgeProperty) -> DMSNode:
+        return DMSNode(node=self._create_node_entity(prop.type))
+
+    ## Entity Helpers ###
 
     def _create_view_entity(self, view: ViewRequest | ViewReference) -> ParsedEntity:
         prefix = view.space
