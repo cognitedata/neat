@@ -1206,15 +1206,14 @@ def valid_dms_yaml_formats() -> Iterable[tuple]:
 Properties:
 - View: CogniteDescribable
   View Property: name
-  Connection: null
   Value Type: text
   Min Count: 0
   Max Count: 1
   Immutable: false
-  Default: null
   Container: CogniteDescribable
   Container Property: name
-  Index: btree:name(cursorable=true)
+  Index: btree:name(cursorable=True)
+  Connection: null
 Views:
 - View: CogniteDescribable
 Containers:
