@@ -60,8 +60,8 @@ class DMSTableWriter:
 
     def write_tables(self, schema: RequestSchema) -> TableDMS:
         metadata = self.write_metadata(schema.data_model)
-        container_properties = self._write_container_properties(schema.containers)
-        view_properties = self.write_properties(schema.views, container_properties)
+        container_properties = self.write_container_properties(schema.containers)
+        view_properties = self.write_view_properties(schema.views, container_properties)
         views = self.write_views(schema.views, set(schema.data_model.views or []))
         containers = self.write_containers(schema.containers)
 
@@ -83,7 +83,7 @@ class DMSTableWriter:
             ).items()
         ]
 
-    def _write_container_properties(self, containers: list[ContainerRequest]) -> ContainerProperties:
+    def write_container_properties(self, containers: list[ContainerRequest]) -> ContainerProperties:
         indices_by_container_property = self._write_container_indices(containers)
         constraints_by_container_property = self._write_container_property_constraints(containers)
 
@@ -229,7 +229,7 @@ class DMSTableWriter:
             )
         return output
 
-    def write_properties(self, views: list[ViewRequest], container: ContainerProperties) -> ViewProperties:
+    def write_view_properties(self, views: list[ViewRequest], container: ContainerProperties) -> ViewProperties:
         output = ViewProperties()
         for view in views:
             if not view.properties:
