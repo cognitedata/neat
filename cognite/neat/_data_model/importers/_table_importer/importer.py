@@ -2,6 +2,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, cast
 
+import yaml
 from pydantic import ValidationError
 
 from cognite.neat._data_model.importers._base import DMSImporter
@@ -106,4 +107,8 @@ class DMSTableImporter(DMSImporter):
     @classmethod
     def from_yaml(cls, yaml_file: Path) -> "DMSTableImporter":
         """Create a DMSTableImporter from a YAML file."""
-        raise NotImplementedError()
+        cwd = Path.cwd()
+        source = yaml_file
+        if yaml_file.is_relative_to(cwd):
+            source = yaml_file.relative_to(cwd)
+        return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
