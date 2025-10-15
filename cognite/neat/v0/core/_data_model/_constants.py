@@ -43,6 +43,7 @@ class EntityTypes(StrEnum):
     prefix = "prefix"
     space = "space"
     container_index = "container_index"
+    container_constraint = "container_constraint"
     concept_restriction = "conceptRestriction"
     value_constraint = "valueConstraint"
     cardinality_constraint = "cardinalityConstraint"

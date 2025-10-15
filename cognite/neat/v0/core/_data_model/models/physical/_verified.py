@@ -10,6 +10,7 @@ from pydantic_core.core_schema import SerializationInfo, ValidationInfo
 
 from cognite.neat.v0.core._client.data_classes.schema import DMSSchema
 from cognite.neat.v0.core._constants import DMS_CONTAINER_LIST_MAX_LIMIT
+from cognite.neat.v0.core._data_model._constants import CONSTRAINT_ID_MAX_LENGTH
 from cognite.neat.v0.core._data_model.models._base_verified import (
     BaseVerifiedDataModel,
     BaseVerifiedMetadata,
@@ -25,7 +26,6 @@ from cognite.neat.v0.core._data_model.models._types import (
     ConceptEntityType,
     ContainerEntityType,
     PhysicalPropertyType,
-    StrListType,
     URIRefType,
     ViewEntityType,
 )
@@ -45,7 +45,10 @@ from cognite.neat.v0.core._data_model.models.entities import (
     ViewEntity,
     ViewEntityList,
 )
-from cognite.neat.v0.core._data_model.models.entities._types import ContainerEntityList, ContainerIndexListType
+from cognite.neat.v0.core._data_model.models.entities._types import (
+    ContainerConstraintListType,
+    ContainerIndexListType,
+)
 from cognite.neat.v0.core._issues.errors import NeatValueError
 from cognite.neat.v0.core._issues.warnings import NeatValueWarning, PropertyDefinitionWarning
 
@@ -149,7 +152,7 @@ class PhysicalProperty(SheetRow):
         alias="Index",
         description="The names of the indexes (comma separated) that should be created for the property.",
     )
-    constraint: StrListType | None = Field(
+    constraint: ContainerConstraintListType | None = Field(
         None,
         alias="Constraint",
         description="The names of the uniquness (comma separated) that should be created for the property.",
@@ -264,11 +267,12 @@ class PhysicalProperty(SheetRow):
     def index_set_correctly(cls, value: list[ContainerIndexEntity] | None, info: ValidationInfo) -> Any:
         if value is None:
             return value
-        try:
-            container = str(info.data["container"])
-            container_property = str(info.data["container_property"])
-        except KeyError:
-            raise ValueError("Container and container property must be set to use indexes") from None
+
+        container = info.data["container"]
+        container_property = info.data["container_property"]
+
+        if not container or not container_property:
+            raise ValueError("Container and container property must be set to use indexes")
         max_count = info.data.get("max_count")
         is_list = (
             max_count is not None and (isinstance(max_count, int | float) and max_count > 1)
@@ -277,7 +281,7 @@ class PhysicalProperty(SheetRow):
             if index.prefix is Undefined:
                 message = f"The type of index is not defined. Please set 'inverted:{index!s}' or 'btree:{index!s}'."
                 warnings.warn(
-                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    PropertyDefinitionWarning(str(container), "container property", str(container_property), message),
                     stacklevel=2,
                 )
             elif index.prefix == "inverted" and not is_list:
@@ -286,7 +290,7 @@ class PhysicalProperty(SheetRow):
                     "Please consider using btree index instead."
                 )
                 warnings.warn(
-                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    PropertyDefinitionWarning(str(container), "container property", str(container_property), message),
                     stacklevel=2,
                 )
             elif index.prefix == "btree" and is_list:
@@ -295,15 +299,47 @@ class PhysicalProperty(SheetRow):
                     "Please consider using inverted index instead."
                 )
                 warnings.warn(
-                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    PropertyDefinitionWarning(str(container), "container property", str(container_property), message),
                     stacklevel=2,
                 )
             if index.prefix == "inverted" and (index.cursorable is not None or index.by_space is not None):
                 message = "Cursorable and bySpace are not supported for inverted indexes. These will be ignored."
                 warnings.warn(
-                    PropertyDefinitionWarning(container, "container property", container_property, message),
+                    PropertyDefinitionWarning(str(container), "container property", str(container_property), message),
                     stacklevel=2,
                 )
+        return value
+
+    @field_validator("constraint", mode="after")
+    @classmethod
+    def constraint_set_correctly(cls, value: ContainerConstraintListType | None, info: ValidationInfo) -> Any:
+        if value is None:
+            return value
+
+        container = info.data["container"]
+        container_property = info.data["container_property"]
+
+        if not container or not container_property:
+            raise ValueError("Container and container property must be set to use constraint")
+
+        for constraint in value:
+            if constraint.prefix is Undefined:
+                message = f"The type of constraint is not defined. Please set 'uniqueness:{constraint!s}'."
+                warnings.warn(
+                    PropertyDefinitionWarning(str(container), "container property", str(container_property), message),
+                    stacklevel=2,
+                )
+            elif constraint.prefix != "uniqueness":
+                message = (
+                    f"Unsupported constraint type on container property"
+                    f" '{constraint.prefix}'. Currently only 'uniqueness' is supported."
+                )
+                raise ValueError(message) from None
+
+            if len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
+                message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
+                raise ValueError(message) from None
+
         return value
 
     @field_serializer("value_type", when_used="always")
@@ -352,12 +388,45 @@ class PhysicalContainer(SheetRow):
     description: str | None = Field(
         alias="Description", default=None, description="Short description of the node being defined."
     )
-    constraint: ContainerEntityList | None = Field(
+    constraint: ContainerConstraintListType | None = Field(
         None, alias="Constraint", description="List of required (comma separated) constraints for the container"
     )
     used_for: Literal["node", "edge", "all"] | None = Field(
         "all", alias="Used For", description=" Whether the container is used for nodes, edges or all."
     )
+
+    @field_validator("constraint", mode="after")
+    @classmethod
+    def constraint_set_correctly(cls, value: ContainerConstraintListType | None) -> Any:
+        if value is None:
+            return value
+
+        for constraint in value:
+            if constraint.prefix is Undefined:
+                message = f"The type of constraint is not defined. Please set 'requires:{constraint!s}'."
+                warnings.warn(
+                    message,
+                    stacklevel=2,
+                )
+            elif constraint.prefix != "requires":
+                message = (
+                    f"Unsupported constraint type on container as "
+                    f"the whole '{constraint.prefix}'. Currently only 'requires' is supported."
+                )
+                raise ValueError(message) from None
+
+            if len(constraint.suffix) > CONSTRAINT_ID_MAX_LENGTH:
+                message = f"Constraint id '{constraint.suffix}' exceeds maximum length of {CONSTRAINT_ID_MAX_LENGTH}."
+                raise ValueError(message) from None
+
+            if constraint.require is None:
+                message = (
+                    f"Container constraint must have a container set. "
+                    f"Please set 'requires:{constraint!s}(container=space:external_id)'."
+                )
+                raise ValueError(message) from None
+
+        return value
 
     def _identifier(self) -> tuple[Hashable, ...]:
         return (self.container,)
@@ -366,8 +435,10 @@ class PhysicalContainer(SheetRow):
         container_id = self.container.as_id()
         constraints: dict[str, dm.Constraint] = {}
         for constraint in self.constraint or []:
-            requires = dm.RequiresConstraint(constraint.as_id())
-            constraints[f"{constraint.space}_{constraint.external_id}"] = requires
+            if constraint.require is None:
+                continue
+            requires = dm.RequiresConstraint(constraint.require.as_id())
+            constraints[constraint.suffix] = requires
 
         return dm.ContainerApply(
             space=container_id.space,

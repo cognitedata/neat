@@ -21,6 +21,7 @@ from cognite.neat.v0.core._data_model.models._base_unverified import (
 )
 from cognite.neat.v0.core._data_model.models.data_types import DataType
 from cognite.neat.v0.core._data_model.models.entities import (
+    ContainerConstraintEntity,
     ContainerEntity,
     ContainerIndexEntity,
     DMSNodeEntity,
@@ -138,7 +139,7 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
     container: str | None = None
     container_property: str | None = None
     index: str | list[str | ContainerIndexEntity] | ContainerIndexEntity | None = None
-    constraint: str | list[str] | None = None
+    constraint: str | list[str] | list[ContainerConstraintEntity] | ContainerConstraintEntity | None = None
     neatId: str | URIRef | None = None
     conceptual: str | URIRef | None = None
 
@@ -197,6 +198,8 @@ class UnverifiedPhysicalProperty(UnverifiedComponent[PhysicalProperty]):
                 else:
                     raise TypeError(f"Unexpected type for index: {type(index)}")
             output["Index"] = index_list
+
+            output["Constraint"] = _parse_constraints(self.constraint, default_space)
         return output
 
     def referenced_view(self, default_space: str, default_version: str) -> ViewEntity:
@@ -249,7 +252,7 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     container: str
     name: str | None = None
     description: str | None = None
-    constraint: str | None = None
+    constraint: str | list[str] | list[ContainerConstraintEntity] | ContainerConstraintEntity | None = None
     neatId: str | URIRef | None = None
     used_for: Literal["node", "edge", "all"] | None = None
 
@@ -260,14 +263,7 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     def dump(self, default_space: str) -> dict[str, Any]:  # type: ignore[override]
         output = super().dump()
         output["Container"] = self.as_entity_id(default_space, return_on_failure=True)
-        output["Constraint"] = (
-            [
-                ContainerEntity.load(constraint.strip(), space=default_space, return_on_failure=True)
-                for constraint in self.constraint.split(",")
-            ]
-            if self.constraint
-            else None
-        )
+        output["Constraint"] = _parse_constraints(self.constraint, default_space)
         return output
 
     @overload
@@ -286,9 +282,13 @@ class UnverifiedPhysicalContainer(UnverifiedComponent[PhysicalContainer]):
     @classmethod
     def from_container(cls, container: dm.ContainerApply) -> "UnverifiedPhysicalContainer":
         constraints: list[str] = []
-        for _, constraint_obj in (container.constraints or {}).items():
+        for constraint_name, constraint_obj in (container.constraints or {}).items():
             if isinstance(constraint_obj, dm.RequiresConstraint):
-                constraints.append(str(ContainerEntity.from_id(constraint_obj.require)))
+                constraint = ContainerConstraintEntity(
+                    prefix="requires", suffix=constraint_name, require=ContainerEntity.from_id(constraint_obj.require)
+                )
+                constraints.append(str(constraint))
+
             # UniquenessConstraint it handled in the properties
         container_entity = ContainerEntity.from_id(container.as_id())
         return cls(
@@ -506,3 +506,52 @@ class UnverifiedPhysicalDataModel(UnverifiedDataModel[PhysicalDataModel]):
     def imported_views_and_containers_ids(self) -> tuple[set[ViewId], set[ContainerId]]:
         views, containers = self.imported_views_and_containers()
         return {view.as_id() for view in views}, {container.as_id() for container in containers}
+
+
+def _parse_constraints(
+    constraint: str | list[str] | list[ContainerConstraintEntity] | ContainerConstraintEntity | None,
+    default_space: str | None = None,
+) -> list[ContainerConstraintEntity | PhysicalUnknownEntity] | None:
+    """Parse constraint input into a standardized list of ContainerConstraintEntity objects.
+
+    Args:
+        constraint: The constraint input in various formats
+        default_space: Default space to use when loading constraint entities
+
+    Returns:
+        List of parsed constraint entities, or None if no constraints
+    """
+    if constraint is None:
+        return None
+
+    if isinstance(constraint, ContainerConstraintEntity):
+        return [constraint]
+
+    if isinstance(constraint, str) and "," not in constraint:
+        return [ContainerConstraintEntity.load(constraint, return_on_failure=True, space=default_space)]
+
+    if isinstance(constraint, str):
+        return [
+            ContainerConstraintEntity.load(constraint_item.strip(), return_on_failure=True, space=default_space)
+            for constraint_item in SPLIT_ON_COMMA_PATTERN.split(constraint)
+            if constraint_item.strip()
+        ]
+
+    if isinstance(constraint, list):
+        constraint_list: list[ContainerConstraintEntity | PhysicalUnknownEntity] = []
+        for constraint_item in constraint:
+            if isinstance(constraint_item, ContainerConstraintEntity):
+                constraint_list.append(constraint_item)
+            elif isinstance(constraint_item, str):
+                constraint_list.extend(
+                    [
+                        ContainerConstraintEntity.load(idx.strip(), return_on_failure=True, space=default_space)
+                        for idx in SPLIT_ON_COMMA_PATTERN.split(constraint_item)
+                        if idx.strip()
+                    ]
+                )
+            else:
+                raise TypeError(f"Unexpected type for constraint: {type(constraint_item)}")
+        return constraint_list
+
+    raise TypeError(f"Unexpected type for constraint: {type(constraint)}")

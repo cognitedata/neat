@@ -9,6 +9,7 @@ from pydantic import (
 from ._single_value import (
     AssetEntity,
     ConceptEntity,
+    ContainerConstraintEntity,
     ContainerEntity,
     ContainerIndexEntity,
     RelationshipEntity,
@@ -69,6 +70,15 @@ ContainerEntityList = Annotated[
 
 ContainerIndexListType = Annotated[
     list[ContainerIndexEntity],
+    BeforeValidator(_split_str),
+    PlainSerializer(
+        _join_str,
+        return_type=str,
+        when_used="unless-none",
+    ),
+]
+ContainerConstraintListType = Annotated[
+    list[ContainerConstraintEntity],
     BeforeValidator(_split_str),
     PlainSerializer(
         _join_str,

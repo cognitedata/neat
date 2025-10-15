@@ -585,24 +585,24 @@ instances:
     space: sp_windfarm
 rules:
   containers:
-  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable,cdf_cdm:CogniteSchedulable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable),requires:sourceablePresent(require=cdf_cdm:CogniteSourceable),requires:schedulablePresent(require=cdf_cdm:CogniteSchedulable)
     container: cdf_cdm:CogniteActivity
     description: Represent an activity
     used_for: node
-  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable),requires:sourceablePresent(require=cdf_cdm:CogniteSourceable)
     container: cdf_cdm:CogniteAnnotation
     description: Annotation represents contextualization results or links
     used_for: edge
-  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteVisualizable,cdf_cdm:CogniteSourceable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable),requires:visualizablePresent(require=cdf_cdm:CogniteVisualizable),requires:sourceablePresent(require=cdf_cdm:CogniteSourceable)
     container: cdf_cdm:CogniteAsset
     description: The asset is the bare bone representation of assets in our asset
       centric world
     used_for: node
-  - constraint: cdf_cdm:CogniteDescribable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable)
     container: cdf_cdm:CogniteAssetClass
     description: This identifies the class of an asset
     used_for: node
-  - constraint: cdf_cdm:CogniteDescribable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable)
     container: cdf_cdm:CogniteAssetType
     description: This identifies the type of an asset
     used_for: node
@@ -610,19 +610,19 @@ rules:
     description: The describable core concept is used as a standard way of holding
       the bare minimum of information about the instance.
     used_for: all
-  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable),requires:sourceablePresent(require=cdf_cdm:CogniteSourceable)
     container: cdf_cdm:CogniteEquipment
     description: Represent a physical piece of equipment
     used_for: node
-  - constraint: cdf_cdm:CogniteDescribable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable)
     container: cdf_cdm:CogniteEquipmentType
     description: This identifies the type of an equipment
     used_for: node
-  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable),requires:sourceablePresent(require=cdf_cdm:CogniteSourceable)
     container: cdf_cdm:CogniteFile
     description: This concept models the underlying file from the Files resource type
     used_for: node
-  - constraint: cdf_cdm:CogniteDescribable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable)
     container: cdf_cdm:CogniteFileCategory
     description: Specifies the category for a file (as a result of categorization/classification))
     used_for: node
@@ -638,10 +638,10 @@ rules:
     description: The CogniteSourceable core concept is used to standardize the way
       source information is stored.
     used_for: all
-  - constraint: cdf_cdm:CogniteDescribable,cdf_cdm:CogniteSourceable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable),requires:sourceablePresent(require=cdf_cdm:CogniteSourceable)
     container: cdf_cdm:CogniteTimeSeries
     used_for: node
-  - constraint: cdf_cdm:CogniteDescribable
+  - constraint: requires:describablePresent(require=cdf_cdm:CogniteDescribable)
     container: cdf_cdm:CogniteUnit
     description: Represents a single unit of measurement
     used_for: node

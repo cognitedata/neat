@@ -25,6 +25,7 @@ from cognite.neat.v0.core._store._data_model import DataModelEntity
 from cognite.neat.v0.core._utils.auxiliary import local_import
 
 from ._collector import _COLLECTOR, Collector
+from ._diff import DiffAPI
 from ._drop import DropAPI
 from ._explore import ExploreAPI
 from ._fix import FixAPI
@@ -110,6 +111,7 @@ class NeatSession:
         self.template = TemplateAPI(self._state)
         self._explore = ExploreAPI(self._state)
         self.plugins = PluginAPI(self._state)
+        self._diff = DiffAPI(self._state)
         self.opt = OptAPI()
         self.opt._display()
         if load_engine != "skip" and (engine_version := load_neat_engine(client, load_engine)):

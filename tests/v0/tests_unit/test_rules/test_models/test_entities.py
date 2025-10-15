@@ -8,6 +8,7 @@ from cognite.neat.v0.core._data_model.models.entities import (
     AssetEntity,
     ConceptEntity,
     ConceptualEntity,
+    ContainerConstraintEntity,
     ContainerIndexEntity,
     DataModelEntity,
     DMSNodeEntity,
@@ -20,6 +21,7 @@ from cognite.neat.v0.core._data_model.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
+from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerEntity
 from cognite.neat.v0.core._issues.errors import NeatValueError
 
 DEFAULT_SPACE = "sp_my_space"
@@ -27,6 +29,18 @@ DEFAULT_VERSION = "vDefault"
 
 
 TEST_CASES = [
+    (
+        ContainerConstraintEntity,
+        "uniqueness:name",
+        ContainerConstraintEntity(prefix="uniqueness", suffix="name"),
+    ),
+    (
+        ContainerConstraintEntity,
+        "requires:my_space_Asset(require=my_space:Asset)",
+        ContainerConstraintEntity(
+            prefix="requires", suffix="my_space_Asset", require=ContainerEntity(space="my_space", externalId="Asset")
+        ),
+    ),
     (
         ContainerIndexEntity,
         "name",

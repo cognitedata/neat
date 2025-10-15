@@ -16,6 +16,7 @@ from cognite.neat.v0.core._client.data_classes.data_modeling import (
 )
 from cognite.neat.v0.core._data_model._shared import ImportedDataModel
 from cognite.neat.v0.core._data_model.importers import DMSImporter
+from cognite.neat.v0.core._data_model.importers._spreadsheet2data_model import ExcelImporter
 from cognite.neat.v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat.v0.core._data_model.models.data_types import String
 from cognite.neat.v0.core._data_model.models.entities._single_value import (
@@ -42,13 +43,14 @@ from cognite.neat.v0.core._data_model.transformers import (
     PhysicalToConceptual,
     VerifyPhysicalDataModel,
 )
+from cognite.neat.v0.core._data_model.transformers._verification import VerifyAnyDataModel
 from cognite.neat.v0.core._issues import MultiValueError, NeatError, catch_issues
 from cognite.neat.v0.core._issues.errors import PropertyDefinitionDuplicatedError, PropertyValueError
 from cognite.neat.v0.core._issues.errors._resources import ResourceDuplicatedError
 from cognite.neat.v0.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
 )
-from tests.v0.data import GraphData
+from tests.v0.data import GraphData, SchemaData
 from tests.v0.utils import normalize_neat_id_in_rules
 
 
@@ -90,7 +92,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalContainer(
                     container="Asset",
                 ),
-                UnverifiedPhysicalContainer(container="GeneratingUnit", constraint="Asset"),
+                UnverifiedPhysicalContainer(
+                    container="GeneratingUnit", constraint="requires:my_space_Asset(require=Asset)"
+                ),
             ],
             views=[
                 UnverifiedPhysicalView("Asset"),
@@ -225,7 +229,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ],
         containers=[
             UnverifiedPhysicalContainer(container="Asset"),
-            UnverifiedPhysicalContainer(container="WindFarm", constraint="Asset"),
+            UnverifiedPhysicalContainer(
+                container="WindFarm", constraint="requires:my_space_Asset(require=my_space:Asset)"
+            ),
         ],
     )
     expected_schema = DMSSchema(
@@ -294,6 +300,7 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ),
         node_types=NodeApplyDict([]),
     )
+
     yield pytest.param(
         dms_rules,
         expected_schema,
@@ -331,7 +338,9 @@ def rules_schema_tests_cases() -> Iterable[ParameterSet]:
         ],
         containers=[
             UnverifiedPhysicalContainer(container="Asset"),
-            UnverifiedPhysicalContainer(container="WindTurbine", constraint="Asset"),
+            UnverifiedPhysicalContainer(
+                container="WindTurbine", constraint="requires:my_space_Asset(require=my_space:Asset)"
+            ),
         ],
     )
     expected_schema = DMSSchema(
@@ -766,7 +775,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 ),
                 UnverifiedPhysicalContainer(
                     container="GeneratingUnit",
-                    constraint="sp_core:Asset",
+                    constraint="requires:sp_core_Asset(require=sp_core:Asset)",
                 ),
             ],
             views=[
@@ -803,7 +812,9 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalContainer(
                     container="sp_core:Asset",
                 ),
-                UnverifiedPhysicalContainer(container="GeneratingUnit", constraint="sp_core:Asset"),
+                UnverifiedPhysicalContainer(
+                    container="GeneratingUnit", constraint="requires:sp_core_Asset(require=sp_core:Asset)"
+                ),
             ],
             views=[
                 UnverifiedPhysicalView(view="sp_core:Asset(version=1)"),
@@ -850,7 +861,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
                 UnverifiedPhysicalContainer(container="Asset"),
                 UnverifiedPhysicalContainer(
                     container="Plant",
-                    constraint="Asset",
+                    constraint="requires:my_space_Asset(require=Asset)",
                 ),
             ],
             views=[
@@ -894,7 +905,7 @@ def valid_rules_tests_cases() -> Iterable[ParameterSet]:
             ],
             containers=[
                 UnverifiedPhysicalContainer(container="Asset"),
-                UnverifiedPhysicalContainer(container="Plant", constraint="Asset"),
+                UnverifiedPhysicalContainer(container="Plant", constraint="requires:my_space_Asset(require=Asset)"),
             ],
             views=[
                 UnverifiedPhysicalView(view="Asset"),
@@ -1249,8 +1260,36 @@ def case_unknown_value_types():
 
 
 class TestDMSRules:
+    def test_missing_container_for_index_constraint(self) -> None:
+        unverified = ExcelImporter(SchemaData.PhysicalInvalid.missing_container_for_index_constraint).to_data_model()
+        with catch_issues() as issues:
+            _ = VerifyAnyDataModel().transform(unverified)
+
+        assert issues.has_errors
+        assert len(issues) == 12
+
+        constraint_missing_container_issues = []
+        index_missing_container_issues = []
+        max_id_length_issues = []
+        unsupported_constraint_type = []
+        for issue in issues.errors:
+            if "set to use constraint" in issue.error.raw_message:
+                constraint_missing_container_issues.append(issue)
+            if "set to use index" in issue.error.raw_message:
+                index_missing_container_issues.append(issue)
+            if "exceeds maximum length of" in issue.error.raw_message:
+                max_id_length_issues.append(issue)
+            if "Unsupported constraint type" in issue.error.raw_message:
+                unsupported_constraint_type.append(issue)
+
+        assert len(constraint_missing_container_issues) == 4
+        assert len(index_missing_container_issues) == 4
+        assert len(max_id_length_issues) == 2
+        assert len(unsupported_constraint_type) == 2
+
     def test_load_valid_alice_rules(self, alice_spreadsheet: dict[str, dict[str, Any]]) -> None:
-        valid_rules = UnverifiedPhysicalDataModel.load(alice_spreadsheet).as_verified_data_model()
+        unverified = UnverifiedPhysicalDataModel.load(alice_spreadsheet)
+        valid_rules = unverified.as_verified_data_model()
 
         assert isinstance(valid_rules, PhysicalDataModel)
 
@@ -1367,7 +1406,12 @@ class TestDMSRules:
                 UnverifiedPhysicalView(view="cdf_cdm:Sourceable(version=v1)"),
                 UnverifiedPhysicalView(view="cdf_cdm:Describable(version=v1)"),
             ],
-            containers=[UnverifiedPhysicalContainer(container="Asset", constraint="Sourceable,Describable")],
+            containers=[
+                UnverifiedPhysicalContainer(
+                    container="Asset",
+                    constraint="requires:src(require=Sourceable),requires:desc(require=Describable)",
+                )
+            ],
         ).as_verified_data_model()
 
         normalize_neat_id_in_rules(dms_rules)
@@ -1410,7 +1454,7 @@ class TestDMSRules:
             "containers": [
                 {
                     "container": "Asset",
-                    "constraint": "Sourceable,Describable",
+                    "constraint": "requires:src(require=Sourceable),requires:desc(require=Describable)",
                     "neatId": "http://purl.org/cognite/neat/Container_0",
                 }
             ],
@@ -1785,7 +1829,11 @@ class TestDMSValidation:
                         ),
                     ],
                     views=[UnverifiedPhysicalView("MyView")],
-                    containers=[UnverifiedPhysicalContainer("MyContainer", constraint="cdf_cdm:CogniteDescribable")],
+                    containers=[
+                        UnverifiedPhysicalContainer(
+                            "MyContainer", constraint="requires:desc(require=cdf_cdm:CogniteDescribable)"
+                        )
+                    ],
                 ),
                 set(),
                 {ContainerEntity(space="cdf_cdm", externalId="CogniteDescribable")},

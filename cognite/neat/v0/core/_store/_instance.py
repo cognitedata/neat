@@ -12,6 +12,7 @@ from rdflib import Dataset, Graph, Namespace, URIRef
 from rdflib.graph import DATASET_DEFAULT_GRAPH_ID
 from rdflib.plugins.stores.sparqlstore import SPARQLUpdateStore
 
+from cognite.neat.v0.core._constants import NAMED_GRAPH_NAMESPACE
 from cognite.neat.v0.core._instances._shared import quad_formats, rdflib_to_oxi_type
 from cognite.neat.v0.core._instances.extractors import RdfFileExtractor, TripleExtractors
 from cognite.neat.v0.core._instances.queries import Queries
@@ -450,3 +451,35 @@ class NeatInstanceStore:
     def empty(self) -> bool:
         """Cheap way to check if the graph store is empty."""
         return not self.queries.select.has_data()
+
+    def diff(self, current_named_graph: URIRef, new_named_graph: URIRef) -> None:
+        """
+        Compare two named graphs and store diff results in dedicated named graphs.
+
+        Stores triples to add in DIFF_ADD and triples to delete in DIFF_DELETE.
+
+        Args:
+            current_named_graph: URI of the current named graph
+            new_named_graph: URI of the new/updated named graph
+
+        Raises:
+            NeatValueError: If either named graph doesn't exist in the store
+        """
+        if current_named_graph not in self.named_graphs:
+            raise NeatValueError(f"Current named graph not found: {current_named_graph}")
+        if new_named_graph not in self.named_graphs:
+            raise NeatValueError(f"New named graph not found: {new_named_graph}")
+
+        # Clear previous diff results using SPARQL
+        self.dataset.update(f"CLEAR SILENT GRAPH <{NAMED_GRAPH_NAMESPACE['DIFF_ADD']}>")
+        self.dataset.update(f"CLEAR SILENT GRAPH <{NAMED_GRAPH_NAMESPACE['DIFF_DELETE']}>")
+
+        # Store new diff results
+        self._add_triples(
+            self.queries.select.get_graph_diff(new_named_graph, current_named_graph),
+            named_graph=NAMED_GRAPH_NAMESPACE["DIFF_ADD"],
+        )
+        self._add_triples(
+            self.queries.select.get_graph_diff(current_named_graph, new_named_graph),
+            named_graph=NAMED_GRAPH_NAMESPACE["DIFF_DELETE"],
+        )
