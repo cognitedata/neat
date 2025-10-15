@@ -1,4 +1,6 @@
 from collections.abc import Iterable
+from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -1190,3 +1192,49 @@ class TestSpreadsheetRead:
     )
     def test_adjusted_row_number(self, row: int, read: SpreadsheetReadContext, expected: int) -> None:
         assert read.adjusted_row_number(row) == expected
+
+
+def valid_dms_yaml_formats() -> Iterable[tuple]:
+    yield pytest.param(
+        """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+Properties:
+- View: CogniteDescribable
+  View Property: name
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Connection: null
+Views:
+- View: CogniteDescribable
+Containers:
+- Container: CogniteDescribable
+  Used For: node
+""",
+        id="Minimal example",
+    )
+
+
+class TestYAMLTableFormat:
+    @pytest.mark.parametrize("yaml_str", list(valid_dms_yaml_formats()))
+    def test_roundtrip(self, yaml_str: str) -> None:
+        yaml_file = MagicMock(spec=Path)
+        yaml_file.read_text.return_value = yaml_str
+        data_model = DMSTableImporter.from_yaml(yaml_file).to_data_model()
+
+        yaml_file.read_text.assert_called_once()
+        result_file = MagicMock(spec=Path)
+        DMSTableExporter(exclude_none=True).as_yaml(data_model, result_file)
+
+        result_file.write_text.assert_called_once()
+        written_yaml = result_file.write_text.call_args[0][0]
+        assert written_yaml == yaml_str

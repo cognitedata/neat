@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import cast
 
+import yaml
+
 from cognite.neat._data_model.exporters._base import DMSExporter
 from cognite.neat._data_model.importers._table_importer.data_classes import DMSProperty, TableDMS
 from cognite.neat._data_model.models.dms import RequestSchema
@@ -62,7 +64,10 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
             data_model (RequestSchema): The data model to export.
             file_path (Path): The path to the YAML file to create.
         """
-        raise NotImplementedError()
+        table_format = self.export(data_model)
+        file_path.write_text(
+            yaml.safe_dump(table_format, sort_keys=False), encoding=self.ENCODING, newline=self.NEW_LINE
+        )
 
     def as_csvs(self, data_model: RequestSchema, directory_path: Path) -> None:
         """Exports the data model as a set of CSV files, one for each table.
