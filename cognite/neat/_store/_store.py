@@ -15,7 +15,7 @@ Agents = DMSTableExporter | DMSTableImporter
 
 class NeatStore:
     def __init__(self) -> None:
-        self._physical: DataModelList = DataModelList()
+        self.physical_data_model: DataModelList = DataModelList()
         self.provenance = Provenance()
         self.state: State = EmptyState()
 
@@ -26,8 +26,8 @@ class NeatStore:
         change, data_model = self._do_activity(reader.to_data_model)
 
         if data_model:
-            change.target_entity = self._physical.generate_reference(cast(PhysicalDataModel, data_model))
-            self._physical.append(data_model)
+            change.target_entity = self.physical_data_model.generate_reference(cast(PhysicalDataModel, data_model))
+            self.physical_data_model.append(data_model)
             self.state = self.state.transition(reader)
             change.target_state = self.state
 
@@ -37,7 +37,7 @@ class NeatStore:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
-        change, _ = self._do_activity(writer.as_yaml, data_model=self._physical[-1], **kwargs)
+        change, _ = self._do_activity(writer.as_yaml, data_model=self.physical_data_model[-1], **kwargs)
 
         if not change.issues:
             change.target_entity = "ExternalEntity"

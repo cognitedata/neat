@@ -15,7 +15,7 @@ class TestNeatSession:
         read_yaml.write_text(next(iter(valid_dms_yaml_formats())).values[0])  # type: ignore [attr-defined]
 
         session.physical_data_model.read.yaml(read_yaml)
-        assert len(session._store._physical) == 1
+        assert len(session._store.physical_data_model) == 1
         assert len(session._store.provenance) == 1
         assert isinstance(session._store.state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].source_state, states.EmptyState)
@@ -25,7 +25,7 @@ class TestNeatSession:
         write_yaml = tmp_path / "write.yaml"
         session.physical_data_model.write.yaml(write_yaml, exclude_none=False)
 
-        assert len(session._store._physical) == 1
+        assert len(session._store.physical_data_model) == 1
         assert len(session._store.provenance) == 2
         assert isinstance(session._store.state, states.PhysicalState)
         # there is no state change when writing
@@ -40,7 +40,7 @@ class TestNeatSession:
             session.physical_data_model.read.yaml(read_yaml)
 
         assert "Cannot run DMSTableImporter in state PhysicalState" in str(e.value)
-        assert len(session._store._physical) == 1
+        assert len(session._store.physical_data_model) == 1
 
         # no change took place
         assert len(session._store.provenance) == 2
@@ -52,7 +52,7 @@ class TestNeatSession:
         write_yaml = tmp_path / "write.yaml"
         session.physical_data_model.write.yaml(write_yaml, exclude_none=False)
 
-        assert len(session._store._physical) == 1
+        assert len(session._store.physical_data_model) == 1
         assert len(session._store.provenance) == 3
         assert isinstance(session._store.state, states.PhysicalState)
         # there is no state change when writing
