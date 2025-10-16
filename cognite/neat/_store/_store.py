@@ -93,3 +93,8 @@ class DataModelList(UserList[PhysicalDataModel]):
         iteration = self.iteration(data_model)
 
         return f"physical/{space}/{external_id}/{version}/{iteration}"
+
+    def get_by_reference(self, reference: str) -> PhysicalDataModel | None:
+        """Get data model by reference string"""
+
+        raise NotImplementedError("Not implemented yet")
