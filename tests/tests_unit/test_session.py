@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -10,9 +11,10 @@ session = NeatSession()
 
 
 class TestNeatSession:
-    def test_read_data_model(self, tmp_path: Path) -> None:
-        read_yaml = tmp_path / "read.yaml"
-        read_yaml.write_text(next(iter(valid_dms_yaml_formats())).values[0])  # type: ignore [attr-defined]
+    @pytest.mark.parametrize("yaml_str", list(valid_dms_yaml_formats()))
+    def test_read_data_model(self, yaml_str: str) -> None:
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = yaml_str
 
         session.physical_data_model.read.yaml(read_yaml)
         assert len(session._store.physical_data_model) == 1
@@ -21,8 +23,9 @@ class TestNeatSession:
         assert isinstance(session._store.provenance[-1].source_state, states.EmptyState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
 
-    def test_write_data_model(self, tmp_path: Path) -> None:
-        write_yaml = tmp_path / "write.yaml"
+    def test_write_data_model(self) -> None:
+        write_yaml = MagicMock(spec=Path)
+
         session.physical_data_model.write.yaml(write_yaml, exclude_none=False)
 
         assert len(session._store.physical_data_model) == 1
@@ -32,9 +35,9 @@ class TestNeatSession:
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
 
-    def test_forbid_read_in_physical_state(self, tmp_path: Path) -> None:
-        read_yaml = tmp_path / "read.yaml"
-        read_yaml.write_text("")
+    def test_forbid_read_in_physical_state(self) -> None:
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = ""
 
         with pytest.raises(RuntimeError) as e:
             session.physical_data_model.read.yaml(read_yaml)
@@ -48,8 +51,8 @@ class TestNeatSession:
         # we remain in physical state even though we hit Forbidden state, auto-recovery
         assert isinstance(session._store.state, states.PhysicalState)
 
-    def test_write_again_data_model(self, tmp_path: Path) -> None:
-        write_yaml = tmp_path / "write.yaml"
+    def test_write_again_data_model(self) -> None:
+        write_yaml = MagicMock(spec=Path)
         session.physical_data_model.write.yaml(write_yaml, exclude_none=False)
 
         assert len(session._store.physical_data_model) == 1

@@ -19,8 +19,10 @@ class NeatReader(ABC):
             elif url.scheme == "https":
                 return HttpFileReader(io, url.path)
 
-        if isinstance(io, str | Path):
+        if isinstance(io, str):
             return PathReader(Path(io))
+        if isinstance(io, Path):
+            return PathReader(io)
         raise ValueError(f"Unsupported type: {type(io)}")
 
     @property
