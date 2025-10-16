@@ -51,8 +51,8 @@ class NeatStore:
         if not self.state.can_transition(agent):
             raise RuntimeError(f"Cannot run {type(agent).__name__} in state {self.state}")
 
-        if not self.provenance.can_agent_do_activity(agent):
-            raise RuntimeError(f"Agent {type(agent).__name__} cannot do activity because...")
+        # need implementation of checking if required predecessor activities have been done
+        # this will be done by running self.provenance.can_agent_do_activity(agent)
 
     def _do_activity(self, activity: Callable, **kwargs: Any) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""

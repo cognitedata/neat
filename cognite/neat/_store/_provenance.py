@@ -43,8 +43,8 @@ class Provenance(UserList[Change]):
 
     def can_agent_do_activity(self, activity: Any) -> bool:
         "Check if activity can be performed based on provenance"
-        return True
+        raise NotImplementedError("Not implemented yet")
 
-    def remove_failed_change(self) -> None:
+    def provenance_without_failures(self) -> "Provenance":
         """This method removes all the failed changes from the provenance list."""
         raise NotImplementedError("Not implemented yet")

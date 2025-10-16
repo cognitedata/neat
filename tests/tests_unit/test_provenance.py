@@ -87,8 +87,3 @@ class TestProvenance:
 
         with pytest.raises(TypeError, match="Cannot modify change from provenance"):
             provenance[0] = change2
-
-    def test_can_agent_do_activity(self) -> None:
-        provenance = Provenance()
-        # Currently always returns True
-        assert provenance.can_agent_do_activity("any_activity") is True
