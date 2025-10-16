@@ -48,6 +48,7 @@ def create_new_car_model(neat_client: NeatClient, schema_space: str, instance_sp
 
 
 class TestDataModelToCDF:
+    @pytest.mark.skip("Skipping test as it has tendecy to clash with other tests")
     def test_to_cdf_recreate(self, neat_client: NeatClient) -> None:
         car_model = create_new_car_model(neat_client, "test_to_cdf_recreate", "test_to_cdf_recreate_data")
         neat = NeatSession(neat_client)

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class State(ABC):
@@ -8,11 +9,20 @@ class State(ABC):
         self._store = None
 
     @abstractmethod
-    def on_event(self, event: str) -> "State":
+    def transition(self, event: Any) -> "State":
         """
         Handle events that are delegated to this State.
         """
         raise NotImplementedError("on_event() must be implemented by the subclass.")
+
+    def can_transition(self, event: Any) -> bool:
+        """
+        Check if the state can transition on the given event.
+        """
+        # avoiding circular import
+        from cognite.neat._state_machine._states import ForbiddenState
+
+        return not isinstance(self.transition(event), ForbiddenState)
 
     def __repr__(self) -> str:
         """

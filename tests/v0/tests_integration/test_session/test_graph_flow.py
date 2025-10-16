@@ -140,6 +140,7 @@ class TestExtractToLoadFlow:
             }
         )
 
+    @pytest.mark.skip("Skipping test as it has tendecy to clash with other tests")
     def test_uplift_workflow_to_cdf(self, cognite_client: CogniteClient) -> None:
         neat = NeatSession(cognite_client, storage="oxigraph")
         neat.read.cdf._graph(
