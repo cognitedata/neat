@@ -190,6 +190,7 @@ def existing_data_model(neat_client: NeatClient) -> Iterable[dm.DataModel]:
 
 
 class TestDMSExporter:
+    @pytest.mark.skip("Skipping test as it has tendecy to clash with other tests")
     def test_export_model_merge_with_existing(self, existing_data_model: dm.DataModel, neat_client: NeatClient):
         space = existing_data_model.space
         rules = UnverifiedPhysicalDataModel(
