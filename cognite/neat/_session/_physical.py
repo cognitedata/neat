@@ -14,8 +14,6 @@ class PhysicalDataModel:
         self.read = ReadPhysicalDataModel(self._store)
         self.write = WritePhysicalDataModel(self._store)
 
-    def __call__(self):
-        return self._store._physical[-1]
 
 
 class ReadPhysicalDataModel:

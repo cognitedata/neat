@@ -48,10 +48,10 @@ class NeatStore:
     def _can_agent_do_activity(self, agent: Agents) -> None:
         """Validate if activity can be performed in the current state and considering provenance"""
         if not self.state.can_transition(agent):
-            raise RuntimeError(f"Cannot read data model in state {self.state}")
+            raise RuntimeError(f"Cannot run {type(agent).__name__} in state {self.state}")
 
         if not self.provenance.can_agent_do_activity(agent):
-            raise RuntimeError(f"Cannot do activity {agent} because ...")
+            raise RuntimeError(f"Agent {type(agent).__name__} cannot do activity because...")
 
     def _do_activity(self, activity: Callable, **kwargs: Any) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""
