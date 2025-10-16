@@ -1,10 +1,5 @@
-from pathlib import Path
-
-import pandas as pd
-
 from cognite.neat import _state_machine as states
 from cognite.neat._session._session import NeatSession
-from tests.config import DATA_FOLDER
 
 
 def test_one_end_to_end_workflow() -> None:

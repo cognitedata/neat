@@ -1,14 +1,18 @@
 from typing import Any
-from ._base import State
-from cognite.neat._data_model.importers import DMSImporter
+
 from cognite.neat._data_model.exporters import DMSExporter
+from cognite.neat._data_model.importers import DMSImporter
+
+from ._base import State
 
 
 class Undo:
     """
     Event to trigger undoing the last action.
     """
+
     pass
+
 
 class ForbiddenState(State):
     """
@@ -35,6 +39,7 @@ class EmptyState(State):
         if isinstance(event, DMSImporter):
             return PhysicalState()
         return ForbiddenState(self)
+
 
 class PhysicalState(State):
     """
