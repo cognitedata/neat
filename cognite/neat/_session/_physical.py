@@ -15,7 +15,6 @@ class PhysicalDataModel:
         self.write = WritePhysicalDataModel(self._store)
 
 
-
 class ReadPhysicalDataModel:
     """Read physical data model from various sources into NeatSession graph store."""
 
