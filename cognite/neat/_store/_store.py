@@ -1,3 +1,4 @@
+from collections import UserList
 from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any, cast
@@ -76,7 +77,7 @@ class NeatStore:
         ), result
 
 
-class DataModelList(list[PhysicalDataModel]):
+class DataModelList(UserList[PhysicalDataModel]):
     def iteration(self, data_model: PhysicalDataModel) -> int:
         """Get iteration number for data model"""
         for i, existing in enumerate(self):

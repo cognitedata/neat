@@ -1,3 +1,4 @@
+from collections import UserList
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -25,7 +26,7 @@ class Change:
         return f"{activity}_{start.timestamp()}-{end.timestamp()}"
 
 
-class Provenance(list, Change):
+class Provenance(UserList[Change]):
     def __delitem__(self, *args: Any, **kwargs: Any) -> None:
         raise TypeError("Cannot delete change from provenance")
 
@@ -33,12 +34,12 @@ class Provenance(list, Change):
         raise TypeError("Cannot modify change from provenance")
 
     @property
-    def last_state(self) -> State:
-        return self[-1].target_state
+    def last_state(self) -> State | None:
+        return self[-1].target_state if len(self) > 0 else None
 
     @property
-    def last_issues(self) -> list[str]:
-        return self[-1].issues if len(self) > 0 else []
+    def last_issues(self) -> list[str] | None:
+        return self[-1].issues if len(self) > 0 else None
 
     def can_agent_do_activity(self, activity: Any) -> bool:
         "Check if activity can be performed based on provenance"
