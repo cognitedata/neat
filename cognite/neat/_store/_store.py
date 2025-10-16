@@ -15,7 +15,7 @@ Agents = DMSTableExporter | DMSTableImporter
 
 class NeatStore:
     def __init__(self) -> None:
-        self.physical_data_model: DataModelList = DataModelList()
+        self.physical_data_model = DataModelList()
         self.provenance = Provenance()
         self.state: State = EmptyState()
 
