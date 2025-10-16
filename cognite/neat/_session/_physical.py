@@ -3,7 +3,7 @@ from typing import Any
 from cognite.neat._data_model.exporters import DMSTableExporter
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._store._store import NeatStore
-from cognite.neat._utils.reader._base import NeatReader
+from cognite.neat._utils._reader import NeatReader
 
 
 class PhysicalDataModel:
