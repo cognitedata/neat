@@ -1,8 +1,10 @@
 from collections.abc import Iterable
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from openpyxl import Workbook
+from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._data_model.exporters import DMSTableExporter
 from cognite.neat._data_model.importers import DMSTableImporter
@@ -31,7 +33,7 @@ from cognite.neat._data_model.models.dms import (
     ViewRequest,
 )
 from cognite.neat._exceptions import DataModelImportError
-from cognite.neat._utils.useful_types import CellValueType
+from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 
 SOURCE = "pytest.xlsx"
 
@@ -1238,3 +1240,178 @@ class TestYAMLTableFormat:
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
         assert written_yaml == yaml_str
+
+
+def valid_dms_excel_formats() -> Iterable[tuple]:
+    yield pytest.param(
+        {
+            "Metadata": [
+                ["space", "cdf_cdm"],
+                ["externalId", "CogniteDataModel"],
+                ["version", "v1"],
+            ],
+            "Properties": [
+                ["Properties Definition", *[None] * 14],
+                [
+                    "View",
+                    "View Property",
+                    "Name",
+                    "Description",
+                    "Connection",
+                    "Value Type",
+                    "Min Count",
+                    "Max Count",
+                    "Immutable",
+                    "Default",
+                    "Auto Increment",
+                    "Container",
+                    "Container Property",
+                    "Index",
+                    "Constraint",
+                ],
+                [
+                    "CogniteDescribable",
+                    "name",
+                    None,
+                    None,
+                    None,
+                    "text",
+                    0,
+                    1,
+                    False,
+                    None,
+                    None,
+                    "CogniteDescribable",
+                    "name",
+                    "btree:name(cursorable=True)",
+                    None,
+                ],
+            ],
+            "Views": [
+                ["View Definition", *[None] * 4],
+                [
+                    "View",
+                    "Name",
+                    "Description",
+                    "Implements",
+                    "Filter",
+                ],
+                [None] * 5,
+                [
+                    "CogniteDescribable",
+                    "Cognite Describable",
+                    "The describable core concept is used as a standard way of holding the "
+                    "bare minimum of information about the instance",
+                    None,
+                    None,
+                ],
+            ],
+            "Containers": [
+                ["Container Definition", *[None] * 4],
+                [
+                    "Container",
+                    "Name",
+                    "Description",
+                    "Constraint",
+                    "Used For",
+                ],
+                [
+                    "CogniteDescribable",
+                    None,
+                    None,
+                    None,
+                    "node",
+                ],
+            ],
+        },
+        dict(
+            Metadata=[
+                {"Key": "space", "Value": "cdf_cdm"},
+                {"Key": "externalId", "Value": "CogniteDataModel"},
+                {"Key": "version", "Value": "v1"},
+            ],
+            Properties=[
+                {
+                    "View": "CogniteDescribable",
+                    "View Property": "name",
+                    "Value Type": "text",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Default": None,
+                    "Auto Increment": None,
+                    "Container": "CogniteDescribable",
+                    "Container Property": "name",
+                    "Index": "btree:name(cursorable=True)",
+                    "Connection": None,
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": None,
+                }
+            ],
+            Views=[
+                {
+                    "View": "CogniteDescribable",
+                    "Name": "Cognite Describable",
+                    "Description": "The describable core concept is used as a standard way of holding the "
+                    "bare minimum of information about the instance",
+                    "Implements": None,
+                    "Filter": None,
+                }
+            ],
+            Containers=[
+                {
+                    "Container": "CogniteDescribable",
+                    "Name": None,
+                    "Description": None,
+                    "Constraint": None,
+                    "Used For": "node",
+                }
+            ],
+        ),
+        TableSource(
+            source="excel_file.xlsx",
+            table_read={
+                "Metadata": SpreadsheetReadContext(),
+                "Properties": SpreadsheetReadContext(skipped_rows=[0]),
+                "Views": SpreadsheetReadContext(skipped_rows=[0], empty_rows=[2]),
+                "Containers": SpreadsheetReadContext(skipped_rows=[0]),
+            },
+        ),
+        id="Minimal example",
+    )
+
+
+class TestExcelFormat:
+    @pytest.mark.parametrize("excel_tables,expected_tables,expected_context", list(valid_dms_excel_formats()))
+    def test_read_excel(
+        self,
+        excel_tables: dict[str, list[list[str]]],
+        expected_tables: DataModelTableType,
+        expected_context: TableSource,
+    ) -> None:
+        excel_file_name = expected_context.source
+        excel_file = MagicMock(spec=Path)
+        excel_file.relative_to.return_value = Path(excel_file_name)
+        workbook = MagicMock(spec=Workbook)
+        excel_file.name = excel_file_name
+        load_workbook_mock = MagicMock(return_value=workbook)
+        with patch(f"{DMSTableImporter.__module__}.load_workbook", load_workbook_mock):
+            # Mock the sheets in the workbook
+            workbook.sheetnames = list(excel_tables.keys())
+            sheet_by_name: dict[str, MagicMock] = {}
+            for sheet_name, rows in excel_tables.items():
+                sheet = MagicMock(spec=Worksheet)
+                sheet.title = sheet_name
+                sheet.iter_rows.return_value = rows
+                sheet_by_name[sheet_name] = sheet
+
+            def get_item(name: str) -> MagicMock:
+                return sheet_by_name[name]
+
+            workbook.__getitem__.side_effect = get_item
+
+            importer = DMSTableImporter.from_excel(excel_file)
+
+        assert importer._table == expected_tables
+        assert importer._source == expected_context
