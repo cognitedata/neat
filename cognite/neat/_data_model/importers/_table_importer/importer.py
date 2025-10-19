@@ -112,3 +112,8 @@ class DMSTableImporter(DMSImporter):
         if yaml_file.is_relative_to(cwd):
             source = yaml_file.relative_to(cwd)
         return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
+
+    @classmethod
+    def from_excel(cls, excel_file: Path) -> "DMSTableImporter":
+        """Create a DMSTableImporter from an Excel file."""
+        raise NotImplementedError()
