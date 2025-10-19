@@ -3,6 +3,7 @@ from typing import cast
 
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
+from openpyxl.styles import Font, PatternFill
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._data_model.importers._table_importer.data_classes import TableDMS
@@ -23,9 +24,12 @@ class WorkbookCreator:
     class Sheets:
         metadata = cast(str, TableDMS.model_fields["metadata"].validation_alias)
 
-    def __init__(self, adjust_column_width: bool = True, add_dropdowns: bool = True) -> None:
-        self._add_dropdowns = add_dropdowns
+    def __init__(
+        self, adjust_column_width: bool = True, style_headers: bool = True, add_dropdowns: bool = True
+    ) -> None:
         self._adjust_column_width = adjust_column_width
+        self._style_headers = style_headers
+        self._add_dropdowns = add_dropdowns
 
     def create_workbook(self, tables: DataModelTableType) -> Workbook:
         """Creates an Excel workbook from the data model.
@@ -63,10 +67,26 @@ class WorkbookCreator:
         headers = list(table[0].keys())
         if main_header:
             worksheet.append([main_header] + [""] * (len(headers) - 1))
+            if self._style_headers:
+                worksheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+                cell = worksheet.cell(row=1, column=1)
+                cell.font = Font(bold=True, size=20)
+                cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
 
         worksheet.append(headers)
+        header_row = 2 if main_header else 1
+        if self._style_headers:
+            for col_idx in range(1, len(headers) + 1):
+                cell = worksheet.cell(row=header_row, column=col_idx)
+                cell.font = Font(bold=True, size=14)
+                cell.fill = PatternFill(fgColor="FFD966", patternType="solid")
+
         for row in table:
             worksheet.append(list(row.values()))
+
+        if self._style_headers:
+            # openpyxl is not well typed
+            worksheet.freeze_panes = worksheet.cell(row=header_row + 1, column=1)  # type: ignore[assignment]
 
     @classmethod
     def _adjust_column_widths(cls, worksheet: Worksheet) -> None:
