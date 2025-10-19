@@ -139,6 +139,8 @@ class DMSTableImporter(DMSImporter):
                 sheet = workbook[sheet_name]
                 table_rows: list[dict[str, CellValueType]] = []
                 rows_iter = sheet.iter_rows(values_only=True)
+                # Metadata sheet is just a key-value pair of the first two columns.
+                # For other sheets, we need to find the header row first.
                 headers: list[str] = [] if sheet_name != "Metadata" else required_headers
                 empty_rows: list[int] = []
                 skipped_rows: list[int] = []
