@@ -130,6 +130,10 @@ class TableDMS(TableObj):
             if sheet_field.is_required()
         ]
 
+    @classmethod
+    def required_sheets(cls) -> set[str]:
+        return {cast(str, field_.validation_alias) for field_ in cls.model_fields.values() if field_.is_required()}
+
 
 DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
     "Views": {
