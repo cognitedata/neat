@@ -95,7 +95,7 @@ class WorkbookCreator:
         if main_header:
             worksheet.append([main_header] + [""] * (len(headers) - 1))
             if self._style_headers:
-                worksheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
+                worksheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=max(3, len(headers)))
                 cell = worksheet.cell(row=1, column=1)
                 cell.font = Font(bold=True, size=20)
                 cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
@@ -108,6 +108,15 @@ class WorkbookCreator:
                 cell.font = Font(bold=True, size=14)
                 cell.fill = PatternFill(fgColor="FFD966", patternType="solid")
 
+        self._write_rows_to_worksheet(worksheet, table, headers)
+
+        if self._style_headers:
+            # openpyxl is not well typed
+            worksheet.freeze_panes = worksheet.cell(row=header_row + 1, column=1)  # type: ignore[assignment]
+
+    def _write_rows_to_worksheet(
+        self, worksheet: Worksheet, table: list[dict[str, CellValueType]], headers: list[str]
+    ) -> None:
         is_properties = worksheet.title == self.Sheets.properties
         fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
         fill_color = next(fill_colors)
@@ -134,10 +143,6 @@ class WorkbookCreator:
 
             if is_properties:
                 last_view_value = row[self.PropertyColumns.view]
-
-        if self._style_headers:
-            # openpyxl is not well typed
-            worksheet.freeze_panes = worksheet.cell(row=header_row + 1, column=1)  # type: ignore[assignment]
 
     @classmethod
     def _adjust_column_widths(cls, worksheet: Worksheet) -> None:
