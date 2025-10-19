@@ -1,12 +1,13 @@
+import itertools
 from collections.abc import Mapping
 from typing import cast
 
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
-from openpyxl.styles import Font, PatternFill
+from openpyxl.styles import Border, Font, PatternFill, Side
 from openpyxl.worksheet.worksheet import Worksheet
 
-from cognite.neat._data_model.importers._table_importer.data_classes import TableDMS
+from cognite.neat._data_model.importers._table_importer.data_classes import DMSProperty, TableDMS
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 
 MAIN_HEADERS_BY_SHEET_NAME: Mapping[str, str] = {
@@ -20,15 +21,41 @@ MAX_COLUMN_WIDTH = 70.0
 
 
 class WorkbookCreator:
-    # The following is used to get the sheet names from the TableDMS dataclass
+    # The following classes are used to refer to sheets and columns when creating the workbook.
     class Sheets:
         metadata = cast(str, TableDMS.model_fields["metadata"].validation_alias)
+        properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
+
+    class PropertyColumns:
+        view = cast(str, DMSProperty.model_fields["view"].validation_alias)
+        view_property = cast(str, DMSProperty.model_fields["view_property"].validation_alias)
+        connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
+        value_type = cast(str, DMSProperty.model_fields["value_type"].validation_alias)
+        min_count = cast(str, DMSProperty.model_fields["min_count"].validation_alias)
+        max_count = cast(str, DMSProperty.model_fields["max_count"].validation_alias)
+        default = cast(str, DMSProperty.model_fields["default"].validation_alias)
+        auto_increment = cast(str, DMSProperty.model_fields["auto_increment"].validation_alias)
+        container = cast(str, DMSProperty.model_fields["container"].validation_alias)
+        container_property = cast(str, DMSProperty.model_fields["container_property"].validation_alias)
+        container_property_name = cast(str, DMSProperty.model_fields["container_property_name"].validation_alias)
+        container_property_description = cast(
+            str, DMSProperty.model_fields["container_property_description"].validation_alias
+        )
+        index = cast(str, DMSProperty.model_fields["index"].validation_alias)
+        constraint = cast(str, DMSProperty.model_fields["constraint"].validation_alias)
 
     def __init__(
-        self, adjust_column_width: bool = True, style_headers: bool = True, add_dropdowns: bool = True
+        self,
+        adjust_column_width: bool = True,
+        style_headers: bool = True,
+        row_band_highlighting: bool = True,
+        separate_view_properties: bool = True,
+        add_dropdowns: bool = True,
     ) -> None:
         self._adjust_column_width = adjust_column_width
         self._style_headers = style_headers
+        self._row_band_highlighting = row_band_highlighting
+        self._separate_view_properties = separate_view_properties
         self._add_dropdowns = add_dropdowns
 
     def create_workbook(self, tables: DataModelTableType) -> Workbook:
@@ -81,8 +108,32 @@ class WorkbookCreator:
                 cell.font = Font(bold=True, size=14)
                 cell.fill = PatternFill(fgColor="FFD966", patternType="solid")
 
+        is_properties = worksheet.title == self.Sheets.properties
+        fill_colors = itertools.cycle(["CADCFC", "FFFFFF"])
+        fill_color = next(fill_colors)
+        is_new_view = False
+        last_view_value: CellValueType = None
+        side = Side(style="thin")
         for row in table:
+            if is_properties:
+                is_new_view = row[self.PropertyColumns.view] != last_view_value and last_view_value is not None
+            if is_new_view and is_properties and self._separate_view_properties:
+                worksheet.append([None] * len(headers))  # Add an empty row between views
+                if self._row_band_highlighting:
+                    for cell in worksheet[worksheet.max_row]:
+                        cell.border = Border(left=side, right=side, top=side, bottom=side)
+
             worksheet.append(list(row.values()))
+            if self._row_band_highlighting and is_new_view and is_properties:
+                fill_color = next(fill_colors)
+
+            if self._row_band_highlighting and is_properties:
+                for cell in worksheet[worksheet.max_row]:
+                    cell.fill = PatternFill(fgColor=fill_color, fill_type="solid")
+                    cell.border = Border(left=side, right=side, top=side, bottom=side)
+
+            if is_properties:
+                last_view_value = row[self.PropertyColumns.view]
 
         if self._style_headers:
             # openpyxl is not well typed
