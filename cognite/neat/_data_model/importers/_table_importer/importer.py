@@ -1,8 +1,9 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, cast
+from typing import ClassVar, cast, get_args
 
 import yaml
+from openpyxl import load_workbook
 from pydantic import ValidationError
 
 from cognite.neat._data_model.importers._base import DMSImporter
@@ -12,12 +13,12 @@ from cognite.neat._data_model.models.dms import (
 from cognite.neat._exceptions import DataModelImportError
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat._utils.useful_types import DataModelTableType
+from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 from cognite.neat._utils.validation import as_json_path, humanize_validation_error
 
 from .data_classes import MetadataValue, TableDMS
 from .reader import DMSTableReader
-from .source import TableSource
+from .source import SpreadsheetReadContext, TableSource
 
 
 class DMSTableImporter(DMSImporter):
@@ -107,13 +108,62 @@ class DMSTableImporter(DMSImporter):
     @classmethod
     def from_yaml(cls, yaml_file: Path) -> "DMSTableImporter":
         """Create a DMSTableImporter from a YAML file."""
-        cwd = Path.cwd()
-        source = yaml_file
-        if yaml_file.is_relative_to(cwd):
-            source = yaml_file.relative_to(cwd)
+        source = cls._display_name(yaml_file)
         return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
+
+    @classmethod
+    def _display_name(cls, filepath: Path) -> Path:
+        """Get a display-friendly version of the file path."""
+        cwd = Path.cwd()
+        source = filepath
+        if filepath.is_relative_to(cwd):
+            source = filepath.relative_to(cwd)
+        return source
 
     @classmethod
     def from_excel(cls, excel_file: Path) -> "DMSTableImporter":
         """Create a DMSTableImporter from an Excel file."""
-        raise NotImplementedError()
+        tables: DataModelTableType = {}
+        source = TableSource(cls._display_name(excel_file).as_posix())
+        workbook = load_workbook(excel_file, read_only=True, data_only=True, rich_text=False)
+        try:
+            for field_ in TableDMS.model_fields.values():
+                sheet_name = cast(str, field_.validation_alias)
+                if sheet_name not in workbook.sheetnames:
+                    continue
+                required_headers = [
+                    cast(str, sheet_field.validation_alias)
+                    for sheet_field in get_args(field_.annotation)[0].model_fields.values()
+                    if sheet_field.is_required()
+                ]
+                sheet = workbook[sheet_name]
+                table_rows: list[dict[str, CellValueType]] = []
+                rows_iter = sheet.iter_rows(values_only=True)
+                headers: list[str] = [] if sheet_name != "Metadata" else required_headers
+                empty_rows: list[int] = []
+                skipped_rows: list[int] = []
+                header_row = 0
+                for row_no, row in enumerate(rows_iter):
+                    if headers:
+                        if all(cell is None for cell in row):
+                            empty_rows.append(row_no)
+                            continue
+                        record = dict(zip(headers, row, strict=False))
+                        # MyPy complains as it thinks DataTableFormula | ArrayFormula could be cell values,
+                        # but as we used values_only=True, this is not the case.
+                        table_rows.append(record)  # type: ignore[arg-type]
+                    else:
+                        row_values = [str(cell) for cell in row]
+                        if set(row_values).intersection(required_headers):
+                            headers = row_values
+                            header_row = row_no
+                        else:
+                            skipped_rows.append(row_no)
+
+                tables[sheet_name] = table_rows
+                source.table_read[sheet_name] = SpreadsheetReadContext(
+                    header_row=header_row, empty_rows=empty_rows, skipped_rows=skipped_rows, is_one_indexed=True
+                )
+            return cls(tables, source)
+        finally:
+            workbook.close()
