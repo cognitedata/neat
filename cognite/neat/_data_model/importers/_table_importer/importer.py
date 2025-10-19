@@ -1,9 +1,10 @@
 from collections.abc import Mapping
 from pathlib import Path
-from typing import ClassVar, cast, get_args
+from typing import ClassVar, cast
 
 import yaml
 from openpyxl import load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import ValidationError
 
 from cognite.neat._data_model.importers._base import DMSImporter
@@ -127,45 +128,44 @@ class DMSTableImporter(DMSImporter):
         source = TableSource(cls._display_name(excel_file).as_posix())
         workbook = load_workbook(excel_file, read_only=True, data_only=True, rich_text=False)
         try:
-            for field_ in TableDMS.model_fields.values():
+            for field_id, field_ in TableDMS.model_fields.items():
                 sheet_name = cast(str, field_.validation_alias)
                 if sheet_name not in workbook.sheetnames:
                     continue
-                required_headers = [
-                    cast(str, sheet_field.validation_alias)
-                    for sheet_field in get_args(field_.annotation)[0].model_fields.values()
-                    if sheet_field.is_required()
-                ]
+                required_headers = TableDMS.get_required_headers(field_id, field_)
                 sheet = workbook[sheet_name]
-                table_rows: list[dict[str, CellValueType]] = []
-                rows_iter = sheet.iter_rows(values_only=True)
-                # Metadata sheet is just a key-value pair of the first two columns.
-                # For other sheets, we need to find the header row first.
-                headers: list[str] = [] if sheet_name != "Metadata" else required_headers
-                empty_rows: list[int] = []
-                skipped_rows: list[int] = []
-                header_row = 0
-                for row_no, row in enumerate(rows_iter):
-                    if headers:
-                        if all(cell is None for cell in row):
-                            empty_rows.append(row_no)
-                            continue
-                        record = dict(zip(headers, row, strict=False))
-                        # MyPy complains as it thinks DataTableFormula | ArrayFormula could be cell values,
-                        # but as we used values_only=True, this is not the case.
-                        table_rows.append(record)  # type: ignore[arg-type]
-                    else:
-                        row_values = [str(cell) for cell in row]
-                        if set(row_values).intersection(required_headers):
-                            headers = row_values
-                            header_row = row_no
-                        else:
-                            skipped_rows.append(row_no)
-
+                context = SpreadsheetReadContext()
+                table_rows = cls._read_rows(sheet, required_headers, context)
                 tables[sheet_name] = table_rows
-                source.table_read[sheet_name] = SpreadsheetReadContext(
-                    header_row=header_row, empty_rows=empty_rows, skipped_rows=skipped_rows, is_one_indexed=True
-                )
+                source.table_read[sheet_name] = context
             return cls(tables, source)
         finally:
             workbook.close()
+
+    @classmethod
+    def _read_rows(
+        cls, sheet: Worksheet, required_headers: list[str], context: SpreadsheetReadContext
+    ) -> list[dict[str, CellValueType]]:
+        table_rows: list[dict[str, CellValueType]] = []
+        # Metadata sheet is just a key-value pair of the first two columns.
+        # For other sheets, we need to find the header row first.
+        headers: list[str] = [] if sheet.title != "Metadata" else required_headers
+        for row_no, row in enumerate(sheet.iter_rows(values_only=True)):
+            if headers:
+                # We have found the header row, read the data rows.
+                if all(cell is None for cell in row):
+                    context.empty_rows.append(row_no)
+                else:
+                    record = dict(zip(headers, row, strict=False))
+                    # MyPy complains as it thinks DataTableFormula | ArrayFormula could be cell values,
+                    # but as we used values_only=True, this is not the case.
+                    table_rows.append(record)  # type: ignore[arg-type]
+            else:
+                # Look for the header row.
+                row_values = [str(cell) for cell in row]
+                if set(row_values).intersection(required_headers):
+                    headers = row_values
+                    context.header_row = row_no
+                else:
+                    context.skipped_rows.append(row_no)
+        return table_rows
