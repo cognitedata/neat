@@ -8,6 +8,7 @@ from cognite.neat._data_model.importers._table_importer.data_classes import DMSP
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._utils.useful_types import DataModelTableType
 
+from .workbook import WorkbookCreator
 from .writer import DMSTableWriter
 
 
@@ -55,7 +56,12 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
             data_model (RequestSchema): The data model to export.
             file_path (Path): The path to the Excel file to create.
         """
-        raise NotImplementedError()
+        table_format = self.export(data_model)
+        workbook = WorkbookCreator().create_workbook(table_format)
+        try:
+            workbook.save(file_path)
+        finally:
+            workbook.close()
 
     def as_yaml(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as a flat YAML file, which is identical to the spreadsheet representation
