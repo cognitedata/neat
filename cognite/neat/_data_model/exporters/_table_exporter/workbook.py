@@ -43,6 +43,26 @@ HEADER_ROWS = 2
 
 @dataclass
 class WorkbookOptions:
+    """Options for creating an Excel workbook from a data model.
+
+    Attributes:
+        adjust_column_width (bool): Whether to adjust the column widths to fit the content. Default
+            is True.
+        style_headers (bool): Whether to style the header rows. Default is True.
+        row_band_highlighting (bool): Whether to apply row band highlighting to the properties sheet.
+            Default is True.
+        separate_view_properties (bool): Whether to separate properties by view with an empty row.
+            Default is False.
+        add_dropdowns (bool): Whether to add drop-down menus for certain columns. Default is True.
+        dropdown_implements (Set[Literal["main", "interface", "configuration", "annotation", "3D"]]):
+            The types of Cognite concepts to include in the "implements" drop-down menu. Default is
+            {"main", "interface"}.
+        max_views (int): The maximum number of views to support in the drop-down menus. Default is 100.
+        max_containers (int): The maximum number of containers to support in the drop-down menus. Default is 100.
+        max_properties_per_view (int): The maximum number of properties per view to support in the
+            drop-down menus. Default is 100.
+    """
+
     adjust_column_width: bool = True
     style_headers: bool = True
     row_band_highlighting: bool = True
