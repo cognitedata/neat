@@ -132,7 +132,7 @@ class DMSTableImporter(DMSImporter):
                 sheet_name = cast(str, field_.validation_alias)
                 if sheet_name not in workbook.sheetnames:
                     continue
-                required_headers = TableDMS.get_required_headers(field_id, field_)
+                required_headers = TableDMS.get_sheet_headers(field_id, field_, field_type="required")
                 sheet = workbook[sheet_name]
                 context = SpreadsheetReadContext()
                 table_rows = cls._read_rows(sheet, required_headers, context)

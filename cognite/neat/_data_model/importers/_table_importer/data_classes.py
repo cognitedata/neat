@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Annotated, cast, get_args
+from typing import Annotated, Literal, cast, get_args
 
 from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
 from pydantic.alias_generators import to_camel
@@ -119,16 +119,29 @@ class TableDMS(TableObj):
         return data
 
     @classmethod
-    def get_required_headers(cls, field_id: str, field_: FieldInfo) -> list[str]:
+    def get_sheet_headers(
+        cls, field_id: str, field_: FieldInfo | None = None, *, field_type: Literal["all", "required"] = "required"
+    ) -> list[str]:
         if field_id not in cls.model_fields.keys():
             raise KeyError(f"Invalid field id: {field_id}")
+        if field_ is None:
+            field_ = cls.model_fields[field_id]
         return [
             # We know all fields has validation_alias because of the alias_generator in TableDMS
             cast(str, sheet_field.validation_alias)
             # All the fields in the sheet's model are lists.
             for sheet_field in get_args(field_.annotation)[0].model_fields.values()
-            if sheet_field.is_required()
+            if sheet_field.is_required() or field_type == "all"
         ]
+
+    @classmethod
+    def get_sheet_headers_by_alias(
+        cls, field_alias: str, *, field_type: Literal["all", "required"] = "required"
+    ) -> list[str]:
+        for field_id, field_ in cls.model_fields.items():
+            if cast(str, field_.validation_alias) == field_alias:
+                return cls.get_sheet_headers(field_id, field_, field_type=field_type)
+        raise KeyError(f"Invalid field alias: {field_alias}")
 
     @classmethod
     def required_sheets(cls) -> set[str]:
