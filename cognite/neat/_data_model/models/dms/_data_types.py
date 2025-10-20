@@ -1,5 +1,6 @@
 import re
 from abc import ABC
+from collections.abc import Mapping
 from typing import Annotated, Literal
 
 from pydantic import Field, TypeAdapter, field_validator
@@ -184,4 +185,6 @@ DataType = Annotated[
 
 DataTypeAdapter: TypeAdapter[DataType] = TypeAdapter(DataType)
 
-DMS_DATA_TYPES = {cls_.type: cls_ for cls_ in get_concrete_subclasses(PropertyTypeDefinition)}
+DMS_DATA_TYPES: Mapping[str, type[PropertyTypeDefinition]] = {
+    cls_.model_fields["type"].default: cls_ for cls_ in get_concrete_subclasses(PropertyTypeDefinition)
+}
