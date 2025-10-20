@@ -7,6 +7,7 @@ from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._data_model.exporters import DMSTableExporter
+from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.importers._table_importer.source import SpreadsheetReadContext, TableSource
 from cognite.neat._data_model.models.dms import (
@@ -1251,7 +1252,7 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                 ["version", "v1"],
             ],
             "Properties": [
-                ["Properties Definition", *[None] * 14],
+                ["Definition of Properties", *[None] * 16],
                 [
                     "View",
                     "View Property",
@@ -1266,6 +1267,8 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                     "Auto Increment",
                     "Container",
                     "Container Property",
+                    "Container Property Name",
+                    "Container Property Description",
                     "Index",
                     "Constraint",
                 ],
@@ -1283,20 +1286,22 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                     None,
                     "CogniteDescribable",
                     "name",
+                    None,
+                    None,
                     "btree:name(cursorable=True)",
                     None,
                 ],
             ],
             "Views": [
-                ["View Definition", *[None] * 4],
+                ["Definition of Views", *[None] * 5],
                 [
                     "View",
                     "Name",
                     "Description",
                     "Implements",
                     "Filter",
+                    "In Model",
                 ],
-                [None] * 5,
                 [
                     "CogniteDescribable",
                     "Cognite Describable",
@@ -1304,10 +1309,11 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                     "bare minimum of information about the instance",
                     None,
                     None,
+                    None,
                 ],
             ],
             "Containers": [
-                ["Container Definition", *[None] * 4],
+                ["Definition of Containers", *[None] * 4],
                 [
                     "Container",
                     "Name",
@@ -1342,6 +1348,8 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                     "Auto Increment": None,
                     "Container": "CogniteDescribable",
                     "Container Property": "name",
+                    "Container Property Description": None,
+                    "Container Property Name": None,
                     "Index": "btree:name(cursorable=True)",
                     "Connection": None,
                     "Name": None,
@@ -1357,6 +1365,7 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                     "bare minimum of information about the instance",
                     "Implements": None,
                     "Filter": None,
+                    "In Model": None,
                 }
             ],
             Containers=[
@@ -1374,7 +1383,7 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
             table_read={
                 "Metadata": SpreadsheetReadContext(),
                 "Properties": SpreadsheetReadContext(skipped_rows=[0]),
-                "Views": SpreadsheetReadContext(skipped_rows=[0], empty_rows=[2]),
+                "Views": SpreadsheetReadContext(skipped_rows=[0]),
                 "Containers": SpreadsheetReadContext(skipped_rows=[0]),
             },
         ),
@@ -1386,7 +1395,7 @@ class TestExcelFormat:
     @pytest.mark.parametrize("excel_tables,expected_tables,expected_context", list(valid_dms_excel_formats()))
     def test_read_excel(
         self,
-        excel_tables: dict[str, list[list[str]]],
+        excel_tables: dict[str, list[list[CellValueType]]],
         expected_tables: DataModelTableType,
         expected_context: TableSource,
     ) -> None:
@@ -1415,3 +1424,53 @@ class TestExcelFormat:
 
         assert importer._table == expected_tables
         assert importer._source == expected_context
+
+    @pytest.mark.parametrize("excel_tables,expected_tables,expected_context", list(valid_dms_excel_formats()))
+    def test_roundtrip_excel(
+        self,
+        excel_tables: dict[str, list[list[CellValueType]]],
+        expected_tables: DataModelTableType,
+        expected_context: TableSource,
+    ) -> None:
+        excel_file_name = expected_context.source
+        excel_file = MagicMock(spec=Path)
+        excel_file.relative_to.return_value = Path(excel_file_name)
+        workbook = MagicMock(spec=Workbook)
+        excel_file.name = excel_file_name
+        load_workbook_mock = MagicMock(return_value=workbook)
+        with patch(f"{DMSTableImporter.__module__}.load_workbook", load_workbook_mock):
+            # Mock the sheets in the workbook
+            workbook.sheetnames = list(excel_tables.keys())
+            sheet_by_name: dict[str, MagicMock] = {}
+            for sheet_name, rows in excel_tables.items():
+                sheet = MagicMock(spec=Worksheet)
+                sheet.title = sheet_name
+                sheet.iter_rows.return_value = rows
+                sheet_by_name[sheet_name] = sheet
+
+            def get_item(name: str) -> MagicMock:
+                return sheet_by_name[name]
+
+            workbook.__getitem__.side_effect = get_item
+
+            importer = DMSTableImporter.from_excel(excel_file)
+            data_model = importer.to_data_model()
+
+            exported = DMSTableExporter(exclude_none=False).export(data_model)
+            created_workbook = WorkbookCreator().create_workbook(exported)
+
+            read_tables = self._read_workbook(created_workbook)
+            read_tables.pop(WorkbookCreator.Sheets.dropdown_source)
+            assert excel_tables == read_tables
+
+    @staticmethod
+    def _read_workbook(workbook: Workbook) -> dict[str, list[list[CellValueType]]]:
+        output: dict[str, list[list[CellValueType]]] = {}
+        for sheet_name in workbook.sheetnames:
+            sheet = workbook[sheet_name]
+            rows: list[list[CellValueType]] = []
+            for row in sheet.iter_rows(values_only=True):
+                # MyPy does not understand values_only=True returns Tuple[CellValueType, ...]
+                rows.append(list(row))  # type: ignore[arg-type]
+            output[sheet_name] = rows
+        return output
