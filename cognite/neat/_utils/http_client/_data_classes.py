@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from typing import Generic, Literal, TypeAlias, TypeVar
 
 import httpx
-from pydantic import BaseModel, ConfigDict, JsonValue
+from pydantic import BaseModel, ConfigDict, JsonValue, TypeAdapter
 
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
 from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
@@ -56,10 +56,17 @@ class SuccessResponse(ResponseMessage):
     data: bytes
 
 
-class FailedResponse(ResponseMessage):
+class ErrorDetails(BaseModel):
+    code: int
     message: str
     missing: list[JsonValue] | None = None
     duplicated: list[JsonValue] | None = None
+
+class ErrorResponse(BaseModel):
+    error: ErrorDetails
+
+class FailedResponse(ResponseMessage, ErrorResponse):
+    ...
 
 
 class SimpleRequest(RequestMessage):
@@ -71,7 +78,8 @@ class SimpleRequest(RequestMessage):
 
     @classmethod
     def create_failure_response(cls, response: httpx.Response) -> Sequence[ResponseMessage]:
-        return [ResponseMessage.model_validate_json(response.content)]
+        error = ErrorResponse.model_validate_json(response.content)
+        return [FailedResponse(code=response.status_code, error=error.error)]
 
     @classmethod
     def create_failed_request(cls, error_message: str) -> Sequence[HTTPMessage]:
@@ -217,4 +225,22 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
             except Exception:
                 raise ValueError("Invalid as_id function provided for ItemsRequest") from None
             responses.append(FailedItem(id=item_id, **error))
+        return responses
+
+    def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
+        """Creates failed request messages for each item in the request.
+
+        Args:
+            error_message: The error message to include in the failed request messages.
+
+        Returns:
+            A sequence of HTTPMessage instances representing the failed request for each item.
+        """
+        responses: list[HTTPMessage] = []
+        for item in self.body.items:
+            try:
+                item_id = self.as_id(item)
+            except Exception:
+                raise ValueError("Invalid as_id function provided for ItemsRequest") from None
+            responses.append(FailedRequestItem(id=item_id, message=error_message))
         return responses
