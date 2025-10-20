@@ -17,7 +17,7 @@ from cognite.neat._utils.http_client._data_classes import (
     FailedRequestMessage,
     HTTPMessage,
     ItemsRequest,
-    ParamRequest,
+    ParametersRequest,
     RequestMessage,
     ResponseMessage,
 )
@@ -182,7 +182,7 @@ class HTTPClient:
     def _make_request(self, item: RequestMessage) -> httpx.Response:
         headers = self._create_headers(item.api_version)
         params: dict[str, str] | None = None
-        if isinstance(item, ParamRequest):
+        if isinstance(item, ParametersRequest):
             params = item.parameters
         data: str | bytes | None = None
         if isinstance(item, BodyRequest):
@@ -205,7 +205,7 @@ class HTTPClient:
         try:
             body = response.json()
         except ValueError as e:
-            return request.create_responses(response, error_message=f"Invalid JSON response: {e!s}")
+            return request.create_success_response(response, error_message=f"Invalid JSON response: {e!s}")
 
         error_obj = body.get("error", {})
         is_auto_retryable = False
@@ -213,7 +213,7 @@ class HTTPClient:
             is_auto_retryable = error_obj.get("isAutoRetryable", False)
 
         if 200 <= response.status_code < 300:
-            return request.create_responses(response, body)
+            return request.create_success_response(response, body)
         elif (
             isinstance(request, ItemsRequest)
             and len(request.items) > 1
@@ -226,7 +226,7 @@ class HTTPClient:
                 status_attempts += 1
             splits = request.split(status_attempts=status_attempts)
             if splits[0].tracker and splits[0].tracker.limit_reached():
-                return request.create_responses(response, body, self._get_error_message(body, response.text))
+                return request.create_success_response(response, body, self._get_error_message(body, response.text))
             return splits
         elif request.status_attempt < self._max_retries and (
             response.status_code in self._retry_status_codes or is_auto_retryable
@@ -236,7 +236,7 @@ class HTTPClient:
             return [request]
         else:
             # Permanent failure
-            return request.create_responses(response, body, self._get_error_message(body, response.text))
+            return request.create_success_response(response, body, self._get_error_message(body, response.text))
 
     @staticmethod
     def _get_error_message(body: JsonVal, default: str) -> str:

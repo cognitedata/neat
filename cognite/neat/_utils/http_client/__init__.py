@@ -9,16 +9,11 @@ from ._data_classes import (
     ItemMessage,
     ItemResponse,
     ItemsRequest,
-    MissingItem,
-    ParamRequest,
+    ParametersRequest,
     RequestMessage,
     ResponseMessage,
     SimpleBodyRequest,
-    SuccessItem,
     SuccessResponse,
-    UnexpectedItem,
-    UnknownRequestItem,
-    UnknownResponseItem,
 )
 
 __all__ = [
@@ -32,14 +27,9 @@ __all__ = [
     "ItemMessage",
     "ItemResponse",
     "ItemsRequest",
-    "MissingItem",
-    "ParamRequest",
+    "ParametersRequest",
     "RequestMessage",
     "ResponseMessage",
     "SimpleBodyRequest",
-    "SuccessItem",
     "SuccessResponse",
-    "UnexpectedItem",
-    "UnknownRequestItem",
-    "UnknownResponseItem",
 ]
