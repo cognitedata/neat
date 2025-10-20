@@ -82,8 +82,8 @@ class TestHTTPClient:
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, SuccessResponse)
-        assert response.status_code == 200
-        assert response.body == {"key": "value"}
+        assert response.code == 200
+        assert response.data == b'{"key":"value"}'
         assert rsps.calls[-1].request.url == "https://example.com/api/resource?query=test"
 
     @pytest.mark.usefixtures("disable_gzip")
@@ -91,43 +91,22 @@ class TestHTTPClient:
         rsps.post("https://example.com/api/resource").respond(json={"id": 123, "status": "created"}, status_code=201)
         results = http_client.request(
             SimpleBodyRequest(
-                endpoint_url="https://example.com/api/resource", method="POST", body_content={"name": "new resource"}
+                endpoint_url="https://example.com/api/resource",
+                method="POST",
+                body=json.dumps({"name": "new resource"}),
             )
         )
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, SuccessResponse)
-        assert response.status_code == 201
-        assert response.body == {"id": 123, "status": "created"}
+        assert response.code == 201
+        assert response.data == b'{"id":123,"status":"created"}'
         assert rsps.calls[-1].request.content == json.dumps({"name": "new resource"}).encode()
 
-    @pytest.mark.usefixtures("disable_gzip")
-    @pytest.mark.parametrize(
-        "bad_body,error",
-        [
-            pytest.param({"name": bytes(10)}, "can't be serialized by the JSON encoder", id="bytes value"),
-            pytest.param(
-                {"values": [float("nan")], "other": float("inf")},
-                "Out of range float values are not JSON compliant",
-                id="nan and inf",
-            ),
-        ],
-    )
-    def test_post_request_bad_json(self, bad_body: dict[str, JsonVal], error: str, http_client: HTTPClient) -> None:
-        results = http_client.request(
-            SimpleBodyRequest(
-                endpoint_url="https://example.com/api/resource",
-                method="POST",
-                body_content=bad_body,
-            )
-        )
-        assert len(results) == 1
-        response = results[0]
-        assert isinstance(response, FailedRequestMessage)
-        assert error in response.error
-
     def test_failed_request(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
-        rsps.get("https://example.com/api/resource").respond(json={"error": "bad request"}, status_code=400)
+        rsps.get("https://example.com/api/resource").respond(
+            json={"error": {"code": 400, "message": "bad request"}}, status_code=400
+        )
         results = http_client.request(
             ParametersRequest(
                 endpoint_url="https://example.com/api/resource", method="GET", parameters={"query": "fail"}
@@ -136,8 +115,8 @@ class TestHTTPClient:
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, FailedResponse)
-        assert response.status_code == 400
-        assert response.error == "bad request"
+        assert response.code == 400
+        assert response.error.message == "bad request"
 
     @pytest.mark.usefixtures("disable_gzip")
     def test_retry_then_success(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
@@ -148,14 +127,14 @@ class TestHTTPClient:
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, SuccessResponse)
-        assert response.status_code == 200
-        assert response.body == {"key": "value"}
+        assert response.code == 200
+        assert response.data == b'{"key":"value"}'
 
     def test_retry_exhausted(self, http_client_one_retry: HTTPClient, rsps: respx.MockRouter) -> None:
         client = http_client_one_retry
         for _ in range(2):
             rsps.get("https://example.com/api/resource").respond(
-                json={"error": {"message": "service unavailable"}}, status_code=503
+                json={"error": {"message": "service unavailable", "code": 503}}, status_code=503
             )
         with patch("time.sleep"):  # Patch sleep to speed up the test
             results = client.request_with_retries(
@@ -165,52 +144,47 @@ class TestHTTPClient:
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, FailedResponse)
-        assert response.status_code == 503
-        assert response.error == "service unavailable"
-
-    def test_invalid_json_response(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
-        rsps.get("https://example.com/api/resource").respond(content="not json", status_code=200)
-        results = http_client.request(ParametersRequest(endpoint_url="https://example.com/api/resource", method="GET"))
-        assert len(results) == 1
-        response = results[0]
-        assert isinstance(response, FailedResponse)
-        assert response.status_code == 200
-        assert "Invalid JSON response" in response.error
+        assert response.code == 503
+        assert response.error.message == "service unavailable"
 
     def test_connection_error(self, http_client_one_retry: HTTPClient, rsps: respx.MockRouter) -> None:
         http_client = http_client_one_retry
         rsps.get("http://nonexistent.domain/api/resource").mock(
             side_effect=httpx.ConnectError("Simulated connection error")
         )
-        results = http_client.request_with_retries(
-            ParametersRequest(endpoint_url="http://nonexistent.domain/api/resource", method="GET")
-        )
+        with patch("time.sleep"):  # Patch sleep to speed up the test
+            results = http_client.request_with_retries(
+                ParametersRequest(endpoint_url="http://nonexistent.domain/api/resource", method="GET")
+            )
         response = results[0]
         assert len(results) == 1
         assert isinstance(response, FailedRequestMessage)
-        assert "RequestException after 1 attempts (connect error): Simulated connection error" == response.error
+        assert "RequestException after 1 attempts (connect error): Simulated connection error" == response.message
 
     def test_read_timeout_error(self, http_client_one_retry: HTTPClient, rsps: respx.MockRouter) -> None:
         http_client = http_client_one_retry
         rsps.get("https://example.com/api/resource").mock(side_effect=httpx.ReadTimeout("Simulated read timeout"))
         bad_request = ParametersRequest(endpoint_url="https://example.com/api/resource", method="GET")
-        results = http_client.request_with_retries(bad_request)
+        with patch("time.sleep"):  # Patch sleep to speed up the test
+            results = http_client.request_with_retries(bad_request)
         response = results[0]
         assert len(results) == 1
         assert isinstance(response, FailedRequestMessage)
-        assert "RequestException after 1 attempts (read error): Simulated read timeout" == response.error
+        assert "RequestException after 1 attempts (read error): Simulated read timeout" == response.message
 
     def test_zero_retries(self, client_config: ClientConfig, rsps: respx.MockRouter) -> None:
         client = HTTPClient(client_config, max_retries=0)
-        rsps.get("https://example.com/api/resource").respond(json={"error": "service unavailable"}, status_code=503)
+        rsps.get("https://example.com/api/resource").respond(
+            json={"error": {"message": "service unavailable", "code": 503}}, status_code=503
+        )
         results = client.request_with_retries(
             ParametersRequest(endpoint_url="https://example.com/api/resource", method="GET")
         )
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, FailedResponse)
-        assert response.status_code == 503
-        assert response.error == "service unavailable"
+        assert response.code == 503
+        assert response.error.message == "service unavailable"
         assert len(rsps.calls) == 1
 
     def test_raise_if_already_retied(self, http_client_one_retry: HTTPClient) -> None:
@@ -218,15 +192,6 @@ class TestHTTPClient:
         bad_request = ParametersRequest(endpoint_url="https://example.com/api/resource", method="GET", status_attempt=3)
         with pytest.raises(RuntimeError, match=r"RequestMessage has already been attempted 3 times."):
             http_client.request_with_retries(bad_request)
-
-    def test_error_text(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
-        rsps.get("https://example.com/api/resource").respond(json={"message": "plain_text"}, status_code=401)
-        results = http_client.request(ParametersRequest(endpoint_url="https://example.com/api/resource", method="GET"))
-        assert len(results) == 1
-        response = results[0]
-        assert isinstance(response, FailedResponse)
-        assert response.status_code == 401
-        assert response.error == '{"message":"plain_text"}'
 
     def test_request_alpha(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         rsps.get("https://example.com/api/alpha/endpoint").respond(json={"key": "value"}, status_code=200)
@@ -241,7 +206,7 @@ class TestHTTPClient:
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, SuccessResponse)
-        assert response.status_code == 200
+        assert response.code == 200
         assert rsps.calls[-1].request.headers["cdf-version"] == "alpha"
 
 
@@ -592,6 +557,6 @@ class TestHTTPClientItemRequests:
             assert len(results) == 1
             response = results[0]
             assert isinstance(response, FailedItem)
-            assert response.status_code == 500
+            assert response.code == 500
             assert response.error == "Server error"
             assert len(rsps.calls) == 4  # Retries 3 times
