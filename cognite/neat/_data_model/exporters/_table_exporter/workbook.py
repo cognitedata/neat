@@ -61,8 +61,6 @@ class WorkbookCreator:
         properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
         views = cast(str, TableDMS.model_fields["views"].validation_alias)
         containers = cast(str, TableDMS.model_fields["containers"].validation_alias)
-        enum = cast(str, TableDMS.model_fields["enum"].validation_alias)
-        nodes = cast(str, TableDMS.model_fields["nodes"].validation_alias)
         dropdown_source = "_dropdown_source"
 
     class PropertyColumns:
