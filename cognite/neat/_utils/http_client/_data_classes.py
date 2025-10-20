@@ -67,7 +67,7 @@ class SimpleRequest(RequestMessage):
 
     @classmethod
     def create_success_response(cls, response: httpx.Response) -> Sequence[ResponseMessage]:
-        return [SuccessResponse(status_code=response.status_code, data=response.content)]
+        return [SuccessResponse(code=response.status_code, data=response.content)]
 
     @classmethod
     def create_failure_response(cls, response: httpx.Response) -> Sequence[ResponseMessage]:
