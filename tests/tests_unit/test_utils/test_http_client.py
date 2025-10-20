@@ -17,7 +17,7 @@ from cognite.neat._utils.http_client import (
     HTTPClient,
     ItemsRequest,
     MissingItem,
-    ParamRequest,
+    ParameterRequest,
     SimpleBodyRequest,
     SuccessItem,
     SuccessResponse,
@@ -80,7 +80,9 @@ class TestHTTPClient:
     def test_get_request(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
         rsps.get("https://example.com/api/resource").respond(json={"key": "value"}, status_code=200)
         results = http_client.request(
-            ParamRequest(endpoint_url="https://example.com/api/resource", method="GET", parameters={"query": "test"})
+            ParameterRequest(
+                endpoint_url="https://example.com/api/resource", method="GET", parameters={"query": "test"}
+            )
         )
         assert len(results) == 1
         response = results[0]
@@ -132,7 +134,9 @@ class TestHTTPClient:
     def test_failed_request(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
         rsps.get("https://example.com/api/resource").respond(json={"error": "bad request"}, status_code=400)
         results = http_client.request(
-            ParamRequest(endpoint_url="https://example.com/api/resource", method="GET", parameters={"query": "fail"})
+            ParameterRequest(
+                endpoint_url="https://example.com/api/resource", method="GET", parameters={"query": "fail"}
+            )
         )
         assert len(results) == 1
         response = results[0]
@@ -145,7 +149,7 @@ class TestHTTPClient:
         url = "https://example.com/api/resource"
         rsps.get(url).respond(json={"error": "service unavailable"}, status_code=503)
         rsps.get(url).respond(json={"key": "value"}, status_code=200)
-        results = http_client.request_with_retries(ParamRequest(endpoint_url=url, method="GET"))
+        results = http_client.request_with_retries(ParameterRequest(endpoint_url=url, method="GET"))
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, SuccessResponse)
@@ -160,7 +164,7 @@ class TestHTTPClient:
             )
         with patch("time.sleep"):  # Patch sleep to speed up the test
             results = client.request_with_retries(
-                ParamRequest(endpoint_url="https://example.com/api/resource", method="GET")
+                ParameterRequest(endpoint_url="https://example.com/api/resource", method="GET")
             )
 
         assert len(results) == 1
@@ -171,7 +175,7 @@ class TestHTTPClient:
 
     def test_invalid_json_response(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
         rsps.get("https://example.com/api/resource").respond(content="not json", status_code=200)
-        results = http_client.request(ParamRequest(endpoint_url="https://example.com/api/resource", method="GET"))
+        results = http_client.request(ParameterRequest(endpoint_url="https://example.com/api/resource", method="GET"))
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, FailedResponse)
@@ -184,7 +188,7 @@ class TestHTTPClient:
             side_effect=httpx.ConnectError("Simulated connection error")
         )
         results = http_client.request_with_retries(
-            ParamRequest(endpoint_url="http://nonexistent.domain/api/resource", method="GET")
+            ParameterRequest(endpoint_url="http://nonexistent.domain/api/resource", method="GET")
         )
         response = results[0]
         assert len(results) == 1
@@ -194,7 +198,7 @@ class TestHTTPClient:
     def test_read_timeout_error(self, http_client_one_retry: HTTPClient, rsps: respx.MockRouter) -> None:
         http_client = http_client_one_retry
         rsps.get("https://example.com/api/resource").mock(side_effect=httpx.ReadTimeout("Simulated read timeout"))
-        bad_request = ParamRequest(endpoint_url="https://example.com/api/resource", method="GET")
+        bad_request = ParameterRequest(endpoint_url="https://example.com/api/resource", method="GET")
         results = http_client.request_with_retries(bad_request)
         response = results[0]
         assert len(results) == 1
@@ -205,7 +209,7 @@ class TestHTTPClient:
         client = HTTPClient(client_config, max_retries=0)
         rsps.get("https://example.com/api/resource").respond(json={"error": "service unavailable"}, status_code=503)
         results = client.request_with_retries(
-            ParamRequest(endpoint_url="https://example.com/api/resource", method="GET")
+            ParameterRequest(endpoint_url="https://example.com/api/resource", method="GET")
         )
         assert len(results) == 1
         response = results[0]
@@ -216,13 +220,13 @@ class TestHTTPClient:
 
     def test_raise_if_already_retied(self, http_client_one_retry: HTTPClient) -> None:
         http_client = http_client_one_retry
-        bad_request = ParamRequest(endpoint_url="https://example.com/api/resource", method="GET", status_attempt=3)
+        bad_request = ParameterRequest(endpoint_url="https://example.com/api/resource", method="GET", status_attempt=3)
         with pytest.raises(RuntimeError, match=r"RequestMessage has already been attempted 3 times."):
             http_client.request_with_retries(bad_request)
 
     def test_error_text(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         rsps.get("https://example.com/api/resource").respond(json={"message": "plain_text"}, status_code=401)
-        results = http_client.request(ParamRequest(endpoint_url="https://example.com/api/resource", method="GET"))
+        results = http_client.request(ParameterRequest(endpoint_url="https://example.com/api/resource", method="GET"))
         assert len(results) == 1
         response = results[0]
         assert isinstance(response, FailedResponse)
@@ -232,7 +236,7 @@ class TestHTTPClient:
     def test_request_alpha(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         rsps.get("https://example.com/api/alpha/endpoint").respond(json={"key": "value"}, status_code=200)
         results = http_client.request(
-            ParamRequest(
+            ParameterRequest(
                 endpoint_url="https://example.com/api/alpha/endpoint",
                 method="GET",
                 parameters={"query": "test"},
