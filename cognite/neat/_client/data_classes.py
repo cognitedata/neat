@@ -1,6 +1,9 @@
 from typing import Generic, TypeVar
+
 from pydantic import BaseModel, Field, JsonValue
-T = TypeVar('T', bound=BaseModel)
+
+T = TypeVar("T", bound=BaseModel)
+
 
 class PagedResponse(BaseModel, Generic[T]):
     items: list[T]
