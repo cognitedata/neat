@@ -1,8 +1,9 @@
 from collections.abc import Mapping
-from typing import Annotated, cast
+from typing import Annotated, cast, get_args
 
 from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
 from pydantic.alias_generators import to_camel
+from pydantic.fields import FieldInfo
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
@@ -116,6 +117,18 @@ class TableDMS(TableObj):
             # We are case-insensitive on the table names.
             return {title_case(k): v for k, v in data.items()}
         return data
+
+    @classmethod
+    def get_required_headers(cls, field_id: str, field_: FieldInfo) -> list[str]:
+        if field_id not in cls.model_fields.keys():
+            raise KeyError(f"Invalid field id: {field_id}")
+        return [
+            # We know all fields has validation_alias because of the alias_generator in TableDMS
+            cast(str, sheet_field.validation_alias)
+            # All the fields in the sheet's model are lists.
+            for sheet_field in get_args(field_.annotation)[0].model_fields.values()
+            if sheet_field.is_required()
+        ]
 
 
 DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {

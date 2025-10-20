@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import ClassVar, cast
 
 import yaml
+from openpyxl import load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
 from pydantic import ValidationError
 
 from cognite.neat._data_model.importers._base import DMSImporter
@@ -12,12 +14,12 @@ from cognite.neat._data_model.models.dms import (
 from cognite.neat._exceptions import DataModelImportError
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat._utils.useful_types import DataModelTableType
+from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 from cognite.neat._utils.validation import as_json_path, humanize_validation_error
 
 from .data_classes import MetadataValue, TableDMS
 from .reader import DMSTableReader
-from .source import TableSource
+from .source import SpreadsheetReadContext, TableSource
 
 
 class DMSTableImporter(DMSImporter):
@@ -107,8 +109,63 @@ class DMSTableImporter(DMSImporter):
     @classmethod
     def from_yaml(cls, yaml_file: Path) -> "DMSTableImporter":
         """Create a DMSTableImporter from a YAML file."""
-        cwd = Path.cwd()
-        source = yaml_file
-        if yaml_file.is_relative_to(cwd):
-            source = yaml_file.relative_to(cwd)
+        source = cls._display_name(yaml_file)
         return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
+
+    @classmethod
+    def _display_name(cls, filepath: Path) -> Path:
+        """Get a display-friendly version of the file path."""
+        cwd = Path.cwd()
+        source = filepath
+        if filepath.is_relative_to(cwd):
+            source = filepath.relative_to(cwd)
+        return source
+
+    @classmethod
+    def from_excel(cls, excel_file: Path) -> "DMSTableImporter":
+        """Create a DMSTableImporter from an Excel file."""
+        tables: DataModelTableType = {}
+        source = TableSource(cls._display_name(excel_file).as_posix())
+        workbook = load_workbook(excel_file, read_only=True, data_only=True, rich_text=False)
+        try:
+            for field_id, field_ in TableDMS.model_fields.items():
+                sheet_name = cast(str, field_.validation_alias)
+                if sheet_name not in workbook.sheetnames:
+                    continue
+                required_headers = TableDMS.get_required_headers(field_id, field_)
+                sheet = workbook[sheet_name]
+                context = SpreadsheetReadContext()
+                table_rows = cls._read_rows(sheet, required_headers, context)
+                tables[sheet_name] = table_rows
+                source.table_read[sheet_name] = context
+            return cls(tables, source)
+        finally:
+            workbook.close()
+
+    @classmethod
+    def _read_rows(
+        cls, sheet: Worksheet, required_headers: list[str], context: SpreadsheetReadContext
+    ) -> list[dict[str, CellValueType]]:
+        table_rows: list[dict[str, CellValueType]] = []
+        # Metadata sheet is just a key-value pair of the first two columns.
+        # For other sheets, we need to find the header row first.
+        headers: list[str] = [] if sheet.title != "Metadata" else required_headers
+        for row_no, row in enumerate(sheet.iter_rows(values_only=True)):
+            if headers:
+                # We have found the header row, read the data rows.
+                if all(cell is None for cell in row):
+                    context.empty_rows.append(row_no)
+                else:
+                    record = dict(zip(headers, row, strict=False))
+                    # MyPy complains as it thinks DataTableFormula | ArrayFormula could be cell values,
+                    # but as we used values_only=True, this is not the case.
+                    table_rows.append(record)  # type: ignore[arg-type]
+            else:
+                # Look for the header row.
+                row_values = [str(cell) for cell in row]
+                if set(row_values).intersection(required_headers):
+                    headers = row_values
+                    context.header_row = row_no
+                else:
+                    context.skipped_rows.append(row_no)
+        return table_rows
