@@ -1,5 +1,6 @@
 import itertools
 from collections.abc import Mapping, Set
+from dataclasses import dataclass
 from functools import lru_cache
 from typing import Literal, cast
 
@@ -38,6 +39,21 @@ MAIN_HEADERS_BY_SHEET_NAME: Mapping[str, str] = {
 }
 MAX_COLUMN_WIDTH = 70.0
 HEADER_ROWS = 2
+
+
+@dataclass
+class WorkbookOptions:
+    adjust_column_width: bool = True
+    style_headers: bool = True
+    row_band_highlighting: bool = True
+    separate_view_properties: bool = False
+    add_dropdowns: bool = True
+    dropdown_implements: Set[Literal["main", "interface", "configuration", "annotation", "3D"]] = frozenset(
+        {"main", "interface"}
+    )
+    max_views: int = 100
+    max_containers: int = 100
+    max_properties_per_view: int = 100
 
 
 class WorkbookCreator:
@@ -87,29 +103,17 @@ class WorkbookCreator:
         immutable = 5
         used_for = 6
 
-    def __init__(
-        self,
-        adjust_column_width: bool = True,
-        style_headers: bool = True,
-        row_band_highlighting: bool = True,
-        separate_view_properties: bool = True,
-        add_dropdowns: bool = True,
-        dropdown_implements: Set[Literal["main", "interface", "configuration", "annotation", "3D"]] = frozenset(
-            {"main", "interface"}
-        ),
-        max_views: int = 100,
-        max_containers: int = 100,
-        max_properties_per_view: int = 100,
-    ) -> None:
-        self._adjust_column_width = adjust_column_width
-        self._style_headers = style_headers
-        self._row_band_highlighting = row_band_highlighting
-        self._separate_view_properties = separate_view_properties
-        self._add_dropdowns = add_dropdowns
-        self._dropdown_implements = dropdown_implements
-        self._max_views = max_views
-        self._max_containers = max_containers
-        self._max_properties_per_view = max_properties_per_view
+    def __init__(self, options: WorkbookOptions | None = None) -> None:
+        options = options or WorkbookOptions()
+        self._adjust_column_width = options.adjust_column_width
+        self._style_headers = options.style_headers
+        self._row_band_highlighting = options.row_band_highlighting
+        self._separate_view_properties = options.separate_view_properties
+        self._add_dropdowns = options.add_dropdowns
+        self._dropdown_implements = options.dropdown_implements
+        self._max_views = options.max_views
+        self._max_containers = options.max_containers
+        self._max_properties_per_view = options.max_properties_per_view
 
     def create_workbook(self, tables: DataModelTableType) -> Workbook:
         """Creates an Excel workbook from the data model.
