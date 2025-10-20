@@ -8,6 +8,6 @@ from .data_model_api import DataModelsAPI
 
 class NeatClient:
     def __init__(self, cognite_client_or_config: CogniteClient | ClientConfig):
-        config = NeatClientConfig(cognite_client_or_config)
-        http_client = HTTPClient(config)
-        self.data_models = DataModelsAPI(config, http_client)
+        self.config = NeatClientConfig(cognite_client_or_config)
+        http_client = HTTPClient(self.config)
+        self.data_models = DataModelsAPI(self.config, http_client)

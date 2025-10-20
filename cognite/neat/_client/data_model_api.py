@@ -14,6 +14,7 @@ class DataModelsAPI(NeatAPI):
         include_global: bool = False,
         limit: int = 10,
     ) -> list[DataModelResponse]:
+        """List data models in CDF Project."""
         if limit > 1000:
             raise ValueError("Pagination is not (yet) supported for listing data models. The maximum limit is 1000.")
         parameters: dict[str, PrimitiveType] = {
