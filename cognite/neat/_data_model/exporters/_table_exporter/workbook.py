@@ -136,7 +136,7 @@ class WorkbookCreator:
             if table:
                 headers = list(table[0].keys())
             else:
-                headers = TableDMS.get_sheet_headers_by_alias(sheet_name)
+                headers = TableDMS.get_sheet_column_by_alias(sheet_name)
             self._write_table_to_worksheet(worksheet, table, MAIN_HEADERS_BY_SHEET_NAME[sheet_name], headers)
             for i, column in enumerate(headers, 1):
                 index_by_sheet_name_column[(sheet_name, column)] = i
