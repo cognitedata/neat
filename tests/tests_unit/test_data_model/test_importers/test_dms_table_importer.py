@@ -1399,27 +1399,9 @@ class TestExcelFormat:
         expected_tables: DataModelTableType,
         expected_context: TableSource,
     ) -> None:
-        excel_file_name = expected_context.source
-        excel_file = MagicMock(spec=Path)
-        excel_file.relative_to.return_value = Path(excel_file_name)
-        workbook = MagicMock(spec=Workbook)
-        excel_file.name = excel_file_name
-        load_workbook_mock = MagicMock(return_value=workbook)
+        excel_file = self._create_excel_file_mock(expected_context.source)
+        load_workbook_mock = self._create_load_workbook_mock(excel_tables)
         with patch(f"{DMSTableImporter.__module__}.load_workbook", load_workbook_mock):
-            # Mock the sheets in the workbook
-            workbook.sheetnames = list(excel_tables.keys())
-            sheet_by_name: dict[str, MagicMock] = {}
-            for sheet_name, rows in excel_tables.items():
-                sheet = MagicMock(spec=Worksheet)
-                sheet.title = sheet_name
-                sheet.iter_rows.return_value = rows
-                sheet_by_name[sheet_name] = sheet
-
-            def get_item(name: str) -> MagicMock:
-                return sheet_by_name[name]
-
-            workbook.__getitem__.side_effect = get_item
-
             importer = DMSTableImporter.from_excel(excel_file)
 
         assert importer._table == expected_tables
@@ -1432,27 +1414,9 @@ class TestExcelFormat:
         expected_tables: DataModelTableType,
         expected_context: TableSource,
     ) -> None:
-        excel_file_name = expected_context.source
-        excel_file = MagicMock(spec=Path)
-        excel_file.relative_to.return_value = Path(excel_file_name)
-        workbook = MagicMock(spec=Workbook)
-        excel_file.name = excel_file_name
-        load_workbook_mock = MagicMock(return_value=workbook)
+        excel_file = self._create_excel_file_mock(expected_context.source)
+        load_workbook_mock = self._create_load_workbook_mock(excel_tables)
         with patch(f"{DMSTableImporter.__module__}.load_workbook", load_workbook_mock):
-            # Mock the sheets in the workbook
-            workbook.sheetnames = list(excel_tables.keys())
-            sheet_by_name: dict[str, MagicMock] = {}
-            for sheet_name, rows in excel_tables.items():
-                sheet = MagicMock(spec=Worksheet)
-                sheet.title = sheet_name
-                sheet.iter_rows.return_value = rows
-                sheet_by_name[sheet_name] = sheet
-
-            def get_item(name: str) -> MagicMock:
-                return sheet_by_name[name]
-
-            workbook.__getitem__.side_effect = get_item
-
             importer = DMSTableImporter.from_excel(excel_file)
             data_model = importer.to_data_model()
 
@@ -1462,6 +1426,32 @@ class TestExcelFormat:
             read_tables = self._read_workbook(created_workbook)
             read_tables.pop(WorkbookCreator.Sheets.dropdown_source)
             assert excel_tables == read_tables
+
+    @staticmethod
+    def _create_load_workbook_mock(excel_tables: dict[str, list[list[CellValueType]]]) -> MagicMock:
+        workbook = MagicMock(spec=Workbook)
+        # Mock the sheets in the workbook
+        workbook.sheetnames = list(excel_tables.keys())
+        sheet_by_name: dict[str, MagicMock] = {}
+        for sheet_name, rows in excel_tables.items():
+            sheet = MagicMock(spec=Worksheet)
+            sheet.title = sheet_name
+            sheet.iter_rows.return_value = rows
+            sheet_by_name[sheet_name] = sheet
+
+        def get_item(name: str) -> MagicMock:
+            return sheet_by_name[name]
+
+        workbook.__getitem__.side_effect = get_item
+        load_workbook_mock = MagicMock(return_value=workbook)
+        return load_workbook_mock
+
+    @staticmethod
+    def _create_excel_file_mock(excel_file_name: str) -> MagicMock:
+        excel_file = MagicMock(spec=Path)
+        excel_file.relative_to.return_value = Path(excel_file_name)
+        excel_file.name = excel_file_name
+        return excel_file
 
     @staticmethod
     def _read_workbook(workbook: Workbook) -> dict[str, list[list[CellValueType]]]:
