@@ -123,7 +123,6 @@ class SimpleBodyRequest(SimpleRequest, BodyRequest):
     def body(self) -> dict[str, JsonVal]:
         return self.body_content
 
-
 @dataclass
 class ItemMessage:
     """Base class for message related to a specific item"""
