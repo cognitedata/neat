@@ -1,10 +1,13 @@
 import itertools
 from collections.abc import Mapping, Set
+from functools import lru_cache
 from typing import Literal, cast
 
 from openpyxl import Workbook
 from openpyxl.cell import MergedCell
 from openpyxl.styles import Border, Font, PatternFill, Side
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._data_model._constants import (
@@ -34,7 +37,6 @@ MAIN_HEADERS_BY_SHEET_NAME: Mapping[str, str] = {
     "Enum": "Definition of Enum Collections",
 }
 MAX_COLUMN_WIDTH = 70.0
-DROPDOWN_SOURCE_SHEET_NAME = "_dropdown_source"
 HEADER_ROWS = 2
 
 
@@ -43,10 +45,11 @@ class WorkbookCreator:
     class Sheets:
         metadata = cast(str, TableDMS.model_fields["metadata"].validation_alias)
         properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
-        view = cast(str, TableDMS.model_fields["views"].validation_alias)
+        views = cast(str, TableDMS.model_fields["views"].validation_alias)
         containers = cast(str, TableDMS.model_fields["containers"].validation_alias)
         enum = cast(str, TableDMS.model_fields["enum"].validation_alias)
         nodes = cast(str, TableDMS.model_fields["nodes"].validation_alias)
+        dropdown_source = "_dropdown_source"
 
     class PropertyColumns:
         view = cast(str, DMSProperty.model_fields["view"].validation_alias)
@@ -73,6 +76,7 @@ class WorkbookCreator:
     class ViewColumns:
         view = cast(str, DMSView.model_fields["view"].validation_alias)
         implements = cast(str, DMSView.model_fields["implements"].validation_alias)
+        in_model = cast(str, DMSView.model_fields["in_model"].validation_alias)
 
     class DropdownSourceColumns:
         view = 1
@@ -115,21 +119,31 @@ class WorkbookCreator:
         # Remove default sheet named "Sheet"
         workbook.remove(workbook["Sheet"])
 
+        index_by_sheet_name_column: dict[tuple[str, str], int] = {}
         for sheet_name, table in tables.items():
             if not table and sheet_name not in TableDMS.required_sheets():
                 continue
             worksheet = workbook.create_sheet(title=sheet_name)
             if sheet_name == self.Sheets.metadata:
                 self._write_metadata_to_worksheet(worksheet, table)
+                continue
+            if table:
+                headers = list(table[0].keys())
             else:
-                self._write_table_to_worksheet(worksheet, table, MAIN_HEADERS_BY_SHEET_NAME[sheet_name])
+                raise NotImplementedError()
+            self._write_table_to_worksheet(worksheet, table, MAIN_HEADERS_BY_SHEET_NAME[sheet_name], headers)
+            for i, column in enumerate(headers, 1):
+                index_by_sheet_name_column[(sheet_name, column)] = i
+
             if self._adjust_column_width:
                 self._adjust_column_widths(worksheet)
+
         if self._add_dropdowns:
-            self._add_drop_downs(workbook)
+            self._add_drop_downs(workbook, index_by_sheet_name_column)
         return workbook
 
-    def _write_metadata_to_worksheet(self, worksheet: Worksheet, table: list[dict[str, CellValueType]]) -> None:
+    @staticmethod
+    def _write_metadata_to_worksheet(worksheet: Worksheet, table: list[dict[str, CellValueType]]) -> None:
         """Writes Metadata to the given worksheet.
 
         Metadata is written as key-value pairs without headers.
@@ -138,9 +152,8 @@ class WorkbookCreator:
             worksheet.append(list(row.values()))
 
     def _write_table_to_worksheet(
-        self, worksheet: Worksheet, table: list[dict[str, CellValueType]], main_header: str
+        self, worksheet: Worksheet, table: list[dict[str, CellValueType]], main_header: str, headers: list[str]
     ) -> None:
-        headers = list(table[0].keys())
         worksheet.append([main_header] + [""] * (len(headers) - 1))
         if self._style_headers:
             worksheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=max(3, len(headers)))
@@ -210,7 +223,7 @@ class WorkbookCreator:
             )
         return None
 
-    def _add_drop_downs(self, workbook: Workbook) -> None:
+    def _add_drop_downs(self, workbook: Workbook, index_by_sheet_name_column: dict[tuple[str, str], int]) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry
 
         Args:
@@ -225,6 +238,16 @@ class WorkbookCreator:
 
         self._create_dropdown_source_sheet(workbook)
 
+        sheet = workbook[self.Sheets.views]
+        letter = get_column_letter(self.DropdownSourceColumns.in_model)
+        validation_range = 3  # True, False, None
+        data_validation = DataValidation(
+            type="list", formula1=f"={self.Sheets.dropdown_source}!${letter}$1:${letter}${validation_range}"
+        )
+        sheet.add_data_validation(data_validation)
+        target_letter = get_column_letter(index_by_sheet_name_column[(self.Sheets.views, self.ViewColumns.in_model)])
+        data_validation.add(f"{target_letter}{HEADER_ROWS + 1}:{target_letter}{HEADER_ROWS + self._max_views}")
+
     def _create_dropdown_source_sheet(self, workbook: Workbook) -> None:
         """This methods creates a hidden sheet in the workbook which contains
         the source data for the drop-down menus.
@@ -234,7 +257,7 @@ class WorkbookCreator:
 
         """
 
-        dropdown_sheet = workbook.create_sheet(title=DROPDOWN_SOURCE_SHEET_NAME)
+        dropdown_sheet = workbook.create_sheet(title=self.Sheets.dropdown_source)
 
         # skip types which require special handling (enum) or are surpassed by CDM (CDF references)
         exclude = {
@@ -263,7 +286,7 @@ class WorkbookCreator:
         core_concept_count = len(cognite_concepts)
         for i in range(1, self._max_views + 1):
             source_row = i + HEADER_ROWS
-            view_reference = f'=IF(ISBLANK({self.Sheets.view}!A{source_row}), "", {self.Sheets.view}!A{source_row})'
+            view_reference = f'=IF(ISBLANK({self.Sheets.views}!A{source_row}), "", {self.Sheets.views}!A{source_row})'
             dropdown_sheet.cell(row=i, column=self.DropdownSourceColumns.view, value=view_reference)
             dropdown_sheet.cell(
                 row=i + core_concept_count, column=self.DropdownSourceColumns.implements, value=view_reference
@@ -289,16 +312,27 @@ class WorkbookCreator:
 
     def _get_cognite_concepts(self) -> list[str]:
         """Gets the cognite concepts based on the dropdown_implements setting."""
-        cognite_concepts: list[str] = []
-        if self._dropdown_implements:
-            if "main" in self._dropdown_implements:
-                cognite_concepts.extend(COGNITE_CONCEPTS_MAIN)
-            if "interface" in self._dropdown_implements:
-                cognite_concepts.extend(COGNITE_CONCEPTS_INTERFACES)
-            if "configuration" in self._dropdown_implements:
-                cognite_concepts.extend(COGNITE_CONCEPTS_CONFIGURATIONS)
-            if "annotation" in self._dropdown_implements:
-                cognite_concepts.extend(COGNITE_CONCEPTS_ANNOTATIONS)
-            if "3D" in self._dropdown_implements:
-                cognite_concepts.extend(COGNITE_CONCEPTS_3D)
-        return cognite_concepts
+        return _get_cognite_concepts(self._dropdown_implements)
+
+
+@lru_cache(maxsize=1)
+def _get_cognite_concepts(
+    dropdown_implements: Set[Literal["main", "interface", "configuration", "annotation", "3D"]],
+) -> list[str]:
+    """Gets the cognite concepts based on the dropdown_implements setting.
+
+    This is moved outside of the class to enable caching.
+    """
+    cognite_concepts: list[str] = []
+
+    if "main" in dropdown_implements:
+        cognite_concepts.extend(COGNITE_CONCEPTS_MAIN)
+    if "interface" in dropdown_implements:
+        cognite_concepts.extend(COGNITE_CONCEPTS_INTERFACES)
+    if "configuration" in dropdown_implements:
+        cognite_concepts.extend(COGNITE_CONCEPTS_CONFIGURATIONS)
+    if "annotation" in dropdown_implements:
+        cognite_concepts.extend(COGNITE_CONCEPTS_ANNOTATIONS)
+    if "3D" in dropdown_implements:
+        cognite_concepts.extend(COGNITE_CONCEPTS_3D)
+    return cognite_concepts
