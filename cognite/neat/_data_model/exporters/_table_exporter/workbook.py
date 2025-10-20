@@ -210,10 +210,7 @@ class WorkbookCreator:
             )
         return None
 
-    def _add_drop_downs(
-        self,
-        workbook: Workbook,
-    ) -> None:
+    def _add_drop_downs(self, workbook: Workbook) -> None:
         """Adds drop down menus to specific columns for fast and accurate data entry
 
         Args:
@@ -224,11 +221,6 @@ class WorkbookCreator:
             different column leads to unexpected behavior when the openpyxl workbook is exported
             as and Excel file. Probably, the validation is not copied to the new column,
             but instead reference to the data validation object is added.
-
-        !!! note "Why 100*100 rows?"
-            This is due to the fact that we need to add drop down menus for all properties
-            in the sheet. The maximum number of properties per view/concept is 100. So considering
-            maximum number of views/concepts is 100, we need to add 100*100 rows.
         """
 
         self._create_dropdown_source_sheet(workbook)
