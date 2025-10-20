@@ -41,6 +41,20 @@ HEADER_ROWS = 2
 
 
 class WorkbookCreator:
+    # skip types which require special handling (enum) or are surpassed by CDM (CDF references)
+    DROPDOWN_DMS_TYPE_EXCLUDE = frozenset(
+        {
+            # MyPy does not understand that model_fields is in all pydantic classes.
+            prop.model_fields["type"].default  # type: ignore[attr-defined]
+            for prop in [
+                EnumProperty,
+                TimeseriesCDFExternalIdReference,
+                SequenceCDFExternalIdReference,
+                FileCDFExternalIdReference,
+            ]
+        }
+    )
+
     # The following classes are used to refer to sheets and columns when creating the workbook.
     class Sheets:
         metadata = cast(str, TableDMS.model_fields["metadata"].validation_alias)
@@ -53,21 +67,9 @@ class WorkbookCreator:
 
     class PropertyColumns:
         view = cast(str, DMSProperty.model_fields["view"].validation_alias)
-        view_property = cast(str, DMSProperty.model_fields["view_property"].validation_alias)
-        connection = cast(str, DMSProperty.model_fields["connection"].validation_alias)
         value_type = cast(str, DMSProperty.model_fields["value_type"].validation_alias)
-        min_count = cast(str, DMSProperty.model_fields["min_count"].validation_alias)
-        max_count = cast(str, DMSProperty.model_fields["max_count"].validation_alias)
-        default = cast(str, DMSProperty.model_fields["default"].validation_alias)
-        auto_increment = cast(str, DMSProperty.model_fields["auto_increment"].validation_alias)
+        immutable = cast(str, DMSProperty.model_fields["immutable"].validation_alias)
         container = cast(str, DMSProperty.model_fields["container"].validation_alias)
-        container_property = cast(str, DMSProperty.model_fields["container_property"].validation_alias)
-        container_property_name = cast(str, DMSProperty.model_fields["container_property_name"].validation_alias)
-        container_property_description = cast(
-            str, DMSProperty.model_fields["container_property_description"].validation_alias
-        )
-        index = cast(str, DMSProperty.model_fields["index"].validation_alias)
-        constraint = cast(str, DMSProperty.model_fields["constraint"].validation_alias)
 
     class ContainerColumns:
         container = cast(str, DMSContainer.model_fields["container"].validation_alias)
@@ -99,6 +101,7 @@ class WorkbookCreator:
         ),
         max_views: int = 100,
         max_containers: int = 100,
+        max_properties_per_view: int = 100,
     ) -> None:
         self._adjust_column_width = adjust_column_width
         self._style_headers = style_headers
@@ -108,6 +111,7 @@ class WorkbookCreator:
         self._dropdown_implements = dropdown_implements
         self._max_views = max_views
         self._max_containers = max_containers
+        self._max_properties_per_view = max_properties_per_view
 
     def create_workbook(self, tables: DataModelTableType) -> Workbook:
         """Creates an Excel workbook from the data model.
@@ -228,25 +232,84 @@ class WorkbookCreator:
 
         Args:
             workbook: Workbook representation of the Excel file.
-
-        !!! note "Why defining individual data validation per desired column?
-            This is due to the internal working of openpyxl. Adding same validation to
-            different column leads to unexpected behavior when the openpyxl workbook is exported
-            as and Excel file. Probably, the validation is not copied to the new column,
-            but instead reference to the data validation object is added.
+            index_by_sheet_name_column: A mapping of (sheet name, column name) to column index.
         """
 
         self._create_dropdown_source_sheet(workbook)
 
-        sheet = workbook[self.Sheets.views]
-        letter = get_column_letter(self.DropdownSourceColumns.in_model)
-        validation_range = 3  # True, False, None
+        property_sheet = workbook[self.Sheets.properties]
+        self._add_validation(
+            property_sheet,
+            self.DropdownSourceColumns.view,
+            self._max_views,
+            index_by_sheet_name_column[(self.Sheets.properties, self.PropertyColumns.view)],
+            self._max_views,
+        )
+        self._add_validation(
+            property_sheet,
+            self.DropdownSourceColumns.value_type,
+            len(DMS_DATA_TYPES) - len(self.DROPDOWN_DMS_TYPE_EXCLUDE) + self._max_views,
+            index_by_sheet_name_column[(self.Sheets.properties, self.PropertyColumns.value_type)],
+            self._max_views * self._max_properties_per_view,
+        )
+        self._add_validation(
+            property_sheet,
+            self.DropdownSourceColumns.immutable,
+            2,  # True, False
+            index_by_sheet_name_column[(self.Sheets.properties, self.PropertyColumns.immutable)],
+            self._max_views * self._max_properties_per_view,
+        )
+        self._add_validation(
+            property_sheet,
+            self.DropdownSourceColumns.container,
+            self._max_containers,
+            index_by_sheet_name_column[(self.Sheets.properties, self.PropertyColumns.container)],
+            self._max_views * self._max_properties_per_view,
+        )
+
+        view_sheet = workbook[self.Sheets.views]
+        self._add_validation(
+            view_sheet,
+            self.DropdownSourceColumns.implements,
+            self._max_views + len(self._get_cognite_concepts()),
+            index_by_sheet_name_column[(self.Sheets.views, self.ViewColumns.implements)],
+            self._max_views,
+        )
+        self._add_validation(
+            view_sheet,
+            self.DropdownSourceColumns.in_model,
+            3,  # True, False, None
+            index_by_sheet_name_column[(self.Sheets.views, self.ViewColumns.in_model)],
+            self._max_views,
+        )
+        container_sheet = workbook[self.Sheets.containers]
+        self._add_validation(
+            container_sheet,
+            self.DropdownSourceColumns.used_for,
+            3,  # node, edge, all
+            index_by_sheet_name_column[(self.Sheets.containers, self.ContainerColumns.used_for)],
+            self._max_containers,
+        )
+
+    def _add_validation(
+        self, sheet: Worksheet, column_index: int, row_range: int, sheet_column_index: int, sheet_row_range: int
+    ) -> None:
+        """Adds data validation to a specific column in a sheet.
+
+        Args:
+            sheet: The worksheet to add the data validation to.
+            column_index: The column index in the dropdown source sheet to use as the source for the drop-down.
+            row_range: The number of rows in the dropdown source sheet to use as the source for the drop-down.
+            sheet_column_index: The column index in the target sheet to add the data validation to.
+            sheet_row_range: The number of rows in the target sheet to add the data validation to.
+        """
+        letter = get_column_letter(column_index)
         data_validation = DataValidation(
-            type="list", formula1=f"={self.Sheets.dropdown_source}!${letter}$1:${letter}${validation_range}"
+            type="list", formula1=f"={self.Sheets.dropdown_source}!${letter}$1:${letter}${row_range}"
         )
         sheet.add_data_validation(data_validation)
-        target_letter = get_column_letter(index_by_sheet_name_column[(self.Sheets.views, self.ViewColumns.in_model)])
-        data_validation.add(f"{target_letter}{HEADER_ROWS + 1}:{target_letter}{HEADER_ROWS + self._max_views}")
+        target_letter = get_column_letter(sheet_column_index)
+        data_validation.add(f"{target_letter}{HEADER_ROWS + 1}:{target_letter}{HEADER_ROWS + sheet_row_range}")
 
     def _create_dropdown_source_sheet(self, workbook: Workbook) -> None:
         """This methods creates a hidden sheet in the workbook which contains
@@ -256,20 +319,8 @@ class WorkbookCreator:
             workbook: Workbook representation of the Excel file.
 
         """
-
         dropdown_sheet = workbook.create_sheet(title=self.Sheets.dropdown_source)
-
-        # skip types which require special handling (enum) or are surpassed by CDM (CDF references)
-        exclude = {
-            # MyPy does not understand that model_fields is in all pydantic classes.
-            prop.model_fields["type"].default  # type: ignore[attr-defined]
-            for prop in [
-                EnumProperty,
-                TimeseriesCDFExternalIdReference,
-                SequenceCDFExternalIdReference,
-                FileCDFExternalIdReference,
-            ]
-        }
+        exclude = self.DROPDOWN_DMS_TYPE_EXCLUDE
         for no, dms_type in enumerate([type for type in DMS_DATA_TYPES.keys() if type not in exclude], 1):
             dropdown_sheet.cell(row=no, column=self.DropdownSourceColumns.value_type, value=dms_type)
 
