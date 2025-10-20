@@ -13,12 +13,12 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._data_model._constants import (
     CDF_CDM_SPACE,
+    CDF_CDM_VERSION,
     COGNITE_CONCEPTS_3D,
     COGNITE_CONCEPTS_ANNOTATIONS,
     COGNITE_CONCEPTS_CONFIGURATIONS,
     COGNITE_CONCEPTS_INTERFACES,
     COGNITE_CONCEPTS_MAIN,
-    CDF_CORE_v1,
 )
 from cognite.neat._data_model.importers._table_importer.data_classes import DMSContainer, DMSProperty, DMSView, TableDMS
 from cognite.neat._data_model.models.dms import (
@@ -91,7 +91,8 @@ class WorkbookCreator:
         }
     )
 
-    # The following classes are used to refer to sheets and columns when creating the workbook.
+    # These classer are used to refer to sheets that needs to be explicitly checked for in the
+    # workbook creation.
     class Sheets:
         metadata = cast(str, TableDMS.model_fields["metadata"].validation_alias)
         properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
@@ -99,6 +100,8 @@ class WorkbookCreator:
         containers = cast(str, TableDMS.model_fields["containers"].validation_alias)
         dropdown_source = "_dropdown_source"
 
+    # The following classes are used to refer to sheets and columns that are used
+    # in dropdown creation.
     class PropertyColumns:
         view = cast(str, DMSProperty.model_fields["view"].validation_alias)
         value_type = cast(str, DMSProperty.model_fields["value_type"].validation_alias)
@@ -352,7 +355,7 @@ class WorkbookCreator:
             dropdown_sheet.cell(
                 row=i,
                 column=self.DropdownSourceColumns.implements,
-                value=f"{CDF_CDM_SPACE}:{concept}(version={CDF_CORE_v1})",
+                value=f"{CDF_CDM_SPACE}:{concept}(version={CDF_CDM_VERSION})",
             )
 
         dms_type_count = len(DMS_DATA_TYPES) - len(exclude)

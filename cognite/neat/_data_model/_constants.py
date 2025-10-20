@@ -3,7 +3,7 @@ from ._identifiers import NameSpace
 XML_SCHEMA_NAMESPACE = NameSpace("http://www.w3.org/2001/XMLSchema#")
 
 CDF_CDM_SPACE = "cdf_cdm"
-CDF_CORE_v1 = "v1"
+CDF_CDM_VERSION = "v1"
 
 COGNITE_CONCEPTS_MAIN = (
     "CogniteAsset",
