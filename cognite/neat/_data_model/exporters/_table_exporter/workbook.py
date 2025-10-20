@@ -154,11 +154,11 @@ class WorkbookCreator:
                 self._write_metadata_to_worksheet(worksheet, table)
                 continue
             if table:
-                headers = list(table[0].keys())
+                column_headers = list(table[0].keys())
             else:
-                headers = TableDMS.get_sheet_column_by_alias(sheet_name)
-            self._write_table_to_worksheet(worksheet, table, MAIN_HEADERS_BY_SHEET_NAME[sheet_name], headers)
-            for i, column in enumerate(headers, 1):
+                column_headers = TableDMS.get_sheet_column_by_name(sheet_name, column_type="all")
+            self._write_table_to_worksheet(worksheet, table, MAIN_HEADERS_BY_SHEET_NAME[sheet_name], column_headers)
+            for i, column in enumerate(column_headers, 1):
                 index_by_sheet_name_column[(sheet_name, column)] = i
 
             if self._adjust_column_width:
@@ -178,24 +178,24 @@ class WorkbookCreator:
             worksheet.append(list(row.values()))
 
     def _write_table_to_worksheet(
-        self, worksheet: Worksheet, table: list[dict[str, CellValueType]], main_header: str, headers: list[str]
+        self, worksheet: Worksheet, table: list[dict[str, CellValueType]], main_header: str, column_headers: list[str]
     ) -> None:
-        worksheet.append([main_header] + [""] * (len(headers) - 1))
+        worksheet.append([main_header] + [""] * (len(column_headers) - 1))
         if self._style_headers:
-            worksheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=max(3, len(headers)))
+            worksheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=max(3, len(column_headers)))
             cell = worksheet.cell(row=1, column=1)
             cell.font = Font(bold=True, size=20)
             cell.fill = PatternFill(fgColor="FFC000", patternType="solid")
 
-        worksheet.append(headers)
+        worksheet.append(column_headers)
         header_row = 2 if main_header else 1
         if self._style_headers:
-            for col_idx in range(1, len(headers) + 1):
+            for col_idx in range(1, len(column_headers) + 1):
                 cell = worksheet.cell(row=header_row, column=col_idx)
                 cell.font = Font(bold=True, size=14)
                 cell.fill = PatternFill(fgColor="FFD966", patternType="solid")
 
-        self._write_rows_to_worksheet(worksheet, table, headers)
+        self._write_rows_to_worksheet(worksheet, table, column_headers)
 
         if self._style_headers:
             # openpyxl is not well typed
