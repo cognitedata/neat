@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from typing import Annotated, cast, get_args
+from typing import Annotated, Literal, cast, get_args
 
 from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
 from pydantic.alias_generators import to_camel
@@ -119,16 +119,33 @@ class TableDMS(TableObj):
         return data
 
     @classmethod
-    def get_required_headers(cls, field_id: str, field_: FieldInfo) -> list[str]:
-        if field_id not in cls.model_fields.keys():
-            raise KeyError(f"Invalid field id: {field_id}")
+    def get_sheet_columns(
+        cls, sheet_id: str, sheet: FieldInfo | None = None, *, column_type: Literal["all", "required"] = "required"
+    ) -> list[str]:
+        if sheet_id not in cls.model_fields.keys():
+            raise KeyError(f"Invalid field id: {sheet_id}")
+        if sheet is None:
+            sheet = cls.model_fields[sheet_id]
         return [
             # We know all fields has validation_alias because of the alias_generator in TableDMS
             cast(str, sheet_field.validation_alias)
             # All the fields in the sheet's model are lists.
-            for sheet_field in get_args(field_.annotation)[0].model_fields.values()
-            if sheet_field.is_required()
+            for sheet_field in get_args(sheet.annotation)[0].model_fields.values()
+            if sheet_field.is_required() or column_type == "all"
         ]
+
+    @classmethod
+    def get_sheet_column_by_name(
+        cls, sheet_name: str, *, column_type: Literal["all", "required"] = "required"
+    ) -> list[str]:
+        for field_id, field_ in cls.model_fields.items():
+            if cast(str, field_.validation_alias) == sheet_name:
+                return cls.get_sheet_columns(field_id, field_, column_type=column_type)
+        raise KeyError(f"Invalid field alias: {sheet_name}")
+
+    @classmethod
+    def required_sheets(cls) -> set[str]:
+        return {cast(str, field_.validation_alias) for field_ in cls.model_fields.values() if field_.is_required()}
 
 
 DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {

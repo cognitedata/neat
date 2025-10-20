@@ -36,6 +36,7 @@ class DMSTableImporter(DMSImporter):
     REQUIRED_SHEET_MESSAGES: ClassVar[Mapping[str, str]] = {
         f"Missing required column: {sheet!r}": f"Missing required sheet: {sheet!r}" for sheet in REQUIRED_SHEETS
     }
+    MetadataSheet = cast(str, TableDMS.model_fields["metadata"].validation_alias)
 
     def __init__(self, tables: DataModelTableType, source: TableSource | None = None) -> None:
         self._table = tables
@@ -128,14 +129,14 @@ class DMSTableImporter(DMSImporter):
         source = TableSource(cls._display_name(excel_file).as_posix())
         workbook = load_workbook(excel_file, read_only=True, data_only=True, rich_text=False)
         try:
-            for field_id, field_ in TableDMS.model_fields.items():
-                sheet_name = cast(str, field_.validation_alias)
+            for column_id, column_info in TableDMS.model_fields.items():
+                sheet_name = cast(str, column_info.validation_alias)
                 if sheet_name not in workbook.sheetnames:
                     continue
-                required_headers = TableDMS.get_required_headers(field_id, field_)
+                required_columns = TableDMS.get_sheet_columns(column_id, column_info, column_type="required")
                 sheet = workbook[sheet_name]
                 context = SpreadsheetReadContext()
-                table_rows = cls._read_rows(sheet, required_headers, context)
+                table_rows = cls._read_rows(sheet, required_columns, context)
                 tables[sheet_name] = table_rows
                 source.table_read[sheet_name] = context
             return cls(tables, source)
@@ -144,27 +145,27 @@ class DMSTableImporter(DMSImporter):
 
     @classmethod
     def _read_rows(
-        cls, sheet: Worksheet, required_headers: list[str], context: SpreadsheetReadContext
+        cls, sheet: Worksheet, required_columns: list[str], context: SpreadsheetReadContext
     ) -> list[dict[str, CellValueType]]:
         table_rows: list[dict[str, CellValueType]] = []
         # Metadata sheet is just a key-value pair of the first two columns.
-        # For other sheets, we need to find the header row first.
-        headers: list[str] = [] if sheet.title != "Metadata" else required_headers
+        # For other sheets, we need to find the column header row first.
+        columns: list[str] = [] if sheet.title != cls.MetadataSheet else required_columns
         for row_no, row in enumerate(sheet.iter_rows(values_only=True)):
-            if headers:
-                # We have found the header row, read the data rows.
+            if columns:
+                # We have found the column header row, read the data rows.
                 if all(cell is None for cell in row):
                     context.empty_rows.append(row_no)
                 else:
-                    record = dict(zip(headers, row, strict=False))
+                    record = dict(zip(columns, row, strict=False))
                     # MyPy complains as it thinks DataTableFormula | ArrayFormula could be cell values,
                     # but as we used values_only=True, this is not the case.
                     table_rows.append(record)  # type: ignore[arg-type]
             else:
-                # Look for the header row.
+                # Look for the column header row.
                 row_values = [str(cell) for cell in row]
-                if set(row_values).intersection(required_headers):
-                    headers = row_values
+                if set(row_values).intersection(required_columns):
+                    columns = row_values
                     context.header_row = row_no
                 else:
                     context.skipped_rows.append(row_no)

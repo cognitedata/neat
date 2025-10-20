@@ -13,6 +13,7 @@ from cognite.neat._data_model.models.dms._container import (
     ContainerResponse,
 )
 from cognite.neat._data_model.models.dms._data_types import (
+    DMS_DATA_TYPES,
     BooleanProperty,
     DataType,
     DataTypeAdapter,
@@ -70,6 +71,7 @@ from ._views import (
 )
 
 __all__ = [
+    "DMS_DATA_TYPES",
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
