@@ -13,6 +13,7 @@ from cognite.neat._utils.auxiliary import get_current_neat_version
 from cognite.neat._utils.http_client._config import get_user_agent
 from cognite.neat._utils.http_client._data_classes import (
     BodyRequest,
+    ErrorResponse,
     FailedRequestMessage,
     HTTPMessage,
     ItemsRequest,
@@ -183,7 +184,8 @@ class HTTPClient:
     ) -> Sequence[HTTPMessage]:
         if 200 <= response.status_code < 300:
             return request.create_success_response(response)
-        elif (
+
+        if (
             isinstance(request, ItemsRequest)
             and len(request.body.items) > 1
             and response.status_code in self._split_items_status_codes
@@ -195,15 +197,22 @@ class HTTPClient:
                 status_attempts += 1
             splits = request.split(status_attempts=status_attempts)
             if splits[0].tracker and splits[0].tracker.limit_reached():
-                return request.create_failure_response(response)
+                return request.create_failure_response(
+                    response, error=ErrorResponse.model_validate_json(response.content)
+                )
             return splits
-        elif request.status_attempt < self._max_retries and response.status_code in self._retry_status_codes:
+
+        error = ErrorResponse.model_validate_json(response.content)
+
+        if request.status_attempt < self._max_retries and (
+            response.status_code in self._retry_status_codes or error.error.is_auto_retryable
+        ):
             request.status_attempt += 1
             time.sleep(self._backoff_time(request.total_attempts))
             return [request]
         else:
             # Permanent failure
-            return request.create_failure_response(response)
+            return request.create_failure_response(response, error)
 
     @staticmethod
     def _backoff_time(attempts: int) -> float:

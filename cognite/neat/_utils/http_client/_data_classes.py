@@ -25,33 +25,6 @@ class ResponseMessage(HTTPMessage):
     code: int
 
 
-class RequestMessage(HTTPMessage, ABC):
-    """Base class for HTTP request messages"""
-
-    endpoint_url: str
-    method: Literal["GET", "POST", "PATCH", "DELETE"]
-    connect_attempt: int = 0
-    read_attempt: int = 0
-    status_attempt: int = 0
-    api_version: str | None = None
-
-    @property
-    def total_attempts(self) -> int:
-        return self.connect_attempt + self.read_attempt + self.status_attempt
-
-    @abstractmethod
-    def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def create_failure_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
-        raise NotImplementedError()
-
-
 class SuccessResponse(ResponseMessage):
     data: bytes
 
@@ -71,6 +44,33 @@ class ErrorResponse(BaseModel):
 class FailedResponse(ResponseMessage, ErrorResponse): ...
 
 
+class RequestMessage(HTTPMessage, ABC):
+    """Base class for HTTP request messages"""
+
+    endpoint_url: str
+    method: Literal["GET", "POST", "PATCH", "DELETE"]
+    connect_attempt: int = 0
+    read_attempt: int = 0
+    status_attempt: int = 0
+    api_version: str | None = None
+
+    @property
+    def total_attempts(self) -> int:
+        return self.connect_attempt + self.read_attempt + self.status_attempt
+
+    @abstractmethod
+    def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
+        raise NotImplementedError()
+
+
 class SimpleRequest(RequestMessage):
     """Base class for requests with a simple success/fail response structure"""
 
@@ -79,8 +79,7 @@ class SimpleRequest(RequestMessage):
         return [SuccessResponse(code=response.status_code, data=response.content)]
 
     @classmethod
-    def create_failure_response(cls, response: httpx.Response) -> Sequence[ResponseMessage]:
-        error = ErrorResponse.model_validate_json(response.content)
+    def create_failure_response(cls, response: httpx.Response, error: ErrorResponse) -> Sequence[ResponseMessage]:
         return [FailedResponse(code=response.status_code, error=error.error)]
 
     @classmethod
@@ -211,22 +210,22 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
         """
         return SimpleRequest.create_success_response(response)
 
-    def create_failure_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
+    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
         """Creates response messages based on the HTTP response and the original request.
 
         Args:
             response: The HTTP response received from the server.
+            error: The error response received from the server.
         Returns:
             A sequence of HTTPMessage instances representing the outcome for each item in the request.
         """
         responses: list[HTTPMessage] = []
-        error = ErrorResponse.model_validate_json(response.content).model_dump()
         for item in self.body.items:
             try:
                 item_id = self.as_id(item)
             except Exception:
                 raise ValueError("Invalid as_id function provided for ItemsRequest") from None
-            responses.append(FailedItem(code=response.status_code, id=item_id, **error))
+            responses.append(FailedItem(code=response.status_code, id=item_id, error=error.error))
         return responses
 
     def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
