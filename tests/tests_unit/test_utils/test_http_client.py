@@ -230,12 +230,12 @@ class TestHTTPClientItemRequests:
             json={"items": [{"id": 1, "value": 42}, {"id": 2, "value": 43}]},
             status_code=200,
         )
-        items = [dict(id="1", value=42, name="item1"), dict(id="2", value=43, name="item2")]
+        items = [MyItem(id="1", value=42, name="item1"), MyItem(id="2", value=43, name="item2")]
         results = http_client.request(
             ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                body=ItemBody[MyItem].model_validate(dict(items=items, autoCreateDirectRelations=True)),
+                body=ItemBody(items=items, extra_args={"autoCreateDirectRelations": True}),
                 as_id=MyItem.as_id,
             )
         )

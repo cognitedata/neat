@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from typing import Generic, Literal, TypeAlias, TypeVar
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_serializer
 
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
 from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
@@ -130,8 +130,15 @@ class FailedRequestItem(ItemIDMessage, FailedRequestMessage): ...
 
 
 class ItemBody(BaseModel, Generic[T_BaseModel]):
-    model_config = ConfigDict(extra="allow")
     items: list[T_BaseModel]
+    extra_args: dict[str, JsonValue] | None = None
+
+    @model_serializer(mode="plain", return_type=dict)
+    def serialize(self) -> dict[str, JsonValue]:
+        data: dict[str, JsonValue] = {"items": [item.model_dump(exclude_unset=True) for item in self.items]}
+        if isinstance(self.extra_args, dict):
+            data.update(self.extra_args)
+        return data
 
 
 class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
@@ -180,7 +187,7 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
         first_half = ItemsRequest[T_ID, T_BaseModel](
             endpoint_url=self.endpoint_url,
             method=self.method,
-            body=ItemBody(items=self.body.items[:mid], **self.body.model_dump(exclude={"items"})),
+            body=ItemBody(items=self.body.items[:mid], extra_args=self.body.extra_args),
             as_id=self.as_id,
             connect_attempt=self.connect_attempt,
             read_attempt=self.read_attempt,
@@ -190,7 +197,7 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
         second_half = ItemsRequest[T_ID, T_BaseModel](
             endpoint_url=self.endpoint_url,
             method=self.method,
-            body=ItemBody(items=self.body.items[mid:], **self.body.model_dump(exclude={"items"})),
+            body=ItemBody(items=self.body.items[mid:], extra_args=self.body.extra_args),
             as_id=self.as_id,
             connect_attempt=self.connect_attempt,
             read_attempt=self.read_attempt,
