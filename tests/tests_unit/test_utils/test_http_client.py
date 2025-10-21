@@ -212,6 +212,17 @@ class TestHTTPClient:
         assert response.code == 200
         assert rsps.calls[-1].request.headers["cdf-version"] == "alpha"
 
+    def test_unexpected_error_format(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
+        rsps.get("https://example.com/api/resource").respond(
+            json={"unexpected_error": "Something went wrong"}, status_code=500
+        )
+        results = http_client.request(ParametersRequest(endpoint_url="https://example.com/api/resource", method="GET"))
+        assert len(results) == 1
+        response = results[0]
+        assert isinstance(response, FailedResponse)
+        assert response.code == 500
+        assert response.error.message == '{"unexpected_error":"Something went wrong"}'
+
 
 class MyItem(BaseModel):
     id: str
