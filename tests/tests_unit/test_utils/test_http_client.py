@@ -21,7 +21,7 @@ from cognite.neat._utils.http_client import (
     SimpleBodyRequest,
     SuccessResponse,
 )
-from cognite.neat._utils.http_client._data_classes import ItemBody, ErrorDetails
+from cognite.neat._utils.http_client._data_classes import ErrorDetails, ItemBody
 from cognite.neat._utils.useful_types import JsonVal
 
 BASE_URL = "http://my_cluster.cognitedata.com"
@@ -322,105 +322,50 @@ class TestHTTPClientItemRequests:
 
         assert len(rsps.calls) == 1  # Only one request made
 
-    def test_bad_request_items(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
-        # Test with non-serializable item
-        bad_items: list[JsonVal] = [
-            {"id": 1},
-            {"externalId": "duplicate"},
-            {"externalId": "duplicate"},
-        ]  # Duplicate externalId will cause issue
-        rsps.post("https://example.com/api/resource").respond(
-            json={"items": [{"externalId": "duplicate", "data": 123}]},
-            status_code=200,
-        )
-
-        results = http_client.request(
-            ItemsRequest[str](
-                endpoint_url="https://example.com/api/resource",
-                method="POST",
-                items=bad_items,
-                as_id=as_external_id,  # This will raise a KeyError for the first item
-            )
-        )
-        assert results == [
-            UnknownRequestItem(
-                error="Error extracting ID: \"Item does not have a string 'externalId' field\"", item={"id": 1}
-            ),
-            FailedRequestItem(id="duplicate", error="Duplicate item ID: 'duplicate'"),
-            SuccessItem(status_code=200, id="duplicate", item={"externalId": "duplicate", "data": 123}),
-        ]
-
     def test_request_no_items_response(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         rsps.post("https://example.com/api/resource/delete").respond(status_code=200)
-        items: list[JsonVal] = [{"id": 1}, {"id": 2}]
         results = http_client.request(
-            ItemsRequest[int](
+            ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource/delete",
                 method="POST",
-                items=items,
-                as_id=as_id,
+                body=ItemBody(items=[MyItem(id="1"), MyItem(id="2")]),
+                as_id=MyItem.as_id,
             )
         )
-        assert results == [
-            SuccessItem(status_code=200, id=1),
-            SuccessItem(status_code=200, id=2),
-        ]
-
-    def test_response_unknown_id(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
-        rsps.post("https://example.com/api/resource").respond(
-            json={"items": [{"uid": "a", "data": 1}, {"uid": "b", "data": 2}]},
-            status_code=200,
-        )
-        items: list[JsonVal] = [{"name": "itemA", "id": 1}, {"name": "itemB", "id": 2}]
-        results = http_client.request(
-            ItemsRequest[int](
-                endpoint_url="https://example.com/api/resource",
-                method="POST",
-                iprtems=items,
-                as_id=as_id,
-            )
-        )
-        assert results == [
-            UnknownResponseItem(
-                status_code=200,
-                item={"uid": "a", "data": 1},
-                error="Error extracting ID: \"Item does not have an integer 'id' field\"",
-            ),
-            UnknownResponseItem(
-                status_code=200,
-                item={"uid": "b", "data": 2},
-                error="Error extracting ID: \"Item does not have an integer 'id' field\"",
-            ),
-            MissingItem(status_code=200, id=1),
-            MissingItem(status_code=200, id=2),
-        ]
+        assert len(results) == 1
+        response = results[0]
+        assert isinstance(response, SuccessResponse)
+        assert response.code == 200
+        assert response.data == b""
 
     def test_timeout_error(self, http_client_one_retry: HTTPClient, rsps: respx.MockRouter) -> None:
         client = http_client_one_retry
         rsps.post("https://example.com/api/resource").mock(side_effect=httpx.ReadTimeout("Simulated timeout error"))
         with patch("time.sleep"):
             results = client.request_with_retries(
-                ItemsRequest[int](
+                ItemsRequest[str, MyItem](
                     endpoint_url="https://example.com/api/resource",
                     method="POST",
-                    items=[{"id": 1}],
-                    as_id=as_id,
+                    body=ItemBody(items=[MyItem(id="1")]),
+                    as_id=MyItem.as_id,
                 )
             )
-        assert results == [
-            FailedRequestItem(id=1, error="RequestException after 1 attempts (read error): Simulated timeout error")
-        ]
+        assert len(results) == 1
+        response = results[0]
+        assert isinstance(response, FailedRequestItem)
+        assert response.id == "1"
+        assert "RequestException after 1 attempts (read error): Simulated timeout error" == response.message
 
     @pytest.mark.usefixtures("disable_gzip")
     def test_early_failure(self, http_client_one_retry: HTTPClient, rsps: respx.MockRouter) -> None:
         client = http_client_one_retry
         rsps.post("https://example.com/api/resource").respond(
-            json={"error": "Server error"},
+            json={"error": {"message": "Server error", "code": 400}},
             status_code=400,
         )
         with patch("time.sleep"):
             results = client.request_with_retries(
-                ItemsRequest[int](
+                ItemsRequest[str, MyItem](
                     endpoint_url="https://example.com/api/resource",
                     method="POST",
                     items=[{"id": i} for i in range(1000)],
@@ -524,35 +469,35 @@ class TestHTTPClientItemRequests:
         rsps.post("https://example.com/api/resource").mock(side_effect=dislike_942_112_and_547)
         with patch("time.sleep"):
             results = client.request_with_retries(
-                ItemsRequest[int](
+                ItemsRequest[str, MyItem](
                     endpoint_url="https://example.com/api/resource",
                     method="POST",
-                    items=[{"id": i} for i in range(1000)],
-                    as_id=as_id,
+                    body=ItemBody(items=[MyItem(id=str(i)) for i in range(1000)]),
+                    as_id=MyItem.as_id,
                     max_failures_before_abort=30,
                 )
             )
-        failures = Counter([type(results) for results in results])
-        assert failures == {FailedItem: 3, SuccessItem: 997}
+        failures = Counter([type(result) for result in results])
+        assert failures == {FailedItem: 3, SuccessResponse: 1}
 
     def test_response_auto_retryable(self, client_config: ClientConfig, rsps: respx.MockRouter) -> None:
         with HTTPClient(client_config, max_retries=3, retry_status_codes=set()) as client:
             rsps.post("https://example.com/api/resource").respond(
-                json={"error": {"message": "Server error", "isAutoRetryable": True}},
+                json={"error": {"message": "Server error", "code": 500, "isAutoRetryable": True}},
                 status_code=500,
             )
             with patch("time.sleep"):
                 results = client.request_with_retries(
-                    ItemsRequest[int](
+                    ItemsRequest[str, MyItem](
                         endpoint_url="https://example.com/api/resource",
                         method="POST",
-                        items=[{"id": 1}],
-                        as_id=as_id,
+                        body=ItemBody(items=[MyItem(id="1")]),
+                        as_id=MyItem.as_id,
                     )
                 )
             assert len(results) == 1
             response = results[0]
             assert isinstance(response, FailedItem)
             assert response.code == 500
-            assert response.error == "Server error"
+            assert response.error.message == "Server error"
             assert len(rsps.calls) == 4  # Retries 3 times
