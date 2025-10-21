@@ -269,7 +269,9 @@ class TestHTTPClientItemRequests:
             ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                body=ItemBody(items=[MyItem(id="success"), MyItem(id="fail")]),
+                body=ItemBody(
+                    items=[MyItem(id="success"), MyItem(id="fail")], extra_args={"autoCreateDirectRelations": True}
+                ),
                 as_id=MyItem.as_id,
             )
         )
@@ -284,11 +286,14 @@ class TestHTTPClientItemRequests:
         assert len(rsps.calls) == 3  # Three requests made
         first, second, third = rsps.calls
         # First call will fail, and split into 1 item + 1 items
-        assert json.loads(first.request.content)["items"] == [{"id": "success"}, {"id": "fail"}]
+        assert json.loads(first.request.content) == {
+            "items": [{"id": "success"}, {"id": "fail"}],
+            "autoCreateDirectRelations": True,
+        }
         # Second succeeds with 1 item.
-        assert json.loads(second.request.content)["items"] == [{"id": "success"}]
+        assert json.loads(second.request.content) == {"items": [{"id": "success"}], "autoCreateDirectRelations": True}
         # Third fails with 1 item.
-        assert json.loads(third.request.content)["items"] == [{"id": "fail"}]
+        assert json.loads(third.request.content) == {"items": [{"id": "fail"}], "autoCreateDirectRelations": True}
 
     def test_request_all_item_fail(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         rsps.post("https://example.com/api/resource").respond(
