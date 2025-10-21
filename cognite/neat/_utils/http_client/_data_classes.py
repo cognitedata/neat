@@ -1,45 +1,51 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
-from typing import Generic, Literal, TypeAlias
+from typing import Generic, Literal, TypeAlias, TypeVar
 
 import httpx
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_serializer
 
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
-from cognite.neat._utils.useful_types import T_ID, JsonVal
+from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
 
 StatusCode: TypeAlias = int
 
+T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
 
-@dataclass
-class HTTPMessage:
+
+class HTTPMessage(BaseModel):
     """Base class for HTTP messages (requests and responses)"""
 
-    def dump(self) -> dict[str, JsonVal]:
-        """Dumps the message to a JSON serializable dictionary.
 
-        Returns:
-            dict[str, JsonVal]: The message as a dictionary.
-        """
-        # We avoid using the asdict function as we know we have a shallow structure,
-        # and this roughly ~10x faster.
-        output = self.__dict__.copy()
-        output["type"] = type(self).__name__
-        return output
-
-
-@dataclass
 class FailedRequestMessage(HTTPMessage):
-    error: str
+    message: str
 
 
-@dataclass
 class ResponseMessage(HTTPMessage):
-    status_code: StatusCode
+    code: int
 
 
-@dataclass
-class RequestMessage(HTTPMessage):
+class SuccessResponse(ResponseMessage):
+    data: bytes
+
+
+class ErrorDetails(BaseModel):
+    code: int
+    message: str
+    missing: list[JsonValue] | None = None
+    duplicated: list[JsonValue] | None = None
+    is_auto_retryable: bool | None = Field(None, alias="isAutoRetryable")
+
+
+class ErrorResponse(BaseModel):
+    error: ErrorDetails
+
+
+class FailedResponse(ResponseMessage):
+    error: ErrorDetails
+
+
+class RequestMessage(HTTPMessage, ABC):
     """Base class for HTTP request messages"""
 
     endpoint_url: str
@@ -54,12 +60,11 @@ class RequestMessage(HTTPMessage):
         return self.connect_attempt + self.read_attempt + self.status_attempt
 
     @abstractmethod
-    def create_responses(
-        self,
-        response: httpx.Response,
-        response_body: dict[str, JsonVal] | None = None,
-        error_message: str | None = None,
-    ) -> Sequence[HTTPMessage]:
+    def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
         raise NotImplementedError()
 
     @abstractmethod
@@ -67,158 +72,98 @@ class RequestMessage(HTTPMessage):
         raise NotImplementedError()
 
 
-@dataclass
-class SuccessResponse(ResponseMessage):
-    body: dict[str, JsonVal] | None = None
-
-
-@dataclass
-class FailedResponse(ResponseMessage):
-    error: str
-    body: dict[str, JsonVal] | None = None
-
-
-@dataclass
 class SimpleRequest(RequestMessage):
     """Base class for requests with a simple success/fail response structure"""
 
     @classmethod
-    def create_responses(
-        cls,
-        response: httpx.Response,
-        response_body: dict[str, JsonVal] | None = None,
-        error_message: str | None = None,
-    ) -> Sequence[ResponseMessage]:
-        if 200 <= response.status_code < 300 and error_message is None:
-            return [SuccessResponse(status_code=response.status_code, body=response_body)]
-        if error_message is None:
-            error_message = f"Request failed with status code {response.status_code}"
-        return [FailedResponse(status_code=response.status_code, error=error_message, body=response_body)]
+    def create_success_response(cls, response: httpx.Response) -> Sequence[ResponseMessage]:
+        return [SuccessResponse(code=response.status_code, data=response.content)]
+
+    @classmethod
+    def create_failure_response(cls, response: httpx.Response, error: ErrorResponse) -> Sequence[ResponseMessage]:
+        return [FailedResponse(code=response.status_code, error=error.error)]
 
     @classmethod
     def create_failed_request(cls, error_message: str) -> Sequence[HTTPMessage]:
-        return [FailedRequestMessage(error=error_message)]
+        return [FailedRequestMessage(message=error_message)]
 
 
-@dataclass
 class BodyRequest(RequestMessage, ABC):
     """Base class for HTTP request messages with a body"""
 
     @abstractmethod
-    def body(self) -> dict[str, JsonVal]:
+    def data(self) -> str:
         raise NotImplementedError()
 
 
-@dataclass
-class ParamRequest(SimpleRequest):
+class ParametersRequest(SimpleRequest):
     """Base class for HTTP request messages with query parameters"""
 
-    parameters: dict[str, str] | None = None
+    parameters: dict[str, PrimaryTypes] | None = None
 
 
-@dataclass
 class SimpleBodyRequest(SimpleRequest, BodyRequest):
-    body_content: dict[str, JsonVal] = field(default_factory=dict)
+    body: str
 
-    def body(self) -> dict[str, JsonVal]:
-        return self.body_content
+    def data(self) -> str:
+        return self.body
 
 
-@dataclass
-class ItemMessage:
+class ItemMessage(BaseModel):
     """Base class for message related to a specific item"""
 
     ...
 
 
-@dataclass
 class ItemIDMessage(Generic[T_ID], ItemMessage, ABC):
     """Base class for message related to a specific item identified by an ID"""
 
     id: T_ID
 
 
-@dataclass
 class ItemResponse(ItemIDMessage, ResponseMessage, ABC): ...
 
 
-@dataclass
-class SuccessItem(ItemResponse):
-    item: JsonVal | None = None
+class FailedItem(ItemResponse, FailedResponse): ...
 
 
-@dataclass
-class FailedItem(ItemResponse):
-    error: str
-
-
-@dataclass
-class MissingItem(ItemResponse): ...
-
-
-@dataclass
-class UnexpectedItem(ItemResponse):
-    item: JsonVal | None = None
-
-
-@dataclass
 class FailedRequestItem(ItemIDMessage, FailedRequestMessage): ...
 
 
-@dataclass
-class UnknownRequestItem(ItemMessage, FailedRequestMessage):
-    item: JsonVal | None = None
+class ItemBody(BaseModel, Generic[T_BaseModel]):
+    items: list[T_BaseModel]
+    extra_args: dict[str, JsonValue] | None = None
+
+    @model_serializer(mode="plain", return_type=dict)
+    def serialize(self) -> dict[str, JsonValue]:
+        data: dict[str, JsonValue] = {"items": [item.model_dump(exclude_unset=True) for item in self.items]}
+        if isinstance(self.extra_args, dict):
+            data.update(self.extra_args)
+        return data
 
 
-@dataclass
-class UnknownResponseItem(ItemMessage, ResponseMessage):
-    error: str
-    item: JsonVal | None = None
-
-
-@dataclass
-class ItemsRequest(Generic[T_ID], BodyRequest):
+class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
     """Requests message for endpoints that accept multiple items in a single request.
 
     This class provides functionality to split large requests into smaller ones, handle responses for each item,
     and manage errors effectively.
 
     Attributes:
-        items (list[JsonVal]): The list of items to be sent in the request body.
-        extra_body_fields (dict[str, JsonVal]): Additional fields to include in the request body
+        body (ItemBody[T_BaseModel]): The body of the request containing the items to be processed.
         as_id (Callable[[JsonVal], T_ID] | None): A function to extract the ID from each item. If None,
             IDs are not used.
         max_failures_before_abort (int): The maximum number of failed split requests before aborting further splits.
 
     """
 
-    items: list[JsonVal] = field(default_factory=list)
-    extra_body_fields: dict[str, JsonVal] = field(default_factory=dict)
-    as_id: Callable[[JsonVal], T_ID] | None = None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    body: ItemBody[T_BaseModel]
+    as_id: Callable[[T_BaseModel], T_ID]
     max_failures_before_abort: int = 50
-    tracker: ItemsRequestTracker | None = field(default=None, init=False)
+    tracker: ItemsRequestTracker | None = None
 
-    def dump(self) -> dict[str, JsonVal]:
-        """Dumps the message to a JSON serializable dictionary.
-
-        This override removes the 'as_id' attribute as it is not serializable.
-
-        Returns:
-            dict[str, JsonVal]: The message as a dictionary.
-        """
-        output = super().dump()
-        if self.as_id is not None:
-            # We cannot serialize functions
-            del output["as_id"]
-        if self.tracker is not None:
-            # We cannot serialize the tracker
-            del output["tracker"]
-        return output
-
-    def body(self) -> dict[str, JsonVal]:
-        if self.extra_body_fields:
-            return {"items": self.items, **self.extra_body_fields}
-        return {"items": self.items}
+    def data(self) -> str:
+        return self.body.model_dump_json(exclude_unset=True)
 
     def split(self, status_attempts: int) -> "list[ItemsRequest]":
         """Splits the request into two smaller requests.
@@ -235,27 +180,25 @@ class ItemsRequest(Generic[T_ID], BodyRequest):
             A list containing two new ItemsRequest instances, each with half of the original items.
 
         """
-        mid = len(self.items) // 2
+        mid = len(self.body.items) // 2
         if mid == 0:
             return [self]
         tracker = self.tracker or ItemsRequestTracker(self.max_failures_before_abort)
         tracker.register_failure()
-        first_half = ItemsRequest[T_ID](
+        first_half = ItemsRequest[T_ID, T_BaseModel](
             endpoint_url=self.endpoint_url,
             method=self.method,
-            items=self.items[:mid],
-            extra_body_fields=self.extra_body_fields,
+            body=ItemBody(items=self.body.items[:mid], extra_args=self.body.extra_args),
             as_id=self.as_id,
             connect_attempt=self.connect_attempt,
             read_attempt=self.read_attempt,
             status_attempt=status_attempts,
         )
         first_half.tracker = tracker
-        second_half = ItemsRequest[T_ID](
+        second_half = ItemsRequest[T_ID, T_BaseModel](
             endpoint_url=self.endpoint_url,
             method=self.method,
-            items=self.items[mid:],
-            extra_body_fields=self.extra_body_fields,
+            body=ItemBody(items=self.body.items[mid:], extra_args=self.body.extra_args),
             as_id=self.as_id,
             connect_attempt=self.connect_attempt,
             read_attempt=self.read_attempt,
@@ -264,126 +207,49 @@ class ItemsRequest(Generic[T_ID], BodyRequest):
         second_half.tracker = tracker
         return [first_half, second_half]
 
-    def create_responses(
-        self,
-        response: httpx.Response,
-        response_body: dict[str, JsonVal] | None = None,
-        error_message: str | None = None,
-    ) -> Sequence[HTTPMessage]:
+    def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
         """Creates response messages based on the HTTP response and the original request.
 
         Args:
             response: The HTTP response received from the server.
-            response_body: The parsed JSON body of the response, if available.
-            error_message: An optional error message to use if the response indicates a failure.
 
         Returns:
             A sequence of HTTPMessage instances representing the outcome for each item in the request.
         """
-        if self.as_id is None:
-            return SimpleBodyRequest.create_responses(response, response_body, error_message)
-        request_items_by_id, errors = self._create_items_by_id()
-        responses: list[HTTPMessage] = list(errors)
-        error_message = error_message or "Unknown error"
+        return SimpleRequest.create_success_response(response)
 
-        if not self._is_items_response(response_body):
-            return self._handle_non_items_response(responses, response, error_message, request_items_by_id)
+    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
+        """Creates response messages based on the HTTP response and the original request.
 
-        # Process items from response
-        if response_body is not None:
-            self._process_response_items(responses, response, response_body, error_message, request_items_by_id)
-
-        # Handle missing items
-        self._handle_missing_items(responses, response, request_items_by_id)
-
-        return responses
-
-    @staticmethod
-    def _handle_non_items_response(
-        responses: list[HTTPMessage],
-        response: httpx.Response,
-        error_message: str,
-        request_items_by_id: dict[T_ID, JsonVal],
-    ) -> list[HTTPMessage]:
-        """Handles responses that do not contain an 'items' field in the body."""
-        if 200 <= response.status_code < 300:
-            responses.extend(
-                SuccessItem(status_code=response.status_code, id=id_) for id_ in request_items_by_id.keys()
-            )
-        else:
-            responses.extend(
-                FailedItem(status_code=response.status_code, error=error_message, id=id_)
-                for id_ in request_items_by_id.keys()
-            )
-        return responses
-
-    def _process_response_items(
-        self,
-        responses: list[HTTPMessage],
-        response: httpx.Response,
-        response_body: dict[str, JsonVal],
-        error_message: str,
-        request_items_by_id: dict[T_ID, JsonVal],
-    ) -> None:
-        """Processes each item in the response body and categorizes them based on their status."""
-        for response_item in response_body["items"]:  # type: ignore[union-attr]
-            try:
-                item_id = self.as_id(response_item)  # type: ignore[misc]
-            except Exception as e:
-                responses.append(
-                    UnknownResponseItem(
-                        status_code=response.status_code, item=response_item, error=f"Error extracting ID: {e!s}"
-                    )
-                )
-                continue
-            request_item = request_items_by_id.pop(item_id, None)
-            if request_item is None:
-                responses.append(UnexpectedItem(status_code=response.status_code, id=item_id, item=response_item))
-            elif 200 <= response.status_code < 300:
-                responses.append(SuccessItem(status_code=response.status_code, id=item_id, item=response_item))
-            else:
-                responses.append(FailedItem(status_code=response.status_code, id=item_id, error=error_message))
-
-    @staticmethod
-    def _handle_missing_items(
-        responses: list[HTTPMessage], response: httpx.Response, request_items_by_id: dict[T_ID, JsonVal]
-    ) -> None:
-        """Handles items that were in the request but not present in the response."""
-        for item_id in request_items_by_id.keys():
-            responses.append(MissingItem(status_code=response.status_code, id=item_id))
-
-    def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
-        if self.as_id is None:
-            return SimpleBodyRequest.create_failed_request(error_message)
-        items_by_id, errors = self._create_items_by_id()
-        results: list[HTTPMessage] = []
-        results.extend(errors)
-        results.extend(FailedRequestItem(id=item_id, error=error_message) for item_id in items_by_id.keys())
-        return results
-
-    def _create_items_by_id(self) -> tuple[dict[T_ID, JsonVal], list[FailedRequestItem | UnknownRequestItem]]:
-        if self.as_id is None:
-            raise ValueError("as_id function must be provided to create items by ID")
-        items_by_id: dict[T_ID, JsonVal] = {}
-        errors: list[FailedRequestItem | UnknownRequestItem] = []
-        for item in self.items:
+        Args:
+            response: The HTTP response received from the server.
+            error: The error response received from the server.
+        Returns:
+            A sequence of HTTPMessage instances representing the outcome for each item in the request.
+        """
+        responses: list[HTTPMessage] = []
+        for item in self.body.items:
             try:
                 item_id = self.as_id(item)
-            except Exception as e:
-                errors.append(UnknownRequestItem(error=f"Error extracting ID: {e!s}", item=item))
-                continue
-            if item_id in items_by_id:
-                errors.append(FailedRequestItem(id=item_id, error=f"Duplicate item ID: {item_id!r}"))
-            else:
-                items_by_id[item_id] = item
-        return items_by_id, errors
+            except Exception:
+                raise ValueError("Invalid as_id function provided for ItemsRequest") from None
+            responses.append(FailedItem(code=response.status_code, id=item_id, error=error.error))
+        return responses
 
-    @staticmethod
-    def _is_items_response(body: dict[str, JsonVal] | None = None) -> bool:
-        if body is None:
-            return False
-        if "items" not in body:
-            return False
-        if not isinstance(body["items"], list):
-            return False
-        return True
+    def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
+        """Creates failed request messages for each item in the request.
+
+        Args:
+            error_message: The error message to include in the failed request messages.
+
+        Returns:
+            A sequence of HTTPMessage instances representing the failed request for each item.
+        """
+        responses: list[HTTPMessage] = []
+        for item in self.body.items:
+            try:
+                item_id = self.as_id(item)
+            except Exception:
+                raise ValueError("Invalid as_id function provided for ItemsRequest") from None
+            responses.append(FailedRequestItem(id=item_id, message=error_message))
+        return responses
