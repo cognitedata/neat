@@ -41,7 +41,8 @@ class ErrorResponse(BaseModel):
     error: ErrorDetails
 
 
-class FailedResponse(ResponseMessage, ErrorResponse): ...
+class FailedResponse(ResponseMessage):
+    error: ErrorDetails
 
 
 class RequestMessage(HTTPMessage, ABC):
