@@ -22,7 +22,6 @@ from cognite.neat._utils.http_client import (
     SuccessResponse,
 )
 from cognite.neat._utils.http_client._data_classes import ErrorDetails, ItemBody
-from cognite.neat._utils.useful_types import JsonVal
 
 BASE_URL = "http://my_cluster.cognitedata.com"
 
@@ -213,18 +212,6 @@ class TestHTTPClient:
         assert rsps.calls[-1].request.headers["cdf-version"] == "alpha"
 
 
-def as_id(item: JsonVal) -> int:
-    if not isinstance(item, dict) or "id" not in item or not isinstance(item["id"], int):
-        raise KeyError("Item does not have an integer 'id' field")
-    return item["id"]
-
-
-def as_external_id(item: JsonVal) -> str:
-    if not isinstance(item, dict) or "externalId" not in item or not isinstance(item["externalId"], str):
-        raise KeyError("Item does not have a string 'externalId' field")
-    return item["externalId"]
-
-
 class MyItem(BaseModel):
     id: str
     value: int | None = None
@@ -245,7 +232,7 @@ class TestHTTPClientItemRequests:
         )
         items = [dict(id="1", value=42, name="item1"), dict(id="2", value=43, name="item2")]
         results = http_client.request(
-            ItemsRequest[int, MyItem](
+            ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
                 body=ItemBody[MyItem].model_validate(dict(items=items, autoCreateDirectRelations=True)),
@@ -368,8 +355,8 @@ class TestHTTPClientItemRequests:
                 ItemsRequest[str, MyItem](
                     endpoint_url="https://example.com/api/resource",
                     method="POST",
-                    items=[{"id": i} for i in range(1000)],
-                    as_id=as_id,
+                    body=ItemBody(items=[MyItem(id=str(i)) for i in range(1000)]),
+                    as_id=MyItem.as_id,
                     max_failures_before_abort=5,
                 )
             )
@@ -386,15 +373,15 @@ class TestHTTPClientItemRequests:
     def test_abort_on_first_failure(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         client = http_client
         rsps.post("https://example.com/api/resource").respond(
-            json={"error": "Server error"},
+            json={"error": {"message": "Server error", "code": 400}},
             status_code=400,
         )
         results = client.request_with_retries(
-            ItemsRequest[int](
+            ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                items=[{"id": i} for i in range(1000)],
-                as_id=as_id,
+                body=ItemBody(items=[MyItem(id=str(i)) for i in range(1000)]),
+                as_id=MyItem.as_id,
                 max_failures_before_abort=1,
             )
         )
@@ -408,15 +395,15 @@ class TestHTTPClientItemRequests:
     def test_abort_on_second_failure(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         client = http_client
         rsps.post("https://example.com/api/resource").respond(
-            json={"error": "Server error"},
+            json={"error": {"message": "Server error", "code": 400}},
             status_code=400,
         )
         results = client.request_with_retries(
-            ItemsRequest[int](
+            ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                items=[{"id": i} for i in range(1000)],
-                as_id=as_id,
+                body=ItemBody(items=[MyItem(id=str(i)) for i in range(1000)]),
+                as_id=MyItem.as_id,
                 max_failures_before_abort=2,
             )
         )
@@ -430,15 +417,15 @@ class TestHTTPClientItemRequests:
     def test_never_abort_on_failure(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         client = http_client
         rsps.post("https://example.com/api/resource").respond(
-            json={"error": "Server error"},
+            json={"error": {"message": "Server error", "code": 400}},
             status_code=400,
         )
         results = client.request_with_retries(
-            ItemsRequest[int](
+            ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                items=[{"id": i} for i in range(100)],
-                as_id=as_id,
+                body=ItemBody(items=[MyItem(id=str(i)) for i in range(100)]),
+                as_id=MyItem.as_id,
                 max_failures_before_abort=-1,  # Never abort
             )
         )
@@ -455,7 +442,7 @@ class TestHTTPClientItemRequests:
             body_content = request.content.decode() if request.content else ""
             for no in ["942", "112", "547"]:
                 if no in body_content:
-                    return httpx.Response(400, json={"error": f"Item {no} is not allowed"})
+                    return httpx.Response(400, json={"error": {"message": f"Item {no} is not allowed", "code": 400}})
 
             # Parse the request body to create response items
             try:
@@ -478,7 +465,7 @@ class TestHTTPClientItemRequests:
                 )
             )
         failures = Counter([type(result) for result in results])
-        assert failures == {FailedItem: 3, SuccessResponse: 1}
+        assert failures == {FailedItem: 3, SuccessResponse: 25}
 
     def test_response_auto_retryable(self, client_config: ClientConfig, rsps: respx.MockRouter) -> None:
         with HTTPClient(client_config, max_retries=3, retry_status_codes=set()) as client:

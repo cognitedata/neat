@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from typing import Generic, Literal, TypeAlias, TypeVar
 
 import httpx
-from pydantic import BaseModel, ConfigDict, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
 from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
@@ -61,6 +61,7 @@ class ErrorDetails(BaseModel):
     message: str
     missing: list[JsonValue] | None = None
     duplicated: list[JsonValue] | None = None
+    is_auto_retryable: bool | None = Field(None, alias="isAutoRetryable")
 
 
 class ErrorResponse(BaseModel):
