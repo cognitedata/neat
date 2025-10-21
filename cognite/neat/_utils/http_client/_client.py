@@ -20,6 +20,7 @@ from cognite.neat._utils.http_client._data_classes import (
     RequestMessage,
     ResponseMessage,
 )
+from cognite.neat._utils.useful_types import PrimaryTypes
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -157,7 +158,7 @@ class HTTPClient:
 
     def _make_request(self, item: RequestMessage) -> httpx.Response:
         headers = self._create_headers(item.api_version)
-        params: dict[str, str] | None = None
+        params: dict[str, PrimaryTypes] | None = None
         if isinstance(item, ParametersRequest):
             params = item.parameters
         data: str | bytes | None = None

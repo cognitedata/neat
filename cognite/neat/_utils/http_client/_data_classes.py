@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from typing import Generic, Literal, TypeAlias, TypeVar
 
 import httpx
-from pydantic import BaseModel, ConfigDict, JsonValue, TypeAdapter
+from pydantic import BaseModel, ConfigDict, JsonValue
 
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
 from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
@@ -62,11 +62,12 @@ class ErrorDetails(BaseModel):
     missing: list[JsonValue] | None = None
     duplicated: list[JsonValue] | None = None
 
+
 class ErrorResponse(BaseModel):
     error: ErrorDetails
 
-class FailedResponse(ResponseMessage, ErrorResponse):
-    ...
+
+class FailedResponse(ResponseMessage, ErrorResponse): ...
 
 
 class SimpleRequest(RequestMessage):
@@ -154,7 +155,7 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
     tracker: ItemsRequestTracker | None = None
 
     def data(self) -> str:
-        return self.body.model_dump_json()
+        return self.body.model_dump_json(exclude_unset=True)
 
     def split(self, status_attempts: int) -> "list[ItemsRequest]":
         """Splits the request into two smaller requests.
@@ -218,13 +219,13 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
             A sequence of HTTPMessage instances representing the outcome for each item in the request.
         """
         responses: list[HTTPMessage] = []
-        error = FailedResponse.model_validate_json(response.content).model_dump()
+        error = ErrorResponse.model_validate_json(response.content).model_dump()
         for item in self.body.items:
             try:
                 item_id = self.as_id(item)
             except Exception:
                 raise ValueError("Invalid as_id function provided for ItemsRequest") from None
-            responses.append(FailedItem(id=item_id, **error))
+            responses.append(FailedItem(code=response.status_code, id=item_id, **error))
         return responses
 
     def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
