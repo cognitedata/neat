@@ -11,17 +11,18 @@ from cognite.client.credentials import Token
 from pydantic import BaseModel
 
 from cognite.neat._utils.http_client import (
+    ErrorDetails,
     FailedItem,
     FailedRequestItem,
     FailedRequestMessage,
     FailedResponse,
     HTTPClient,
+    ItemBody,
     ItemsRequest,
     ParametersRequest,
     SimpleBodyRequest,
     SuccessResponse,
 )
-from cognite.neat._utils.http_client._data_classes import ErrorDetails, ItemBody
 
 BASE_URL = "http://my_cluster.cognitedata.com"
 

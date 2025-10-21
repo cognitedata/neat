@@ -1,10 +1,13 @@
 from ._client import HTTPClient
 from ._data_classes import (
+    ErrorDetails,
+    ErrorResponse,
     FailedItem,
     FailedRequestItem,
     FailedRequestMessage,
     FailedResponse,
     HTTPMessage,
+    ItemBody,
     ItemIDMessage,
     ItemMessage,
     ItemResponse,
@@ -17,12 +20,15 @@ from ._data_classes import (
 )
 
 __all__ = [
+    "ErrorDetails",
+    "ErrorResponse",
     "FailedItem",
     "FailedRequestItem",
     "FailedRequestMessage",
     "FailedResponse",
     "HTTPClient",
     "HTTPMessage",
+    "ItemBody",
     "ItemIDMessage",
     "ItemMessage",
     "ItemResponse",
