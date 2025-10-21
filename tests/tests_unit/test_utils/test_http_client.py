@@ -8,6 +8,7 @@ import pytest
 import respx
 from cognite.client import ClientConfig, global_config
 from cognite.client.credentials import Token
+from pydantic import BaseModel
 
 from cognite.neat._utils.http_client import (
     FailedItem,
@@ -20,6 +21,7 @@ from cognite.neat._utils.http_client import (
     SimpleBodyRequest,
     SuccessResponse,
 )
+from cognite.neat._utils.http_client._data_classes import ItemBody, ErrorDetails
 from cognite.neat._utils.useful_types import JsonVal
 
 BASE_URL = "http://my_cluster.cognitedata.com"
@@ -71,6 +73,7 @@ def http_client_one_retry(client_config: ClientConfig) -> Iterator[HTTPClient]:
         yield client
 
 
+@pytest.mark.usefixtures("disable_pypi_check")
 class TestHTTPClient:
     def test_get_request(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
         rsps.get("https://example.com/api/resource").respond(json={"key": "value"}, status_code=200)
@@ -222,6 +225,16 @@ def as_external_id(item: JsonVal) -> str:
     return item["externalId"]
 
 
+class MyItem(BaseModel):
+    id: str
+    value: int | None = None
+    name: str | None = None
+
+    @classmethod
+    def as_id(cls, item: "MyItem") -> str:
+        return item.id
+
+
 @pytest.mark.usefixtures("disable_pypi_check")
 class TestHTTPClientItemRequests:
     @pytest.mark.usefixtures("disable_gzip")
@@ -230,98 +243,81 @@ class TestHTTPClientItemRequests:
             json={"items": [{"id": 1, "value": 42}, {"id": 2, "value": 43}]},
             status_code=200,
         )
-        items: list[JsonVal] = [{"name": "item1", "id": 1}, {"name": "item2", "id": 2}]
+        items = [dict(id="1", value=42, name="item1"), dict(id="2", value=43, name="item2")]
         results = http_client.request(
-            ItemsRequest[int](
+            ItemsRequest[int, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                items=items,
-                extra_body_fields={"autoCreateDirectRelations": True},
-                as_id=as_id,
+                body=ItemBody[MyItem].model_validate(dict(items=items, autoCreateDirectRelations=True)),
+                as_id=MyItem.as_id,
             )
         )
-        assert results == [
-            SuccessItem(status_code=200, id=1, item={"id": 1, "value": 42}),
-            SuccessItem(status_code=200, id=2, item={"id": 2, "value": 43}),
-        ]
+        assert len(results) == 1
+        response = results[0]
+        assert isinstance(response, SuccessResponse)
+        assert response.code == 200
+        assert response.data == b'{"items":[{"id":1,"value":42},{"id":2,"value":43}]}'
         assert len(rsps.calls) == 1
         assert json.loads(rsps.calls[0].request.content) == {
-            "items": [{"name": "item1", "id": 1}, {"name": "item2", "id": 2}],
             "autoCreateDirectRelations": True,
+            "items": [{"id": "1", "name": "item1", "value": 42}, {"id": "2", "name": "item2", "value": 43}],
         }
 
     @pytest.mark.usefixtures("disable_gzip")
     def test_request_with_items_issues(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
-        response_items = [
-            {"externalId": "success", "data": 123},
-            {"externalId": "unexpected", "data": 999},
-        ]
-
         def server_callback(request: httpx.Request) -> httpx.Response:
             # Check request body content
             body_content = request.content.decode() if request.content else ""
             if "fail" in body_content:
-                return httpx.Response(400, json={"error": "Item failed"})
+                return httpx.Response(400, json={"error": {"message": "Item failed", "code": 400}})
             elif "success" in body_content:
-                return httpx.Response(200, json={"items": response_items})
+                return httpx.Response(200, json={"items": {"externalId": "success", "value": 123}})
             else:
                 return httpx.Response(200, json={"items": []})
 
         rsps.post("https://example.com/api/resource").mock(side_effect=server_callback)
 
-        request_items: list[JsonVal] = [
-            {"externalId": "success"},
-            {"externalId": "missing"},
-            {"externalId": "fail"},
-        ]
         results = http_client.request_with_retries(
-            ItemsRequest[str](
+            ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                items=request_items,
-                as_id=as_external_id,
+                body=ItemBody(items=[MyItem(id="success"), MyItem(id="fail")]),
+                as_id=MyItem.as_id,
             )
         )
-        assert results == [
-            SuccessItem(status_code=200, id="success", item={"externalId": "success", "data": 123}),
-            UnexpectedItem(status_code=200, id="unexpected", item={"externalId": "unexpected", "data": 999}),
-            MissingItem(status_code=200, id="missing"),
-            FailedItem(status_code=400, id="fail", error="Item failed"),
-        ]
-        assert len(rsps.calls) == 5  # Three requests made
-        first, second, third, fourth, fifth = rsps.calls
-        # First call will fail, and split into 1 item + 2 items
-        assert json.loads(first.request.content)["items"] == [
-            {"externalId": "success"},
-            {"externalId": "missing"},
-            {"externalId": "fail"},
-        ]
+        assert len(results) == 2
+        first, second = results
+        assert isinstance(first, SuccessResponse)
+        assert first.data == b'{"items":{"externalId":"success","value":123}}'
+        assert isinstance(second, FailedItem)
+        assert second.code == 400
+        assert second.error.message == "Item failed"
+
+        assert len(rsps.calls) == 3  # Three requests made
+        first, second, third = rsps.calls
+        # First call will fail, and split into 1 item + 1 items
+        assert json.loads(first.request.content)["items"] == [{"id": "success"}, {"id": "fail"}]
         # Second succeeds with 1 item.
-        assert json.loads(second.request.content)["items"] == [{"externalId": "success"}]
-        # Third fails with two items, and splits into 1 + 1
-        assert json.loads(third.request.content)["items"] == [{"externalId": "missing"}, {"externalId": "fail"}]
-        # Fourth succeeds with 1 item.
-        assert json.loads(fourth.request.content)["items"] == [{"externalId": "missing"}]
-        # Fifth fails with 1 item.
-        assert json.loads(fifth.request.content)["items"] == [{"externalId": "fail"}]
+        assert json.loads(second.request.content)["items"] == [{"id": "success"}]
+        # Third fails with 1 item.
+        assert json.loads(third.request.content)["items"] == [{"id": "fail"}]
 
     def test_request_all_item_fail(self, http_client: HTTPClient, rsps: respx.MockRouter) -> None:
         rsps.post("https://example.com/api/resource").respond(
-            json={"error": "Unauthorized"},
+            json={"error": {"message": "Unauthorized", "code": 401}},
             status_code=401,
         )
-        items: list[JsonVal] = [{"name": "item1", "id": 1}, {"name": "item2", "id": 2}]
         results = http_client.request(
-            ItemsRequest[int](
+            ItemsRequest[str, MyItem](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                items=items,
-                as_id=as_id,
+                body=ItemBody(items=[MyItem(id="1"), MyItem(id="2")]),
+                as_id=MyItem.as_id,
             )
         )
         assert results == [
-            FailedItem(status_code=401, id=1, error="Unauthorized"),
-            FailedItem(status_code=401, id=2, error="Unauthorized"),
+            FailedItem(code=401, id="1", error=ErrorDetails(message="Unauthorized", code=401)),
+            FailedItem(code=401, id="2", error=ErrorDetails(message="Unauthorized", code=401)),
         ]
 
         assert len(rsps.calls) == 1  # Only one request made
@@ -380,7 +376,7 @@ class TestHTTPClientItemRequests:
             ItemsRequest[int](
                 endpoint_url="https://example.com/api/resource",
                 method="POST",
-                items=items,
+                iprtems=items,
                 as_id=as_id,
             )
         )
