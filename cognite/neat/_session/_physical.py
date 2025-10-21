@@ -1,6 +1,6 @@
 from typing import Any
 
-from cognite.neat._data_model.exporters import DMSTableExporter
+from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
@@ -29,6 +29,14 @@ class ReadPhysicalDataModel:
 
         return self._store.read_physical(reader)
 
+    def excel(self, io: Any) -> None:
+        """Read physical data model from Excel file"""
+
+        path = NeatReader.create(io).materialize_path()
+        reader = DMSTableImporter.from_excel(path)
+
+        return self._store.read_physical(reader)
+
 
 class WritePhysicalDataModel:
     """Write physical data model to various sources from NeatSession graph store."""
@@ -40,6 +48,14 @@ class WritePhysicalDataModel:
         """Write physical data model to YAML file"""
 
         file_path = NeatReader.create(io).materialize_path()
-        writer = DMSTableExporter(exclude_none=exclude_none)
+        writer = DMSYamlExporter(exclude_none=exclude_none)
+
+        return self._store.write_physical(writer, file_path=file_path)
+
+    def excel(self, io: Any, exclude_none: bool = False) -> None:
+        """Write physical data model to Excel file"""
+
+        file_path = NeatReader.create(io).materialize_path()
+        writer = DMSExcelExporter(exclude_none=exclude_none)
 
         return self._store.write_physical(writer, file_path=file_path)

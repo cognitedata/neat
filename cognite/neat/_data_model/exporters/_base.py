@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Generic, TypeVar
 
 from cognite.neat._data_model.models.dms import RequestSchema
@@ -13,5 +14,9 @@ class DMSExporter(ABC, Generic[T_Export]):
     ENCODING = "utf-8"
 
     @abstractmethod
-    def export(self, data_model: RequestSchema) -> T_Export:
+    def _export(self, data_model: RequestSchema) -> T_Export:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def export(self, data_model: RequestSchema, file_path: Path) -> None:
         raise NotImplementedError()

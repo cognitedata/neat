@@ -6,7 +6,7 @@ import pytest
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from cognite.neat._data_model.exporters import DMSTableExporter
+from cognite.neat._data_model.exporters._table_exporter.exporter import DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.importers._table_importer.source import SpreadsheetReadContext, TableSource
@@ -1060,7 +1060,7 @@ class TestDMSTableExporter:
     def test_export(
         self, expected: dict[str, list[dict[str, CellValueType]]], exclude_none: bool, schema: RequestSchema
     ) -> None:
-        result = DMSTableExporter(exclude_none=exclude_none).export(schema)
+        result = DMSYamlExporter(exclude_none=exclude_none)._export(schema)
         assert result == expected
 
 
@@ -1236,7 +1236,7 @@ class TestYAMLTableFormat:
 
         yaml_file.read_text.assert_called_once()
         result_file = MagicMock(spec=Path)
-        DMSTableExporter(exclude_none=True).as_yaml(data_model, result_file)
+        DMSYamlExporter(exclude_none=True).export(data_model, result_file)
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
@@ -1420,7 +1420,7 @@ class TestExcelFormat:
             importer = DMSTableImporter.from_excel(excel_file)
             data_model = importer.to_data_model()
 
-            exported = DMSTableExporter(exclude_none=False).export(data_model)
+            exported = DMSExcelExporter(exclude_none=False)._export(data_model)
             created_workbook = WorkbookCreator().create_workbook(exported)
 
             read_tables = self._read_workbook(created_workbook)
