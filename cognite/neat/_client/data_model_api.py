@@ -18,9 +18,9 @@ class DataModelsAPI(NeatAPI):
         if limit > 1000:
             raise ValueError("Pagination is not (yet) supported for listing data models. The maximum limit is 1000.")
         parameters: dict[str, PrimitiveType] = {
-            "limit": limit,
             "allVersions": all_versions,
             "includeGlobal": include_global,
+            "limit": limit,
         }
         if space is not None:
             parameters["space"] = space

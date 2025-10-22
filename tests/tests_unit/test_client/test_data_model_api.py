@@ -20,5 +20,8 @@ class TestDataModelAPI:
                 "nextCursor": None,
             },
         )
-        models = client.data_models.list()
+        models = client.data_models.list(space="my_space", limit=10, all_versions=True, include_global=False)
         assert len(models) == 1
+        assert len(respx_mock.calls) == 1
+        call = respx_mock.calls[0]
+        assert str(call.request.url.params) == "allVersions=true&includeGlobal=false&limit=10&space=my_space"
