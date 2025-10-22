@@ -44,18 +44,18 @@ class WritePhysicalDataModel:
     def __init__(self, store: NeatStore) -> None:
         self._store = store
 
-    def yaml(self, io: Any, exclude_none: bool = False) -> None:
+    def yaml(self, io: Any) -> None:
         """Write physical data model to YAML file"""
 
         file_path = NeatReader.create(io).materialize_path()
-        writer = DMSYamlExporter(exclude_none=exclude_none)
+        writer = DMSYamlExporter()
 
         return self._store.write_physical(writer, file_path=file_path)
 
-    def excel(self, io: Any, exclude_none: bool = False) -> None:
+    def excel(self, io: Any) -> None:
         """Write physical data model to Excel file"""
 
         file_path = NeatReader.create(io).materialize_path()
-        writer = DMSExcelExporter(exclude_none=exclude_none)
+        writer = DMSExcelExporter()
 
         return self._store.write_physical(writer, file_path=file_path)
