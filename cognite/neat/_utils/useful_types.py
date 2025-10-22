@@ -3,7 +3,7 @@ from datetime import date, datetime, time, timedelta
 from typing import TypeAlias, TypeVar
 
 JsonVal: TypeAlias = None | str | int | float | bool | dict[str, "JsonVal"] | list["JsonVal"]
-
+PrimaryTypes: TypeAlias = str | int | float | bool
 
 T_ID = TypeVar("T_ID", bound=Hashable)
 
