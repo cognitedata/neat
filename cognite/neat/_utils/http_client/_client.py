@@ -21,6 +21,7 @@ from cognite.neat._utils.http_client._data_classes import (
     ParametersRequest,
     RequestMessage,
     ResponseMessage,
+    ResponseResult,
 )
 from cognite.neat._utils.useful_types import PrimaryTypes
 
@@ -99,7 +100,7 @@ class HTTPClient:
             results = self._handle_error(e, message)
         return results
 
-    def request_with_retries(self, message: RequestMessage) -> Sequence[ResponseMessage | FailedRequestMessage]:
+    def request_with_retries(self, message: RequestMessage) -> ResponseResult:
         """Send an HTTP request and handle retries.
 
         This method will keep retrying the request until it either succeeds or
@@ -119,7 +120,7 @@ class HTTPClient:
             raise RuntimeError(f"RequestMessage has already been attempted {message.total_attempts} times.")
         pending_requests: deque[RequestMessage] = deque()
         pending_requests.append(message)
-        final_responses: list[ResponseMessage | FailedRequestMessage] = []
+        final_responses = ResponseResult()
 
         while pending_requests:
             current_request = pending_requests.popleft()

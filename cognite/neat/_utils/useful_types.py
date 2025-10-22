@@ -12,3 +12,4 @@ CellValueType: TypeAlias = str | int | float | bool | datetime | date | time | t
 
 # The format expected for excel sheets representing a data model
 DataModelTableType: TypeAlias = dict[str, list[dict[str, CellValueType]]]
+PrimitiveType: TypeAlias = str | int | float | bool

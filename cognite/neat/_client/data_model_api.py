@@ -1,17 +1,35 @@
-from collections.abc import Sequence
-
-from cognite.neat._data_model.models.dms import DataModelReference, DataModelResponse
+from cognite.neat._data_model.models.dms import DataModelResponse
+from cognite.neat._utils.http_client import ParametersRequest
+from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
+from .data_classes import PagedResponse
 
 
 class DataModelsAPI(NeatAPI):
-    def retrieve(
-        self, data_model_id: DataModelReference | Sequence[DataModelReference]
-    ) -> DataModelResponse | list[DataModelResponse]:
-        raise NotImplementedError()
-
     def list(
-        self, limit: int = 10, space: str | None = None, all_versions: bool = False, include_global: bool = False
+        self,
+        space: str | None = None,
+        all_versions: bool = False,
+        include_global: bool = False,
+        limit: int = 10,
     ) -> list[DataModelResponse]:
-        raise NotImplementedError()
+        if limit > 1000:
+            raise ValueError("Pagination is not (yet) supported for listing data models. The maximum limit is 1000.")
+        parameters: dict[str, PrimitiveType] = {
+            "limit": limit,
+            "allVersions": all_versions,
+            "includeGlobal": include_global,
+        }
+        if space is not None:
+            parameters["space"] = space
+        result = self._http_client.request_with_retries(
+            ParametersRequest(
+                endpoint_url=self._config.create_api_url("/models/datamodels"),
+                method="GET",
+                parameters=parameters,
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.data)
+        return result.items
