@@ -26,7 +26,7 @@ class TestNeatSession:
     def test_write_data_model(self) -> None:
         write_yaml = MagicMock(spec=Path)
 
-        session.physical_data_model.write.yaml(write_yaml, exclude_none=False)
+        session.physical_data_model.write.yaml(write_yaml)
 
         assert len(session._store.physical_data_model) == 1
         assert len(session._store.provenance) == 2
@@ -53,7 +53,7 @@ class TestNeatSession:
 
     def test_write_again_data_model(self) -> None:
         write_yaml = MagicMock(spec=Path)
-        session.physical_data_model.write.yaml(write_yaml, exclude_none=False)
+        session.physical_data_model.write.yaml(write_yaml)
 
         assert len(session._store.physical_data_model) == 1
         assert len(session._store.provenance) == 3

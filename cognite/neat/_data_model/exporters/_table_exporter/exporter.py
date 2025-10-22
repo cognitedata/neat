@@ -54,6 +54,9 @@ class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
 class DMSYamlExporter(DMSTableExporter):
     """Exports DMS to YAML."""
 
+    def __init__(self) -> None:
+        super().__init__(exclude_none=True)
+
     def export(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as a flat YAML file, which is identical to the spreadsheet representation
 
@@ -70,8 +73,8 @@ class DMSYamlExporter(DMSTableExporter):
 class DMSExcelExporter(DMSTableExporter):
     """Exports DMS to Excel file."""
 
-    def __init__(self, exclude_none: bool = False, options: WorkbookOptions | None = None) -> None:
-        super().__init__(exclude_none)
+    def __init__(self, options: WorkbookOptions | None = None) -> None:
+        super().__init__(exclude_none=False)
         self._options = options or WorkbookOptions()
 
     def export(self, data_model: RequestSchema, file_path: Path) -> None:
