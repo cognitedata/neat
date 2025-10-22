@@ -49,6 +49,33 @@ class DMSTableImporter(DMSImporter):
         reader = DMSTableReader(space, version, self._source)
         return reader.read_tables(tables)
 
+    @classmethod
+    def from_yaml(cls, yaml_file: Path) -> "DMSTableImporter":
+        """Create a DMSTableImporter from a YAML file."""
+        source = cls._display_name(yaml_file)
+        return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
+
+    @classmethod
+    def from_excel(cls, excel_file: Path) -> "DMSTableImporter":
+        """Create a DMSTableImporter from an Excel file."""
+        tables: DataModelTableType = {}
+        source = TableSource(cls._display_name(excel_file).as_posix())
+        workbook = load_workbook(excel_file, read_only=True, data_only=True, rich_text=False)
+        try:
+            for column_id, column_info in TableDMS.model_fields.items():
+                sheet_name = cast(str, column_info.validation_alias)
+                if sheet_name not in workbook.sheetnames:
+                    continue
+                required_columns = TableDMS.get_sheet_columns(column_id, column_info, column_type="required")
+                sheet = workbook[sheet_name]
+                context = SpreadsheetReadContext()
+                table_rows = cls._read_rows(sheet, required_columns, context)
+                tables[sheet_name] = table_rows
+                source.table_read[sheet_name] = context
+            return cls(tables, source)
+        finally:
+            workbook.close()
+
     def _read_tables(self) -> TableDMS:
         try:
             # Check tables, columns, data type and entity syntax.
@@ -108,12 +135,6 @@ class DMSTableImporter(DMSImporter):
         return str(default_space), str(default_version)
 
     @classmethod
-    def from_yaml(cls, yaml_file: Path) -> "DMSTableImporter":
-        """Create a DMSTableImporter from a YAML file."""
-        source = cls._display_name(yaml_file)
-        return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
-
-    @classmethod
     def _display_name(cls, filepath: Path) -> Path:
         """Get a display-friendly version of the file path."""
         cwd = Path.cwd()
@@ -121,27 +142,6 @@ class DMSTableImporter(DMSImporter):
         if filepath.is_relative_to(cwd):
             source = filepath.relative_to(cwd)
         return source
-
-    @classmethod
-    def from_excel(cls, excel_file: Path) -> "DMSTableImporter":
-        """Create a DMSTableImporter from an Excel file."""
-        tables: DataModelTableType = {}
-        source = TableSource(cls._display_name(excel_file).as_posix())
-        workbook = load_workbook(excel_file, read_only=True, data_only=True, rich_text=False)
-        try:
-            for column_id, column_info in TableDMS.model_fields.items():
-                sheet_name = cast(str, column_info.validation_alias)
-                if sheet_name not in workbook.sheetnames:
-                    continue
-                required_columns = TableDMS.get_sheet_columns(column_id, column_info, column_type="required")
-                sheet = workbook[sheet_name]
-                context = SpreadsheetReadContext()
-                table_rows = cls._read_rows(sheet, required_columns, context)
-                tables[sheet_name] = table_rows
-                source.table_read[sheet_name] = context
-            return cls(tables, source)
-        finally:
-            workbook.close()
 
     @classmethod
     def _read_rows(

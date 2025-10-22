@@ -6,7 +6,10 @@ import pytest
 from openpyxl import Workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
-from cognite.neat._data_model.exporters import DMSTableExporter
+from cognite.neat._data_model.exporters._table_exporter.exporter import (
+    DMSExcelExporter,
+    DMSYamlExporter,
+)
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.importers._table_importer.source import SpreadsheetReadContext, TableSource
@@ -68,116 +71,65 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 {
                     "View": "CogniteDescribable",
                     "View Property": "name",
-                    "Name": None,
-                    "Description": None,
                     "Connection": None,
                     "Value Type": "text(maxTextSize=400)",
                     "Min Count": 0,
                     "Max Count": 1,
                     "Immutable": False,
-                    "Auto Increment": None,
-                    "Default": None,
                     "Container": "CogniteDescribable",
                     "Container Property": "name",
-                    "Container Property Description": None,
-                    "Container Property Name": None,
                     "Index": "btree:name(cursorable=False)",
                     "Constraint": "uniqueness:uniqueName(bySpace=True)",
                 },
                 {
                     "View": "CogniteAsset",
                     "View Property": "files",
-                    "Name": None,
-                    "Description": None,
                     "Connection": "reverse(property=assets)",
                     "Value Type": "CogniteFile",
                     "Min Count": 0,
                     "Max Count": None,
-                    "Immutable": None,
-                    "Default": None,
-                    "Auto Increment": None,
-                    "Container": None,
-                    "Container Property": None,
-                    "Container Property Description": None,
-                    "Container Property Name": None,
-                    "Index": None,
-                    "Constraint": None,
                 },
                 {
                     "View": "CogniteFile",
                     "View Property": "assets",
-                    "Name": None,
-                    "Description": None,
                     "Connection": "direct",
                     "Value Type": "CogniteAsset",
                     "Min Count": 0,
                     "Max Count": 1200,
                     "Immutable": False,
-                    "Auto Increment": None,
-                    "Default": None,
                     "Container": "CogniteFile",
                     "Container Property": "assets",
-                    "Container Property Description": None,
-                    "Container Property Name": None,
-                    "Index": None,
-                    "Constraint": None,
                 },
                 {
                     "View": "CogniteFile",
                     "View Property": "assetAnnotations",
-                    "Name": None,
-                    "Description": None,
                     "Connection": "edge(edgeSource=FileAnnotation,type=diagramAnnotation)",
                     "Value Type": "CogniteAsset",
                     "Min Count": 0,
                     "Max Count": None,
-                    "Auto Increment": None,
-                    "Immutable": None,
-                    "Default": None,
-                    "Container": None,
-                    "Container Property": None,
-                    "Container Property Description": None,
-                    "Container Property Name": None,
-                    "Index": None,
-                    "Constraint": None,
                 },
                 {
                     "View": "CogniteFile",
                     "View Property": "category",
-                    "Name": None,
-                    "Description": None,
                     "Connection": None,
                     "Value Type": "enum(collection=CogniteFile.category,unknownValue=other)",
                     "Min Count": 0,
                     "Max Count": 1,
                     "Immutable": False,
-                    "Auto Increment": None,
-                    "Default": None,
                     "Container": "CogniteFile",
                     "Container Property": "category",
                     "Container Property Name": "category_405",
-                    "Container Property Description": None,
-                    "Index": None,
-                    "Constraint": None,
                 },
                 {
                     "View": "FileAnnotation",
                     "View Property": "confidence",
-                    "Name": None,
-                    "Description": None,
                     "Connection": None,
                     "Value Type": "float32",
                     "Min Count": 0,
                     "Max Count": 1,
                     "Immutable": True,
-                    "Default": None,
-                    "Auto Increment": None,
                     "Container": "FileAnnotation",
                     "Container Property": "confidence",
-                    "Container Property Description": None,
-                    "Container Property Name": None,
-                    "Index": None,
-                    "Constraint": None,
                 },
             ],
             "Views": [
@@ -186,54 +138,35 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Name": "Cognite Describable",
                     "Description": "The describable core concept is used as a standard way of "
                     "holding the bare minimum of information about the instance",
-                    "Implements": None,
-                    "Filter": None,
-                    "In Model": None,
                 },
                 {
                     "View": "CogniteAsset",
                     "Name": "Cognite Asset",
-                    "Description": None,
                     "Implements": "CogniteDescribable",
-                    "Filter": None,
-                    "In Model": None,
                 },
                 {
                     "View": "CogniteFile",
                     "Name": "Cognite File",
-                    "Description": None,
                     "Implements": "CogniteDescribable",
-                    "Filter": None,
-                    "In Model": None,
                 },
                 {
                     "View": "FileAnnotation",
                     "Name": "File Annotation",
-                    "Description": None,
                     "Implements": "CogniteDescribable",
-                    "Filter": None,
-                    "In Model": None,
                 },
             ],
             "Containers": [
                 {
                     "Container": "CogniteDescribable",
-                    "Name": None,
-                    "Description": None,
-                    "Constraint": None,
                     "Used For": "all",
                 },
                 {
                     "Container": "CogniteFile",
-                    "Name": None,
-                    "Description": None,
                     "Constraint": "requires:describablePresent(require=CogniteDescribable)",
                     "Used For": "node",
                 },
                 {
                     "Container": "FileAnnotation",
-                    "Name": None,
-                    "Description": None,
                     "Constraint": "requires:describablePresent(require=CogniteDescribable)",
                     "Used For": "edge",
                 },
@@ -248,14 +181,10 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 {
                     "Collection": "CogniteFile.category",
                     "Value": "document",
-                    "Name": None,
-                    "Description": None,
                 },
                 {
                     "Collection": "CogniteFile.category",
                     "Value": "other",
-                    "Name": None,
-                    "Description": None,
                 },
             ],
             "Nodes": [
@@ -264,7 +193,6 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 }
             ],
         },
-        False,
         RequestSchema(
             dataModel=DataModelRequest(
                 space="cdf_cdm",
@@ -511,7 +439,6 @@ def valid_dms_table_formats() -> Iterable[tuple]:
             "Views": [{"View": "TestView"}],
             "Containers": [{"Container": "TestContainer", "Used For": "node"}],
         },
-        True,
         RequestSchema(
             dataModel=DataModelRequest(
                 space="test_space",
@@ -1009,7 +936,6 @@ def invalid_dms_table() -> Iterable[tuple]:
             ],
             "Views": [
                 {
-                    # Missing required "View" field entirely
                     "Name": "Some View Name",
                 }
             ],
@@ -1036,10 +962,8 @@ class TestDMSTableImporter:
         actual_errors = {err.message for err in exc_info.value.errors}
         assert actual_errors == expected_errors
 
-    @pytest.mark.parametrize("data,exclude_none,expected", list(valid_dms_table_formats()))
-    def test_import(
-        self, data: dict[str, list[dict[str, CellValueType]]], exclude_none: bool, expected: RequestSchema
-    ) -> None:
+    @pytest.mark.parametrize("data,expected", list(valid_dms_table_formats()))
+    def test_import(self, data: dict[str, list[dict[str, CellValueType]]], expected: RequestSchema) -> None:
         importer = DMSTableImporter(data)
         result = importer.to_data_model()
         assert result.model_dump() == expected.model_dump()
@@ -1056,11 +980,10 @@ class TestDMSTableImporter:
 
 
 class TestDMSTableExporter:
-    @pytest.mark.parametrize("expected,exclude_none,schema", list(valid_dms_table_formats()))
-    def test_export(
-        self, expected: dict[str, list[dict[str, CellValueType]]], exclude_none: bool, schema: RequestSchema
-    ) -> None:
-        result = DMSTableExporter(exclude_none=exclude_none).export(schema)
+    @pytest.mark.parametrize("expected,schema", list(valid_dms_table_formats()))
+    def test_export(self, expected: dict[str, list[dict[str, CellValueType]]], schema: RequestSchema) -> None:
+        result = DMSYamlExporter()._export(schema)
+
         assert result == expected
 
 
@@ -1236,7 +1159,7 @@ class TestYAMLTableFormat:
 
         yaml_file.read_text.assert_called_once()
         result_file = MagicMock(spec=Path)
-        DMSTableExporter(exclude_none=True).as_yaml(data_model, result_file)
+        DMSYamlExporter().export(data_model, result_file)
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
@@ -1420,7 +1343,7 @@ class TestExcelFormat:
             importer = DMSTableImporter.from_excel(excel_file)
             data_model = importer.to_data_model()
 
-            exported = DMSTableExporter(exclude_none=False).export(data_model)
+            exported = DMSExcelExporter()._export(data_model)
             created_workbook = WorkbookCreator().create_workbook(exported)
 
             read_tables = self._read_workbook(created_workbook)
@@ -1430,7 +1353,7 @@ class TestExcelFormat:
     @staticmethod
     def _create_load_workbook_mock(excel_tables: dict[str, list[list[CellValueType]]]) -> MagicMock:
         workbook = MagicMock(spec=Workbook)
-        # Mock the sheets in the workbook
+
         workbook.sheetnames = list(excel_tables.keys())
         sheet_by_name: dict[str, MagicMock] = {}
         for sheet_name, rows in excel_tables.items():
@@ -1460,7 +1383,6 @@ class TestExcelFormat:
             sheet = workbook[sheet_name]
             rows: list[list[CellValueType]] = []
             for row in sheet.iter_rows(values_only=True):
-                # MyPy does not understand values_only=True returns Tuple[CellValueType, ...]
                 rows.append(list(row))  # type: ignore[arg-type]
             output[sheet_name] = rows
         return output
