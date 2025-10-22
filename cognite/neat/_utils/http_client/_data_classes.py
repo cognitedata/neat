@@ -6,6 +6,7 @@ from typing import Generic, Literal, TypeAlias, TypeVar
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_serializer
 
+from cognite.neat._exceptions import CDFAPIError
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
 from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
 
@@ -116,7 +117,7 @@ class ItemMessage(BaseModel):
     ...
 
 
-class ItemIDMessage(Generic[T_ID], ItemMessage, ABC):
+class ItemIDMessage(ItemMessage, Generic[T_ID], ABC):
     """Base class for message related to a specific item identified by an ID"""
 
     id: T_ID
@@ -263,7 +264,7 @@ class ResponseResult(UserList, MutableSequence[ResponseMessage | FailedRequestMe
     def raise_for_status(self) -> None:
         error_messages = [message for message in self.data if not isinstance(message, SuccessResponse)]
         if error_messages:
-            raise Exception(f"One or more requests failed: {error_messages}")
+            raise CDFAPIError(error_messages)
 
     @property
     def success_response(self) -> SuccessResponse:

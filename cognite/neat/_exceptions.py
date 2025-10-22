@@ -1,4 +1,9 @@
+from typing import TYPE_CHECKING
+
 from ._issues import ModelSyntaxError
+
+if TYPE_CHECKING:
+    from cognite.neat._utils.http_client import HTTPMessage
 
 
 class NeatException(Exception):
@@ -15,3 +20,10 @@ class DataModelImportError(NeatException):
 
     def __str__(self) -> str:
         return f"Model import failed with {len(self.errors)} errors: " + "; ".join(map(str, self.errors))
+
+
+class CDFAPIError(NeatException):
+    """Raised when there is an error in an API call."""
+
+    def __init__(self, messages: "list[HTTPMessage]") -> None:
+        self.messages = messages
