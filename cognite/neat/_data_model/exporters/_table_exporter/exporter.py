@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import cast
 
 import yaml
+from pyparsing import ABC
 
 from cognite.neat._data_model.exporters._base import DMSExporter
 from cognite.neat._data_model.importers._table_importer.data_classes import DMSProperty, TableDMS
@@ -12,7 +13,7 @@ from .workbook import WorkbookCreator, WorkbookOptions
 from .writer import DMSTableWriter
 
 
-class DMSTableExporter(DMSExporter[DataModelTableType]):
+class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
     """Exports DMS to a table structure.
 
     The tables can are expected to be a dictionary where the keys are the table names and the values
