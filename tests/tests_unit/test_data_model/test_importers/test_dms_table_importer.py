@@ -36,7 +36,7 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._issues import DataModelImportError
+from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 
 SOURCE = "pytest.xlsx"
@@ -957,7 +957,7 @@ class TestDMSTableImporter:
         self, data: dict[str, list[dict[str, CellValueType]]], expected_errors: set[str]
     ) -> None:
         importer = DMSTableImporter(data)
-        with pytest.raises(DataModelImportError) as exc_info:
+        with pytest.raises(DataModelImportException) as exc_info:
             importer._read_tables()
         actual_errors = {err.message for err in exc_info.value.errors}
         assert actual_errors == expected_errors
@@ -971,7 +971,7 @@ class TestDMSTableImporter:
     @pytest.mark.parametrize("data,expected_errors", list(invalid_dms_table_formats()))
     def test_import_errors(self, data: dict[str, list[dict[str, CellValueType]]], expected_errors: set[str]) -> None:
         importer = DMSTableImporter(data, source=TableSource(source=SOURCE, table_read={}))
-        with pytest.raises(DataModelImportError) as e:
+        with pytest.raises(DataModelImportException) as e:
             _ = importer.to_data_model()
 
         result_errors = {err.message for err in e.value.errors}

@@ -6,7 +6,7 @@ from typing import Generic, Literal, TypeAlias, TypeVar
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_serializer
 
-from cognite.neat._exceptions import CDFAPIError
+from cognite.neat._exceptions import CDFAPIException
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
 from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
 
@@ -264,7 +264,7 @@ class APIResponse(UserList, MutableSequence[ResponseMessage | FailedRequestMessa
     def raise_for_status(self) -> None:
         error_messages = [message for message in self.data if not isinstance(message, SuccessResponse)]
         if error_messages:
-            raise CDFAPIError(error_messages)
+            raise CDFAPIException(error_messages)
 
     @property
     def success_response(self) -> SuccessResponse:

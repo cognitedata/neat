@@ -11,7 +11,8 @@ from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.models.dms import (
     RequestSchema,
 )
-from cognite.neat._issues import DataModelImportError, ModelSyntaxError
+from cognite.neat._exceptions import DataModelImportException
+from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 from cognite.neat._utils.validation import as_json_path, humanize_validation_error
@@ -81,7 +82,7 @@ class DMSTableImporter(DMSImporter):
             table = TableDMS.model_validate(self._table)
         except ValidationError as e:
             errors = self._create_error_messages(e)
-            raise DataModelImportError(errors) from None
+            raise DataModelImportException(errors) from None
         return table
 
     def _create_error_messages(self, error: ValidationError) -> list[ModelSyntaxError]:
@@ -130,7 +131,7 @@ class DMSTableImporter(DMSImporter):
         if missing:
             error = ModelSyntaxError(message=f"In Metadata missing required values: {humanize_collection(missing)}")
             # If space or version is missing, we cannot continue parsing the model as these are used as defaults.
-            raise DataModelImportError([error]) from None
+            raise DataModelImportException([error]) from None
         return str(default_space), str(default_version)
 
     @classmethod
