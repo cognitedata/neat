@@ -2,6 +2,7 @@ from typing import Any
 
 from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSTableImporter
+from cognite.neat._data_model.models.dms._quality_assessment import DmsQualityAssessment
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
 
@@ -27,7 +28,7 @@ class ReadPhysicalDataModel:
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_yaml(path)
 
-        return self._store.read_physical(reader)
+        return self._store.read_physical(reader, DmsQualityAssessment)
 
     def excel(self, io: Any) -> None:
         """Read physical data model from Excel file"""
@@ -35,7 +36,7 @@ class ReadPhysicalDataModel:
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
 
-        return self._store.read_physical(reader)
+        return self._store.read_physical(reader, DmsQualityAssessment)
 
 
 class WritePhysicalDataModel:

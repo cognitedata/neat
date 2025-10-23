@@ -11,8 +11,7 @@ from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.models.dms import (
     RequestSchema,
 )
-from cognite.neat._exceptions import DataModelImportError
-from cognite.neat._issues import ModelSyntaxError
+from cognite.neat._issues import DataModelImportError, ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 from cognite.neat._utils.validation import as_json_path, humanize_validation_error
