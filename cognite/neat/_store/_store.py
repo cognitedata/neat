@@ -7,6 +7,8 @@ from cognite.neat._data_model._shared import OnSuccess
 from cognite.neat._data_model.exporters import DMSTableExporter
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
+from cognite.neat._exceptions import DataModelImportException
+from cognite.neat._issues import Issue
 from cognite.neat._state_machine._states import EmptyState, State
 
 from ._provenance import Change, Provenance
@@ -31,6 +33,8 @@ class NeatStore:
             self.physical_data_model.append(data_model)
             self.state = self.state.transition(reader)
             change.target_state = self.state
+            # in case of read of data model result will be same as target entity
+            change.result = change.target_entity
 
         self.provenance.append(change)
 
@@ -63,7 +67,8 @@ class NeatStore:
         """Execute activity and capture timing, results, and issues"""
         start = datetime.now(timezone.utc)
         result: PhysicalDataModel | None = None
-        issues: list[str] = []
+        issues: list[Issue] = []
+        errors: list[Issue] = []
 
         try:
             result = activity(**kwargs)
@@ -71,8 +76,14 @@ class NeatStore:
                 on_success_instance = on_success(result)
                 on_success_instance.run()
                 issues.extend(on_success_instance.issues)
+
+        # we catch import exceptions to capture issues and errors in provenance
+        except DataModelImportException as e:
+            errors.extend(e.errors)
+
+        # these are all other errors, such as missing file, wrong format, etc.
         except Exception as e:
-            issues.append(str(e))
+            raise e
 
         end = datetime.now(timezone.utc)
 
@@ -82,6 +93,7 @@ class NeatStore:
             source_state=self.state,
             agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
+            errors=errors,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
         ), result
 
