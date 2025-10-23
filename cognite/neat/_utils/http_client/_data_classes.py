@@ -257,7 +257,7 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
         return responses
 
 
-class ResponseResult(UserList, MutableSequence[ResponseMessage | FailedRequestMessage]):
+class APIResponse(UserList, MutableSequence[ResponseMessage | FailedRequestMessage]):
     def __init__(self, collection: Sequence[ResponseMessage | FailedRequestMessage] | None = None):
         super().__init__(collection or [])
 
