@@ -14,7 +14,7 @@ class NeatException(Exception):
 class DataModelImportException(NeatException):
     """Raised when there is an error importing a model."""
 
-    def __init__(self, errors: list[ModelSyntaxError]) -> None:
+    def __init__(self, errors: "list[ModelSyntaxError]") -> None:
         super().__init__(errors)
         self.errors = errors
 
