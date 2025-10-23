@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 
 from cognite.neat import _state_machine as states
+from cognite.neat._issues import Issue, ModelSyntaxError
 from cognite.neat._store._provenance import Change, Provenance
 
 
@@ -40,7 +41,7 @@ class TestProvenance:
 
     def test_last_issues_property(self) -> None:
         provenance = Provenance()
-        issues = ["error1", "error2"]
+        issues: list[Issue] = [ModelSyntaxError(message="error1"), ModelSyntaxError(message="error2")]
         change = Change(
             agent="test_agent",
             activity="test_activity",
