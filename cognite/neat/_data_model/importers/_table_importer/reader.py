@@ -22,8 +22,7 @@ from cognite.neat._data_model.models.dms import (
     ViewRequestPropertyAdapter,
 )
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
-from cognite.neat._exceptions import DataModelImportError
-from cognite.neat._issues import ModelSyntaxError
+from cognite.neat._issues import DataModelImportError, ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.validation import humanize_validation_error
 

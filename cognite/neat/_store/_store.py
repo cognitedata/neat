@@ -3,6 +3,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any, cast
 
+from cognite.neat._data_model._shared import OnSuccess
 from cognite.neat._data_model.exporters import DMSTableExporter
 from cognite.neat._data_model.importers import DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
@@ -19,11 +20,11 @@ class NeatStore:
         self.provenance = Provenance()
         self.state: State = EmptyState()
 
-    def read_physical(self, reader: DMSTableImporter) -> None:
+    def read_physical(self, reader: DMSTableImporter, on_success: type[OnSuccess] | None = None) -> None:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
 
-        change, data_model = self._do_activity(reader.to_data_model)
+        change, data_model = self._do_activity(reader.to_data_model, on_success)
 
         if data_model:
             change.target_entity = self.physical_data_model.generate_reference(cast(PhysicalDataModel, data_model))
@@ -33,11 +34,13 @@ class NeatStore:
 
         self.provenance.append(change)
 
-    def write_physical(self, writer: DMSTableExporter, **kwargs: Any) -> None:
+    def write_physical(
+        self, writer: DMSTableExporter, on_success: type[OnSuccess] | None = None, **kwargs: Any
+    ) -> None:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
-        change, _ = self._do_activity(writer.export, data_model=self.physical_data_model[-1], **kwargs)
+        change, _ = self._do_activity(writer.export, on_success, data_model=self.physical_data_model[-1], **kwargs)
 
         if not change.issues:
             change.target_entity = "ExternalEntity"
@@ -54,7 +57,9 @@ class NeatStore:
         # need implementation of checking if required predecessor activities have been done
         # this will be done by running self.provenance.can_agent_do_activity(agent)
 
-    def _do_activity(self, activity: Callable, **kwargs: Any) -> tuple[Change, PhysicalDataModel | None]:
+    def _do_activity(
+        self, activity: Callable, on_success: type[OnSuccess] | None = None, **kwargs: Any
+    ) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""
         start = datetime.now(timezone.utc)
         result: PhysicalDataModel | None = None
@@ -62,6 +67,10 @@ class NeatStore:
 
         try:
             result = activity(**kwargs)
+            if result and on_success:
+                on_success_instance = on_success(result)
+                on_success_instance.run()
+                issues.extend(on_success_instance.issues)
         except Exception as e:
             issues.append(str(e))
 
