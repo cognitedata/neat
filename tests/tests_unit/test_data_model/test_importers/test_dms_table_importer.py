@@ -36,7 +36,7 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._exceptions import DataModelImportError
+from cognite.neat._issues import DataModelImportError
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
 
 SOURCE = "pytest.xlsx"
