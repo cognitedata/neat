@@ -1,14 +1,17 @@
 from pydantic import BaseModel
 
 
-class ModelSyntaxError(BaseModel):
+class Issue(BaseModel): ...
+
+
+class ModelSyntaxError(Issue):
     """If any syntax error is found. Stop validation
     and ask user to fix the syntax error first."""
 
     message: str
 
 
-class ImplementationWarning(BaseModel):
+class ImplementationWarning(Issue):
     """This is only for conceptual data model. It means that conversion to DMS
     will fail unless user implements the missing part."""
 
@@ -16,7 +19,7 @@ class ImplementationWarning(BaseModel):
     fix: str
 
 
-class ConsistencyError(BaseModel):
+class ConsistencyError(Issue):
     """If any consistency error is found, the deployment of the data model will fail. For example,
     if a reverse direct relations points to a non-existing direct relation. This is only relevant for
     DMS model.
@@ -26,24 +29,8 @@ class ConsistencyError(BaseModel):
     fix: str
 
 
-class Recommendation(BaseModel):
+class Recommendation(Issue):
     """Best practice recommendation."""
 
     message: str
     fix: str | None = None
-
-
-class NeatException(Exception):
-    """Base class for all exceptions raised by Neat."""
-
-    pass
-
-
-class DataModelImportError(NeatException):
-    """Raised when there is an error importing a model."""
-
-    def __init__(self, errors: list[ModelSyntaxError]) -> None:
-        self.errors = errors
-
-    def __str__(self) -> str:
-        return f"Model import failed with {len(self.errors)} errors: " + "; ".join(map(str, self.errors))

@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections import UserList
+from collections.abc import Callable, MutableSequence, Sequence
 from typing import Generic, Literal, TypeAlias, TypeVar
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_serializer
 
+from cognite.neat._exceptions import CDFAPIException
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
 from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
 
@@ -115,7 +117,7 @@ class ItemMessage(BaseModel):
     ...
 
 
-class ItemIDMessage(Generic[T_ID], ItemMessage, ABC):
+class ItemIDMessage(ItemMessage, Generic[T_ID], ABC):
     """Base class for message related to a specific item identified by an ID"""
 
     id: T_ID
@@ -253,3 +255,23 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
                 raise ValueError("Invalid as_id function provided for ItemsRequest") from None
             responses.append(FailedRequestItem(id=item_id, message=error_message))
         return responses
+
+
+class APIResponse(UserList, MutableSequence[ResponseMessage | FailedRequestMessage]):
+    def __init__(self, collection: Sequence[ResponseMessage | FailedRequestMessage] | None = None):
+        super().__init__(collection or [])
+
+    def raise_for_status(self) -> None:
+        error_messages = [message for message in self.data if not isinstance(message, SuccessResponse)]
+        if error_messages:
+            raise CDFAPIException(error_messages)
+
+    @property
+    def success_response(self) -> SuccessResponse:
+        success = [msg for msg in self.data if isinstance(msg, SuccessResponse)]
+        if len(success) == 1:
+            return success[0]
+        elif success:
+            raise ValueError("Multiple successful HTTP responses found in the messages.")
+        else:
+            raise ValueError("No successful HTTP response found in the messages.")

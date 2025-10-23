@@ -22,7 +22,8 @@ from cognite.neat._data_model.models.dms import (
     ViewRequestPropertyAdapter,
 )
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
-from cognite.neat._issues import DataModelImportError, ModelSyntaxError
+from cognite.neat._exceptions import DataModelImportException
+from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.validation import humanize_validation_error
 
@@ -173,7 +174,7 @@ class DMSTableReader:
         data_model = self.read_data_model(tables, valid_view_entities)
 
         if self.errors:
-            raise DataModelImportError(self.errors) from None
+            raise DataModelImportException(self.errors) from None
         return RequestSchema(
             dataModel=data_model, views=views, containers=containers, spaces=[space_request], nodeTypes=node_types
         )
@@ -182,7 +183,7 @@ class DMSTableReader:
         space_request = self._validate_obj(SpaceRequest, {"space": space}, (self.Sheets.metadata,), field_name="value")
         if space_request is None:
             # If space is invalid, we stop parsing to avoid raising an error for every place the space is used.
-            raise DataModelImportError(self.errors) from None
+            raise DataModelImportException(self.errors) from None
         return space_request
 
     def read_nodes(self, nodes: list[DMSNode]) -> list[NodeReference]:
@@ -729,7 +730,7 @@ class DMSTableReader:
         model = self._validate_obj(DataModelRequest, data, (self.Sheets.metadata,), field_name="value")
         if model is None:
             # This is the last step, so we can raise the error here.
-            raise DataModelImportError(self.errors) from None
+            raise DataModelImportException(self.errors) from None
         return model
 
     def _parse_entity(self, entity: str, loc: tuple[str | int, ...]) -> ParsedEntity | None:
