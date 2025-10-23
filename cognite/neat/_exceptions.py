@@ -1,7 +1,4 @@
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
-
-from ._issues import Issue
 
 if TYPE_CHECKING:
     from cognite.neat._issues import ModelSyntaxError
@@ -14,14 +11,7 @@ class NeatException(Exception):
     pass
 
 
-class NeatIssueException(NeatException):
-    """Raised when there are issues detected."""
-
-    def __init__(self, issues: Sequence[Issue]) -> None:
-        self.issues = list(issues)
-
-
-class DataModelImportException(NeatIssueException):
+class DataModelImportException(NeatException):
     """Raised when there is an error importing a model."""
 
     def __init__(self, errors: list[ModelSyntaxError]) -> None:
