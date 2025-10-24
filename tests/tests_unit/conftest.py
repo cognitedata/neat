@@ -64,7 +64,15 @@ def example_dms_view_response() -> dict[str, Any]:
                 "type": {"type": "text"},
                 "connectionType": "primary_property",
                 "constraintState": {"nullability": "current"},
-            }
+            },
+            "anEdge": {
+                "connectionType": "multi_edge_connection",
+                "type": {
+                    "space": "my_space",
+                    "externalId": "MyEdgeType",
+                },
+                "source": {"space": "my_space", "externalId": "MyTargetType", "version": "v1", "type": "view"},
+            },
         },
         createdTime=0,
         lastUpdatedTime=1,

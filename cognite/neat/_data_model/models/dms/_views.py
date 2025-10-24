@@ -15,8 +15,9 @@ from ._constants import (
     FORBIDDEN_CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER,
     SPACE_FORMAT_PATTERN,
 )
-from ._references import ContainerReference, ViewReference
+from ._references import ContainerReference, NodeReference, ViewReference
 from ._view_property import (
+    EdgeProperty,
     ViewRequestProperty,
     ViewResponseProperty,
 )
@@ -133,6 +134,15 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
     def validate_properties_identifier(cls, val: dict[str, ViewResponseProperty]) -> dict[str, ViewResponseProperty]:
         """Validate properties Identifier"""
         return _validate_properties_keys(val)
+
+    @property
+    def node_types(self) -> list[NodeReference]:
+        """Get all node types referenced by this view."""
+        nodes_refs: set[NodeReference] = set()
+        for prop in self.properties.values():
+            if isinstance(prop, EdgeProperty):
+                nodes_refs.add(prop.type)
+        return list(nodes_refs)
 
     def as_request(self) -> ViewRequest:
         dumped = self.model_dump(by_alias=True, exclude={"properties"})
