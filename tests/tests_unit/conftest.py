@@ -47,3 +47,63 @@ def example_dms_data_model_response() -> dict[str, Any]:
         lastUpdatedTime=1,
         isGlobal=False,
     )
+
+
+@pytest.fixture
+def example_dms_view_response() -> dict[str, Any]:
+    return dict(
+        space="my_space",
+        externalId="MyView",
+        version="v1",
+        name="My View",
+        description="An example view",
+        properties={
+            "name": {
+                "container": {"space": "my_space", "externalId": "MyContainer"},
+                "containerPropertyIdentifier": "name",
+                "type": {"type": "text"},
+                "connectionType": "primary_property",
+                "constraintState": {"nullability": "current"},
+            }
+        },
+        createdTime=0,
+        lastUpdatedTime=1,
+        writable=True,
+        queryable=True,
+        usedFor="node",
+        isGlobal=False,
+        mappedContainers=[{"space": "my_space", "externalId": "MyContainer"}],
+    )
+
+
+@pytest.fixture
+def example_dms_container_response() -> dict[str, Any]:
+    return dict(
+        space="my_space",
+        externalId="MyContainer",
+        name="My Container",
+        description="An example container",
+        usedFor="node",
+        properties={
+            "name": {
+                "type": {"type": "text"},
+                "nullable": False,
+                "immutable": False,
+            }
+        },
+        createdTime=0,
+        lastUpdatedTime=1,
+        isGlobal=False,
+    )
+
+
+@pytest.fixture
+def example_dms_space_response() -> dict[str, Any]:
+    return dict(
+        space="my_space",
+        name="My Space",
+        description="An example space",
+        createdTime=0,
+        lastUpdatedTime=1,
+        isGlobal=False,
+    )

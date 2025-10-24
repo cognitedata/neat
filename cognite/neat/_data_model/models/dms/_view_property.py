@@ -49,6 +49,7 @@ class ViewCorePropertyRequest(ViewCoreProperty): ...
 
 class ConstraintOrIndexState(BaseModelObject):
     nullability: Literal["current", "pending", "failed"] | None = Field(
+        None,
         description="""For properties that have isNullable set to false, this field describes the validity of the
 not-null constraint. It is not specified for nullable properties.
 
@@ -58,7 +59,7 @@ Possible values are:
           existing nulls was made non-nullable. New null values will still be rejected.
 "current": The constraint is satisfied; all values in the property are not null.
 "pending": The constraint validity has not yet been computed.
-        """
+        """,
     )
 
 
@@ -147,7 +148,7 @@ class SingleReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[SingleReverseDirectRelationPropertyRequest]
 ):
     connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
-    target_list: bool = Field(
+    targets_list: bool = Field(
         description="Whether or not this reverse direct relation targets a list of direct relations.",
     )
 
@@ -159,7 +160,7 @@ class MultiReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[MultiReverseDirectRelationPropertyRequest]
 ):
     connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
-    target_list: bool = Field(
+    targets_list: bool = Field(
         description="Whether or not this reverse direct relation targets a list of direct relations.",
     )
 

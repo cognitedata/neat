@@ -55,7 +55,7 @@ class DataModel(Resource, ABC):
     def as_reference(self) -> DataModelReference:
         return DataModelReference(
             space=self.space,
-            externalId=self.external_id,
+            external_id=self.external_id,
             version=self.version,
         )
 

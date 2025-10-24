@@ -1,4 +1,6 @@
-from cognite.neat._data_model.models.dms import DataModelReference, DataModelResponse
+from __future__ import annotations
+
+from cognite.neat._data_model.models.dms import ContainerReference, ContainerResponse
 from cognite.neat._utils.http_client import ItemBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
@@ -6,17 +8,18 @@ from .api import NeatAPI
 from .data_classes import PagedResponse
 
 
-class DataModelsAPI(NeatAPI):
+class ContainersAPI(NeatAPI):
     def retrieve(
         self,
-        items: list[DataModelReference],
-    ) -> list[DataModelResponse]:
-        """Retrieve data models by their identifiers.
+        items: list[ContainerReference],
+    ) -> list[ContainerResponse]:
+        """Retrieve containers by their identifiers.
 
         Args:
-            items: List of data models references identifying the data models to retrieve.
+            items: List of (space, external_id) tuples identifying the containers to retrieve.
+
         Returns:
-            List of DataModelResponse objects.
+            List of ContainerResponse objects.
         """
         if not items:
             return []
@@ -25,28 +28,35 @@ class DataModelsAPI(NeatAPI):
 
         result = self._http_client.request_with_retries(
             ItemsRequest(
-                endpoint_url=self._config.create_api_url("/models/datamodels/byids"),
+                endpoint_url=self._config.create_api_url("/models/containers/byids"),
                 method="POST",
                 body=ItemBody(items=items),
                 as_id=lambda c: c,
             )
         )
         result.raise_for_status()
-        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.data)
         return result.items
 
     def list(
         self,
         space: str | None = None,
-        all_versions: bool = False,
         include_global: bool = False,
         limit: int = 10,
-    ) -> list[DataModelResponse]:
-        """List data models in CDF Project."""
+    ) -> list[ContainerResponse]:
+        """List containers in CDF Project.
+
+        Args:
+            space: If specified, only containers in this space are returned.
+            include_global: If True, include global containers.
+            limit: Maximum number of containers to return. Max is 1000.
+
+        Returns:
+            List of ContainerResponse objects.
+        """
         if limit > 1000:
-            raise ValueError("Pagination is not (yet) supported for listing data models. The maximum limit is 1000.")
+            raise ValueError("Pagination is not (yet) supported for listing containers. The maximum limit is 1000.")
         parameters: dict[str, PrimitiveType] = {
-            "allVersions": all_versions,
             "includeGlobal": include_global,
             "limit": limit,
         }
@@ -54,11 +64,11 @@ class DataModelsAPI(NeatAPI):
             parameters["space"] = space
         result = self._http_client.request_with_retries(
             ParametersRequest(
-                endpoint_url=self._config.create_api_url("/models/datamodels"),
+                endpoint_url=self._config.create_api_url("/models/containers"),
                 method="GET",
                 parameters=parameters,
             )
         )
         result.raise_for_status()
-        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.data)
         return result.items

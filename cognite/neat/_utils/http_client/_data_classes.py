@@ -77,25 +77,14 @@ class RequestMessage(HTTPMessage, ABC):
 class SimpleRequest(RequestMessage):
     """Base class for requests with a simple success/fail response structure"""
 
-    @classmethod
-    def create_success_response(cls, response: httpx.Response) -> Sequence[ResponseMessage]:
+    def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
         return [SuccessResponse(code=response.status_code, data=response.content)]
 
-    @classmethod
-    def create_failure_response(cls, response: httpx.Response, error: ErrorResponse) -> Sequence[ResponseMessage]:
+    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
         return [FailedResponse(code=response.status_code, error=error.error)]
 
-    @classmethod
-    def create_failed_request(cls, error_message: str) -> Sequence[HTTPMessage]:
+    def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
         return [FailedRequestMessage(message=error_message)]
-
-
-class BodyRequest(RequestMessage, ABC):
-    """Base class for HTTP request messages with a body"""
-
-    @abstractmethod
-    def data(self) -> str:
-        raise NotImplementedError()
 
 
 class ParametersRequest(SimpleRequest):
@@ -104,7 +93,15 @@ class ParametersRequest(SimpleRequest):
     parameters: dict[str, PrimaryTypes] | None = None
 
 
-class SimpleBodyRequest(SimpleRequest, BodyRequest):
+class BodyRequest(ParametersRequest, ABC):
+    """Base class for HTTP request messages with a body"""
+
+    @abstractmethod
+    def data(self) -> str:
+        raise NotImplementedError()
+
+
+class SimpleBodyRequest(BodyRequest):
     body: str
 
     def data(self) -> str:
@@ -138,7 +135,9 @@ class ItemBody(BaseModel, Generic[T_BaseModel]):
 
     @model_serializer(mode="plain", return_type=dict)
     def serialize(self) -> dict[str, JsonValue]:
-        data: dict[str, JsonValue] = {"items": [item.model_dump(exclude_unset=True) for item in self.items]}
+        data: dict[str, JsonValue] = {
+            "items": [item.model_dump(exclude_unset=True, by_alias=True) for item in self.items]
+        }
         if isinstance(self.extra_args, dict):
             data.update(self.extra_args)
         return data
@@ -165,7 +164,7 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
     tracker: ItemsRequestTracker | None = None
 
     def data(self) -> str:
-        return self.body.model_dump_json(exclude_unset=True)
+        return self.body.model_dump_json(exclude_unset=True, by_alias=True)
 
     def split(self, status_attempts: int) -> "list[ItemsRequest]":
         """Splits the request into two smaller requests.
@@ -208,17 +207,6 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
         )
         second_half.tracker = tracker
         return [first_half, second_half]
-
-    def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
-        """Creates response messages based on the HTTP response and the original request.
-
-        Args:
-            response: The HTTP response received from the server.
-
-        Returns:
-            A sequence of HTTPMessage instances representing the outcome for each item in the request.
-        """
-        return SimpleRequest.create_success_response(response)
 
     def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
         """Creates response messages based on the HTTP response and the original request.
