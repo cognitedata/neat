@@ -148,7 +148,7 @@ class SingleReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[SingleReverseDirectRelationPropertyRequest]
 ):
     connection_type: Literal["single_reverse_direct_relation"] = "single_reverse_direct_relation"
-    target_list: bool = Field(
+    targets_list: bool = Field(
         description="Whether or not this reverse direct relation targets a list of direct relations.",
     )
 
@@ -160,7 +160,7 @@ class MultiReverseDirectRelationPropertyResponse(
     ReverseDirectRelationProperty, WriteableResource[MultiReverseDirectRelationPropertyRequest]
 ):
     connection_type: Literal["multi_reverse_direct_relation"] = "multi_reverse_direct_relation"
-    target_list: bool = Field(
+    targets_list: bool = Field(
         description="Whether or not this reverse direct relation targets a list of direct relations.",
     )
 

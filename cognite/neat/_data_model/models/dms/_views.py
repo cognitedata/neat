@@ -2,7 +2,7 @@ import re
 from abc import ABC
 from typing import Literal, TypeVar
 
-from pydantic import Field, Json, field_validator, model_validator
+from pydantic import Field, JsonValue, field_validator, model_validator
 
 from cognite.neat._utils.text import humanize_collection
 
@@ -52,7 +52,7 @@ class View(Resource, ABC):
         description="Description of the view.",
         max_length=1024,
     )
-    filter: dict[str, Json] | None = Field(
+    filter: dict[str, JsonValue] | None = Field(
         default=None,
         description="A filter Domain Specific Language (DSL) used to create advanced filter queries.",
     )
