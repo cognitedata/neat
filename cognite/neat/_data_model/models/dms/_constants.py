@@ -1,7 +1,7 @@
 SPACE_FORMAT_PATTERN = r"^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$"
 DM_EXTERNAL_ID_PATTERN = r"^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"
 CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN = r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,253}[a-zA-Z0-9]?$"
-INSTANCE_ID_PATTERN = r"^[^\\x00]{1,256}$"
+INSTANCE_ID_PATTERN = r"^[^\x00]{1,256}$"
 ENUM_VALUE_IDENTIFIER_PATTERN = r"^[_A-Za-z][_0-9A-Za-z]{0,127}$"
 DM_VERSION_PATTERN = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
 FORBIDDEN_ENUM_VALUES = frozenset({"true", "false", "null"})
