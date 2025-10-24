@@ -49,6 +49,7 @@ class ViewCorePropertyRequest(ViewCoreProperty): ...
 
 class ConstraintOrIndexState(BaseModelObject):
     nullability: Literal["current", "pending", "failed"] | None = Field(
+        None,
         description="""For properties that have isNullable set to false, this field describes the validity of the
 not-null constraint. It is not specified for nullable properties.
 
@@ -58,7 +59,7 @@ Possible values are:
           existing nulls was made non-nullable. New null values will still be rejected.
 "current": The constraint is satisfied; all values in the property are not null.
 "pending": The constraint validity has not yet been computed.
-        """
+        """,
     )
 
 
