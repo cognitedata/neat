@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from cognite.neat._issues import Issue
+from cognite.neat._issues import IssueList
 from cognite.neat._state_machine import State
 
 
@@ -18,8 +18,8 @@ class Change:
     target_state: State | None = field(default=None)
     source_entity: str | None = field(default="ExternalEntity")
     target_entity: str | None = field(default="FailedEntity")
-    issues: list[Issue] | None = field(default=None)
-    errors: list[Issue] | None = field(default=None)
+    issues: IssueList | None = field(default=None)
+    errors: IssueList | None = field(default=None)
     # for time being setting to Any, can be refined later
     result: Any | None = field(default=None)
     description: str | None = field(default=None)
@@ -28,6 +28,11 @@ class Change:
     def standardize_activity_name(activity: str, start: datetime, end: datetime) -> str:
         """Create standardized activity name"""
         return f"{activity}_{start.timestamp()}-{end.timestamp()}"
+
+    @property
+    def successful(self) -> bool:
+        """Check if change was successful"""
+        return not self.errors
 
 
 class Provenance(UserList[Change]):
@@ -38,12 +43,8 @@ class Provenance(UserList[Change]):
         raise TypeError("Cannot modify change from provenance")
 
     @property
-    def last_state(self) -> State | None:
-        return self[-1].target_state if len(self) > 0 else None
-
-    @property
-    def last_issues(self) -> list[Issue] | None:
-        return self[-1].issues if len(self) > 0 else None
+    def last_change(self) -> Change | None:
+        return self[-1] if len(self) > 0 else None
 
     def can_agent_do_activity(self, activity: Any) -> bool:
         "Check if activity can be performed based on provenance"
