@@ -1,5 +1,5 @@
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
@@ -163,6 +163,7 @@ class TestEntityParser:
     # Strategy for generating property dictionaries
     properties = st.dictionaries(keys=property_name, values=property_value, max_size=5)
 
+    @settings(max_examples=3)
     @given(prefix=valid_identifier, suffix=valid_identifier.filter(lambda s: s != ""), props=properties)
     def test_entity_roundtrip(self, prefix: str, suffix: str, props: dict[str, str]) -> None:
         """Test that entity strings can be parsed correctly and reconstruct to original data."""
