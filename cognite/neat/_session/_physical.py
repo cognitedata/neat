@@ -6,6 +6,8 @@ from cognite.neat._data_model.models.dms._quality_assessment import DmsQualityAs
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
 
+from ._wrappers import session_wrapper
+
 
 class PhysicalDataModel:
     """Read from a data source into NeatSession graph store."""
@@ -16,6 +18,7 @@ class PhysicalDataModel:
         self.write = WritePhysicalDataModel(self._store)
 
 
+@session_wrapper
 class ReadPhysicalDataModel:
     """Read physical data model from various sources into NeatSession graph store."""
 
@@ -39,6 +42,7 @@ class ReadPhysicalDataModel:
         return self._store.read_physical(reader, DmsQualityAssessment)
 
 
+@session_wrapper
 class WritePhysicalDataModel:
     """Write physical data model to various sources from NeatSession graph store."""
 

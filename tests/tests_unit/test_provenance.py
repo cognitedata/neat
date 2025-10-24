@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import cast
 
 import pytest
 
 from cognite.neat import _state_machine as states
-from cognite.neat._issues import Issue, ModelSyntaxError
+from cognite.neat._issues import IssueList, ModelSyntaxError
 from cognite.neat._store._provenance import Change, Provenance
 
 
@@ -22,8 +23,7 @@ class TestProvenance:
     def test_empty_provenance(self) -> None:
         provenance = Provenance()
         assert len(provenance) == 0
-        assert provenance.last_state is None
-        assert provenance.last_issues is None
+        assert provenance.last_change is None
 
     def test_append_change(self) -> None:
         provenance = Provenance()
@@ -41,7 +41,7 @@ class TestProvenance:
 
     def test_last_issues_property(self) -> None:
         provenance = Provenance()
-        issues: list[Issue] = [ModelSyntaxError(message="error1"), ModelSyntaxError(message="error2")]
+        issues: IssueList = IssueList([ModelSyntaxError(message="error1"), ModelSyntaxError(message="error2")])
         change = Change(
             agent="test_agent",
             activity="test_activity",
@@ -52,7 +52,7 @@ class TestProvenance:
         )
 
         provenance.append(change)
-        assert provenance.last_issues == issues
+        assert cast(Change, provenance.last_change).issues == issues
 
     def test_cannot_delete_item(self) -> None:
         provenance = Provenance()
