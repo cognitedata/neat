@@ -78,10 +78,10 @@ class DMSAPIImporter(DMSImporter):
             )
         return DMSAPIImporter(
             RequestSchema(
-                data_model=data_model.as_request(),
+                dataModel=data_model.as_request(),
                 views=[view.as_request() for view in views],
                 containers=[container.as_request() for container in containers],
-                node_types=node_types,
+                nodeTypes=node_types,
                 spaces=[space.as_request() for space in spaces],
             )
         )
