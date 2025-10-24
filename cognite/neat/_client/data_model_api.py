@@ -1,5 +1,5 @@
-from cognite.neat._data_model.models.dms import DataModelResponse
-from cognite.neat._utils.http_client import ParametersRequest
+from cognite.neat._data_model.models.dms import DataModelReference, DataModelResponse
+from cognite.neat._utils.http_client import ItemBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
@@ -7,6 +7,34 @@ from .data_classes import PagedResponse
 
 
 class DataModelsAPI(NeatAPI):
+    def retrieve(
+        self,
+        items: list[DataModelReference],
+    ) -> list[DataModelResponse]:
+        """Retrieve data models by their identifiers.
+
+        Args:
+            items: List of data models references identifying the data models to retrieve.
+        Returns:
+            List of DataModelResponse objects.
+        """
+        if not items:
+            return []
+        if len(items) > 1000:
+            raise ValueError("Cannot retrieve more than 1000 containers at once.")
+
+        result = self._http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self._config.create_api_url("/models/datamodels/byids"),
+                method="POST",
+                body=ItemBody(items=items),
+                as_id=lambda c: c,
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.data)
+        return result.items
+
     def list(
         self,
         space: str | None = None,
