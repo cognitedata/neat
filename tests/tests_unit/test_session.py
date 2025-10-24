@@ -1,3 +1,5 @@
+import contextlib
+import io
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -39,10 +41,12 @@ class TestNeatSession:
         read_yaml = MagicMock(spec=Path)
         read_yaml.read_text.return_value = ""
 
-        with pytest.raises(RuntimeError) as e:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
             session.physical_data_model.read.yaml(read_yaml)
 
-        assert "Cannot run DMSTableImporter in state PhysicalState" in str(e.value)
+        printed_statements = output.getvalue()
+        assert "Cannot run DMSTableImporter in state PhysicalState" in str(printed_statements)
         assert len(session._store.physical_data_model) == 1
 
         # no change took place
