@@ -16,7 +16,7 @@ class ReferenceObject(BaseModelObject, frozen=True, populate_by_name=True): ...
 
 
 class ContainerReference(ReferenceObject):
-    type: Literal["container"] = "container"
+    type: Literal["container"] = Field("container", exclude=True)
     space: str = Field(
         description="Id of the space hosting (containing) the container.",
         min_length=1,
@@ -32,7 +32,7 @@ class ContainerReference(ReferenceObject):
 
 
 class ViewReference(ReferenceObject):
-    type: Literal["view"] = "view"
+    type: Literal["view"] = Field("view", exclude=True)
     space: str = Field(
         description="Id of the space that the view belongs to.",
         min_length=1,

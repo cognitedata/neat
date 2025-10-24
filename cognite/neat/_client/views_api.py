@@ -29,7 +29,7 @@ class ViewsAPI(NeatAPI):
             raise ValueError("Cannot retrieve more than 1000 views at once.")
 
         result = self._http_client.request_with_retries(
-            ItemsRequest[ViewReference, ViewReference](
+            ItemsRequest(
                 endpoint_url=self._config.create_api_url("/models/views/byids"),
                 method="POST",
                 body=ItemBody(items=items),
