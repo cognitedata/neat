@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from cognite.neat._issues import Issue
 from cognite.neat._state_machine import State
 
 
@@ -17,7 +18,10 @@ class Change:
     target_state: State | None = field(default=None)
     source_entity: str | None = field(default="ExternalEntity")
     target_entity: str | None = field(default="FailedEntity")
-    issues: list[str] | None = field(default=None)
+    issues: list[Issue] | None = field(default=None)
+    errors: list[Issue] | None = field(default=None)
+    # for time being setting to Any, can be refined later
+    result: Any | None = field(default=None)
     description: str | None = field(default=None)
 
     @staticmethod
@@ -38,7 +42,7 @@ class Provenance(UserList[Change]):
         return self[-1].target_state if len(self) > 0 else None
 
     @property
-    def last_issues(self) -> list[str] | None:
+    def last_issues(self) -> list[Issue] | None:
         return self[-1].issues if len(self) > 0 else None
 
     def can_agent_do_activity(self, activity: Any) -> bool:
