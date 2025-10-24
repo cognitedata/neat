@@ -136,7 +136,7 @@ class Container(Resource, ABC):
     def as_reference(self) -> ContainerReference:
         return ContainerReference(
             space=self.space,
-            externalId=self.external_id,
+            external_id=self.external_id,
         )
 
 

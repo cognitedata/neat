@@ -201,10 +201,10 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 name="Cognite Core Data Model",
                 description="The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
                 views=[
-                    ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1"),
-                    ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
-                    ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
-                    ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
+                    ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1"),
+                    ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
+                    ViewReference(space="cdf_cdm", external_id="CogniteFile", version="v1"),
+                    ViewReference(space="cdf_cdm", external_id="FileAnnotation", version="v1"),
                 ],
             ),
             spaces=[SpaceRequest(space="cdf_cdm")],
@@ -221,7 +221,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                         "name": ViewCorePropertyRequest(
                             name=None,
                             description=None,
-                            container=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable"),
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable"),
                             containerPropertyIdentifier="name",
                         ),
                     },
@@ -232,14 +232,14 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     version="v1",
                     name="Cognite Asset",
                     description=None,
-                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    implements=[ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")],
                     properties={
                         "files": MultiReverseDirectRelationPropertyRequest(
                             name=None,
                             description=None,
-                            source=ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                            source=ViewReference(space="cdf_cdm", external_id="CogniteFile", version="v1"),
                             through=ViewDirectReference(
-                                source=ViewReference(space="cdf_cdm", externalId="CogniteFile", version="v1"),
+                                source=ViewReference(space="cdf_cdm", external_id="CogniteFile", version="v1"),
                                 identifier="assets",
                             ),
                         ),
@@ -251,27 +251,27 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     version="v1",
                     name="Cognite File",
                     description=None,
-                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    implements=[ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")],
                     properties={
                         "assets": ViewCorePropertyRequest(
                             name=None,
                             description=None,
-                            container=ContainerReference(space="cdf_cdm", externalId="CogniteFile"),
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
                             containerPropertyIdentifier="assets",
-                            source=ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
+                            source=ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
                         ),
                         "assetAnnotations": MultiEdgeProperty(
                             name=None,
                             description=None,
-                            source=ViewReference(space="cdf_cdm", externalId="CogniteAsset", version="v1"),
-                            edgeSource=ViewReference(space="cdf_cdm", externalId="FileAnnotation", version="v1"),
+                            source=ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
+                            edgeSource=ViewReference(space="cdf_cdm", external_id="FileAnnotation", version="v1"),
                             direction="outwards",
-                            type=NodeReference(space="cdf_cdm", externalId="diagramAnnotation"),
+                            type=NodeReference(space="cdf_cdm", external_id="diagramAnnotation"),
                         ),
                         "category": ViewCorePropertyRequest(
                             name=None,
                             description=None,
-                            container=ContainerReference(space="cdf_cdm", externalId="CogniteFile"),
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
                             containerPropertyIdentifier="category",
                         ),
                     },
@@ -282,12 +282,12 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     version="v1",
                     name="File Annotation",
                     description=None,
-                    implements=[ViewReference(space="cdf_cdm", externalId="CogniteDescribable", version="v1")],
+                    implements=[ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")],
                     properties={
                         "confidence": ViewCorePropertyRequest(
                             name=None,
                             description=None,
-                            container=ContainerReference(space="cdf_cdm", externalId="FileAnnotation"),
+                            container=ContainerReference(space="cdf_cdm", external_id="FileAnnotation"),
                             containerPropertyIdentifier="confidence",
                         ),
                     },
@@ -353,7 +353,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     },
                     constraints={
                         "describablePresent": RequiresConstraintDefinition(
-                            require=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable")
+                            require=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
                         )
                     },
                 ),
@@ -374,12 +374,12 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     },
                     constraints={
                         "describablePresent": RequiresConstraintDefinition(
-                            require=ContainerReference(space="cdf_cdm", externalId="CogniteDescribable")
+                            require=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
                         )
                     },
                 ),
             ],
-            nodeTypes=[NodeReference(space="cdf_cdm", externalId="diagramAnnotation")],
+            nodeTypes=[NodeReference(space="cdf_cdm", external_id="diagramAnnotation")],
         ),
         id="Full example",
     )
@@ -444,7 +444,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 space="test_space",
                 externalId="TestModel",
                 version="v1",
-                views=[ViewReference(space="test_space", externalId="TestView", version="v1")],
+                views=[ViewReference(space="test_space", external_id="TestView", version="v1")],
             ),
             spaces=[SpaceRequest(space="test_space")],
             views=[
@@ -454,19 +454,19 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     version="v1",
                     properties={
                         "multiIndex": ViewCorePropertyRequest(
-                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            container=ContainerReference(space="test_space", external_id="TestContainer"),
                             containerPropertyIdentifier="multiIndex",
                         ),
                         "multiIndex2": ViewCorePropertyRequest(
-                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            container=ContainerReference(space="test_space", external_id="TestContainer"),
                             containerPropertyIdentifier="multiIndex2",
                         ),
                         "multiConstraint": ViewCorePropertyRequest(
-                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            container=ContainerReference(space="test_space", external_id="TestContainer"),
                             containerPropertyIdentifier="multiConstraint",
                         ),
                         "multiConstraint2": ViewCorePropertyRequest(
-                            container=ContainerReference(space="test_space", externalId="TestContainer"),
+                            container=ContainerReference(space="test_space", external_id="TestContainer"),
                             containerPropertyIdentifier="multiConstraint2",
                         ),
                     },

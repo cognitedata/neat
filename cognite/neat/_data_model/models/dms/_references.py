@@ -12,7 +12,7 @@ from ._constants import (
 )
 
 
-class ReferenceObject(BaseModelObject, frozen=True): ...
+class ReferenceObject(BaseModelObject, frozen=True, populate_by_name=True): ...
 
 
 class ContainerReference(ReferenceObject):

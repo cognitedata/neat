@@ -3,6 +3,7 @@ from typing import Any
 import respx
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model.models.dms import ViewReference
 
 
 class TestViewsAPI:
@@ -71,7 +72,10 @@ class TestViewsAPI:
             },
         )
         views = client.views.retrieve(
-            items=[("my_space", "MyView", "v1"), ("my_space", "AnotherView", "v2")],
+            items=[
+                ViewReference(space="my_space", external_id="MyView", version="v1"),
+                ViewReference(space="my_space", external_id="AnotherView", version="v2"),
+            ],
             include_inherited_properties=False,
         )
         assert len(views) == 1
@@ -89,7 +93,7 @@ class TestViewsAPI:
         assert len(body["items"]) == 2
         assert body["items"][0] == {"space": "my_space", "externalId": "MyView", "version": "v1"}
         assert body["items"][1] == {"space": "my_space", "externalId": "AnotherView", "version": "v2"}
-        assert body["includeInheritedProperties"] is False
+        assert "includeInheritedProperties=false" in str(call.request.url.params)
 
     def test_retrieve_empty_list(self, neat_client: NeatClient, respx_mock: respx.MockRouter) -> None:
         client = neat_client

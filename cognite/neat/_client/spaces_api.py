@@ -11,10 +11,7 @@ from .data_classes import PagedResponse
 
 
 class SpacesAPI(NeatAPI):
-    def retrieve(
-        self,
-        spaces: list[str],
-    ) -> list[SpaceResponse]:
+    def retrieve(self, spaces: list[str]) -> list[SpaceResponse]:
         """Retrieve spaces by their identifiers.
 
         Args:
@@ -32,7 +29,7 @@ class SpacesAPI(NeatAPI):
             SimpleBodyRequest(
                 endpoint_url=self._config.create_api_url("/models/spaces/byids"),
                 method="POST",
-                body=json.dumps({"items": spaces}),
+                body=json.dumps({"items": [{"space": space} for space in spaces]}),
             )
         )
         result.raise_for_status()

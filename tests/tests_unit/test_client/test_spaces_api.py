@@ -1,3 +1,5 @@
+import gzip
+import json
 from typing import Any
 
 import respx
@@ -67,10 +69,6 @@ class TestSpacesAPI:
         assert spaces[0].space == "my_space"
         assert len(respx_mock.calls) == 1
         call = respx_mock.calls[0]
-        # Check the request body - decompress gzip if needed
-        import gzip
-        import json
-
         content = call.request.content
         if content.startswith(b"\x1f\x8b"):  # gzip magic number
             content = gzip.decompress(content)

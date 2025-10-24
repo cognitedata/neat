@@ -62,7 +62,7 @@ class View(Resource, ABC):
     )
 
     def as_reference(self) -> ViewReference:
-        return ViewReference(space=self.space, externalId=self.external_id, version=self.version)
+        return ViewReference(space=self.space, external_id=self.external_id, version=self.version)
 
     @model_validator(mode="before")
     def set_connection_type_on_primary_properties(cls, data: dict) -> dict:

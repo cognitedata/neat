@@ -1,8 +1,11 @@
+import gzip
+import json
 from typing import Any
 
 import respx
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model.models.dms import ContainerReference
 
 
 class TestContainersAPI:
@@ -65,15 +68,15 @@ class TestContainersAPI:
             },
         )
         containers = client.containers.retrieve(
-            items=[("my_space", "MyContainer"), ("other_space", "OtherContainer")],
+            items=[
+                ContainerReference(space="my_space", external_id="MyContainer"),
+                ContainerReference(space="other_space", external_id="OtherContainer"),
+            ],
         )
         assert len(containers) == 1
         assert containers[0].external_id == "MyContainer"
         assert len(respx_mock.calls) == 1
         call = respx_mock.calls[0]
-        # Check the request body - decompress gzip if needed
-        import gzip
-        import json
 
         content = call.request.content
         if content.startswith(b"\x1f\x8b"):  # gzip magic number
