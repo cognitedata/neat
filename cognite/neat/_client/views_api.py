@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from cognite.neat._data_model.models.dms import ViewResponse
-from cognite.neat._utils.http_client import ParametersRequest, SimpleBodyRequest
+from cognite.neat._data_model.models.dms import ViewReference, ViewResponse
+from cognite.neat._utils.http_client import ItemBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
@@ -9,6 +9,38 @@ from .data_classes import PagedResponse
 
 
 class ViewsAPI(NeatAPI):
+    def retrieve(
+        self,
+        items: list[ViewReference],
+        include_inherited_properties: bool = True,
+    ) -> list[ViewResponse]:
+        """Retrieve views by their identifiers.
+
+        Args:
+            items: List of (space, external_id, version) tuples identifying the views to retrieve.
+            include_inherited_properties: If True, include properties inherited from parent views.
+
+        Returns:
+            List of ViewResponse objects.
+        """
+        if not items:
+            return []
+        if len(items) > 1000:
+            raise ValueError("Cannot retrieve more than 1000 views at once.")
+
+        result = self._http_client.request_with_retries(
+            ItemsRequest[ViewReference, ViewReference](
+                endpoint_url=self._config.create_api_url("/models/views/byids"),
+                method="POST",
+                body=ItemBody(items=items),
+                as_id=lambda v: v,
+                parameters={"includeInheritedProperties": include_inherited_properties},
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.data)
+        return result.items
+
     def list(
         self,
         space: str | None = None,
@@ -49,46 +81,3 @@ class ViewsAPI(NeatAPI):
         result.raise_for_status()
         result = PagedResponse[ViewResponse].model_validate_json(result.success_response.data)
         return result.items
-
-    def retrieve(
-        self,
-        items: list[tuple[str, str, str]],
-        include_inherited_properties: bool = True,
-    ) -> list[ViewResponse]:
-        """Retrieve views by their identifiers.
-
-        Args:
-            items: List of (space, external_id, version) tuples identifying the views to retrieve.
-            include_inherited_properties: If True, include properties inherited from parent views.
-
-        Returns:
-            List of ViewResponse objects.
-        """
-        if not items:
-            return []
-        if len(items) > 1000:
-            raise ValueError("Cannot retrieve more than 1000 views at once.")
-
-        body = {
-            "items": [
-                {"space": space, "externalId": external_id, "version": version} for space, external_id, version in items
-            ],
-            "includeInheritedProperties": include_inherited_properties,
-        }
-
-        result = self._http_client.request_with_retries(
-            SimpleBodyRequest(
-                endpoint_url=self._config.create_api_url("/models/views/byids"),
-                method="POST",
-                body=self._dump_json(body),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.data)
-        return result.items
-
-    @staticmethod
-    def _dump_json(data: dict) -> str:
-        import json
-
-        return json.dumps(data)

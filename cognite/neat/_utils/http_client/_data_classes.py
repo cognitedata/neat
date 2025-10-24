@@ -104,7 +104,7 @@ class ParametersRequest(SimpleRequest):
     parameters: dict[str, PrimaryTypes] | None = None
 
 
-class SimpleBodyRequest(SimpleRequest, BodyRequest):
+class SimpleBodyRequest(SimpleRequest, ParametersRequest):
     body: str
 
     def data(self) -> str:
@@ -144,7 +144,7 @@ class ItemBody(BaseModel, Generic[T_BaseModel]):
         return data
 
 
-class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
+class ItemsRequest(BodyRequest, ParametersRequest, Generic[T_ID, T_BaseModel]):
     """Requests message for endpoints that accept multiple items in a single request.
 
     This class provides functionality to split large requests into smaller ones, handle responses for each item,

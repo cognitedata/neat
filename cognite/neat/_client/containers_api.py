@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from cognite.neat._data_model.models.dms import ContainerResponse
-from cognite.neat._utils.http_client import ParametersRequest, SimpleBodyRequest
+from cognite.neat._data_model.models.dms import ContainerReference, ContainerResponse
+from cognite.neat._utils.http_client import ItemBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
@@ -9,6 +9,35 @@ from .data_classes import PagedResponse
 
 
 class ContainersAPI(NeatAPI):
+    def retrieve(
+        self,
+        items: list[ContainerReference],
+    ) -> list[ContainerResponse]:
+        """Retrieve containers by their identifiers.
+
+        Args:
+            items: List of (space, external_id) tuples identifying the containers to retrieve.
+
+        Returns:
+            List of ContainerResponse objects.
+        """
+        if not items:
+            return []
+        if len(items) > 1000:
+            raise ValueError("Cannot retrieve more than 1000 containers at once.")
+
+        result = self._http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self._config.create_api_url("/models/containers/byids"),
+                method="POST",
+                body=ItemBody(items=items),
+                as_id=lambda c: c,
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.data)
+        return result.items
+
     def list(
         self,
         space: str | None = None,
@@ -43,41 +72,3 @@ class ContainersAPI(NeatAPI):
         result.raise_for_status()
         result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.data)
         return result.items
-
-    def retrieve(
-        self,
-        items: list[tuple[str, str]],
-    ) -> list[ContainerResponse]:
-        """Retrieve containers by their identifiers.
-
-        Args:
-            items: List of (space, external_id) tuples identifying the containers to retrieve.
-
-        Returns:
-            List of ContainerResponse objects.
-        """
-        if not items:
-            return []
-        if len(items) > 1000:
-            raise ValueError("Cannot retrieve more than 1000 containers at once.")
-
-        body = {
-            "items": [{"space": space, "externalId": external_id} for space, external_id in items],
-        }
-
-        result = self._http_client.request_with_retries(
-            SimpleBodyRequest(
-                endpoint_url=self._config.create_api_url("/models/containers/byids"),
-                method="POST",
-                body=self._dump_json(body),
-            )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.data)
-        return result.items
-
-    @staticmethod
-    def _dump_json(data: dict) -> str:
-        import json
-
-        return json.dumps(data)
