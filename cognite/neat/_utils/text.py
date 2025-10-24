@@ -1,3 +1,4 @@
+import re
 from collections.abc import Collection
 from typing import Any
 
@@ -60,3 +61,8 @@ def title_case(s: str) -> str:
         'Hello World'
     """
     return " ".join(word.capitalize() for word in s.replace("_", " ").replace("-", " ").split())
+
+
+def split_on_capitals(text: str) -> list[str]:
+    """Split a string at capital letters."""
+    return re.findall(r"[A-Z][a-z]*", text)
