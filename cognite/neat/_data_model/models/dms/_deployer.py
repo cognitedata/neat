@@ -6,7 +6,6 @@ from typing import Any, Generic, Literal, TypeAlias, TypeVar
 from pydantic import BaseModel
 
 from cognite.neat._client import NeatClient
-from cognite.neat._data_model._shared import OnSuccess
 from cognite.neat._issues import ConsistencyError, ImplementationWarning, IssueList, ModelSyntaxError
 
 from ._container import ContainerRequest
@@ -69,10 +68,14 @@ class DeploymentPlan:
 
     def has_changes(self) -> bool:
         """Check if there are any changes in the deployment plan."""
-        return any(
-            plan.to_create or plan.to_update or plan.to_recreate
-            for plan in [self.spaces, self.containers, self.views, self.data_models, self.nodes]
-        )
+        plans: list[ResourceDeploymentPlan[Any]] = [
+            self.spaces,
+            self.containers,
+            self.views,
+            self.data_models,
+            self.nodes,
+        ]
+        return any(plan.to_create or plan.to_update or plan.to_recreate for plan in plans)
 
 
 @dataclass
@@ -106,9 +109,8 @@ class DeploymentOptions:
     max_severity: SeverityType = "safe"
 
 
-class SchemaDeployer(OnSuccess):
+class SchemaDeployer:
     def __init__(self, data_model: RequestSchema, client: NeatClient, options: DeploymentOptions | None = None) -> None:
-        super().__init__(data_model)
         self.data_model: RequestSchema = data_model
         self.client: NeatClient = client
         self.options: DeploymentOptions = options or DeploymentOptions()
@@ -116,7 +118,12 @@ class SchemaDeployer(OnSuccess):
         self._cdf_schema: RequestSchema | None = None
         self._snapshot: DeploymentSnapshot | None = None
 
-    def run(self) -> DeploymentResult:
+    def run(self) -> None:
+        """Execute the success handler on the data model."""
+        # Override base class method but delegate to deploy
+        self.deploy()
+
+    def deploy(self) -> DeploymentResult:
         """Execute the deployment with dry-run and rollback support."""
         # Step 1: Fetch current cdf state
         self._cdf_schema = self._fetch_cdf_state()
@@ -183,8 +190,16 @@ class SchemaDeployer(OnSuccess):
         cdf_data_models = self.client.data_models.retrieve([dm_ref])
 
         nodes = [node_type for view in cdf_views for node_type in view.node_types]
+
+        # Get data model or create a placeholder if not found
+        if cdf_data_models:
+            data_model = cdf_data_models[0].as_request()
+        else:
+            # If data model doesn't exist in CDF, use the local one as template
+            data_model = self.data_model.data_model
+
         return RequestSchema(
-            data_model=cdf_data_models[0].as_request() if cdf_data_models else None,
+            data_model=data_model,
             views=[v.as_request() for v in cdf_views],
             containers=[c.as_request() for c in cdf_containers],
             spaces=[s.as_request() for s in cdf_spaces],
@@ -223,10 +238,10 @@ class SchemaDeployer(OnSuccess):
         local_map = {key_func(item): item for item in local_items}
         cdf_map = {key_func(item): item for item in cdf_items}
 
-        to_create = []
-        to_update = []
-        unchanged = []
-        to_recreate = []
+        to_create: list[ResourceDiff[T_Item]] = []
+        to_update: list[ResourceDiff[T_Item]] = []
+        unchanged: list[ResourceDiff[T_Item]] = []
+        to_recreate: list[ResourceDiff[T_Item]] = []
 
         for key, local_item in local_map.items():
             resource_id = resource_id_func(local_item)
@@ -438,8 +453,15 @@ class SchemaDeployer(OnSuccess):
     def _analyze_changes(self, plan: DeploymentPlan) -> None:
         """Analyze changes and collect issues."""
         # Collect all changes across all resource types
-        all_changes: list[ResourceDiff] = []
-        for resource_plan in [plan.spaces, plan.containers, plan.views, plan.data_models, plan.nodes]:
+        all_changes: list[ResourceDiff[Any]] = []
+        resource_plans: list[ResourceDeploymentPlan[Any]] = [
+            plan.spaces,
+            plan.containers,
+            plan.views,
+            plan.data_models,
+            plan.nodes,
+        ]
+        for resource_plan in resource_plans:
             all_changes.extend(resource_plan.to_create + resource_plan.to_update + resource_plan.to_recreate)
 
         # Check for breaking changes
@@ -461,7 +483,7 @@ class SchemaDeployer(OnSuccess):
             return False
 
         # Check if there are blocking issues (errors)
-        if any(isinstance(issue, (ModelSyntaxError, ConsistencyError)) for issue in self.issues):
+        if any(isinstance(issue, ModelSyntaxError | ConsistencyError) for issue in self.issues):
             return False
 
         # Check if warnings should block deployment
@@ -472,6 +494,8 @@ class SchemaDeployer(OnSuccess):
 
     def _create_snapshot(self) -> DeploymentSnapshot:
         """Create snapshot of cdf state for rollback."""
+        if self._cdf_schema is None:
+            raise RuntimeError("Cannot create snapshot: CDF schema has not been fetched")
         return DeploymentSnapshot(
             timestamp=datetime.now().isoformat(),
             schema=self._cdf_schema,
@@ -479,8 +503,8 @@ class SchemaDeployer(OnSuccess):
 
     def _apply_changes(self, plan: DeploymentPlan) -> DeploymentResult:
         """Apply the deployment plan to CDF."""
-        applied_changes = []
-        failed_changes = []
+        applied_changes: list[ResourceDiff[Any]] = []
+        failed_changes: list[ResourceDiff[Any]] = []
 
         # TODO: Implement actual API calls to create/update resources
         # Order matters: spaces -> containers -> views -> data models -> nodes
