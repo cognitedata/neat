@@ -115,3 +115,18 @@ def example_dms_space_response() -> dict[str, Any]:
         lastUpdatedTime=1,
         isGlobal=False,
     )
+
+
+@pytest.fixture
+def example_dms_schema(
+    example_dms_data_model_response: dict[str, Any],
+    example_dms_view_response: dict[str, Any],
+    example_dms_container_response: dict[str, Any],
+    example_dms_space_response: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "dataModel": example_dms_data_model_response,
+        "views": [example_dms_view_response],
+        "containers": [example_dms_container_response],
+        "spaces": [example_dms_space_response],
+    }

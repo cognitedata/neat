@@ -1,14 +1,17 @@
 import contextlib
 import io
 from pathlib import Path
-from typing import cast
-from unittest.mock import MagicMock
+from typing import Any, cast
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
+from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
+from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._issues import ImplementationWarning, IssueList
+from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
 
 
@@ -114,4 +117,24 @@ class TestNeatSession:
         assert isinstance(session._store.state, states.PhysicalState)
         # there is no state change when writing
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
+        assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
+
+    def test_read_dms_from_cdf(self, example_dms_schema: dict[str, Any], new_session: NeatSession) -> None:
+        session = new_session
+        mock_importer = MagicMock(spec=DMSAPIImporter)
+        mock_importer.to_data_model.return_value = RequestSchema.model_validate(example_dms_schema)
+        mock_importer.to_data_model.__name__ = DMSImporter.to_data_model.__name__
+
+        provenance_before = len(session._store.provenance)
+
+        with patch(
+            f"{ReadPhysicalDataModel.__module__}.{DMSAPIImporter.__name__}.{DMSAPIImporter.from_cdf.__name__}",
+            return_value=mock_importer,
+        ):
+            session.physical_data_model.read.cdf(space="test_space", external_id="test_id", version="v1")
+
+        assert len(session._store.provenance) == provenance_before + 1
+        assert len(session._store.physical_data_model) == 1
+        assert isinstance(session._store.state, states.PhysicalState)
+        assert isinstance(session._store.provenance[-1].source_state, states.EmptyState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
