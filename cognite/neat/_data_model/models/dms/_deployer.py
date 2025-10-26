@@ -1,6 +1,7 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Generic, Literal, TypeAlias, TypeVar
+from typing import Any, Generic, Literal, TypeAlias, TypeVar
 
 from pydantic import BaseModel
 
@@ -65,6 +66,13 @@ class DeploymentPlan:
     views: ResourceDeploymentPlan[ViewRequest]
     data_models: ResourceDeploymentPlan[DataModelRequest]
     nodes: ResourceDeploymentPlan[NodeReference]
+
+    def has_changes(self) -> bool:
+        """Check if there are any changes in the deployment plan."""
+        return any(
+            plan.to_create or plan.to_update or plan.to_recreate
+            for plan in [self.spaces, self.containers, self.views, self.data_models, self.nodes]
+        )
 
 
 @dataclass
@@ -193,51 +201,70 @@ class SchemaDeployer(OnSuccess):
             nodes=self._plan_nodes(),
         )
 
-    def _plan_spaces(self) -> ResourceDeploymentPlan[SpaceRequest]:
-        """Create deployment plan for spaces."""
-        local_spaces = {s.space: s for s in self.data_model.spaces}
-        cdf_spaces = {s.space: s for s in (self._cdf_schema.spaces if self._cdf_schema else [])}
+    def _plan_resources(
+        self,
+        resource_type: DataModelingResource,
+        local_items: list[T_Item],
+        cdf_items: list[T_Item],
+        key_func: Callable[[T_Item], Any],
+        resource_id_func: Callable[[T_Item], ReferenceObject | str],
+        diff_func: Callable[[T_Item, T_Item], list[PropertyChange]],
+    ) -> ResourceDeploymentPlan[T_Item]:
+        """Generic method to create deployment plan for any resource type.
+
+        Args:
+            resource_type: Type of resource being planned
+            local_items: Local resources from data_model
+            cdf_items: CDF resources fetched from cloud
+            key_func: Function to extract unique key from resource
+            resource_id_func: Function to extract resource_id for ResourceDiff
+            diff_func: Function to diff two resources
+        """
+        local_map = {key_func(item): item for item in local_items}
+        cdf_map = {key_func(item): item for item in cdf_items}
 
         to_create = []
         to_update = []
         unchanged = []
         to_recreate = []
 
-        for space_id, local_space in local_spaces.items():
-            if space_id not in cdf_spaces:
+        for key, local_item in local_map.items():
+            resource_id = resource_id_func(local_item)
+
+            if key not in cdf_map:
                 to_create.append(
                     ResourceDiff(
-                        resource_type="space",
-                        resource_id=space_id,
+                        resource_type=resource_type,
+                        resource_id=resource_id,
                         action="create",
                         changes=[],
-                        new_value=local_space,
+                        new_value=local_item,
                         old_value=None,
                     )
                 )
             else:
-                cdf_space = cdf_spaces[space_id]
-                changes = self._diff_spaces(local_space, cdf_space)
+                cdf_item = cdf_map[key]
+                changes = diff_func(local_item, cdf_item)
                 if changes:
                     to_update.append(
                         ResourceDiff(
-                            resource_type="space",
-                            resource_id=space_id,
+                            resource_type=resource_type,
+                            resource_id=resource_id,
                             action="update",
                             changes=changes,
-                            new_value=local_space,
-                            old_value=cdf_space,
+                            new_value=local_item,
+                            old_value=cdf_item,
                         )
                     )
                 else:
                     unchanged.append(
                         ResourceDiff(
-                            resource_type="space",
-                            resource_id=space_id,
+                            resource_type=resource_type,
+                            resource_id=resource_id,
                             action="unchanged",
                             changes=[],
-                            new_value=local_space,
-                            old_value=cdf_space,
+                            new_value=local_item,
+                            old_value=cdf_item,
                         )
                     )
 
@@ -245,59 +272,26 @@ class SchemaDeployer(OnSuccess):
             to_create=to_create, to_update=to_update, to_recreate=to_recreate, unchanged=unchanged
         )
 
+    def _plan_spaces(self) -> ResourceDeploymentPlan[SpaceRequest]:
+        """Create deployment plan for spaces."""
+        return self._plan_resources(
+            resource_type="space",
+            local_items=self.data_model.spaces,
+            cdf_items=self._cdf_schema.spaces if self._cdf_schema else [],
+            key_func=lambda s: s.space,
+            resource_id_func=lambda s: s.space,
+            diff_func=self._diff_spaces,
+        )
+
     def _plan_containers(self) -> ResourceDeploymentPlan[ContainerRequest]:
         """Create deployment plan for containers."""
-        local_containers = {(c.space, c.external_id): c for c in self.data_model.containers}
-        cdf_containers = {
-            (c.space, c.external_id): c for c in (self._cdf_schema.containers if self._cdf_schema else [])
-        }
-
-        to_create = []
-        to_update = []
-        unchanged = []
-        to_recreate = []
-
-        for container_id, local_container in local_containers.items():
-            ref = local_container.as_reference()
-            if container_id not in cdf_containers:
-                to_create.append(
-                    ResourceDiff(
-                        resource_type="container",
-                        resource_id=ref,
-                        action="create",
-                        changes=[],
-                        new_value=local_container,
-                        old_value=None,
-                    )
-                )
-            else:
-                cdf_container = cdf_containers[container_id]
-                changes = self._diff_containers(local_container, cdf_container)
-                if changes:
-                    to_update.append(
-                        ResourceDiff(
-                            resource_type="container",
-                            resource_id=ref,
-                            action="update",
-                            changes=changes,
-                            new_value=local_container,
-                            old_value=cdf_container,
-                        )
-                    )
-                else:
-                    unchanged.append(
-                        ResourceDiff(
-                            resource_type="container",
-                            resource_id=ref,
-                            action="unchanged",
-                            changes=[],
-                            new_value=local_container,
-                            old_value=cdf_container,
-                        )
-                    )
-
-        return ResourceDeploymentPlan(
-            to_create=to_create, to_update=to_update, to_recreate=to_recreate, unchanged=unchanged
+        return self._plan_resources(
+            resource_type="container",
+            local_items=self.data_model.containers,
+            cdf_items=self._cdf_schema.containers if self._cdf_schema else [],
+            key_func=lambda c: (c.space, c.external_id),
+            resource_id_func=lambda c: c.as_reference(),
+            diff_func=self._diff_containers,
         )
 
     def _plan_views(self) -> ResourceDeploymentPlan[ViewRequest]:
@@ -315,29 +309,88 @@ class SchemaDeployer(OnSuccess):
         # TODO: Implement when node API is available
         return ResourceDeploymentPlan(to_create=[], to_update=[], to_recreate=[], unchanged=[])
 
+    def _create_field_change(
+        self, field_path: str, local_value: Any, cdf_value: Any, severity: SeverityType = "safe"
+    ) -> PropertyChange | None:
+        """Create a PropertyChange if values differ, otherwise return None."""
+        if local_value == cdf_value:
+            return None
+
+        return PropertyChange(
+            field_path=field_path,
+            change_type="modified",
+            severity=severity,
+            description=f"{field_path} changed from '{cdf_value}' to '{local_value}'",
+        )
+
+    def _diff_dict_items(
+        self,
+        field_prefix: str,
+        local_dict: dict,
+        cdf_dict: dict,
+        add_severity: SeverityType = "safe",
+        remove_severity: SeverityType = "breaking",
+        modify_severity: SeverityType = "breaking",
+    ) -> list[PropertyChange]:
+        """Compare two dictionaries and return changes for added/removed/modified keys.
+
+        Args:
+            field_prefix: Prefix for the field path (e.g., "properties", "constraints")
+            local_dict: Local dictionary
+            cdf_dict: CDF dictionary
+            add_severity: Severity for added items
+            remove_severity: Severity for removed items
+            modify_severity: Severity for modified items
+        """
+        changes = []
+        local_keys = set(local_dict.keys())
+        cdf_keys = set(cdf_dict.keys())
+
+        # Added items
+        for key in local_keys - cdf_keys:
+            changes.append(
+                PropertyChange(
+                    field_path=f"{field_prefix}.{key}",
+                    change_type="added",
+                    severity=add_severity,
+                    description=f"{field_prefix.capitalize()} '{key}' added",
+                )
+            )
+
+        # Removed items
+        for key in cdf_keys - local_keys:
+            changes.append(
+                PropertyChange(
+                    field_path=f"{field_prefix}.{key}",
+                    change_type="removed",
+                    severity=remove_severity,
+                    description=f"{field_prefix.capitalize()} '{key}' removed",
+                )
+            )
+
+        # Modified items
+        for key in local_keys & cdf_keys:
+            if local_dict[key] != cdf_dict[key]:
+                changes.append(
+                    PropertyChange(
+                        field_path=f"{field_prefix}.{key}",
+                        change_type="modified",
+                        severity=modify_severity,
+                        description=f"{field_prefix.capitalize()} '{key}' modified",
+                    )
+                )
+
+        return changes
+
     def _diff_spaces(self, local: SpaceRequest, cdf: SpaceRequest) -> list[PropertyChange]:
         """Compare two spaces and return changes."""
         changes = []
 
-        if local.name != cdf.name:
-            changes.append(
-                PropertyChange(
-                    field_path="name",
-                    change_type="modified",
-                    severity="safe",
-                    description=f"Name changed from '{cdf.name}' to '{local.name}'",
-                )
-            )
+        if change := self._create_field_change("name", local.name, cdf.name):
+            changes.append(change)
 
-        if local.description != cdf.description:
-            changes.append(
-                PropertyChange(
-                    field_path="description",
-                    change_type="modified",
-                    severity="safe",
-                    description=f"Description changed from '{cdf.description}' to '{local.description}'",
-                )
-            )
+        if change := self._create_field_change("description", local.description, cdf.description):
+            changes.append(change)
 
         return changes
 
@@ -346,120 +399,39 @@ class SchemaDeployer(OnSuccess):
         changes = []
 
         # Check primary properties
-        if local.name != cdf.name:
-            changes.append(
-                PropertyChange(
-                    field_path="name",
-                    change_type="modified",
-                    severity="safe",
-                    description=f"Name changed from '{cdf.name}' to '{local.name}'",
-                )
+        if change := self._create_field_change("name", local.name, cdf.name):
+            changes.append(change)
+
+        if change := self._create_field_change("description", local.description, cdf.description):
+            changes.append(change)
+
+        if change := self._create_field_change("used_for", local.used_for, cdf.used_for, severity="breaking"):
+            changes.append(change)
+
+        # Check properties (added/removed/modified)
+        changes.extend(self._diff_dict_items("properties", local.properties, cdf.properties))
+
+        # Check constraints (added/removed)
+        changes.extend(
+            self._diff_dict_items(
+                "constraints",
+                local.constraints or {},
+                cdf.constraints or {},
+                add_severity="safe",
+                remove_severity="breaking",
             )
+        )
 
-        if local.description != cdf.description:
-            changes.append(
-                PropertyChange(
-                    field_path="description",
-                    change_type="modified",
-                    severity="safe",
-                    description="Description changed",
-                )
+        # Check indexes (added/removed)
+        changes.extend(
+            self._diff_dict_items(
+                "indexes",
+                local.indexes or {},
+                cdf.indexes or {},
+                add_severity="safe",
+                remove_severity="safe",
             )
-
-        if local.used_for != cdf.used_for:
-            changes.append(
-                PropertyChange(
-                    field_path="used_for",
-                    change_type="modified",
-                    severity="breaking",
-                    description=f"used_for changed from '{cdf.used_for}' to '{local.used_for}'",
-                )
-            )
-
-        # Check properties
-        local_props = set(local.properties.keys())
-        cdf_props = set(cdf.properties.keys())
-
-        for prop_name in local_props - cdf_props:
-            changes.append(
-                PropertyChange(
-                    field_path=f"properties.{prop_name}",
-                    change_type="added",
-                    severity="safe",
-                    description=f"Property '{prop_name}' added",
-                )
-            )
-
-        for prop_name in cdf_props - local_props:
-            changes.append(
-                PropertyChange(
-                    field_path=f"properties.{prop_name}",
-                    change_type="removed",
-                    severity="breaking",
-                    description=f"Property '{prop_name}' removed",
-                )
-            )
-
-        for prop_name in local_props & cdf_props:
-            local_prop = local.properties[prop_name]
-            cdf_prop = cdf.properties[prop_name]
-            if local_prop != cdf_prop:
-                changes.append(
-                    PropertyChange(
-                        field_path=f"properties.{prop_name}",
-                        change_type="modified",
-                        severity="breaking",
-                        description=f"Property '{prop_name}' modified",
-                    )
-                )
-
-        # Check constraints
-        local_constraints = set((local.constraints or {}).keys())
-        cdf_constraints = set((cdf.constraints or {}).keys())
-
-        for constraint_name in local_constraints - cdf_constraints:
-            changes.append(
-                PropertyChange(
-                    field_path=f"constraints.{constraint_name}",
-                    change_type="added",
-                    severity="safe",
-                    description=f"Constraint '{constraint_name}' added",
-                )
-            )
-
-        for constraint_name in cdf_constraints - local_constraints:
-            changes.append(
-                PropertyChange(
-                    field_path=f"constraints.{constraint_name}",
-                    change_type="removed",
-                    severity="breaking",
-                    description=f"Constraint '{constraint_name}' removed",
-                )
-            )
-
-        # Check indexes
-        local_indexes = set((local.indexes or {}).keys())
-        cdf_indexes = set((cdf.indexes or {}).keys())
-
-        for index_name in local_indexes - cdf_indexes:
-            changes.append(
-                PropertyChange(
-                    field_path=f"indexes.{index_name}",
-                    change_type="added",
-                    severity="safe",
-                    description=f"Index '{index_name}' added",
-                )
-            )
-
-        for index_name in cdf_indexes - local_indexes:
-            changes.append(
-                PropertyChange(
-                    field_path=f"indexes.{index_name}",
-                    change_type="removed",
-                    severity="safe",
-                    description=f"Index '{index_name}' removed",
-                )
-            )
+        )
 
         return changes
 
@@ -467,11 +439,8 @@ class SchemaDeployer(OnSuccess):
         """Analyze changes and collect issues."""
         # Collect all changes across all resource types
         all_changes: list[ResourceDiff] = []
-        all_changes.extend(plan.spaces.to_create + plan.spaces.to_update + plan.spaces.to_recreate)
-        all_changes.extend(plan.containers.to_create + plan.containers.to_update + plan.containers.to_recreate)
-        all_changes.extend(plan.views.to_create + plan.views.to_update + plan.views.to_recreate)
-        all_changes.extend(plan.data_models.to_create + plan.data_models.to_update + plan.data_models.to_recreate)
-        all_changes.extend(plan.nodes.to_create + plan.nodes.to_update + plan.nodes.to_recreate)
+        for resource_plan in [plan.spaces, plan.containers, plan.views, plan.data_models, plan.nodes]:
+            all_changes.extend(resource_plan.to_create + resource_plan.to_update + resource_plan.to_recreate)
 
         # Check for breaking changes
         for resource_diff in all_changes:
@@ -487,19 +456,8 @@ class SchemaDeployer(OnSuccess):
 
     def _should_proceed(self, plan: DeploymentPlan) -> bool:
         """Check if deployment should proceed based on options and issues."""
-
         # Check if there are any changes
-        has_changes = any(
-            [
-                plan.spaces.to_create or plan.spaces.to_update or plan.spaces.to_recreate,
-                plan.containers.to_create or plan.containers.to_update or plan.containers.to_recreate,
-                plan.views.to_create or plan.views.to_update or plan.views.to_recreate,
-                plan.data_models.to_create or plan.data_models.to_update or plan.data_models.to_recreate,
-                plan.nodes.to_create or plan.nodes.to_update or plan.nodes.to_recreate,
-            ]
-        )
-
-        if not has_changes:
+        if not plan.has_changes():
             return False
 
         # Check if there are blocking issues (errors)
