@@ -1,7 +1,9 @@
 from typing import Any
 
+from cognite.neat._client import NeatClient
 from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
-from cognite.neat._data_model.importers import DMSTableImporter
+from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
+from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.models.dms._quality_assessment import DmsQualityAssessment
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
@@ -12,9 +14,10 @@ from ._wrappers import session_wrapper
 class PhysicalDataModel:
     """Read from a data source into NeatSession graph store."""
 
-    def __init__(self, store: NeatStore) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient) -> None:
         self._store = store
-        self.read = ReadPhysicalDataModel(self._store)
+        self._client = client
+        self.read = ReadPhysicalDataModel(self._store, self._client)
         self.write = WritePhysicalDataModel(self._store)
 
 
@@ -22,8 +25,9 @@ class PhysicalDataModel:
 class ReadPhysicalDataModel:
     """Read physical data model from various sources into NeatSession graph store."""
 
-    def __init__(self, store: NeatStore) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient) -> None:
         self._store = store
+        self._client = client
 
     def yaml(self, io: Any) -> None:
         """Read physical data model from YAML file"""
@@ -38,6 +42,21 @@ class ReadPhysicalDataModel:
 
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
+
+        return self._store.read_physical(reader, DmsQualityAssessment)
+
+    def cdf(self, space: str, external_id: str, version: str) -> None:
+        """Read physical data model from CDF file
+
+        Args:
+            space (str): The space id of the data model.
+            external_id (str): The external id of the data model.
+            version (str): The version of the data model.
+
+        """
+        reader = DMSAPIImporter.from_cdf(
+            DataModelReference(space=space, external_id=external_id, version=version), self._client
+        )
 
         return self._store.read_physical(reader, DmsQualityAssessment)
 

@@ -1,3 +1,6 @@
+from cognite.client import ClientConfig, CogniteClient
+
+from cognite.neat._client import NeatClient
 from cognite.neat._store import NeatStore
 
 from ._physical import PhysicalDataModel
@@ -9,9 +12,10 @@ class NeatSession:
     the state machine for data model and instance operations.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, cognite_client: CogniteClient | ClientConfig) -> None:
         self._store = NeatStore()
-        self.physical_data_model = PhysicalDataModel(self._store)
+        self._client = NeatClient(cognite_client)
+        self.physical_data_model = PhysicalDataModel(self._store, self._client)
         self.issues = Issues(self._store)
 
 
