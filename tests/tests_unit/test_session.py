@@ -26,6 +26,13 @@ def physical_state_session(new_session: NeatSession, valid_dms_yaml_format: str)
     return new_session
 
 
+@pytest.fixture()
+def physical_written_session(physical_state_session: NeatSession) -> NeatSession:
+    write_yaml = MagicMock(spec=Path)
+    physical_state_session.physical_data_model.write.yaml(write_yaml)
+    return physical_state_session
+
+
 class TestNeatSession:
     def test_error_reading(self, new_session: NeatSession) -> None:
         session = new_session
@@ -66,10 +73,11 @@ class TestNeatSession:
         session = physical_state_session
         write_yaml = MagicMock(spec=Path)
 
+        provenance_before = len(session._store.provenance)
         session.physical_data_model.write.yaml(write_yaml)
+        assert len(session._store.provenance) == provenance_before + 1
 
         assert len(session._store.physical_data_model) == 1
-        assert len(session._store.provenance) == 2
         assert isinstance(session._store.state, states.PhysicalState)
         # there is no state change when writing
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
@@ -89,18 +97,20 @@ class TestNeatSession:
         assert len(session._store.physical_data_model) == 1
 
         # no change took place
-        assert len(session._store.provenance) == 1
+        assert len(session._store.provenance) == 1, "We should only have the read change from before"
 
         # we remain in physical state even though we hit Forbidden state, auto-recovery
         assert isinstance(session._store.state, states.PhysicalState)
 
-    def test_write_again_data_model(self, physical_state_session: NeatSession) -> None:
-        session = physical_state_session
+    def test_write_again_data_model(self, physical_written_session: NeatSession) -> None:
+        session = physical_written_session
         write_yaml = MagicMock(spec=Path)
+
+        provenance_before = len(session._store.provenance)
         session.physical_data_model.write.yaml(write_yaml)
+        assert len(session._store.provenance) == provenance_before + 1
 
         assert len(session._store.physical_data_model) == 1
-        assert len(session._store.provenance) == 2
         assert isinstance(session._store.state, states.PhysicalState)
         # there is no state change when writing
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
