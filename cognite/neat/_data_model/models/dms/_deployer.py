@@ -10,7 +10,7 @@ from cognite.neat._issues import ConsistencyError, ImplementationWarning, IssueL
 
 from ._container import ContainerRequest
 from ._data_model import DataModelRequest
-from ._references import NodeReference, ReferenceObject
+from ._references import DataModelReference, NodeReference, ReferenceObject, ViewReference
 from ._schema import RequestSchema
 from ._space import SpaceRequest
 from ._views import ViewRequest
@@ -83,7 +83,11 @@ class DeploymentSnapshot:
     """Stores the cdf state before deployment for rollback."""
 
     timestamp: str
-    schema: RequestSchema
+    data_model: dict[DataModelReference, DataModelRequest]
+    views: dict[ViewReference, ViewRequest]
+    containers: dict[ReferenceObject, ContainerRequest]
+    spaces: dict[str, SpaceRequest]
+    node_types: dict[NodeReference, NodeReference]
 
 
 @dataclass
@@ -115,18 +119,12 @@ class SchemaDeployer:
         self.client: NeatClient = client
         self.options: DeploymentOptions = options or DeploymentOptions()
         self.issues: IssueList = IssueList()
-        self._cdf_schema: RequestSchema | None = None
         self._snapshot: DeploymentSnapshot | None = None
-
-    def run(self) -> None:
-        """Execute the success handler on the data model."""
-        # Override base class method but delegate to deploy
-        self.deploy()
 
     def deploy(self) -> DeploymentResult:
         """Execute the deployment with dry-run and rollback support."""
         # Step 1: Fetch current cdf state
-        self._cdf_schema = self._fetch_cdf_state()
+        self._snapshot = self._fetch_cdf_state()
 
         # Step 2: Create deployment plan by comparing local vs cdf
         plan = self._create_deployment_plan()
@@ -158,20 +156,16 @@ class SchemaDeployer:
                 dry_run=True,
             )
 
-        # Step 6: Create snapshot for rollback
-        if self.options.auto_rollback:
-            self._snapshot = self._create_snapshot()
-
-        # Step 7: Apply changes
+        # Step 6: Apply changes
         result = self._apply_changes(plan)
 
-        # Step 8: Rollback if failed and auto_rollback is enabled
+        # Step 7: Rollback if failed and auto_rollback is enabled
         if not result.success and self.options.auto_rollback and self._snapshot:
             self._rollback(self._snapshot)
 
         return result
 
-    def _fetch_cdf_state(self) -> RequestSchema:
+    def _fetch_cdf_state(self) -> DeploymentSnapshot:
         """Fetch current state from CDF."""
         # Fetch spaces
         space_ids = [space.space for space in self.data_model.spaces]
@@ -191,19 +185,13 @@ class SchemaDeployer:
 
         nodes = [node_type for view in cdf_views for node_type in view.node_types]
 
-        # Get data model or create a placeholder if not found
-        if cdf_data_models:
-            data_model = cdf_data_models[0].as_request()
-        else:
-            # If data model doesn't exist in CDF, use the local one as template
-            data_model = self.data_model.data_model
-
-        return RequestSchema(
-            data_model=data_model,
-            views=[v.as_request() for v in cdf_views],
-            containers=[c.as_request() for c in cdf_containers],
-            spaces=[s.as_request() for s in cdf_spaces],
-            node_types=nodes,
+        return DeploymentSnapshot(
+            timestamp=datetime.now().isoformat(),
+            data_model={dm.as_reference(): dm.as_request() for dm in cdf_data_models},
+            views={view.as_reference(): view.as_request() for view in cdf_views},
+            containers={container.as_reference(): container.as_request() for container in cdf_containers},
+            spaces={space.space: space.as_request() for space in cdf_spaces},
+            node_types={node: node for node in nodes},
         )
 
     def _create_deployment_plan(self) -> DeploymentPlan:
@@ -292,7 +280,7 @@ class SchemaDeployer:
         return self._plan_resources(
             resource_type="space",
             local_items=self.data_model.spaces,
-            cdf_items=self._cdf_schema.spaces if self._cdf_schema else [],
+            cdf_items=self._snapshot.spaces if self._snapshot else {},
             key_func=lambda s: s.space,
             resource_id_func=lambda s: s.space,
             diff_func=self._diff_spaces,
@@ -491,15 +479,6 @@ class SchemaDeployer:
             return False
 
         return True
-
-    def _create_snapshot(self) -> DeploymentSnapshot:
-        """Create snapshot of cdf state for rollback."""
-        if self._cdf_schema is None:
-            raise RuntimeError("Cannot create snapshot: CDF schema has not been fetched")
-        return DeploymentSnapshot(
-            timestamp=datetime.now().isoformat(),
-            schema=self._cdf_schema,
-        )
 
     def _apply_changes(self, plan: DeploymentPlan) -> DeploymentResult:
         """Apply the deployment plan to CDF."""
