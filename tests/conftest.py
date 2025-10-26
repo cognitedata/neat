@@ -1,11 +1,9 @@
 import pytest
-from pyparsing import Iterable
 
 
 @pytest.fixture(scope="session")
-def valid_dms_yaml_formats() -> Iterable[tuple]:
-    yield pytest.param(
-        """Metadata:
+def valid_dms_yaml_format() -> str:
+    return """Metadata:
 - Key: space
   Value: cdf_cdm
 - Key: externalId
@@ -28,6 +26,4 @@ Views:
 Containers:
 - Container: CogniteDescribable
   Used For: node
-""",
-        id="Minimal example",
-    )
+"""
