@@ -4,11 +4,11 @@ from pydantic import Field, field_validator
 
 from cognite.neat.v0.core._utils.text import humanize_collection
 
-from ._base import Resource, WriteableResource
+from ._base import APIResourceMixin, Resource, WriteableResource
 from ._constants import FORBIDDEN_SPACES, SPACE_FORMAT_PATTERN
 
 
-class Space(Resource, ABC):
+class Space(Resource, APIResourceMixin[str], ABC):
     space: str = Field(
         description="The Space identifier (id).",
         min_length=1,
@@ -24,6 +24,9 @@ class Space(Resource, ABC):
         if val in FORBIDDEN_SPACES:
             raise ValueError(f"{val!r} is a reserved space. Reserved Spaces: {humanize_collection(FORBIDDEN_SPACES)}")
         return val
+
+    def as_reference(self) -> str:
+        return self.space
 
 
 class SpaceRequest(Space): ...
