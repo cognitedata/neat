@@ -38,7 +38,7 @@ class WriteableResource(Resource, Generic[T_Resource], ABC):
 T_Reference = TypeVar("T_Reference", bound=ReferenceObject | str)
 
 
-class APIResourceMixin(Generic[T_Reference], ABC):
+class APIResource(Generic[T_Reference], ABC):
     """Base class for all API data modeling resources."""
 
     @abstractmethod

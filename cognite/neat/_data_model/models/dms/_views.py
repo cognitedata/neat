@@ -6,7 +6,7 @@ from pydantic import Field, JsonValue, field_validator, model_validator
 
 from cognite.neat._utils.text import humanize_collection
 
-from ._base import Resource, WriteableResource
+from ._base import APIResource, Resource, WriteableResource
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
@@ -25,7 +25,7 @@ from ._view_property import (
 KEY_PATTERN = re.compile(CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN)
 
 
-class View(Resource, ABC):
+class View(Resource, APIResource[ViewReference], ABC):
     space: str = Field(
         description="Id of the space that the view belongs to.",
         min_length=1,

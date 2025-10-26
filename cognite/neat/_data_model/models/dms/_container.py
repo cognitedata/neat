@@ -7,7 +7,7 @@ from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat._utils.text import humanize_collection
 
-from ._base import BaseModelObject, Resource, WriteableResource
+from ._base import APIResource, BaseModelObject, Resource, WriteableResource
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
@@ -53,7 +53,7 @@ class ContainerPropertyDefinition(BaseModelObject):
     type: DataType = Field(description="The type of data you can store in this property.")
 
 
-class Container(Resource, ABC):
+class Container(Resource, APIResource[ContainerReference], ABC):
     space: str = Field(
         description="The workspace for the container, a unique identifier for the space.",
         min_length=1,

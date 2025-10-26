@@ -2,7 +2,7 @@ from abc import ABC
 
 from pydantic import Field
 
-from ._base import Resource, WriteableResource
+from ._base import APIResource, Resource, WriteableResource
 from ._constants import (
     DM_EXTERNAL_ID_PATTERN,
     DM_VERSION_PATTERN,
@@ -11,7 +11,7 @@ from ._constants import (
 from ._references import DataModelReference, ViewReference
 
 
-class DataModel(Resource, ABC):
+class DataModel(Resource, APIResource[DataModelReference], ABC):
     """Cognite Data Model resource.
 
     Data models group and structure views into reusable collections.

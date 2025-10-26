@@ -4,11 +4,11 @@ from pydantic import Field, field_validator
 
 from cognite.neat.v0.core._utils.text import humanize_collection
 
-from ._base import APIResourceMixin, Resource, WriteableResource
+from ._base import APIResource, Resource, WriteableResource
 from ._constants import FORBIDDEN_SPACES, SPACE_FORMAT_PATTERN
 
 
-class Space(Resource, APIResourceMixin[str], ABC):
+class Space(Resource, APIResource[str], ABC):
     space: str = Field(
         description="The Space identifier (id).",
         min_length=1,
