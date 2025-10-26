@@ -46,10 +46,10 @@ class ReadPhysicalDataModel:
         return self._store.read_physical(reader, DmsQualityAssessment)
 
     def cdf(self, space: str, external_id: str, version: str) -> None:
-        """Read physical data model from CDF file
+        """Read physical data model from CDF
 
         Args:
-            space (str): The space id of the data model.
+            space (str): The schema space of the data model.
             external_id (str): The external id of the data model.
             version (str): The version of the data model.
 
