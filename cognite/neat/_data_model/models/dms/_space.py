@@ -4,11 +4,11 @@ from pydantic import Field, field_validator
 
 from cognite.neat.v0.core._utils.text import humanize_collection
 
-from ._base import WriteableResource
+from ._base import APIResource, Resource, WriteableResource
 from ._constants import FORBIDDEN_SPACES, SPACE_FORMAT_PATTERN
 
 
-class Space(WriteableResource["SpaceRequest"], ABC):
+class Space(Resource, APIResource[str], ABC):
     space: str = Field(
         description="The Space identifier (id).",
         min_length=1,
@@ -25,11 +25,14 @@ class Space(WriteableResource["SpaceRequest"], ABC):
             raise ValueError(f"{val!r} is a reserved space. Reserved Spaces: {humanize_collection(FORBIDDEN_SPACES)}")
         return val
 
-    def as_request(self) -> "SpaceRequest":
-        return SpaceRequest.model_validate(self.model_dump(by_alias=True))
+    def as_reference(self) -> str:
+        return self.space
 
 
-class SpaceResponse(Space):
+class SpaceRequest(Space): ...
+
+
+class SpaceResponse(Space, WriteableResource[Space]):
     created_time: int = Field(
         description="When the space was created. The number of milliseconds since 00:00:00 Thursday, 1 January 1970, "
         "Coordinated Universal Time (UTC), minus leap seconds."
@@ -40,5 +43,5 @@ class SpaceResponse(Space):
     )
     is_global: bool = Field(description="Whether the space is a global space.")
 
-
-class SpaceRequest(Space): ...
+    def as_request(self) -> "SpaceRequest":
+        return SpaceRequest.model_validate(self.model_dump(by_alias=True))

@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import Field
 
-from ._base import BaseModelObject
+from ._base import ReferenceObject
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
@@ -10,9 +10,6 @@ from ._constants import (
     INSTANCE_ID_PATTERN,
     SPACE_FORMAT_PATTERN,
 )
-
-
-class ReferenceObject(BaseModelObject, frozen=True, populate_by_name=True): ...
 
 
 class ContainerReference(ReferenceObject):
