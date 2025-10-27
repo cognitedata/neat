@@ -5,7 +5,7 @@ from typing import Any, cast
 
 from cognite.neat._data_model._shared import OnSuccess
 from cognite.neat._data_model.exporters import DMSTableExporter
-from cognite.neat._data_model.importers import DMSTableImporter
+from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import IssueList
@@ -13,7 +13,7 @@ from cognite.neat._state_machine._states import EmptyState, State
 
 from ._provenance import Change, Provenance
 
-Agents = DMSTableExporter | DMSTableImporter
+Agents = DMSTableExporter | DMSTableImporter | DMSImporter
 
 
 class NeatStore:
@@ -22,7 +22,7 @@ class NeatStore:
         self.provenance = Provenance()
         self.state: State = EmptyState()
 
-    def read_physical(self, reader: DMSTableImporter, on_success: type[OnSuccess] | None = None) -> None:
+    def read_physical(self, reader: DMSImporter, on_success: type[OnSuccess] | None = None) -> None:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
 
