@@ -77,7 +77,7 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
     ) -> list[PropertyChange]:
         changes = self._check_name_description(cdf_property, desired_property)
         if cdf_property.type != desired_property.type:
-            changes.extend(DataTypeDiffer().diff(cdf_property.type, cdf_property.type))
+            changes.extend(DataTypeDiffer().diff(cdf_property.type, desired_property.type))
 
         if cdf_property.immutable != desired_property.immutable:
             changes.append(
