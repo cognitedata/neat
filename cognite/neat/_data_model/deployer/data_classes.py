@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.dms import (
+    ContainerReference,
     ContainerRequest,
     DataModelReference,
     DataModelRequest,
@@ -17,7 +18,6 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._data_model.models.dms._base import ReferenceObject
 from cognite.neat._utils.http_client._data_classes import HTTPMessage
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
@@ -99,7 +99,7 @@ class ContainerPropertyChange(PropertyChange):
 
 
 class ResourceChange(BaseDeployObject, Generic[T_Reference, T_Resource]):
-    resource_id: T_Resource
+    resource_id: T_Reference
     new_value: T_Resource
     old_value: T_Resource | None = None
     changes: list[PropertyChange] = Field(default_factory=list)
@@ -139,7 +139,7 @@ class SchemaSnapshot(BaseDeployObject):
     timestamp: datetime
     data_model: dict[DataModelReference, DataModelRequest]
     views: dict[ViewReference, ViewRequest]
-    containers: dict[ReferenceObject, ContainerRequest]
+    containers: dict[ContainerReference, ContainerRequest]
     spaces: dict[str, SpaceRequest]
     node_types: dict[NodeReference, NodeReference]
 
@@ -149,10 +149,10 @@ class ChangeResult(BaseDeployObject, Generic[T_Reference, T_Resource]):
     message: HTTPMessage
 
 
-class AppliedChanges(BaseDeployObject):
-    created: list[ChangeResult] = Field(default_factory=list)
-    updated: list[ChangeResult] = Field(default_factory=list)
-    deletions: list[ChangeResult] = Field(default_factory=list)
+class AppliedChanges(BaseDeployObject, Generic[T_Reference, T_Resource]):
+    created: list[ChangeResult[T_Reference, T_Resource]] = Field(default_factory=list)
+    updated: list[ChangeResult[T_Reference, T_Resource]] = Field(default_factory=list)
+    deletions: list[ChangeResult[T_Reference, T_Resource]] = Field(default_factory=list)
 
 
 class DeploymentResult(BaseDeployObject):
