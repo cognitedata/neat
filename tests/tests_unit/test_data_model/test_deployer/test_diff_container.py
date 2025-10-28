@@ -31,7 +31,7 @@ from cognite.neat._data_model.models.dms import (
     TextProperty,
     UniquenessConstraintDefinition,
 )
-from cognite.neat._data_model.models.dms._data_types import PropertyTypeDefinition, Unit
+from cognite.neat._data_model.models.dms._data_types import EnumProperty, PropertyTypeDefinition, Unit
 
 
 class TestContainerDiffer:
@@ -313,6 +313,21 @@ class TestContainerDiffer:
                 ],
                 id="RequiresConstraintDefinition change",
             ),
+            pytest.param(
+                RequiresConstraintDefinition(
+                    require=ContainerReference(space="space_a", external_id="container_a"),
+                ),
+                UniquenessConstraintDefinition(properties=["id"], bySpace=True),
+                [
+                    PrimitivePropertyChange(
+                        field_path="constraintType",
+                        item_severity=SeverityType.WARNING,
+                        old_value="requires",
+                        new_value="uniqueness",
+                    ),
+                ],
+                id="Constraint type change",
+            ),
         ],
     )
     def test_constraint_diff(
@@ -329,7 +344,7 @@ class TestContainerDiffer:
         [
             pytest.param(
                 BtreeIndex(properties=["name"], cursorable=True, bySpace=False),
-                BtreeIndex(properties=["category"], cursorable=False, bySpace=False),
+                BtreeIndex(properties=["category"], cursorable=False, bySpace=True),
                 [
                     PrimitivePropertyChange(
                         field_path="properties",
@@ -342,6 +357,12 @@ class TestContainerDiffer:
                         item_severity=SeverityType.WARNING,
                         old_value=True,
                         new_value=False,
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="bySpace",
+                        item_severity=SeverityType.WARNING,
+                        old_value=False,
+                        new_value=True,
                     ),
                 ],
                 id="BtreeIndex change",
@@ -358,6 +379,19 @@ class TestContainerDiffer:
                     ),
                 ],
                 id="InvertedIndex change",
+            ),
+            pytest.param(
+                InvertedIndex(properties=["description"]),
+                BtreeIndex(properties=["description"]),
+                [
+                    PrimitivePropertyChange(
+                        field_path="indexType",
+                        item_severity=SeverityType.WARNING,
+                        old_value="inverted",
+                        new_value="btree",
+                    ),
+                ],
+                id="Index type change",
             ),
         ],
     )
@@ -408,6 +442,74 @@ class TestContainerDiffer:
                     ),
                 ],
                 id="Float32Property change",
+            ),
+            pytest.param(
+                TextProperty(
+                    max_text_size=100,
+                    collation="usc_basic",
+                ),
+                TextProperty(max_text_size=50, collation="en"),
+                [
+                    PrimitivePropertyChange(
+                        field_path="maxTextSize",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=100,
+                        new_value=50,
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="collation",
+                        item_severity=SeverityType.WARNING,
+                        old_value="usc_basic",
+                        new_value="en",
+                    ),
+                ],
+                id="TextProperty change",
+            ),
+            pytest.param(
+                EnumProperty(
+                    unknown_value="unknown",
+                    values={
+                        "toModify": EnumValue(name="Category 1"),
+                        "toRemove": EnumValue(name="Category 2"),
+                    },
+                ),
+                EnumProperty(
+                    unknown_value="unknown_updated",
+                    values={
+                        "toModify": EnumValue(name="Category One"),
+                        "toAdd": EnumValue(name="Category 3"),
+                    },
+                ),
+                [
+                    PrimitivePropertyChange(
+                        field_path="unknownValue",
+                        item_severity=SeverityType.WARNING,
+                        old_value="unknown",
+                        new_value="unknown_updated",
+                    ),
+                    RemovedProperty(
+                        field_path="values.toRemove",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=EnumValue(name="Category 2"),
+                    ),
+                    AddedProperty(
+                        field_path="values.toAdd",
+                        item_severity=SeverityType.SAFE,
+                        new_value=EnumValue(name="Category 3"),
+                    ),
+                    ContainerPropertyChange(
+                        field_path="values.toModify",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="name",
+                                item_severity=SeverityType.SAFE,
+                                old_value="Category 1",
+                                new_value="Category One",
+                            ),
+                        ],
+                    ),
+                ],
+                id="EnumProperty change",
             ),
         ],
     )

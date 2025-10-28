@@ -130,7 +130,7 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
         if cdf_constraint.constraint_type != desired_constraint.constraint_type:
             changes.append(
                 PrimitivePropertyChange(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path="constraintType",
                     old_value=cdf_constraint.constraint_type,
                     new_value=desired_constraint.constraint_type,
@@ -181,7 +181,7 @@ class IndexDiffer(ItemDiffer[IndexDefinition]):
         if cdf_index.index_type != desired_index.index_type:
             changes.append(
                 PrimitivePropertyChange(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path="indexType",
                     old_value=cdf_index.index_type,
                     new_value=desired_index.index_type,
@@ -234,96 +234,118 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
         if isinstance(cdf_type, ListablePropertyTypeDefinition) and isinstance(
             desired_type, ListablePropertyTypeDefinition
         ):
-            if cdf_type.list != desired_type.list:
-                changes.append(
-                    PrimitivePropertyChange(
-                        item_severity=SeverityType.BREAKING,
-                        field_path="list",
-                        old_value=cdf_type.list,
-                        new_value=desired_type.list,
-                    )
-                )
-            if cdf_type.max_list_size != desired_type.max_list_size:
-                changes.append(
-                    PrimitivePropertyChange(
-                        item_severity=SeverityType.BREAKING
-                        if desired_type.max_list_size is not None
-                        and cdf_type.max_list_size is not None
-                        and desired_type.max_list_size < cdf_type.max_list_size
-                        else SeverityType.WARNING,
-                        field_path="maxListSize",
-                        old_value=cdf_type.max_list_size,
-                        new_value=desired_type.max_list_size,
-                    )
-                )
+            changes.extend(self._check_listable_property(cdf_type, desired_type))
+
         if isinstance(cdf_type, TextProperty) and isinstance(desired_type, TextProperty):
-            if cdf_type.max_text_size != desired_type.max_text_size:
-                changes.append(
-                    PrimitivePropertyChange(
-                        item_severity=SeverityType.BREAKING
-                        if desired_type.max_text_size is not None
-                        and cdf_type.max_text_size is not None
-                        and desired_type.max_text_size < cdf_type.max_text_size
-                        else SeverityType.WARNING,
-                        field_path="maxTextSize",
-                        old_value=cdf_type.max_text_size,
-                        new_value=desired_type.max_text_size,
-                    )
-                )
-            if cdf_type.collation != desired_type.collation:
-                changes.append(
-                    PrimitivePropertyChange(
-                        item_severity=SeverityType.BREAKING,
-                        field_path="collation",
-                        old_value=cdf_type.collation,
-                        new_value=desired_type.collation,
-                    )
-                )
-        if (
-            isinstance(cdf_type, FloatProperty)
-            and isinstance(desired_type, FloatProperty)
-            and cdf_type.unit
-            and desired_type.unit
-        ):
-            if cdf_type.unit.external_id != desired_type.unit.external_id:
-                changes.append(
-                    PrimitivePropertyChange(
-                        item_severity=SeverityType.WARNING,
-                        field_path="unit.externalId",
-                        old_value=cdf_type.unit.external_id,
-                        new_value=desired_type.unit.external_id,
-                    )
-                )
-            if cdf_type.unit.source_unit != desired_type.unit.source_unit:
-                changes.append(
-                    PrimitivePropertyChange(
-                        item_severity=SeverityType.WARNING,
-                        field_path="unit.sourceUnit",
-                        old_value=cdf_type.unit.source_unit,
-                        new_value=desired_type.unit.source_unit,
-                    )
-                )
+            changes.extend(self._check_text_property(cdf_type, desired_type))
+
+        if isinstance(cdf_type, FloatProperty) and isinstance(desired_type, FloatProperty):
+            changes.extend(self._check_float_property(cdf_type, desired_type))
+
         if isinstance(cdf_type, EnumProperty) and isinstance(desired_type, EnumProperty):
-            if cdf_type.unknown_value != desired_type.unknown_value:
-                changes.append(
-                    PrimitivePropertyChange(
-                        item_severity=SeverityType.WARNING,
-                        field_path="unknownValue",
-                        old_value=cdf_type.unknown_value,
-                        new_value=desired_type.unknown_value,
-                    )
-                )
-            changes.extend(
-                diff_container(
-                    "enumValues.",
-                    cdf_type.values,
-                    desired_type.values,
-                    add_severity=SeverityType.SAFE,
-                    remove_severity=SeverityType.BREAKING,
-                    differ=EnumValueDiffer(),
+            self._check_enum_property(cdf_type, desired_type)
+
+        return changes
+
+    def _check_listable_property(
+        self, cdf_type: ListablePropertyTypeDefinition, desired_type: ListablePropertyTypeDefinition
+    ) -> list[PropertyChange]:
+        changes: list[PropertyChange] = []
+        if cdf_type.list != desired_type.list:
+            changes.append(
+                PrimitivePropertyChange(
+                    item_severity=SeverityType.BREAKING,
+                    field_path="list",
+                    old_value=cdf_type.list,
+                    new_value=desired_type.list,
                 )
             )
+        if cdf_type.max_list_size != desired_type.max_list_size:
+            changes.append(
+                PrimitivePropertyChange(
+                    item_severity=SeverityType.BREAKING
+                    if desired_type.max_list_size is not None
+                    and cdf_type.max_list_size is not None
+                    and desired_type.max_list_size < cdf_type.max_list_size
+                    else SeverityType.WARNING,
+                    field_path="maxListSize",
+                    old_value=cdf_type.max_list_size,
+                    new_value=desired_type.max_list_size,
+                )
+            )
+        return changes
 
+    def _check_float_property(self, cdf_type: FloatProperty, desired_type: FloatProperty) -> list[PropertyChange]:
+        if cdf_type.unit is None or desired_type.unit is None:
+            return []
+        changes: list[PropertyChange] = []
+        if cdf_type.unit.external_id != desired_type.unit.external_id:
+            changes.append(
+                PrimitivePropertyChange(
+                    item_severity=SeverityType.WARNING,
+                    field_path="unit.externalId",
+                    old_value=cdf_type.unit.external_id,
+                    new_value=desired_type.unit.external_id,
+                )
+            )
+        if cdf_type.unit.source_unit != desired_type.unit.source_unit:
+            changes.append(
+                PrimitivePropertyChange(
+                    item_severity=SeverityType.WARNING,
+                    field_path="unit.sourceUnit",
+                    old_value=cdf_type.unit.source_unit,
+                    new_value=desired_type.unit.source_unit,
+                )
+            )
+        return changes
+
+    def _check_text_property(self, cdf_type: TextProperty, desired_type: TextProperty) -> list[PropertyChange]:
+        changes: list[PropertyChange] = []
+        if cdf_type.max_text_size != desired_type.max_text_size:
+            changes.append(
+                PrimitivePropertyChange(
+                    item_severity=SeverityType.BREAKING
+                    if desired_type.max_text_size is not None
+                    and cdf_type.max_text_size is not None
+                    and desired_type.max_text_size < cdf_type.max_text_size
+                    else SeverityType.WARNING,
+                    field_path="maxTextSize",
+                    old_value=cdf_type.max_text_size,
+                    new_value=desired_type.max_text_size,
+                )
+            )
+        if cdf_type.collation != desired_type.collation:
+            changes.append(
+                PrimitivePropertyChange(
+                    item_severity=SeverityType.WARNING,
+                    field_path="collation",
+                    old_value=cdf_type.collation,
+                    new_value=desired_type.collation,
+                )
+            )
+        return changes
+
+    def _check_enum_property(self, cdf_type: EnumProperty, desired_type: EnumProperty) -> list[PropertyChange]:
+        changes: list[PropertyChange] = []
+        if cdf_type.unknown_value != desired_type.unknown_value:
+            changes.append(
+                PrimitivePropertyChange(
+                    item_severity=SeverityType.WARNING,
+                    field_path="unknownValue",
+                    old_value=cdf_type.unknown_value,
+                    new_value=desired_type.unknown_value,
+                )
+            )
+        changes.extend(
+            diff_container(
+                "enumValues.",
+                cdf_type.values,
+                desired_type.values,
+                add_severity=SeverityType.SAFE,
+                remove_severity=SeverityType.BREAKING,
+                differ=EnumValueDiffer(),
+            )
+        )
         return changes
 
 
