@@ -11,6 +11,9 @@ class BaseModelObject(BaseModel, alias_generator=to_camel, extra="ignore"):
     ...
 
 
+T_Item = TypeVar("T_Item", bound=BaseModelObject)
+
+
 class ReferenceObject(BaseModelObject, frozen=True, populate_by_name=True):
     """Base class for all reference objects - these are identifiers."""
 
