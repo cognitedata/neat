@@ -243,7 +243,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             changes.extend(self._check_float_property(cdf_type, desired_type))
 
         if isinstance(cdf_type, EnumProperty) and isinstance(desired_type, EnumProperty):
-            self._check_enum_property(cdf_type, desired_type)
+            changes.extend(self._check_enum_property(cdf_type, desired_type))
 
         return changes
 
@@ -338,7 +338,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             )
         changes.extend(
             diff_container(
-                "enumValues.",
+                "values.",
                 cdf_type.values,
                 desired_type.values,
                 add_severity=SeverityType.SAFE,

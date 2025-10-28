@@ -444,11 +444,8 @@ class TestContainerDiffer:
                 id="Float32Property change",
             ),
             pytest.param(
-                TextProperty(
-                    max_text_size=100,
-                    collation="usc_basic",
-                ),
-                TextProperty(max_text_size=50, collation="en"),
+                TextProperty(maxTextSize=100, collation="usc_basic"),
+                TextProperty(maxTextSize=50, collation="en"),
                 [
                     PrimitivePropertyChange(
                         field_path="maxTextSize",
@@ -467,14 +464,14 @@ class TestContainerDiffer:
             ),
             pytest.param(
                 EnumProperty(
-                    unknown_value="unknown",
+                    unknownValue="unknown",
                     values={
                         "toModify": EnumValue(name="Category 1"),
                         "toRemove": EnumValue(name="Category 2"),
                     },
                 ),
                 EnumProperty(
-                    unknown_value="unknown_updated",
+                    unknownValue="unknown_updated",
                     values={
                         "toModify": EnumValue(name="Category One"),
                         "toAdd": EnumValue(name="Category 3"),
@@ -487,15 +484,15 @@ class TestContainerDiffer:
                         old_value="unknown",
                         new_value="unknown_updated",
                     ),
-                    RemovedProperty(
-                        field_path="values.toRemove",
-                        item_severity=SeverityType.BREAKING,
-                        old_value=EnumValue(name="Category 2"),
-                    ),
                     AddedProperty(
                         field_path="values.toAdd",
                         item_severity=SeverityType.SAFE,
                         new_value=EnumValue(name="Category 3"),
+                    ),
+                    RemovedProperty(
+                        field_path="values.toRemove",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=EnumValue(name="Category 2"),
                     ),
                     ContainerPropertyChange(
                         field_path="values.toModify",
