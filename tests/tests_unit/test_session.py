@@ -106,6 +106,10 @@ class TestNeatSession:
         by_type = cast(IssueList, new_session._store.provenance[-1].issues).by_type()
         assert set(by_type.keys()) == {ConsistencyError}
         assert len(by_type[ConsistencyError]) == 1
+        assert (
+            "View my_space:MissingProperties(version=v1) does not have any properties defined"
+            in by_type[ConsistencyError][0].message
+        )
 
     def test_write_data_model(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
