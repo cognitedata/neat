@@ -19,6 +19,7 @@ from cognite.neat._data_model.models.dms import (
 from cognite.neat._data_model.models.dms._base import ReferenceObject
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
+# Todo Severity Type -> Enum
 SeverityType: TypeAlias = Literal["safe", "warning", "breaking"]
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
 T_Resource = TypeVar("T_Resource", bound=APIResource)
@@ -45,6 +46,8 @@ class PropertyChange(BaseDeployObject, ABC):
 class PrimitivePropertyChange(PropertyChange):
     item_severity: SeverityType
     description: str
+    new_value: str | int | float | bool | None
+    old_value: str | int | float | bool | None
 
     @property
     def severity(self) -> SeverityType:
@@ -53,6 +56,7 @@ class PrimitivePropertyChange(PropertyChange):
 
 class ContainerPropertyChange(PropertyChange):
     changed_items: list[PrimitivePropertyChange]
+    description: str
 
     @property
     def severity(self) -> SeverityType:
@@ -78,6 +82,15 @@ class ResourceChange(BaseDeployObject, Generic[T_Reference, T_Resource]):
             return "update"
         else:
             return "unchanged"
+
+    @property
+    def severity(self) -> SeverityType:
+        if any(change.severity == "breaking" for change in self.changes):
+            return "breaking"
+        elif any(change.severity == "warning" for change in self.changes):
+            return "warning"
+        else:
+            return "safe"
 
 
 class ResourceDeploymentPlan(BaseDeployObject, Generic[T_Reference, T_Resource]):
