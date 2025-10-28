@@ -1,4 +1,4 @@
-from cognite.neat._data_model.models.dms._base import Resource, WriteableResource
+from cognite.neat._data_model.models.dms._base import APIResource, Resource, T_Reference, WriteableResource
 from cognite.neat._data_model.models.dms._constraints import (
     Constraint,
     ConstraintAdapter,
@@ -72,6 +72,7 @@ from ._views import (
 
 __all__ = [
     "DMS_DATA_TYPES",
+    "APIResource",
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
@@ -122,6 +123,7 @@ __all__ = [
     "Space",
     "SpaceRequest",
     "SpaceResponse",
+    "T_Reference",
     "TextProperty",
     "TextProperty",
     "TimeseriesCDFExternalIdReference",
