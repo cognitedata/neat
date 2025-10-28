@@ -279,9 +279,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
         return changes
 
     def _check_float_unit(self, cdf_unit: Unit | None, desired_unit: Unit | None) -> list[PropertyChange]:
-        if cdf_unit is None and desired_unit is None:
-            return []
-        elif cdf_unit is not None and desired_unit is None:
+        if cdf_unit is not None and desired_unit is None:
             return [RemovedProperty(field_path="unit", item_severity=SeverityType.WARNING, old_value=cdf_unit)]
         elif cdf_unit is None and desired_unit is not None:
             return [AddedProperty(field_path="unit", item_severity=SeverityType.WARNING, new_value=desired_unit)]
@@ -305,8 +303,9 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                         new_value=desired_unit.source_unit,
                     )
                 )
-            return [ContainerPropertyChange(field_path="unit", changed_items=changes)]
-        return []
+            if changes:
+                return [ContainerPropertyChange(field_path="unit", changed_items=changes)]
+        return []  # No changes
 
     def _check_text_property(self, cdf_type: TextProperty, desired_type: TextProperty) -> list[PropertyChange]:
         changes: list[PropertyChange] = []
