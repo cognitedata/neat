@@ -9,7 +9,23 @@ class OnSuccess(ABC):
 
     def __init__(self, client: NeatClient | None = None) -> None:
         self._client = client
-        self.issues: list = []
+        self._issues: list = []
+        self._results: list = []
+        self._has_run = False
+
+    @property
+    def issues(self) -> list:
+        """List of issues found during the success handler execution."""
+        if not self._has_run:
+            raise RuntimeError("OnSuccess handler has not been run yet.")
+        return self._issues
+
+    @property
+    def results(self) -> list:
+        """List of results produced during the success handler execution."""
+        if not self._has_run:
+            raise RuntimeError("OnSuccess handler has not been run yet.")
+        return self._results
 
     @abstractmethod
     def run(self, data_model: Any) -> None:

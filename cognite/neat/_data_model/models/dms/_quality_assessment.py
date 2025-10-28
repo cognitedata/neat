@@ -14,19 +14,20 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         """Run quality assessment on the DMS data model."""
 
         if not AssessRealUseCaseAlignment(self._client).run(data_model):
-            self.issues.append(
+            self._issues.append(
                 ImplementationWarning(
                     message="The data model does not appear to originate from real business questions.",
                     fix="Engage with stakeholders to ensure the model addresses actual business needs.",
                 )
             )
         if not AssessCooperationEvidence(self._client).run(data_model):
-            self.issues.append(
+            self._issues.append(
                 ImplementationWarning(
                     message="The data model lacks evidence of cross-domain cooperation.",
                     fix="Facilitate collaboration among different domain experts during model creation.",
                 )
             )
+        self._has_run = True
 
 
 class DataModelValidator(ABC):
