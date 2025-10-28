@@ -12,8 +12,8 @@ from .views_api import ViewsAPI
 class NeatClient:
     def __init__(self, cognite_client_or_config: CogniteClient | ClientConfig) -> None:
         self.config = NeatClientConfig(cognite_client_or_config)
-        http_client = HTTPClient(self.config)
-        self.data_models = DataModelsAPI(self.config, http_client)
-        self.views = ViewsAPI(self.config, http_client)
-        self.containers = ContainersAPI(self.config, http_client)
-        self.spaces = SpacesAPI(self.config, http_client)
+        self.http_client = HTTPClient(self.config)
+        self.data_models = DataModelsAPI(self.config, self.http_client)
+        self.views = ViewsAPI(self.config, self.http_client)
+        self.containers = ContainersAPI(self.config, self.http_client)
+        self.spaces = SpacesAPI(self.config, self.http_client)

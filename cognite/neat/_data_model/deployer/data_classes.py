@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Generic, Literal, TypeAlias, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.dms import (
@@ -122,11 +122,21 @@ class SchemaSnapshot(BaseDeployObject):
     spaces: dict[str, SpaceRequest]
     node_types: dict[NodeReference, NodeReference]
 
+    def as_plan(self, drop_data: bool) -> list[ResourceDeploymentPlan]:
+        raise NotImplementedError()
+
 
 class DeploymentResult(BaseDeployObject):
-    success: bool
+    status: Literal["success", "failure", "partial", "pending"]
     plan: list[ResourceDeploymentPlan]
-    applied_changes: list[ResourceChange]
-    failed_changes: list[ResourceChange]
-    snapshot: SchemaSnapshot | None
-    dry_run: bool
+    snapshot: SchemaSnapshot
+    applied_changes: list[ResourceChange] = Field(default_factory=list)
+    failed_changes: list[ResourceChange] = Field(default_factory=list)
+
+    @property
+    def is_dry_run(self) -> bool:
+        return self.status == "pending"
+
+    @property
+    def is_success(self) -> bool:
+        return self.status == "success"

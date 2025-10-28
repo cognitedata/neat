@@ -2,13 +2,24 @@ from abc import ABC, abstractmethod
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
-from cognite.neat._issues import ImplementationWarning
+from cognite.neat._issues import ImplementationWarning, IssueList
 
 from ._schema import RequestSchema
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
+
+    def __init__(self, client: NeatClient):
+        self._client = client
+        self._issues: list[ImplementationWarning] = []
+        self._has_run = False
+
+    @property
+    def issues(self) -> IssueList:
+        if not self._has_run:
+            raise RuntimeError("DmsDataModelValidation has not been run yet.")
+        return IssueList(self._issues)
 
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
