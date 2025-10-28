@@ -22,7 +22,7 @@ from cognite.neat._data_model.models.dms import (
     TextProperty,
     UniquenessConstraintDefinition,
 )
-from cognite.neat._data_model.models.dms._data_types import EnumProperty, Unit
+from cognite.neat._data_model.models.dms._data_types import EnumProperty, Float64Property, Unit
 
 
 class TestContainerDiffer:
@@ -39,8 +39,8 @@ class TestContainerDiffer:
                 description="The name property",
                 nullable=False,
                 immutable=False,
-                default_value="Default Name",
-                auto_increment=False,
+                defaultValue="Default Name",
+                autoIncrement=False,
             ),
             "distance": ContainerPropertyDefinition(
                 type=Float32Property(
@@ -340,6 +340,51 @@ class TestContainerDiffer:
                     ),
                 ],
                 id="comprehensive changes: add/remove/modify properties, constraints and indexes",
+            ),
+            pytest.param(
+                ContainerRequest(
+                    space="test_space",
+                    externalId="test_container",
+                    name="Test Container Updated",
+                    description="This is a test container with updated name.",
+                    usedFor="all",
+                    properties={
+                        "name": ContainerPropertyDefinition(
+                            type=TextProperty(collation="ucs_basic", maxTextSize=50),
+                            name="Name",
+                            description="The name property",
+                            nullable=False,
+                            immutable=False,
+                            defaultValue="Default Name",
+                            autoIncrement=False,
+                        ),
+                        "distance": ContainerPropertyDefinition(type=Float64Property()),
+                        "category": cdf_container.properties["category"],
+                    },
+                    constraints=cdf_container.constraints,
+                    indexes=cdf_container.indexes,
+                ),
+                [
+                    PrimitivePropertyChange(
+                        field_path="name",
+                        item_severity=SeverityType.SAFE,
+                        old_value="Test Container",
+                        new_value="Test Container Updated",
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="description",
+                        item_severity=SeverityType.SAFE,
+                        old_value="This is a test container.",
+                        new_value="This is a test container with updated name.",
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="usedFor",
+                        item_severity=SeverityType.BREAKING,
+                        old_value="node",
+                        new_value="all",
+                    ),
+                ],
+                id="Modify top level, change in Text Property, change DataType",
             ),
         ],
     )
