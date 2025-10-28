@@ -1,6 +1,13 @@
 import pytest
 
-from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
+from cognite.neat._data_model.deployer._differ_container import (
+    ConstraintDiffer,
+    ContainerDiffer,
+    ContainerPropertyDiffer,
+    DataTypeDiffer,
+    EnumValueDiffer,
+    IndexDiffer,
+)
 from cognite.neat._data_model.deployer.data_classes import (
     AddedProperty,
     ContainerPropertyChange,
@@ -11,18 +18,20 @@ from cognite.neat._data_model.deployer.data_classes import (
 )
 from cognite.neat._data_model.models.dms import (
     BtreeIndex,
+    ConstraintDefinition,
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
     EnumValue,
     Float32Property,
+    IndexDefinition,
     Int32Property,
     InvertedIndex,
     RequiresConstraintDefinition,
     TextProperty,
     UniquenessConstraintDefinition,
 )
-from cognite.neat._data_model.models.dms._data_types import EnumProperty, Float64Property, Unit
+from cognite.neat._data_model.models.dms._data_types import PropertyTypeDefinition, Unit
 
 
 class TestContainerDiffer:
@@ -33,50 +42,39 @@ class TestContainerDiffer:
         description="This is a test container.",
         usedFor="node",
         properties={
-            "name": ContainerPropertyDefinition(
-                type=TextProperty(maxTextSize=100),
-                name="Name",
-                description="The name property",
-                nullable=False,
-                immutable=False,
-                defaultValue="Default Name",
-                autoIncrement=False,
-            ),
-            "distance": ContainerPropertyDefinition(
-                type=Float32Property(
-                    unit=Unit(externalId="unit:meter", sourceUnit="meter"), list=True, maxListSize=100
-                ),
-                nullable=True,
-                immutable=False,
-            ),
-            "category": ContainerPropertyDefinition(
-                type=EnumProperty(
-                    unknownValue="unknown",
-                    values={
-                        "cat1": EnumValue(name="Category 1", description="The first category"),
-                        "cat2": EnumValue(),
-                    },
-                )
-            ),
+            "toModify": ContainerPropertyDefinition(type=TextProperty()),
+            "toRemove": ContainerPropertyDefinition(type=TextProperty()),
         },
         constraints={
-            "req1": RequiresConstraintDefinition(
+            "toModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=True),
+            "toRemove": RequiresConstraintDefinition(
                 require=ContainerReference(space="other_space", external_id="other_container"),
-            ),
-            "uniq1": UniquenessConstraintDefinition(
-                properties=["name"],
-                bySpace=True,
             ),
         },
         indexes={
-            "idx1": BtreeIndex(
-                properties=["name"],
-                cursorable=True,
-                bySpace=False,
+            "toModify": BtreeIndex(properties=["toModify"], cursorable=True, bySpace=False),
+            "toRemove": InvertedIndex(properties=["toModify"]),
+        },
+    )
+    changed_container = ContainerRequest(
+        space="test_space",
+        externalId="test_container",
+        name="This is an updated container",
+        description="This is an update",
+        usedFor="edge",
+        properties={
+            "toModify": ContainerPropertyDefinition(type=TextProperty(list=True)),
+            "toAdd": ContainerPropertyDefinition(type=Int32Property()),
+        },
+        constraints={
+            "toModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=False),
+            "toAdd": RequiresConstraintDefinition(
+                require=ContainerReference(space="new_space", external_id="new_container"),
             ),
-            "idx2": InvertedIndex(
-                properties=["category", "distance"],
-            ),
+        },
+        indexes={
+            "toModify": BtreeIndex(properties=["toModify", "toAdd"], cursorable=True, bySpace=False),
+            "toAdd": InvertedIndex(properties=["toAdd"]),
         },
     )
 
@@ -89,357 +87,371 @@ class TestContainerDiffer:
                 id="no changes",
             ),
             pytest.param(
-                ContainerRequest(
-                    space="test_space",
-                    externalId="test_container",
-                    name="Test Container",
-                    description="This is a test container.",
-                    usedFor="node",
-                    properties={
-                        # "name" removed
-                        "distance": ContainerPropertyDefinition(
-                            type=Float32Property(
-                                unit=Unit(externalId="unit:kilometer", sourceUnit="kilometer"),
-                                list=False,
-                                maxListSize=None,
-                            ),
-                            nullable=False,
-                            immutable=True,
-                            name="Distance in km",
-                            description="The distance property in kilometers",
-                            default_value=0.0,
-                            auto_increment=True,
-                        ),
-                        "category": ContainerPropertyDefinition(
-                            type=EnumProperty(
-                                unknownValue="newUnknoown",
-                                values={
-                                    "cat1": EnumValue(name="Category One", description="The first category updated"),
-                                    "cat3": EnumValue(),
-                                },
-                            )
-                        ),
-                        # Added new property
-                        "count": ContainerPropertyDefinition(
-                            type=Int32Property(),
-                            name="Count",
-                            description="A count property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                    },
-                    constraints={
-                        # Modified constraint: changed require reference
-                        "req1": RequiresConstraintDefinition(
-                            require=ContainerReference(space="new_space", external_id="new_container"),
-                        ),
-                        # "uniq1" removed
-                        # Added new constraint
-                        "uniq2": UniquenessConstraintDefinition(
-                            properties=["category"],
-                            bySpace=False,
-                        ),
-                    },
-                    indexes={
-                        # Modified index: changed properties and cursorable
-                        "idx1": BtreeIndex(
-                            properties=["category"],
-                            cursorable=False,
-                            bySpace=False,
-                        ),
-                        # "idx2" removed
-                        # Added new index
-                        "idx3": InvertedIndex(
-                            properties=["count"],
-                        ),
-                    },
-                ),
-                [
-                    # Added new property "count"
-                    AddedProperty(
-                        field_path="properties.count",
-                        item_severity=SeverityType.SAFE,
-                        new_value=ContainerPropertyDefinition(
-                            type=Int32Property(),
-                            name="Count",
-                            description="A count property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                    ),
-                    # Removed property "name"
-                    RemovedProperty(
-                        field_path="properties.name",
-                        item_severity=SeverityType.BREAKING,
-                        old_value=ContainerPropertyDefinition(
-                            type=TextProperty(maxTextSize=100),
-                            name="Name",
-                            description="The name property",
-                            nullable=False,
-                            immutable=False,
-                            defaultValue="Default Name",
-                            autoIncrement=False,
-                        ),
-                    ),
-                    # Modified property "category" - enum changes
-                    ContainerPropertyChange(
-                        field_path="properties.category",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="unknownValue",
-                                item_severity=SeverityType.WARNING,
-                                old_value="unknown",
-                                new_value="newUnknoown",
-                            ),
-                            AddedProperty(
-                                field_path="enumValues.cat3",
-                                item_severity=SeverityType.SAFE,
-                                new_value=EnumValue(),
-                            ),
-                            RemovedProperty(
-                                field_path="enumValues.cat2",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=EnumValue(),
-                            ),
-                            ContainerPropertyChange(
-                                field_path="enumValues.cat1",
-                                changed_items=[
-                                    PrimitivePropertyChange(
-                                        field_path="name",
-                                        item_severity=SeverityType.SAFE,
-                                        old_value="Category 1",
-                                        new_value="Category One",
-                                    ),
-                                    PrimitivePropertyChange(
-                                        field_path="description",
-                                        item_severity=SeverityType.SAFE,
-                                        old_value="The first category",
-                                        new_value="The first category updated",
-                                    ),
-                                ],
-                            ),
-                        ],
-                    ),
-                    # Modified property "distance" - both type changes and property metadata
-                    ContainerPropertyChange(
-                        field_path="properties.distance",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="name",
-                                item_severity=SeverityType.SAFE,
-                                old_value=None,
-                                new_value="Distance in km",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="description",
-                                item_severity=SeverityType.SAFE,
-                                old_value=None,
-                                new_value="The distance property in kilometers",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="list",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=True,
-                                new_value=False,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="maxListSize",
-                                item_severity=SeverityType.WARNING,
-                                old_value=100,
-                                new_value=None,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="unit.externalId",
-                                item_severity=SeverityType.WARNING,
-                                old_value="unit:meter",
-                                new_value="unit:kilometer",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="unit.sourceUnit",
-                                item_severity=SeverityType.WARNING,
-                                old_value="meter",
-                                new_value="kilometer",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="immutable",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=False,
-                                new_value=True,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="nullable",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=True,
-                                new_value=False,
-                            ),
-                        ],
-                    ),
-                    # Added new constraint "uniq2"
-                    AddedProperty(
-                        field_path="constraints.uniq2",
-                        item_severity=SeverityType.SAFE,
-                        new_value=UniquenessConstraintDefinition(
-                            properties=["category"],
-                            bySpace=False,
-                        ),
-                    ),
-                    # Removed constraint "uniq1"
-                    RemovedProperty(
-                        field_path="constraints.uniq1",
-                        item_severity=SeverityType.WARNING,
-                        old_value=UniquenessConstraintDefinition(
-                            properties=["name"],
-                            bySpace=True,
-                        ),
-                    ),
-                    # Modified constraint "req1"
-                    ContainerPropertyChange(
-                        field_path="constraints.req1",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="require",
-                                item_severity=SeverityType.WARNING,
-                                old_value="other_space:other_container",
-                                new_value="new_space:new_container",
-                            ),
-                        ],
-                    ),
-                    # Added new index "idx3"
-                    AddedProperty(
-                        field_path="indexes.idx3",
-                        item_severity=SeverityType.SAFE,
-                        new_value=InvertedIndex(
-                            properties=["count"],
-                        ),
-                    ),
-                    # Removed index "idx2"
-                    RemovedProperty(
-                        field_path="indexes.idx2",
-                        item_severity=SeverityType.WARNING,
-                        old_value=InvertedIndex(
-                            properties=["category", "distance"],
-                        ),
-                    ),
-                    # Modified index "idx1"
-                    ContainerPropertyChange(
-                        field_path="indexes.idx1",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="properties",
-                                item_severity=SeverityType.WARNING,
-                                old_value="['name']",
-                                new_value="['category']",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="cursorable",
-                                item_severity=SeverityType.WARNING,
-                                old_value=True,
-                                new_value=False,
-                            ),
-                        ],
-                    ),
-                ],
-                id="comprehensive changes: add/remove/modify properties, constraints and indexes",
-            ),
-            pytest.param(
-                ContainerRequest(
-                    space="test_space",
-                    externalId="test_container",
-                    name="Test Container Updated",
-                    description="This is a test container with updated name.",
-                    usedFor="all",
-                    properties={
-                        "name": ContainerPropertyDefinition(
-                            type=TextProperty(collation="ucs_basic", maxTextSize=50),
-                            name="Name",
-                            description="The name property",
-                            nullable=False,
-                            immutable=False,
-                            defaultValue="Default Name",
-                            autoIncrement=False,
-                        ),
-                        "distance": ContainerPropertyDefinition(type=Float64Property()),
-                        "category": cdf_container.properties["category"],
-                    },
-                    constraints=cdf_container.constraints,
-                    indexes=cdf_container.indexes,
-                ),
+                changed_container,
                 [
                     PrimitivePropertyChange(
                         field_path="name",
                         item_severity=SeverityType.SAFE,
                         old_value="Test Container",
-                        new_value="Test Container Updated",
+                        new_value="This is an updated container",
                     ),
                     PrimitivePropertyChange(
                         field_path="description",
                         item_severity=SeverityType.SAFE,
                         old_value="This is a test container.",
-                        new_value="This is a test container with updated name.",
+                        new_value="This is an update",
                     ),
                     PrimitivePropertyChange(
                         field_path="usedFor",
                         item_severity=SeverityType.BREAKING,
                         old_value="node",
-                        new_value="all",
+                        new_value="edge",
+                    ),
+                    AddedProperty(
+                        field_path="properties.toAdd",
+                        item_severity=SeverityType.SAFE,
+                        # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
+                        new_value=changed_container.properties["toAdd"],  # type: ignore[index]
+                    ),
+                    RemovedProperty(
+                        field_path="properties.toRemove",
+                        item_severity=SeverityType.BREAKING,
+                        # See above
+                        old_value=cdf_container.properties["toRemove"],  # type: ignore[index]
                     ),
                     ContainerPropertyChange(
-                        field_path="properties.distance",
+                        field_path="properties.toModify",
+                        changed_items=[
+                            ContainerPropertyChange(
+                                field_path="type",
+                                changed_items=[
+                                    PrimitivePropertyChange(
+                                        field_path="list",
+                                        item_severity=SeverityType.BREAKING,
+                                        old_value=None,
+                                        new_value=True,
+                                    ),
+                                ],
+                            )
+                        ],
+                    ),
+                    AddedProperty(
+                        field_path="constraints.toAdd",
+                        item_severity=SeverityType.SAFE,
+                        # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
+                        new_value=changed_container.constraints["toAdd"],  # type: ignore[index]
+                    ),
+                    RemovedProperty(
+                        field_path="constraints.toRemove",
+                        item_severity=SeverityType.WARNING,
+                        # See above
+                        old_value=cdf_container.constraints["toRemove"],  # type: ignore[index]
+                    ),
+                    ContainerPropertyChange(
+                        field_path="constraints.toModify",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="bySpace",
+                                item_severity=SeverityType.WARNING,
+                                old_value=True,
+                                new_value=False,
+                            ),
+                        ],
+                    ),
+                    AddedProperty(
+                        field_path="indexes.toAdd",
+                        item_severity=SeverityType.SAFE,
+                        # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
+                        new_value=changed_container.indexes["toAdd"],  # type: ignore[index]
+                    ),
+                    RemovedProperty(
+                        field_path="indexes.toRemove",
+                        item_severity=SeverityType.WARNING,
+                        # See above
+                        old_value=cdf_container.indexes["toRemove"],  # type: ignore[index]
+                    ),
+                    ContainerPropertyChange(
+                        field_path="indexes.toModify",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="properties",
+                                item_severity=SeverityType.WARNING,
+                                old_value="['toModify']",
+                                new_value="['toModify', 'toAdd']",
+                            ),
+                        ],
+                    ),
+                ],
+                id="Modify/Add/Remove properties, constraints, indexes",
+            ),
+        ],
+    )
+    def test_container_diff(self, resource: ContainerRequest, expected_diff: list[PropertyChange]) -> None:
+        actual_diffs = ContainerDiffer().diff(self.cdf_container, resource)
+        assert expected_diff == actual_diffs
+
+    @pytest.mark.parametrize(
+        "cdf_property,desired_property,expected_diff",
+        [
+            pytest.param(
+                ContainerPropertyDefinition(
+                    type=Float32Property(),
+                    name="Name",
+                    description="The name property",
+                    nullable=False,
+                    immutable=False,
+                    defaultValue="Default Name",
+                    autoIncrement=False,
+                ),
+                ContainerPropertyDefinition(
+                    type=TextProperty(),
+                    name="Name Updated",
+                    description="The updated name property",
+                    nullable=True,
+                    immutable=True,
+                    defaultValue="Updated Name",
+                    autoIncrement=True,
+                ),
+                [
+                    PrimitivePropertyChange(
+                        field_path="name",
+                        item_severity=SeverityType.SAFE,
+                        old_value="Name",
+                        new_value="Name Updated",
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="description",
+                        item_severity=SeverityType.SAFE,
+                        old_value="The name property",
+                        new_value="The updated name property",
+                    ),
+                    ContainerPropertyChange(
+                        field_path="type",
                         changed_items=[
                             PrimitivePropertyChange(
                                 field_path="type",
                                 item_severity=SeverityType.BREAKING,
                                 old_value="float32",
-                                new_value="float64",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="list",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=True,
-                                new_value=None,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="maxListSize",
-                                item_severity=SeverityType.WARNING,
-                                old_value=100,
-                                new_value=None,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="immutable",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=False,
-                                new_value=None,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="nullable",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=True,
-                                new_value=None,
+                                new_value="text",
                             ),
                         ],
                     ),
-                    ContainerPropertyChange(
-                        field_path="properties.name",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="maxTextSize",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=100,
-                                new_value=50,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="collation",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=None,
-                                new_value="ucs_basic",
-                            ),
-                        ],
+                    PrimitivePropertyChange(
+                        field_path="immutable",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=False,
+                        new_value=True,
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="nullable",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=False,
+                        new_value=True,
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="autoIncrement",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=False,
+                        new_value=True,
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="defaultValue",
+                        item_severity=SeverityType.BREAKING,
+                        old_value="Default Name",
+                        new_value="Updated Name",
                     ),
                 ],
-                id="Modify top level, change in Text Property, change DataType",
+                id="ContainerPropertyDefinition change",
             ),
         ],
     )
-    def test_diff(self, resource: ContainerRequest, expected_diff: list[PropertyChange]) -> None:
-        actual_diffs = ContainerDiffer().diff(self.cdf_container, resource)
-        assert actual_diffs == expected_diff
+    def test_property_diff(
+        self,
+        cdf_property: ContainerPropertyDefinition,
+        desired_property: ContainerPropertyDefinition,
+        expected_diff: list[PropertyChange],
+    ) -> None:
+        actual = ContainerPropertyDiffer().diff(cdf_property, desired_property)
+        assert expected_diff == actual
+
+    @pytest.mark.parametrize(
+        "cdf_constraint,desired_constraint,expected_diff",
+        [
+            pytest.param(
+                UniquenessConstraintDefinition(properties=["name"], bySpace=True),
+                UniquenessConstraintDefinition(properties=["category"], bySpace=False),
+                [
+                    PrimitivePropertyChange(
+                        field_path="properties",
+                        item_severity=SeverityType.WARNING,
+                        old_value="['name']",
+                        new_value="['category']",
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="bySpace",
+                        item_severity=SeverityType.WARNING,
+                        old_value=True,
+                        new_value=False,
+                    ),
+                ],
+                id="UniquenessConstraintDefinition change",
+            ),
+            pytest.param(
+                RequiresConstraintDefinition(
+                    require=ContainerReference(space="other_space", external_id="other_container"),
+                ),
+                RequiresConstraintDefinition(
+                    require=ContainerReference(space="new_space", external_id="new_container"),
+                ),
+                [
+                    PrimitivePropertyChange(
+                        field_path="require",
+                        item_severity=SeverityType.WARNING,
+                        old_value="other_space:other_container",
+                        new_value="new_space:new_container",
+                    ),
+                ],
+                id="RequiresConstraintDefinition change",
+            ),
+        ],
+    )
+    def test_constraint_diff(
+        self,
+        cdf_constraint: ConstraintDefinition,
+        desired_constraint: ConstraintDefinition,
+        expected_diff: list[PropertyChange],
+    ) -> None:
+        actual = ConstraintDiffer().diff(cdf_constraint, desired_constraint)
+        assert expected_diff == actual
+
+    @pytest.mark.parametrize(
+        "cdf_index,desired_index,expected_diff",
+        [
+            pytest.param(
+                BtreeIndex(properties=["name"], cursorable=True, bySpace=False),
+                BtreeIndex(properties=["category"], cursorable=False, bySpace=False),
+                [
+                    PrimitivePropertyChange(
+                        field_path="properties",
+                        item_severity=SeverityType.WARNING,
+                        old_value="['name']",
+                        new_value="['category']",
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="cursorable",
+                        item_severity=SeverityType.WARNING,
+                        old_value=True,
+                        new_value=False,
+                    ),
+                ],
+                id="BtreeIndex change",
+            ),
+            pytest.param(
+                InvertedIndex(properties=["description"]),
+                InvertedIndex(properties=["name", "category"]),
+                [
+                    PrimitivePropertyChange(
+                        field_path="properties",
+                        item_severity=SeverityType.WARNING,
+                        old_value="['description']",
+                        new_value="['name', 'category']",
+                    ),
+                ],
+                id="InvertedIndex change",
+            ),
+        ],
+    )
+    def test_index_diff(
+        self, cdf_index: IndexDefinition, desired_index: IndexDefinition, expected_diff: list[PropertyChange]
+    ) -> None:
+        actual = IndexDiffer().diff(cdf_index, desired_index)
+        assert actual == expected_diff
+
+    @pytest.mark.parametrize(
+        "cdf_type,desired_type,expected_diff",
+        [
+            pytest.param(
+                Float32Property(
+                    unit=Unit(externalId="unit:meter", sourceUnit="meter"),
+                    list=True,
+                    maxListSize=100,
+                ),
+                Float32Property(
+                    unit=Unit(externalId="unit:kilometer", sourceUnit="kilometer"),
+                    list=False,
+                    maxListSize=None,
+                ),
+                [
+                    PrimitivePropertyChange(
+                        field_path="list",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=True,
+                        new_value=False,
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="maxListSize",
+                        item_severity=SeverityType.WARNING,
+                        old_value=100,
+                        new_value=None,
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="unit.externalId",
+                        item_severity=SeverityType.WARNING,
+                        old_value="unit:meter",
+                        new_value="unit:kilometer",
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="unit.sourceUnit",
+                        item_severity=SeverityType.WARNING,
+                        old_value="meter",
+                        new_value="kilometer",
+                    ),
+                ],
+                id="Float32Property change",
+            ),
+        ],
+    )
+    def test_data_type_diff(
+        self,
+        cdf_type: PropertyTypeDefinition,
+        desired_type: PropertyTypeDefinition,
+        expected_diff: list[PropertyChange],
+    ) -> None:
+        actual = DataTypeDiffer().diff(cdf_type, desired_type)
+        assert expected_diff == actual
+
+    @pytest.mark.parametrize(
+        "cdf_value,desired_value,expected_diff",
+        [
+            pytest.param(
+                EnumValue(
+                    name="Category 1",
+                    description="The first category",
+                ),
+                EnumValue(
+                    name="Category One",
+                    description="The first category updated",
+                ),
+                [
+                    PrimitivePropertyChange(
+                        field_path="name",
+                        item_severity=SeverityType.SAFE,
+                        old_value="Category 1",
+                        new_value="Category One",
+                    ),
+                    PrimitivePropertyChange(
+                        field_path="description",
+                        item_severity=SeverityType.SAFE,
+                        old_value="The first category",
+                        new_value="The first category updated",
+                    ),
+                ],
+                id="EnumValue change",
+            )
+        ],
+    )
+    def test_enum_value_diff(
+        self, cdf_value: EnumValue, desired_value: EnumValue, expected_diff: list[PropertyChange]
+    ) -> None:
+        actual = EnumValueDiffer().diff(cdf_value, desired_value)
+        assert expected_diff == actual

@@ -16,6 +16,7 @@ from cognite.neat._data_model.models.dms import (
 
 from ._differ import ItemDiffer, diff_container
 from .data_classes import (
+    ContainerPropertyChange,
     PrimitivePropertyChange,
     PropertyChange,
     SeverityType,
@@ -76,8 +77,9 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
         self, cdf_property: ContainerPropertyDefinition, desired_property: ContainerPropertyDefinition
     ) -> list[PropertyChange]:
         changes = self._check_name_description(cdf_property, desired_property)
-        if cdf_property.type != desired_property.type:
-            changes.extend(DataTypeDiffer().diff(cdf_property.type, desired_property.type))
+        diffs = DataTypeDiffer().diff(cdf_property.type, desired_property.type)
+        if diffs:
+            changes.append(ContainerPropertyChange(field_path="type", changed_items=diffs))
 
         if cdf_property.immutable != desired_property.immutable:
             changes.append(
@@ -88,6 +90,7 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
                     new_value=desired_property.immutable,
                 )
             )
+
         if cdf_property.nullable != desired_property.nullable:
             changes.append(
                 PrimitivePropertyChange(
