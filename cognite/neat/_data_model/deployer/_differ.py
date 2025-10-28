@@ -83,7 +83,7 @@ def diff_container(
     cdf_keys = set(cdf_items_map.keys())
     desired_keys = set(desired_items_map.keys())
 
-    for key in desired_keys - cdf_keys:
+    for key in sorted(desired_keys - cdf_keys):
         item_path = f"{parent_path}{key}"
         changes.append(
             AddedProperty(
@@ -93,7 +93,7 @@ def diff_container(
             )
         )
 
-    for key in cdf_keys - desired_keys:
+    for key in sorted(cdf_keys - desired_keys):
         changes.append(
             RemovedProperty(
                 item_severity=remove_severity,
@@ -102,7 +102,7 @@ def diff_container(
             )
         )
 
-    for key in cdf_keys & desired_keys:
+    for key in sorted(cdf_keys & desired_keys):
         item_path = f"{parent_path}{key}"
         cdf_item = cdf_items_map[key]
         desired_item = desired_items_map[key]
