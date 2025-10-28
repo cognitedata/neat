@@ -55,7 +55,8 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
             )
         )
         changes.extend(
-            diff_container(
+            # MyPy fails to understand that ConstraintDefinition and Constraint are compatible here
+            diff_container(  # type: ignore[misc]
                 "constraints.",
                 cdf_container.constraints,
                 container.constraints,
@@ -65,7 +66,8 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
             )
         )
         changes.extend(
-            diff_container(
+            # MyPy fails to understand that IndexDefinition and Index are compatible here
+            diff_container(  # type: ignore[misc]
                 "indexes.",
                 cdf_container.indexes,
                 container.indexes,
