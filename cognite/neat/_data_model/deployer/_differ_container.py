@@ -218,16 +218,16 @@ class IndexDiffer(ItemDiffer[IndexDefinition]):
 
 class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
     def diff(self, cdf_type: PropertyTypeDefinition, desired_type: PropertyTypeDefinition) -> list[PropertyChange]:
+        changes: list[PropertyChange] = []
         if cdf_type.type != desired_type.type:
-            return [
+            changes.append(
                 PrimitivePropertyChange(
                     item_severity=SeverityType.BREAKING,
                     field_path="type",
                     old_value=cdf_type.type,
                     new_value=desired_type.type,
                 )
-            ]
-        changes: list[PropertyChange] = []
+            )
         if isinstance(cdf_type, ListablePropertyTypeDefinition) and isinstance(
             desired_type, ListablePropertyTypeDefinition
         ):
