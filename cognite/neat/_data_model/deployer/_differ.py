@@ -78,30 +78,36 @@ def diff_container(
 
     """
     changes: list[PropertyChange] = []
-    for key, desired_item in (desired_items or {}).items():
+    cdf_items_map = cdf_items or {}
+    desired_items_map = desired_items or {}
+    cdf_keys = set(cdf_items_map.keys())
+    desired_keys = set(desired_items_map.keys())
+
+    for key in desired_keys - cdf_keys:
         item_path = f"{parent_path}{key}"
-        if cdf_items is None or key not in cdf_items:
-            changes.append(
-                AddedProperty(
-                    item_severity=add_severity,
-                    field_path=item_path,
-                    new_value=desired_item,
-                )
+        changes.append(
+            AddedProperty(
+                item_severity=add_severity,
+                field_path=item_path,
+                new_value=desired_items_map[key],
             )
-            continue
-        cdf_item = cdf_items[key]
+        )
+
+    for key in cdf_keys - desired_keys:
+        changes.append(
+            RemovedProperty(
+                item_severity=remove_severity,
+                field_path=f"{parent_path}{key}",
+                old_value=cdf_items_map[key],
+            )
+        )
+
+    for key in cdf_keys & desired_keys:
+        item_path = f"{parent_path}{key}"
+        cdf_item = cdf_items_map[key]
+        desired_item = desired_items_map[key]
         diffs = differ.diff(cdf_item, desired_item)
         if diffs:
             changes.append(ContainerPropertyChange(field_path=item_path, changed_items=diffs))
 
-    if desired_items is not None:
-        for key, cdf_item in (cdf_items or {}).items():
-            if key not in desired_items:
-                changes.append(
-                    RemovedProperty(
-                        item_severity=remove_severity,
-                        field_path=f"{parent_path}{key}",
-                        old_value=cdf_item,
-                    )
-                )
     return changes
