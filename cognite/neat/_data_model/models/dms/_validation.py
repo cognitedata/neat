@@ -18,7 +18,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         local_views_by_reference = DataModelAnalysis(data_model).view_by_reference(include_inherited_properties=True)
         cdf_views_by_reference = self._cdf_view_by_reference(
-            list(local_views_by_reference.keys()), include_inherited_properties=True
+            list(DataModelAnalysis(data_model).referenced_views), include_inherited_properties=True
         )
 
         self._issues.extend(ViewsWithoutProperties().run(local_views_by_reference, cdf_views_by_reference) or [])
@@ -64,9 +64,12 @@ class ViewsWithoutProperties(DataModelValidator):
 
         for ref, view in local_views_by_reference.items():
             if not view.properties:
-                if cdf_views_by_reference and (remote := cdf_views_by_reference.get(ref)):
-                    if remote.properties:
-                        continue
+                found_properties = any(
+                    cdf_views_by_reference and (remote := cdf_views_by_reference.get(implement)) and remote.properties
+                    for implement in view.implements or []
+                )
+                if found_properties:
+                    continue
 
                 views_without_properties.append(ref)
 
