@@ -99,17 +99,23 @@ class TestContainerDiffer:
                         # "name" removed
                         "distance": ContainerPropertyDefinition(
                             type=Float32Property(
-                                unit=Unit(externalId="unit:meter", sourceUnit="meter"), list=True, maxListSize=100
+                                unit=Unit(externalId="unit:kilometer", sourceUnit="kilometer"),
+                                list=False,
+                                maxListSize=None,
                             ),
-                            nullable=True,
-                            immutable=False,
+                            nullable=False,
+                            immutable=True,
+                            name="Distance in km",
+                            description="The distance property in kilometers",
+                            default_value=0.0,
+                            auto_increment=True,
                         ),
                         "category": ContainerPropertyDefinition(
                             type=EnumProperty(
-                                unknownValue="unknown",
+                                unknownValue="newUnknoown",
                                 values={
-                                    "cat1": EnumValue(name="Category 1", description="The first category"),
-                                    "cat2": EnumValue(),
+                                    "cat1": EnumValue(name="Category One", description="The first category updated"),
+                                    "cat3": EnumValue(),
                                 },
                             )
                         ),
@@ -149,6 +155,99 @@ class TestContainerDiffer:
                     },
                 ),
                 [
+                    # Modified property "distance" - both type changes and property metadata
+                    ContainerPropertyChange(
+                        field_path="properties.distance",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="name",
+                                item_severity=SeverityType.SAFE,
+                                old_value=None,
+                                new_value="Distance in km",
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="description",
+                                item_severity=SeverityType.SAFE,
+                                old_value=None,
+                                new_value="The distance property in kilometers",
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="list",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=True,
+                                new_value=False,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="maxListSize",
+                                item_severity=SeverityType.WARNING,
+                                old_value=100,
+                                new_value=None,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="unit.externalId",
+                                item_severity=SeverityType.WARNING,
+                                old_value="unit:meter",
+                                new_value="unit:kilometer",
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="unit.sourceUnit",
+                                item_severity=SeverityType.WARNING,
+                                old_value="meter",
+                                new_value="kilometer",
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="immutable",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=False,
+                                new_value=True,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="nullable",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=True,
+                                new_value=False,
+                            ),
+                        ],
+                    ),
+                    # Modified property "category" - enum changes
+                    ContainerPropertyChange(
+                        field_path="properties.category",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="unknownValue",
+                                item_severity=SeverityType.WARNING,
+                                old_value="unknown",
+                                new_value="newUnknoown",
+                            ),
+                            ContainerPropertyChange(
+                                field_path="enumValues.cat1",
+                                changed_items=[
+                                    PrimitivePropertyChange(
+                                        field_path="name",
+                                        item_severity=SeverityType.SAFE,
+                                        old_value="Category 1",
+                                        new_value="Category One",
+                                    ),
+                                    PrimitivePropertyChange(
+                                        field_path="description",
+                                        item_severity=SeverityType.SAFE,
+                                        old_value="The first category",
+                                        new_value="The first category updated",
+                                    ),
+                                ],
+                            ),
+                            AddedProperty(
+                                field_path="enumValues.cat3",
+                                item_severity=SeverityType.SAFE,
+                                new_value=EnumValue(),
+                            ),
+                            RemovedProperty(
+                                field_path="enumValues.cat2",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=EnumValue(),
+                            ),
+                        ],
+                    ),
                     # Added new property "count"
                     AddedProperty(
                         field_path="properties.count",
@@ -240,7 +339,7 @@ class TestContainerDiffer:
                         ),
                     ),
                 ],
-                id="comprehensive changes: add/remove properties, modify/add/remove constraints and indexes",
+                id="comprehensive changes: add/remove/modify properties, constraints and indexes",
             ),
         ],
     )
