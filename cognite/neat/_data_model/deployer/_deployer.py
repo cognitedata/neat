@@ -3,10 +3,11 @@ from datetime import datetime, timezone
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
-from cognite.neat._data_model.deployer.data_classes import SeverityType
-from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.deployer.data_classes import DataModelEndpoint, ResourceChange, SeverityType, T_Resource
+from cognite.neat._data_model.models.dms import RequestSchema, T_Reference
+from cognite.neat._utils.http_client import ItemBody, ItemsRequest
 
-from .data_classes import DeploymentResult, ResourceDeploymentPlan, SchemaSnapshot
+from .data_classes import AppliedChanges, DeploymentResult, ResourceDeploymentPlan, SchemaSnapshot
 
 
 @dataclass
@@ -39,22 +40,24 @@ class SchemaDeployer(OnSuccessResultProducer):
         # Step 2: Create deployment plan by comparing local vs cdf
         plan = self._create_deployment_plan(snapshot, data_model)
 
-        # Step 3: Check if deployment should proceed
         if not self._should_proceed(plan):
+            # Step 3: Check if deployment should proceed
             return DeploymentResult(status="failure", plan=plan, snapshot=snapshot)
-
-        # Step 4: If dry-run, return plan without applying
         elif self.options.dry_run:
+            # Step 4: If dry-run, return plan without applying
             return DeploymentResult(status="pending", plan=plan, snapshot=snapshot)
 
         # Step 5: Apply changes
-        result = self._apply_changes(plan)
+        changes = self._apply_changes(plan)
 
         # Step 6: Rollback if failed and auto_rollback is enabled
-        if not result.is_success and self.options.auto_rollback:
-            self._apply_changes(snapshot.as_plan(drop_data=True))
+        if not changes.is_success and self.options.auto_rollback:
+            recovery = self._apply_changes(changes.as_recovery_plan())
+            return DeploymentResult(
+                status="success", plan=plan, snapshot=snapshot, responses=changes, recovery=recovery
+            )
 
-        return result
+        return DeploymentResult(status="success", plan=plan, snapshot=snapshot, responses=changes)
 
     def _fetch_cdf_state(self, data_model: RequestSchema) -> SchemaSnapshot:
         now = datetime.now(tz=timezone.utc)
@@ -83,12 +86,57 @@ class SchemaDeployer(OnSuccessResultProducer):
     def _create_deployment_plan(
         self, snapshot: SchemaSnapshot, data_model: RequestSchema
     ) -> list[ResourceDeploymentPlan]:
-        # Placeholder for actual implementation
-        return []
+        return [
+            self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces"),
+            self._create_resource_plan(snapshot.containers, data_model.containers, "containers"),
+            self._create_resource_plan(snapshot.views, data_model.views, "views"),
+            self._create_resource_plan(snapshot.data_model, [data_model.data_model], "datamodels"),
+        ]
+
+    def _create_resource_plan(
+        self, existing: dict[T_Reference, T_Resource], desired: list[T_Resource], endpoint: DataModelEndpoint
+    ) -> ResourceDeploymentPlan:
+        resources: list[ResourceChange[T_Reference, T_Resource]] = []
+        for resource in desired:
+            ref = resource.as_reference()
+            if ref not in existing:
+                resources.append(ResourceChange(resource_id=ref, new_value=resource))
+                continue
+            cdf_resource = existing[ref]
+            diffs = resource.diff(cdf_resource)
+            resources.append(ResourceChange(resource_id=ref, new_value=resource, old_value=cdf_resource, changes=diffs))
+
+        return ResourceDeploymentPlan(endpoint=endpoint, resources=resources)
 
     def _should_proceed(self, plan: list[ResourceDeploymentPlan]) -> bool:
         # Placeholder for actual implementation
         return True
 
-    def _apply_changes(self, plan: list[ResourceDeploymentPlan]) -> DeploymentResult:
-        raise NotImplementedError()
+    def _apply_changes(self, plan: list[ResourceDeploymentPlan]) -> AppliedChanges:
+        config = self.client.config
+        for resource in plan:
+            to_delete = [resource.resource_id for resource in resource.to_delete]
+            responses = self.client.http_client.request_with_retries(
+                ItemsRequest(
+                    endpoint_url=config.create_api_url(f"/models/{resource.endpoint}/delete"),
+                    method="POST",
+                    body=ItemBody(items=to_delete),
+                    as_id=lambda x: x,
+                )
+            )
+            for response in responses:
+                raise NotImplementedError()
+            to_upsert = [change.new_value for change in resource.to_upsert]
+            responses = self.client.http_client.request_with_retries(
+                ItemsRequest(
+                    endpoint_url=config.create_api_url(f"/models/{resource.endpoint}"),
+                    method="POST",
+                    body=ItemBody(items=to_upsert),
+                    as_id=lambda x: x.as_reference(),
+                )
+            )
+            for response in responses:
+                # Validate output matches input. Data Modeling has false updates.
+                raise NotImplementedError()
+            # If failure abort
+        return AppliedChanges(status="success", created=[], updated=[], deletions=[])
