@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
-from cognite.neat._client.client import NeatClient
+from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
-from cognite.neat._issues import ImplementationWarning
+from cognite.neat._data_model.models.dms._references import ViewReference
+from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._issues import ConsistencyError
 
 from ._schema import RequestSchema
 
@@ -13,51 +16,65 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
 
-        if not AssessRealUseCaseAlignment(self._client).run(data_model):
-            self._issues.append(
-                ImplementationWarning(
-                    message="The data model does not appear to originate from real business questions.",
-                    fix="Engage with stakeholders to ensure the model addresses actual business needs.",
-                )
-            )
-        if not AssessCooperationEvidence(self._client).run(data_model):
-            self._issues.append(
-                ImplementationWarning(
-                    message="The data model lacks evidence of cross-domain cooperation.",
-                    fix="Facilitate collaboration among different domain experts during model creation.",
-                )
-            )
+        local_views_by_reference = DataModelAnalysis(data_model).view_by_reference(include_inherited_properties=True)
+        cdf_views_by_reference = self._cdf_view_by_reference(list(local_views_by_reference.keys()))
+
+        self._issues.extend(ViewsWithoutProperties().run(local_views_by_reference, cdf_views_by_reference) or [])
         self._has_run = True
+
+    def _cdf_view_by_reference(
+        self, views: list[ViewReference], include_inherited_properties: bool = True
+    ) -> dict[ViewReference, ViewRequest]:
+        """Fetch view definition from CDF."""
+
+        if not self._client:
+            return {}
+        return {
+            response.as_reference(): response.as_request()
+            for response in self._client.views.retrieve(
+                views, include_inherited_properties=include_inherited_properties
+            )
+        }
 
 
 class DataModelValidator(ABC):
     """Assessors for fundamental data model principles."""
 
-    def __init__(self, client: NeatClient | None = None) -> None:
-        self.client = client
-
     @abstractmethod
-    def run(self, data_model: RequestSchema) -> bool:
+    def run(self, *args: Any, **kwargs: Any) -> list[ConsistencyError] | None:
         """Execute the success handler on the data model."""
         # do something with data model
         pass
 
 
-class AssessRealUseCaseAlignment(DataModelValidator):
-    """Validator for assessing real use case alignment."""
+class ViewsWithoutProperties(DataModelValidator):
+    """This validator checks for views without properties, i.e. views that do not have any
+    property attached to them , either directly or through implements."""
 
-    def run(self, data_model: RequestSchema) -> bool:
+    def run(
+        self,
+        local_views_by_reference: dict[ViewReference, ViewRequest],
+        cdf_views_by_reference: dict[ViewReference, ViewRequest] | None = None,
+    ) -> list[ConsistencyError] | None:
         """Check if the data model is aligned with real use cases."""
 
-        # placeholder logic, will be replaced
-        return False if data_model else True
+        views_without_properties = []
 
+        for ref, view in local_views_by_reference.items():
+            if not view.properties:
+                if cdf_views_by_reference and (remote := cdf_views_by_reference.get(ref)):
+                    if remote.properties:
+                        continue
 
-class AssessCooperationEvidence(DataModelValidator):
-    """Validator for assessing cooperation evidence."""
+                views_without_properties.append(ref)
 
-    def run(self, data_model: RequestSchema) -> bool:
-        """Check if the data model shows evidence of cooperation."""
-
-        # placeholder logic, will be replaced
-        return False if data_model else True
+        return [
+            ConsistencyError(
+                message=(
+                    f"View {ref.space}:{ref.external_id}(version={ref.version}) does "
+                    "not have any properties defined, either directly or through implements."
+                ),
+                fix="Define properties for the view",
+            )
+            for ref in views_without_properties
+        ]

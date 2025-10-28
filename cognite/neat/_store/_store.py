@@ -70,6 +70,7 @@ class NeatStore:
 
         try:
             result = activity(**kwargs)
+
             if result and on_success:
                 if isinstance(on_success, OnSuccessIssuesChecker):
                     on_success.run(result)
