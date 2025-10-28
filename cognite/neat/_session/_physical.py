@@ -4,7 +4,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
-from cognite.neat._data_model.models.dms._quality_assessment import DmsDataModelValidation
+from cognite.neat._data_model.models.dms._validation import DmsDataModelValidation
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
 
