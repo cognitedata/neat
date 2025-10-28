@@ -2,8 +2,6 @@ import pytest
 
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
-    AddedProperty,
-    ContainerPropertyChange,
     PrimitivePropertyChange,
     PropertyChange,
     SeverityType,
@@ -13,10 +11,14 @@ from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
+    EnumValue,
+    Float32Property,
+    InvertedIndex,
     RequiresConstraintDefinition,
     TextProperty,
     UniquenessConstraintDefinition,
 )
+from cognite.neat._data_model.models.dms._data_types import EnumProperty, Unit
 
 
 class TestContainerDiffer:
@@ -28,37 +30,48 @@ class TestContainerDiffer:
         usedFor="node",
         properties={
             "name": ContainerPropertyDefinition(
-                type=TextProperty(type="text"),
+                type=TextProperty(maxTextSize=100),
                 name="Name",
                 description="The name property",
                 nullable=False,
                 immutable=False,
+                default_value="Default Name",
+                auto_increment=False,
             ),
-            "description": ContainerPropertyDefinition(
-                type=TextProperty(type="text"),
-                name="Description",
-                description="The description property",
+            "distance": ContainerPropertyDefinition(
+                type=Float32Property(
+                    unit=Unit(externalId="unit:meter", sourceUnit="meter"), list=True, maxListSize=100
+                ),
                 nullable=True,
                 immutable=False,
+            ),
+            "category": ContainerPropertyDefinition(
+                type=EnumProperty(
+                    unknownValue="unknown",
+                    values={
+                        "cat1": EnumValue(name="Category 1", description="The first category"),
+                        "cat2": EnumValue(),
+                    },
+                )
             ),
         },
         constraints={
             "req1": RequiresConstraintDefinition(
-                constraintType="requires",
                 require=ContainerReference(space="other_space", external_id="other_container"),
             ),
             "uniq1": UniquenessConstraintDefinition(
-                constraintType="uniqueness",
                 properties=["name"],
                 bySpace=True,
             ),
         },
         indexes={
             "idx1": BtreeIndex(
-                indexType="btree",
                 properties=["name"],
                 cursorable=True,
                 bySpace=False,
+            ),
+            "idx2": InvertedIndex(
+                properties=["category", "distance"],
             ),
         },
     )
@@ -77,30 +90,28 @@ class TestContainerDiffer:
                     externalId="test_container",
                     name="Test Container Updated",
                     description="This is an updated test container.",
-                    usedFor="node",
+                    usedFor="edge",
                     properties={
-                        "name": ContainerPropertyDefinition(
+                        "newProperty": ContainerPropertyDefinition(
                             type=TextProperty(type="text"),
-                            name="Name",
-                            description="The name property",
-                            nullable=False,
-                            immutable=False,
                         ),
-                        "description": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Description",
-                            description="The description property",
+                        "distance": ContainerPropertyDefinition(
+                            type=Float32Property(
+                                unit=Unit(externalId="unit:kilometer", sourceUnit="meter"), list=False, maxListSize=None
+                            ),
+                            name="Updated name",
+                            description="Updated description",
                             nullable=True,
                             immutable=False,
+                            default_value="New default",
+                            auto_increment=True,
                         ),
                     },
                     constraints={
                         "req1": RequiresConstraintDefinition(
-                            constraintType="requires",
-                            require=ContainerReference(space="other_space", external_id="other_container"),
+                            require=ContainerReference(space="other_space", external_id="new_container"),
                         ),
                         "uniq1": UniquenessConstraintDefinition(
-                            constraintType="uniqueness",
                             properties=["name"],
                             bySpace=True,
                         ),
@@ -182,275 +193,6 @@ class TestContainerDiffer:
                     ),
                 ],
                 id="used_for changed",
-            ),
-            pytest.param(
-                ContainerRequest(
-                    space="test_space",
-                    externalId="test_container",
-                    name="Test Container",
-                    description="This is a test container.",
-                    usedFor="node",
-                    properties={
-                        "name": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Name Updated",
-                            description="The updated name property",
-                            nullable=True,
-                            immutable=True,
-                        ),
-                        "description": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Description",
-                            description="The description property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                        "age": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Age",
-                            description="The age property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                    },
-                    constraints={
-                        "req1": RequiresConstraintDefinition(
-                            constraintType="requires",
-                            require=ContainerReference(space="other_space", external_id="other_container"),
-                        ),
-                        "uniq1": UniquenessConstraintDefinition(
-                            constraintType="uniqueness",
-                            properties=["name"],
-                            bySpace=True,
-                        ),
-                    },
-                    indexes={
-                        "idx1": BtreeIndex(
-                            indexType="btree",
-                            properties=["name"],
-                            cursorable=True,
-                            bySpace=False,
-                        ),
-                    },
-                ),
-                [
-                    ContainerPropertyChange(
-                        field_path="properties.name",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="name",
-                                item_severity=SeverityType.SAFE,
-                                old_value="Name",
-                                new_value="Name Updated",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="description",
-                                item_severity=SeverityType.SAFE,
-                                old_value="The name property",
-                                new_value="The updated name property",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="immutable",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=False,
-                                new_value=True,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="nullable",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=False,
-                                new_value=True,
-                            ),
-                        ],
-                    ),
-                    AddedProperty(
-                        field_path="properties.age",
-                        item_severity=SeverityType.SAFE,
-                        new_value=ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Age",
-                            description="The age property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                    ),
-                ],
-                id="property changes and addition",
-            ),
-            pytest.param(
-                ContainerRequest(
-                    space="test_space",
-                    externalId="test_container",
-                    name="Test Container",
-                    description="This is a test container.",
-                    usedFor="node",
-                    properties={
-                        "name": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Name",
-                            description="The name property",
-                            nullable=False,
-                            immutable=False,
-                        ),
-                        "description": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Description",
-                            description="The description property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                    },
-                    constraints={
-                        "req1": RequiresConstraintDefinition(
-                            constraintType="requires",
-                            require=ContainerReference(space="new_space", external_id="new_container"),
-                        ),
-                        "uniq1": UniquenessConstraintDefinition(
-                            constraintType="uniqueness",
-                            properties=["name", "description"],
-                            bySpace=False,
-                        ),
-                        "uniq2": UniquenessConstraintDefinition(
-                            constraintType="uniqueness",
-                            properties=["name"],
-                            bySpace=True,
-                        ),
-                    },
-                    indexes={
-                        "idx1": BtreeIndex(
-                            indexType="btree",
-                            properties=["name"],
-                            cursorable=True,
-                            bySpace=False,
-                        ),
-                    },
-                ),
-                [
-                    ContainerPropertyChange(
-                        field_path="constraints.req1",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="require",
-                                item_severity=SeverityType.WARNING,
-                                old_value="other_space:other_container",
-                                new_value="new_space:new_container",
-                            ),
-                        ],
-                    ),
-                    ContainerPropertyChange(
-                        field_path="constraints.uniq1",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="properties",
-                                item_severity=SeverityType.WARNING,
-                                old_value="['name']",
-                                new_value="['name', 'description']",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="bySpace",
-                                item_severity=SeverityType.WARNING,
-                                old_value=True,
-                                new_value=False,
-                            ),
-                        ],
-                    ),
-                    AddedProperty(
-                        field_path="constraints.uniq2",
-                        item_severity=SeverityType.SAFE,
-                        new_value=UniquenessConstraintDefinition(
-                            constraintType="uniqueness",
-                            properties=["name"],
-                            bySpace=True,
-                        ),
-                    ),
-                ],
-                id="constraint changes and addition",
-            ),
-            pytest.param(
-                ContainerRequest(
-                    space="test_space",
-                    externalId="test_container",
-                    name="Test Container",
-                    description="This is a test container.",
-                    usedFor="node",
-                    properties={
-                        "name": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Name",
-                            description="The name property",
-                            nullable=False,
-                            immutable=False,
-                        ),
-                        "description": ContainerPropertyDefinition(
-                            type=TextProperty(type="text"),
-                            name="Description",
-                            description="The description property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                    },
-                    constraints={
-                        "req1": RequiresConstraintDefinition(
-                            constraintType="requires",
-                            require=ContainerReference(space="other_space", external_id="other_container"),
-                        ),
-                        "uniq1": UniquenessConstraintDefinition(
-                            constraintType="uniqueness",
-                            properties=["name"],
-                            bySpace=True,
-                        ),
-                    },
-                    indexes={
-                        "idx1": BtreeIndex(
-                            indexType="btree",
-                            properties=["name", "description"],
-                            cursorable=False,
-                            bySpace=True,
-                        ),
-                        "idx2": BtreeIndex(
-                            indexType="btree",
-                            properties=["description"],
-                            cursorable=True,
-                            bySpace=False,
-                        ),
-                    },
-                ),
-                [
-                    ContainerPropertyChange(
-                        field_path="indexes.idx1",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="properties",
-                                item_severity=SeverityType.WARNING,
-                                old_value="['name']",
-                                new_value="['name', 'description']",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="cursorable",
-                                item_severity=SeverityType.WARNING,
-                                old_value=True,
-                                new_value=False,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="unique",
-                                item_severity=SeverityType.WARNING,
-                                old_value=False,
-                                new_value=True,
-                            ),
-                        ],
-                    ),
-                    AddedProperty(
-                        field_path="indexes.idx2",
-                        item_severity=SeverityType.SAFE,
-                        new_value=BtreeIndex(
-                            indexType="btree",
-                            properties=["description"],
-                            cursorable=True,
-                            bySpace=False,
-                        ),
-                    ),
-                ],
-                id="index changes and addition",
             ),
         ],
     )
