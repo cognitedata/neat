@@ -428,20 +428,55 @@ class TestContainerDiffer:
                         old_value=100,
                         new_value=None,
                     ),
-                    PrimitivePropertyChange(
-                        field_path="unit.externalId",
-                        item_severity=SeverityType.WARNING,
-                        old_value="unit:meter",
-                        new_value="unit:kilometer",
-                    ),
-                    PrimitivePropertyChange(
-                        field_path="unit.sourceUnit",
-                        item_severity=SeverityType.WARNING,
-                        old_value="meter",
-                        new_value="kilometer",
+                    ContainerPropertyChange(
+                        field_path="unit",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="externalId",
+                                item_severity=SeverityType.WARNING,
+                                old_value="unit:meter",
+                                new_value="unit:kilometer",
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="sourceUnit",
+                                item_severity=SeverityType.WARNING,
+                                old_value="meter",
+                                new_value="kilometer",
+                            ),
+                        ],
                     ),
                 ],
                 id="Float32Property change",
+            ),
+            pytest.param(
+                Float32Property(),
+                Float32Property(),
+                [],
+                id="Float property unchanged",
+            ),
+            pytest.param(
+                Float32Property(unit=Unit(externalId="unit:meter")),
+                Float32Property(unit=None),
+                [
+                    RemovedProperty(
+                        field_path="unit",
+                        item_severity=SeverityType.WARNING,
+                        old_value=Unit(externalId="unit:meter"),
+                    ),
+                ],
+                id="Float32Property unit removed",
+            ),
+            pytest.param(
+                Float32Property(unit=None),
+                Float32Property(unit=Unit(externalId="unit:meter")),
+                [
+                    AddedProperty(
+                        field_path="unit",
+                        item_severity=SeverityType.WARNING,
+                        new_value=Unit(externalId="unit:meter"),
+                    ),
+                ],
+                id="Float32Property unit removed",
             ),
             pytest.param(
                 TextProperty(maxTextSize=100, collation="usc_basic"),

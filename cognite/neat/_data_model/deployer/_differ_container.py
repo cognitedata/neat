@@ -13,12 +13,15 @@ from cognite.neat._data_model.models.dms import (
     TextProperty,
     UniquenessConstraintDefinition,
 )
+from cognite.neat._data_model.models.dms._data_types import Unit
 
 from ._differ import ItemDiffer, diff_container
 from .data_classes import (
+    AddedProperty,
     ContainerPropertyChange,
     PrimitivePropertyChange,
     PropertyChange,
+    RemovedProperty,
     SeverityType,
 )
 
@@ -240,7 +243,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             changes.extend(self._check_text_property(cdf_type, desired_type))
 
         if isinstance(cdf_type, FloatProperty) and isinstance(desired_type, FloatProperty):
-            changes.extend(self._check_float_property(cdf_type, desired_type))
+            changes.extend(self._check_float_unit(cdf_type.unit, desired_type.unit))
 
         if isinstance(cdf_type, EnumProperty) and isinstance(desired_type, EnumProperty):
             changes.extend(self._check_enum_property(cdf_type, desired_type))
@@ -275,29 +278,35 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             )
         return changes
 
-    def _check_float_property(self, cdf_type: FloatProperty, desired_type: FloatProperty) -> list[PropertyChange]:
-        if cdf_type.unit is None or desired_type.unit is None:
+    def _check_float_unit(self, cdf_unit: Unit | None, desired_unit: Unit | None) -> list[PropertyChange]:
+        if cdf_unit is None and desired_unit is None:
             return []
-        changes: list[PropertyChange] = []
-        if cdf_type.unit.external_id != desired_type.unit.external_id:
-            changes.append(
-                PrimitivePropertyChange(
-                    item_severity=SeverityType.WARNING,
-                    field_path="unit.externalId",
-                    old_value=cdf_type.unit.external_id,
-                    new_value=desired_type.unit.external_id,
+        elif cdf_unit is not None and desired_unit is None:
+            return [RemovedProperty(field_path="unit", item_severity=SeverityType.WARNING, old_value=cdf_unit)]
+        elif cdf_unit is None and desired_unit is not None:
+            return [AddedProperty(field_path="unit", item_severity=SeverityType.WARNING, new_value=desired_unit)]
+        elif cdf_unit is not None and desired_unit is not None:
+            changes: list[PropertyChange] = []
+            if cdf_unit.external_id != desired_unit.external_id:
+                changes.append(
+                    PrimitivePropertyChange(
+                        item_severity=SeverityType.WARNING,
+                        field_path="externalId",
+                        old_value=cdf_unit.external_id,
+                        new_value=desired_unit.external_id,
+                    )
                 )
-            )
-        if cdf_type.unit.source_unit != desired_type.unit.source_unit:
-            changes.append(
-                PrimitivePropertyChange(
-                    item_severity=SeverityType.WARNING,
-                    field_path="unit.sourceUnit",
-                    old_value=cdf_type.unit.source_unit,
-                    new_value=desired_type.unit.source_unit,
+            if cdf_unit.source_unit != desired_unit.source_unit:
+                changes.append(
+                    PrimitivePropertyChange(
+                        item_severity=SeverityType.WARNING,
+                        field_path="sourceUnit",
+                        old_value=cdf_unit.source_unit,
+                        new_value=desired_unit.source_unit,
+                    )
                 )
-            )
-        return changes
+            return [ContainerPropertyChange(field_path="unit", changed_items=changes)]
+        return []
 
     def _check_text_property(self, cdf_type: TextProperty, desired_type: TextProperty) -> list[PropertyChange]:
         changes: list[PropertyChange] = []
