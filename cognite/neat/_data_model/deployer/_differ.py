@@ -3,7 +3,14 @@ from typing import Generic
 
 from cognite.neat._data_model.models.dms import T_Item
 
-from .data_classes import AddedProperty, ContainerPropertyChange, PropertyChange, RemovedProperty, SeverityType
+from .data_classes import (
+    AddedProperty,
+    ContainerPropertyChange,
+    PrimitivePropertyChange,
+    PropertyChange,
+    RemovedProperty,
+    SeverityType,
+)
 
 
 class ItemDiffer(Generic[T_Item], ABC):
@@ -21,6 +28,31 @@ class ItemDiffer(Generic[T_Item], ABC):
             A list of changes between the two resources.
         """
         raise NotImplementedError()
+
+    @classmethod
+    def _check_name_description(cls, cdf_item: T_Item, desired_item: T_Item) -> list[PropertyChange]:
+        changes: list[PropertyChange] = []
+        if hasattr(cdf_item, "name") and hasattr(desired_item, "name"):
+            if cdf_item.name != desired_item.name:
+                changes.append(
+                    PrimitivePropertyChange(
+                        item_severity=SeverityType.SAFE,
+                        field_path="name",
+                        old_value=cdf_item.name,
+                        new_value=desired_item.name,
+                    )
+                )
+        if hasattr(cdf_item, "description") and hasattr(desired_item, "description"):
+            if cdf_item.description != desired_item.description:
+                changes.append(
+                    PrimitivePropertyChange(
+                        item_severity=SeverityType.SAFE,
+                        field_path="description",
+                        old_value=cdf_item.description,
+                        new_value=desired_item.description,
+                    )
+                )
+        return changes
 
 
 def diff_container(
@@ -48,7 +80,7 @@ def diff_container(
     changes: list[PropertyChange] = []
     for key, desired_item in (desired_items or {}).items():
         item_path = f"{parent_path}{key}"
-        if key not in cdf_items or cdf_items is None:
+        if cdf_items is None or key not in cdf_items:
             changes.append(
                 AddedProperty(
                     item_severity=add_severity,
@@ -62,13 +94,14 @@ def diff_container(
         if diffs:
             changes.append(ContainerPropertyChange(field_path=item_path, changed_items=diffs))
 
-    for key, cdf_item in (cdf_items or {}).items():
-        if key not in desired_items:
-            changes.append(
-                RemovedProperty(
-                    item_severity=remove_severity,
-                    field_path=f"{parent_path}{key}",
-                    old_value=cdf_item,
+    if desired_items is not None:
+        for key, cdf_item in (cdf_items or {}).items():
+            if key not in desired_items:
+                changes.append(
+                    RemovedProperty(
+                        item_severity=remove_severity,
+                        field_path=f"{parent_path}{key}",
+                        old_value=cdf_item,
+                    )
                 )
-            )
     return changes

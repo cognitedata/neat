@@ -27,6 +27,9 @@ class ContainerReference(ReferenceObject):
         pattern=DM_EXTERNAL_ID_PATTERN,
     )
 
+    def __str__(self) -> str:
+        return f"{self.space}:{self.external_id}"
+
 
 class ViewReference(ReferenceObject):
     type: Literal["view"] = Field("view", exclude=True)
