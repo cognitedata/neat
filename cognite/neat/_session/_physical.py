@@ -4,7 +4,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
-from cognite.neat._data_model.models.dms._quality_assessment import DmsQualityAssessment
+from cognite.neat._data_model.models.dms._quality_assessment import DmsDataModelValidation
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
 
@@ -34,16 +34,18 @@ class ReadPhysicalDataModel:
 
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_yaml(path)
+        on_success = DmsDataModelValidation(self._client)
 
-        return self._store.read_physical(reader, DmsQualityAssessment)
+        return self._store.read_physical(reader, on_success)
 
     def excel(self, io: Any) -> None:
         """Read physical data model from Excel file"""
 
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
+        on_success = DmsDataModelValidation(self._client)
 
-        return self._store.read_physical(reader, DmsQualityAssessment)
+        return self._store.read_physical(reader, on_success)
 
     def cdf(self, space: str, external_id: str, version: str) -> None:
         """Read physical data model from CDF
@@ -57,8 +59,9 @@ class ReadPhysicalDataModel:
         reader = DMSAPIImporter.from_cdf(
             DataModelReference(space=space, external_id=external_id, version=version), self._client
         )
+        on_success = DmsDataModelValidation(self._client)
 
-        return self._store.read_physical(reader, DmsQualityAssessment)
+        return self._store.read_physical(reader, on_success)
 
 
 @session_wrapper

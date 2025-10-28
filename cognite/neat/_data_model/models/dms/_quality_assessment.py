@@ -1,91 +1,62 @@
-from cognite.neat._data_model._shared import OnSuccess
+from abc import ABC, abstractmethod
+
+from cognite.neat._client.client import NeatClient
+from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._issues import ImplementationWarning
 
 from ._schema import RequestSchema
 
 
-class DmsQualityAssessment(OnSuccess):
+class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
 
-    def run(self) -> None:
+    def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
 
-        principle_assessors = DataModelPrincipleAssessors(self.data_model)
-        best_practice_assessors = DataModelBestPracticeAssessors(self.data_model)
-
-        if not principle_assessors.assess_real_use_case_alignment():
+        if not AssessRealUseCaseAlignment(self._client).run(data_model):
             self.issues.append(
                 ImplementationWarning(
                     message="The data model does not appear to originate from real business questions.",
                     fix="Engage with stakeholders to ensure the model addresses actual business needs.",
                 )
             )
-        if not principle_assessors.assess_cooperation_evidence():
+        if not AssessCooperationEvidence(self._client).run(data_model):
             self.issues.append(
                 ImplementationWarning(
                     message="The data model lacks evidence of cross-domain cooperation.",
                     fix="Facilitate collaboration among different domain experts during model creation.",
                 )
             )
-        if not best_practice_assessors.assess_data_governance_team_exists():
-            self.issues.append(
-                ImplementationWarning(
-                    message="No data governance team is associated with the data model.",
-                    fix="Establish a data governance team to oversee model quality and compliance.",
-                )
-            )
-
-        if not best_practice_assessors.assess_model_in_own_space():
-            self.issues.append(
-                ImplementationWarning(
-                    message="The data model is not defined in its own space.",
-                    fix="Define the data model in a dedicated space to avoid conflicts and ensure clarity.",
-                )
-            )
-
-        if not best_practice_assessors.assess_views_same_version_and_space():
-            self.issues.append(
-                ImplementationWarning(
-                    message="Views in the data model do not share the same version and space.",
-                    fix="Ensure all views are aligned in terms of version and space for consistency.",
-                )
-            )
 
 
-class DataModelPrincipleAssessors:
+class DataModelValidator(ABC):
     """Assessors for fundamental data model principles."""
 
-    def __init__(self, data_model: RequestSchema) -> None:
-        self.data_model = data_model
+    def __init__(self, client: NeatClient | None = None) -> None:
+        self.client = client
 
-    def assess_real_use_case_alignment(self) -> bool:
-        """Does this model originate from real, active business questions?"""
-        return False
-
-    def assess_cooperation_evidence(self) -> bool:
-        """Was the model co-created across domains vs solo/ivory-tower?"""
-        return False
-
-    def assess_parsimony(self) -> bool:
-        """Is the model as simple as possible, but not simpler?"""
-        return False
+    @abstractmethod
+    def run(self, data_model: RequestSchema) -> bool:
+        """Execute the success handler on the data model."""
+        # do something with data model
+        pass
 
 
-class DataModelBestPracticeAssessors:
-    """Assessors for data model best practices."""
+class AssessRealUseCaseAlignment(DataModelValidator):
+    """Validator for assessing real use case alignment."""
 
-    def __init__(self, data_model: RequestSchema) -> None:
-        self.data_model = data_model
+    def run(self, data_model: RequestSchema) -> bool:
+        """Check if the data model is aligned with real use cases."""
 
-    def assess_data_governance_team_exists(self) -> bool:
-        return False
+        # placeholder logic, will be replaced
+        return False if data_model else True
 
-    def assess_model_in_own_space(self) -> bool:
-        return False
 
-    def assess_views_same_version_and_space(self) -> bool:
-        return False
+class AssessCooperationEvidence(DataModelValidator):
+    """Validator for assessing cooperation evidence."""
 
-    def assess_model_size(self) -> bool:
-        """Is data model as small as small as possible?"""
-        return False
+    def run(self, data_model: RequestSchema) -> bool:
+        """Check if the data model shows evidence of cooperation."""
+
+        # placeholder logic, will be replaced
+        return False if data_model else True
