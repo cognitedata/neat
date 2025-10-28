@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Generic, Literal, TypeAlias, TypeVar
 
@@ -29,12 +30,38 @@ class BaseDeployObject(BaseModel, alias_generator=to_camel, extra="ignore", popu
     ...
 
 
-class PropertyChange(BaseDeployObject):
+class PropertyChange(BaseDeployObject, ABC):
     """Represents a change to a specific property or field."""
 
     field_path: JsonPath
-    severity: SeverityType
+
+    @abstractmethod
+    @property
+    def severity(self) -> SeverityType:
+        """The severity of the change."""
+        raise NotImplementedError()
+
+
+class PrimitivePropertyChange(PropertyChange):
+    item_severity: SeverityType
     description: str
+
+    @property
+    def severity(self) -> SeverityType:
+        return self.item_severity
+
+
+class ContainerPropertyChange(PropertyChange):
+    changed_items: list[PrimitivePropertyChange]
+
+    @property
+    def severity(self) -> SeverityType:
+        if any(item.severity == "breaking" for item in self.changed_items):
+            return "breaking"
+        elif any(item.severity == "warning" for item in self.changed_items):
+            return "warning"
+        else:
+            return "safe"
 
 
 class ResourceChange(BaseDeployObject, Generic[T_Reference, T_Resource]):
