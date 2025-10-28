@@ -35,6 +35,7 @@ class SchemaDeployer(OnSuccessResultProducer):
         self._results = self.deploy(data_model)
 
     def deploy(self, data_model: RequestSchema) -> DeploymentResult:
+        # Step 1: Fetch current CDF state
         snapshot = self._fetch_cdf_state(data_model)
 
         # Step 2: Create deployment plan by comparing local vs cdf

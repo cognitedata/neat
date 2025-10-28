@@ -46,9 +46,12 @@ class PropertyChange(BaseDeployObject, ABC):
 
 class PrimitivePropertyChange(PropertyChange):
     item_severity: SeverityType
-    description: str
     new_value: str | int | float | bool | None
     old_value: str | int | float | bool | None
+
+    @property
+    def description(self) -> str:
+        return f"changed from {self.old_value!r} to {self.new_value!r}"
 
     @property
     def severity(self) -> SeverityType:
