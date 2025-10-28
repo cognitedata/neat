@@ -270,8 +270,8 @@ class TestContainerDiffer:
                             description="The name property",
                             nullable=False,
                             immutable=False,
-                            default_value="Default Name",
-                            auto_increment=False,
+                            defaultValue="Default Name",
+                            autoIncrement=False,
                         ),
                     ),
                     # Modified constraint "req1"
@@ -383,14 +383,63 @@ class TestContainerDiffer:
                         old_value="node",
                         new_value="all",
                     ),
+                    ContainerPropertyChange(
+                        field_path="properties.name",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="maxTextSize",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=100,
+                                new_value=50,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="collation",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=None,
+                                new_value="ucs_basic",
+                            ),
+                        ],
+                    ),
+                    ContainerPropertyChange(
+                        field_path="properties.distance",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="type",
+                                item_severity=SeverityType.BREAKING,
+                                old_value="float32",
+                                new_value="float64",
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="list",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=True,
+                                new_value=None,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="maxListSize",
+                                item_severity=SeverityType.WARNING,
+                                old_value=100,
+                                new_value=None,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="immutable",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=False,
+                                new_value=None,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="nullable",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=True,
+                                new_value=None,
+                            ),
+                        ],
+                    ),
                 ],
                 id="Modify top level, change in Text Property, change DataType",
             ),
         ],
     )
     def test_diff(self, resource: ContainerRequest, expected_diff: list[PropertyChange]) -> None:
-        actual_diffs = ContainerDiffer().diff(
-            self.cdf_container,
-            resource,
-        )
+        actual_diffs = ContainerDiffer().diff(self.cdf_container, resource)
         assert actual_diffs == expected_diff
