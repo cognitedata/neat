@@ -3,7 +3,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from cognite.neat._data_model._shared import OnSuccess
+from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model.exporters import DMSTableExporter
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
@@ -22,7 +22,7 @@ class NeatStore:
         self.provenance = Provenance()
         self.state: State = EmptyState()
 
-    def read_physical(self, reader: DMSImporter, on_success: type[OnSuccess] | None = None) -> None:
+    def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
 
@@ -38,9 +38,7 @@ class NeatStore:
 
         self.provenance.append(change)
 
-    def write_physical(
-        self, writer: DMSTableExporter, on_success: type[OnSuccess] | None = None, **kwargs: Any
-    ) -> None:
+    def write_physical(self, writer: DMSTableExporter, on_success: OnSuccess | None = None, **kwargs: Any) -> None:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
@@ -62,7 +60,7 @@ class NeatStore:
         # this will be done by running self.provenance.can_agent_do_activity(agent)
 
     def _do_activity(
-        self, activity: Callable, on_success: type[OnSuccess] | None = None, **kwargs: Any
+        self, activity: Callable, on_success: OnSuccess | None = None, **kwargs: Any
     ) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""
         start = datetime.now(timezone.utc)
@@ -73,9 +71,13 @@ class NeatStore:
         try:
             result = activity(**kwargs)
             if result and on_success:
-                on_success_instance = on_success(result)
-                on_success_instance.run()
-                issues.extend(on_success_instance.issues)
+                if isinstance(on_success, OnSuccessIssuesChecker):
+                    on_success.run(result)
+                    issues.extend(on_success.issues)
+                elif isinstance(on_success, OnSuccessResultProducer):
+                    raise NotImplementedError("OnSuccessResultProducer is not implemented yet.")
+                else:
+                    raise RuntimeError(f"Unknown OnSuccess type {type(on_success).__name__}")
 
         # we catch import exceptions to capture issues and errors in provenance
         except DataModelImportException as e:

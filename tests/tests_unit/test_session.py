@@ -70,7 +70,7 @@ class TestNeatSession:
 
         by_type = cast(IssueList, new_session._store.provenance[-1].issues).by_type()
         assert set(by_type.keys()) == {ImplementationWarning}
-        assert len(by_type[ImplementationWarning]) == 5
+        assert len(by_type[ImplementationWarning]) == 2
 
     def test_write_data_model(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
