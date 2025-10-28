@@ -25,8 +25,8 @@ class ItemDiffer(Generic[T_Item], ABC):
 
 def diff_container(
     parent_path: str,
-    cdf_items: dict[str, T_Item],
-    desired_items: dict[str, T_Item],
+    cdf_items: dict[str, T_Item] | None,
+    desired_items: dict[str, T_Item] | None,
     add_severity: SeverityType,
     remove_severity: SeverityType,
     differ: ItemDiffer[T_Item],
@@ -46,9 +46,9 @@ def diff_container(
 
     """
     changes: list[PropertyChange] = []
-    for key, desired_item in desired_items.items():
+    for key, desired_item in (desired_items or {}).items():
         item_path = f"{parent_path}{key}"
-        if key not in cdf_items:
+        if key not in cdf_items or cdf_items is None:
             changes.append(
                 AddedProperty(
                     item_severity=add_severity,
@@ -62,7 +62,7 @@ def diff_container(
         if diffs:
             changes.append(ContainerPropertyChange(field_path=item_path, changed_items=diffs))
 
-    for key, cdf_item in cdf_items.items():
+    for key, cdf_item in (cdf_items or {}).items():
         if key not in desired_items:
             changes.append(
                 RemovedProperty(

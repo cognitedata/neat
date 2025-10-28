@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.dms import (
+    BaseModelObject,
     ContainerReference,
     ContainerRequest,
     DataModelReference,
@@ -64,7 +65,7 @@ class PrimitiveProperty(PropertyChange, ABC):
 
 
 class AddedProperty(PrimitiveProperty):
-    new_value: str | int | float | bool | None
+    new_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
@@ -72,7 +73,7 @@ class AddedProperty(PrimitiveProperty):
 
 
 class RemovedProperty(PrimitiveProperty):
-    old_value: str | int | float | bool | None
+    old_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
@@ -80,8 +81,8 @@ class RemovedProperty(PrimitiveProperty):
 
 
 class PrimitivePropertyChange(PrimitiveProperty):
-    new_value: str | int | float | bool | None
-    old_value: str | int | float | bool | None
+    new_value: BaseModelObject | str | int | float | bool | None
+    old_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:

@@ -1,14 +1,16 @@
-from cognite.neat._data_model.models.dms import ContainerPropertyDefinition, ContainerRequest, ConstraintDefinition, IndexDefinition
+from cognite.neat._data_model.models.dms import (
+    ConstraintDefinition,
+    ContainerPropertyDefinition,
+    ContainerRequest,
+    IndexDefinition,
+)
 
+from ._differ import ItemDiffer, diff_container
 from .data_classes import (
-    AddedProperty,
-    ContainerPropertyChange,
     PrimitivePropertyChange,
     PropertyChange,
-    RemovedProperty,
     SeverityType,
 )
-from ._differ import ItemDiffer, diff_container
 
 
 class ContainerDiffer(ItemDiffer[ContainerRequest]):
@@ -54,13 +56,24 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
         )
         changes.extend(
             diff_container(
-                "constraints.", cdf_container.constraints, container.constraints,
-                           SeverityType.SAFE, SeverityType.WARNING
-            , ConstraintDiffer()
+                "constraints.",
+                cdf_container.constraints,
+                container.constraints,
+                SeverityType.SAFE,
+                SeverityType.WARNING,
+                ConstraintDiffer(),
             )
         )
-        changes.extend(diff_container(
-            "indexes.", cdf_container.indexes, container.indexes, SeverityType.SAFE, SeverityType.WARNING, IndexDiffer()))
+        changes.extend(
+            diff_container(
+                "indexes.",
+                cdf_container.indexes,
+                container.indexes,
+                SeverityType.SAFE,
+                SeverityType.WARNING,
+                IndexDiffer(),
+            )
+        )
 
         return changes
 
@@ -71,14 +84,14 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
     ) -> list[PropertyChange]:
         raise NotImplementedError()
 
+
 class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
     def diff(
         self, cdf_constraint: ConstraintDefinition, desired_constraint: ConstraintDefinition
     ) -> list[PropertyChange]:
         raise NotImplementedError()
 
+
 class IndexDiffer(ItemDiffer[IndexDefinition]):
-    def diff(
-        self, cdf_index: IndexDefinition, desired_index: IndexDefinition
-    ) -> list[PropertyChange]:
+    def diff(self, cdf_index: IndexDefinition, desired_index: IndexDefinition) -> list[PropertyChange]:
         raise NotImplementedError()
