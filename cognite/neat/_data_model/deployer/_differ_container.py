@@ -208,7 +208,7 @@ class IndexDiffer(ItemDiffer[IndexDefinition]):
                 changes.append(
                     PrimitivePropertyChange(
                         item_severity=SeverityType.WARNING,
-                        field_path="unique",
+                        field_path="bySpace",
                         old_value=cdf_index.by_space,
                         new_value=desired_index.by_space,
                     )
