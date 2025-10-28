@@ -155,6 +155,32 @@ class TestContainerDiffer:
                     },
                 ),
                 [
+                    # Added new property "count"
+                    AddedProperty(
+                        field_path="properties.count",
+                        item_severity=SeverityType.SAFE,
+                        new_value=ContainerPropertyDefinition(
+                            type=Int32Property(),
+                            name="Count",
+                            description="A count property",
+                            nullable=True,
+                            immutable=False,
+                        ),
+                    ),
+                    # Removed property "name"
+                    RemovedProperty(
+                        field_path="properties.name",
+                        item_severity=SeverityType.BREAKING,
+                        old_value=ContainerPropertyDefinition(
+                            type=TextProperty(maxTextSize=100),
+                            name="Name",
+                            description="The name property",
+                            nullable=False,
+                            immutable=False,
+                            defaultValue="Default Name",
+                            autoIncrement=False,
+                        ),
+                    ),
                     # Modified property "distance" - both type changes and property metadata
                     ContainerPropertyChange(
                         field_path="properties.distance",
@@ -219,6 +245,16 @@ class TestContainerDiffer:
                                 old_value="unknown",
                                 new_value="newUnknoown",
                             ),
+                            AddedProperty(
+                                field_path="enumValues.cat3",
+                                item_severity=SeverityType.SAFE,
+                                new_value=EnumValue(),
+                            ),
+                            RemovedProperty(
+                                field_path="enumValues.cat2",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=EnumValue(),
+                            ),
                             ContainerPropertyChange(
                                 field_path="enumValues.cat1",
                                 changed_items=[
@@ -235,54 +271,6 @@ class TestContainerDiffer:
                                         new_value="The first category updated",
                                     ),
                                 ],
-                            ),
-                            AddedProperty(
-                                field_path="enumValues.cat3",
-                                item_severity=SeverityType.SAFE,
-                                new_value=EnumValue(),
-                            ),
-                            RemovedProperty(
-                                field_path="enumValues.cat2",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=EnumValue(),
-                            ),
-                        ],
-                    ),
-                    # Added new property "count"
-                    AddedProperty(
-                        field_path="properties.count",
-                        item_severity=SeverityType.SAFE,
-                        new_value=ContainerPropertyDefinition(
-                            type=Int32Property(),
-                            name="Count",
-                            description="A count property",
-                            nullable=True,
-                            immutable=False,
-                        ),
-                    ),
-                    # Removed property "name"
-                    RemovedProperty(
-                        field_path="properties.name",
-                        item_severity=SeverityType.BREAKING,
-                        old_value=ContainerPropertyDefinition(
-                            type=TextProperty(maxTextSize=100),
-                            name="Name",
-                            description="The name property",
-                            nullable=False,
-                            immutable=False,
-                            defaultValue="Default Name",
-                            autoIncrement=False,
-                        ),
-                    ),
-                    # Modified constraint "req1"
-                    ContainerPropertyChange(
-                        field_path="constraints.req1",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="require",
-                                item_severity=SeverityType.WARNING,
-                                old_value="other_space:other_container",
-                                new_value="new_space:new_container",
                             ),
                         ],
                     ),
@@ -304,21 +292,15 @@ class TestContainerDiffer:
                             bySpace=True,
                         ),
                     ),
-                    # Modified index "idx1"
+                    # Modified constraint "req1"
                     ContainerPropertyChange(
-                        field_path="indexes.idx1",
+                        field_path="constraints.req1",
                         changed_items=[
                             PrimitivePropertyChange(
-                                field_path="properties",
+                                field_path="require",
                                 item_severity=SeverityType.WARNING,
-                                old_value="['name']",
-                                new_value="['category']",
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="cursorable",
-                                item_severity=SeverityType.WARNING,
-                                old_value=True,
-                                new_value=False,
+                                old_value="other_space:other_container",
+                                new_value="new_space:new_container",
                             ),
                         ],
                     ),
@@ -337,6 +319,24 @@ class TestContainerDiffer:
                         old_value=InvertedIndex(
                             properties=["category", "distance"],
                         ),
+                    ),
+                    # Modified index "idx1"
+                    ContainerPropertyChange(
+                        field_path="indexes.idx1",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="properties",
+                                item_severity=SeverityType.WARNING,
+                                old_value="['name']",
+                                new_value="['category']",
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="cursorable",
+                                item_severity=SeverityType.WARNING,
+                                old_value=True,
+                                new_value=False,
+                            ),
+                        ],
                     ),
                 ],
                 id="comprehensive changes: add/remove/modify properties, constraints and indexes",
