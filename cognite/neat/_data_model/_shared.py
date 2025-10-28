@@ -33,13 +33,13 @@ class OnSuccess(ABC):
         pass
 
 
-class OnSuccessIssuesChecker(OnSuccess):
+class OnSuccessIssuesChecker(OnSuccess, ABC):
     """Abstract base class for post-activity success handlers that check for issues of the data model."""
 
     ...
 
 
-class OnSuccessResultProducer(OnSuccess):
+class OnSuccessResultProducer(OnSuccess, ABC):
     """Abstract base class for post-activity success handlers that produce desired outcomes using the data model."""
 
     ...
