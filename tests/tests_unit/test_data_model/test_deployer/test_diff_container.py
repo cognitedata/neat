@@ -181,6 +181,45 @@ class TestContainerDiffer:
                             autoIncrement=False,
                         ),
                     ),
+                    # Modified property "category" - enum changes
+                    ContainerPropertyChange(
+                        field_path="properties.category",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="unknownValue",
+                                item_severity=SeverityType.WARNING,
+                                old_value="unknown",
+                                new_value="newUnknoown",
+                            ),
+                            AddedProperty(
+                                field_path="enumValues.cat3",
+                                item_severity=SeverityType.SAFE,
+                                new_value=EnumValue(),
+                            ),
+                            RemovedProperty(
+                                field_path="enumValues.cat2",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=EnumValue(),
+                            ),
+                            ContainerPropertyChange(
+                                field_path="enumValues.cat1",
+                                changed_items=[
+                                    PrimitivePropertyChange(
+                                        field_path="name",
+                                        item_severity=SeverityType.SAFE,
+                                        old_value="Category 1",
+                                        new_value="Category One",
+                                    ),
+                                    PrimitivePropertyChange(
+                                        field_path="description",
+                                        item_severity=SeverityType.SAFE,
+                                        old_value="The first category",
+                                        new_value="The first category updated",
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
                     # Modified property "distance" - both type changes and property metadata
                     ContainerPropertyChange(
                         field_path="properties.distance",
@@ -232,45 +271,6 @@ class TestContainerDiffer:
                                 item_severity=SeverityType.BREAKING,
                                 old_value=True,
                                 new_value=False,
-                            ),
-                        ],
-                    ),
-                    # Modified property "category" - enum changes
-                    ContainerPropertyChange(
-                        field_path="properties.category",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="unknownValue",
-                                item_severity=SeverityType.WARNING,
-                                old_value="unknown",
-                                new_value="newUnknoown",
-                            ),
-                            AddedProperty(
-                                field_path="enumValues.cat3",
-                                item_severity=SeverityType.SAFE,
-                                new_value=EnumValue(),
-                            ),
-                            RemovedProperty(
-                                field_path="enumValues.cat2",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=EnumValue(),
-                            ),
-                            ContainerPropertyChange(
-                                field_path="enumValues.cat1",
-                                changed_items=[
-                                    PrimitivePropertyChange(
-                                        field_path="name",
-                                        item_severity=SeverityType.SAFE,
-                                        old_value="Category 1",
-                                        new_value="Category One",
-                                    ),
-                                    PrimitivePropertyChange(
-                                        field_path="description",
-                                        item_severity=SeverityType.SAFE,
-                                        old_value="The first category",
-                                        new_value="The first category updated",
-                                    ),
-                                ],
                             ),
                         ],
                     ),
@@ -384,23 +384,6 @@ class TestContainerDiffer:
                         new_value="all",
                     ),
                     ContainerPropertyChange(
-                        field_path="properties.name",
-                        changed_items=[
-                            PrimitivePropertyChange(
-                                field_path="maxTextSize",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=100,
-                                new_value=50,
-                            ),
-                            PrimitivePropertyChange(
-                                field_path="collation",
-                                item_severity=SeverityType.BREAKING,
-                                old_value=None,
-                                new_value="ucs_basic",
-                            ),
-                        ],
-                    ),
-                    ContainerPropertyChange(
                         field_path="properties.distance",
                         changed_items=[
                             PrimitivePropertyChange(
@@ -432,6 +415,23 @@ class TestContainerDiffer:
                                 item_severity=SeverityType.BREAKING,
                                 old_value=True,
                                 new_value=None,
+                            ),
+                        ],
+                    ),
+                    ContainerPropertyChange(
+                        field_path="properties.name",
+                        changed_items=[
+                            PrimitivePropertyChange(
+                                field_path="maxTextSize",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=100,
+                                new_value=50,
+                            ),
+                            PrimitivePropertyChange(
+                                field_path="collation",
+                                item_severity=SeverityType.BREAKING,
+                                old_value=None,
+                                new_value="ucs_basic",
                             ),
                         ],
                     ),
