@@ -46,8 +46,8 @@ class PropertyChange(BaseDeployObject, ABC):
 
     field_path: JsonPath
 
-    @abstractmethod
     @property
+    @abstractmethod
     def severity(self) -> SeverityType:
         """The severity of the change."""
         raise NotImplementedError()
