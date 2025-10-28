@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import ClassVar
 
+from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._references import ViewReference
@@ -10,8 +11,72 @@ from cognite.neat._issues import ConsistencyError
 from ._schema import RequestSchema
 
 
+class DataModelValidator(ABC):
+    """Assessors for fundamental data model principles."""
+
+    code: ClassVar[str]
+
+    @abstractmethod
+    def run(self) -> list[ConsistencyError]:
+        """Execute the success handler on the data model."""
+        # do something with data model
+        pass
+
+
+class ViewsWithoutProperties(DataModelValidator):
+    """This validator checks for views without properties, i.e. views that do not have any
+    property attached to them , either directly or through implements."""
+
+    code = "NEAT-DMS-001"
+
+    def __init__(
+        self,
+        local_views_by_reference: dict[ViewReference, ViewRequest],
+        cdf_views_by_reference: dict[ViewReference, ViewRequest] | None = None,
+    ) -> None:
+        self.local_views_by_reference = local_views_by_reference
+        self.cdf_views_by_reference = cdf_views_by_reference or {}
+
+    def run(self) -> list[ConsistencyError]:
+        """Check if the data model is aligned with real use cases."""
+
+        views_without_properties = []
+
+        for ref, view in self.local_views_by_reference.items():
+            if not view.properties:
+                found_properties = any(
+                    self.cdf_views_by_reference
+                    and (remote := self.cdf_views_by_reference.get(implement))
+                    and remote.properties
+                    for implement in view.implements or []
+                )
+                if found_properties:
+                    continue
+
+                views_without_properties.append(ref)
+
+        return [
+            ConsistencyError(
+                message=(
+                    f"View {ref!s} does "
+                    "not have any properties defined, either directly or through implements."
+                    " This will prohibit your from deploying the data model to CDF."
+                ),
+                fix="Define properties for the view",
+            )
+            for ref in views_without_properties
+        ]
+
+
 class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
+
+    def __init__(
+        self, client: NeatClient | None = None, codes: list[str] | None = None, modus_operandi: str | None = None
+    ) -> None:
+        super().__init__(client)
+        self._codes = codes or ["all"]
+        self._modus_operandi = modus_operandi  # will be used later to trigger how validators will behave
 
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
@@ -21,7 +86,17 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             list(DataModelAnalysis(data_model).referenced_views), include_inherited_properties=True
         )
 
-        self._issues.extend(ViewsWithoutProperties().run(local_views_by_reference, cdf_views_by_reference) or [])
+        validators: list[DataModelValidator] = [
+            ViewsWithoutProperties(
+                local_views_by_reference=local_views_by_reference,
+                cdf_views_by_reference=cdf_views_by_reference,
+            ),
+        ]
+
+        for validator in validators:
+            if "all" in self._codes or validator.code in self._codes:
+                self._issues.extend(validator.run())
+
         self._has_run = True
 
     def _cdf_view_by_reference(
@@ -37,50 +112,3 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
                 views, include_inherited_properties=include_inherited_properties
             )
         }
-
-
-class DataModelValidator(ABC):
-    """Assessors for fundamental data model principles."""
-
-    @abstractmethod
-    def run(self, *args: Any, **kwargs: Any) -> list[ConsistencyError] | None:
-        """Execute the success handler on the data model."""
-        # do something with data model
-        pass
-
-
-class ViewsWithoutProperties(DataModelValidator):
-    """This validator checks for views without properties, i.e. views that do not have any
-    property attached to them , either directly or through implements."""
-
-    def run(
-        self,
-        local_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest] | None = None,
-    ) -> list[ConsistencyError] | None:
-        """Check if the data model is aligned with real use cases."""
-
-        views_without_properties = []
-
-        for ref, view in local_views_by_reference.items():
-            if not view.properties:
-                found_properties = any(
-                    cdf_views_by_reference and (remote := cdf_views_by_reference.get(implement)) and remote.properties
-                    for implement in view.implements or []
-                )
-                if found_properties:
-                    continue
-
-                views_without_properties.append(ref)
-
-        return [
-            ConsistencyError(
-                message=(
-                    f"View {ref.space}:{ref.external_id}(version={ref.version}) does "
-                    "not have any properties defined, either directly or through implements."
-                    " This will prohibit your from deploying the data model to CDF."
-                ),
-                fix="Define properties for the view",
-            )
-            for ref in views_without_properties
-        ]

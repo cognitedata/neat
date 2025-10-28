@@ -48,6 +48,9 @@ class ViewReference(ReferenceObject):
         pattern=DM_VERSION_PATTERN,
     )
 
+    def __str__(self) -> str:
+        return f"{self.space}:{self.external_id}(version={self.version})"
+
 
 class DataModelReference(ReferenceObject):
     space: str = Field(
