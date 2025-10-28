@@ -17,7 +17,9 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         """Run quality assessment on the DMS data model."""
 
         local_views_by_reference = DataModelAnalysis(data_model).view_by_reference(include_inherited_properties=True)
-        cdf_views_by_reference = self._cdf_view_by_reference(list(local_views_by_reference.keys()))
+        cdf_views_by_reference = self._cdf_view_by_reference(
+            list(local_views_by_reference.keys()), include_inherited_properties=True
+        )
 
         self._issues.extend(ViewsWithoutProperties().run(local_views_by_reference, cdf_views_by_reference) or [])
         self._has_run = True
@@ -73,6 +75,7 @@ class ViewsWithoutProperties(DataModelValidator):
                 message=(
                     f"View {ref.space}:{ref.external_id}(version={ref.version}) does "
                     "not have any properties defined, either directly or through implements."
+                    " This will prohibit your from deploying the data model to CDF."
                 ),
                 fix="Define properties for the view",
             )
