@@ -11,6 +11,7 @@ class SpaceDiffer(ResourceDiffer[SpaceRequest]):
         if cdf_space.name != desired_space.name:
             changes.append(
                 PrimitivePropertyChange(
+                    item_severity="safe",
                     field_path="name",
                     old_value=cdf_space.name,
                     new_value=desired_space.name,
@@ -20,6 +21,7 @@ class SpaceDiffer(ResourceDiffer[SpaceRequest]):
         if cdf_space.description != desired_space.description:
             changes.append(
                 PrimitivePropertyChange(
+                    item_severity="safe",
                     field_path="description",
                     old_value=cdf_space.description,
                     new_value=desired_space.description,

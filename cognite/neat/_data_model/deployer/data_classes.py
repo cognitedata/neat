@@ -16,7 +16,7 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._data_model.models.dms._base import ReferenceObject
+from cognite.neat._data_model.models.dms._base import BaseModelObject, ReferenceObject
 from cognite.neat._utils.http_client._data_classes import HTTPMessage
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
@@ -24,6 +24,7 @@ JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.unique
 SeverityType: TypeAlias = Literal["safe", "warning", "breaking"]
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
 T_Resource = TypeVar("T_Resource", bound=APIResource)
+T_Item = TypeVar("T_Item", bound=BaseModelObject)
 
 
 class BaseDeployObject(BaseModel, alias_generator=to_camel, extra="ignore", populate_by_name=True):
@@ -44,6 +45,32 @@ class PropertyChange(BaseDeployObject, ABC):
         raise NotImplementedError()
 
 
+class AddedProperty(PropertyChange):
+    item_severity: SeverityType
+    new_value: str | int | float | bool | None
+
+    @property
+    def description(self) -> str:
+        return f"added with value {self.new_value!r}"
+
+    @property
+    def severity(self) -> SeverityType:
+        return self.item_severity
+
+
+class RemovedProperty(PropertyChange):
+    item_severity: SeverityType
+    old_value: str | int | float | bool | None
+
+    @property
+    def description(self) -> str:
+        return f"removed (was {self.old_value!r})"
+
+    @property
+    def severity(self) -> SeverityType:
+        return self.item_severity
+
+
 class PrimitivePropertyChange(PropertyChange):
     item_severity: SeverityType
     new_value: str | int | float | bool | None
@@ -59,8 +86,7 @@ class PrimitivePropertyChange(PropertyChange):
 
 
 class ContainerPropertyChange(PropertyChange):
-    changed_items: list[PrimitivePropertyChange]
-    description: str
+    changed_items: list[PropertyChange]
 
     @property
     def severity(self) -> SeverityType:
