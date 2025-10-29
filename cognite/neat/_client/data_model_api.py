@@ -31,7 +31,7 @@ class DataModelsAPI(NeatAPI):
             )
         )
         result.raise_for_status()
-        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.body)
         return result.items
 
     def list(
@@ -59,5 +59,5 @@ class DataModelsAPI(NeatAPI):
             )
         )
         result.raise_for_status()
-        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[DataModelResponse].model_validate_json(result.success_response.body)
         return result.items

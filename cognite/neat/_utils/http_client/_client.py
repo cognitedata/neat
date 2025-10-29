@@ -15,7 +15,6 @@ from cognite.neat._utils.http_client._data_classes import (
     APIResponse,
     BodyRequest,
     ErrorDetails,
-    ErrorResponse,
     FailedRequestMessage,
     HTTPMessage,
     ItemsRequest,
@@ -199,27 +198,20 @@ class HTTPClient:
                 status_attempts += 1
             splits = request.split(status_attempts=status_attempts)
             if splits[0].tracker and splits[0].tracker.limit_reached():
-                return request.create_failure_response(response, error=self._parse_error_response(response))
+                return request.create_failure_response(response)
             return splits
-        error = self._parse_error_response(response)
+
+        error = ErrorDetails.from_response(response)
 
         if request.status_attempt < self._max_retries and (
-            response.status_code in self._retry_status_codes or error.error.is_auto_retryable
+            response.status_code in self._retry_status_codes or error.is_auto_retryable
         ):
             request.status_attempt += 1
             time.sleep(self._backoff_time(request.total_attempts))
             return [request]
         else:
             # Permanent failure
-            return request.create_failure_response(response, error)
-
-    @staticmethod
-    def _parse_error_response(response: httpx.Response) -> ErrorResponse:
-        try:
-            error = ErrorResponse.model_validate_json(response.content)
-        except ValueError:
-            error = ErrorResponse(error=ErrorDetails(code=response.status_code, message=response.text))
-        return error
+            return request.create_failure_response(response)
 
     @staticmethod
     def _backoff_time(attempts: int) -> float:

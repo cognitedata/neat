@@ -9,7 +9,7 @@ from ._base import APIResource, Resource, WriteableResource
 from ._constants import FORBIDDEN_SPACES, SPACE_FORMAT_PATTERN
 
 
-class Space(Resource, APIResource[str], ABC):
+class Space(Resource, APIResource[SpaceReference], ABC):
     space: str = Field(
         description="The Space identifier (id).",
         min_length=1,
