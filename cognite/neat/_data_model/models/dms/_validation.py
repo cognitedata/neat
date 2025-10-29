@@ -38,8 +38,6 @@ class ViewsWithoutProperties(DataModelValidator):
         self.cdf_views_by_reference = cdf_views_by_reference
 
     def run(self) -> list[ConsistencyError]:
-        """Check if the data model is aligned with real use cases."""
-
         views_without_properties = []
 
         for ref, view in self.local_views_by_reference.items():
@@ -93,8 +91,6 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
         self.cdf_views_by_reference = cdf_views_by_reference
 
     def run(self) -> list[ConsistencyError]:
-        """Check if the data model is aligned with real use cases."""
-
         undefined_value_types = []
 
         for (view, property_), value_type in self.local_connection_end_node_types.items():
@@ -129,8 +125,6 @@ class VersionSpaceInconsistency(DataModelValidator):
         self.view_references = view_references
 
     def run(self) -> list[Recommendation]:
-        """Check if the data model is aligned with real use cases."""
-
         recommendations = []
 
         for view_ref in self.view_references:
