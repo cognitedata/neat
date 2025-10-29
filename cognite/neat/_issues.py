@@ -63,4 +63,4 @@ class IssueList(UserList[Issue]):
                 result[issue.code].append(issue)
             else:
                 result["UNDEFINED"].append(issue)
-        return result
+        return dict(result)
