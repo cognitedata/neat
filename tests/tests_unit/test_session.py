@@ -34,7 +34,7 @@ def new_session(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> 
 
 
 @pytest.fixture(scope="session")
-def valid_dms_yaml_with_view_without_properties() -> str:
+def valid_dms_yaml_with_consistency_errors() -> str:
     return """Metadata:
 - Key: space
   Value: my_space
@@ -63,9 +63,9 @@ Containers:
 
 
 @pytest.fixture()
-def physical_state_session(new_session: NeatSession, valid_dms_yaml_with_view_without_properties: str) -> NeatSession:
+def physical_state_session(new_session: NeatSession, valid_dms_yaml_with_consistency_errors: str) -> NeatSession:
     read_yaml = MagicMock(spec=Path)
-    read_yaml.read_text.return_value = valid_dms_yaml_with_view_without_properties
+    read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
 
     new_session.physical_data_model.read.yaml(read_yaml)
     return new_session
@@ -91,10 +91,10 @@ class TestNeatSession:
         assert len(session._store.provenance) == 0
         assert isinstance(session._store.state, states.EmptyState)
 
-    def test_read_data_model(self, valid_dms_yaml_with_view_without_properties: str, new_session: NeatSession) -> None:
+    def test_read_data_model(self, valid_dms_yaml_with_consistency_errors: str, new_session: NeatSession) -> None:
         session = new_session
         read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = valid_dms_yaml_with_view_without_properties
+        read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
 
         session.physical_data_model.read.yaml(read_yaml)
         assert len(session._store.physical_data_model) == 1
