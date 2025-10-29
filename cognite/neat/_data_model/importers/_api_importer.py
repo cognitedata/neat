@@ -7,6 +7,7 @@ from cognite.neat._data_model.importers._base import DMSImporter
 from cognite.neat._data_model.models.dms import (
     DataModelReference,
     RequestSchema,
+    SpaceReference,
 )
 from cognite.neat._exceptions import CDFAPIException, DataModelImportException
 from cognite.neat._issues import ModelSyntaxError
@@ -66,7 +67,7 @@ class DMSAPIImporter(DMSImporter):
             | {container.space for container in containers}
             | {nt.space for nt in node_types}
         )
-        spaces = client.spaces.retrieve(space_ids)
+        spaces = client.spaces.retrieve([SpaceReference(space=space_id) for space_id in space_ids])
         if missing_spaces := set(space_ids) - {space.space for space in spaces}:
             raise CDFAPIException(
                 messages=[

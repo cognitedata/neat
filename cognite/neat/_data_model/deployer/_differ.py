@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generic
 
-from cognite.neat._data_model.models.dms import T_Item
+from cognite.neat._utils.useful_types import T_Item
 
 from .data_classes import PropertyChange
 
