@@ -34,7 +34,7 @@ def new_session(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> 
 
 
 @pytest.fixture(scope="session")
-def valid_dms_yaml_with_view_without_properties() -> str:
+def valid_dms_yaml_with_consistency_errrors() -> str:
     return """Metadata:
 - Key: space
   Value: my_space
@@ -53,19 +53,42 @@ Properties:
   Container Property: name
   Index: btree:name(cursorable=True)
   Connection: null
+- View: MyDescribable
+  View Property: source
+  Connection: direct
+  Value Type: cdf_cdm:UnexistingDirectConnection(version=v1)
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: cdf_cdm:CogniteSourceable
+  Container Property: source
+- View: MyDescribable
+  View Property: singleEdgeProperty
+  Connection: edge(type=MyDescribable.singleEdgeProperty)
+  Value Type: cdf_cdm:UnexistingEdgeConnection(version=v1)
+  Min Count: 0
+  Max Count: 1
+- View: MyDescribable
+  View Property: reverseDirectProperty
+  Connection: reverse(property=asset)
+  Value Type: cdf_cdm:UnexistingReverseConnection(version=v1)
+  Min Count: 0
+  Max Count: 1
 Views:
 - View: MyDescribable
 - View: MissingProperties
 Containers:
 - Container: cdf_cdm:CogniteDescribable
   Used For: node
+- Container: cdf_cdm:CogniteSourceable
+  Used For: node
 """
 
 
 @pytest.fixture()
-def physical_state_session(new_session: NeatSession, valid_dms_yaml_with_view_without_properties: str) -> NeatSession:
+def physical_state_session(new_session: NeatSession, valid_dms_yaml_with_consistency_errrors: str) -> NeatSession:
     read_yaml = MagicMock(spec=Path)
-    read_yaml.read_text.return_value = valid_dms_yaml_with_view_without_properties
+    read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errrors
 
     new_session.physical_data_model.read.yaml(read_yaml)
     return new_session
@@ -91,10 +114,10 @@ class TestNeatSession:
         assert len(session._store.provenance) == 0
         assert isinstance(session._store.state, states.EmptyState)
 
-    def test_read_data_model(self, valid_dms_yaml_with_view_without_properties: str, new_session: NeatSession) -> None:
+    def test_read_data_model(self, valid_dms_yaml_with_consistency_errrors: str, new_session: NeatSession) -> None:
         session = new_session
         read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = valid_dms_yaml_with_view_without_properties
+        read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errrors
 
         session.physical_data_model.read.yaml(read_yaml)
         assert len(session._store.physical_data_model) == 1
@@ -102,14 +125,17 @@ class TestNeatSession:
         assert isinstance(session._store.state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].source_state, states.EmptyState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
-        assert len(cast(IssueList, session._store.provenance[-1].issues)) == 1
+        assert len(cast(IssueList, session._store.provenance[-1].issues)) == 4
         by_type = cast(IssueList, new_session._store.provenance[-1].issues).by_type()
         assert set(by_type.keys()) == {ConsistencyError}
-        assert len(by_type[ConsistencyError]) == 1
+        assert len(by_type[ConsistencyError]) == 4
         assert (
             "View my_space:MissingProperties(version=v1) does not have any properties defined"
             in by_type[ConsistencyError][0].message
         )
+
+        for issue in by_type[ConsistencyError][1:]:
+            assert "is not defined as a view in the data model niether exists in CDF" in issue.message
 
     def test_write_data_model(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
