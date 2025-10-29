@@ -104,8 +104,8 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
             ConsistencyError(
                 message=(
                     f"View {view!s} property {property_!s} has value type {value_type!s} "
-                    "which is not defined as a view in the data model niether exists in CDF."
-                    " This will prohibit your from deploying the data model to CDF."
+                    "which is not defined as a view in the data model neither exists in CDF."
+                    " This will prohibit you from deploying the data model to CDF."
                 ),
                 fix="Define necessary view",
             )
