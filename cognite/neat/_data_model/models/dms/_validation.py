@@ -71,6 +71,7 @@ class ViewsWithoutProperties(DataModelValidator):
                     " This will prohibit your from deploying the data model to CDF."
                 ),
                 fix="Define properties for the view",
+                code=self.code,
             )
             for ref in views_without_properties
         ]
@@ -108,6 +109,7 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
                     " This will prohibit you from deploying the data model to CDF."
                 ),
                 fix="Define necessary view",
+                code=self.code,
             )
             for (view, property_, value_type) in undefined_value_types
         ]

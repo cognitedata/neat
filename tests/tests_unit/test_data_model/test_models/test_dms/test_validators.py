@@ -7,8 +7,12 @@ import respx
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
-from cognite.neat._data_model.models.dms._validation import DmsDataModelValidation
-from cognite.neat._issues import ConsistencyError, IssueList
+from cognite.neat._data_model.models.dms._validation import (
+    DmsDataModelValidation,
+    UndefinedConnectionEndNodeTypes,
+    ViewsWithoutProperties,
+)
+from cognite.neat._issues import IssueList
 
 
 @pytest.fixture()
@@ -92,13 +96,7 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
 
     assert len(on_success.issues) == 4
 
-    by_type = cast(IssueList, on_success.issues).by_type()
-    assert set(by_type.keys()) == {ConsistencyError}
-    assert len(by_type[ConsistencyError]) == 4
-    assert (
-        "View my_space:MissingProperties(version=v1) does not have any properties defined"
-        in by_type[ConsistencyError][0].message
-    )
-
-    for issue in by_type[ConsistencyError][1:]:
-        assert "is not defined as a view in the data model neither exists in CDF" in issue.message
+    by_code = cast(IssueList, on_success.issues).by_code()
+    assert set(by_code.keys()) == {ViewsWithoutProperties.code, UndefinedConnectionEndNodeTypes.code}
+    assert len(by_code[ViewsWithoutProperties.code]) == 1
+    assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 3
