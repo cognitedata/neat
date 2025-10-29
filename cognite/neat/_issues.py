@@ -7,6 +7,7 @@ class Issue(BaseModel):
     """Base class for all issues"""
 
     message: str
+    code: str | None = None
 
 
 class ModelSyntaxError(Issue):
@@ -31,7 +32,7 @@ class ConsistencyError(Issue):
     """
 
     message: str
-    fix: str
+    fix: str | None = None
 
 
 class Recommendation(Issue):
@@ -53,3 +54,13 @@ class IssueList(UserList[Issue]):
                 result[issue_type] = []
             result[issue_type].append(issue)
         return result
+
+    def by_code(self) -> dict[str, list[Issue]]:
+        """Returns a dictionary of issues sorted by their code."""
+        result: dict[str, list[Issue]] = defaultdict(list)
+        for issue in self.data:
+            if issue.code is not None:
+                result[issue.code].append(issue)
+            else:
+                result["UNDEFINED"].append(issue)
+        return dict(result)
