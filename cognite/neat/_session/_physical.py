@@ -4,6 +4,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
+from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._validation import DmsDataModelValidation
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
@@ -19,6 +20,12 @@ class PhysicalDataModel:
         self._client = client
         self.read = ReadPhysicalDataModel(self._store, self._client)
         self.write = WritePhysicalDataModel(self._store)
+
+    def __call__(self) -> RequestSchema | None:
+        """Get the current physical data model from the store."""
+        if self._store.physical_data_model:
+            return self._store.physical_data_model[-1]
+        return None
 
 
 @session_wrapper

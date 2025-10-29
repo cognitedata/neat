@@ -2,7 +2,11 @@ from graphlib import TopologicalSorter
 
 from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
-from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
+from cognite.neat._data_model.models.dms._view_property import (
+    EdgeProperty,
+    ReverseDirectRelationProperty,
+    ViewCorePropertyRequest,
+)
 from cognite.neat._data_model.models.dms._views import ViewRequest
 
 
@@ -19,8 +23,7 @@ class DataModelAnalysis:
             raise ValueError("Physical Data Model is required for this analysis")
         return self._physical
 
-    @property
-    def referenced_views(self) -> set[ViewReference]:
+    def referenced_views(self, include_connection_end_node_types: bool = False) -> set[ViewReference]:
         """Get all referenced views in the physical data model."""
         referenced_views = set()
 
@@ -29,6 +32,9 @@ class DataModelAnalysis:
             if view.implements:
                 for implement in view.implements:
                     referenced_views.add(implement)
+
+        if include_connection_end_node_types:
+            referenced_views |= set(self.connection_end_node_types.values())
 
         return referenced_views
 
@@ -95,3 +101,27 @@ class DataModelAnalysis:
                             view.properties.update(ancestor_view.properties)
 
         return view_by_reference
+
+    @property
+    def connection_end_node_types(self) -> dict[tuple[ViewReference, str], ViewReference]:
+        """Get a mapping of view references to their corresponding ViewRequest objects."""
+        view_by_reference = self.view_by_reference(include_inherited_properties=False)
+        connection_end_node_types: dict[tuple[ViewReference, str], ViewReference] = {}
+
+        for view_ref, view in view_by_reference.items():
+            if not view.properties:
+                continue
+            for prop_ref, property_ in view.properties.items():
+                # direct relation
+                if isinstance(property_, ViewCorePropertyRequest) and property_.source:
+                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
+
+                # reverse direct relation
+                if isinstance(property_, ReverseDirectRelationProperty) and property_.source:
+                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
+
+                # edge property
+                if isinstance(property_, EdgeProperty) and property_.source:
+                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
+
+        return connection_end_node_types

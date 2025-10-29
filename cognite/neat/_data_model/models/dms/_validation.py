@@ -32,10 +32,10 @@ class ViewsWithoutProperties(DataModelValidator):
     def __init__(
         self,
         local_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest] | None = None,
+        cdf_views_by_reference: dict[ViewReference, ViewRequest],
     ) -> None:
         self.local_views_by_reference = local_views_by_reference
-        self.cdf_views_by_reference = cdf_views_by_reference or {}
+        self.cdf_views_by_reference = cdf_views_by_reference
 
     def run(self) -> list[ConsistencyError]:
         """Check if the data model is aligned with real use cases."""
@@ -76,6 +76,43 @@ class ViewsWithoutProperties(DataModelValidator):
         ]
 
 
+class UndefinedConnectionEndNodeTypes(DataModelValidator):
+    """This validator checks for connections where the end node types are not defined"""
+
+    code = "NEAT-DMS-002"
+
+    def __init__(
+        self,
+        local_connection_end_node_types: dict[tuple[ViewReference, str], ViewReference],
+        local_views_by_reference: dict[ViewReference, ViewRequest],
+        cdf_views_by_reference: dict[ViewReference, ViewRequest],
+    ) -> None:
+        self.local_connection_end_node_types = local_connection_end_node_types
+        self.local_views_by_reference = local_views_by_reference
+        self.cdf_views_by_reference = cdf_views_by_reference
+
+    def run(self) -> list[ConsistencyError]:
+        """Check if the data model is aligned with real use cases."""
+
+        undefined_value_types = []
+
+        for (view, property_), value_type in self.local_connection_end_node_types.items():
+            if value_type not in self.local_views_by_reference and value_type not in self.cdf_views_by_reference:
+                undefined_value_types.append((view, property_, value_type))
+
+        return [
+            ConsistencyError(
+                message=(
+                    f"View {view!s} property {property_!s} has value type {value_type!s} "
+                    "which is not defined as a view in the data model niether exists in CDF."
+                    " This will prohibit your from deploying the data model to CDF."
+                ),
+                fix="Define necessary view",
+            )
+            for (view, property_, value_type) in undefined_value_types
+        ]
+
+
 class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
 
@@ -89,13 +126,21 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
 
+        # Helper wrangled data model components
         local_views_by_reference = DataModelAnalysis(data_model).view_by_reference(include_inherited_properties=True)
+        local_connection_end_node_types = DataModelAnalysis(data_model).connection_end_node_types
         cdf_views_by_reference = self._cdf_view_by_reference(
-            list(DataModelAnalysis(data_model).referenced_views), include_inherited_properties=True
+            list(DataModelAnalysis(data_model).referenced_views(include_connection_end_node_types=True)),
+            include_inherited_properties=True,
         )
 
         validators: list[DataModelValidator] = [
             ViewsWithoutProperties(
+                local_views_by_reference=local_views_by_reference,
+                cdf_views_by_reference=cdf_views_by_reference,
+            ),
+            UndefinedConnectionEndNodeTypes(
+                local_connection_end_node_types=local_connection_end_node_types,
                 local_views_by_reference=local_views_by_reference,
                 cdf_views_by_reference=cdf_views_by_reference,
             ),
