@@ -126,7 +126,7 @@ class SimpleBodyRequest(BodyRequest):
 class ItemMessage(BaseModel, Generic[T_Reference], ABC):
     """Base class for message related to a specific item"""
 
-    ids: list[T_Reference]
+    ids: Sequence[T_Reference]
 
 
 class SuccessResponseItems(ItemMessage[T_Reference], SuccessResponse): ...
@@ -182,7 +182,7 @@ class ItemIDBody(ItemBody[ReferenceObject, ReferenceObject]):
         return list(self.items)
 
 
-class ItemsRequest(BodyRequest):
+class ItemsRequest(BodyRequest, Generic[T_Reference, T_BaseModel]):
     """Requests message for endpoints that accept multiple items in a single request.
 
     This class provides functionality to split large requests into smaller ones, handle responses for each item,
@@ -195,7 +195,7 @@ class ItemsRequest(BodyRequest):
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    body: ItemBody
+    body: ItemBody[T_Reference, T_BaseModel]
     max_failures_before_abort: int = 50
     tracker: ItemsRequestTracker | None = None
 
