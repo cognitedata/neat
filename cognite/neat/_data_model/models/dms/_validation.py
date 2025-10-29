@@ -44,13 +44,21 @@ class ViewsWithoutProperties(DataModelValidator):
 
         for ref, view in self.local_views_by_reference.items():
             if not view.properties:
-                found_properties = any(
+                # Existing CDF view has properties
+                if (
                     self.cdf_views_by_reference
-                    and (remote := self.cdf_views_by_reference.get(implement))
+                    and (remote := self.cdf_views_by_reference.get(ref))
                     and remote.properties
+                ):
+                    continue
+
+                # Implemented views have properties
+                if view.implements and any(
+                    self.cdf_views_by_reference
+                    and (remote_implement := self.cdf_views_by_reference.get(implement))
+                    and remote_implement.properties
                     for implement in view.implements or []
-                )
-                if found_properties:
+                ):
                     continue
 
                 views_without_properties.append(ref)
