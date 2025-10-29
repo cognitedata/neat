@@ -42,7 +42,6 @@ from cognite.neat._data_model.models.dms._data_types import (
 )
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, IndexAdapter, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
-from cognite.neat._utils.useful_types import T_Item, T_Reference
 
 from ._data_model import DataModelRequest, DataModelResponse
 from ._references import (
@@ -50,6 +49,7 @@ from ._references import (
     ContainerReference,
     DataModelReference,
     NodeReference,
+    SpaceReference,
     ViewDirectReference,
     ViewReference,
 )
@@ -127,6 +127,7 @@ __all__ = [
     "SingleReverseDirectRelationPropertyRequest",
     "SingleReverseDirectRelationPropertyResponse",
     "Space",
+    "SpaceReference",
     "SpaceRequest",
     "SpaceResponse",
     "T_Resource",
