@@ -13,12 +13,12 @@ from cognite.neat._data_model.models.dms import (
     DataModelRequest,
     NodeReference,
     SpaceRequest,
-    T_Reference,
     T_Resource,
     ViewReference,
     ViewRequest,
 )
 from cognite.neat._utils.http_client._data_classes import HTTPMessage
+from cognite.neat._utils.useful_types import T_Reference
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
