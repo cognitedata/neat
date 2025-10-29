@@ -25,8 +25,8 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                 PrimitivePropertyChange(
                     field_path="filter",
                     item_severity=SeverityType.BREAKING,
-                    new_value=str(cdf_view.filter),
-                    old_value=str(desired_view.filter),
+                    new_value=str(desired_view.filter),
+                    old_value=str(cdf_view.filter),
                 )
             )
         if cdf_view.implements != desired_view.implements:
@@ -35,8 +35,8 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                 PrimitivePropertyChange(
                     field_path="implements",
                     item_severity=SeverityType.BREAKING,
-                    new_value=str(cdf_view.implements),
-                    old_value=str(desired_view.implements),
+                    new_value=str(desired_view.implements),
+                    old_value=str(cdf_view.implements),
                 )
             )
         changes.extend(
@@ -67,8 +67,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="connectionType",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_property.connection_type,
-                    old_value=desired_property.connection_type,
+                    new_value=desired_property.connection_type,
+                    old_value=cdf_property.connection_type,
                 )
             )
         if isinstance(cdf_property, ViewCoreProperty) and isinstance(desired_property, ViewCoreProperty):
@@ -97,8 +97,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                     field_path="container",
                     # Todo check container type.
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_property.container,
-                    old_value=desired_property.container,
+                    new_value=desired_property.container,
+                    old_value=cdf_property.container,
                 )
             )
         if cdf_property.container_property_identifier != desired_property.container_property_identifier:
@@ -107,8 +107,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                     field_path="containerPropertyIdentifier",
                     # Todo check container property type.
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_property.container_property_identifier,
-                    old_value=desired_property.container_property_identifier,
+                    new_value=desired_property.container_property_identifier,
+                    old_value=cdf_property.container_property_identifier,
                 )
             )
         if cdf_property.source != desired_property.source:
@@ -116,8 +116,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="source",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_property.source,
-                    old_value=desired_property.source,
+                    new_value=desired_property.source,
+                    old_value=cdf_property.source,
                 )
             )
 
@@ -134,8 +134,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="source",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_edge.source,
-                    old_value=desired_edge.source,
+                    new_value=desired_edge.source,
+                    old_value=cdf_edge.source,
                 )
             )
         if cdf_edge.type != desired_edge.type:
@@ -143,8 +143,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="type",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_edge.type,
-                    old_value=desired_edge.type,
+                    new_value=desired_edge.type,
+                    old_value=cdf_edge.type,
                 )
             )
         if cdf_edge.edge_source != desired_edge.edge_source:
@@ -152,8 +152,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="edgeSource",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_edge.edge_source,
-                    old_value=desired_edge.edge_source,
+                    new_value=desired_edge.edge_source,
+                    old_value=cdf_edge.edge_source,
                 )
             )
         if cdf_edge.direction != desired_edge.direction:
@@ -161,8 +161,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="direction",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_edge.direction,
-                    old_value=desired_edge.direction,
+                    new_value=desired_edge.direction,
+                    old_value=cdf_edge.direction,
                 )
             )
         return changes
@@ -178,8 +178,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="source",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_relation.source,
-                    old_value=desired_relation.source,
+                    new_value=desired_relation.source,
+                    old_value=cdf_relation.source,
                 )
             )
 
@@ -188,8 +188,8 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                 PrimitivePropertyChange(
                     field_path="through",
                     item_severity=SeverityType.BREAKING,
-                    new_value=cdf_relation.through,
-                    old_value=desired_relation.through,
+                    new_value=desired_relation.through,
+                    old_value=cdf_relation.through,
                 )
             )
 
