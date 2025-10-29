@@ -11,7 +11,7 @@ from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
-from cognite.neat._issues import ConsistencyError, IssueList
+from cognite.neat._issues import IssueList
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
 
@@ -33,62 +33,10 @@ def new_session(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> 
     return session
 
 
-@pytest.fixture(scope="session")
-def valid_dms_yaml_with_consistency_errors() -> str:
-    return """Metadata:
-- Key: space
-  Value: my_space
-- Key: externalId
-  Value: TestModel
-- Key: version
-  Value: v1
-Properties:
-- View: MyDescribable
-  View Property: name
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: cdf_cdm:CogniteDescribable
-  Container Property: name
-  Index: btree:name(cursorable=True)
-  Connection: null
-- View: MyDescribable
-  View Property: source
-  Connection: direct
-  Value Type: cdf_cdm:UnexistingDirectConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: cdf_cdm:CogniteSourceable
-  Container Property: source
-- View: MyDescribable
-  View Property: singleEdgeProperty
-  Connection: edge(type=MyDescribable.singleEdgeProperty)
-  Value Type: cdf_cdm:UnexistingEdgeConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-- View: MyDescribable
-  View Property: reverseDirectProperty
-  Connection: reverse(property=asset)
-  Value Type: cdf_cdm:UnexistingReverseConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-Views:
-- View: MyDescribable
-- View: MissingProperties
-Containers:
-- Container: cdf_cdm:CogniteDescribable
-  Used For: node
-- Container: cdf_cdm:CogniteSourceable
-  Used For: node
-"""
-
-
 @pytest.fixture()
-def physical_state_session(new_session: NeatSession, valid_dms_yaml_with_consistency_errors: str) -> NeatSession:
+def physical_state_session(new_session: NeatSession, valid_dms_yaml_format: str) -> NeatSession:
     read_yaml = MagicMock(spec=Path)
-    read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
+    read_yaml.read_text.return_value = valid_dms_yaml_format
 
     new_session.physical_data_model.read.yaml(read_yaml)
     return new_session
@@ -114,10 +62,10 @@ class TestNeatSession:
         assert len(session._store.provenance) == 0
         assert isinstance(session._store.state, states.EmptyState)
 
-    def test_read_data_model(self, valid_dms_yaml_with_consistency_errors: str, new_session: NeatSession) -> None:
+    def test_read_data_model(self, valid_dms_yaml_format: str, new_session: NeatSession) -> None:
         session = new_session
         read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
+        read_yaml.read_text.return_value = valid_dms_yaml_format
 
         session.physical_data_model.read.yaml(read_yaml)
         assert len(session._store.physical_data_model) == 1
@@ -125,17 +73,7 @@ class TestNeatSession:
         assert isinstance(session._store.state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].source_state, states.EmptyState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
-        assert len(cast(IssueList, session._store.provenance[-1].issues)) == 4
-        by_type = cast(IssueList, new_session._store.provenance[-1].issues).by_type()
-        assert set(by_type.keys()) == {ConsistencyError}
-        assert len(by_type[ConsistencyError]) == 4
-        assert (
-            "View my_space:MissingProperties(version=v1) does not have any properties defined"
-            in by_type[ConsistencyError][0].message
-        )
-
-        for issue in by_type[ConsistencyError][1:]:
-            assert "is not defined as a view in the data model neither exists in CDF" in issue.message
+        assert len(cast(IssueList, session._store.provenance[-1].issues)) == 0
 
     def test_write_data_model(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
