@@ -47,9 +47,13 @@ class ErrorDetails(BaseModel):
     @classmethod
     def from_response(cls, response: httpx.Response) -> "ErrorDetails":
         try:
-            return cls.model_validate(response.text)
+            return _ErrorResponse.model_validate_json(response.text).error
         except ValidationError:
             return cls(code=response.status_code, message=response.text)
+
+
+class _ErrorResponse(BaseModel):
+    error: ErrorDetails
 
 
 class FailedResponse(ResponseMessage):

@@ -12,8 +12,6 @@ from pydantic import BaseModel
 
 from cognite.neat._utils.http_client import (
     ErrorDetails,
-    FailedItem,
-    FailedRequestItem,
     FailedRequestMessage,
     FailedResponse,
     HTTPClient,
@@ -86,7 +84,7 @@ class TestHTTPClient:
         response = results[0]
         assert isinstance(response, SuccessResponse)
         assert response.code == 200
-        assert response.data == b'{"key":"value"}'
+        assert response.body == '{"key":"value"}'
         assert rsps.calls[-1].request.url == "https://example.com/api/resource?query=test"
 
     @pytest.mark.usefixtures("disable_gzip")
@@ -103,7 +101,7 @@ class TestHTTPClient:
         response = results[0]
         assert isinstance(response, SuccessResponse)
         assert response.code == 201
-        assert response.data == b'{"id":123,"status":"created"}'
+        assert response.body == '{"id":123,"status":"created"}'
         assert rsps.calls[-1].request.content == json.dumps({"name": "new resource"}).encode()
 
     def test_failed_request(self, rsps: respx.MockRouter, http_client: HTTPClient) -> None:
@@ -131,7 +129,7 @@ class TestHTTPClient:
         response = results[0]
         assert isinstance(response, SuccessResponse)
         assert response.code == 200
-        assert response.data == b'{"key":"value"}'
+        assert response.body == '{"key":"value"}'
 
     def test_retry_exhausted(self, http_client_one_retry: HTTPClient, rsps: respx.MockRouter) -> None:
         client = http_client_one_retry
