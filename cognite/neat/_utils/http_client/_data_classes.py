@@ -52,10 +52,6 @@ class ErrorDetails(BaseModel):
             return cls(code=response.status_code, message=response.text)
 
 
-class ErrorResponse(BaseModel):
-    error: ErrorDetails
-
-
 class FailedResponse(ResponseMessage):
     error: ErrorDetails
 

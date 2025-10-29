@@ -1,7 +1,6 @@
 from ._client import HTTPClient
 from ._data_classes import (
     ErrorDetails,
-    ErrorResponse,
     FailedRequestItems,
     FailedRequestMessage,
     FailedResponse,
@@ -21,7 +20,6 @@ from ._data_classes import (
 
 __all__ = [
     "ErrorDetails",
-    "ErrorResponse",
     "FailedRequestItems",
     "FailedRequestMessage",
     "FailedResponse",
