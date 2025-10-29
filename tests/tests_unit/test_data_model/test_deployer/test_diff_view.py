@@ -12,6 +12,6 @@ class TestViewDiffer:
     cdf_view = ViewRequest(
 
     )
-    def test_container_diff(self, resource: ViewRequest, expected_diff: list[PropertyChange]) -> None:
-        actual_diffs = ViewPropertyDiffer().diff(self.cdf_view, resource)
+    def test_view_diff(self, resource: ViewRequest, expected_diff: list[PropertyChange]) -> None:
+        actual_diffs = ViewDiffer().diff(self.cdf_view, resource)
         assert expected_diff == actual_diffs
