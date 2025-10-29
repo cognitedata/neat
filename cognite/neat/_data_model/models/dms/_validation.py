@@ -4,9 +4,9 @@ from typing import ClassVar
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
-from cognite.neat._data_model.models.dms._references import ViewReference
+from cognite.neat._data_model.models.dms._references import DataModelReference, ViewReference
 from cognite.neat._data_model.models.dms._views import ViewRequest
-from cognite.neat._issues import ConsistencyError
+from cognite.neat._issues import ConsistencyError, Recommendation
 
 from ._schema import RequestSchema
 
@@ -17,7 +17,7 @@ class DataModelValidator(ABC):
     code: ClassVar[str]
 
     @abstractmethod
-    def run(self) -> list[ConsistencyError]:
+    def run(self) -> list[ConsistencyError] | list[Recommendation]:
         """Execute the success handler on the data model."""
         # do something with data model
         pass
@@ -115,6 +115,50 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
         ]
 
 
+class VersionSpaceInconsistency(DataModelValidator):
+    """This validator checks for inconsistencies in versioning and space among views and data model"""
+
+    code = "NEAT-DMS-003"
+
+    def __init__(
+        self,
+        data_model_reference: DataModelReference,
+        view_references: list[ViewReference],
+    ) -> None:
+        self.data_model_reference = data_model_reference
+        self.view_references = view_references
+
+    def run(self) -> list[Recommendation]:
+        """Check if the data model is aligned with real use cases."""
+
+        recommendations = []
+
+        for view_ref in self.view_references:
+            issues = []
+
+            if view_ref.version != self.data_model_reference.version:
+                issues.append(f"version (view: {view_ref.version}, data model: {self.data_model_reference.version})")
+
+            if view_ref.space != self.data_model_reference.space:
+                issues.append(f"space (view: {view_ref.space}, data model: {self.data_model_reference.space})")
+
+            if issues:
+                issue_description = " and ".join(issues)
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"View {view_ref!s} has inconsistent {issue_description} "
+                            "with the data model."
+                            " This may lead to more demanding development and maintenance efforts."
+                        ),
+                        fix="Update view version and/or space to match data model",
+                        code=self.code,
+                    )
+                )
+
+        return recommendations
+
+
 class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
 
@@ -146,6 +190,10 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
                 local_connection_end_node_types=local_connection_end_node_types,
                 local_views_by_reference=local_views_by_reference,
                 cdf_views_by_reference=cdf_views_by_reference,
+            ),
+            VersionSpaceInconsistency(
+                data_model_reference=data_model.data_model.as_reference(),
+                view_references=list(local_views_by_reference.keys()),
             ),
         ]
 

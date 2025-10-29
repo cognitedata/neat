@@ -10,6 +10,7 @@ from cognite.neat._data_model.importers._table_importer.importer import DMSTable
 from cognite.neat._data_model.models.dms._validation import (
     DmsDataModelValidation,
     UndefinedConnectionEndNodeTypes,
+    VersionSpaceInconsistency,
     ViewsWithoutProperties,
 )
 from cognite.neat._issues import IssueList
@@ -75,7 +76,8 @@ Properties:
   Max Count: 1
 Views:
 - View: MyDescribable
-- View: MissingProperties
+- View: another_space:MissingProperties(version=v2)
+- View: my_space:MissingProperties(version=v2)
 Containers:
 - Container: cdf_cdm:CogniteDescribable
   Used For: node
@@ -94,9 +96,14 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
 
     on_success.run(data_model)
 
-    assert len(on_success.issues) == 4
+    assert len(on_success.issues) == 7
 
     by_code = cast(IssueList, on_success.issues).by_code()
-    assert set(by_code.keys()) == {ViewsWithoutProperties.code, UndefinedConnectionEndNodeTypes.code}
-    assert len(by_code[ViewsWithoutProperties.code]) == 1
+    assert set(by_code.keys()) == {
+        ViewsWithoutProperties.code,
+        UndefinedConnectionEndNodeTypes.code,
+        VersionSpaceInconsistency.code,
+    }
+    assert len(by_code[ViewsWithoutProperties.code]) == 2
     assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 3
+    assert len(by_code[VersionSpaceInconsistency.code]) == 2
