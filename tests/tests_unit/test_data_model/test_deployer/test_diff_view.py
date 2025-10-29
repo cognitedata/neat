@@ -300,6 +300,26 @@ class TestViewDiffer:
                 ],
                 id="ReverseDirectRelationProperty change",
             ),
+            pytest.param(
+                ViewCorePropertyRequest(
+                    container=ContainerReference(space="space_a", external_id="container_a"),
+                    containerPropertyIdentifier="prop_a",
+                ),
+                MultiEdgeProperty(
+                    source=ViewReference(space="source_space", external_id="source_view", version="1"),
+                    type=NodeReference(space="node_space", external_id="node_type"),
+                    direction="outwards",
+                ),
+                [
+                    PrimitivePropertyChange(
+                        field_path="connectionType",
+                        item_severity=SeverityType.BREAKING,
+                        old_value="primary_property",
+                        new_value="multi_edge_connection",
+                    )
+                ],
+                id="Different property types",
+            ),
         ],
     )
     def test_view_property_diff(

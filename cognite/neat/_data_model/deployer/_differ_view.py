@@ -71,7 +71,7 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
                     old_value=cdf_property.connection_type,
                 )
             )
-        if isinstance(cdf_property, ViewCoreProperty) and isinstance(desired_property, ViewCoreProperty):
+        elif isinstance(cdf_property, ViewCoreProperty) and isinstance(desired_property, ViewCoreProperty):
             changes.extend(self._diff_core_property(cdf_property, desired_property))
 
         elif isinstance(cdf_property, EdgeProperty) and isinstance(desired_property, EdgeProperty):
