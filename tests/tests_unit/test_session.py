@@ -135,7 +135,7 @@ class TestNeatSession:
         )
 
         for issue in by_type[ConsistencyError][1:]:
-            assert "is not defined as a view in the data model niether exists in CDF" in issue.message
+            assert "is not defined as a view in the data model neither exists in CDF" in issue.message
 
     def test_write_data_model(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session

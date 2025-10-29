@@ -127,10 +127,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         """Run quality assessment on the DMS data model."""
 
         # Helper wrangled data model components
-        local_views_by_reference = DataModelAnalysis(data_model).view_by_reference(include_inherited_properties=True)
-        local_connection_end_node_types = DataModelAnalysis(data_model).connection_end_node_types
+        analysis = DataModelAnalysis(data_model)
+        local_views_by_reference = analysis.view_by_reference(include_inherited_properties=True)
+        local_connection_end_node_types = analysis.connection_end_node_types
         cdf_views_by_reference = self._cdf_view_by_reference(
-            list(DataModelAnalysis(data_model).referenced_views(include_connection_end_node_types=True)),
+            list(analysis.referenced_views(include_connection_end_node_types=True)),
             include_inherited_properties=True,
         )
 
