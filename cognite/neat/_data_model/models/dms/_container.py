@@ -6,8 +6,9 @@ from pydantic import Field, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat._utils.text import humanize_collection
+from cognite.neat._utils.useful_types import BaseModelObject
 
-from ._base import APIResource, BaseModelObject, Resource, WriteableResource
+from ._base import APIResource, Resource, WriteableResource
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,

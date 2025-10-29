@@ -3,7 +3,9 @@ from typing import Annotated, Literal
 
 from pydantic import Field, Json, TypeAdapter
 
-from ._base import BaseModelObject, Resource, WriteableResource
+from cognite.neat._utils.useful_types import BaseModelObject
+
+from ._base import Resource, WriteableResource
 from ._constants import CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN
 from ._data_types import DataType
 from ._references import ContainerDirectReference, ContainerReference, NodeReference, ViewDirectReference, ViewReference

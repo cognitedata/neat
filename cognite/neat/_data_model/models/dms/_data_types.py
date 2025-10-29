@@ -6,8 +6,8 @@ from typing import Annotated, Literal
 from pydantic import Field, TypeAdapter, field_validator
 
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
+from cognite.neat._utils.useful_types import BaseModelObject
 
-from ._base import BaseModelObject
 from ._constants import ENUM_VALUE_IDENTIFIER_PATTERN, FORBIDDEN_ENUM_VALUES, INSTANCE_ID_PATTERN
 from ._references import ContainerReference
 
