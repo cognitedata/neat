@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from cognite.neat._data_model.models.dms import ContainerReference, ContainerResponse
-from cognite.neat._utils.http_client import ItemBody, ItemsRequest, ParametersRequest
+from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
@@ -30,12 +30,11 @@ class ContainersAPI(NeatAPI):
             ItemsRequest(
                 endpoint_url=self._config.create_api_url("/models/containers/byids"),
                 method="POST",
-                body=ItemBody(items=items),
-                as_id=lambda c: c,
+                body=ItemIDBody(items=items),
             )
         )
         result.raise_for_status()
-        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
         return result.items
 
     def list(
@@ -70,5 +69,5 @@ class ContainersAPI(NeatAPI):
             )
         )
         result.raise_for_status()
-        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
         return result.items

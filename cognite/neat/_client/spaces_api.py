@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import json
-
 from cognite.neat._data_model.models.dms import SpaceResponse
-from cognite.neat._utils.http_client import ParametersRequest, SimpleBodyRequest
+from cognite.neat._data_model.models.dms._references import SpaceReference
+from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
@@ -11,7 +10,7 @@ from .data_classes import PagedResponse
 
 
 class SpacesAPI(NeatAPI):
-    def retrieve(self, spaces: list[str]) -> list[SpaceResponse]:
+    def retrieve(self, spaces: list[SpaceReference]) -> list[SpaceResponse]:
         """Retrieve spaces by their identifiers.
 
         Args:
@@ -26,14 +25,14 @@ class SpacesAPI(NeatAPI):
             raise ValueError("Cannot retrieve more than 1000 spaces at once.")
 
         result = self._http_client.request_with_retries(
-            SimpleBodyRequest(
+            ItemsRequest(
                 endpoint_url=self._config.create_api_url("/models/spaces/byids"),
                 method="POST",
-                body=json.dumps({"items": [{"space": space} for space in spaces]}),
+                body=ItemIDBody(items=spaces),
             )
         )
         result.raise_for_status()
-        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.body)
         return result.items
 
     def list(
@@ -64,5 +63,5 @@ class SpacesAPI(NeatAPI):
             )
         )
         result.raise_for_status()
-        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.body)
         return result.items

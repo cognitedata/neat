@@ -1,5 +1,5 @@
 from cognite.neat._data_model.models.dms import DataModelReference, DataModelResponse
-from cognite.neat._utils.http_client import ItemBody, ItemsRequest, ParametersRequest
+from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
@@ -27,8 +27,7 @@ class DataModelsAPI(NeatAPI):
             ItemsRequest(
                 endpoint_url=self._config.create_api_url("/models/datamodels/byids"),
                 method="POST",
-                body=ItemBody(items=items),
-                as_id=lambda c: c,
+                body=ItemIDBody(items=items),
             )
         )
         result.raise_for_status()
