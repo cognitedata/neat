@@ -286,7 +286,6 @@ def invalid_container_definition_test_cases() -> Iterator:
         {"externalId": "MyContainer", "name": "way too long name" * 100, "usedFor": "not-instance", "properties": {}},
         {
             "In field 'name', string should have at most 255 characters.",
-            "In field 'properties', dictionary should have at least 1 item after validation, not 0.",
             "In field 'usedFor', input should be 'node', 'edge' or 'all'. Got 'not-instance'.",
             "Missing required field: 'space'.",
         },

@@ -83,7 +83,6 @@ class Container(Resource, APIResource[ContainerReference], ABC):
     )
     properties: dict[str, ContainerPropertyDefinition] = Field(
         description="Set of properties to apply to the container.",
-        min_length=1,
     )
     constraints: dict[str, Constraint] | None = Field(
         default=None,
