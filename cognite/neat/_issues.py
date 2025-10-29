@@ -61,4 +61,6 @@ class IssueList(UserList[Issue]):
         for issue in self.data:
             if issue.code is not None:
                 result[issue.code].append(issue)
+            else:
+                result["UNDEFINED"].append(issue)
         return result
