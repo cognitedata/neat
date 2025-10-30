@@ -131,11 +131,11 @@ class VersionSpaceInconsistency(DataModelValidator):
         for view_ref in self.view_references:
             issues = []
 
-            if view_ref.version != self.data_model_reference.version:
-                issues.append(f"version (view: {view_ref.version}, data model: {self.data_model_reference.version})")
-
             if view_ref.space != self.data_model_reference.space and view_ref.space not in COGNITE_SPACES:
                 issues.append(f"space (view: {view_ref.space}, data model: {self.data_model_reference.space})")
+
+            if view_ref.version != self.data_model_reference.version and view_ref.space not in COGNITE_SPACES:
+                issues.append(f"version (view: {view_ref.version}, data model: {self.data_model_reference.version})")
 
             if issues:
                 issue_description = " and ".join(issues)
