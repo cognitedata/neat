@@ -17,26 +17,26 @@ from .data_classes import (
 
 
 class ViewDiffer(ItemDiffer[ViewRequest]):
-    def diff(self, cdf_view: ViewRequest, desired_view: ViewRequest) -> list[FieldChange]:
-        changes: list[FieldChange] = self._diff_name_description(cdf_view, desired_view)
+    def diff(self, current: ViewRequest, new: ViewRequest) -> list[FieldChange]:
+        changes: list[FieldChange] = self._diff_name_description(current, new)
 
-        if cdf_view.filter != desired_view.filter:
+        if current.filter != new.filter:
             changes.append(
                 ChangedField(
                     field_path="filter",
                     item_severity=SeverityType.BREAKING,
-                    new_value=str(desired_view.filter),
-                    current_value=str(cdf_view.filter),
+                    new_value=str(new.filter),
+                    current_value=str(current.filter),
                 )
             )
-        if cdf_view.implements != desired_view.implements:
+        if current.implements != new.implements:
             # Note that order of implements list is significant
             changes.append(
                 ChangedField(
                     field_path="implements",
                     item_severity=SeverityType.BREAKING,
-                    new_value=str(desired_view.implements),
-                    current_value=str(cdf_view.implements),
+                    new_value=str(new.implements),
+                    current_value=str(current.implements),
                 )
             )
         changes.extend(
@@ -44,8 +44,8 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
             # the union ViewRequestProperty are the same here.
             field_differences(  # type: ignore[misc]
                 "properties",
-                cdf_view.properties,
-                desired_view.properties,
+                current.properties,
+                new.properties,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
                 differ=ViewPropertyDiffer(),
