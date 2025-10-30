@@ -133,8 +133,7 @@ class VersionSpaceInconsistency(DataModelValidator):
 
             if view_ref.space != self.data_model_reference.space and view_ref.space not in COGNITE_SPACES:
                 issues.append(f"space (view: {view_ref.space}, data model: {self.data_model_reference.space})")
-
-            if view_ref.version != self.data_model_reference.version and view_ref.space not in COGNITE_SPACES:
+            elif view_ref.version != self.data_model_reference.version and view_ref.space not in COGNITE_SPACES:
                 issues.append(f"version (view: {view_ref.version}, data model: {self.data_model_reference.version})")
 
             if issues:
