@@ -182,4 +182,4 @@ class DeploymentResult(BaseDeployObject):
 
     @property
     def is_success(self) -> bool:
-        return self.status == "success"
+        return self.status in ("success", "pending")
