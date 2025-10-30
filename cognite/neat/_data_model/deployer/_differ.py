@@ -57,8 +57,8 @@ class ItemDiffer(Generic[T_Item], ABC):
 
 def field_differences(
     parent_path: str,
-    cdf_items: dict[str, T_Item] | None,
-    desired_items: dict[str, T_Item] | None,
+    current: dict[str, T_Item] | None,
+    new: dict[str, T_Item] | None,
     add_severity: SeverityType,
     remove_severity: SeverityType,
     differ: ItemDiffer[T_Item],
@@ -70,26 +70,26 @@ def field_differences(
 
     Args:
         parent_path: The JSON path to the container being compared.
-        cdf_items: The items as they are in CDF.
-        desired_items: The items as they are desired to be.
+        current: The items as they are in CDF.
+        new: The items as they are desired to be.
         add_severity: The severity to assign to added items.
         remove_severity: The severity to assign to removed items.
         differ: The differ to use for comparing individual items.
 
     """
     changes: list[FieldChange] = []
-    cdf_items_map = cdf_items or {}
-    desired_items_map = desired_items or {}
-    cdf_keys = set(cdf_items_map.keys())
-    desired_keys = set(desired_items_map.keys())
+    current_map = current or {}
+    new_map = new or {}
+    cdf_keys = set(current_map.keys())
+    desired_keys = set(new_map.keys())
 
     for key in sorted(desired_keys - cdf_keys):
-        item_path = f"{parent_path}{key}"
+        item_path = f"{parent_path}.{key}"
         changes.append(
             AddedField(
                 item_severity=add_severity,
                 field_path=item_path,
-                new_value=desired_items_map[key],
+                new_value=new_map[key],
             )
         )
 
@@ -97,15 +97,15 @@ def field_differences(
         changes.append(
             RemovedField(
                 item_severity=remove_severity,
-                field_path=f"{parent_path}{key}",
-                old_value=cdf_items_map[key],
+                field_path=f"{parent_path}.{key}",
+                old_value=current_map[key],
             )
         )
 
     for key in sorted(cdf_keys & desired_keys):
-        item_path = f"{parent_path}{key}"
-        cdf_item = cdf_items_map[key]
-        desired_item = desired_items_map[key]
+        item_path = f"{parent_path}.{key}"
+        cdf_item = current_map[key]
+        desired_item = new_map[key]
         diffs = differ.diff(cdf_item, desired_item)
         if diffs:
             changes.append(FieldChanges(field_path=item_path, changes=diffs))

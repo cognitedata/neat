@@ -41,7 +41,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
             )
         changes.extend(
             field_differences(
-                "properties.",
+                "properties",
                 current.properties,
                 new.properties,
                 add_severity=SeverityType.SAFE,
@@ -52,7 +52,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
         changes.extend(
             # MyPy fails to understand that ConstraintDefinition and Constraint are compatible here
             field_differences(  # type: ignore[misc]
-                "constraints.",
+                "constraints",
                 current.constraints,
                 new.constraints,
                 add_severity=SeverityType.SAFE,
@@ -63,7 +63,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
         changes.extend(
             # MyPy fails to understand that IndexDefinition and Index are compatible here
             field_differences(  # type: ignore[misc]
-                "indexes.",
+                "indexes",
                 current.indexes,
                 new.indexes,
                 add_severity=SeverityType.SAFE,
@@ -338,7 +338,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             )
         changes.extend(
             field_differences(
-                "values.",
+                "values",
                 current.values,
                 new.values,
                 add_severity=SeverityType.SAFE,
