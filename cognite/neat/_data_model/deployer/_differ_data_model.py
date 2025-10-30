@@ -15,12 +15,12 @@ class DataModelDiffer(ItemDiffer[DataModelRequest]):
         changes: list[FieldChange] = self._diff_name_description(current, new)
         if current.views != new.views:
             # Change of order is considered a change.
-            existing_views = set(current.views or [])
-            desired_views = set(new.views or [])
+            current_views = set(current.views or [])
+            new_views = set(new.views or [])
             changes.append(
                 ChangedField(
                     field_path="views",
-                    item_severity=SeverityType.SAFE if existing_views <= desired_views else SeverityType.BREAKING,
+                    item_severity=SeverityType.SAFE if current_views <= new_views else SeverityType.BREAKING,
                     current_value=str(current.views),
                     new_value=str(new.views),
                 )

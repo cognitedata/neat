@@ -80,10 +80,10 @@ def field_differences(
     changes: list[FieldChange] = []
     current_map = current or {}
     new_map = new or {}
-    cdf_keys = set(current_map.keys())
-    desired_keys = set(new_map.keys())
+    current_keys = set(current_map.keys())
+    new_keys = set(new_map.keys())
 
-    for key in sorted(desired_keys - cdf_keys):
+    for key in sorted(new_keys - current_keys):
         item_path = f"{parent_path}.{key}"
         changes.append(
             AddedField(
@@ -93,7 +93,7 @@ def field_differences(
             )
         )
 
-    for key in sorted(cdf_keys - desired_keys):
+    for key in sorted(current_keys - new_keys):
         changes.append(
             RemovedField(
                 item_severity=remove_severity,
@@ -102,7 +102,7 @@ def field_differences(
             )
         )
 
-    for key in sorted(cdf_keys & desired_keys):
+    for key in sorted(current_keys & new_keys):
         item_path = f"{parent_path}.{key}"
         cdf_item = current_map[key]
         desired_item = new_map[key]
