@@ -48,12 +48,12 @@ class SchemaDeployer:
 
     def deploy(self, data_model: RequestSchema) -> DeploymentResult:
         # Step 1: Fetch current CDF state
-        snapshot = self._fetch_cdf_state(data_model)
+        snapshot = self.fetch_cdf_state(data_model)
 
         # Step 2: Create deployment plan by comparing local vs cdf
-        plan = self._create_deployment_plan(snapshot, data_model)
+        plan = self.create_deployment_plan(snapshot, data_model)
 
-        if not self._should_proceed(plan):
+        if not self.should_proceed_to_deploy(plan):
             # Step 3: Check if deployment should proceed
             return DeploymentResult(status="failure", plan=plan, snapshot=snapshot)
         elif self.options.dry_run:
@@ -61,18 +61,18 @@ class SchemaDeployer:
             return DeploymentResult(status="pending", plan=plan, snapshot=snapshot)
 
         # Step 5: Apply changes
-        changes = self._apply_changes(plan)
+        changes = self.apply_changes(plan)
 
         # Step 6: Rollback if failed and auto_rollback is enabled
         if not changes.is_success and self.options.auto_rollback:
-            recovery = self._apply_changes(changes.as_recovery_plan())
+            recovery = self.apply_changes(changes.as_recovery_plan())
             return DeploymentResult(
                 status="success", plan=plan, snapshot=snapshot, responses=changes, recovery=recovery
             )
 
         return DeploymentResult(status="success", plan=plan, snapshot=snapshot, responses=changes)
 
-    def _fetch_cdf_state(self, data_model: RequestSchema) -> SchemaSnapshot:
+    def fetch_cdf_state(self, data_model: RequestSchema) -> SchemaSnapshot:
         now = datetime.now(tz=timezone.utc)
         space_ids = [space.as_reference() for space in data_model.spaces]
         cdf_spaces = self.client.spaces.retrieve(space_ids)
@@ -96,17 +96,17 @@ class SchemaDeployer:
             node_types={node: node for node in nodes},
         )
 
-    def _create_deployment_plan(
+    def create_deployment_plan(
         self, snapshot: SchemaSnapshot, data_model: RequestSchema
     ) -> list[ResourceDeploymentPlan]:
         return [
-            self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
-            self._create_resource_plan(snapshot.containers, data_model.containers, "containers", ContainerDiffer()),
-            self._create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
-            self._create_resource_plan(snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()),
+            self.create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
+            self.create_resource_plan(snapshot.containers, data_model.containers, "containers", ContainerDiffer()),
+            self.create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
+            self.create_resource_plan(snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()),
         ]
 
-    def _create_resource_plan(
+    def create_resource_plan(
         self,
         current_resources: dict[T_ResourceId, T_DataModelResource],
         new_resources: list[T_DataModelResource],
@@ -128,9 +128,9 @@ class SchemaDeployer:
 
         return ResourceDeploymentPlan(endpoint=endpoint, resources=resources)
 
-    def _should_proceed(self, plan: list[ResourceDeploymentPlan]) -> bool:
+    def should_proceed_to_deploy(self, plan: list[ResourceDeploymentPlan]) -> bool:
         # Placeholder for actual implementation
         return True
 
-    def _apply_changes(self, plan: list[ResourceDeploymentPlan]) -> AppliedChanges:
+    def apply_changes(self, plan: list[ResourceDeploymentPlan]) -> AppliedChanges:
         raise NotImplementedError()
