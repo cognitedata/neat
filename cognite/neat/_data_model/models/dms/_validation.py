@@ -7,7 +7,7 @@ from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._references import DataModelReference, ViewReference
 from cognite.neat._data_model.models.dms._views import ViewRequest
-from cognite.neat._issues import ConsistencyError, Issue, Recommendation
+from cognite.neat._issues import ConsistencyError, Recommendation
 
 from ._schema import RequestSchema
 
@@ -18,7 +18,7 @@ class DataModelValidator(ABC):
     code: ClassVar[str]
 
     @abstractmethod
-    def run(self) -> list[Issue]:
+    def run(self) -> list[ConsistencyError] | list[Recommendation]:
         """Execute the success handler on the data model."""
         # do something with data model
         pass
@@ -38,7 +38,7 @@ class ViewsWithoutProperties(DataModelValidator):
         self.local_views_by_reference = local_views_by_reference
         self.cdf_views_by_reference = cdf_views_by_reference
 
-    def run(self) -> list[Issue]:
+    def run(self) -> list[ConsistencyError]:
         views_without_properties = []
 
         for ref, view in self.local_views_by_reference.items():
@@ -91,7 +91,7 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
         self.local_views_by_reference = local_views_by_reference
         self.cdf_views_by_reference = cdf_views_by_reference
 
-    def run(self) -> list[Issue]:
+    def run(self) -> list[ConsistencyError]:
         undefined_value_types = []
 
         for (view, property_), value_type in self.local_connection_end_node_types.items():
@@ -125,8 +125,8 @@ class VersionSpaceInconsistency(DataModelValidator):
         self.data_model_reference = data_model_reference
         self.view_references = view_references
 
-    def run(self) -> list[Issue]:
-        recommendations: list[Issue] = []
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
 
         for view_ref in self.view_references:
             issues = []
