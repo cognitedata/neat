@@ -2,8 +2,8 @@ import pytest
 
 from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer.data_classes import (
-    PrimitivePropertyChange,
-    PropertyChange,
+    ChangedField,
+    FieldChange,
     SeverityType,
 )
 from cognite.neat._data_model.models.dms import DataModelRequest, ViewReference
@@ -43,22 +43,22 @@ class TestDataModelDiffer:
             pytest.param(
                 changed_datamodel,
                 [
-                    PrimitivePropertyChange(
+                    ChangedField(
                         field_path="name",
                         item_severity=SeverityType.SAFE,
-                        old_value="My Model",
+                        current_value="My Model",
                         new_value="This is updated",
                     ),
-                    PrimitivePropertyChange(
+                    ChangedField(
                         field_path="description",
                         item_severity=SeverityType.SAFE,
-                        old_value="This is my model",
+                        current_value="This is my model",
                         new_value="This is an update",
                     ),
-                    PrimitivePropertyChange(
+                    ChangedField(
                         field_path="views",
                         item_severity=SeverityType.SAFE,
-                        old_value=str(cdf_datamodel.views),
+                        current_value=str(cdf_datamodel.views),
                         new_value=str(changed_datamodel.views),
                     ),
                 ],
@@ -66,6 +66,6 @@ class TestDataModelDiffer:
             ),
         ],
     )
-    def test_datamodel_diff(self, resource: DataModelRequest, expected_diff: list[PropertyChange]) -> None:
+    def test_datamodel_diff(self, resource: DataModelRequest, expected_diff: list[FieldChange]) -> None:
         actual_diffs = DataModelDiffer().diff(self.cdf_datamodel, resource)
         assert expected_diff == actual_diffs
