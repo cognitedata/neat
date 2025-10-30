@@ -30,26 +30,26 @@ class ItemDiffer(Generic[T_Item], ABC):
         raise NotImplementedError()
 
     @classmethod
-    def _diff_name_description(cls, cdf_item: T_Item, desired_item: T_Item) -> list[FieldChange]:
+    def _diff_name_description(cls, current: T_Item, new: T_Item) -> list[FieldChange]:
         changes: list[FieldChange] = []
-        if hasattr(cdf_item, "name") and hasattr(desired_item, "name"):
-            if cdf_item.name != desired_item.name:
+        if hasattr(current, "name") and hasattr(new, "name"):
+            if current.name != new.name:
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.SAFE,
                         field_path="name",
-                        current_value=cdf_item.name,
-                        new_value=desired_item.name,
+                        current_value=current.name,
+                        new_value=new.name,
                     )
                 )
-        if hasattr(cdf_item, "description") and hasattr(desired_item, "description"):
-            if cdf_item.description != desired_item.description:
+        if hasattr(current, "description") and hasattr(new, "description"):
+            if current.description != new.description:
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.SAFE,
                         field_path="description",
-                        current_value=cdf_item.description,
-                        new_value=desired_item.description,
+                        current_value=current.description,
+                        new_value=new.description,
                     )
                 )
         return changes
