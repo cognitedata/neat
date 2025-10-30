@@ -23,7 +23,17 @@ from .data_classes import (
 
 @dataclass
 class DeploymentOptions:
-    """Configuration options for deployment."""
+    """Configuration options for deployment.
+
+    Attributes:
+        dry_run (bool): If True, the deployment will be simulated without applying changes. Defaults to True.
+        auto_rollback (bool): If True, automatically roll back changes if deployment fails. Defaults to True.
+        max_severity (SeverityType): Maximum allowed severity of changes to proceed with deployment.
+            Defaults to SeverityType.SAFE.
+        modus_operandi (Literal["partial", "overwrite"]): Deployment mode. If "partial", only add/modify resources
+            specified in the data model. If "overwrite", remove resources not present in the data model.
+            Defaults to "partial".
+    """
 
     dry_run: bool = True
     auto_rollback: bool = True
