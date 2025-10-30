@@ -1,5 +1,6 @@
 from cognite.neat._data_model.models.dms._base import (
     APIResource,
+    BaseModelObject,
     Resource,
     T_Resource,
     WriteableResource,
@@ -80,6 +81,7 @@ from ._views import (
 __all__ = [
     "DMS_DATA_TYPES",
     "APIResource",
+    "BaseModelObject",
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
