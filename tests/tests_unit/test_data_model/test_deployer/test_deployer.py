@@ -49,7 +49,8 @@ class TestSchemaDeployer:
         self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
     ) -> None:
         deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=True))
-        result = deployer.deploy(model)
+        deployer.run(model)
+        result = deployer.results
         assert result.is_dry_run
         assert result.status == "pending"
         assert result.is_success
