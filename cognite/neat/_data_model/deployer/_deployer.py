@@ -110,14 +110,15 @@ class SchemaDeployer:
         self, snapshot: SchemaSnapshot, data_model: RequestSchema
     ) -> list[ResourceDeploymentPlan]:
         return [
-            self.create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
-            self.create_resource_plan(snapshot.containers, data_model.containers, "containers", ContainerDiffer()),
-            self.create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
-            self.create_resource_plan(snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()),
+            self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
+            self._create_resource_plan(snapshot.containers, data_model.containers, "containers", ContainerDiffer()),
+            self._create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
+            self._create_resource_plan(snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()),
         ]
 
-    def create_resource_plan(
-        self,
+    @classmethod
+    def _create_resource_plan(
+        cls,
         current_resources: dict[T_ResourceId, T_DataModelResource],
         new_resources: list[T_DataModelResource],
         endpoint: DataModelEndpoint,
