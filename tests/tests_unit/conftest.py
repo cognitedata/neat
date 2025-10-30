@@ -1,6 +1,7 @@
 from typing import Any
 
 import pytest
+import respx
 from cognite.client import ClientConfig
 from cognite.client.credentials import Token
 
@@ -130,3 +131,40 @@ def example_dms_schema(
         "containers": [example_dms_container_response],
         "spaces": [example_dms_space_response],
     }
+
+
+@pytest.fixture
+def respx_mock_data_model(
+    neat_client: NeatClient,
+    respx_mock: respx.MockRouter,
+    example_dms_data_model_response: dict[str, Any],
+    example_dms_view_response: dict[str, Any],
+    example_dms_container_response: dict[str, Any],
+    example_dms_space_response: dict[str, Any],
+) -> respx.MockRouter:
+    config = neat_client.config
+
+    # Mock data model retrieval
+    respx_mock.post(config.create_api_url("/models/datamodels/byids")).respond(
+        status_code=200,
+        json={"items": [example_dms_data_model_response]},
+    )
+
+    # Mock views retrieval
+    respx_mock.post(config.create_api_url("/models/views/byids")).respond(
+        status_code=200,
+        json={"items": [example_dms_view_response]},
+    )
+
+    # Mock containers retrieval
+    respx_mock.post(config.create_api_url("/models/containers/byids")).respond(
+        status_code=200,
+        json={"items": [example_dms_container_response]},
+    )
+
+    # Mock spaces retrieval
+    respx_mock.post(config.create_api_url("/models/spaces/byids")).respond(
+        status_code=200,
+        json={"items": [example_dms_space_response]},
+    )
+    return respx_mock

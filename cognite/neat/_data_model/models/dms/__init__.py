@@ -45,7 +45,7 @@ from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, Inde
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
 from ._data_model import DataModelRequest, DataModelResponse
-from ._http import DataModelBody, DataModelResource
+from ._http import DataModelBody, DataModelResource, ResourceId, T_DataModelResource, T_ResourceId
 from ._references import (
     ContainerDirectReference,
     ContainerReference,
@@ -126,6 +126,7 @@ __all__ = [
     "RequestSchema",
     "RequiresConstraintDefinition",
     "Resource",
+    "ResourceId",
     "SequenceCDFExternalIdReference",
     "SequenceCDFExternalIdReference",
     "SingleEdgeProperty",
@@ -135,7 +136,9 @@ __all__ = [
     "SpaceReference",
     "SpaceRequest",
     "SpaceResponse",
+    "T_DataModelResource",
     "T_Resource",
+    "T_ResourceId",
     "TextProperty",
     "TextProperty",
     "TimeseriesCDFExternalIdReference",

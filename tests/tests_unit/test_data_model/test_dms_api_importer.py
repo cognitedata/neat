@@ -16,39 +16,9 @@ class TestDMSAPIImporter:
     def test_from_cdf_success(
         self,
         neat_client: NeatClient,
-        respx_mock: respx.MockRouter,
-        example_dms_data_model_response: dict[str, Any],
-        example_dms_view_response: dict[str, Any],
-        example_dms_container_response: dict[str, Any],
-        example_dms_space_response: dict[str, Any],
+        respx_mock_data_model: respx.MockRouter,
     ) -> None:
         """Test successful import of a data model from CDF with all dependencies."""
-        config = neat_client.config
-
-        # Mock data model retrieval
-        respx_mock.post(config.create_api_url("/models/datamodels/byids")).respond(
-            status_code=200,
-            json={"items": [example_dms_data_model_response]},
-        )
-
-        # Mock views retrieval
-        respx_mock.post(config.create_api_url("/models/views/byids")).respond(
-            status_code=200,
-            json={"items": [example_dms_view_response]},
-        )
-
-        # Mock containers retrieval
-        respx_mock.post(config.create_api_url("/models/containers/byids")).respond(
-            status_code=200,
-            json={"items": [example_dms_container_response]},
-        )
-
-        # Mock spaces retrieval
-        respx_mock.post(config.create_api_url("/models/spaces/byids")).respond(
-            status_code=200,
-            json={"items": [example_dms_space_response]},
-        )
-
         # Create the importer
         data_model_ref = DataModelReference(space="my_space", external_id="my_data_model", version="v1")
         importer = DMSAPIImporter.from_cdf(data_model_ref, neat_client)
@@ -72,7 +42,7 @@ class TestDMSAPIImporter:
         assert schema.spaces[0].space == "my_space"
 
         # Verify all expected API calls were made
-        assert len(respx_mock.calls) == 4
+        assert len(respx_mock_data_model.calls) == 4
 
     def test_from_cdf_data_model_not_found(
         self,
