@@ -1,7 +1,7 @@
 import pytest
 
 from cognite.neat._data_model.deployer._differ_space import SpaceDiffer
-from cognite.neat._data_model.deployer.data_classes import PrimitivePropertyChange, PropertyChange, SeverityType
+from cognite.neat._data_model.deployer.data_classes import ChangedField, FieldChange, SeverityType
 from cognite.neat._data_model.models.dms import SpaceRequest
 
 
@@ -27,16 +27,16 @@ class TestSpaceDiffer:
                     description="This is space 1.",
                 ),
                 [
-                    PrimitivePropertyChange(
+                    ChangedField(
                         field_path="name",
                         item_severity=SeverityType.SAFE,
-                        old_value="Space One",
+                        current_value="Space One",
                         new_value="Space 1",
                     ),
-                    PrimitivePropertyChange(
+                    ChangedField(
                         field_path="description",
                         item_severity=SeverityType.SAFE,
-                        old_value="This is space one.",
+                        current_value="This is space one.",
                         new_value="This is space 1.",
                     ),
                 ],
@@ -44,7 +44,7 @@ class TestSpaceDiffer:
             ),
         ],
     )
-    def test_diff(self, resource: SpaceRequest, expected_diff: list[PropertyChange]) -> None:
+    def test_diff(self, resource: SpaceRequest, expected_diff: list[FieldChange]) -> None:
         actual_diffs = SpaceDiffer().diff(
             self.cdf_space,
             resource,

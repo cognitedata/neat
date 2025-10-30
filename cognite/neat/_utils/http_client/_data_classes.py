@@ -1,18 +1,22 @@
+import sys
 from abc import ABC, abstractmethod
 from collections import UserList
-from collections.abc import Callable, MutableSequence, Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import Generic, Literal, TypeAlias, TypeVar
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, JsonValue, model_serializer
+from pydantic import BaseModel, ConfigDict, Field, JsonValue, ValidationError, model_serializer
 
 from cognite.neat._exceptions import CDFAPIException
 from cognite.neat._utils.http_client._tracker import ItemsRequestTracker
-from cognite.neat._utils.useful_types import T_ID, PrimaryTypes
+from cognite.neat._utils.useful_types import PrimaryTypes, ReferenceObject, T_Reference
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 StatusCode: TypeAlias = int
-
-T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
 
 
 class HTTPMessage(BaseModel):
@@ -24,22 +28,31 @@ class FailedRequestMessage(HTTPMessage):
 
 
 class ResponseMessage(HTTPMessage):
-    code: int
+    code: StatusCode
+    body: str
 
 
-class SuccessResponse(ResponseMessage):
-    data: bytes
+class SuccessResponse(ResponseMessage): ...
 
 
 class ErrorDetails(BaseModel):
-    code: int
+    """This is the structure of failure responses from CDF APIs"""
+
+    code: StatusCode
     message: str
     missing: list[JsonValue] | None = None
     duplicated: list[JsonValue] | None = None
     is_auto_retryable: bool | None = Field(None, alias="isAutoRetryable")
 
+    @classmethod
+    def from_response(cls, response: httpx.Response) -> "ErrorDetails":
+        try:
+            return _ErrorResponse.model_validate_json(response.text).error
+        except ValidationError:
+            return cls(code=response.status_code, message=response.text)
 
-class ErrorResponse(BaseModel):
+
+class _ErrorResponse(BaseModel):
     error: ErrorDetails
 
 
@@ -66,7 +79,7 @@ class RequestMessage(HTTPMessage, ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
+    def create_failure_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
         raise NotImplementedError()
 
     @abstractmethod
@@ -78,10 +91,12 @@ class SimpleRequest(RequestMessage):
     """Base class for requests with a simple success/fail response structure"""
 
     def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
-        return [SuccessResponse(code=response.status_code, data=response.content)]
+        return [SuccessResponse(code=response.status_code, body=response.text)]
 
-    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
-        return [FailedResponse(code=response.status_code, error=error.error)]
+    def create_failure_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
+        return [
+            FailedResponse(code=response.status_code, body=response.text, error=ErrorDetails.from_response(response))
+        ]
 
     def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
         return [FailedRequestMessage(message=error_message)]
@@ -108,29 +123,26 @@ class SimpleBodyRequest(BodyRequest):
         return self.body
 
 
-class ItemMessage(BaseModel):
+class ItemMessage(BaseModel, Generic[T_Reference], ABC):
     """Base class for message related to a specific item"""
 
-    ...
+    ids: Sequence[T_Reference]
 
 
-class ItemIDMessage(ItemMessage, Generic[T_ID], ABC):
-    """Base class for message related to a specific item identified by an ID"""
-
-    id: T_ID
+class SuccessResponseItems(ItemMessage[T_Reference], SuccessResponse): ...
 
 
-class ItemResponse(ItemIDMessage, ResponseMessage, ABC): ...
+class FailedResponseItems(ItemMessage[T_Reference], FailedResponse): ...
 
 
-class FailedItem(ItemResponse, FailedResponse): ...
+class FailedRequestItems(ItemMessage[T_Reference], FailedRequestMessage): ...
 
 
-class FailedRequestItem(ItemIDMessage, FailedRequestMessage): ...
+T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
 
 
-class ItemBody(BaseModel, Generic[T_BaseModel]):
-    items: list[T_BaseModel]
+class ItemBody(BaseModel, Generic[T_Reference, T_BaseModel], ABC):
+    items: Sequence[T_BaseModel]
     extra_args: dict[str, JsonValue] | None = None
 
     @model_serializer(mode="plain", return_type=dict)
@@ -142,24 +154,48 @@ class ItemBody(BaseModel, Generic[T_BaseModel]):
             data.update(self.extra_args)
         return data
 
+    @abstractmethod
+    def as_ids(self) -> list[T_Reference]:
+        """Returns the list of item identifiers for the items in the body."""
+        raise NotImplementedError()
 
-class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
+    def split(self, mid: int) -> tuple[Self, Self]:
+        """Splits the body into two smaller bodies.
+
+        This is useful for retrying requests that fail due to size limits or timeouts.
+
+        Args:
+            mid: The index at which to split the items.
+        Returns:
+            A tuple containing two new ItemBody instances, each with half of the original items.
+
+        """
+
+        type_ = type(self)
+        return type_(items=self.items[:mid], extra_args=self.extra_args), type_(
+            items=self.items[mid:], extra_args=self.extra_args
+        )
+
+
+class ItemIDBody(ItemBody[ReferenceObject, ReferenceObject]):
+    def as_ids(self) -> list[ReferenceObject]:
+        return list(self.items)
+
+
+class ItemsRequest(BodyRequest, Generic[T_Reference, T_BaseModel]):
     """Requests message for endpoints that accept multiple items in a single request.
 
     This class provides functionality to split large requests into smaller ones, handle responses for each item,
     and manage errors effectively.
 
     Attributes:
-        body (ItemBody[T_BaseModel]): The body of the request containing the items to be processed.
-        as_id (Callable[[JsonVal], T_ID] | None): A function to extract the ID from each item. If None,
-            IDs are not used.
+        body (ItemBody): The body of the request containing the items to be processed.
         max_failures_before_abort (int): The maximum number of failed split requests before aborting further splits.
 
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    body: ItemBody[T_BaseModel]
-    as_id: Callable[[T_BaseModel], T_ID]
+    body: ItemBody[T_Reference, T_BaseModel]
     max_failures_before_abort: int = 50
     tracker: ItemsRequestTracker | None = None
 
@@ -186,45 +222,39 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
             return [self]
         tracker = self.tracker or ItemsRequestTracker(self.max_failures_before_abort)
         tracker.register_failure()
-        first_half = ItemsRequest[T_ID, T_BaseModel](
-            endpoint_url=self.endpoint_url,
-            method=self.method,
-            body=ItemBody(items=self.body.items[:mid], extra_args=self.body.extra_args),
-            as_id=self.as_id,
-            connect_attempt=self.connect_attempt,
-            read_attempt=self.read_attempt,
-            status_attempt=status_attempts,
-        )
-        first_half.tracker = tracker
-        second_half = ItemsRequest[T_ID, T_BaseModel](
-            endpoint_url=self.endpoint_url,
-            method=self.method,
-            body=ItemBody(items=self.body.items[mid:], extra_args=self.body.extra_args),
-            as_id=self.as_id,
-            connect_attempt=self.connect_attempt,
-            read_attempt=self.read_attempt,
-            status_attempt=status_attempts,
-        )
-        second_half.tracker = tracker
-        return [first_half, second_half]
+        messages: list[ItemsRequest] = []
+        for body in self.body.split(mid):
+            item_request = ItemsRequest(
+                endpoint_url=self.endpoint_url,
+                method=self.method,
+                body=body,
+                connect_attempt=self.connect_attempt,
+                read_attempt=self.read_attempt,
+                status_attempt=status_attempts,
+            )
+            item_request.tracker = tracker
+            messages.append(item_request)
+        return messages
 
-    def create_failure_response(self, response: httpx.Response, error: ErrorResponse) -> Sequence[HTTPMessage]:
+    def create_success_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
+        return [SuccessResponseItems(code=response.status_code, body=response.text, ids=self.body.as_ids())]
+
+    def create_failure_response(self, response: httpx.Response) -> Sequence[HTTPMessage]:
         """Creates response messages based on the HTTP response and the original request.
 
         Args:
             response: The HTTP response received from the server.
-            error: The error response received from the server.
         Returns:
             A sequence of HTTPMessage instances representing the outcome for each item in the request.
         """
-        responses: list[HTTPMessage] = []
-        for item in self.body.items:
-            try:
-                item_id = self.as_id(item)
-            except Exception:
-                raise ValueError("Invalid as_id function provided for ItemsRequest") from None
-            responses.append(FailedItem(code=response.status_code, id=item_id, error=error.error))
-        return responses
+        return [
+            FailedResponseItems(
+                code=response.status_code,
+                body=response.text,
+                error=ErrorDetails.from_response(response),
+                ids=self.body.as_ids(),
+            )
+        ]
 
     def create_failed_request(self, error_message: str) -> Sequence[HTTPMessage]:
         """Creates failed request messages for each item in the request.
@@ -235,14 +265,7 @@ class ItemsRequest(BodyRequest, Generic[T_ID, T_BaseModel]):
         Returns:
             A sequence of HTTPMessage instances representing the failed request for each item.
         """
-        responses: list[HTTPMessage] = []
-        for item in self.body.items:
-            try:
-                item_id = self.as_id(item)
-            except Exception:
-                raise ValueError("Invalid as_id function provided for ItemsRequest") from None
-            responses.append(FailedRequestItem(id=item_id, message=error_message))
-        return responses
+        return [FailedRequestItems(message=error_message, ids=self.body.as_ids())]
 
 
 class APIResponse(UserList, MutableSequence[ResponseMessage | FailedRequestMessage]):

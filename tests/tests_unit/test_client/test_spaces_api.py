@@ -5,6 +5,7 @@ from typing import Any
 import respx
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model.models.dms import SpaceReference
 
 
 class TestSpacesAPI:
@@ -64,7 +65,9 @@ class TestSpacesAPI:
                 "nextCursor": None,
             },
         )
-        spaces = client.spaces.retrieve(spaces=["my_space", "other_space", "third_space"])
+        spaces = client.spaces.retrieve(
+            spaces=[SpaceReference(space=space) for space in ["my_space", "other_space", "third_space"]]
+        )
         assert len(spaces) == 1
         assert spaces[0].space == "my_space"
         assert len(respx_mock.calls) == 1

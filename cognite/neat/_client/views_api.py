@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from cognite.neat._data_model.models.dms import ViewReference, ViewResponse
-from cognite.neat._utils.http_client import ItemBody, ItemsRequest, ParametersRequest
+from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
 from .api import NeatAPI
@@ -32,13 +32,12 @@ class ViewsAPI(NeatAPI):
             ItemsRequest(
                 endpoint_url=self._config.create_api_url("/models/views/byids"),
                 method="POST",
-                body=ItemBody(items=items),
-                as_id=lambda v: v,
+                body=ItemIDBody(items=items),
                 parameters={"includeInheritedProperties": include_inherited_properties},
             )
         )
         result.raise_for_status()
-        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
         return result.items
 
     def list(
@@ -79,5 +78,5 @@ class ViewsAPI(NeatAPI):
             )
         )
         result.raise_for_status()
-        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.data)
+        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
         return result.items
