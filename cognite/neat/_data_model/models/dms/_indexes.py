@@ -3,7 +3,8 @@ from typing import Annotated, Literal
 
 from pydantic import Field, TypeAdapter
 
-from ._base import BaseModelObject
+from cognite.neat._utils.useful_types import BaseModelObject
+
 from ._types import Bool
 
 
