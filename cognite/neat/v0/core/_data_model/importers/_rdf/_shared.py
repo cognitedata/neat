@@ -67,13 +67,13 @@ def parse_concepts(
         else:
             # Handling implements
             if concepts[concept_id]["implements"] and isinstance(concepts[concept_id]["implements"], list):
-                if res["implements"] not in concepts[concept_id]["implements"]:
+                if res["implements"] and res["implements"] not in concepts[concept_id]["implements"]:
                     concepts[concept_id]["implements"].append(res["implements"])
 
             elif concepts[concept_id]["implements"] and isinstance(concepts[concept_id]["implements"], str):
                 concepts[concept_id]["implements"] = [concepts[concept_id]["implements"]]
 
-                if res["implements"] not in concepts[concept_id]["implements"]:
+                if res["implements"] and res["implements"] not in concepts[concept_id]["implements"]:
                     concepts[concept_id]["implements"].append(res["implements"])
             elif res["implements"]:
                 concepts[concept_id]["implements"] = [res["implements"]]
