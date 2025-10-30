@@ -4,7 +4,7 @@ import pytest
 import respx
 
 from cognite.neat._client import NeatClient
-from cognite.neat._data_model.deployer import SchemaDeployer
+from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.models.dms import RequestSchema
 
@@ -45,7 +45,19 @@ class TestSchemaDeployer:
                 "All resources should be unchanged as we use the same new as current model"
             )
 
-    def test_deploy(self, neat_client: NeatClient, model: RequestSchema) -> None:
-        deployer = SchemaDeployer(neat_client)
+    def test_deploy_dry_run(
+        self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
+    ) -> None:
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=True))
+        result = deployer.deploy(model)
+        assert result.is_dry_run
+        assert result.status == "pending"
+        assert result.is_success
+        assert result.responses is None
+
+    def test_deploy(
+        self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
+    ) -> None:
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
         with pytest.raises(NotImplementedError):
             deployer.deploy(model)
