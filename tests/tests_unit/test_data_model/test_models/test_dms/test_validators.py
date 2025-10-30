@@ -7,7 +7,7 @@ import respx
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
-from cognite.neat._data_model.models.dms._validation import (
+from cognite.neat._data_model.validation.dms import (
     DmsDataModelValidation,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
