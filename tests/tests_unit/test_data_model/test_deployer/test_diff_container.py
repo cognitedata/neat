@@ -117,7 +117,7 @@ class TestContainerDiffer:
                         field_path="properties.toRemove",
                         item_severity=SeverityType.BREAKING,
                         # See above
-                        old_value=cdf_container.properties["toRemove"],  # type: ignore[index]
+                        current_value=cdf_container.properties["toRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
                         field_path="properties.toModify",
@@ -145,7 +145,7 @@ class TestContainerDiffer:
                         field_path="constraints.constraintToRemove",
                         item_severity=SeverityType.WARNING,
                         # See above
-                        old_value=cdf_container.constraints["constraintToRemove"],  # type: ignore[index]
+                        current_value=cdf_container.constraints["constraintToRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
                         field_path="constraints.constraintToModify",
@@ -168,7 +168,7 @@ class TestContainerDiffer:
                         field_path="indexes.indexToRemove",
                         item_severity=SeverityType.WARNING,
                         # See above
-                        old_value=cdf_container.indexes["indexToRemove"],  # type: ignore[index]
+                        current_value=cdf_container.indexes["indexToRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
                         field_path="indexes.indexToModify",
@@ -461,7 +461,7 @@ class TestContainerDiffer:
                     RemovedField(
                         field_path="unit",
                         item_severity=SeverityType.WARNING,
-                        old_value=Unit(externalId="unit:meter"),
+                        current_value=Unit(externalId="unit:meter"),
                     ),
                 ],
                 id="Float32Property unit removed",
@@ -527,7 +527,7 @@ class TestContainerDiffer:
                     RemovedField(
                         field_path="values.toRemove",
                         item_severity=SeverityType.BREAKING,
-                        old_value=EnumValue(name="Category 2"),
+                        current_value=EnumValue(name="Category 2"),
                     ),
                     FieldChanges(
                         field_path="values.toModify",
