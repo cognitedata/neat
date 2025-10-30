@@ -10,7 +10,7 @@ from cognite.neat._data_model.models.dms import DataModelRequest, ViewReference
 
 
 class TestDataModelDiffer:
-    cdf_datamodel = DataModelRequest(
+    current_datamodel = DataModelRequest(
         space="test_space",
         externalId="test_model",
         version="v1",
@@ -20,7 +20,7 @@ class TestDataModelDiffer:
             ViewReference(space="test_space", external_id="view_1", version="v1"),
         ],
     )
-    changed_datamodel = DataModelRequest(
+    new_datamodel = DataModelRequest(
         space="test_space",
         externalId="test_model",
         version="v1",
@@ -36,12 +36,12 @@ class TestDataModelDiffer:
         "resource,expected_diff",
         [
             pytest.param(
-                cdf_datamodel,
+                current_datamodel,
                 [],
                 id="no changes",
             ),
             pytest.param(
-                changed_datamodel,
+                new_datamodel,
                 [
                     ChangedField(
                         field_path="name",
@@ -58,8 +58,8 @@ class TestDataModelDiffer:
                     ChangedField(
                         field_path="views",
                         item_severity=SeverityType.SAFE,
-                        current_value=str(cdf_datamodel.views),
-                        new_value=str(changed_datamodel.views),
+                        current_value=str(current_datamodel.views),
+                        new_value=str(new_datamodel.views),
                     ),
                 ],
                 id="name, description and views changed",
@@ -67,5 +67,5 @@ class TestDataModelDiffer:
         ],
     )
     def test_datamodel_diff(self, resource: DataModelRequest, expected_diff: list[FieldChange]) -> None:
-        actual_diffs = DataModelDiffer().diff(self.cdf_datamodel, resource)
+        actual_diffs = DataModelDiffer().diff(self.current_datamodel, resource)
         assert expected_diff == actual_diffs
