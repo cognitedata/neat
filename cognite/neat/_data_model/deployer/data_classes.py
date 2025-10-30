@@ -73,11 +73,11 @@ class AddedField(PrimitiveField):
 
 
 class RemovedField(PrimitiveField):
-    old_value: BaseModelObject | str | int | float | bool | None
+    current_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
-        return f"removed (was {self.old_value!r})"
+        return f"removed (was {self.current_value!r})"
 
 
 class ChangedField(PrimitiveField):

@@ -272,7 +272,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
 
     def _check_float_unit(self, current: Unit | None, new: Unit | None) -> list[FieldChange]:
         if current is not None and new is None:
-            return [RemovedField(field_path="unit", item_severity=SeverityType.WARNING, old_value=current)]
+            return [RemovedField(field_path="unit", item_severity=SeverityType.WARNING, current_value=current)]
         elif current is None and new is not None:
             return [AddedField(field_path="unit", item_severity=SeverityType.WARNING, new_value=new)]
         elif current is not None and new is not None:

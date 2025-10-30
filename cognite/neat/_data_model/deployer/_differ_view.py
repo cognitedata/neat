@@ -8,42 +8,42 @@ from cognite.neat._data_model.models.dms._view_property import (
     ViewCoreProperty,
 )
 
-from ._differ import ItemDiffer, diff_container
+from ._differ import ItemDiffer, field_differences
 from .data_classes import (
-    PrimitivePropertyChange,
-    PropertyChange,
+    ChangedField,
+    FieldChange,
     SeverityType,
 )
 
 
 class ViewDiffer(ItemDiffer[ViewRequest]):
-    def diff(self, cdf_view: ViewRequest, desired_view: ViewRequest) -> list[PropertyChange]:
-        changes: list[PropertyChange] = self._check_name_description(cdf_view, desired_view)
+    def diff(self, cdf_view: ViewRequest, desired_view: ViewRequest) -> list[FieldChange]:
+        changes: list[FieldChange] = self._diff_name_description(cdf_view, desired_view)
 
         if cdf_view.filter != desired_view.filter:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="filter",
                     item_severity=SeverityType.BREAKING,
                     new_value=str(desired_view.filter),
-                    old_value=str(cdf_view.filter),
+                    current_value=str(cdf_view.filter),
                 )
             )
         if cdf_view.implements != desired_view.implements:
             # Note that order of implements list is significant
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="implements",
                     item_severity=SeverityType.BREAKING,
                     new_value=str(desired_view.implements),
-                    old_value=str(cdf_view.implements),
+                    current_value=str(cdf_view.implements),
                 )
             )
         changes.extend(
             # MyPy fails to recognize that ViewPropertyDefinition and
             # the union ViewRequestProperty are the same here.
-            diff_container(  # type: ignore[misc]
-                "properties.",
+            field_differences(  # type: ignore[misc]
+                "properties",
                 cdf_view.properties,
                 desired_view.properties,
                 add_severity=SeverityType.SAFE,
@@ -58,66 +58,64 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
 class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
     def diff(
         self,
-        cdf_property: ViewPropertyDefinition,
-        desired_property: ViewPropertyDefinition,
-    ) -> list[PropertyChange]:
-        changes: list[PropertyChange] = self._check_name_description(cdf_property, desired_property)
-        if cdf_property.connection_type != desired_property.connection_type:
+        current: ViewPropertyDefinition,
+        new: ViewPropertyDefinition,
+    ) -> list[FieldChange]:
+        changes: list[FieldChange] = self._diff_name_description(current, new)
+        if current.connection_type != new.connection_type:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="connectionType",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_property.connection_type,
-                    old_value=cdf_property.connection_type,
+                    new_value=new.connection_type,
+                    current_value=current.connection_type,
                 )
             )
-        elif isinstance(cdf_property, ViewCoreProperty) and isinstance(desired_property, ViewCoreProperty):
-            changes.extend(self._diff_core_property(cdf_property, desired_property))
+        elif isinstance(current, ViewCoreProperty) and isinstance(new, ViewCoreProperty):
+            changes.extend(self._diff_core_property(current, new))
 
-        elif isinstance(cdf_property, EdgeProperty) and isinstance(desired_property, EdgeProperty):
-            changes.extend(self._diff_edge_property(cdf_property, desired_property))
+        elif isinstance(current, EdgeProperty) and isinstance(new, EdgeProperty):
+            changes.extend(self._diff_edge_property(current, new))
 
-        elif isinstance(cdf_property, ReverseDirectRelationProperty) and isinstance(
-            desired_property, ReverseDirectRelationProperty
-        ):
-            changes.extend(self._diff_reverse_direct_relation_property(cdf_property, desired_property))
+        elif isinstance(current, ReverseDirectRelationProperty) and isinstance(new, ReverseDirectRelationProperty):
+            changes.extend(self._diff_reverse_direct_relation_property(current, new))
 
         return changes
 
     def _diff_core_property(
         self,
-        cdf_property: ViewCoreProperty,
-        desired_property: ViewCoreProperty,
-    ) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+        current: ViewCoreProperty,
+        new: ViewCoreProperty,
+    ) -> list[FieldChange]:
+        changes: list[FieldChange] = []
 
-        if cdf_property.container != desired_property.container:
+        if current.container != new.container:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="container",
                     # Todo check container type.
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_property.container,
-                    old_value=cdf_property.container,
+                    new_value=new.container,
+                    current_value=current.container,
                 )
             )
-        if cdf_property.container_property_identifier != desired_property.container_property_identifier:
+        if current.container_property_identifier != new.container_property_identifier:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="containerPropertyIdentifier",
                     # Todo check container property type.
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_property.container_property_identifier,
-                    old_value=cdf_property.container_property_identifier,
+                    new_value=new.container_property_identifier,
+                    current_value=current.container_property_identifier,
                 )
             )
-        if cdf_property.source != desired_property.source:
+        if current.source != new.source:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="source",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_property.source,
-                    old_value=cdf_property.source,
+                    new_value=new.source,
+                    current_value=current.source,
                 )
             )
 
@@ -125,71 +123,71 @@ class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
 
     def _diff_edge_property(
         self,
-        cdf_edge: EdgeProperty,
-        desired_edge: EdgeProperty,
-    ) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
-        if cdf_edge.source != desired_edge.source:
+        current: EdgeProperty,
+        new: EdgeProperty,
+    ) -> list[FieldChange]:
+        changes: list[FieldChange] = []
+        if current.source != new.source:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="source",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_edge.source,
-                    old_value=cdf_edge.source,
+                    new_value=new.source,
+                    current_value=current.source,
                 )
             )
-        if cdf_edge.type != desired_edge.type:
+        if current.type != new.type:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="type",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_edge.type,
-                    old_value=cdf_edge.type,
+                    new_value=new.type,
+                    current_value=current.type,
                 )
             )
-        if cdf_edge.edge_source != desired_edge.edge_source:
+        if current.edge_source != new.edge_source:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="edgeSource",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_edge.edge_source,
-                    old_value=cdf_edge.edge_source,
+                    new_value=new.edge_source,
+                    current_value=current.edge_source,
                 )
             )
-        if cdf_edge.direction != desired_edge.direction:
+        if current.direction != new.direction:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="direction",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_edge.direction,
-                    old_value=cdf_edge.direction,
+                    new_value=new.direction,
+                    current_value=current.direction,
                 )
             )
         return changes
 
     def _diff_reverse_direct_relation_property(
         self,
-        cdf_relation: ReverseDirectRelationProperty,
-        desired_relation: ReverseDirectRelationProperty,
-    ) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
-        if cdf_relation.source != desired_relation.source:
+        current: ReverseDirectRelationProperty,
+        new: ReverseDirectRelationProperty,
+    ) -> list[FieldChange]:
+        changes: list[FieldChange] = []
+        if current.source != new.source:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="source",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_relation.source,
-                    old_value=cdf_relation.source,
+                    new_value=new.source,
+                    current_value=current.source,
                 )
             )
 
-        if cdf_relation.through != desired_relation.through:
+        if current.through != new.through:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     field_path="through",
                     item_severity=SeverityType.BREAKING,
-                    new_value=desired_relation.through,
-                    old_value=cdf_relation.through,
+                    new_value=new.through,
+                    current_value=current.through,
                 )
             )
 
