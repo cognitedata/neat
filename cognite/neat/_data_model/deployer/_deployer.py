@@ -140,8 +140,11 @@ class SchemaDeployer:
         return ResourceDeploymentPlan(endpoint=endpoint, resources=resources)
 
     def should_proceed_to_deploy(self, plan: list[ResourceDeploymentPlan]) -> bool:
-        # Placeholder for actual implementation
-        return True
+        max_severity_in_plan = SeverityType.max_severity(
+            [change.severity for resource_plan in plan for change in resource_plan.resources],
+            default=SeverityType.SAFE,
+        )
+        return max_severity_in_plan.value <= self.options.max_severity.value
 
     def apply_changes(self, plan: list[ResourceDeploymentPlan]) -> AppliedChanges:
         raise NotImplementedError()
