@@ -46,14 +46,14 @@ class TestContainerDiffer:
             "toRemove": ContainerPropertyDefinition(type=TextProperty()),
         },
         constraints={
-            "toModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=True),
-            "toRemove": RequiresConstraintDefinition(
+            "constraintToModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=True),
+            "constraintToRemove": RequiresConstraintDefinition(
                 require=ContainerReference(space="other_space", external_id="other_container"),
             ),
         },
         indexes={
-            "toModify": BtreeIndex(properties=["toModify"], cursorable=True, bySpace=False),
-            "toRemove": InvertedIndex(properties=["toModify"]),
+            "indexToModify": BtreeIndex(properties=["toModify"], cursorable=True, bySpace=False),
+            "indexToRemove": InvertedIndex(properties=["toModify"]),
         },
     )
     changed_container = ContainerRequest(
@@ -67,14 +67,14 @@ class TestContainerDiffer:
             "toAdd": ContainerPropertyDefinition(type=Int32Property()),
         },
         constraints={
-            "toModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=False),
-            "toAdd": RequiresConstraintDefinition(
+            "constraintToModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=False),
+            "constraintToAdd": RequiresConstraintDefinition(
                 require=ContainerReference(space="new_space", external_id="new_container"),
             ),
         },
         indexes={
-            "toModify": BtreeIndex(properties=["toModify", "toAdd"], cursorable=True, bySpace=False),
-            "toAdd": InvertedIndex(properties=["toAdd"]),
+            "indexToModify": BtreeIndex(properties=["toModify", "toAdd"], cursorable=True, bySpace=False),
+            "indexToAdd": InvertedIndex(properties=["toAdd"]),
         },
     )
 
@@ -136,19 +136,19 @@ class TestContainerDiffer:
                         ],
                     ),
                     AddedField(
-                        field_path="constraints.toAdd",
+                        field_path="constraints.constraintToAdd",
                         item_severity=SeverityType.SAFE,
                         # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
-                        new_value=changed_container.constraints["toAdd"],  # type: ignore[index]
+                        new_value=changed_container.constraints["constraintToAdd"],  # type: ignore[index]
                     ),
                     RemovedField(
-                        field_path="constraints.toRemove",
+                        field_path="constraints.constraintToRemove",
                         item_severity=SeverityType.WARNING,
                         # See above
-                        old_value=cdf_container.constraints["toRemove"],  # type: ignore[index]
+                        old_value=cdf_container.constraints["constraintToRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
-                        field_path="constraints.toModify",
+                        field_path="constraints.constraintToModify",
                         changes=[
                             ChangedField(
                                 field_path="bySpace",
@@ -159,19 +159,19 @@ class TestContainerDiffer:
                         ],
                     ),
                     AddedField(
-                        field_path="indexes.toAdd",
+                        field_path="indexes.indexToAdd",
                         item_severity=SeverityType.SAFE,
                         # MyPy do not see that we hardcoded the "toAdd" key in the changed_container
-                        new_value=changed_container.indexes["toAdd"],  # type: ignore[index]
+                        new_value=changed_container.indexes["indexToAdd"],  # type: ignore[index]
                     ),
                     RemovedField(
-                        field_path="indexes.toRemove",
+                        field_path="indexes.indexToRemove",
                         item_severity=SeverityType.WARNING,
                         # See above
-                        old_value=cdf_container.indexes["toRemove"],  # type: ignore[index]
+                        old_value=cdf_container.indexes["indexToRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
-                        field_path="indexes.toModify",
+                        field_path="indexes.indexToModify",
                         changes=[
                             ChangedField(
                                 field_path="properties",
