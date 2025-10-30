@@ -79,8 +79,8 @@ class SchemaDeployer:
             return DeploymentResult(
                 status="success", plan=plan, snapshot=snapshot, responses=changes, recovery=recovery
             )
-
-        return DeploymentResult(status="success", plan=plan, snapshot=snapshot, responses=changes)
+        status: Literal["success", "failure", "partial", "pending"] = "success" if changes.is_success else "partial"
+        return DeploymentResult(status=status, plan=plan, snapshot=snapshot, responses=changes)
 
     def fetch_cdf_state(self, data_model: RequestSchema) -> SchemaSnapshot:
         now = datetime.now(tz=timezone.utc)
