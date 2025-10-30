@@ -15,35 +15,35 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._data_model.models.dms._data_types import Unit
 
-from ._differ import ItemDiffer, diff_container
+from ._differ import ItemDiffer, field_differences
 from .data_classes import (
-    AddedProperty,
-    ContainerPropertyChange,
-    PrimitivePropertyChange,
-    PropertyChange,
-    RemovedProperty,
+    AddedField,
+    ChangedField,
+    FieldChange,
+    FieldChanges,
+    RemovedField,
     SeverityType,
 )
 
 
 class ContainerDiffer(ItemDiffer[ContainerRequest]):
-    def diff(self, cdf_container: ContainerRequest, container: ContainerRequest) -> list[PropertyChange]:
-        changes = self._check_name_description(cdf_container, container)
+    def diff(self, current: ContainerRequest, new: ContainerRequest) -> list[FieldChange]:
+        changes = self._diff_name_description(current, new)
 
-        if cdf_container.used_for != container.used_for:
+        if current.used_for != new.used_for:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING,
                     field_path="usedFor",
-                    old_value=cdf_container.used_for,
-                    new_value=container.used_for,
+                    current_value=current.used_for,
+                    new_value=new.used_for,
                 )
             )
         changes.extend(
-            diff_container(
+            field_differences(
                 "properties.",
-                cdf_container.properties,
-                container.properties,
+                current.properties,
+                new.properties,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
                 differ=ContainerPropertyDiffer(),
@@ -51,10 +51,10 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
         )
         changes.extend(
             # MyPy fails to understand that ConstraintDefinition and Constraint are compatible here
-            diff_container(  # type: ignore[misc]
+            field_differences(  # type: ignore[misc]
                 "constraints.",
-                cdf_container.constraints,
-                container.constraints,
+                current.constraints,
+                new.constraints,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.WARNING,
                 differ=ConstraintDiffer(),
@@ -62,10 +62,10 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
         )
         changes.extend(
             # MyPy fails to understand that IndexDefinition and Index are compatible here
-            diff_container(  # type: ignore[misc]
+            field_differences(  # type: ignore[misc]
                 "indexes.",
-                cdf_container.indexes,
-                container.indexes,
+                current.indexes,
+                new.indexes,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.WARNING,
                 differ=IndexDiffer(),
@@ -78,47 +78,47 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
 class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
     def diff(
         self, cdf_property: ContainerPropertyDefinition, desired_property: ContainerPropertyDefinition
-    ) -> list[PropertyChange]:
-        changes = self._check_name_description(cdf_property, desired_property)
+    ) -> list[FieldChange]:
+        changes = self._diff_name_description(cdf_property, desired_property)
         diffs = DataTypeDiffer().diff(cdf_property.type, desired_property.type)
         if diffs:
-            changes.append(ContainerPropertyChange(field_path="type", changed_items=diffs))
+            changes.append(FieldChanges(field_path="type", changes=diffs))
 
         if cdf_property.immutable != desired_property.immutable:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING,
                     field_path="immutable",
-                    old_value=cdf_property.immutable,
+                    current_value=cdf_property.immutable,
                     new_value=desired_property.immutable,
                 )
             )
 
         if cdf_property.nullable != desired_property.nullable:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING,
                     field_path="nullable",
-                    old_value=cdf_property.nullable,
+                    current_value=cdf_property.nullable,
                     new_value=desired_property.nullable,
                 )
             )
         if cdf_property.auto_increment != desired_property.auto_increment:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING,
                     field_path="autoIncrement",
-                    old_value=cdf_property.auto_increment,
+                    current_value=cdf_property.auto_increment,
                     new_value=desired_property.auto_increment,
                 )
             )
 
         if cdf_property.default_value != desired_property.default_value:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING,
                     field_path="defaultValue",
-                    old_value=str(cdf_property.default_value),
+                    current_value=str(cdf_property.default_value),
                     new_value=str(desired_property.default_value),
                 )
             )
@@ -126,16 +126,14 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
 
 
 class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
-    def diff(
-        self, cdf_constraint: ConstraintDefinition, desired_constraint: ConstraintDefinition
-    ) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+    def diff(self, cdf_constraint: ConstraintDefinition, desired_constraint: ConstraintDefinition) -> list[FieldChange]:
+        changes: list[FieldChange] = []
         if cdf_constraint.constraint_type != desired_constraint.constraint_type:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.WARNING,
                     field_path="constraintType",
-                    old_value=cdf_constraint.constraint_type,
+                    current_value=cdf_constraint.constraint_type,
                     new_value=desired_constraint.constraint_type,
                 )
             )
@@ -145,10 +143,10 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
             and cdf_constraint.require != desired_constraint.require
         ):
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.WARNING,
                     field_path="require",
-                    old_value=str(cdf_constraint.require),
+                    current_value=str(cdf_constraint.require),
                     new_value=str(desired_constraint.require),
                 )
             )
@@ -158,19 +156,19 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
             # The order of the properties matter.
             if cdf_constraint.properties != desired_constraint.properties:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.WARNING,
                         field_path="properties",
-                        old_value=str(cdf_constraint.properties),
+                        current_value=str(cdf_constraint.properties),
                         new_value=str(desired_constraint.properties),
                     )
                 )
             if cdf_constraint.by_space != desired_constraint.by_space:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.WARNING,
                         field_path="bySpace",
-                        old_value=cdf_constraint.by_space,
+                        current_value=cdf_constraint.by_space,
                         new_value=desired_constraint.by_space,
                     )
                 )
@@ -179,43 +177,43 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
 
 
 class IndexDiffer(ItemDiffer[IndexDefinition]):
-    def diff(self, cdf_index: IndexDefinition, desired_index: IndexDefinition) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+    def diff(self, cdf_index: IndexDefinition, desired_index: IndexDefinition) -> list[FieldChange]:
+        changes: list[FieldChange] = []
         if cdf_index.index_type != desired_index.index_type:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.WARNING,
                     field_path="indexType",
-                    old_value=cdf_index.index_type,
+                    current_value=cdf_index.index_type,
                     new_value=desired_index.index_type,
                 )
             )
         else:
             if cdf_index.properties != desired_index.properties:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.WARNING,
                         field_path="properties",
-                        old_value=str(cdf_index.properties),
+                        current_value=str(cdf_index.properties),
                         new_value=str(desired_index.properties),
                     )
                 )
         if isinstance(cdf_index, BtreeIndex) and isinstance(desired_index, BtreeIndex):
             if cdf_index.cursorable != desired_index.cursorable:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.WARNING,
                         field_path="cursorable",
-                        old_value=cdf_index.cursorable,
+                        current_value=cdf_index.cursorable,
                         new_value=desired_index.cursorable,
                     )
                 )
             if cdf_index.by_space != desired_index.by_space:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.WARNING,
                         field_path="bySpace",
-                        old_value=cdf_index.by_space,
+                        current_value=cdf_index.by_space,
                         new_value=desired_index.by_space,
                     )
                 )
@@ -223,14 +221,14 @@ class IndexDiffer(ItemDiffer[IndexDefinition]):
 
 
 class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
-    def diff(self, cdf_type: PropertyTypeDefinition, desired_type: PropertyTypeDefinition) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+    def diff(self, cdf_type: PropertyTypeDefinition, desired_type: PropertyTypeDefinition) -> list[FieldChange]:
+        changes: list[FieldChange] = []
         if cdf_type.type != desired_type.type:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING,
                     field_path="type",
-                    old_value=cdf_type.type,
+                    current_value=cdf_type.type,
                     new_value=desired_type.type,
                 )
             )
@@ -252,100 +250,100 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
 
     def _check_listable_property(
         self, cdf_type: ListablePropertyTypeDefinition, desired_type: ListablePropertyTypeDefinition
-    ) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+    ) -> list[FieldChange]:
+        changes: list[FieldChange] = []
         if cdf_type.list != desired_type.list:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING,
                     field_path="list",
-                    old_value=cdf_type.list,
+                    current_value=cdf_type.list,
                     new_value=desired_type.list,
                 )
             )
         if cdf_type.max_list_size != desired_type.max_list_size:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING
                     if desired_type.max_list_size is not None
                     and cdf_type.max_list_size is not None
                     and desired_type.max_list_size < cdf_type.max_list_size
                     else SeverityType.WARNING,
                     field_path="maxListSize",
-                    old_value=cdf_type.max_list_size,
+                    current_value=cdf_type.max_list_size,
                     new_value=desired_type.max_list_size,
                 )
             )
         return changes
 
-    def _check_float_unit(self, cdf_unit: Unit | None, desired_unit: Unit | None) -> list[PropertyChange]:
+    def _check_float_unit(self, cdf_unit: Unit | None, desired_unit: Unit | None) -> list[FieldChange]:
         if cdf_unit is not None and desired_unit is None:
-            return [RemovedProperty(field_path="unit", item_severity=SeverityType.WARNING, old_value=cdf_unit)]
+            return [RemovedField(field_path="unit", item_severity=SeverityType.WARNING, old_value=cdf_unit)]
         elif cdf_unit is None and desired_unit is not None:
-            return [AddedProperty(field_path="unit", item_severity=SeverityType.WARNING, new_value=desired_unit)]
+            return [AddedField(field_path="unit", item_severity=SeverityType.WARNING, new_value=desired_unit)]
         elif cdf_unit is not None and desired_unit is not None:
-            changes: list[PropertyChange] = []
+            changes: list[FieldChange] = []
             if cdf_unit.external_id != desired_unit.external_id:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.WARNING,
                         field_path="externalId",
-                        old_value=cdf_unit.external_id,
+                        current_value=cdf_unit.external_id,
                         new_value=desired_unit.external_id,
                     )
                 )
             if cdf_unit.source_unit != desired_unit.source_unit:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.WARNING,
                         field_path="sourceUnit",
-                        old_value=cdf_unit.source_unit,
+                        current_value=cdf_unit.source_unit,
                         new_value=desired_unit.source_unit,
                     )
                 )
             if changes:
-                return [ContainerPropertyChange(field_path="unit", changed_items=changes)]
+                return [FieldChanges(field_path="unit", changes=changes)]
         return []  # No changes
 
-    def _check_text_property(self, cdf_type: TextProperty, desired_type: TextProperty) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+    def _check_text_property(self, cdf_type: TextProperty, desired_type: TextProperty) -> list[FieldChange]:
+        changes: list[FieldChange] = []
         if cdf_type.max_text_size != desired_type.max_text_size:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.BREAKING
                     if desired_type.max_text_size is not None
                     and cdf_type.max_text_size is not None
                     and desired_type.max_text_size < cdf_type.max_text_size
                     else SeverityType.WARNING,
                     field_path="maxTextSize",
-                    old_value=cdf_type.max_text_size,
+                    current_value=cdf_type.max_text_size,
                     new_value=desired_type.max_text_size,
                 )
             )
         if cdf_type.collation != desired_type.collation:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.WARNING,
                     field_path="collation",
-                    old_value=cdf_type.collation,
+                    current_value=cdf_type.collation,
                     new_value=desired_type.collation,
                 )
             )
         return changes
 
-    def _check_enum_property(self, cdf_type: EnumProperty, desired_type: EnumProperty) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+    def _check_enum_property(self, cdf_type: EnumProperty, desired_type: EnumProperty) -> list[FieldChange]:
+        changes: list[FieldChange] = []
         if cdf_type.unknown_value != desired_type.unknown_value:
             changes.append(
-                PrimitivePropertyChange(
+                ChangedField(
                     item_severity=SeverityType.WARNING,
                     field_path="unknownValue",
-                    old_value=cdf_type.unknown_value,
+                    current_value=cdf_type.unknown_value,
                     new_value=desired_type.unknown_value,
                 )
             )
         changes.extend(
-            diff_container(
+            field_differences(
                 "values.",
                 cdf_type.values,
                 desired_type.values,
@@ -358,5 +356,5 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
 
 
 class EnumValueDiffer(ItemDiffer[EnumValue]):
-    def diff(self, cdf_value: EnumValue, desired_value: EnumValue) -> list[PropertyChange]:
-        return self._check_name_description(cdf_value, desired_value)
+    def diff(self, cdf_value: EnumValue, desired_value: EnumValue) -> list[FieldChange]:
+        return self._diff_name_description(cdf_value, desired_value)

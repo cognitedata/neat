@@ -4,11 +4,11 @@ from typing import Generic
 from cognite.neat._data_model.models.dms import T_Item
 
 from .data_classes import (
-    AddedProperty,
-    ContainerPropertyChange,
-    PrimitivePropertyChange,
-    PropertyChange,
-    RemovedProperty,
+    AddedField,
+    ChangedField,
+    FieldChange,
+    FieldChanges,
+    RemovedField,
     SeverityType,
 )
 
@@ -17,7 +17,7 @@ class ItemDiffer(Generic[T_Item], ABC):
     """A generic class for comparing two items of the same type and reporting the differences."""
 
     @abstractmethod
-    def diff(self, cdf_resource: T_Item, desired_resource: T_Item) -> list[PropertyChange]:
+    def diff(self, cdf_resource: T_Item, desired_resource: T_Item) -> list[FieldChange]:
         """Compare two items and return a list of changes.
 
         Args:
@@ -30,39 +30,39 @@ class ItemDiffer(Generic[T_Item], ABC):
         raise NotImplementedError()
 
     @classmethod
-    def _check_name_description(cls, cdf_item: T_Item, desired_item: T_Item) -> list[PropertyChange]:
-        changes: list[PropertyChange] = []
+    def _diff_name_description(cls, cdf_item: T_Item, desired_item: T_Item) -> list[FieldChange]:
+        changes: list[FieldChange] = []
         if hasattr(cdf_item, "name") and hasattr(desired_item, "name"):
             if cdf_item.name != desired_item.name:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.SAFE,
                         field_path="name",
-                        old_value=cdf_item.name,
+                        current_value=cdf_item.name,
                         new_value=desired_item.name,
                     )
                 )
         if hasattr(cdf_item, "description") and hasattr(desired_item, "description"):
             if cdf_item.description != desired_item.description:
                 changes.append(
-                    PrimitivePropertyChange(
+                    ChangedField(
                         item_severity=SeverityType.SAFE,
                         field_path="description",
-                        old_value=cdf_item.description,
+                        current_value=cdf_item.description,
                         new_value=desired_item.description,
                     )
                 )
         return changes
 
 
-def diff_container(
+def field_differences(
     parent_path: str,
     cdf_items: dict[str, T_Item] | None,
     desired_items: dict[str, T_Item] | None,
     add_severity: SeverityType,
     remove_severity: SeverityType,
     differ: ItemDiffer[T_Item],
-) -> list[PropertyChange]:
+) -> list[FieldChange]:
     """Diff two containers of items.
 
     A container is for example the properties, constraints, or indexes of a container,
@@ -77,7 +77,7 @@ def diff_container(
         differ: The differ to use for comparing individual items.
 
     """
-    changes: list[PropertyChange] = []
+    changes: list[FieldChange] = []
     cdf_items_map = cdf_items or {}
     desired_items_map = desired_items or {}
     cdf_keys = set(cdf_items_map.keys())
@@ -86,7 +86,7 @@ def diff_container(
     for key in sorted(desired_keys - cdf_keys):
         item_path = f"{parent_path}{key}"
         changes.append(
-            AddedProperty(
+            AddedField(
                 item_severity=add_severity,
                 field_path=item_path,
                 new_value=desired_items_map[key],
@@ -95,7 +95,7 @@ def diff_container(
 
     for key in sorted(cdf_keys - desired_keys):
         changes.append(
-            RemovedProperty(
+            RemovedField(
                 item_severity=remove_severity,
                 field_path=f"{parent_path}{key}",
                 old_value=cdf_items_map[key],
@@ -108,6 +108,6 @@ def diff_container(
         desired_item = desired_items_map[key]
         diffs = differ.diff(cdf_item, desired_item)
         if diffs:
-            changes.append(ContainerPropertyChange(field_path=item_path, changed_items=diffs))
+            changes.append(FieldChanges(field_path=item_path, changes=diffs))
 
     return changes
