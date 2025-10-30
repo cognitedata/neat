@@ -2,7 +2,8 @@ from typing import Literal
 
 from pydantic import Field
 
-from ._base import ReferenceObject
+from cognite.neat._utils.useful_types import ReferenceObject
+
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
@@ -10,6 +11,15 @@ from ._constants import (
     INSTANCE_ID_PATTERN,
     SPACE_FORMAT_PATTERN,
 )
+
+
+class SpaceReference(ReferenceObject):
+    space: str = Field(
+        description="Id of the space.",
+        min_length=1,
+        max_length=43,
+        pattern=SPACE_FORMAT_PATTERN,
+    )
 
 
 class ContainerReference(ReferenceObject):
@@ -26,6 +36,9 @@ class ContainerReference(ReferenceObject):
         max_length=255,
         pattern=DM_EXTERNAL_ID_PATTERN,
     )
+
+    def __str__(self) -> str:
+        return f"{self.space}:{self.external_id}"
 
 
 class ViewReference(ReferenceObject):

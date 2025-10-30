@@ -1,8 +1,7 @@
 from cognite.neat._data_model.models.dms._base import (
     APIResource,
+    BaseModelObject,
     Resource,
-    T_Item,
-    T_Reference,
     T_Resource,
     WriteableResource,
 )
@@ -46,11 +45,13 @@ from cognite.neat._data_model.models.dms._indexes import BtreeIndex, Index, Inde
 from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, SpaceResponse
 
 from ._data_model import DataModelRequest, DataModelResponse
+from ._http import DataModelBody, DataModelResource
 from ._references import (
     ContainerDirectReference,
     ContainerReference,
     DataModelReference,
     NodeReference,
+    SpaceReference,
     ViewDirectReference,
     ViewReference,
 )
@@ -80,6 +81,7 @@ from ._views import (
 __all__ = [
     "DMS_DATA_TYPES",
     "APIResource",
+    "BaseModelObject",
     "BooleanProperty",
     "BtreeIndex",
     "ConnectionPropertyDefinition",
@@ -93,8 +95,10 @@ __all__ = [
     "ContainerReference",
     "ContainerRequest",
     "ContainerResponse",
+    "DataModelBody",
     "DataModelReference",
     "DataModelRequest",
+    "DataModelResource",
     "DataModelResponse",
     "DataType",
     "DataTypeAdapter",
@@ -128,10 +132,9 @@ __all__ = [
     "SingleReverseDirectRelationPropertyRequest",
     "SingleReverseDirectRelationPropertyResponse",
     "Space",
+    "SpaceReference",
     "SpaceRequest",
     "SpaceResponse",
-    "T_Item",
-    "T_Reference",
     "T_Resource",
     "TextProperty",
     "TextProperty",

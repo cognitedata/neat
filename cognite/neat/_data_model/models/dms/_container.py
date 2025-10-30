@@ -6,8 +6,9 @@ from pydantic import Field, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from cognite.neat._utils.text import humanize_collection
+from cognite.neat._utils.useful_types import BaseModelObject
 
-from ._base import APIResource, BaseModelObject, Resource, WriteableResource
+from ._base import APIResource, Resource, WriteableResource
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     DM_EXTERNAL_ID_PATTERN,
@@ -36,7 +37,7 @@ class ContainerPropertyDefinition(BaseModelObject):
         default=None,
         description="Increment the property based on its highest current value (max value).",
     )
-    default_value: str | int | bool | dict[str, Any] | None = Field(
+    default_value: str | int | float | bool | dict[str, Any] | None = Field(
         default=None,
         description="Default value to use when you do not specify a value for the property.",
     )

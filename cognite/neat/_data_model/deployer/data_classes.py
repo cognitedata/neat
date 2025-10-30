@@ -7,18 +7,19 @@ from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.dms import (
+    BaseModelObject,
     ContainerReference,
     ContainerRequest,
     DataModelReference,
     DataModelRequest,
     NodeReference,
     SpaceRequest,
-    T_Reference,
     T_Resource,
     ViewReference,
     ViewRequest,
 )
 from cognite.neat._utils.http_client._data_classes import HTTPMessage
+from cognite.neat._utils.useful_types import T_Reference
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -41,7 +42,7 @@ class BaseDeployObject(BaseModel, alias_generator=to_camel, extra="ignore", popu
     ...
 
 
-class PropertyChange(BaseDeployObject, ABC):
+class FieldChange(BaseDeployObject, ABC):
     """Represents a change to a specific property or field."""
 
     field_path: JsonPath
@@ -53,7 +54,7 @@ class PropertyChange(BaseDeployObject, ABC):
         raise NotImplementedError()
 
 
-class PrimitiveProperty(PropertyChange, ABC):
+class PrimitiveField(FieldChange, ABC):
     """Base class for changes to primitive properties."""
 
     item_severity: SeverityType
@@ -63,46 +64,50 @@ class PrimitiveProperty(PropertyChange, ABC):
         return self.item_severity
 
 
-class AddedProperty(PrimitiveProperty):
-    new_value: str | int | float | bool | None
+class AddedField(PrimitiveField):
+    new_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
         return f"added with value {self.new_value!r}"
 
 
-class RemovedProperty(PrimitiveProperty):
-    old_value: str | int | float | bool | None
+class RemovedField(PrimitiveField):
+    current_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
-        return f"removed (was {self.old_value!r})"
+        return f"removed (was {self.current_value!r})"
 
 
-class PrimitivePropertyChange(PrimitiveProperty):
-    new_value: str | int | float | bool | None
-    old_value: str | int | float | bool | None
+class ChangedField(PrimitiveField):
+    new_value: BaseModelObject | str | int | float | bool | None
+    current_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
-        return f"changed from {self.old_value!r} to {self.new_value!r}"
+        if self.new_value is None:
+            return f"removed (was {self.current_value!r})"
+        elif self.current_value is None:
+            return f"added with value {self.new_value!r}"
+        return f"changed from {self.current_value!r} to {self.new_value!r}"
 
 
-class ContainerPropertyChange(PropertyChange):
+class FieldChanges(FieldChange):
     """Represents a nested property, i.e., a property that contains other properties."""
 
-    changed_items: list[PropertyChange]
+    changes: list[FieldChange]
 
     @property
     def severity(self) -> SeverityType:
-        return SeverityType.max_severity([item.severity for item in self.changed_items], default=SeverityType.SAFE)
+        return SeverityType.max_severity([item.severity for item in self.changes], default=SeverityType.SAFE)
 
 
 class ResourceChange(BaseDeployObject, Generic[T_Reference, T_Resource]):
     resource_id: T_Reference
     new_value: T_Resource
     old_value: T_Resource | None = None
-    changes: list[PropertyChange] = Field(default_factory=list)
+    changes: list[FieldChange] = Field(default_factory=list)
 
     @property
     def change_type(self) -> Literal["create", "update", "delete", "unchanged"]:
