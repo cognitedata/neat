@@ -17,12 +17,12 @@ class ItemDiffer(Generic[T_Item], ABC):
     """A generic class for comparing two items of the same type and reporting the differences."""
 
     @abstractmethod
-    def diff(self, cdf_resource: T_Item, desired_resource: T_Item) -> list[FieldChange]:
+    def diff(self, current: T_Item, new: T_Item) -> list[FieldChange]:
         """Compare two items and return a list of changes.
 
         Args:
-            cdf_resource: The resource as it is in CDF.
-            desired_resource: The resource as it is desired to be.
+            current: The resource as it is in CDF.
+            new: The resource as it is desired to be.
 
         Returns:
             A list of changes between the two resources.
@@ -98,7 +98,7 @@ def field_differences(
             RemovedField(
                 item_severity=remove_severity,
                 field_path=f"{parent_path}.{key}",
-                old_value=current_map[key],
+                current_value=current_map[key],
             )
         )
 
