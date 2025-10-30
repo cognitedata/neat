@@ -105,5 +105,47 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
         VersionSpaceInconsistency.code,
     }
     assert len(by_code[ViewsWithoutProperties.code]) == 2
+    views_without_properties_messages = [issue.message for issue in by_code[ViewsWithoutProperties.code]]
+    expected_views = {"another_space:MissingProperties(version=v2)", "my_space:MissingProperties(version=v2)"}
+
+    # Check that both expected views are mentioned in the messages
+    found_views = set()
+    for message in views_without_properties_messages:
+        for expected_view in expected_views:
+            if expected_view in message:
+                found_views.add(expected_view)
+
+    assert found_views == expected_views
     assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 3
+
+    undefined_connection_messages = [issue.message for issue in by_code[UndefinedConnectionEndNodeTypes.code]]
+    expected_connections = {
+        "cdf_cdm:UnexistingDirectConnection(version=v1)",
+        "cdf_cdm:UnexistingReverseConnection(version=v1)",
+        "cdf_cdm:UnexistingEdgeConnection(version=v1)",
+    }
+
+    # Check that all expected connections are mentioned in the messages
+    found_connections = set()
+    for message in undefined_connection_messages:
+        for expected_connection in expected_connections:
+            if expected_connection in message:
+                found_connections.add(expected_connection)
+
+    assert found_connections == expected_connections
+
     assert len(by_code[VersionSpaceInconsistency.code]) == 2
+    version_space_inconsistency_messages = [issue.message for issue in by_code[VersionSpaceInconsistency.code]]
+    expected_inconsistent_views = {
+        "another_space:MissingProperties(version=v2)",
+        "my_space:MissingProperties(version=v2)",
+    }
+
+    # Check that both expected views are mentioned in the messages
+    found_inconsistent_views = set()
+    for message in version_space_inconsistency_messages:
+        for expected_view in expected_inconsistent_views:
+            if expected_view in message:
+                found_inconsistent_views.add(expected_view)
+
+    assert found_inconsistent_views == expected_inconsistent_views
