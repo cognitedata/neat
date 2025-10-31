@@ -63,13 +63,6 @@ class TestSchemaDeployer:
         assert result.is_success
         assert result.responses is None
 
-    def test_deploy(
-        self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
-    ) -> None:
-        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
-        with pytest.raises(NotImplementedError):
-            deployer.deploy(model)
-
     def test_apply_plan(self, neat_client: NeatClient, model: RequestSchema, respx_mock: respx.MockRouter) -> None:
         deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
         plan: list[ResourceDeploymentPlan] = [
