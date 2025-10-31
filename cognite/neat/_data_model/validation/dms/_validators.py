@@ -185,32 +185,32 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         self.cdf_containers_by_reference = cdf_containers_by_reference
 
     def _select_source_view(self, view_ref: ViewReference, through: ViewDirectReference) -> ViewRequest | None:
+        """Select the appropriate view (local or CDF) that contains the property."""
         local_view = self.local_views_by_reference.get(view_ref)
         cdf_view = self.cdf_views_by_reference.get(view_ref)
 
-        # set correct view, since we consider partial data model
-        source_view = None
-        if local_view and local_view.properties and through.identifier in local_view.properties:
-            source_view = local_view
-        elif cdf_view and cdf_view.properties and through.identifier in cdf_view.properties:
-            source_view = cdf_view
+        # Try views with the property first, then any available view
+        candidates = chain(
+            (v for v in (local_view, cdf_view) if v and v.properties and through.identifier in v.properties),
+            (v for v in (local_view, cdf_view) if v),
+        )
 
-        return source_view or local_view or cdf_view
+        return next(candidates, None)
 
     def _select_source_container(
         self, container_ref: ContainerReference, container_property: str
     ) -> ContainerRequest | None:
+        """Select the appropriate container (local or CDF) that contains the property."""
         local_container = self.local_containers_by_reference.get(container_ref)
         cdf_container = self.cdf_containers_by_reference.get(container_ref)
 
-        # set correct container, since we consider partial data model
-        source_container = None
-        if local_container and local_container.properties and container_property in local_container.properties:
-            source_container = local_container
-        elif cdf_container and cdf_container.properties and container_property in cdf_container.properties:
-            source_container = cdf_container
+        # Try containers with the property first, then any available container
+        candidates = chain(
+            (c for c in (local_container, cdf_container) if c and c.properties and container_property in c.properties),
+            (c for c in (local_container, cdf_container) if c),
+        )
 
-        return source_container or local_container or cdf_container
+        return next(candidates, None)
 
     def _container_to_view_direct_reference(
         self, view_ref: ViewReference, container_direct_ref: ContainerDirectReference
