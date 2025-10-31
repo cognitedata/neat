@@ -84,16 +84,46 @@ class TestSchemaDeployer:
             ),
             ResourceDeploymentPlan(
                 endpoint="datamodels",
-                resources=[ResourceChange(resource_id=model.data_model.as_reference(), new_value=model.data_model)],
+                resources=[
+                    ResourceChange(
+                        resource_id=model.data_model.as_reference(), new_value=None, old_value=model.data_model
+                    ),  # Trigger delete.
+                    ResourceChange(resource_id=model.data_model.as_reference(), new_value=model.data_model),
+                ],
             ),
         ]
+        # Mock the responses for creation
+        for resource_plan in plan:
+            respx_mock.post(neat_client.config.create_api_url(f"/models/{resource_plan.endpoint}")).respond(
+                status_code=200,
+                json={
+                    "items": [
+                        change.new_value.model_dump(by_alias=True)
+                        for change in resource_plan.to_create
+                        if change.new_value is not None
+                    ]
+                },
+            )
+            if resource_plan.endpoint == "datamodels":
+                # Mock delete endpoint
+                respx_mock.post(neat_client.config.create_api_url(f"/models/{resource_plan.endpoint}/delete")).respond(
+                    status_code=200,
+                    json={
+                        "items": [
+                            change.old_value.model_dump(by_alias=True)
+                            for change in resource_plan.to_delete
+                            if change.old_value is not None
+                        ]
+                    },
+                )
+
         with patch("time.sleep"):  # In order to speed up tests
             result = deployer.apply_changes(plan)
 
         assert result.is_success
-        assert (
-            len(result.created) == len(model.spaces) + len(model.containers) + len(model.views) + 1
-        )  # +1 for datamodel
+        created_resources = len(result.created)
+        expected_created = len(model.spaces) + len(model.containers) + len(model.views) + 1  # +1 for datamodel
+        assert created_resources == expected_created
         assert len(result.updated) == 0
         assert len(result.deletions) == 0
         assert len(result.unchanged) == 0

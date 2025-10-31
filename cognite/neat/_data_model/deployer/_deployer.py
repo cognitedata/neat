@@ -183,7 +183,9 @@ class SchemaDeployer:
         return self._process_responses(responses, to_delete_by_id)
 
     def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[ChangeResult], list[ChangeResult]]:
-        to_upsert = [resource_change.new_value for resource_change in resource.to_upsert]
+        to_upsert = [
+            resource_change.new_value for resource_change in resource.to_upsert if resource_change.new_value is not None
+        ]
         if not to_upsert:
             return [], []
         responses = self.client.http_client.request_with_retries(
