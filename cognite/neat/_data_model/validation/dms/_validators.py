@@ -161,7 +161,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
       Consistency Error)
     - A direct part of a bidirectional value type is None (results in Recommendation)
 
-    The latter misconfiguration occurs is a hack used by users to create a multi value direct relations. This
+    The latter misconfiguration is a hack used by users to create a multi value direct relations. This
     allows users to create multiple reverse direct relations through this property. In CDF Search this will give
     you a multi value direct relation.
     """
@@ -241,66 +241,46 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                     issues.append(
                         ConsistencyError(
                             message=(
-                                f"Container {through.source!s} for source view {source_view_ref!s} property "
-                                f"{through.identifier!s} used in reverse connection {reverse_prop_name!s}"
-                                f" in target view {target_view_ref!s} "
-                                "does not have any corresponding view property mapped to it which"
-                                " is used to point back to the target view."
+                                f"Source view {source_view_ref!s} is missing a property that maps to "
+                                f"container {through.source!s} property '{through.identifier}'. "
+                                f"This mapping is required to configure the reverse connection "
+                                f"'{reverse_prop_name}' in target view {target_view_ref!s}."
                             ),
-                            fix="Define necessary view property",
+                            fix="Add a view property that maps to the container property",
                             code=self.code,
                         )
                     )
                     continue
                 through = modifed_through
 
-            # need to select correct source view
-            # and correct source container
+            # attempt to select the source view that contains the property either locally or in CDF
             source_view = self._select_source_view(source_view_ref, through)
 
-            # this should be caught by UndefinedConnectionEndNodeTypes as well
+            # This should be caught by UndefinedConnectionEndNodeTypes as well
             if not source_view:
                 issues.append(
                     ConsistencyError(
                         message=(
-                            f"Source view {source_view_ref!s} for reverse connection "
-                            f"{reverse_prop_name!s} in target view {target_view_ref!s}"
-                            " is not defined in the data model nor exists in CDF."
+                            f"Source view {source_view_ref!s} used to configure reverse connection "
+                            f"'{reverse_prop_name}' in target view {target_view_ref!s} "
+                            "does not exist in the data model or CDF."
                         ),
-                        fix="Define necessary view",
+                        fix="Define the missing source view",
                         code=self.code,
                     )
                 )
                 continue
 
-            # this should be caught by ViewsWithoutProperties as well
-            if not source_view.properties:
+            # This should be caught by ViewsWithoutProperties as well
+            if not source_view.properties or not (source_property := source_view.properties.get(through.identifier)):
                 issues.append(
                     ConsistencyError(
                         message=(
-                            f"Source view {source_view_ref!s} for reverse connection "
-                            f"{reverse_prop_name!s} in target view {target_view_ref!s}"
-                            " does not have any properties defined."
+                            f"Source view {source_view_ref!s} is missing property '{through.identifier}' "
+                            f"which is required to configure the reverse connection "
+                            f"'{reverse_prop_name}' in target view {target_view_ref!s}."
                         ),
-                        fix="Define necessary view properties",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            direct_prop_name = through.identifier
-            source_property = source_view.properties.get(direct_prop_name)
-
-            # source property does not exist
-            if not source_property:
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"Source view {source_view_ref!s} for reverse connection "
-                            f"{reverse_prop_name!s} in target view {target_view_ref!s} does not have property "
-                            f"{direct_prop_name!s} defined which is used to point back to the target view."
-                        ),
-                        fix="Define necessary view property",
+                        fix="Add the missing property to the source view",
                         code=self.code,
                     )
                 )
@@ -311,18 +291,17 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 issues.append(
                     ConsistencyError(
                         message=(
-                            f"Source view {source_view_ref!s} for reverse connection "
-                            f"{reverse_prop_name!s} in target view {target_view_ref!s} has property "
-                            f"{direct_prop_name!s} defined which is not a direct relation property."
+                            f"Source view {source_view_ref!s} property '{through.identifier}' "
+                            f"used for configuring the reverse connection '{reverse_prop_name}' "
+                            f"in target view {target_view_ref!s} is not a direct connection property."
                         ),
-                        fix="Change view property to be a direct relation property",
+                        fix="Update view property to be a direct connection property",
                         code=self.code,
                     )
                 )
                 continue
 
-            # Here we start checking if the direct property actually exists in the container
-            # and if it is of the correct type
+            # Here we start checking if the direct connection property is mapped to the container property
             container_ref, container_property_identifier = (
                 source_property.container,
                 source_property.container_property_identifier,
@@ -334,12 +313,13 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 issues.append(
                     ConsistencyError(
                         message=(
-                            f"Container {container_ref!s} for source view {source_view_ref!s} property "
-                            f"{direct_prop_name!s} used in reverse connection {reverse_prop_name!s}"
-                            f" in target view {target_view_ref!s} "
-                            "is not defined in the data model nor exists in CDF."
+                            f"Container {container_ref!s} is missing in both the data model and CDF. "
+                            f"This container is required by view {source_view_ref!s}"
+                            f" property '{through.identifier}', "
+                            f"which configures the reverse connection '{reverse_prop_name}'"
+                            f" in target view {target_view_ref!s}."
                         ),
-                        fix="Define necessary container",
+                        fix="Define the missing container",
                         code=self.code,
                     )
                 )
@@ -351,12 +331,13 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 issues.append(
                     ConsistencyError(
                         message=(
-                            f"Container {container_ref!s} for source view {source_view_ref!s} property "
-                            f"{direct_prop_name!s} used in reverse connection {reverse_prop_name!s}"
-                            f" in target view {target_view_ref!s} "
-                            f"does not have property {container_property_identifier!s} defined."
+                            f"Container {container_ref!s} is missing property '{container_property_identifier}'. "
+                            f"This property is required by the source view {source_view_ref!s}"
+                            f" property '{through.identifier}', "
+                            f"which configures the reverse connection '{reverse_prop_name}' "
+                            f"in target view {target_view_ref!s}."
                         ),
-                        fix="Define necessary container property",
+                        fix="Add the missing property to the container",
                         code=self.code,
                     )
                 )
@@ -368,13 +349,12 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 issues.append(
                     ConsistencyError(
                         message=(
-                            f"Container {container_ref!s} for source view {source_view_ref!s} property "
-                            f"{direct_prop_name!s} used in reverse connection {reverse_prop_name!s}"
-                            f" in target view {target_view_ref!s} "
-                            f"has property {container_property_identifier!s} of type {container_property_type!s}"
-                            " which is not a direct node relation."
+                            f"Container property '{container_property_identifier}' in container {container_ref!s} "
+                            f"must be a direct connection, but found type '{container_property_type!s}'. "
+                            f"This property is used by source view {source_view_ref!s} property '{through.identifier}' "
+                            f"to configure reverse connection '{reverse_prop_name}' in target view {target_view_ref!s}."
                         ),
-                        fix="Change container property type to be a direct node relation",
+                        fix="Change container property type to be a direct connection",
                         code=self.code,
                     )
                 )
@@ -387,12 +367,14 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 issues.append(
                     Recommendation(
                         message=(
-                            f"Source view {source_view_ref!s} for reverse connection "
-                            f"{reverse_prop_name!s} in target view {target_view_ref!s} has property "
-                            f"{direct_prop_name!s} which value type is expected to be {target_view_ref!s} "
-                            "but it is not explicitly defined."
+                            f"Source view {source_view_ref!s} property '{through.identifier}' "
+                            f"has no target view specified (value type is None). "
+                            f"This property is used for reverse connection '{reverse_prop_name}' "
+                            f"in target view {target_view_ref!s}. "
+                            f"While this works as a hack for multi-value relations in CDF Search, "
+                            f"it's recommended to explicitly define the target view as {target_view_ref!s}."
                         ),
-                        fix="Define necessary value type for the source view property",
+                        fix="Set the property's value type to the target view for better clarity",
                         code=self.code,
                     )
                 )
@@ -402,12 +384,12 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 issues.append(
                     ConsistencyError(
                         message=(
-                            f"Source view {source_view_ref!s} for reverse connection "
-                            f"{reverse_prop_name!s} in target view {target_view_ref!s} has property "
-                            f"{direct_prop_name!s} which points to view {actual_target_view!s} "
-                            "but it is expected to point back to the target view."
+                            f"The reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
+                            f"expects its corresponding direct connection in view {source_view_ref!s} "
+                            f"(property '{through.identifier}') to point back to {target_view_ref!s}, "
+                            f"but it actually points to {actual_target_view!s}."
                         ),
-                        fix="Reconfigure direct connection to point back to the target view",
+                        fix="Update the direct connection property to point back to the correct target view",
                         code=self.code,
                     )
                 )
