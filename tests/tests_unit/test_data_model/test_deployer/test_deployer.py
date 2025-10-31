@@ -1,4 +1,5 @@
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 import respx
@@ -86,7 +87,8 @@ class TestSchemaDeployer:
                 resources=[ResourceChange(resource_id=model.data_model.as_reference(), new_value=model.data_model)],
             ),
         ]
-        result = deployer.apply_changes(plan)
+        with patch("time.sleep"):  # In order to speed up tests
+            result = deployer.apply_changes(plan)
 
         assert result.is_success
         assert (
