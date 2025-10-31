@@ -1,3 +1,5 @@
+from itertools import chain
+
 from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
@@ -213,23 +215,16 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
     def _container_to_view_direct_reference(
         self, view_ref: ViewReference, container_direct_ref: ContainerDirectReference
     ) -> ViewDirectReference | None:
-        local_view = self.local_views_by_reference.get(view_ref)
-        cdf_view = self.cdf_views_by_reference.get(view_ref)
-
-        for property_ref, property_ in (local_view.properties if local_view else {}).items():
-            if not isinstance(property_, ViewCorePropertyRequest):
-                continue
+        properties = chain(
+            (local_view.properties or {}).items()
+            if (local_view := self.local_views_by_reference.get(view_ref))
+            else {},
+            (cdf_view.properties or {}).items() if (cdf_view := self.cdf_views_by_reference.get(view_ref)) else {},
+        )
+        for property_ref, property_ in properties:
             if (
-                property_.container == container_direct_ref.source
-                and property_.container_property_identifier == container_direct_ref.identifier
-            ):
-                return ViewDirectReference(source=view_ref, identifier=property_ref)
-
-        for property_ref, property_ in (cdf_view.properties if cdf_view else {}).items():
-            if not isinstance(property_, ViewCorePropertyRequest):
-                continue
-            if (
-                property_.container == container_direct_ref.source
+                isinstance(property_, ViewCorePropertyRequest)
+                and property_.container == container_direct_ref.source
                 and property_.container_property_identifier == container_direct_ref.identifier
             ):
                 return ViewDirectReference(source=view_ref, identifier=property_ref)
@@ -240,7 +235,6 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         issues: list[ConsistencyError | Recommendation] = []
 
         for (target_view_ref, reverse_prop_name), (source_view_ref, through) in self.reverse_to_direct_mapping.items():
-            print(reverse_prop_name, target_view_ref)
             if isinstance(through, ContainerDirectReference):
                 modifed_through = self._container_to_view_direct_reference(source_view_ref, through)
                 if not modifed_through:

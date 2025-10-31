@@ -1,3 +1,5 @@
+from itertools import chain
+
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
@@ -103,16 +105,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         local_views_by_reference: dict[ViewReference, ViewRequest],
         cdf_views_by_reference: dict[ViewReference, ViewRequest],
     ) -> set[ContainerReference]:
-        """Get all referenced containers in the physical data model."""
-        referenced_containers = set()
-
-        for view in local_views_by_reference.values():
-            for property_ in view.properties.values():
-                if isinstance(property_, ViewCorePropertyRequest):
-                    referenced_containers.add(property_.container)
-        for view in cdf_views_by_reference.values():
-            for property_ in view.properties.values():
-                if isinstance(property_, ViewCorePropertyRequest):
-                    referenced_containers.add(property_.container)
-
-        return referenced_containers
+        """Get all referenced containers in the physical data model both local and in CDF."""
+        return {
+            property_.container
+            for view in chain(local_views_by_reference.values(), cdf_views_by_reference.values())
+            if view.properties
+            for property_ in view.properties.values()
+            if isinstance(property_, ViewCorePropertyRequest)
+        }
