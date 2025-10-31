@@ -12,9 +12,9 @@ class NeatSession:
     the state machine for data model and instance operations.
     """
 
-    def __init__(self, cognite_client: CogniteClient | ClientConfig) -> None:
+    def __init__(self, client: CogniteClient | ClientConfig) -> None:
         self._store = NeatStore()
-        self._client = NeatClient(cognite_client)
+        self._client = NeatClient(client)
         self.physical_data_model = PhysicalDataModel(self._store, self._client)
         self.issues = Issues(self._store)
 

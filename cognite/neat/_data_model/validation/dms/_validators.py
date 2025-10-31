@@ -182,7 +182,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         elif cdf_view and cdf_view.properties and through.identifier in cdf_view.properties:
             source_view = cdf_view
 
-        return source_view
+        return source_view or local_view or cdf_view
 
     def _select_source_container(self, container_ref: ContainerReference, container_property: str) -> ContainerRequest | None:
         local_container = self.local_containers_by_reference.get(container_ref)
@@ -195,7 +195,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         elif cdf_container and cdf_container.properties and container_property in cdf_container.properties:
             source_container = cdf_container
 
-        return source_container
+        return source_container or local_container or cdf_container
     
 
     def _container_to_view_direct_reference(self, view_ref: ViewReference, container_direct_ref: ContainerDirectReference) -> ViewDirectReference | None:
@@ -220,27 +220,26 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         return None
 
 
-
-
-
     def run(self) -> list[ConsistencyError] | list[Recommendation]:
         issues: IssueList = []
 
         for (target_view_ref, reverse_prop_name), (source_view_ref, through) in self.reverse_to_direct_mapping.items():
-            if isinstance(through, ContainerDirectReference):
-                print(f"Processing ContainerDirectReference: {through!s}")
 
-            if isinstance(through, ContainerDirectReference) and not (through := self._container_to_view_direct_reference(source_view_ref, through)):
-                issues.append(ConsistencyError(
-                    message=(
-                        f"Container {through.source!s} for source view {source_view_ref!s} property "
-                        f"{through.identifier!s} used in reverse connection {reverse_prop_name!s} in target view {target_view_ref!s} "
-                        "does not have any corresponding view property mapped to it which is used to point back to the target view."
-                    ),
-                    fix="Define necessary view property",
-                    code=self.code,
-                ))
-                continue
+            print(reverse_prop_name, target_view_ref)
+            if isinstance(through, ContainerDirectReference): 
+                modifed_through = self._container_to_view_direct_reference(source_view_ref, through)
+                if not modifed_through:
+                    issues.append(ConsistencyError(
+                        message=(
+                            f"Container {through.source!s} for source view {source_view_ref!s} property "
+                            f"{through.identifier!s} used in reverse connection {reverse_prop_name!s} in target view {target_view_ref!s} "
+                            "does not have any corresponding view property mapped to it which is used to point back to the target view."
+                        ),
+                        fix="Define necessary view property",
+                        code=self.code,
+                    ))
+                    continue
+                through = modifed_through
 
             # need to select correct source view
             # and correct source container
