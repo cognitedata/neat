@@ -1,3 +1,4 @@
+import itertools
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -20,7 +21,7 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._utils.http_client._data_classes import ItemMessage
+from cognite.neat._utils.http_client import ItemMessage, SuccessResponse
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -171,7 +172,10 @@ class AppliedChanges(BaseDeployObject):
 
     @property
     def is_success(self) -> bool:
-        raise NotImplementedError()
+        return all(
+            isinstance(change.message, SuccessResponse)
+            for change in itertools.chain(self.created, self.updated, self.deletions)
+        )
 
     def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
         raise NotImplementedError()
