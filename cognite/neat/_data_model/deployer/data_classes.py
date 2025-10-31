@@ -21,7 +21,12 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._utils.http_client import ItemMessage, SuccessResponse
+from cognite.neat._utils.http_client import (
+    FailedRequestItems,
+    FailedResponseItems,
+    SuccessResponse,
+    SuccessResponseItems,
+)
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -161,7 +166,7 @@ class SchemaSnapshot(BaseDeployObject):
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
     change: ResourceChange[T_ResourceId, T_DataModelResource]
-    message: ItemMessage[T_ResourceId]
+    message: SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
 
 
 class AppliedChanges(BaseDeployObject):

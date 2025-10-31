@@ -4,7 +4,13 @@ from typing import Literal, cast
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.models.dms import DataModelBody, RequestSchema, T_DataModelResource, T_ResourceId
-from cognite.neat._utils.http_client import ItemIDBody, ItemMessage, ItemsRequest
+from cognite.neat._utils.http_client import (
+    FailedRequestItems,
+    FailedResponseItems,
+    ItemIDBody,
+    ItemsRequest,
+    SuccessResponseItems,
+)
 from cognite.neat._utils.http_client._data_classes import APIResponse
 
 from ._differ import ItemDiffer
@@ -165,6 +171,8 @@ class SchemaDeployer:
 
     def _delete_items(self, resource: ResourceDeploymentPlan) -> list[ChangeResult]:
         to_delete_by_id = {resource.resource_id: resource for resource in resource.to_delete}
+        if not to_delete_by_id:
+            return []
         responses = self.client.http_client.request_with_retries(
             ItemsRequest(
                 endpoint_url=self.client.config.create_api_url(f"/models/{resource.endpoint}/delete"),
@@ -176,6 +184,8 @@ class SchemaDeployer:
 
     def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[ChangeResult], list[ChangeResult]]:
         to_upsert = [resource_change.new_value for resource_change in resource.to_upsert]
+        if not to_upsert:
+            return [], []
         responses = self.client.http_client.request_with_retries(
             ItemsRequest(
                 endpoint_url=self.client.config.create_api_url(f"/models/{resource.endpoint}"),
@@ -195,7 +205,7 @@ class SchemaDeployer:
     ) -> list[ChangeResult]:
         results: list[ChangeResult] = []
         for response in responses:
-            if isinstance(response, ItemMessage):
+            if isinstance(response, SuccessResponseItems | FailedResponseItems | FailedRequestItems):
                 for id in response.ids:
                     if id not in change_by_id:
                         continue
