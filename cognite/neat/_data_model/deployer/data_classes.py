@@ -155,11 +155,11 @@ class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource])
     message: ItemMessage[T_ResourceId]
 
 
-class AppliedChanges(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
-    created: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
-    updated: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
-    deletions: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
-    unchanged: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
+class AppliedChanges(BaseDeployObject):
+    created: list[ChangeResult] = Field(default_factory=list)
+    updated: list[ChangeResult] = Field(default_factory=list)
+    deletions: list[ChangeResult] = Field(default_factory=list)
+    unchanged: list[ResourceChange] = Field(default_factory=list)
 
     @property
     def is_success(self) -> bool:
