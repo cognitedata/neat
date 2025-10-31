@@ -5,7 +5,7 @@ import respx
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
-from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
+from cognite.neat._data_model.deployer.data_classes import ResourceChange, ResourceDeploymentPlan, SchemaSnapshot
 from cognite.neat._data_model.models.dms import RequestSchema
 
 
@@ -62,3 +62,36 @@ class TestSchemaDeployer:
         deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
         with pytest.raises(NotImplementedError):
             deployer.deploy(model)
+
+    def test_apply_plan(self, neat_client: NeatClient, model: RequestSchema, respx_mock: respx.MockRouter) -> None:
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
+        plan: list[ResourceDeploymentPlan] = [
+            ResourceDeploymentPlan(
+                endpoint="spaces",
+                resources=[ResourceChange(resource_id=space.as_reference(), new_value=space) for space in model.spaces],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="containers",
+                resources=[
+                    ResourceChange(resource_id=container.as_reference(), new_value=container)
+                    for container in model.containers
+                ],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="views",
+                resources=[ResourceChange(resource_id=view.as_reference(), new_value=view) for view in model.views],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="datamodels",
+                resources=[ResourceChange(resource_id=model.data_model.as_reference(), new_value=model.data_model)],
+            ),
+        ]
+        result = deployer.apply_changes(plan)
+
+        assert result.is_success
+        assert (
+            len(result.created) == len(model.spaces) + len(model.containers) + len(model.views) + 1
+        )  # +1 for datamodel
+        assert len(result.updated) == 0
+        assert len(result.deletions) == 0
+        assert len(result.unchanged) == 0
