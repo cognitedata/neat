@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Literal, cast
 
-from cognite.neat._client import NeatClient, NeatClientConfig
+from cognite.neat._client import NeatClient
 from cognite.neat._data_model.models.dms import DataModelBody, RequestSchema, T_DataModelResource, T_ResourceId
 from cognite.neat._utils.http_client import ItemIDBody, ItemMessage, ItemsRequest
 from cognite.neat._utils.http_client._data_classes import APIResponse
@@ -150,37 +150,35 @@ class SchemaDeployer:
         return max_severity_in_plan.value <= self.options.max_severity.value
 
     def apply_changes(self, plan: list[ResourceDeploymentPlan]) -> AppliedChanges:
-        config = self.client.config
         applied_changes = AppliedChanges()
         for resource in reversed(plan):
-            deletions = self._delete_items(resource, config)
+            deletions = self._delete_items(resource)
             applied_changes.deletions.extend(deletions)
 
-            creations, updated = self._upsert_items(resource, config)
+        for resource in plan:
+            creations, updated = self._upsert_items(resource)
             applied_changes.created.extend(creations)
             applied_changes.updated.extend(updated)
 
             applied_changes.unchanged.extend(resource.unchanged)
         return applied_changes
 
-    def _delete_items(self, resource: ResourceDeploymentPlan, config: NeatClientConfig) -> list[ChangeResult]:
+    def _delete_items(self, resource: ResourceDeploymentPlan) -> list[ChangeResult]:
         to_delete_by_id = {resource.resource_id: resource for resource in resource.to_delete}
         responses = self.client.http_client.request_with_retries(
             ItemsRequest(
-                endpoint_url=config.create_api_url(f"/models/{resource.endpoint}/delete"),
+                endpoint_url=self.client.config.create_api_url(f"/models/{resource.endpoint}/delete"),
                 method="POST",
                 body=ItemIDBody(items=list(to_delete_by_id.keys())),
             )
         )
         return self._process_responses(responses, to_delete_by_id)
 
-    def _upsert_items(
-        self, resource: ResourceDeploymentPlan, config: NeatClientConfig
-    ) -> tuple[list[ChangeResult], list[ChangeResult]]:
+    def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[ChangeResult], list[ChangeResult]]:
         to_upsert = [resource_change.new_value for resource_change in resource.to_upsert]
         responses = self.client.http_client.request_with_retries(
             ItemsRequest(
-                endpoint_url=config.create_api_url(f"/models/{resource.endpoint}"),
+                endpoint_url=self.client.config.create_api_url(f"/models/{resource.endpoint}"),
                 method="POST",
                 body=DataModelBody(items=to_upsert),
             )
@@ -191,8 +189,9 @@ class SchemaDeployer:
         update_result = self._process_responses(responses, to_update_by_id)
         return create_result, update_result
 
+    @classmethod
     def _process_responses(
-        self, responses: APIResponse, change_by_id: dict[T_ResourceId, ResourceChange]
+        cls, responses: APIResponse, change_by_id: dict[T_ResourceId, ResourceChange]
     ) -> list[ChangeResult]:
         results: list[ChangeResult] = []
         for response in responses:
