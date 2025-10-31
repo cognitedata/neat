@@ -125,5 +125,5 @@ class TestSchemaDeployer:
         expected_created = len(model.spaces) + len(model.containers) + len(model.views) + 1  # +1 for datamodel
         assert created_resources == expected_created
         assert len(result.updated) == 0
-        assert len(result.deletions) == 0
+        assert len(result.deletions) == 1  # One datamodel deleted
         assert len(result.unchanged) == 0
