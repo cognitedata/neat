@@ -141,7 +141,7 @@ class DataModelAnalysis:
     def reverse_to_direct_mapping(
         self,
     ) -> dict[tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]]:
-        """Get a mapping of view references to their corresponding ViewRequest objects."""
+        """Get a mapping of reverse direct relations to their corresponding source view and 'through' property."""
         view_by_reference = self.view_by_reference(include_inherited_properties=False)
         bidirectional_connections = {}
 
