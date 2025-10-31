@@ -10,7 +10,7 @@ class DataModelValidator(ABC):
     code: ClassVar[str]
 
     @abstractmethod
-    def run(self) -> list[ConsistencyError] | list[Recommendation]:
+    def run(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:
         """Execute the success handler on the data model."""
         # do something with data model
         pass

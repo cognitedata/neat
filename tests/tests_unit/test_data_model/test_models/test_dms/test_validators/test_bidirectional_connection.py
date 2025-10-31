@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,13 +9,9 @@ from cognite.neat._data_model.importers._table_importer.importer import DMSTable
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
 from cognite.neat._data_model.validation.dms import (
+    BidirectionalConnectionMisconfigured,
     DmsDataModelValidation,
-    UndefinedConnectionEndNodeTypes,
-    VersionSpaceInconsistency,
-    ViewsWithoutProperties,
-    BidirectionalConnectionMisconfigured
 )
-from cognite.neat._issues import IssueList
 
 
 @pytest.fixture()
@@ -56,7 +51,7 @@ def valid_dms_yaml_with_consistency_errors() -> str:
   Value: v1
 Properties:
 
-- View: SourceView  
+- View: SourceView
   View Property: name
   Connection: null
   Value Type: text
@@ -66,7 +61,7 @@ Properties:
   Container: SourceContainer
   Container Property: nameStorage
 
-- View: AnotherView  
+- View: AnotherView
   View Property: name
   Connection: null
   Value Type: text
@@ -74,7 +69,7 @@ Properties:
   Max Count: 1
   Immutable: false
   Container: AnotherContainer
-  Container Property: nameStorage  
+  Container Property: nameStorage
 
 - View: TargetView
   View Property: name
@@ -84,7 +79,7 @@ Properties:
   Max Count: 1
   Immutable: false
   Container: TargetContainer
-  Container Property: nameStorage  
+  Container Property: nameStorage
 
 
 - View: SourceView
@@ -96,7 +91,7 @@ Properties:
   Container: SourceContainer
   Container Property: directConnectionStorage
 
-# Simulates case where niether local nor CDF have the container property  
+# Simulates case where niether local nor CDF have the container property
 - View: SourceView
   View Property: directConnectionWithoutContainer
   Connection: direct
@@ -107,7 +102,7 @@ Properties:
   Container Property: directConnectionWithoutContainerStorage
 
 
-# Simulates case where niether local nor CDF have the container property  
+# Simulates case where niether local nor CDF have the container property
 - View: SourceView
   View Property: directWhichContainerPropertyDoesNotExist
   Connection: direct
@@ -143,7 +138,7 @@ Properties:
   Connection: reverse(property=directSourceToAnotheViewConnection)
   Value Type: SourceView
   Min Count: 0
-  Max Count: 1  
+  Max Count: 1
 
 # Direct points to AnotherView not to TargetView
 - View: TargetView
@@ -151,9 +146,9 @@ Properties:
   Connection: reverse(property=directSourceToAnotheViewConnection)
   Value Type: SourceView
   Min Count: 0
-  Max Count: 1  
+  Max Count: 1
 
-# Unknow view type is not in the data model  
+# Unknow view type is not in the data model
 - View: TargetView
   View Property: reverseUnknownToTargetViewConnection
   Connection: reverse(property=directSourceToAnotheViewConnection)
@@ -187,7 +182,7 @@ Properties:
   Min Count: 0
   Max Count: 1
 
-  
+
 # View does not have any property
 - View: TargetView
   View Property: reverseToViewWithoutProperties
@@ -221,7 +216,7 @@ Properties:
   Min Count: 0
   Max Count: 1
 
-  
+
 
 Views:
 - View: SourceView
@@ -239,7 +234,6 @@ Containers:
 """
 
 
-
 def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
     read_yaml = MagicMock(spec=Path)
     read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
@@ -248,16 +242,21 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
 
     data_model.containers[0].properties.pop("directWhichContainerPropertyDoesNotExistStorage")
 
-        # simulates undefined end node type by removing the source from the property
-    data_model.views[0].properties['directWithoutTyping'].source = None
+    # simulates undefined end node type by removing the source from the property
+    data_model.views[0].properties["directWithoutTyping"].source = None
 
-
-    data_model.views[1].properties["reverseThroughContainerDirectReferenceFailing"] = SingleReverseDirectRelationPropertyRequest(connection_type='single_reverse_direct_relation', 
-                                                                                                                             name=None, description=None, 
-                                                                                                                             source=ViewReference(type='view', space='my_space', external_id='SourceView', version='v1'), 
-                                                                                                                             through=ContainerDirectReference(source=ContainerReference(type='container', space='my_space', external_id='SourceContainer'), 
-                                                                                                                                                              identifier='notImportant'))
-
+    data_model.views[1].properties["reverseThroughContainerDirectReferenceFailing"] = (
+        SingleReverseDirectRelationPropertyRequest(
+            connection_type="single_reverse_direct_relation",
+            name=None,
+            description=None,
+            source=ViewReference(type="view", space="my_space", external_id="SourceView", version="v1"),
+            through=ContainerDirectReference(
+                source=ContainerReference(type="container", space="my_space", external_id="SourceContainer"),
+                identifier="notImportant",
+            ),
+        )
+    )
 
     on_success = DmsDataModelValidation(client)
 
@@ -265,17 +264,19 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
 
     by_code = on_success.issues.by_code()
 
-    expected_problematic_reversals = ["reverseSourceToTargetViewConnection", 
-                                      "reverseUnknownToTargetViewConnection", 
-                                      "reverseToEdgeConnection",
-                                      "reverseToDirectConnectionWithoutContainer",
-                                      "reverseToDirectThatDoesNotExist",
-                                      "reverseToViewWithoutProperties",
-                                      "reverseToAttribute",
-                                      "reverseToDirectWhichDoesHaveStorage",
-                                      "reverseToDirectWithoutTyping",
-                                      "reverseThroughContainerDirectReferenceFailing"]
-    
+    expected_problematic_reversals = [
+        "reverseSourceToTargetViewConnection",
+        "reverseUnknownToTargetViewConnection",
+        "reverseToEdgeConnection",
+        "reverseToDirectConnectionWithoutContainer",
+        "reverseToDirectThatDoesNotExist",
+        "reverseToViewWithoutProperties",
+        "reverseToAttribute",
+        "reverseToDirectWhichDoesHaveStorage",
+        "reverseToDirectWithoutTyping",
+        "reverseThroughContainerDirectReferenceFailing",
+    ]
+
     assert len(by_code[BidirectionalConnectionMisconfigured.code]) == len(expected_problematic_reversals)
 
     found_problematic_reversals = set()
