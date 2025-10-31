@@ -13,6 +13,7 @@ from cognite.neat._data_model.validation.dms import (
     VersionSpaceInconsistency,
     ViewsWithoutProperties,
 )
+from cognite.neat._data_model.validation.dms._validators import BidirectionalConnectionMisconfigured
 from cognite.neat._issues import IssueList
 
 
@@ -22,6 +23,15 @@ def client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
     config = client.config
     respx_mock.post(
         config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
+    ).respond(
+        status_code=200,
+        json={
+            "items": [],
+            "nextCursor": None,
+        },
+    )
+    respx_mock.post(
+        config.create_api_url("/models/containers/byids"),
     ).respond(
         status_code=200,
         json={
@@ -96,13 +106,14 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
 
     on_success.run(data_model)
 
-    assert len(on_success.issues) == 7
+    assert len(on_success.issues) == 8
 
     by_code = cast(IssueList, on_success.issues).by_code()
     assert set(by_code.keys()) == {
         ViewsWithoutProperties.code,
         UndefinedConnectionEndNodeTypes.code,
         VersionSpaceInconsistency.code,
+        BidirectionalConnectionMisconfigured.code,
     }
     assert len(by_code[ViewsWithoutProperties.code]) == 2
     views_without_properties_messages = [issue.message for issue in by_code[ViewsWithoutProperties.code]]
@@ -149,3 +160,6 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
                 found_inconsistent_views.add(expected_view)
 
     assert found_inconsistent_views == expected_inconsistent_views
+
+    assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
+    assert "reverseDirectProperty" in by_code[BidirectionalConnectionMisconfigured.code][0].message

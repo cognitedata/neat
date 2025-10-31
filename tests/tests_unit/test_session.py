@@ -29,7 +29,15 @@ def new_session(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> 
             "nextCursor": None,
         },
     )
-
+    respx_mock.post(
+        config.create_api_url("/models/containers/byids"),
+    ).respond(
+        status_code=200,
+        json={
+            "items": [],
+            "nextCursor": None,
+        },
+    )
     return session
 
 
