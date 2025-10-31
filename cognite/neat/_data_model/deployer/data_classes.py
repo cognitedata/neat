@@ -133,6 +133,14 @@ class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModel
         return [change for change in self.resources if change.change_type in ("create", "update")]
 
     @property
+    def to_create(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
+        return [change for change in self.resources if change.change_type == "create"]
+
+    @property
+    def to_update(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
+        return [change for change in self.resources if change.change_type == "update"]
+
+    @property
     def to_delete(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type == "delete"]
 
