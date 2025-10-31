@@ -1,12 +1,14 @@
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
-from cognite.neat._data_model.models.dms._references import ViewReference
+from cognite.neat._data_model.models.dms._container import ContainerRequest
+from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
+from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.validation._base import DataModelValidator
 
-from ._validators import UndefinedConnectionEndNodeTypes, VersionSpaceInconsistency, ViewsWithoutProperties
+from ._validators import BidirectionalConnectionMisconfigured, UndefinedConnectionEndNodeTypes, VersionSpaceInconsistency, ViewsWithoutProperties
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -31,6 +33,12 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             include_inherited_properties=True,
         )
 
+        reverse_to_direct_mapping = analysis.reverse_to_direct_mapping
+        local_containers_by_reference = analysis.container_by_reference
+        cdf_containers_by_reference = self._cdf_container_by_reference(
+            list(self._referenced_containers(local_views_by_reference, cdf_views_by_reference))
+        )
+
         validators: list[DataModelValidator] = [
             ViewsWithoutProperties(
                 local_views_by_reference=local_views_by_reference,
@@ -45,6 +53,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
                 data_model_reference=data_model.data_model.as_reference(),
                 view_references=list(local_views_by_reference.keys()),
             ),
+            BidirectionalConnectionMisconfigured(local_views_by_reference=local_views_by_reference,
+                                                 cdf_views_by_reference=cdf_views_by_reference,
+                                                 reverse_to_direct_mapping=reverse_to_direct_mapping,
+                                                 local_containers_by_reference=local_containers_by_reference,
+                                                 cdf_containers_by_reference=cdf_containers_by_reference),
         ]
 
         for validator in validators:
@@ -66,3 +79,32 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
                 views, include_inherited_properties=include_inherited_properties
             )
         }
+    
+    def _cdf_container_by_reference(
+        self, containers: list[ContainerReference]
+    ) -> dict[ContainerReference, ContainerRequest]:
+        """Fetch container definition from CDF."""
+
+        if not self._client:
+            return {}
+        return {
+            response.as_reference(): response.as_request()
+            for response in self._client.containers.retrieve(
+                containers
+            )
+        }
+
+    def _referenced_containers(self, local_views_by_reference: dict[ViewReference, ViewRequest], cdf_views_by_reference: dict[ViewReference, ViewRequest]) -> set[ContainerReference]:
+        """Get all referenced containers in the physical data model."""
+        referenced_containers = set()
+
+        for view in local_views_by_reference.values():
+            for property_ in view.properties.values():
+                if isinstance(property_, ViewCorePropertyRequest):
+                    referenced_containers.add(property_.container)
+        for view in cdf_views_by_reference.values():
+            for property_ in view.properties.values():
+                if isinstance(property_, ViewCorePropertyRequest):
+                    referenced_containers.add(property_.container)
+
+        return referenced_containers

@@ -1,6 +1,7 @@
 from graphlib import TopologicalSorter
 
-from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
+from cognite.neat._data_model.models.dms._container import ContainerRequest
+from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewDirectReference, ViewReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import (
     EdgeProperty,
@@ -103,6 +104,14 @@ class DataModelAnalysis:
         return view_by_reference
 
     @property
+    def container_by_reference(self) -> dict[ContainerReference, ContainerRequest]:
+        """Get a mapping of container references to their corresponding ContainerRequest objects."""
+        return {
+            container.as_reference(): container.model_copy(deep=True)
+            for container in self.physical.containers
+        }
+
+    @property
     def connection_end_node_types(self) -> dict[tuple[ViewReference, str], ViewReference]:
         """Get a mapping of view references to their corresponding ViewRequest objects."""
         view_by_reference = self.view_by_reference(include_inherited_properties=False)
@@ -125,3 +134,23 @@ class DataModelAnalysis:
                     connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
         return connection_end_node_types
+
+    @property
+    def reverse_to_direct_mapping(self) -> dict[tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]]:
+        """Get a mapping of view references to their corresponding ViewRequest objects."""
+        view_by_reference = self.view_by_reference(include_inherited_properties=False)
+        bidirectional_connections: dict[tuple[ViewReference, str], tuple[ViewReference, str]] = {}
+
+        for view_ref, view in view_by_reference.items():
+            if not view.properties:
+                continue
+            for prop_ref, property_ in view.properties.items():
+
+                # reverse direct relation
+                if isinstance(property_, ReverseDirectRelationProperty):
+                    bidirectional_connections[(view_ref, prop_ref)] = (
+                        property_.source,
+                        property_.through,
+                    )
+
+        return bidirectional_connections
