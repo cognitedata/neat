@@ -380,6 +380,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 )
                 continue
 
+            # Finnally check that the direct connection points to the correct target view
             if actual_target_view != target_view_ref:
                 issues.append(
                     ConsistencyError(
