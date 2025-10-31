@@ -156,6 +156,14 @@ class SchemaDeployer:
         return max_severity_in_plan.value <= self.options.max_severity.value
 
     def apply_changes(self, plan: list[ResourceDeploymentPlan]) -> AppliedChanges:
+        """Applies the given deployment plan to CDF by making the necessary API calls.
+
+        Args:
+            plan (list[ResourceDeploymentPlan]): The deployment plan to apply.
+
+        Returns:
+            AppliedChanges: The result of applying the changes.
+        """
         applied_changes = AppliedChanges()
         for resource in reversed(plan):
             deletions = self._delete_items(resource)
@@ -170,7 +178,7 @@ class SchemaDeployer:
         return applied_changes
 
     def _delete_items(self, resource: ResourceDeploymentPlan) -> list[ChangeResult]:
-        to_delete_by_id = {resource.resource_id: resource for resource in resource.to_delete}
+        to_delete_by_id = {change.resource_id: change for change in resource.to_delete}
         if not to_delete_by_id:
             return []
         responses = self.client.http_client.request_with_retries(

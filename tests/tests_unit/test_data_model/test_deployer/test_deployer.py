@@ -6,7 +6,13 @@ import respx
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
-from cognite.neat._data_model.deployer.data_classes import ResourceChange, ResourceDeploymentPlan, SchemaSnapshot
+from cognite.neat._data_model.deployer.data_classes import (
+    ChangedField,
+    ResourceChange,
+    ResourceDeploymentPlan,
+    SchemaSnapshot,
+    SeverityType,
+)
 from cognite.neat._data_model.models.dms import RequestSchema
 
 
@@ -80,7 +86,22 @@ class TestSchemaDeployer:
             ),
             ResourceDeploymentPlan(
                 endpoint="views",
-                resources=[ResourceChange(resource_id=view.as_reference(), new_value=view) for view in model.views],
+                resources=[
+                    ResourceChange(
+                        resource_id=view.as_reference(),
+                        new_value=view,
+                        old_value=view.model_copy(update={"name": "old name"}, deep=True),
+                        changes=[
+                            ChangedField(
+                                field_path="name",
+                                item_severity=SeverityType.SAFE,
+                                new_value=view.name,
+                                current_value="old name",
+                            )
+                        ],
+                    )
+                    for view in model.views
+                ],
             ),
             ResourceDeploymentPlan(
                 endpoint="datamodels",
@@ -92,14 +113,14 @@ class TestSchemaDeployer:
                 ],
             ),
         ]
-        # Mock the responses for creation
+        # Mock the responses for creation/update (same endpoint in data modeling API)
         for resource_plan in plan:
             respx_mock.post(neat_client.config.create_api_url(f"/models/{resource_plan.endpoint}")).respond(
                 status_code=200,
                 json={
                     "items": [
                         change.new_value.model_dump(by_alias=True)
-                        for change in resource_plan.to_create
+                        for change in resource_plan.to_upsert
                         if change.new_value is not None
                     ]
                 },
@@ -122,8 +143,8 @@ class TestSchemaDeployer:
 
         assert result.is_success
         created_resources = len(result.created)
-        expected_created = len(model.spaces) + len(model.containers) + len(model.views) + 1  # +1 for datamodel
+        expected_created = len(model.spaces) + len(model.containers) + 1  # +1 for datamodel
         assert created_resources == expected_created
-        assert len(result.updated) == 0
+        assert len(result.updated) == len(model.views)  # All views updated
         assert len(result.deletions) == 1  # One datamodel deleted
         assert len(result.unchanged) == 0
