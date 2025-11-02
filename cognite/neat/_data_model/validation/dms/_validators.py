@@ -200,6 +200,8 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         self,
         local_views_by_reference: dict[ViewReference, ViewRequest],
         cdf_views_by_reference: dict[ViewReference, ViewRequest],
+        local_ancestors_by_view_reference: dict[ViewReference, set[ViewReference]],
+        cdf_ancestors_by_view_reference: dict[ViewReference, set[ViewReference]],
         reverse_to_direct_mapping: dict[
             tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
         ],
@@ -208,6 +210,8 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
     ) -> None:
         self.local_views_by_reference = local_views_by_reference
         self.cdf_views_by_reference = cdf_views_by_reference
+        self.local_ancestors_by_view_reference = local_ancestors_by_view_reference
+        self.cdf_ancestors_by_view_reference = cdf_ancestors_by_view_reference
         self.reverse_to_direct_mapping = reverse_to_direct_mapping
         self.local_containers_by_reference = local_containers_by_reference
         self.cdf_containers_by_reference = cdf_containers_by_reference
@@ -379,9 +383,25 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 )
                 continue
 
-            # this needs extending to check if actual target view is
-            # an ancestor of the expected target view as well as direct could be inherited
-            # but missed being update
+            if actual_target_view in self.local_ancestors_by_view_reference.get(
+                target_view_ref, set()
+            ) or actual_target_view in self.cdf_ancestors_by_view_reference.get(target_view_ref, set()):
+                issues.append(
+                    Recommendation(
+                        message=(
+                            f"The direct connection property '{through.identifier}' in view {source_view_ref!s} "
+                            f"configures the reverse connection '{reverse_prop_name}' in {target_view_ref!s}. "
+                            f" Therefore, it is expected that '{through.identifier}' points to {target_view_ref!s}."
+                            f" However, it currently points to {actual_target_view!s}, which is an ancestor of "
+                            f" {target_view_ref!s}. "
+                            "While this will allow for model to be valid, it can be a source of confusion and mistakes."
+                        ),
+                        fix="Update the direct connection property to point to the target view instead of its ancestor",
+                        code=self.code,
+                    )
+                )
+                continue
+
             if actual_target_view != target_view_ref:
                 issues.append(
                     ConsistencyError(

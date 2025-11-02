@@ -59,41 +59,9 @@ class DataModelAnalysis:
 
         return referenced_containers
 
-    @property
-    def ancestors_by_view(self) -> dict[ViewReference, set[ViewReference]]:
-        """Get a mapping of each view to its ancestors in the physical data model."""
-        implements_by_view = self.implements_by_view
-
-        # Topological sort to ensure that concepts include all ancestors
-        for view in list(TopologicalSorter(implements_by_view).static_order()):
-            if view not in implements_by_view:
-                continue
-            implements_by_view[view] |= {
-                grand_parent
-                for parent in implements_by_view[view]
-                for grand_parent in implements_by_view.get(parent, set())
-            }
-
-        return implements_by_view
-
-    @property
-    def implements_by_view(self) -> dict[ViewReference, set[ViewReference]]:
-        """Get a mapping of each view to the views it implements."""
-        implements_mapping: dict[ViewReference, set[ViewReference]] = {}
-
-        for view in self.physical.views:
-            view_ref = view.as_reference()
-            if view_ref not in implements_mapping:
-                implements_mapping[view_ref] = set()
-            if view.implements:
-                for implement in view.implements:
-                    implements_mapping[view_ref].add(implement)
-
-        return implements_mapping
-
     def view_by_reference(self, include_inherited_properties: bool = True) -> dict[ViewReference, ViewRequest]:
         """Get a mapping of view references to their corresponding ViewRequest objects."""
-        view_ancestors = self.ancestors_by_view
+        view_ancestors = self.ancestors_by_view(self.physical.views)
 
         view_by_reference: dict[ViewReference, ViewRequest] = {
             view.as_reference(): view.model_copy(deep=True) for view in self.physical.views
@@ -107,6 +75,38 @@ class DataModelAnalysis:
                             view.properties.update(ancestor_view.properties)
 
         return view_by_reference
+
+    @staticmethod
+    def ancestors_by_view(views: list[ViewRequest]) -> dict[ViewReference, set[ViewReference]]:
+        """Get a mapping of each view to its ancestors in the physical data model."""
+        implements_by_view = DataModelAnalysis.implements_by_view(views)
+
+        # Topological sort to ensure that concepts include all ancestors
+        for view in list(TopologicalSorter(implements_by_view).static_order()):
+            if view not in implements_by_view:
+                continue
+            implements_by_view[view] |= {
+                grand_parent
+                for parent in implements_by_view[view]
+                for grand_parent in implements_by_view.get(parent, set())
+            }
+
+        return implements_by_view
+
+    @staticmethod
+    def implements_by_view(views: list[ViewRequest]) -> dict[ViewReference, set[ViewReference]]:
+        """Get a mapping of each view to the views it implements."""
+        implements_mapping: dict[ViewReference, set[ViewReference]] = {}
+
+        for view in views:
+            view_ref = view.as_reference()
+            if view_ref not in implements_mapping:
+                implements_mapping[view_ref] = set()
+            if view.implements:
+                for implement in view.implements:
+                    implements_mapping[view_ref].add(implement)
+
+        return implements_mapping
 
     @property
     def container_by_reference(self) -> dict[ContainerReference, ContainerRequest]:

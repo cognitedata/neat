@@ -35,10 +35,12 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         analysis = DataModelAnalysis(data_model)
         local_views_by_reference = analysis.view_by_reference(include_inherited_properties=True)
         local_connection_end_node_types = analysis.connection_end_node_types
+        local_ancestors_by_view_reference = analysis.ancestors_by_view(list(local_views_by_reference.values()))
         cdf_views_by_reference = self._cdf_view_by_reference(
             list(analysis.referenced_views(include_connection_end_node_types=True)),
             include_inherited_properties=True,
         )
+        cdf_ancestors_by_view_reference = analysis.ancestors_by_view(list(cdf_views_by_reference.values()))
 
         reverse_to_direct_mapping = analysis.reverse_to_direct_mapping
         local_containers_by_reference = analysis.container_by_reference
@@ -63,6 +65,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             BidirectionalConnectionMisconfigured(
                 local_views_by_reference=local_views_by_reference,
                 cdf_views_by_reference=cdf_views_by_reference,
+                local_ancestors_by_view_reference=local_ancestors_by_view_reference,
+                cdf_ancestors_by_view_reference=cdf_ancestors_by_view_reference,
                 reverse_to_direct_mapping=reverse_to_direct_mapping,
                 local_containers_by_reference=local_containers_by_reference,
                 cdf_containers_by_reference=cdf_containers_by_reference,

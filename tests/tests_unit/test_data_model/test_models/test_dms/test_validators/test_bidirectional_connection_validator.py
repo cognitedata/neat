@@ -41,8 +41,8 @@ def client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
 
 
 @pytest.fixture(scope="session")
-def valid_dms_yaml_with_consistency_errors() -> str:
-    return """Metadata:
+def valid_dms_yaml_with_consistency_errors() -> tuple[str, set[str]]:
+    yaml_content = """Metadata:
 - Key: space
   Value: my_space
 - Key: externalId
@@ -50,6 +50,30 @@ def valid_dms_yaml_with_consistency_errors() -> str:
 - Key: version
   Value: v1
 Properties:
+
+- View: AncestorView
+  View Property: outerReflection
+  Connection: direct
+  Value Type: AncestorView
+  Min Count: 0
+  Max Count: 1
+  Container: AncestorContainer
+  Container Property: outerReflectionStorage
+
+- View: AncestorView
+  View Property: innerReflection
+  Connection: reverse(property=outerReflection)
+  Value Type: AncestorView
+  Min Count: 0
+  Max Count: 1
+
+# Simulates when inherited direct was not updated
+- View: DescendantView
+  View Property: innerReflection
+  Connection: reverse(property=outerReflection)
+  Value Type: DescendantView
+  Min Count: 0
+  Max Count: 1
 
 - View: SourceView
   View Property: name
@@ -223,6 +247,9 @@ Views:
 - View: TargetView
 - View: AnotherView
 - View: ViewWithoutProperties
+- View: AncestorView
+- View: DescendantView
+  Implements: AncestorView
 
 Containers:
 - Container: SourceContainer
@@ -231,12 +258,34 @@ Containers:
   Used For: node
 - Container: AnotherContainer
   Used For: node
+- Container: AncestorContainer
+  Used For: node
+- Container: DescendantContainer
+  Used For: node
 """
 
+    expected_problematic_reversals = {
+        "reverseSourceToTargetViewConnection",
+        "reverseUnknownToTargetViewConnection",
+        "reverseToEdgeConnection",
+        "reverseToDirectConnectionWithoutContainer",
+        "reverseToDirectThatDoesNotExist",
+        "reverseToViewWithoutProperties",
+        "reverseToAttribute",
+        "reverseToDirectWhichDoesHaveStorage",
+        "reverseToDirectWithoutTyping",
+        "reverseThroughContainerDirectReferenceFailing",
+        "innerReflection",
+    }
 
-def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
+    return yaml_content, expected_problematic_reversals
+
+
+def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, list[str]]) -> None:
+    yaml_content, expected_problematic_reversals = valid_dms_yaml_with_consistency_errors
+
     read_yaml = MagicMock(spec=Path)
-    read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
+    read_yaml.read_text.return_value = yaml_content
     importer = DMSTableImporter.from_yaml(read_yaml)
     data_model = importer.to_data_model()
 
@@ -245,6 +294,7 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
     # simulates undefined end node type by removing the source from the property
     data_model.views[0].properties["directWithoutTyping"].source = None
 
+    # simulates that reverse connection was configured using SDK
     data_model.views[1].properties["reverseThroughContainerDirectReferenceFailing"] = (
         SingleReverseDirectRelationPropertyRequest(
             connection_type="single_reverse_direct_relation",
@@ -258,27 +308,16 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
         )
     )
 
+    # Run on success validators
     on_success = DmsDataModelValidation(client)
-
     on_success.run(data_model)
 
     by_code = on_success.issues.by_code()
 
-    expected_problematic_reversals = [
-        "reverseSourceToTargetViewConnection",
-        "reverseUnknownToTargetViewConnection",
-        "reverseToEdgeConnection",
-        "reverseToDirectConnectionWithoutContainer",
-        "reverseToDirectThatDoesNotExist",
-        "reverseToViewWithoutProperties",
-        "reverseToAttribute",
-        "reverseToDirectWhichDoesHaveStorage",
-        "reverseToDirectWithoutTyping",
-        "reverseThroughContainerDirectReferenceFailing",
-    ]
-
+    # number of problematic reversals should match number of issues found
     assert len(by_code[BidirectionalConnectionMisconfigured.code]) == len(expected_problematic_reversals)
 
+    # here we check that all expected problematic reversals are found
     found_problematic_reversals = set()
     for reversal in expected_problematic_reversals:
         for issue in by_code[BidirectionalConnectionMisconfigured.code]:
