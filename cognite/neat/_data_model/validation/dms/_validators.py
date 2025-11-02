@@ -155,43 +155,8 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
     are properly configured.
 
     A bidirectional connection consists of:
-    - A reverse connection property in a target view
+    - A reverse connection property in a target view, pointing to a source view through a direct connection property
     - A corresponding direct connection property in a source view that points back to the target view
-
-    Common misconfigurations detected:
-
-    1. **Missing view property mapping** (Consistency Error):
-       Source view is missing a property that maps to the required container property
-       for configuring the reverse connection.
-
-    2. **Source view not found** (Consistency Error):
-       The source view used to configure reverse connection does not exist
-       in the data model or CDF.
-
-    3. **Missing source property** (Consistency Error):
-       Source view is missing the property required to configure the reverse connection.
-
-    4. **Non-direct connection property** (Consistency Error):
-       The source view property used for reverse connection is not a direct connection property.
-
-    5. **Missing container** (Consistency Error):
-       The container required by the source view property is missing from both
-       the data model and CDF.
-
-    6. **Missing container property** (Consistency Error):
-       Container is missing the property required by the source view property.
-
-    7. **Wrong container property type** (Consistency Error):
-       Container property must be a direct connection but has a different type.
-
-    8. **Unspecified target view** (Recommendation):
-       Direct connection has no target view specified (value type is None).
-       While this works as a hack for multi-value relations in CDF Search,
-       it's recommended to explicitly specify the target view for clarity.
-
-    9. **Incorrect target view** (Consistency Error):
-       The direct connection property points to a different view than expected,
-       breaking the bidirectional relationship.
     """
 
     code = "NEAT-DMS-004"
