@@ -240,48 +240,18 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
 
         return next(candidates, None)
 
-    def _container_to_view_direct_reference(
-        self, view_ref: ViewReference, container_direct_ref: ContainerDirectReference
-    ) -> ViewDirectReference | None:
-        properties = chain(
-            (local_view.properties or {}).items()
-            if (local_view := self.local_views_by_reference.get(view_ref))
-            else {},
-            (cdf_view.properties or {}).items() if (cdf_view := self.cdf_views_by_reference.get(view_ref)) else {},
-        )
-        for property_ref, property_ in properties:
-            if (
-                isinstance(property_, ViewCorePropertyRequest)
-                and property_.container == container_direct_ref.source
-                and property_.container_property_identifier == container_direct_ref.identifier
-            ):
-                return ViewDirectReference(source=view_ref, identifier=property_ref)
-
-        return None
-
     def run(self) -> list[ConsistencyError | Recommendation]:
         issues: list[ConsistencyError | Recommendation] = []
 
         for (target_view_ref, reverse_prop_name), (source_view_ref, through) in self.reverse_to_direct_mapping.items():
-            if isinstance(through, ContainerDirectReference):
-                modifed_through = self._container_to_view_direct_reference(source_view_ref, through)
-                if not modifed_through:
-                    issues.append(
-                        ConsistencyError(
-                            message=(
-                                f"Source view {source_view_ref!s} is missing a property that maps to "
-                                f"container {through.source!s} property '{through.identifier}'. "
-                                f"This mapping is required to configure the reverse connection "
-                                f"'{reverse_prop_name}' in target view {target_view_ref!s}."
-                            ),
-                            fix="Add a view property that maps to the container property",
-                            code=self.code,
-                        )
-                    )
-                    continue
-                through = modifed_through
+            # normalize through reference to be ViewDirectReference for easier processing
+            through = (
+                ViewDirectReference(source=source_view_ref, identifier=through.identifier)
+                if isinstance(through, ContainerDirectReference)
+                else through
+            )
 
-            # attempt to select the source view that contains the property either locally or in CDF
+            # attempt to select the source view definition that contains the property either locally or in CDF
             source_view = self._select_source_view(source_view_ref, through)
 
             # This should be caught by UndefinedConnectionEndNodeTypes as well
@@ -329,7 +299,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 )
                 continue
 
-            # Here we start checking if the direct connection property is mapped to the container property
+            # Here we start checking if the direct connection property is mapped to the container
             container_ref, container_property_identifier = (
                 source_property.container,
                 source_property.container_property_identifier,
@@ -388,6 +358,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 )
                 continue
 
+            # Finally we are checking that the direct connection points back to the correct target view
             actual_target_view = source_property.source
 
             # Typical hack used to make SEARCH to work
@@ -408,7 +379,9 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
                 )
                 continue
 
-            # Finnally check that the direct connection points to the correct target view
+            # this needs extending to check if actual target view is
+            # an ancestor of the expected target view as well as direct could be inherited
+            # but missed being update
             if actual_target_view != target_view_ref:
                 issues.append(
                     ConsistencyError(

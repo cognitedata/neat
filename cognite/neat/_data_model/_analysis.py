@@ -60,7 +60,7 @@ class DataModelAnalysis:
         return referenced_containers
 
     @property
-    def view_ancestors(self) -> dict[ViewReference, set[ViewReference]]:
+    def ancestors_by_view(self) -> dict[ViewReference, set[ViewReference]]:
         """Get a mapping of each view to its ancestors in the physical data model."""
         implements_by_view = self.implements_by_view
 
@@ -93,7 +93,7 @@ class DataModelAnalysis:
 
     def view_by_reference(self, include_inherited_properties: bool = True) -> dict[ViewReference, ViewRequest]:
         """Get a mapping of view references to their corresponding ViewRequest objects."""
-        view_ancestors = self.view_ancestors
+        view_ancestors = self.ancestors_by_view
 
         view_by_reference: dict[ViewReference, ViewRequest] = {
             view.as_reference(): view.model_copy(deep=True) for view in self.physical.views
