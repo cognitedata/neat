@@ -199,21 +199,22 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
     def __init__(
         self,
         local_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest],
         local_ancestors_by_view_reference: dict[ViewReference, set[ViewReference]],
-        cdf_ancestors_by_view_reference: dict[ViewReference, set[ViewReference]],
-        reverse_to_direct_mapping: dict[
+        local_reverse_to_direct_mapping: dict[
             tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
         ],
         local_containers_by_reference: dict[ContainerReference, ContainerRequest],
+        cdf_views_by_reference: dict[ViewReference, ViewRequest],
+        cdf_ancestors_by_view_reference: dict[ViewReference, set[ViewReference]],
         cdf_containers_by_reference: dict[ContainerReference, ContainerRequest],
     ) -> None:
         self.local_views_by_reference = local_views_by_reference
-        self.cdf_views_by_reference = cdf_views_by_reference
         self.local_ancestors_by_view_reference = local_ancestors_by_view_reference
-        self.cdf_ancestors_by_view_reference = cdf_ancestors_by_view_reference
-        self.reverse_to_direct_mapping = reverse_to_direct_mapping
+        self.local_reverse_to_direct_mapping = local_reverse_to_direct_mapping
         self.local_containers_by_reference = local_containers_by_reference
+
+        self.cdf_views_by_reference = cdf_views_by_reference
+        self.cdf_ancestors_by_view_reference = cdf_ancestors_by_view_reference
         self.cdf_containers_by_reference = cdf_containers_by_reference
 
     def _select_source_view(self, view_ref: ViewReference, through: ViewDirectReference) -> ViewRequest | None:
@@ -247,7 +248,10 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
     def run(self) -> list[ConsistencyError | Recommendation]:
         issues: list[ConsistencyError | Recommendation] = []
 
-        for (target_view_ref, reverse_prop_name), (source_view_ref, through) in self.reverse_to_direct_mapping.items():
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_reverse_to_direct_mapping.items():
             # normalize through reference to be ViewDirectReference for easier processing
             through = (
                 ViewDirectReference(source=source_view_ref, identifier=through.identifier)

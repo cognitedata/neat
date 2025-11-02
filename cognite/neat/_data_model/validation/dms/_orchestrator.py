@@ -33,21 +33,23 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Helper wrangled data model components
         analysis = DataModelAnalysis(data_model)
+
         local_views_by_reference = analysis.view_by_reference(include_inherited_properties=True)
         local_connection_end_node_types = analysis.connection_end_node_types
         local_ancestors_by_view_reference = analysis.ancestors_by_view(list(local_views_by_reference.values()))
+        local_reverse_to_direct_mapping = analysis.reverse_to_direct_mapping
+        local_containers_by_reference = analysis.container_by_reference
+
         cdf_views_by_reference = self._cdf_view_by_reference(
             list(analysis.referenced_views(include_connection_end_node_types=True)),
             include_inherited_properties=True,
         )
         cdf_ancestors_by_view_reference = analysis.ancestors_by_view(list(cdf_views_by_reference.values()))
-
-        reverse_to_direct_mapping = analysis.reverse_to_direct_mapping
-        local_containers_by_reference = analysis.container_by_reference
         cdf_containers_by_reference = self._cdf_container_by_reference(
             list(self._referenced_containers(local_views_by_reference, cdf_views_by_reference))
         )
 
+        # Initialize all validators
         validators: list[DataModelValidator] = [
             ViewsWithoutProperties(
                 local_views_by_reference=local_views_by_reference,
@@ -64,15 +66,16 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ),
             BidirectionalConnectionMisconfigured(
                 local_views_by_reference=local_views_by_reference,
-                cdf_views_by_reference=cdf_views_by_reference,
                 local_ancestors_by_view_reference=local_ancestors_by_view_reference,
-                cdf_ancestors_by_view_reference=cdf_ancestors_by_view_reference,
-                reverse_to_direct_mapping=reverse_to_direct_mapping,
+                local_reverse_to_direct_mapping=local_reverse_to_direct_mapping,
                 local_containers_by_reference=local_containers_by_reference,
+                cdf_views_by_reference=cdf_views_by_reference,
+                cdf_ancestors_by_view_reference=cdf_ancestors_by_view_reference,
                 cdf_containers_by_reference=cdf_containers_by_reference,
             ),
         ]
 
+        # Run validators
         for validator in validators:
             if "all" in self._codes or validator.code in self._codes:
                 self._issues.extend(validator.run())
