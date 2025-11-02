@@ -8,12 +8,12 @@ import respx
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms import (
+    BidirectionalConnectionMisconfigured,
     DmsDataModelValidation,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
     ViewsWithoutProperties,
 )
-from cognite.neat._data_model.validation.dms._validators import BidirectionalConnectionMisconfigured
 from cognite.neat._issues import IssueList
 
 

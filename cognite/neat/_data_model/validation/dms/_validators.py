@@ -1,18 +1,5 @@
-from itertools import chain
-
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model.models.dms._container import ContainerRequest
-from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
-from cognite.neat._data_model.models.dms._references import (
-    ContainerDirectReference,
-    ContainerReference,
-    DataModelReference,
-    ViewDirectReference,
-    ViewReference,
-)
-from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.models.dms._views import ViewRequest
-from cognite.neat._data_model.validation._base import DataModelValidator
+from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 
@@ -22,31 +9,23 @@ class ViewsWithoutProperties(DataModelValidator):
 
     code = "NEAT-DMS-001"
 
-    def __init__(
-        self,
-        local_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest],
-    ) -> None:
-        self.local_views_by_reference = local_views_by_reference
-        self.cdf_views_by_reference = cdf_views_by_reference
-
     def run(self) -> list[ConsistencyError]:
         views_without_properties = []
 
-        for ref, view in self.local_views_by_reference.items():
+        for ref, view in self.local_resources.views_by_reference.items():
             if not view.properties:
                 # Existing CDF view has properties
                 if (
-                    self.cdf_views_by_reference
-                    and (remote := self.cdf_views_by_reference.get(ref))
+                    self.cdf_resources
+                    and (remote := self.cdf_resources.views_by_reference.get(ref))
                     and remote.properties
                 ):
                     continue
 
                 # Implemented views have properties
                 if view.implements and any(
-                    self.cdf_views_by_reference
-                    and (remote_implement := self.cdf_views_by_reference.get(implement))
+                    self.cdf_resources.views_by_reference
+                    and (remote_implement := self.cdf_resources.views_by_reference.get(implement))
                     and remote_implement.properties
                     for implement in view.implements or []
                 ):
@@ -73,21 +52,14 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
 
     code = "NEAT-DMS-002"
 
-    def __init__(
-        self,
-        local_connection_end_node_types: dict[tuple[ViewReference, str], ViewReference],
-        local_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest],
-    ) -> None:
-        self.local_connection_end_node_types = local_connection_end_node_types
-        self.local_views_by_reference = local_views_by_reference
-        self.cdf_views_by_reference = cdf_views_by_reference
-
     def run(self) -> list[ConsistencyError]:
         undefined_value_types = []
 
-        for (view, property_), value_type in self.local_connection_end_node_types.items():
-            if value_type not in self.local_views_by_reference and value_type not in self.cdf_views_by_reference:
+        for (view, property_), value_type in self.local_resources.connection_end_node_types.items():
+            if (
+                value_type not in self.local_resources.views_by_reference
+                and value_type not in self.cdf_resources.views_by_reference
+            ):
                 undefined_value_types.append((view, property_, value_type))
 
         return [
@@ -109,29 +81,24 @@ class VersionSpaceInconsistency(DataModelValidator):
 
     code = "NEAT-DMS-003"
 
-    def __init__(
-        self,
-        data_model_reference: DataModelReference,
-        view_references: list[ViewReference],
-    ) -> None:
-        self.data_model_reference = data_model_reference
-        self.view_references = view_references
-
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.view_references:
+        for view_ref in self.local_resources.views_by_reference:
             issue_description = ""
 
             if view_ref.space not in COGNITE_SPACES:
                 # notify about inconsisten space
-                if view_ref.space != self.data_model_reference.space:
-                    issue_description = f"space (view: {view_ref.space}, data model: {self.data_model_reference.space})"
+                if view_ref.space != self.local_resources.data_model_reference.space:
+                    issue_description = (
+                        f"space (view: {view_ref.space}, data model: {self.local_resources.data_model_reference.space})"
+                    )
 
                 # or version if spaces are same
-                elif view_ref.version != self.data_model_reference.version:
+                elif view_ref.version != self.local_resources.data_model_reference.version:
                     issue_description = (
-                        f"version (view: {view_ref.version}, data model: {self.data_model_reference.version})"
+                        f"version (view: {view_ref.version}, "
+                        f"data model: {self.local_resources.data_model_reference.version})"
                     )
 
             if issue_description:
@@ -148,241 +115,3 @@ class VersionSpaceInconsistency(DataModelValidator):
                 )
 
         return recommendations
-
-
-class BidirectionalConnectionMisconfigured(DataModelValidator):
-    """This validator checks bidirectional connections to ensure reverse and direct connection pairs
-    are properly configured.
-
-    A bidirectional connection consists of:
-    - A reverse connection property in a target view, pointing to a source view through a direct connection property
-    - A corresponding direct connection property in a source view that points back to the target view
-    """
-
-    code = "NEAT-DMS-004"
-
-    def __init__(
-        self,
-        local_views_by_reference: dict[ViewReference, ViewRequest],
-        local_ancestors_by_view_reference: dict[ViewReference, set[ViewReference]],
-        local_reverse_to_direct_mapping: dict[
-            tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
-        ],
-        local_containers_by_reference: dict[ContainerReference, ContainerRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_ancestors_by_view_reference: dict[ViewReference, set[ViewReference]],
-        cdf_containers_by_reference: dict[ContainerReference, ContainerRequest],
-    ) -> None:
-        self.local_views_by_reference = local_views_by_reference
-        self.local_ancestors_by_view_reference = local_ancestors_by_view_reference
-        self.local_reverse_to_direct_mapping = local_reverse_to_direct_mapping
-        self.local_containers_by_reference = local_containers_by_reference
-
-        self.cdf_views_by_reference = cdf_views_by_reference
-        self.cdf_ancestors_by_view_reference = cdf_ancestors_by_view_reference
-        self.cdf_containers_by_reference = cdf_containers_by_reference
-
-    def _select_source_view(self, view_ref: ViewReference, through: ViewDirectReference) -> ViewRequest | None:
-        """Select the appropriate view (local or CDF) that contains the property."""
-        local_view = self.local_views_by_reference.get(view_ref)
-        cdf_view = self.cdf_views_by_reference.get(view_ref)
-
-        # Try views with the property first, then any available view
-        candidates = chain(
-            (v for v in (local_view, cdf_view) if v and v.properties and through.identifier in v.properties),
-            (v for v in (local_view, cdf_view) if v),
-        )
-
-        return next(candidates, None)
-
-    def _select_source_container(
-        self, container_ref: ContainerReference, container_property: str
-    ) -> ContainerRequest | None:
-        """Select the appropriate container (local or CDF) that contains the property."""
-        local_container = self.local_containers_by_reference.get(container_ref)
-        cdf_container = self.cdf_containers_by_reference.get(container_ref)
-
-        # Try containers with the property first, then any available container
-        candidates = chain(
-            (c for c in (local_container, cdf_container) if c and c.properties and container_property in c.properties),
-            (c for c in (local_container, cdf_container) if c),
-        )
-
-        return next(candidates, None)
-
-    def run(self) -> list[ConsistencyError | Recommendation]:
-        issues: list[ConsistencyError | Recommendation] = []
-
-        for (target_view_ref, reverse_prop_name), (
-            source_view_ref,
-            through,
-        ) in self.local_reverse_to_direct_mapping.items():
-            # normalize through reference to be ViewDirectReference for easier processing
-            through = (
-                ViewDirectReference(source=source_view_ref, identifier=through.identifier)
-                if isinstance(through, ContainerDirectReference)
-                else through
-            )
-
-            # attempt to select the source view definition that contains the property either locally or in CDF
-            source_view = self._select_source_view(source_view_ref, through)
-
-            # This should be caught by UndefinedConnectionEndNodeTypes as well
-            if not source_view:
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"Source view {source_view_ref!s} used to configure reverse connection "
-                            f"'{reverse_prop_name}' in target view {target_view_ref!s} "
-                            "does not exist in the data model or CDF."
-                        ),
-                        fix="Define the missing source view",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            # This should be caught by ViewsWithoutProperties as well
-            if not source_view.properties or not (source_property := source_view.properties.get(through.identifier)):
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"Source view {source_view_ref!s} is missing property '{through.identifier}' "
-                            f"which is required to configure the reverse connection "
-                            f"'{reverse_prop_name}' in target view {target_view_ref!s}."
-                        ),
-                        fix="Add the missing property to the source view",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            # source property exists, but it is not a direct relation property
-            if not isinstance(source_property, ViewCorePropertyRequest):
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"Source view {source_view_ref!s} property '{through.identifier}' "
-                            f"used for configuring the reverse connection '{reverse_prop_name}' "
-                            f"in target view {target_view_ref!s} is not a direct connection property."
-                        ),
-                        fix="Update view property to be a direct connection property",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            # Here we start checking if the direct connection property is mapped to the container
-            container_ref, container_property_identifier = (
-                source_property.container,
-                source_property.container_property_identifier,
-            )
-
-            source_container = self._select_source_container(container_ref, container_property_identifier)
-
-            if not source_container:
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"Container {container_ref!s} is missing in both the data model and CDF. "
-                            f"This container is required by view {source_view_ref!s}"
-                            f" property '{through.identifier}', "
-                            f"which configures the reverse connection '{reverse_prop_name}'"
-                            f" in target view {target_view_ref!s}."
-                        ),
-                        fix="Define the missing container",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            container_property = source_container.properties.get(container_property_identifier)
-
-            if not container_property:
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"Container {container_ref!s} is missing property '{container_property_identifier}'. "
-                            f"This property is required by the source view {source_view_ref!s}"
-                            f" property '{through.identifier}', "
-                            f"which configures the reverse connection '{reverse_prop_name}' "
-                            f"in target view {target_view_ref!s}."
-                        ),
-                        fix="Add the missing property to the container",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            container_property_type = container_property.type
-
-            if not isinstance(container_property_type, DirectNodeRelation):
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"Container property '{container_property_identifier}' in container {container_ref!s} "
-                            f"must be a direct connection, but found type '{container_property_type!s}'. "
-                            f"This property is used by source view {source_view_ref!s} property '{through.identifier}' "
-                            f"to configure reverse connection '{reverse_prop_name}' in target view {target_view_ref!s}."
-                        ),
-                        fix="Change container property type to be a direct connection",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            # Finally we are checking that the direct connection points back to the correct target view
-            actual_target_view = source_property.source
-
-            # Typical hack used to make SEARCH to work
-            if not actual_target_view:
-                issues.append(
-                    Recommendation(
-                        message=(
-                            f"Source view {source_view_ref!s} property '{through.identifier}' "
-                            f"has no target view specified (value type is None). "
-                            f"This property is used for reverse connection '{reverse_prop_name}' "
-                            f"in target view {target_view_ref!s}. "
-                            f"While this works as a hack for multi-value relations in CDF Search, "
-                            f"it's recommended to explicitly define the target view as {target_view_ref!s}."
-                        ),
-                        fix="Set the property's value type to the target view for better clarity",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            if actual_target_view in self.local_ancestors_by_view_reference.get(
-                target_view_ref, set()
-            ) or actual_target_view in self.cdf_ancestors_by_view_reference.get(target_view_ref, set()):
-                issues.append(
-                    Recommendation(
-                        message=(
-                            f"The direct connection property '{through.identifier}' in view {source_view_ref!s} "
-                            f"configures the reverse connection '{reverse_prop_name}' in {target_view_ref!s}. "
-                            f" Therefore, it is expected that '{through.identifier}' points to {target_view_ref!s}."
-                            f" However, it currently points to {actual_target_view!s}, which is an ancestor of "
-                            f" {target_view_ref!s}. "
-                            "While this will allow for model to be valid, it can be a source of confusion and mistakes."
-                        ),
-                        fix="Update the direct connection property to point to the target view instead of its ancestor",
-                        code=self.code,
-                    )
-                )
-                continue
-
-            if actual_target_view != target_view_ref:
-                issues.append(
-                    ConsistencyError(
-                        message=(
-                            f"The reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
-                            f"expects its corresponding direct connection in view {source_view_ref!s} "
-                            f"(property '{through.identifier}') to point back to {target_view_ref!s}, "
-                            f"but it actually points to {actual_target_view!s}."
-                        ),
-                        fix="Update the direct connection property to point back to the correct target view",
-                        code=self.code,
-                    )
-                )
-
-        return issues

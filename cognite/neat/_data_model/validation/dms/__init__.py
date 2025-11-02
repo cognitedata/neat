@@ -1,6 +1,6 @@
 from ._orchestrator import DmsDataModelValidation
+from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
 from ._validators import (
-    BidirectionalConnectionMisconfigured,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
     ViewsWithoutProperties,

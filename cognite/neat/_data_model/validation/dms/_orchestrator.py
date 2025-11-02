@@ -8,10 +8,11 @@ from cognite.neat._data_model.models.dms._references import ContainerReference, 
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.models.dms._views import ViewRequest
-from cognite.neat._data_model.validation._base import DataModelValidator
+from cognite.neat._data_model.validation.dms._base import DataModelValidator
 
+from ._base import CDFResources, LocalResources
+from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
 from ._validators import (
-    BidirectionalConnectionMisconfigured,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
     ViewsWithoutProperties,
@@ -28,17 +29,24 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._codes = codes or ["all"]
         self._modus_operandi = modus_operandi  # will be used later to trigger how validators will behave
 
-    def run(self, data_model: RequestSchema) -> None:
-        """Run quality assessment on the DMS data model."""
+    def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources]:
+        """Gather local and CDF resources needed for validation."""
 
-        # Helper wrangled data model components
         analysis = DataModelAnalysis(data_model)
 
         local_views_by_reference = analysis.view_by_reference(include_inherited_properties=True)
-        local_connection_end_node_types = analysis.connection_end_node_types
         local_ancestors_by_view_reference = analysis.ancestors_by_view(list(local_views_by_reference.values()))
         local_reverse_to_direct_mapping = analysis.reverse_to_direct_mapping
         local_containers_by_reference = analysis.container_by_reference
+
+        local_resources = LocalResources(
+            data_model_reference=data_model.data_model.as_reference(),
+            views_by_reference=local_views_by_reference,
+            ancestors_by_view_reference=local_ancestors_by_view_reference,
+            reverse_to_direct_mapping=local_reverse_to_direct_mapping,
+            containers_by_reference=local_containers_by_reference,
+            connection_end_node_types=analysis.connection_end_node_types,
+        )
 
         cdf_views_by_reference = self._cdf_view_by_reference(
             list(analysis.referenced_views(include_connection_end_node_types=True)),
@@ -49,29 +57,37 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             list(self._referenced_containers(local_views_by_reference, cdf_views_by_reference))
         )
 
+        cdf_resources = CDFResources(
+            views_by_reference=cdf_views_by_reference,
+            ancestors_by_view_reference=cdf_ancestors_by_view_reference,
+            containers_by_reference=cdf_containers_by_reference,
+        )
+
+        return local_resources, cdf_resources
+
+    def run(self, data_model: RequestSchema) -> None:
+        """Run quality assessment on the DMS data model."""
+
+        # Helper wrangled data model components
+        local_resources, cdf_resources = self._gather_resources(data_model)
+
         # Initialize all validators
         validators: list[DataModelValidator] = [
             ViewsWithoutProperties(
-                local_views_by_reference=local_views_by_reference,
-                cdf_views_by_reference=cdf_views_by_reference,
+                local_resources=local_resources,
+                cdf_resources=cdf_resources,
             ),
             UndefinedConnectionEndNodeTypes(
-                local_connection_end_node_types=local_connection_end_node_types,
-                local_views_by_reference=local_views_by_reference,
-                cdf_views_by_reference=cdf_views_by_reference,
+                local_resources=local_resources,
+                cdf_resources=cdf_resources,
             ),
             VersionSpaceInconsistency(
-                data_model_reference=data_model.data_model.as_reference(),
-                view_references=list(local_views_by_reference.keys()),
+                local_resources=local_resources,
+                cdf_resources=cdf_resources,
             ),
             BidirectionalConnectionMisconfigured(
-                local_views_by_reference=local_views_by_reference,
-                local_ancestors_by_view_reference=local_ancestors_by_view_reference,
-                local_reverse_to_direct_mapping=local_reverse_to_direct_mapping,
-                local_containers_by_reference=local_containers_by_reference,
-                cdf_views_by_reference=cdf_views_by_reference,
-                cdf_ancestors_by_view_reference=cdf_ancestors_by_view_reference,
-                cdf_containers_by_reference=cdf_containers_by_reference,
+                local_resources=local_resources,
+                cdf_resources=cdf_resources,
             ),
         ]
 
