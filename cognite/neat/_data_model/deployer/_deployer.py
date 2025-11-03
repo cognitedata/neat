@@ -64,6 +64,8 @@ class SchemaDeployer(OnSuccessResultProducer):
         return self._results
 
     def run(self, data_model: RequestSchema) -> None:
+        if self._results is not None:
+            raise RuntimeError("SchemaDeployer has already been run.")
         self._results = self.deploy(data_model)
 
     def deploy(self, data_model: RequestSchema) -> DeploymentResult:
