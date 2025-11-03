@@ -31,13 +31,21 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
     """This validator checks bidirectional connections to ensure reverse and direct connection pairs
     are properly configured.
 
+    Args:
+        reverse_to_direct_mapping: dict containing keys as (Target View Reference, reverse property) and values as
+            (Source View Reference, Through), where through contains definition of the direct connection property
+            used to configure the reverse connection.
+
     A bidirectional connection consists of:
+    - A direct connection property in a source view that points to the target view
+      SourceView -- [directConnection] --> TargetView
     - A reverse connection property in a target view, pointing to a source view through a direct connection property
-    - A corresponding direct connection property in a source view that points back to the target view
+      TargetView -- [reverseConnection, through(SourceView, SourceView.directConnection)] --> SourceView
+
 
     Example:
-        View A has property "relatedB" (reverse) → through View B property "relatedA" (direct)
-        View B has property "relatedA" (direct) → points back to View A
+        View `WindTurbine` has property `windFarm` (direct) → points to View `WindFarm`
+        View `WindFarm` has property `turbines` (reverse) → points to View `WindTurbine` through `WindTurbine.windFarm`
 
     Validation checks:
         1. Source view and property exist
