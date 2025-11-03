@@ -88,8 +88,6 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         if not source_view:
             return [self._create_missing_view_error(ctx)]
 
-        source_view: ViewRequest  # for type checker, since we checked for None above
-        # Validate source property exists and is correct type
         if error := self._check_source_property(source_view, ctx):
             return [error]
 
