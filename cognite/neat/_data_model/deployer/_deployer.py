@@ -143,7 +143,7 @@ class SchemaDeployer:
             current_resource = current_resources[ref]
             diffs = differ.diff(current_resource, new_resource)
             resources.append(
-                ResourceChange(resource_id=ref, new_value=new_resource, old_value=current_resource, changes=diffs)
+                ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
             )
 
         return ResourceDeploymentPlan(endpoint=endpoint, resources=resources)

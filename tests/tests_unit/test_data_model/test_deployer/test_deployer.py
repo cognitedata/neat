@@ -83,7 +83,7 @@ class TestSchemaDeployer:
                     ResourceChange(
                         resource_id=view.as_reference(),
                         new_value=view,
-                        old_value=view.model_copy(update={"name": "old name"}, deep=True),
+                        current_value=view.model_copy(update={"name": "old name"}, deep=True),
                         changes=[
                             ChangedField(
                                 field_path="name",
@@ -100,7 +100,7 @@ class TestSchemaDeployer:
                 endpoint="datamodels",
                 resources=[
                     ResourceChange(
-                        resource_id=model.data_model.as_reference(), new_value=None, old_value=model.data_model
+                        resource_id=model.data_model.as_reference(), new_value=None, current_value=model.data_model
                     ),  # Trigger delete.
                     ResourceChange(resource_id=model.data_model.as_reference(), new_value=model.data_model),
                 ],
@@ -124,9 +124,9 @@ class TestSchemaDeployer:
                     status_code=200,
                     json={
                         "items": [
-                            change.old_value.model_dump(by_alias=True)
+                            change.current_value.model_dump(by_alias=True)
                             for change in resource_plan.to_delete
-                            if change.old_value is not None
+                            if change.current_value is not None
                         ]
                     },
                 )

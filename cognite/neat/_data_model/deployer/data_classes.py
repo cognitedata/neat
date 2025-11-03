@@ -113,12 +113,12 @@ class FieldChanges(FieldChange):
 class ResourceChange(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
     resource_id: T_ResourceId
     new_value: T_DataModelResource | None
-    old_value: T_DataModelResource | None = None
+    current_value: T_DataModelResource | None = None
     changes: list[FieldChange] = Field(default_factory=list)
 
     @property
     def change_type(self) -> Literal["create", "update", "delete", "unchanged"]:
-        if self.old_value is None:
+        if self.current_value is None:
             return "create"
         elif self.new_value is None:
             return "delete"
