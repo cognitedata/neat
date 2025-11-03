@@ -13,13 +13,14 @@ from cognite.neat._data_model.models.dms import (
     DataModelReference,
     DataModelRequest,
     NodeReference,
+    SpaceReference,
     SpaceRequest,
-    T_Resource,
+    T_DataModelResource,
+    T_ResourceId,
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._utils.http_client._data_classes import HTTPMessage
-from cognite.neat._utils.useful_types import T_Reference
+from cognite.neat._utils.http_client._data_classes import ItemMessage
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -103,10 +104,10 @@ class FieldChanges(FieldChange):
         return SeverityType.max_severity([item.severity for item in self.changes], default=SeverityType.SAFE)
 
 
-class ResourceChange(BaseDeployObject, Generic[T_Reference, T_Resource]):
-    resource_id: T_Reference
-    new_value: T_Resource
-    old_value: T_Resource | None = None
+class ResourceChange(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
+    resource_id: T_ResourceId
+    new_value: T_DataModelResource
+    old_value: T_DataModelResource | None = None
     changes: list[FieldChange] = Field(default_factory=list)
 
     @property
@@ -123,20 +124,20 @@ class ResourceChange(BaseDeployObject, Generic[T_Reference, T_Resource]):
         return SeverityType.max_severity([change.severity for change in self.changes], default=SeverityType.SAFE)
 
 
-class ResourceDeploymentPlan(BaseDeployObject, Generic[T_Reference, T_Resource]):
+class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
     endpoint: DataModelEndpoint
-    resources: list[ResourceChange[T_Reference, T_Resource]]
+    resources: list[ResourceChange[T_ResourceId, T_DataModelResource]]
 
     @property
-    def to_upsert(self) -> list[ResourceChange[T_Reference, T_Resource]]:
+    def to_upsert(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type in ("create", "update")]
 
     @property
-    def to_delete(self) -> list[ResourceChange[T_Reference, T_Resource]]:
+    def to_delete(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type == "delete"]
 
     @property
-    def unchanged(self) -> list[ResourceChange[T_Reference, T_Resource]]:
+    def unchanged(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type == "unchanged"]
 
 
@@ -145,19 +146,27 @@ class SchemaSnapshot(BaseDeployObject):
     data_model: dict[DataModelReference, DataModelRequest]
     views: dict[ViewReference, ViewRequest]
     containers: dict[ContainerReference, ContainerRequest]
-    spaces: dict[str, SpaceRequest]
+    spaces: dict[SpaceReference, SpaceRequest]
     node_types: dict[NodeReference, NodeReference]
 
 
-class ChangeResult(BaseDeployObject, Generic[T_Reference, T_Resource]):
-    change: ResourceChange[T_Reference, T_Resource]
-    message: HTTPMessage
+class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
+    change: ResourceChange[T_ResourceId, T_DataModelResource]
+    message: ItemMessage[T_ResourceId]
 
 
-class AppliedChanges(BaseDeployObject, Generic[T_Reference, T_Resource]):
-    created: list[ChangeResult[T_Reference, T_Resource]] = Field(default_factory=list)
-    updated: list[ChangeResult[T_Reference, T_Resource]] = Field(default_factory=list)
-    deletions: list[ChangeResult[T_Reference, T_Resource]] = Field(default_factory=list)
+class AppliedChanges(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
+    created: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
+    updated: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
+    deletions: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
+    unchanged: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
+
+    @property
+    def is_success(self) -> bool:
+        raise NotImplementedError()
+
+    def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
+        raise NotImplementedError()
 
 
 class DeploymentResult(BaseDeployObject):
@@ -173,4 +182,4 @@ class DeploymentResult(BaseDeployObject):
 
     @property
     def is_success(self) -> bool:
-        return self.status == "success"
+        return self.status in ("success", "pending")
