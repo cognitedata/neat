@@ -3,34 +3,17 @@ from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
-import respx
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms import (
+    BidirectionalConnectionMisconfigured,
     DmsDataModelValidation,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
     ViewsWithoutProperties,
 )
 from cognite.neat._issues import IssueList
-
-
-@pytest.fixture()
-def client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
-    client = neat_client
-    config = client.config
-    respx_mock.post(
-        config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-
-    return client
 
 
 @pytest.fixture(scope="session")
@@ -86,23 +69,24 @@ Containers:
 """
 
 
-def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
+def test_validation(empty_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
     read_yaml = MagicMock(spec=Path)
     read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
     importer = DMSTableImporter.from_yaml(read_yaml)
     data_model = importer.to_data_model()
 
-    on_success = DmsDataModelValidation(client)
+    on_success = DmsDataModelValidation(empty_cdf_client)
 
     on_success.run(data_model)
 
-    assert len(on_success.issues) == 7
+    assert len(on_success.issues) == 8
 
     by_code = cast(IssueList, on_success.issues).by_code()
     assert set(by_code.keys()) == {
         ViewsWithoutProperties.code,
         UndefinedConnectionEndNodeTypes.code,
         VersionSpaceInconsistency.code,
+        BidirectionalConnectionMisconfigured.code,
     }
     assert len(by_code[ViewsWithoutProperties.code]) == 2
     views_without_properties_messages = [issue.message for issue in by_code[ViewsWithoutProperties.code]]
@@ -149,3 +133,6 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
                 found_inconsistent_views.add(expected_view)
 
     assert found_inconsistent_views == expected_inconsistent_views
+
+    assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
+    assert "reverseDirectProperty" in by_code[BidirectionalConnectionMisconfigured.code][0].message
