@@ -9,6 +9,7 @@ from cognite.neat._data_model.importers._table_importer.importer import DMSTable
 from cognite.neat._data_model.validation.dms import (
     BidirectionalConnectionMisconfigured,
     DmsDataModelValidation,
+    ReferencedContainersExist,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
     ViewsWithoutProperties,
@@ -35,6 +36,24 @@ Properties:
   Container: cdf_cdm:CogniteDescribable
   Container Property: name
   Index: btree:name(cursorable=True)
+  Connection: null
+- View: MyDescribable
+  View Property: altName
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: nospace:UnexistingContainer
+  Container Property: altName
+  Connection: null
+- View: MyDescribable
+  View Property: jargon
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: nospace:ExistingContainer
+  Container Property: unexistingProperty
   Connection: null
 - View: MyDescribable
   View Property: source
@@ -69,24 +88,25 @@ Containers:
 """
 
 
-def test_validation(empty_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
+def test_validation(validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
     read_yaml = MagicMock(spec=Path)
     read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
     importer = DMSTableImporter.from_yaml(read_yaml)
     data_model = importer.to_data_model()
 
-    on_success = DmsDataModelValidation(empty_cdf_client)
+    on_success = DmsDataModelValidation(validation_test_cdf_client)
 
     on_success.run(data_model)
 
-    assert len(on_success.issues) == 8
-
     by_code = cast(IssueList, on_success.issues).by_code()
+
+    assert len(on_success.issues) == 10
     assert set(by_code.keys()) == {
         ViewsWithoutProperties.code,
         UndefinedConnectionEndNodeTypes.code,
         VersionSpaceInconsistency.code,
         BidirectionalConnectionMisconfigured.code,
+        ReferencedContainersExist.code,
     }
     assert len(by_code[ViewsWithoutProperties.code]) == 2
     views_without_properties_messages = [issue.message for issue in by_code[ViewsWithoutProperties.code]]
@@ -136,3 +156,22 @@ def test_validation(empty_cdf_client: NeatClient, valid_dms_yaml_with_consistenc
 
     assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
     assert "reverseDirectProperty" in by_code[BidirectionalConnectionMisconfigured.code][0].message
+
+    assert len(by_code[ReferencedContainersExist.code]) == 2
+    referenced_containers_messages = [issue.message for issue in by_code[ReferencedContainersExist.code]]
+    expected_missing_containers = {"nospace:UnexistingContainer"}
+    expected_missing_container_properties = {"unexistingProperty"}
+
+    found_missing_containers = set()
+    found_missing_container_properties = set()
+
+    for message in referenced_containers_messages:
+        for expected_container in expected_missing_containers:
+            if expected_container in message:
+                found_missing_containers.add(expected_container)
+        for expected_property in expected_missing_container_properties:
+            if expected_property in message:
+                found_missing_container_properties.add(expected_property)
+
+    assert found_missing_containers == expected_missing_containers
+    assert found_missing_container_properties == expected_missing_container_properties

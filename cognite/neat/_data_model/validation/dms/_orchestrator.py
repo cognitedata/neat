@@ -13,6 +13,7 @@ from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from ._base import CDFResources, LocalResources
 from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
 from ._validators import (
+    ReferencedContainersExist,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
     ViewsWithoutProperties,
@@ -77,6 +78,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             UndefinedConnectionEndNodeTypes(local_resources, cdf_resources),
             VersionSpaceInconsistency(local_resources, cdf_resources),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources),
+            ReferencedContainersExist(local_resources, cdf_resources),
         ]
 
         # Run validators

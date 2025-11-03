@@ -255,7 +255,7 @@ Containers:
 
 
 def test_validation(
-    empty_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, list[str]]
+    validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, list[str]]
 ) -> None:
     yaml_content, expected_problematic_reversals = valid_dms_yaml_with_consistency_errors
 
@@ -284,7 +284,7 @@ def test_validation(
     )
 
     # Run on success validators
-    on_success = DmsDataModelValidation(empty_cdf_client)
+    on_success = DmsDataModelValidation(validation_test_cdf_client)
     on_success.run(data_model)
 
     by_code = on_success.issues.by_code()

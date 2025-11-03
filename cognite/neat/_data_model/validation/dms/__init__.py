@@ -1,6 +1,7 @@
 from ._orchestrator import DmsDataModelValidation
 from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
 from ._validators import (
+    ReferencedContainersExist,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
     ViewsWithoutProperties,
@@ -9,6 +10,7 @@ from ._validators import (
 __all__ = [
     "BidirectionalConnectionMisconfigured",
     "DmsDataModelValidation",
+    "ReferencedContainersExist",
     "UndefinedConnectionEndNodeTypes",
     "VersionSpaceInconsistency",
     "ViewsWithoutProperties",

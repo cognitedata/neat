@@ -1,4 +1,5 @@
 from cognite.neat._data_model._constants import COGNITE_SPACES
+from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
@@ -115,3 +116,59 @@ class VersionSpaceInconsistency(DataModelValidator):
                 )
 
         return recommendations
+
+
+class ReferencedContainersExist(DataModelValidator):
+    """This validator checks that all referenced containers in the data model exist either locally or in CDF."""
+
+    code = "NEAT-DMS-005"
+
+    def run(self) -> list[ConsistencyError]:
+        errors = []
+        missing_containers = []
+        missing_container_properties = []
+
+        for view_ref, view in self.local_resources.views_by_reference.items():
+            for property_ref, property_ in view.properties.items():
+                if not isinstance(property_, ViewCorePropertyRequest):
+                    continue
+
+                container_ref = property_.container
+                container_property = property_.container_property_identifier
+
+                container = self._select_container(container_ref, container_property)
+
+                if not container:
+                    missing_containers.append((view_ref, property_ref, container_ref))
+                elif container_property not in container.properties:
+                    missing_container_properties.append((view_ref, property_ref, container_ref, container_property))
+
+        errors = [
+            ConsistencyError(
+                message=(
+                    f"View {view_ref!s} property {property_ref!s} references "
+                    f"container {container_ref!s} which does not exist "
+                    "in the data model nor in CDF."
+                    " This will prohibit you from deploying the data model to CDF."
+                ),
+                fix="Define necessary container",
+                code=self.code,
+            )
+            for (view_ref, property_ref, container_ref) in missing_containers
+        ]
+
+        errors.extend(
+            ConsistencyError(
+                message=(
+                    f"View {view_ref!s} property {property_ref!s} references "
+                    f"container {container_ref!s} which does not have "
+                    f"property '{container_property}' defined."
+                    " This will prohibit you from deploying the data model to CDF."
+                ),
+                fix="Define necessary container property",
+                code=self.code,
+            )
+            for (view_ref, property_ref, container_ref, container_property) in missing_container_properties
+        )
+
+        return errors
