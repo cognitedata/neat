@@ -94,7 +94,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         source_property = cast(ViewCorePropertyRequest, source_view.properties[ctx.through.identifier])
 
         # Validate container mapping
-        if container_errors := self._validate_container_mapping(source_property, ctx):
+        if container_errors := self._check_container_property_type(source_property, ctx):
             return container_errors
 
         # Validate target view reference
@@ -159,7 +159,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
 
         return None
 
-    def _validate_container_mapping(
+    def _check_container_property_type(
         self, source_property: ViewCorePropertyRequest, ctx: ReverseConnectionContext
     ) -> list[ConsistencyError]:
         """Validate that the container and container property are correctly configured."""
