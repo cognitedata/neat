@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, cast
 
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
+from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.exporters import DMSTableExporter
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
@@ -64,19 +65,19 @@ class NeatStore:
     ) -> tuple[Change, PhysicalDataModel | None]:
         """Execute activity and capture timing, results, and issues"""
         start = datetime.now(timezone.utc)
-        result: PhysicalDataModel | None = None
+        created_data_model: PhysicalDataModel | None = None
         issues = IssueList()
         errors = IssueList()
+        deployment_result: DeploymentResult | None = None
 
         try:
-            result = activity(**kwargs)
-
-            if result and on_success:
+            created_data_model = activity(**kwargs)
+            if created_data_model and on_success:
+                on_success.run(created_data_model)
                 if isinstance(on_success, OnSuccessIssuesChecker):
-                    on_success.run(result)
                     issues.extend(on_success.issues)
                 elif isinstance(on_success, OnSuccessResultProducer):
-                    raise NotImplementedError("OnSuccessResultProducer is not implemented yet.")
+                    deployment_result = on_success.result
                 else:
                     raise RuntimeError(f"Unknown OnSuccess type {type(on_success).__name__}")
 
@@ -97,8 +98,9 @@ class NeatStore:
             agent=type(activity.__self__).__name__ if hasattr(activity, "__self__") else "UnknownAgent",
             issues=issues,
             errors=errors,
+            result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
-        ), result
+        ), created_data_model
 
 
 class DataModelList(UserList[PhysicalDataModel]):
