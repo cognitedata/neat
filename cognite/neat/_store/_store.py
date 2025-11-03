@@ -34,8 +34,6 @@ class NeatStore:
             self.physical_data_model.append(data_model)
             self.state = self.state.transition(reader)
             change.target_state = self.state
-            # in case of read of data model result will be same as target entity
-            change.result = change.target_entity
 
         self.provenance.append(change)
 
