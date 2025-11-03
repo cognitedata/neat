@@ -84,8 +84,9 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
 
         # Validate source view exists
         source_view = self._select_source_view(ctx.source_view_ref, ctx.through.identifier)
-        if error := self._check_source_view_exists(source_view, ctx):
-            return [error]
+
+        if not source_view:
+            return [self._create_missing_view_error(ctx)]
 
         source_view: ViewRequest  # for type checker, since we checked for None above
         # Validate source property exists and is correct type
@@ -143,14 +144,6 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         )
 
         return next(candidates, None)
-
-    def _check_source_view_exists(
-        self, source_view: ViewRequest | None, ctx: ReverseConnectionContext
-    ) -> "ConsistencyError | None":
-        """Check if source view exists."""
-        if not source_view:
-            return self._create_missing_view_error(ctx)
-        return None
 
     def _check_source_property(
         self, source_view: ViewRequest, ctx: ReverseConnectionContext
