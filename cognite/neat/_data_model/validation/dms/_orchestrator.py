@@ -5,6 +5,7 @@ from cognite.neat._data_model.models.dms._references import ViewReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.validation._base import DataModelValidator
+from cognite.neat._issues import IssueList
 
 from ._validators import UndefinedConnectionEndNodeTypes, VersionSpaceInconsistency, ViewsWithoutProperties
 
@@ -15,9 +16,17 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     def __init__(
         self, client: NeatClient | None = None, codes: list[str] | None = None, modus_operandi: str | None = None
     ) -> None:
-        super().__init__(client)
+        self._client = client
         self._codes = codes or ["all"]
         self._modus_operandi = modus_operandi  # will be used later to trigger how validators will behave
+        self._issues = IssueList()
+        self._has_run = False
+
+    @property
+    def issues(self) -> IssueList:
+        if not self._has_run:
+            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
+        return IssueList(self._issues)
 
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
