@@ -57,7 +57,7 @@ class TestSchemaDeployer:
     ) -> None:
         deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=True))
         deployer.run(model)
-        result = deployer.results
+        result = deployer.result
         assert result.is_dry_run
         assert result.status == "pending"
         assert result.is_success

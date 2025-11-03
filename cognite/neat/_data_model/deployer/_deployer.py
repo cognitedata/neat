@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Literal, cast
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model._shared import OnSuccessResultProducer
 from cognite.neat._data_model.models.dms import DataModelBody, RequestSchema, T_DataModelResource, T_ResourceId
 from cognite.neat._utils.http_client import (
     FailedRequestItems,
@@ -50,14 +51,14 @@ class DeploymentOptions:
     modus_operandi: Literal["partial", "overwrite"] = "partial"
 
 
-class SchemaDeployer:
+class SchemaDeployer(OnSuccessResultProducer):
     def __init__(self, client: NeatClient, options: DeploymentOptions | None = None) -> None:
         self.client: NeatClient = client
         self.options: DeploymentOptions = options or DeploymentOptions()
         self._results: DeploymentResult | None = None
 
     @property
-    def results(self) -> DeploymentResult:
+    def result(self) -> DeploymentResult:
         if self._results is None:
             raise RuntimeError("SchemaDeployer has not been run yet.")
         return self._results
