@@ -73,22 +73,10 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
-            ViewsWithoutProperties(
-                local_resources=local_resources,
-                cdf_resources=cdf_resources,
-            ),
-            UndefinedConnectionEndNodeTypes(
-                local_resources=local_resources,
-                cdf_resources=cdf_resources,
-            ),
-            VersionSpaceInconsistency(
-                local_resources=local_resources,
-                cdf_resources=cdf_resources,
-            ),
-            BidirectionalConnectionMisconfigured(
-                local_resources=local_resources,
-                cdf_resources=cdf_resources,
-            ),
+            ViewsWithoutProperties(local_resources, cdf_resources),
+            UndefinedConnectionEndNodeTypes(local_resources, cdf_resources),
+            VersionSpaceInconsistency(local_resources, cdf_resources),
+            BidirectionalConnectionMisconfigured(local_resources, cdf_resources),
         ]
 
         # Run validators
