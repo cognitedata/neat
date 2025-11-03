@@ -30,6 +30,32 @@ def neat_client(neat_config: NeatClientConfig) -> NeatClient:
 
 
 @pytest.fixture
+def empty_cdf_client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
+    client = neat_client
+    config = client.config
+    respx_mock.post(
+        config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
+    ).respond(
+        status_code=200,
+        json={
+            "items": [],
+            "nextCursor": None,
+        },
+    )
+    respx_mock.post(
+        config.create_api_url("/models/containers/byids"),
+    ).respond(
+        status_code=200,
+        json={
+            "items": [],
+            "nextCursor": None,
+        },
+    )
+
+    return client
+
+
+@pytest.fixture
 def example_dms_data_model_response() -> dict[str, Any]:
     return dict(
         space="my_space",

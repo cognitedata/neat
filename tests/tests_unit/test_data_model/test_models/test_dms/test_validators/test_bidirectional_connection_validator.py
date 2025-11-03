@@ -2,7 +2,6 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-import respx
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
@@ -12,32 +11,6 @@ from cognite.neat._data_model.validation.dms import (
     BidirectionalConnectionMisconfigured,
     DmsDataModelValidation,
 )
-
-
-@pytest.fixture()
-def client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
-    client = neat_client
-    config = client.config
-    respx_mock.post(
-        config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-    respx_mock.post(
-        config.create_api_url("/models/containers/byids"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-
-    return client
 
 
 @pytest.fixture(scope="session")
@@ -281,7 +254,9 @@ Containers:
     return yaml_content, expected_problematic_reversals
 
 
-def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, list[str]]) -> None:
+def test_validation(
+    empty_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, list[str]]
+) -> None:
     yaml_content, expected_problematic_reversals = valid_dms_yaml_with_consistency_errors
 
     read_yaml = MagicMock(spec=Path)
@@ -309,7 +284,7 @@ def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: 
     )
 
     # Run on success validators
-    on_success = DmsDataModelValidation(client)
+    on_success = DmsDataModelValidation(empty_cdf_client)
     on_success.run(data_model)
 
     by_code = on_success.issues.by_code()

@@ -3,7 +3,6 @@ from typing import cast
 from unittest.mock import MagicMock
 
 import pytest
-import respx
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
@@ -15,32 +14,6 @@ from cognite.neat._data_model.validation.dms import (
     ViewsWithoutProperties,
 )
 from cognite.neat._issues import IssueList
-
-
-@pytest.fixture()
-def client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
-    client = neat_client
-    config = client.config
-    respx_mock.post(
-        config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-    respx_mock.post(
-        config.create_api_url("/models/containers/byids"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-
-    return client
 
 
 @pytest.fixture(scope="session")
@@ -96,13 +69,13 @@ Containers:
 """
 
 
-def test_validation(client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
+def test_validation(empty_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str) -> None:
     read_yaml = MagicMock(spec=Path)
     read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
     importer = DMSTableImporter.from_yaml(read_yaml)
     data_model = importer.to_data_model()
 
-    on_success = DmsDataModelValidation(client)
+    on_success = DmsDataModelValidation(empty_cdf_client)
 
     on_success.run(data_model)
 
