@@ -30,7 +30,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
-
+        if self._has_run:
+            raise RuntimeError(f"{type(self).__name__} has already been run.")
         # Helper wrangled data model components
         analysis = DataModelAnalysis(data_model)
         local_views_by_reference = analysis.view_by_reference(include_inherited_properties=True)
