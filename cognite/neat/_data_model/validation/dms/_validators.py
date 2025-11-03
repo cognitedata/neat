@@ -1,7 +1,5 @@
 from cognite.neat._data_model._constants import COGNITE_SPACES
-from cognite.neat._data_model.models.dms._references import DataModelReference, ViewReference
-from cognite.neat._data_model.models.dms._views import ViewRequest
-from cognite.neat._data_model.validation._base import DataModelValidator
+from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 
@@ -11,31 +9,23 @@ class ViewsWithoutProperties(DataModelValidator):
 
     code = "NEAT-DMS-001"
 
-    def __init__(
-        self,
-        local_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest],
-    ) -> None:
-        self.local_views_by_reference = local_views_by_reference
-        self.cdf_views_by_reference = cdf_views_by_reference
-
     def run(self) -> list[ConsistencyError]:
         views_without_properties = []
 
-        for ref, view in self.local_views_by_reference.items():
+        for ref, view in self.local_resources.views_by_reference.items():
             if not view.properties:
                 # Existing CDF view has properties
                 if (
-                    self.cdf_views_by_reference
-                    and (remote := self.cdf_views_by_reference.get(ref))
+                    self.cdf_resources
+                    and (remote := self.cdf_resources.views_by_reference.get(ref))
                     and remote.properties
                 ):
                     continue
 
                 # Implemented views have properties
                 if view.implements and any(
-                    self.cdf_views_by_reference
-                    and (remote_implement := self.cdf_views_by_reference.get(implement))
+                    self.cdf_resources.views_by_reference
+                    and (remote_implement := self.cdf_resources.views_by_reference.get(implement))
                     and remote_implement.properties
                     for implement in view.implements or []
                 ):
@@ -62,21 +52,14 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
 
     code = "NEAT-DMS-002"
 
-    def __init__(
-        self,
-        local_connection_end_node_types: dict[tuple[ViewReference, str], ViewReference],
-        local_views_by_reference: dict[ViewReference, ViewRequest],
-        cdf_views_by_reference: dict[ViewReference, ViewRequest],
-    ) -> None:
-        self.local_connection_end_node_types = local_connection_end_node_types
-        self.local_views_by_reference = local_views_by_reference
-        self.cdf_views_by_reference = cdf_views_by_reference
-
     def run(self) -> list[ConsistencyError]:
         undefined_value_types = []
 
-        for (view, property_), value_type in self.local_connection_end_node_types.items():
-            if value_type not in self.local_views_by_reference and value_type not in self.cdf_views_by_reference:
+        for (view, property_), value_type in self.local_resources.connection_end_node_types.items():
+            if (
+                value_type not in self.local_resources.views_by_reference
+                and value_type not in self.cdf_resources.views_by_reference
+            ):
                 undefined_value_types.append((view, property_, value_type))
 
         return [
@@ -98,29 +81,24 @@ class VersionSpaceInconsistency(DataModelValidator):
 
     code = "NEAT-DMS-003"
 
-    def __init__(
-        self,
-        data_model_reference: DataModelReference,
-        view_references: list[ViewReference],
-    ) -> None:
-        self.data_model_reference = data_model_reference
-        self.view_references = view_references
-
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.view_references:
+        for view_ref in self.local_resources.views_by_reference:
             issue_description = ""
 
             if view_ref.space not in COGNITE_SPACES:
                 # notify about inconsisten space
-                if view_ref.space != self.data_model_reference.space:
-                    issue_description = f"space (view: {view_ref.space}, data model: {self.data_model_reference.space})"
+                if view_ref.space != self.local_resources.data_model_reference.space:
+                    issue_description = (
+                        f"space (view: {view_ref.space}, data model: {self.local_resources.data_model_reference.space})"
+                    )
 
                 # or version if spaces are same
-                elif view_ref.version != self.data_model_reference.version:
+                elif view_ref.version != self.local_resources.data_model_reference.version:
                     issue_description = (
-                        f"version (view: {view_ref.version}, data model: {self.data_model_reference.version})"
+                        f"version (view: {view_ref.version}, "
+                        f"data model: {self.local_resources.data_model_reference.version})"
                     )
 
             if issue_description:
