@@ -83,7 +83,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         """
 
         # Validate source view exists
-        source_view = self._select_source_view(ctx.source_view_ref, ctx.through)
+        source_view = self._select_source_view(ctx.source_view_ref, ctx.through.identifier)
         if error := self._check_source_view_exists(source_view, ctx):
             return [error]
 
@@ -110,7 +110,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
             return ViewDirectReference(source=source_view_ref, identifier=through.identifier)
         return through
 
-    def _select_source_view(self, view_ref: ViewReference, through: ViewDirectReference) -> ViewRequest | None:
+    def _select_source_view(self, view_ref: ViewReference, reverse_property: str) -> ViewRequest | None:
         """Select the appropriate view (local or CDF) that contains the property used in the reverse connection.
 
         Prioritizes views that contain the property, then falls back to any available view.
@@ -120,7 +120,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
 
         # Try views with the property first, then any available view
         candidates = chain(
-            (v for v in (local_view, cdf_view) if v and v.properties and through.identifier in v.properties),
+            (v for v in (local_view, cdf_view) if v and v.properties and reverse_property in v.properties),
             (v for v in (local_view, cdf_view) if v),
         )
 
