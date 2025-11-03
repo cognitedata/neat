@@ -8,9 +8,8 @@ from cognite.neat._data_model.models.dms._references import ContainerReference, 
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.models.dms._views import ViewRequest
-from cognite.neat._data_model.validation.dms._base import DataModelValidator
 
-from ._base import CDFResources, LocalResources
+from ._base import CDFResources, DataModelValidator, LocalResources
 from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
 from ._validators import (
     ReferencedContainersExist,
@@ -26,9 +25,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     def __init__(
         self, client: NeatClient | None = None, codes: list[str] | None = None, modus_operandi: str | None = None
     ) -> None:
-        super().__init__(client)
+        super().__init__()
+        self._client = client
         self._codes = codes or ["all"]
         self._modus_operandi = modus_operandi  # will be used later to trigger how validators will behave
+        self._has_run = False
 
     def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources]:
         """Gather local and CDF resources needed for validation."""

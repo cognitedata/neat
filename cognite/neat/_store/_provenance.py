@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine import State
 
@@ -21,7 +22,7 @@ class Change:
     issues: IssueList | None = field(default=None)
     errors: IssueList | None = field(default=None)
     # for time being setting to Any, can be refined later
-    result: Any | None = field(default=None)
+    result: DeploymentResult | None = field(default=None)
     description: str | None = field(default=None)
 
     @staticmethod
