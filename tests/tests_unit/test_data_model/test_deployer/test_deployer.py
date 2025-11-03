@@ -1,11 +1,18 @@
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 import respx
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
-from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
+from cognite.neat._data_model.deployer.data_classes import (
+    ChangedField,
+    ResourceChange,
+    ResourceDeploymentPlan,
+    SchemaSnapshot,
+    SeverityType,
+)
 from cognite.neat._data_model.models.dms import RequestSchema
 
 
@@ -56,9 +63,81 @@ class TestSchemaDeployer:
         assert result.is_success
         assert result.responses is None
 
-    def test_deploy(
-        self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
-    ) -> None:
+    def test_apply_plan(self, neat_client: NeatClient, model: RequestSchema, respx_mock: respx.MockRouter) -> None:
         deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
-        with pytest.raises(NotImplementedError):
-            deployer.deploy(model)
+        plan: list[ResourceDeploymentPlan] = [
+            ResourceDeploymentPlan(
+                endpoint="spaces",
+                resources=[ResourceChange(resource_id=space.as_reference(), new_value=space) for space in model.spaces],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="containers",
+                resources=[
+                    ResourceChange(resource_id=container.as_reference(), new_value=container)
+                    for container in model.containers
+                ],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="views",
+                resources=[
+                    ResourceChange(
+                        resource_id=view.as_reference(),
+                        new_value=view,
+                        current_value=view.model_copy(update={"name": "old name"}, deep=True),
+                        changes=[
+                            ChangedField(
+                                field_path="name",
+                                item_severity=SeverityType.SAFE,
+                                new_value=view.name,
+                                current_value="old name",
+                            )
+                        ],
+                    )
+                    for view in model.views
+                ],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="datamodels",
+                resources=[
+                    ResourceChange(
+                        resource_id=model.data_model.as_reference(), new_value=None, current_value=model.data_model
+                    ),  # Trigger delete.
+                    ResourceChange(resource_id=model.data_model.as_reference(), new_value=model.data_model),
+                ],
+            ),
+        ]
+        # Mock the responses for creation/update (same endpoint in data modeling API)
+        for resource_plan in plan:
+            respx_mock.post(neat_client.config.create_api_url(f"/models/{resource_plan.endpoint}")).respond(
+                status_code=200,
+                json={
+                    "items": [
+                        change.new_value.model_dump(by_alias=True)
+                        for change in resource_plan.to_upsert
+                        if change.new_value is not None
+                    ]
+                },
+            )
+            if resource_plan.endpoint == "datamodels":
+                # Mock delete endpoint
+                respx_mock.post(neat_client.config.create_api_url(f"/models/{resource_plan.endpoint}/delete")).respond(
+                    status_code=200,
+                    json={
+                        "items": [
+                            change.current_value.model_dump(by_alias=True)
+                            for change in resource_plan.to_delete
+                            if change.current_value is not None
+                        ]
+                    },
+                )
+
+        with patch("time.sleep"):  # In order to speed up tests
+            result = deployer.apply_changes(plan)
+
+        assert result.is_success
+        created_resources = len(result.created)
+        expected_created = len(model.spaces) + len(model.containers) + 1  # +1 for datamodel
+        assert created_resources == expected_created
+        assert len(result.updated) == len(model.views)  # All views updated
+        assert len(result.deletions) == 1  # One datamodel deleted
+        assert len(result.unchanged) == 0

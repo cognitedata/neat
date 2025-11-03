@@ -1,3 +1,4 @@
+import itertools
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -20,7 +21,12 @@ from cognite.neat._data_model.models.dms import (
     ViewReference,
     ViewRequest,
 )
-from cognite.neat._utils.http_client._data_classes import ItemMessage
+from cognite.neat._utils.http_client import (
+    FailedRequestItems,
+    FailedResponseItems,
+    SuccessResponse,
+    SuccessResponseItems,
+)
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -106,14 +112,16 @@ class FieldChanges(FieldChange):
 
 class ResourceChange(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
     resource_id: T_ResourceId
-    new_value: T_DataModelResource
-    old_value: T_DataModelResource | None = None
+    new_value: T_DataModelResource | None
+    current_value: T_DataModelResource | None = None
     changes: list[FieldChange] = Field(default_factory=list)
 
     @property
     def change_type(self) -> Literal["create", "update", "delete", "unchanged"]:
-        if self.old_value is None:
+        if self.current_value is None:
             return "create"
+        elif self.new_value is None:
+            return "delete"
         elif self.changes:
             return "update"
         else:
@@ -131,6 +139,14 @@ class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModel
     @property
     def to_upsert(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type in ("create", "update")]
+
+    @property
+    def to_create(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
+        return [change for change in self.resources if change.change_type == "create"]
+
+    @property
+    def to_update(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
+        return [change for change in self.resources if change.change_type == "update"]
 
     @property
     def to_delete(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
@@ -152,18 +168,21 @@ class SchemaSnapshot(BaseDeployObject):
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
     change: ResourceChange[T_ResourceId, T_DataModelResource]
-    message: ItemMessage[T_ResourceId]
+    message: SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
 
 
-class AppliedChanges(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
-    created: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
-    updated: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
-    deletions: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
-    unchanged: list[ChangeResult[T_ResourceId, T_DataModelResource]] = Field(default_factory=list)
+class AppliedChanges(BaseDeployObject):
+    created: list[ChangeResult] = Field(default_factory=list)
+    updated: list[ChangeResult] = Field(default_factory=list)
+    deletions: list[ChangeResult] = Field(default_factory=list)
+    unchanged: list[ResourceChange] = Field(default_factory=list)
 
     @property
     def is_success(self) -> bool:
-        raise NotImplementedError()
+        return all(
+            isinstance(change.message, SuccessResponse)
+            for change in itertools.chain(self.created, self.updated, self.deletions)
+        )
 
     def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
         raise NotImplementedError()
