@@ -17,16 +17,25 @@ class OnSuccess(ABC):
 class OnSuccessIssuesChecker(OnSuccess, ABC):
     """Abstract base class for post-activity success handlers that check for issues of the data model."""
 
+    def __init__(self) -> None:
+        self._issues = IssueList()
+        self._has_run = False
+
     @property
-    @abstractmethod
     def issues(self) -> IssueList:
-        """List of issues found during the success handler execution."""
-        ...
+        if not self._has_run:
+            raise RuntimeError(f"{type(self).__name__} has not been run yet.")
+        return IssueList(self._issues)
 
 
 class OnSuccessResultProducer(OnSuccess, ABC):
     """Abstract base class for post-activity success handlers that produce desired outcomes using the data model."""
 
+    def __init__(self) -> None:
+        self._results: DeploymentResult | None = None
+
     @property
-    @abstractmethod
-    def result(self) -> DeploymentResult: ...
+    def result(self) -> DeploymentResult:
+        if self._results is None:
+            raise RuntimeError("SchemaDeployer has not been run yet.")
+        return self._results

@@ -53,15 +53,9 @@ class DeploymentOptions:
 
 class SchemaDeployer(OnSuccessResultProducer):
     def __init__(self, client: NeatClient, options: DeploymentOptions | None = None) -> None:
+        super().__init__()
         self.client: NeatClient = client
         self.options: DeploymentOptions = options or DeploymentOptions()
-        self._results: DeploymentResult | None = None
-
-    @property
-    def result(self) -> DeploymentResult:
-        if self._results is None:
-            raise RuntimeError("SchemaDeployer has not been run yet.")
-        return self._results
 
     def run(self, data_model: RequestSchema) -> None:
         if self._results is not None:
