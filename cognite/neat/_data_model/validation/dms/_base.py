@@ -61,4 +61,4 @@ class DataModelValidator(ABC):
     def run(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:
         """Execute the success handler on the data model."""
         # do something with data model
-        pass
+        ...
