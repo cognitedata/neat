@@ -280,7 +280,7 @@ class DataModelLimitValidator(DataModelValidator):
                 raise RuntimeError(f"View {view_ref!s} not found in either local or CDF resources. This is a bug!")
 
             # this will later update of local properties and implements
-            merged_views[view_ref] = cast(ViewRequest, cdf_view or local_view)
+            merged_views[view_ref] = cast(ViewRequest, (cdf_view or local_view)).model_copy(deep=True)
 
             if local_view and local_view.properties:
                 if not merged_views[view_ref].properties:
@@ -329,7 +329,9 @@ class DataModelLimitValidator(DataModelValidator):
             if not cdf_container and not local_container:
                 raise RuntimeError(f"Container {view_ref!s} not found in either local or CDF resources. This is a bug!")
 
-            merged_containers[view_ref] = cast(ContainerRequest, cdf_container or local_container)
+            merged_containers[view_ref] = cast(ContainerRequest, (cdf_container or local_container)).model_copy(
+                deep=True
+            )
 
             if local_container and local_container.properties:
                 if not merged_containers[view_ref].properties:
