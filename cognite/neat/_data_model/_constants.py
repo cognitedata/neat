@@ -1,3 +1,7 @@
+from dataclasses import field
+
+from attr import dataclass
+
 from ._identifiers import NameSpace
 
 XML_SCHEMA_NAMESPACE = NameSpace("http://www.w3.org/2001/XMLSchema#")
@@ -60,3 +64,79 @@ COGNITE_CONCEPTS: tuple[str, ...] = (
 )
 
 COGNITE_SPACES = (CDF_CDM_SPACE,)
+
+
+@dataclass(frozen=True)
+class SpaceLimits:
+    """Limits for spaces."""
+
+    total: int = 100
+
+
+@dataclass(frozen=True)
+class ListPropertyLimits:
+    """Limits for list properties."""
+
+    default_direct_relations: int = 100
+    default_other_types: int = 1_000
+    max_int32_with_btree: int = 600
+    max_int64_with_btree: int = 300
+    max_all_other_types: int = 2_000
+
+
+@dataclass(frozen=True)
+class ContainerLimits:
+    """Limits for containers."""
+
+    total: int = 1_000
+    properties_total: int = 25_000
+    properties_per_container: int = 100
+    enums_per_property: int = 32
+    listable_property: ListPropertyLimits = field(default_factory=ListPropertyLimits)
+
+
+@dataclass(frozen=True)
+class ViewLimits:
+    """Limits for views."""
+
+    total: int = 2_000
+    versions_per_view: int = 100
+    properties_per_view: int = 300
+    implements_per_view: int = 10
+    container_per_view: int = 10
+
+
+@dataclass(frozen=True)
+class DataModelLimits:
+    """Limits for data models."""
+
+    versions_total: int = 500
+    versions_per_data_model: int = 100
+    views_per_data_model: int = 100
+
+
+@dataclass(frozen=True)
+class InstanceLimits:
+    """Limits for instances."""
+
+    live: int = 5_000_000
+    soft_deleted: int = 10_000_000
+
+
+class _DMSLimits:
+    """CDF Data Modeling resource limits."""
+
+    def __init__(self) -> None:
+        self.space = SpaceLimits()
+        self.container = ContainerLimits()
+        self.view = ViewLimits()
+        self.data_model = DataModelLimits()
+        self.instance = InstanceLimits()
+
+    def from_api_response(self, response: dict) -> None:
+        """Populate limits from API response."""
+        # Implementation to parse and set limits from response can be added here
+        ...
+
+
+DMSDefaultLimits = _DMSLimits()
