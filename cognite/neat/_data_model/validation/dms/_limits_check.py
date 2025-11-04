@@ -1,9 +1,9 @@
-from pyparsing import cast
+from typing import cast
 
 from cognite.neat._data_model._constants import DMSDefaultLimits
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import EnumProperty
-from cognite.neat._data_model.models.dms._indexes import BtreeIndex, IndexDefinition, InvertedIndex
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, InvertedIndex
 from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import (
     ViewCorePropertyRequest,
@@ -367,8 +367,8 @@ class DataModelLimitValidator(DataModelValidator):
         for index in container.indexes.values():
             if isinstance(index, BtreeIndex):
                 container_property_by_index_type[BtreeIndex.model_fields["index_type"].default].extend(index.properties)
-            elif isinstance(index, IndexDefinition):
-                container_property_by_index_type[IndexDefinition.model_fields["index_type"].default].extend(
+            elif isinstance(index, InvertedIndex):
+                container_property_by_index_type[InvertedIndex.model_fields["index_type"].default].extend(
                     index.properties
                 )
 
