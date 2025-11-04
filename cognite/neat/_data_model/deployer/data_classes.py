@@ -269,7 +269,7 @@ class ResourceDeploymentPlanList(UserList):
 
     def _consolidate_resource(self, resource: DataModelResource, removals: list[RemovedField]) -> DataModelResource:
         if isinstance(resource, DataModelRequest):
-            raise NotImplementedError()
+            return self._consolidate_data_model(resource, removals)
         elif isinstance(resource, ViewRequest):
             return self._consolidate_view(resource, removals)
         elif isinstance(resource, ContainerRequest):
@@ -278,6 +278,14 @@ class ResourceDeploymentPlanList(UserList):
             # This should not happen, as only containers, views, and data models have removable fields.
             raise RuntimeError("Bug in Neat: attempted to consolidate removals for unsupported resource type.")
         return resource
+
+    @staticmethod
+    def _consolidate_data_model(resource: DataModelRequest, removals: list[RemovedField]) -> DataModelResource:
+        data_model_views = resource.views.copy() if resource.views else []
+        for removal in removals:
+            if removal.field_path == "views":
+                data_model_views.append(cast(ViewReference, removal.current_value))
+        return resource.model_copy(update={"views": data_model_views}, deep=True)
 
     @staticmethod
     def _consolidate_view(resource: ViewRequest, removals: list[RemovedField]) -> DataModelResource:
