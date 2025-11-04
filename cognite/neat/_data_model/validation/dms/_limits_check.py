@@ -13,10 +13,10 @@ from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError
 
 
-class ReferencedContainersExist(DataModelValidator):
-    """This validator checks that all referenced containers in the data model exist either locally or in CDF."""
+class DataModelLimitValidator(DataModelValidator):
+    """This data model validator checks that the data model adheres to DMS limits."""
 
-    code = "NEAT-DMS-005"
+    code = "NEAT-DMS-006"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -202,7 +202,7 @@ class ReferencedContainersExist(DataModelValidator):
             if local_view and local_view.implements:
                 if not merged_views[view_ref].implements:
                     merged_views[view_ref].implements = local_view.implements
-                else:
+                else:  # mypy is complaining here about possible None which is not possible due to the check above
                     cast(list[ViewReference], merged_views[view_ref].implements).extend(local_view.implements)
 
         return merged_views

@@ -11,6 +11,7 @@ from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
+from ._limits_check import DataModelLimitValidator
 from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
 from ._validators import (
     ReferencedContainersExist,
@@ -84,6 +85,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             VersionSpaceInconsistency(local_resources, cdf_resources),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources),
             ReferencedContainersExist(local_resources, cdf_resources),
+            DataModelLimitValidator(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators
