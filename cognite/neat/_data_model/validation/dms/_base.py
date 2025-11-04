@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from itertools import chain
 from typing import ClassVar, TypeAlias
 
 from cognite.neat._data_model.models.dms._container import ContainerRequest
@@ -62,3 +63,46 @@ class DataModelValidator(ABC):
         """Execute the success handler on the data model."""
         # do something with data model
         ...
+
+    def _select_view(self, view_ref: ViewReference, property_: str) -> ViewRequest | None:
+        """Select the appropriate view (local or CDF) that contains desired property.
+
+        Prioritizes views that contain the property  (first local than CDF),
+        then falls back to any available view (even without the property).
+
+        Args:
+            view_ref: Reference to the view.
+            property_: Property name to look for.
+
+        """
+        local_view = self.local_resources.views_by_reference.get(view_ref)
+        cdf_view = self.cdf_resources.views_by_reference.get(view_ref)
+
+        # Try views with the property first, then any available view
+        candidates = chain(
+            (v for v in (local_view, cdf_view) if v and v.properties and property_ in v.properties),
+            (v for v in (local_view, cdf_view) if v),
+        )
+
+        return next(candidates, None)
+
+    def _select_container(self, container_ref: ContainerReference, property_: str) -> ContainerRequest | None:
+        """Select the appropriate container (local or CDF) that contains the desired property.
+
+        Prioritizes containers that contain the property (first local than CDF),
+        then falls back to any available container.
+
+        Args:
+            container_ref: Reference to the container.
+            property_: Property name to look for.
+        """
+        local_container = self.local_resources.containers_by_reference.get(container_ref)
+        cdf_container = self.cdf_resources.containers_by_reference.get(container_ref)
+
+        # Try containers with the property first, then any available container
+        candidates = chain(
+            (c for c in (local_container, cdf_container) if c and c.properties and property_ in c.properties),
+            (c for c in (local_container, cdf_container) if c),
+        )
+
+        return next(candidates, None)

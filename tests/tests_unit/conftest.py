@@ -30,7 +30,7 @@ def neat_client(neat_config: NeatClientConfig) -> NeatClient:
 
 
 @pytest.fixture
-def empty_cdf_client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
+def validation_test_cdf_client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> NeatClient:
     client = neat_client
     config = client.config
     respx_mock.post(
@@ -47,7 +47,25 @@ def empty_cdf_client(neat_client: NeatClient, respx_mock: respx.MockRouter) -> N
     ).respond(
         status_code=200,
         json={
-            "items": [],
+            "items": [
+                dict(
+                    space="nospace",
+                    externalId="ExistingContainer",
+                    name="ExistingContainer",
+                    description="ExistingContainer",
+                    usedFor="node",
+                    properties={
+                        "unused": {
+                            "type": {"type": "text"},
+                            "nullable": False,
+                            "immutable": False,
+                        }
+                    },
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    isGlobal=False,
+                )
+            ],
             "nextCursor": None,
         },
     )

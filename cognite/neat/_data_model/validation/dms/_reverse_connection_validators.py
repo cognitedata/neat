@@ -1,9 +1,7 @@
 from dataclasses import dataclass
-from itertools import chain
 
 from pyparsing import cast
 
-from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DataType, DirectNodeRelation
 from cognite.neat._data_model.models.dms._references import (
     ContainerDirectReference,
@@ -86,7 +84,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         """
 
         # Validate source view exists
-        source_view = self._select_source_view(ctx.source_view_ref, ctx.through.identifier)
+        source_view = self._select_view(ctx.source_view_ref, ctx.through.identifier)
 
         if not source_view:
             return [self._create_missing_view_error(ctx)]
@@ -112,40 +110,6 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
             return ViewDirectReference(source=source_view_ref, identifier=through.identifier)
         return through
 
-    def _select_source_view(self, view_ref: ViewReference, reverse_property: str) -> ViewRequest | None:
-        """Select the appropriate view (local or CDF) that contains the property used in the reverse connection.
-
-        Prioritizes views that contain the property, then falls back to any available view.
-        """
-        local_view = self.local_resources.views_by_reference.get(view_ref)
-        cdf_view = self.cdf_resources.views_by_reference.get(view_ref)
-
-        # Try views with the property first, then any available view
-        candidates = chain(
-            (v for v in (local_view, cdf_view) if v and v.properties and reverse_property in v.properties),
-            (v for v in (local_view, cdf_view) if v),
-        )
-
-        return next(candidates, None)
-
-    def _select_source_container(
-        self, container_ref: ContainerReference, container_property: str
-    ) -> ContainerRequest | None:
-        """Select the appropriate container (local or CDF) that contains the property.
-
-        Prioritizes containers that contain the property, then falls back to any available container.
-        """
-        local_container = self.local_resources.containers_by_reference.get(container_ref)
-        cdf_container = self.cdf_resources.containers_by_reference.get(container_ref)
-
-        # Try containers with the property first, then any available container
-        candidates = chain(
-            (c for c in (local_container, cdf_container) if c and c.properties and container_property in c.properties),
-            (c for c in (local_container, cdf_container) if c),
-        )
-
-        return next(candidates, None)
-
     def _check_source_property(
         self, source_view: ViewRequest, ctx: ReverseConnectionContext
     ) -> "ConsistencyError | None":
@@ -169,7 +133,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         container_ref = source_property.container
         container_property_id = source_property.container_property_identifier
 
-        source_container = self._select_source_container(container_ref, container_property_id)
+        source_container = self._select_container(container_ref, container_property_id)
         if not source_container:
             return [self._create_missing_container_error(container_ref, ctx)]
 
