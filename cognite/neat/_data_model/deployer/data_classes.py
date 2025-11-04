@@ -1,20 +1,26 @@
 import itertools
+import sys
 from abc import ABC, abstractmethod
+from collections import UserList
 from datetime import datetime
 from enum import Enum
-from typing import Generic, Literal, TypeAlias
+from typing import Generic, Literal, TypeAlias, cast
 
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
+    Constraint,
     ContainerConstraintReference,
     ContainerIndexReference,
+    ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
     DataModelReference,
     DataModelRequest,
+    DataModelResource,
+    Index,
     NodeReference,
     SpaceReference,
     SpaceRequest,
@@ -22,6 +28,7 @@ from cognite.neat._data_model.models.dms import (
     T_ResourceId,
     ViewReference,
     ViewRequest,
+    ViewRequestProperty,
 )
 from cognite.neat._utils.http_client import (
     FailedRequestItems,
@@ -30,6 +37,11 @@ from cognite.neat._utils.http_client import (
     SuccessResponseItems,
 )
 from cognite.neat._utils.useful_types import T_Reference
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -220,6 +232,95 @@ class SchemaSnapshot(BaseDeployObject):
     containers: dict[ContainerReference, ContainerRequest]
     spaces: dict[SpaceReference, SpaceRequest]
     node_types: dict[NodeReference, NodeReference]
+
+
+class ResourceDeploymentPlanList(UserList):
+    def consolidate_changes(self) -> Self:
+        """Consolidate the deployment plans by applying field removals to the new_value of resources."""
+        consolidated_plan: list[ResourceDeploymentPlan] = []
+        for plan in self.data:
+            consolidated_resources: list[ResourceChange] = []
+            for resource in plan.resources:
+                if resource.new_value is None and resource.current_value is not None:
+                    # Deletion, keep current_value.
+                    updated_resource = resource.model_copy(update={"new_value": resource.current_value})
+                elif resource.changes and resource.new_value is not None:
+                    # Find all field removals and update new_value accordingly.
+                    removals = [change for change in resource.changes if isinstance(change, RemovedField)]
+                    if removals:
+                        if resource.current_value is None:
+                            raise RuntimeError("Bug in Neat: current_value is None for a resource with removals.")
+                        new_value = self._consolidate_resource(resource.current_value, resource.new_value, removals)
+                        updated_resource = resource.model_copy(
+                            update={
+                                "new_value": new_value,
+                                "changes": [
+                                    change for change in resource.changes if not isinstance(change, RemovedField)
+                                ],
+                            }
+                        )
+                    else:
+                        # No removals, keep as is.
+                        updated_resource = resource
+                else:
+                    # Creation or unchanged, keep as is.
+                    updated_resource = resource
+                consolidated_resources.append(updated_resource)
+            consolidated_plan.append(plan.model_copy(update={"resources": consolidated_resources}))
+        return type(self)(consolidated_plan)
+
+    def _consolidate_resource(
+        self, current: DataModelResource, new: DataModelResource, removals: list[RemovedField]
+    ) -> DataModelResource:
+        if isinstance(new, DataModelRequest):
+            if not isinstance(current, DataModelRequest):
+                # This should not happen, as only containers, views, and data models have removable fields.
+                raise RuntimeError("Bug in Neat: current value is not a DataModelRequest during consolidation.")
+            return self._consolidate_data_model(current, new)
+        elif isinstance(new, ViewRequest):
+            return self._consolidate_view(new, removals)
+        elif isinstance(new, ContainerRequest):
+            return self._consolidate_container(new, removals)
+        elif removals:
+            # This should not happen, as only containers, views, and data models have removable fields.
+            raise RuntimeError("Bug in Neat: attempted to consolidate removals for unsupported resource type.")
+        return new
+
+    @staticmethod
+    def _consolidate_data_model(current: DataModelRequest, new: DataModelRequest) -> DataModelResource:
+        current_views = set(v for v in (current.views or []))
+        new_only_views = [v for v in (new.views or []) if v not in current_views]
+        final_views = (current.views or []) + new_only_views
+        return new.model_copy(update={"views": final_views}, deep=True)
+
+    @staticmethod
+    def _consolidate_view(resource: ViewRequest, removals: list[RemovedField]) -> DataModelResource:
+        view_properties = resource.properties.copy()
+        for removal in removals:
+            if removal.field_path.startswith("properties."):
+                prop_key = removal.field_path.removeprefix("properties.")
+                view_properties[prop_key] = cast(ViewRequestProperty, removal.current_value)
+        return resource.model_copy(update={"properties": view_properties}, deep=True)
+
+    @staticmethod
+    def _consolidate_container(resource: ContainerRequest, removals: list[RemovedField]) -> DataModelResource:
+        container_properties = resource.properties.copy()
+        indexes = (resource.indexes or {}).copy()
+        constraints = (resource.constraints or {}).copy()
+        for removal in removals:
+            if removal.field_path.startswith("properties."):
+                prop_key = removal.field_path.removeprefix("properties.")
+                container_properties[prop_key] = cast(ContainerPropertyDefinition, removal.current_value)
+            elif removal.field_path.startswith("indexes."):
+                index_key = removal.field_path.removeprefix("indexes.")
+                indexes[index_key] = cast(Index, removal.current_value)
+            elif removal.field_path.startswith("constraints."):
+                constraint_key = removal.field_path.removeprefix("constraints.")
+                constraints[constraint_key] = cast(Constraint, removal.current_value)
+        return resource.model_copy(
+            update={"properties": container_properties, "indexes": indexes or None, "constraints": constraints or None},
+            deep=True,
+        )
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):

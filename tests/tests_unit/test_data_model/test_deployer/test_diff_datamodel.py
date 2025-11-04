@@ -2,8 +2,10 @@ import pytest
 
 from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer.data_classes import (
+    AddedField,
     ChangedField,
     FieldChange,
+    RemovedField,
     SeverityType,
 )
 from cognite.neat._data_model.models.dms import DataModelRequest, ViewReference
@@ -17,7 +19,8 @@ class TestDataModelDiffer:
         name="My Model",
         description="This is my model",
         views=[
-            ViewReference(space="test_space", external_id="view_1", version="v1"),
+            ViewReference(space="test_space", external_id="UnchangedView", version="v1"),
+            ViewReference(space="test_space", external_id="ViewToRemove", version="v1"),
         ],
     )
     new_datamodel = DataModelRequest(
@@ -27,8 +30,19 @@ class TestDataModelDiffer:
         name="This is updated",
         description="This is an update",
         views=[
-            ViewReference(space="test_space", external_id="view_1", version="v1"),
-            ViewReference(space="test_space", external_id="view_2", version="v1"),
+            ViewReference(space="test_space", external_id="UnchangedView", version="v1"),
+            ViewReference(space="test_space", external_id="ViewToAdd", version="v1"),
+        ],
+    )
+    new_datamodel_reorder = DataModelRequest(
+        space="test_space",
+        externalId="test_model",
+        version="v1",
+        name="My Model",
+        description="This is my model",
+        views=[
+            ViewReference(space="test_space", external_id="ViewToRemove", version="v1"),
+            ViewReference(space="test_space", external_id="UnchangedView", version="v1"),
         ],
     )
 
@@ -55,14 +69,30 @@ class TestDataModelDiffer:
                         current_value="This is my model",
                         new_value="This is an update",
                     ),
+                    AddedField(
+                        field_path="views",
+                        item_severity=SeverityType.SAFE,
+                        new_value=new_datamodel.views[1],  # type: ignore[index]
+                    ),
+                    RemovedField(
+                        field_path="views",
+                        item_severity=SeverityType.BREAKING,
+                        current_value=current_datamodel.views[1],  # type: ignore[index]
+                    ),
+                ],
+                id="name, description and views changed",
+            ),
+            pytest.param(
+                new_datamodel_reorder,
+                [
                     ChangedField(
                         field_path="views",
                         item_severity=SeverityType.SAFE,
                         current_value=str(current_datamodel.views),
-                        new_value=str(new_datamodel.views),
-                    ),
+                        new_value=str(new_datamodel_reorder.views),
+                    )
                 ],
-                id="name, description and views changed",
+                id="views reordered",
             ),
         ],
     )
