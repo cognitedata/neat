@@ -22,6 +22,7 @@ from cognite.neat._data_model.models.dms import (
     DataModelResource,
     Index,
     NodeReference,
+    ResourceId,
     SpaceReference,
     SpaceRequest,
     T_DataModelResource,
@@ -357,7 +358,59 @@ class AppliedChanges(BaseDeployObject):
         )
 
     def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
-        raise NotImplementedError()
+        """Generate a recovery plan based on the applied changes."""
+        recovery_plan: dict[DataModelEndpoint, ResourceDeploymentPlan] = {}
+        for change_result in itertools.chain(self.created, self.updated, self.deletions):
+            if not isinstance(change_result.message, SuccessResponse):
+                continue  # Skip failed changes.
+            change = change_result.change
+            if change.change_type == "create":
+                # To recover a created resource, we need to delete it.
+                # MyPy wants an annotation were we want this to be generic.
+                recovery_change = ResourceChange(  # type: ignore[var-annotated]
+                    resource_id=change.resource_id,
+                    current_value=change.new_value,
+                    new_value=None,
+                    changes=[],
+                )
+            elif change.change_type == "delete":
+                # To recover a deleted resource, we need to create it.
+                recovery_change = ResourceChange(
+                    resource_id=change.resource_id,
+                    current_value=None,
+                    new_value=change.current_value,
+                    changes=[],
+                )
+            elif change.change_type == "update":
+                # To recover an updated resource, we need to revert to the previous state.
+                recovery_change = ResourceChange(
+                    resource_id=change.resource_id,
+                    current_value=change.new_value,
+                    new_value=change.current_value,
+                    changes=[],
+                )
+            else:
+                continue  # Unchanged resources do not need recovery.
+
+            endpoint = self._get_endpoint_from_resource_id(change.resource_id)
+            if endpoint not in recovery_plan:
+                recovery_plan[endpoint] = ResourceDeploymentPlan(endpoint=endpoint, resources=[])
+            recovery_plan[endpoint].resources.append(recovery_change)
+
+        return list(recovery_plan.values())
+
+    @staticmethod
+    def _get_endpoint_from_resource_id(resource_id: ResourceId) -> DataModelEndpoint:
+        if isinstance(resource_id, SpaceReference):
+            return "spaces"
+        elif isinstance(resource_id, ContainerReference):
+            return "containers"
+        elif isinstance(resource_id, ViewReference):
+            return "views"
+        elif isinstance(resource_id, DataModelReference):
+            return "datamodels"
+        else:
+            raise RuntimeError("Unsupported resource ID type for endpoint determination.")
 
 
 class DeploymentResult(BaseDeployObject):
