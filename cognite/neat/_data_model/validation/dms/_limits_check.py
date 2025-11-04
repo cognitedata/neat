@@ -3,7 +3,7 @@ from pyparsing import cast
 from cognite.neat._data_model._constants import DMSDefaultLimits
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import EnumProperty
-from cognite.neat._data_model.models.dms._indexes import BtreeIndex, IndexDefinition
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, IndexDefinition, InvertedIndex
 from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import (
     ViewCorePropertyRequest,
@@ -236,15 +236,19 @@ class DataModelLimitValidator(DataModelValidator):
     def container_property_by_index_type(self, container: ContainerRequest) -> dict[str, list]:
         """Get the container properties by index type."""
 
-        container_property_by_index_type: dict[str, list] = {BtreeIndex.index_type: [], IndexDefinition.index_type: []}
-
+        container_property_by_index_type: dict[str, list] = {
+            BtreeIndex.model_fields["index_type"].default: [],
+            InvertedIndex.model_fields["index_type"].default: [],
+        }
         if not container.indexes:
             return container_property_by_index_type
 
         for index in container.indexes.values():
             if isinstance(index, BtreeIndex):
-                container_property_by_index_type[BtreeIndex.index_type].append(index.properties)
+                container_property_by_index_type[BtreeIndex.model_fields["index_type"].default].append(index.properties)
             elif isinstance(index, IndexDefinition):
-                container_property_by_index_type[IndexDefinition.index_type].append(index.properties)
+                container_property_by_index_type[IndexDefinition.model_fields["index_type"].default].append(
+                    index.properties
+                )
 
         return container_property_by_index_type
