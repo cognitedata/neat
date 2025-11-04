@@ -1,7 +1,7 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Literal, cast
+from typing import cast
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
@@ -99,8 +99,9 @@ class SchemaDeployer(OnSuccessResultProducer):
             return DeploymentResult(
                 status="success", plan=list(plan), snapshot=snapshot, responses=changes, recovery=recovery
             )
-        status: Literal["success", "failure", "partial", "pending"] = "success" if changes.is_success else "partial"
-        return DeploymentResult(status=status, plan=list(plan), snapshot=snapshot, responses=changes)
+        return DeploymentResult(
+            status="success" if changes.is_success else "partial", plan=list(plan), snapshot=snapshot, responses=changes
+        )
 
     def fetch_cdf_state(self, data_model: RequestSchema) -> SchemaSnapshot:
         now = datetime.now(tz=timezone.utc)
@@ -292,5 +293,5 @@ class SchemaDeployer(OnSuccessResultProducer):
                     results.append(ChangedFieldResult(field_change=change_by_id[id], message=response))
             else:
                 # This should never happen as we do a ItemsRequest should always return ItemMessage responses
-                raise ValueError("Bug in Neat. Got an unexpected response type.")
+                raise RuntimeError("Bug in Neat. Got an unexpected response type.")
         return results
