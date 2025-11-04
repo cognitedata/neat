@@ -2,6 +2,8 @@ from dataclasses import field
 
 from attr import dataclass
 
+from cognite.neat._client.client import NeatClient
+
 from ._identifiers import NameSpace
 
 XML_SCHEMA_NAMESPACE = NameSpace("http://www.w3.org/2001/XMLSchema#")
@@ -133,7 +135,7 @@ class _DMSLimits:
         self.data_model = DataModelLimits()
         self.instance = InstanceLimits()
 
-    def from_api_response(self, response: dict) -> None:
+    def from_api_response(self, client: NeatClient) -> None:
         """Populate limits from API response."""
         # Implementation to parse and set limits from response can be added here
         ...
