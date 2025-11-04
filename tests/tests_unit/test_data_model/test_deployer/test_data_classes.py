@@ -4,6 +4,8 @@ from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
+    AppliedChanges,
+    ChangeResult,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
@@ -20,6 +22,7 @@ from cognite.neat._data_model.models.dms import (
     ViewCorePropertyRequest,
     ViewRequest,
 )
+from cognite.neat._utils.http_client import SuccessResponseItems
 
 
 class TestSeverityType:
@@ -130,3 +133,76 @@ class TestResourceDeploymentPlanList:
             assert len(resource_plan.to_create) == 0
             assert len(resource_plan.to_update) == 0
             assert len(resource_plan.to_delete) == 0
+
+
+class TestAppliedChanges:
+    def test_as_recovery_plan(self) -> None:
+        container1 = ContainerRequest(
+            space="space1",
+            externalId="container1",
+            name="container1",
+            properties={"prop1": ContainerPropertyDefinition(type=TextProperty())},
+        )
+        container2 = ContainerRequest(
+            space="space1",
+            externalId="container2",
+            name="container2",
+            properties={"prop2": ContainerPropertyDefinition(type=TextProperty())},
+        )
+        container2_update = container2.model_copy(
+            update={
+                "properties": {
+                    "prop2": ContainerPropertyDefinition(type=TextProperty()),
+                    "prop2_new": ContainerPropertyDefinition(type=TextProperty()),
+                }
+            }
+        )
+        container3 = ContainerRequest(
+            space="space1",
+            externalId="container3",
+            name="container3",
+            properties={"prop3": ContainerPropertyDefinition(type=TextProperty())},
+        )
+
+        applied_changes = AppliedChanges(
+            created=[
+                ChangeResult(
+                    endpoint="containers",
+                    change=ResourceChange(resource_id=container1.as_reference(), new_value=container1),
+                    message=SuccessResponseItems(code=200, body="", ids=[container1.as_reference()]),
+                )
+            ],
+            updated=[
+                ChangeResult(
+                    endpoint="containers",
+                    change=ResourceChange(
+                        resource_id=container2.as_reference(), current_value=container2, new_value=container2_update
+                    ),
+                    message=SuccessResponseItems(code=200, body="", ids=[container2.as_reference()]),
+                )
+            ],
+            deletions=[
+                ChangeResult(
+                    endpoint="containers",
+                    change=ResourceChange(
+                        resource_id=container3.as_reference(), new_value=None, current_value=container3
+                    ),
+                    message=SuccessResponseItems(code=200, body="", ids=[container3.as_reference()]),
+                )
+            ],
+        )
+
+        recovery_plan = applied_changes.as_recovery_plan()
+
+        assert len(recovery_plan) == 1
+        resource_plan = recovery_plan[0]
+        assert resource_plan.endpoint == "containers"
+        assert len(resource_plan.to_create) == 1
+        assert resource_plan.to_create[0].resource_id == container3.as_reference()
+        assert resource_plan.to_create[0].new_value == container3
+        assert len(resource_plan.to_update) == 1
+        assert resource_plan.to_update[0].resource_id == container2.as_reference()
+        assert resource_plan.to_update[0].new_value == container2
+        assert len(resource_plan.to_delete) == 1
+        assert resource_plan.to_delete[0].resource_id == container1.as_reference()
+        assert resource_plan.to_delete[0].current_value == container1
