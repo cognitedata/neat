@@ -6,6 +6,7 @@ from typing import Literal, cast
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
 from cognite.neat._data_model.models.dms import DataModelBody, RequestSchema, T_DataModelResource, T_ResourceId
+from cognite.neat._utils.collection import chunker_sequence
 from cognite.neat._utils.http_client import (
     FailedRequestItems,
     FailedResponseItems,
@@ -57,6 +58,9 @@ class DeploymentOptions:
 
 
 class SchemaDeployer(OnSuccessResultProducer):
+    INDEX_DELETE_BATCH_SIZE = 10
+    CONSTRAINT_DELETE_BATCH_SIZE = 10
+
     def __init__(self, client: NeatClient, options: DeploymentOptions | None = None) -> None:
         super().__init__()
         self.client: NeatClient = client
@@ -222,27 +226,33 @@ class SchemaDeployer(OnSuccessResultProducer):
         indexes_to_remove = resource.indexes_to_remove
         if not indexes_to_remove:
             return []
-        responses = self.client.http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self.client.config.create_api_url("/models/containers/indexes/delete"),
-                method="POST",
-                body=ItemIDBody(items=list(indexes_to_remove.keys())),
+        results: list[ChangedFieldResult] = []
+        for batch in chunker_sequence(list(indexes_to_remove.keys()), self.INDEX_DELETE_BATCH_SIZE):
+            responses = self.client.http_client.request_with_retries(
+                ItemsRequest(
+                    endpoint_url=self.client.config.create_api_url("/models/containers/indexes/delete"),
+                    method="POST",
+                    body=ItemIDBody(items=batch),
+                )
             )
-        )
-        return self._process_field_responses(responses, indexes_to_remove)
+            results.extend(self._process_field_responses(responses, indexes_to_remove))
+        return results
 
     def _remove_container_constraints(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
         constrains_to_remove = resource.constraints_to_remove
         if constrains_to_remove:
             return []
-        responses = self.client.http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self.client.config.create_api_url("/models/containers/constraints/delete"),
-                method="POST",
-                body=ItemIDBody(items=list(constrains_to_remove.keys())),
+        results: list[ChangedFieldResult] = []
+        for batch in chunker_sequence(list(constrains_to_remove.keys()), self.CONSTRAINT_DELETE_BATCH_SIZE):
+            responses = self.client.http_client.request_with_retries(
+                ItemsRequest(
+                    endpoint_url=self.client.config.create_api_url("/models/containers/constraints/delete"),
+                    method="POST",
+                    body=ItemIDBody(items=batch),
+                )
             )
-        )
-        return self._process_field_responses(responses, constrains_to_remove)
+            results.extend(self._process_field_responses(responses, constrains_to_remove))
+        return results
 
     @classmethod
     def _process_resource_responses(
