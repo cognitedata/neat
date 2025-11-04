@@ -103,8 +103,8 @@ class RemovedField(PrimitiveField):
 
 
 class ChangedField(PrimitiveField):
-    new_value: BaseModelObject | str | int | float | bool | None
-    current_value: BaseModelObject | str | int | float | bool | None
+    new_value: BaseModelObject | str | int | float | bool | None | list[BaseDeployObject]
+    current_value: BaseModelObject | str | int | float | bool | None | list[BaseDeployObject]
 
     @property
     def description(self) -> str:
