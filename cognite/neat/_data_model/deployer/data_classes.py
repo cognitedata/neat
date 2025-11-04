@@ -9,6 +9,8 @@ from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
+    ContainerConstraintReference,
+    ContainerIndexReference,
     ContainerReference,
     ContainerRequest,
     DataModelReference,
@@ -27,6 +29,7 @@ from cognite.neat._utils.http_client import (
     SuccessResponse,
     SuccessResponseItems,
 )
+from cognite.neat._utils.useful_types import T_Reference
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -157,6 +160,59 @@ class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModel
         return [change for change in self.resources if change.change_type == "unchanged"]
 
 
+class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, ContainerRequest]):
+    endpoint: Literal["containers"] = "containers"
+    resources: list[ResourceChange[ContainerReference, ContainerRequest]]
+
+    @property
+    def indexes_to_remove(self) -> dict[ContainerIndexReference, RemovedField]:
+        return self._get_fields_to_remove("indexes.", ContainerIndexReference)
+
+    @property
+    def constraints_to_remove(self) -> dict[ContainerConstraintReference, RemovedField]:
+        return self._get_fields_to_remove("constraints.", ContainerConstraintReference)
+
+    def _get_fields_to_remove(self, field_prefix: str, ref_cls: type) -> dict:
+        items: dict = {}
+        for resource_change in self.resources:
+            for change in resource_change.changes:
+                if isinstance(change, RemovedField) and change.field_path.startswith(field_prefix):
+                    identifier = change.field_path.removeprefix(field_prefix)
+                    items[
+                        ref_cls(
+                            space=resource_change.resource_id.space,
+                            external_id=resource_change.resource_id.external_id,
+                            identifier=identifier,
+                        )
+                    ] = change
+        return items
+
+    @property
+    def to_upsert(self) -> list[ResourceChange[ContainerReference, ContainerRequest]]:
+        return [change for change in self.resources if change.change_type == "create" or self._is_update(change)]
+
+    @property
+    def to_update(self) -> list[ResourceChange[ContainerReference, ContainerRequest]]:
+        return [change for change in self.resources if self._is_update(change)]
+
+    @classmethod
+    def _is_update(cls, change: ResourceChange[ContainerReference, ContainerRequest]) -> bool:
+        """Whether the container change is an update.
+
+        Containers with only index or constraint removals are not considered updates, as these are handled by a
+        separate API call.
+        """
+        if change.change_type != "update":
+            return False
+        for c in change.changes:
+            if not (
+                isinstance(c, RemovedField)
+                and (c.field_path.startswith("indexes.") or c.field_path.startswith("constraints."))
+            ):
+                return True
+        return False
+
+
 class SchemaSnapshot(BaseDeployObject):
     timestamp: datetime
     data_model: dict[DataModelReference, DataModelRequest]
@@ -171,17 +227,32 @@ class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource])
     message: SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
 
 
+class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
+    field_change: FieldChange
+    message: SuccessResponseItems[T_Reference] | FailedResponseItems[T_Reference] | FailedRequestItems[T_Reference]
+
+
 class AppliedChanges(BaseDeployObject):
+    """The result of applying changes to the data model.
+
+    Contains lists of created, updated, deleted, and unchanged resources.
+
+    In addition, it has changed fields which tracks the removal of indexes and constraints from containers.
+    This is needed as these changes are done with a separate API call per change.
+    """
+
     created: list[ChangeResult] = Field(default_factory=list)
     updated: list[ChangeResult] = Field(default_factory=list)
     deletions: list[ChangeResult] = Field(default_factory=list)
     unchanged: list[ResourceChange] = Field(default_factory=list)
+    changed_fields: list[ChangedFieldResult] = Field(default_factory=list)
 
     @property
     def is_success(self) -> bool:
         return all(
-            isinstance(change.message, SuccessResponse)
-            for change in itertools.chain(self.created, self.updated, self.deletions)
+            # MyPy fails to understand that ChangeFieldResult.message has the same structure as ChangeResult.message
+            isinstance(change.message, SuccessResponse)  # type: ignore[attr-defined]
+            for change in itertools.chain(self.created, self.updated, self.deletions, self.changed_fields)
         )
 
     def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
