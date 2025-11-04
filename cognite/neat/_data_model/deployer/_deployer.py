@@ -240,7 +240,7 @@ class SchemaDeployer(OnSuccessResultProducer):
 
     def _remove_container_constraints(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
         constrains_to_remove = resource.constraints_to_remove
-        if constrains_to_remove:
+        if not constrains_to_remove:
             return []
         results: list[ChangedFieldResult] = []
         for batch in chunker_sequence(list(constrains_to_remove.keys()), self.CONSTRAINT_DELETE_BATCH_SIZE):

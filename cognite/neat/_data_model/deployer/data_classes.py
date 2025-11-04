@@ -236,8 +236,9 @@ class AppliedChanges(BaseDeployObject):
     @property
     def is_success(self) -> bool:
         return all(
-            isinstance(change.message, SuccessResponse)
-            for change in itertools.chain(self.created, self.updated, self.deletions)
+            # MyPy fails to understand that ChangeFieldResult.message has the same structure as ChangeResult.message
+            isinstance(change.message, SuccessResponse)  # type: ignore[attr-defined]
+            for change in itertools.chain(self.created, self.updated, self.deletions, self.changed_fields)
         )
 
     def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
