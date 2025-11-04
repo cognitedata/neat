@@ -13,6 +13,7 @@ from cognite.neat._data_model.models.dms._references import (
 )
 from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._issues import ConsistencyError, Recommendation
+from cognite.neat._utils.useful_types import ModusOperandi
 
 # Type aliases for better readability
 ViewsByReference: TypeAlias = dict[ViewReference, ViewRequest]
@@ -54,9 +55,11 @@ class DataModelValidator(ABC):
         self,
         local_resources: LocalResources,
         cdf_resources: CDFResources,
+        modus_operandi: ModusOperandi = "additive",
     ) -> None:
         self.local_resources = local_resources
         self.cdf_resources = cdf_resources
+        self.modus_operandi = modus_operandi
 
     @abstractmethod
     def run(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:

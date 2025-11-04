@@ -8,6 +8,7 @@ from cognite.neat._data_model.models.dms._references import ContainerReference, 
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
 from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
@@ -23,12 +24,15 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
 
     def __init__(
-        self, client: NeatClient | None = None, codes: list[str] | None = None, modus_operandi: str | None = None
+        self,
+        client: NeatClient | None = None,
+        codes: list[str] | None = None,
+        modus_operandi: ModusOperandi = "additive",
     ) -> None:
         super().__init__()
         self._client = client
         self._codes = codes or ["all"]
-        self._modus_operandi = modus_operandi  # will be used later to trigger how validators will behave
+        self._modus_operandi = modus_operandi
         self._has_run = False
 
     def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources]:

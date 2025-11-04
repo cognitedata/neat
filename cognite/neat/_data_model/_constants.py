@@ -3,6 +3,7 @@ from dataclasses import field
 from attr import dataclass
 
 from cognite.neat._client.client import NeatClient
+from cognite.neat._data_model.models.dms._data_types import DataType, DirectNodeRelation, Int32Property, Int64Property
 
 from ._identifiers import NameSpace
 
@@ -75,7 +76,6 @@ class SpaceLimits:
     total: int = 100
 
 
-@dataclass(frozen=True)
 class ListPropertyLimits:
     """Limits for list properties."""
 
@@ -84,6 +84,16 @@ class ListPropertyLimits:
     max_int32_with_btree: int = 600
     max_int64_with_btree: int = 300
     max_all_other_types: int = 2_000
+
+    def get_limit_for_data_type(self, data_type: DataType, has_btree_index: bool = False) -> int:
+        """Get the limit for a specific data type."""
+        if isinstance(data_type, DirectNodeRelation):
+            return self.default_direct_relations
+        if isinstance(data_type, Int32Property) and has_btree_index:
+            return self.max_int32_with_btree
+        if isinstance(data_type, Int64Property) and has_btree_index:
+            return self.max_int64_with_btree
+        return self.default_other_types
 
 
 @dataclass(frozen=True)
@@ -105,7 +115,7 @@ class ViewLimits:
     versions_per_view: int = 100
     properties_per_view: int = 300
     implements_per_view: int = 10
-    container_per_view: int = 10
+    containers_per_view: int = 10
 
 
 @dataclass(frozen=True)
