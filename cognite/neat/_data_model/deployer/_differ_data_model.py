@@ -46,9 +46,8 @@ class DataModelDiffer(ItemDiffer[DataModelRequest]):
                     ChangedField(
                         item_severity=SeverityType.SAFE,
                         field_path="views",
-                        # MyPy does not like that list[ViewReference] is the same as list[BaseDeployObject]
-                        current_value=current.views,  # type: ignore[arg-type]
-                        new_value=new.views,  # type: ignore[arg-type]
+                        current_value=str(current.views),
+                        new_value=str(new.views),
                     )
                 )
 

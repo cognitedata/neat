@@ -103,8 +103,8 @@ class RemovedField(PrimitiveField):
 
 
 class ChangedField(PrimitiveField):
-    new_value: BaseModelObject | str | int | float | bool | None | list[BaseDeployObject]
-    current_value: BaseModelObject | str | int | float | bool | None | list[BaseDeployObject]
+    new_value: BaseModelObject | str | int | float | bool | None
+    current_value: BaseModelObject | str | int | float | bool | None
 
     @property
     def description(self) -> str:
@@ -281,11 +281,12 @@ class ResourceDeploymentPlanList(UserList):
 
     @staticmethod
     def _consolidate_data_model(resource: DataModelRequest, removals: list[RemovedField]) -> DataModelResource:
-        data_model_views = resource.views.copy() if resource.views else []
+        data_model_views: list[ViewReference] = []
         for removal in removals:
             if removal.field_path == "views":
                 data_model_views.append(cast(ViewReference, removal.current_value))
-        return resource.model_copy(update={"views": data_model_views}, deep=True)
+        # We add the removed views back at the start of the views list.
+        return resource.model_copy(update={"views": data_model_views + (resource.views or []).copy()}, deep=True)
 
     @staticmethod
     def _consolidate_view(resource: ViewRequest, removals: list[RemovedField]) -> DataModelResource:
