@@ -14,11 +14,34 @@ from cognite.neat._issues import ConsistencyError
 
 
 class DataModelLimitValidator(DataModelValidator):
-    """This data model validator checks that the data model adheres to DMS limits."""
+    """Validates that a DMS data model adheres to all CDF resource limits.
+
+    This validator performs comprehensive limit checking across three levels:
+    - Data Model Level
+    - View Level
+    - Container Level
+
+    The validator supports two deployment modes:
+    - **"replace" mode**: Validates only local data model resources
+    - **"additive" mode**: Merges local + CDF resources for accurate limit checking
+
+    All violations produce ConsistencyError issues that prevent deployment.
+    """
 
     code = "NEAT-DMS-006"
 
     def run(self) -> list[ConsistencyError]:
+        """Execute all limit validations on the data model.
+
+        Performs three levels of validation:
+        1. Data model limits (view count)
+        2. View limits (properties, containers, implements)
+        3. Container limits (properties, list sizes)
+
+        Returns:
+            List of ConsistencyError issues for any limit violations found.
+            Empty list if all limits are satisfied.
+        """
         errors: list[ConsistencyError] = []
 
         errors.extend(self._data_model_limit_check())
@@ -28,7 +51,13 @@ class DataModelLimitValidator(DataModelValidator):
         return errors
 
     def _data_model_limit_check(self) -> list[ConsistencyError]:
-        """Get the data model view limits."""
+        """Validate that the data model does not exceed the maximum number of views.
+
+        Checks that total view count (local + CDF in additive mode) does not exceed the limit.
+
+        Returns:
+            List with single ConsistencyError if limit exceeded, empty list otherwise.
+        """
 
         if len(self.views_references) > DMSDefaultLimits.data_model.views_per_data_model:
             return [
@@ -43,7 +72,20 @@ class DataModelLimitValidator(DataModelValidator):
         return []
 
     def _views_limit_check(self) -> list[ConsistencyError]:
-        """Check that no view exceeds the properties limit."""
+        """Validate that no view exceeds properties, containers, or implements limits.
+
+        For each view in the data model, checks:
+        - Properties count
+        - Unique container references
+        - Implemented views count
+
+        In additive mode, counts include properties and implements from both local
+        and CDF versions of the view.
+
+        Returns:
+            List of ConsistencyError issues, one per limit violation found.
+            Empty list if all views are within limits.
+        """
 
         errors: list[ConsistencyError] = []
 
@@ -101,7 +143,24 @@ class DataModelLimitValidator(DataModelValidator):
         return errors
 
     def _containers_limit_check(self) -> list[ConsistencyError]:
-        """Check that no container exceeds the properties limit."""
+        """Validate that no container exceeds properties or list size limits.
+
+        For each container in the data model, checks:
+        - Total properties count ≤ 100
+        - List size (max_list_size) ≤ appropriate limit based on:
+          * Data type (Int32, Int64, DirectRelation, etc.)
+          * Presence of btree index
+          * Default vs maximum limits
+
+        Enum properties are skipped (have separate 32-value limit).
+
+        In additive mode, counts include properties from both local and CDF
+        versions of the container.
+
+        Returns:
+            List of ConsistencyError issues, one per limit violation found.
+            Empty list if all containers are within limits.
+        """
 
         errors: list[ConsistencyError] = []
 
@@ -154,7 +213,14 @@ class DataModelLimitValidator(DataModelValidator):
 
     @property
     def views_references(self) -> set[ViewReference]:
-        """Get all view references based on the modus operandi."""
+        """Get all view references to validate based on deployment mode.
+
+        In "replace" mode, returns only local view references.
+        In "additive" mode, returns union of local and CDF view references.
+
+        Returns:
+            Set of ViewReference objects representing all views to validate.
+        """
 
         return (
             set(self.local_resources.views_by_reference.keys()).union(set(self.cdf_resources.views_by_reference.keys()))
@@ -164,7 +230,14 @@ class DataModelLimitValidator(DataModelValidator):
 
     @property
     def container_references(self) -> set[ContainerReference]:
-        """Get all container references based on the modus operandi."""
+        """Get all container references to validate based on deployment mode.
+
+        In "replace" mode, returns only local container references.
+        In "additive" mode, returns union of local and CDF container references.
+
+        Returns:
+            Set of ContainerReference objects representing all containers to validate.
+        """
 
         return (
             set(self.local_resources.containers_by_reference.keys()).union(
@@ -176,7 +249,23 @@ class DataModelLimitValidator(DataModelValidator):
 
     @property
     def merged_views(self) -> dict[ViewReference, ViewRequest]:
-        """Get the number of properties for each view based on the modus operandi."""
+        """Get views with merged properties and implements for accurate limit checking.
+
+        In "replace" mode, returns only local views.
+        In "additive" mode, merges local and CDF views by:
+        - Combining properties from both versions (local overrides CDF)
+        - Combining implements lists (union, no duplicates)
+        - Using CDF view as base if it exists, otherwise local view
+
+        This ensures limit validation accounts for the actual deployed state
+        in additive deployments.
+
+        Returns:
+            Dictionary mapping ViewReference to merged ViewRequest objects.
+
+        Raises:
+            RuntimeError: If a referenced view is not found in either local or CDF resources.
+        """
 
         if self.modus_operandi != "additive":
             return self.local_resources.views_by_reference
@@ -211,7 +300,22 @@ class DataModelLimitValidator(DataModelValidator):
 
     @property
     def merged_containers(self) -> dict[ContainerReference, ContainerRequest]:
-        """Get the number of properties for each container based on the modus operandi."""
+        """Get containers with merged properties for accurate limit checking.
+
+        In "replace" mode, returns only local containers.
+        In "additive" mode, merges local and CDF containers by:
+        - Combining properties from both versions (local overrides CDF)
+        - Using CDF container as base if it exists, otherwise local container
+
+        This ensures limit validation accounts for the actual deployed state
+        in additive deployments.
+
+        Returns:
+            Dictionary mapping ContainerReference to merged ContainerRequest objects.
+
+        Raises:
+            RuntimeError: If a referenced container is not found in either local or CDF resources.
+        """
 
         if self.modus_operandi != "additive":
             return self.local_resources.containers_by_reference
@@ -236,7 +340,22 @@ class DataModelLimitValidator(DataModelValidator):
         return merged_containers
 
     def container_property_by_index_type(self, container: ContainerRequest) -> dict[str, list]:
-        """Get the container properties by index type."""
+        """Map container properties to their index types for limit validation.
+
+        Categorizes container properties by their index configuration:
+        - "btree": Properties with btree indexes (have stricter list size limits)
+        - "inverted": Properties with inverted indexes
+
+        This mapping is used to determine the appropriate list size limit for
+        each property based on whether it has a btree index.
+
+        Args:
+            container: The container to analyze.
+
+        Returns:
+            Dictionary with index type strings as keys and lists of property identifiers
+            as values. Returns empty lists for both index types if container has no indexes.
+        """
 
         container_property_by_index_type: dict[str, list] = {
             BtreeIndex.model_fields["index_type"].default: [],
