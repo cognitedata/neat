@@ -138,7 +138,7 @@ class ResourceChange(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource
             return "create"
         elif self.new_value is None:
             return "delete"
-        elif self.changes:
+        elif self.current_value is not None and self.new_value is not None:
             return "update"
         else:
             return "unchanged"
