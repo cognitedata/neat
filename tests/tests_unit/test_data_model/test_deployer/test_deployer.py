@@ -1,3 +1,5 @@
+import gzip
+import json
 from typing import Any
 from unittest.mock import patch
 
@@ -6,14 +8,27 @@ import respx
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
+from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     ChangedField,
+    ContainerDeploymentPlan,
+    RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
     SchemaSnapshot,
     SeverityType,
 )
-from cognite.neat._data_model.models.dms import RequestSchema
+from cognite.neat._data_model.models.dms import (
+    BtreeIndex,
+    ContainerConstraintReference,
+    ContainerIndexReference,
+    ContainerPropertyDefinition,
+    ContainerReference,
+    ContainerRequest,
+    RequestSchema,
+    RequiresConstraintDefinition,
+    TextProperty,
+)
 
 
 @pytest.fixture()
@@ -141,3 +156,91 @@ class TestSchemaDeployer:
         assert len(result.updated) == len(model.views)  # All views updated
         assert len(result.deletions) == 1  # One datamodel deleted
         assert len(result.unchanged) == 0
+
+    def test_apply_plan_remove_indexes_and_constraints(
+        self, neat_client: NeatClient, respx_mock: respx.MockRouter
+    ) -> None:
+        current_container = ContainerRequest(
+            space="space1",
+            externalId="container1",
+            name="container1",
+            properties={"prop1": ContainerPropertyDefinition(type=TextProperty())},
+            constraints={
+                "constraint1": RequiresConstraintDefinition(
+                    require=ContainerReference(space="space1", external_id="container2")
+                )
+            },
+            indexes={"index1": BtreeIndex(properties=["prop1"])},
+        )
+        new_container = current_container.model_copy(update={"constraints": {}, "indexes": {}}, deep=True)
+        changes = ContainerDiffer().diff(current_container, new_container)
+        plan: list[ResourceDeploymentPlan] = [
+            ContainerDeploymentPlan(
+                resources=[
+                    ResourceChange(
+                        resource_id=current_container.as_reference(),
+                        new_value=new_container,
+                        current_value=current_container,
+                        changes=changes,
+                    )
+                ],
+            )
+        ]
+        config = neat_client.config
+        respx_mock.post(config.create_api_url("/models/containers/constraints/delete")).respond(status_code=200)
+        respx_mock.post(config.create_api_url("/models/containers/indexes/delete")).respond(status_code=200)
+
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
+        with patch("time.sleep"):  # In order to speed up tests
+            result = deployer.apply_changes(plan)
+
+        assert len(result.changed_fields) == 2  # One for index removal, one for constraint removal
+        removed_index = next(
+            (
+                field
+                for field in result.changed_fields
+                if isinstance(field.field_change, RemovedField) and field.field_change.field_path.startswith("indexes.")
+            ),
+            None,
+        )
+        assert removed_index is not None
+        assert removed_index.message.ids == [
+            ContainerIndexReference(space="space1", external_id="container1", identifier="index1")
+        ]
+        removed_constriant = next(
+            (
+                field
+                for field in result.changed_fields
+                if isinstance(field.field_change, RemovedField)
+                and field.field_change.field_path.startswith("constraints.")
+            ),
+            None,
+        )
+        assert removed_constriant is not None
+        assert removed_constriant.message.ids == [
+            ContainerConstraintReference(space="space1", external_id="container1", identifier="constraint1")
+        ]
+
+        # Assert the correct requests were made
+        assert respx_mock.calls.call_count == 2
+        constraint_request = respx_mock.calls[0].request
+        assert constraint_request.content.startswith(b"\x1f\x8b"), "Expected gzip compressed content"
+        constraint_request = gzip.decompress(constraint_request.content).decode("utf-8")
+        assert json.loads(constraint_request) == {
+            "items": [{"space": "space1", "externalId": "container1", "identifier": "constraint1"}]
+        }
+        index_request = respx_mock.calls[1].request
+        assert index_request.content.startswith(b"\x1f\x8b"), "Expected gzip compressed content"
+        index_request = gzip.decompress(index_request.content).decode("utf-8")
+        assert json.loads(index_request) == {
+            "items": [{"space": "space1", "externalId": "container1", "identifier": "index1"}]
+        }
+
+        # There should be no created, updated, unchanged, or deleted resources
+        assert len(result.created) == 0
+        assert len(result.unchanged) == 0
+        assert len(result.updated) == 0
+        assert len(result.deletions) == 0
+
+        # All requests should be successful
+        assert result.is_success
