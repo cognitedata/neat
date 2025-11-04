@@ -29,6 +29,7 @@ from cognite.neat._utils.http_client import (
     SuccessResponse,
     SuccessResponseItems,
 )
+from cognite.neat._utils.useful_types import T_Reference
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -164,12 +165,38 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
     resources: list[ResourceChange[ContainerReference, ContainerRequest]]
 
     @property
-    def indexes_to_remove(self) -> list[ContainerIndexReference]:
-        raise NotImplementedError()
+    def indexes_to_remove(self) -> dict[ContainerIndexReference, RemovedField]:
+        indexes: dict[ContainerIndexReference, RemovedField] = {}
+        for resource_change in self.resources:
+            for change in resource_change.changes:
+                if isinstance(change, RemovedField) and change.field_path.startswith("indexes."):
+                    # Extract index reference from field path
+                    index_identifier = change.field_path.removeprefix("indexes.")
+                    indexes[
+                        ContainerIndexReference(
+                            space=resource_change.resource_id.space,
+                            external_id=resource_change.resource_id.external_id,
+                            identifier=index_identifier,
+                        )
+                    ] = change
+        return indexes
 
     @property
-    def constraints_to_remove(self) -> list[ContainerConstraintReference]:
-        raise NotImplementedError()
+    def constraints_to_remove(self) -> dict[ContainerConstraintReference, RemovedField]:
+        constraints: dict[ContainerConstraintReference, RemovedField] = {}
+        for resource_change in self.resources:
+            for change in resource_change.changes:
+                if isinstance(change, RemovedField) and change.field_path.startswith("constraints."):
+                    # Extract constraint reference from field path
+                    constraint_identifier = change.field_path.removeprefix("constraints.")
+                    constraints[
+                        ContainerConstraintReference(
+                            space=resource_change.resource_id.space,
+                            external_id=resource_change.resource_id.external_id,
+                            identifier=constraint_identifier,
+                        )
+                    ] = change
+        return constraints
 
 
 class SchemaSnapshot(BaseDeployObject):
@@ -186,11 +213,25 @@ class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource])
     message: SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
 
 
+class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
+    field_change: FieldChange
+    message: SuccessResponseItems[T_Reference] | FailedResponseItems[T_Reference] | FailedRequestItems[T_Reference]
+
+
 class AppliedChanges(BaseDeployObject):
+    """The result of applying changes to the data model.
+
+    Contains lists of created, updated, deleted, and unchanged resources.
+
+    In addition, it has changed fields which tracks the removal of indexes and constraints from containers.
+    This is needed as these changes are done with a separate API call per change.
+    """
+
     created: list[ChangeResult] = Field(default_factory=list)
     updated: list[ChangeResult] = Field(default_factory=list)
     deletions: list[ChangeResult] = Field(default_factory=list)
     unchanged: list[ResourceChange] = Field(default_factory=list)
+    changed_fields: list[ChangedFieldResult] = Field(default_factory=list)
 
     @property
     def is_success(self) -> bool:

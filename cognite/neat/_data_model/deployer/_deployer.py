@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Literal, cast
@@ -13,6 +14,7 @@ from cognite.neat._utils.http_client import (
     SuccessResponseItems,
 )
 from cognite.neat._utils.http_client._data_classes import APIResponse
+from cognite.neat._utils.useful_types import T_Reference
 
 from ._differ import ItemDiffer
 from ._differ_container import ContainerDiffer
@@ -21,9 +23,12 @@ from ._differ_space import SpaceDiffer
 from ._differ_view import ViewDiffer
 from .data_classes import (
     AppliedChanges,
+    ChangedFieldResult,
     ChangeResult,
+    ContainerDeploymentPlan,
     DataModelEndpoint,
     DeploymentResult,
+    FieldChange,
     ResourceChange,
     ResourceDeploymentPlan,
     SchemaSnapshot,
@@ -117,7 +122,9 @@ class SchemaDeployer(OnSuccessResultProducer):
     ) -> list[ResourceDeploymentPlan]:
         return [
             self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
-            self._create_resource_plan(snapshot.containers, data_model.containers, "containers", ContainerDiffer()),
+            self._create_resource_plan(
+                snapshot.containers, data_model.containers, "containers", ContainerDiffer(), ContainerDeploymentPlan
+            ),
             self._create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
             self._create_resource_plan(snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()),
         ]
@@ -168,6 +175,10 @@ class SchemaDeployer(OnSuccessResultProducer):
             applied_changes.deletions.extend(deletions)
 
         for resource in plan:
+            if isinstance(resource, ContainerDeploymentPlan):
+                applied_changes.changed_fields.extend(self._remove_container_constraints(resource))
+                applied_changes.changed_fields.extend(self._remove_container_indexes(resource))
+
             creations, updated = self._upsert_items(resource)
             applied_changes.created.extend(creations)
             applied_changes.updated.extend(updated)
@@ -186,7 +197,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 body=ItemIDBody(items=list(to_delete_by_id.keys())),
             )
         )
-        return self._process_responses(responses, to_delete_by_id)
+        return self._process_resource_responses(responses, to_delete_by_id)
 
     def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[ChangeResult], list[ChangeResult]]:
         to_upsert = [
@@ -202,13 +213,39 @@ class SchemaDeployer(OnSuccessResultProducer):
             )
         )
         to_create_by_id = {rc.resource_id: rc for rc in resource.to_create}
-        create_result = self._process_responses(responses, to_create_by_id)
+        create_result = self._process_resource_responses(responses, to_create_by_id)
         to_update_by_id = {rc.resource_id: rc for rc in resource.to_update}
-        update_result = self._process_responses(responses, to_update_by_id)
+        update_result = self._process_resource_responses(responses, to_update_by_id)
         return create_result, update_result
 
+    def _remove_container_indexes(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
+        indexes_to_remove = resource.indexes_to_remove
+        if not indexes_to_remove:
+            return []
+        responses = self.client.http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self.client.config.create_api_url("/models/containers/indexes/delete"),
+                method="POST",
+                body=ItemIDBody(items=list(indexes_to_remove.keys())),
+            )
+        )
+        return self._process_field_responses(responses, indexes_to_remove)
+
+    def _remove_container_constraints(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
+        constrains_to_remove = resource.constraints_to_remove
+        if constrains_to_remove:
+            return []
+        responses = self.client.http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self.client.config.create_api_url("/models/containers/constraints/delete"),
+                method="POST",
+                body=ItemIDBody(items=list(constrains_to_remove.keys())),
+            )
+        )
+        return self._process_field_responses(responses, constrains_to_remove)
+
     @classmethod
-    def _process_responses(
+    def _process_resource_responses(
         cls, responses: APIResponse, change_by_id: dict[T_ResourceId, ResourceChange]
     ) -> list[ChangeResult]:
         results: list[ChangeResult] = []
@@ -218,6 +255,22 @@ class SchemaDeployer(OnSuccessResultProducer):
                     if id not in change_by_id:
                         continue
                     results.append(ChangeResult(change=change_by_id[id], message=response))
+            else:
+                # This should never happen as we do a ItemsRequest should always return ItemMessage responses
+                raise ValueError("Bug in Neat. Got an unexpected response type.")
+        return results
+
+    @classmethod
+    def _process_field_responses(
+        cls, responses: APIResponse, change_by_id: Mapping[T_Reference, FieldChange]
+    ) -> list[ChangedFieldResult]:
+        results: list[ChangedFieldResult] = []
+        for response in responses:
+            if isinstance(response, SuccessResponseItems | FailedResponseItems | FailedRequestItems):
+                for id in response.ids:
+                    if id not in change_by_id:
+                        continue
+                    results.append(ChangedFieldResult(field_change=change_by_id[id], message=response))
             else:
                 # This should never happen as we do a ItemsRequest should always return ItemMessage responses
                 raise ValueError("Bug in Neat. Got an unexpected response type.")
