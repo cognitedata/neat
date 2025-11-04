@@ -15,7 +15,7 @@ from cognite.neat._utils.http_client import (
     SuccessResponseItems,
 )
 from cognite.neat._utils.http_client._data_classes import APIResponse
-from cognite.neat._utils.useful_types import T_Reference
+from cognite.neat._utils.useful_types import ModusOperandi, T_Reference
 
 from ._differ import ItemDiffer
 from ._differ_container import ContainerDiffer
@@ -46,15 +46,15 @@ class DeploymentOptions:
         auto_rollback (bool): If True, automatically roll back changes if deployment fails. Defaults to True.
         max_severity (SeverityType): Maximum allowed severity of changes to proceed with deployment.
             Defaults to SeverityType.SAFE.
-        modus_operandi (Literal["partial", "overwrite"]): Deployment mode. If "partial", only add/modify resources
-            specified in the data model. If "overwrite", remove resources not present in the data model.
-            Defaults to "partial".
+        modus_operandi (ModusOperandi): Deployment mode. If "additive", only add/modify resources
+            specified in the data model. If "rebuild", remove resources not present in the data model.
+            Defaults to "additive".
     """
 
     dry_run: bool = True
     auto_rollback: bool = True
     max_severity: SeverityType = SeverityType.SAFE
-    modus_operandi: Literal["partial", "overwrite"] = "partial"
+    modus_operandi: ModusOperandi = "additive"
 
 
 class SchemaDeployer(OnSuccessResultProducer):
@@ -77,6 +77,9 @@ class SchemaDeployer(OnSuccessResultProducer):
 
         # Step 2: Create deployment plan by comparing local vs cdf
         plan = self.create_deployment_plan(snapshot, data_model)
+
+        if self.options.modus_operandi == "additive":
+            plan = plan.merge()
 
         if not self.should_proceed_to_deploy(plan):
             # Step 3: Check if deployment should proceed

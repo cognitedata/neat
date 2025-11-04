@@ -1,6 +1,6 @@
 from collections.abc import Hashable
 from datetime import date, datetime, time, timedelta
-from typing import TypeAlias, TypeVar
+from typing import Literal, TypeAlias, TypeVar
 
 from pydantic import BaseModel
 from pydantic.alias_generators import to_camel
@@ -33,3 +33,5 @@ class ReferenceObject(BaseModelObject, frozen=True, populate_by_name=True):
 
 
 T_Reference = TypeVar("T_Reference", bound=ReferenceObject, covariant=True)
+
+ModusOperandi: TypeAlias = Literal["rebuild", "additive"]
