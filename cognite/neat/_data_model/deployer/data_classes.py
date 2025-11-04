@@ -387,7 +387,7 @@ class AppliedChanges(BaseDeployObject):
                     resource_id=change.resource_id,
                     current_value=change.new_value,
                     new_value=change.current_value,
-                    changes=[],
+                    changes=self._reverse_changes(change.changes),
                 )
             else:
                 continue  # Unchanged resources do not need recovery.
@@ -399,6 +399,43 @@ class AppliedChanges(BaseDeployObject):
             recovery_plan[change_result.endpoint].resources.append(recovery_change)
 
         return list(recovery_plan.values())
+
+    def _reverse_changes(self, changes: list[FieldChange]) -> list[FieldChange]:
+        reversed_changes: list[FieldChange] = []
+        for change in changes:
+            if isinstance(change, AddedField):
+                reversed_changes.append(
+                    RemovedField(
+                        field_path=change.field_path,
+                        current_value=change.new_value,
+                        item_severity=change.item_severity,
+                    )
+                )
+            elif isinstance(change, RemovedField):
+                reversed_changes.append(
+                    AddedField(
+                        field_path=change.field_path,
+                        new_value=change.current_value,
+                        item_severity=change.item_severity,
+                    )
+                )
+            elif isinstance(change, ChangedField):
+                reversed_changes.append(
+                    ChangedField(
+                        field_path=change.field_path,
+                        current_value=change.new_value,
+                        new_value=change.current_value,
+                        item_severity=change.item_severity,
+                    )
+                )
+            elif isinstance(change, FieldChanges):
+                reversed_changes.append(
+                    FieldChanges(
+                        field_path=change.field_path,
+                        changes=self._reverse_changes(change.changes),
+                    )
+                )
+        return reversed_changes
 
 
 class DeploymentResult(BaseDeployObject):

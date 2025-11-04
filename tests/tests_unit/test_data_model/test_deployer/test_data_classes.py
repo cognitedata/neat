@@ -176,7 +176,10 @@ class TestAppliedChanges:
                 ChangeResult(
                     endpoint="containers",
                     change=ResourceChange(
-                        resource_id=container2.as_reference(), current_value=container2, new_value=container2_update
+                        resource_id=container2.as_reference(),
+                        current_value=container2,
+                        new_value=container2_update,
+                        changes=ContainerDiffer().diff(container2, container2_update),
                     ),
                     message=SuccessResponseItems(code=200, body="", ids=[container2.as_reference()]),
                 )
