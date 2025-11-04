@@ -166,37 +166,26 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
 
     @property
     def indexes_to_remove(self) -> dict[ContainerIndexReference, RemovedField]:
-        indexes: dict[ContainerIndexReference, RemovedField] = {}
-        for resource_change in self.resources:
-            for change in resource_change.changes:
-                if isinstance(change, RemovedField) and change.field_path.startswith("indexes."):
-                    # Extract index reference from field path
-                    index_identifier = change.field_path.removeprefix("indexes.")
-                    indexes[
-                        ContainerIndexReference(
-                            space=resource_change.resource_id.space,
-                            external_id=resource_change.resource_id.external_id,
-                            identifier=index_identifier,
-                        )
-                    ] = change
-        return indexes
+        return self._get_fields_to_remove("indexes.", ContainerIndexReference)
 
     @property
     def constraints_to_remove(self) -> dict[ContainerConstraintReference, RemovedField]:
-        constraints: dict[ContainerConstraintReference, RemovedField] = {}
+        return self._get_fields_to_remove("constraints.", ContainerConstraintReference)
+
+    def _get_fields_to_remove(self, field_prefix: str, ref_cls: type) -> dict:
+        items: dict = {}
         for resource_change in self.resources:
             for change in resource_change.changes:
-                if isinstance(change, RemovedField) and change.field_path.startswith("constraints."):
-                    # Extract constraint reference from field path
-                    constraint_identifier = change.field_path.removeprefix("constraints.")
-                    constraints[
-                        ContainerConstraintReference(
+                if isinstance(change, RemovedField) and change.field_path.startswith(field_prefix):
+                    identifier = change.field_path.removeprefix(field_prefix)
+                    items[
+                        ref_cls(
                             space=resource_change.resource_id.space,
                             external_id=resource_change.resource_id.external_id,
-                            identifier=constraint_identifier,
+                            identifier=identifier,
                         )
                     ] = change
-        return constraints
+        return items
 
     @property
     def to_upsert(self) -> list[ResourceChange[ContainerReference, ContainerRequest]]:

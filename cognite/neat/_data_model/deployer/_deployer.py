@@ -223,35 +223,37 @@ class SchemaDeployer(OnSuccessResultProducer):
         return create_result, update_result
 
     def _remove_container_indexes(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
-        indexes_to_remove = resource.indexes_to_remove
-        if not indexes_to_remove:
-            return []
-        results: list[ChangedFieldResult] = []
-        for batch in chunker_sequence(list(indexes_to_remove.keys()), self.INDEX_DELETE_BATCH_SIZE):
-            responses = self.client.http_client.request_with_retries(
-                ItemsRequest(
-                    endpoint_url=self.client.config.create_api_url("/models/containers/indexes/delete"),
-                    method="POST",
-                    body=ItemIDBody(items=batch),
-                )
-            )
-            results.extend(self._process_field_responses(responses, indexes_to_remove))
-        return results
+        return self._remove_container_fields(
+            resource.indexes_to_remove,
+            "/models/containers/indexes/delete",
+            self.INDEX_DELETE_BATCH_SIZE,
+        )
 
     def _remove_container_constraints(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
-        constrains_to_remove = resource.constraints_to_remove
-        if not constrains_to_remove:
+        return self._remove_container_fields(
+            resource.constraints_to_remove,
+            "/models/containers/constraints/delete",
+            self.CONSTRAINT_DELETE_BATCH_SIZE,
+        )
+
+    def _remove_container_fields(
+        self,
+        fields_to_remove: Mapping[T_Reference, FieldChange],
+        endpoint: str,
+        batch_size: int,
+    ) -> list[ChangedFieldResult]:
+        if not fields_to_remove:
             return []
         results: list[ChangedFieldResult] = []
-        for batch in chunker_sequence(list(constrains_to_remove.keys()), self.CONSTRAINT_DELETE_BATCH_SIZE):
+        for batch in chunker_sequence(list(fields_to_remove.keys()), batch_size):
             responses = self.client.http_client.request_with_retries(
                 ItemsRequest(
-                    endpoint_url=self.client.config.create_api_url("/models/containers/constraints/delete"),
+                    endpoint_url=self.client.config.create_api_url(endpoint),
                     method="POST",
                     body=ItemIDBody(items=batch),
                 )
             )
-            results.extend(self._process_field_responses(responses, constrains_to_remove))
+            results.extend(self._process_field_responses(responses, fields_to_remove))
         return results
 
     @classmethod
