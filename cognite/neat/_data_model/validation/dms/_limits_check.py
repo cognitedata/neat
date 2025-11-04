@@ -30,11 +30,11 @@ class DataModelLimitValidator(DataModelValidator):
     def _data_model_limit_check(self) -> list[ConsistencyError]:
         """Get the data model view limits."""
 
-        if len(self.container_references) > DMSDefaultLimits.data_model.views_per_data_model:
+        if len(self.views_references) > DMSDefaultLimits.data_model.views_per_data_model:
             return [
                 ConsistencyError(
                     message=(
-                        f"The data model references {len(self.container_references)} views, which exceeds the limit of "
+                        f"The data model references {len(self.views_references)} views, which exceeds the limit of "
                         f"{DMSDefaultLimits.data_model.views_per_data_model} views per data model."
                     ),
                     code=self.code,
@@ -134,10 +134,10 @@ class DataModelLimitValidator(DataModelValidator):
                         continue
 
                     if type_.list and hasattr(type_, "max_list_size") and type_.max_list_size:
-                        has_btree_index = property_id in properties_by_index_type[BtreeIndex.index_type]
-                        max_allowed_limit = DMSDefaultLimits.container.listable_property.get_limit_for_data_type(
-                            type_, has_btree_index
+                        has_btree_index = (
+                            property_id in properties_by_index_type[BtreeIndex.model_fields["index_type"].default]
                         )
+                        max_allowed_limit = DMSDefaultLimits.container.get_limit_for_data_type(type_, has_btree_index)
                         if type_.max_list_size > max_allowed_limit:
                             errors.append(
                                 ConsistencyError(
@@ -203,7 +203,9 @@ class DataModelLimitValidator(DataModelValidator):
                 if not merged_views[view_ref].implements:
                     merged_views[view_ref].implements = local_view.implements
                 else:  # mypy is complaining here about possible None which is not possible due to the check above
-                    cast(list[ViewReference], merged_views[view_ref].implements).extend(local_view.implements)
+                    for impl in local_view.implements:
+                        if impl not in cast(list[ViewReference], merged_views[view_ref].implements):
+                            cast(list[ViewReference], merged_views[view_ref].implements).append(impl)
 
         return merged_views
 
@@ -245,9 +247,9 @@ class DataModelLimitValidator(DataModelValidator):
 
         for index in container.indexes.values():
             if isinstance(index, BtreeIndex):
-                container_property_by_index_type[BtreeIndex.model_fields["index_type"].default].append(index.properties)
+                container_property_by_index_type[BtreeIndex.model_fields["index_type"].default].extend(index.properties)
             elif isinstance(index, IndexDefinition):
-                container_property_by_index_type[IndexDefinition.model_fields["index_type"].default].append(
+                container_property_by_index_type[IndexDefinition.model_fields["index_type"].default].extend(
                     index.properties
                 )
 

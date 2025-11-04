@@ -1,5 +1,3 @@
-from dataclasses import field
-
 from attr import dataclass
 
 from cognite.neat._client.client import NeatClient
@@ -76,6 +74,7 @@ class SpaceLimits:
     total: int = 100
 
 
+@dataclass(frozen=True)
 class ListPropertyLimits:
     """Limits for list properties."""
 
@@ -84,16 +83,6 @@ class ListPropertyLimits:
     max_int32_with_btree: int = 600
     max_int64_with_btree: int = 300
     max_all_other_types: int = 2_000
-
-    def get_limit_for_data_type(self, data_type: DataType, has_btree_index: bool = False) -> int:
-        """Get the limit for a specific data type."""
-        if isinstance(data_type, DirectNodeRelation):
-            return self.default_direct_relations
-        if isinstance(data_type, Int32Property) and has_btree_index:
-            return self.max_int32_with_btree
-        if isinstance(data_type, Int64Property) and has_btree_index:
-            return self.max_int64_with_btree
-        return self.default_other_types
 
 
 @dataclass(frozen=True)
@@ -104,7 +93,17 @@ class ContainerLimits:
     properties_total: int = 25_000
     properties_per_container: int = 100
     enums_per_property: int = 32
-    listable_property: ListPropertyLimits = field(default_factory=ListPropertyLimits)
+    listable_property: ListPropertyLimits = ListPropertyLimits()
+
+    def get_limit_for_data_type(self, data_type: DataType, has_btree_index: bool = False) -> int:
+        """Get the limit for a specific data type."""
+        if isinstance(data_type, DirectNodeRelation):
+            return self.listable_property.default_direct_relations
+        if isinstance(data_type, Int32Property) and has_btree_index:
+            return self.listable_property.max_int32_with_btree
+        if isinstance(data_type, Int64Property) and has_btree_index:
+            return self.listable_property.max_int64_with_btree
+        return self.listable_property.default_other_types
 
 
 @dataclass(frozen=True)
