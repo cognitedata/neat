@@ -1,5 +1,7 @@
 import itertools
+import sys
 from abc import ABC, abstractmethod
+from collections import UserList
 from datetime import datetime
 from enum import Enum
 from typing import Generic, Literal, TypeAlias
@@ -30,6 +32,11 @@ from cognite.neat._utils.http_client import (
     SuccessResponseItems,
 )
 from cognite.neat._utils.useful_types import T_Reference
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.uniqueKey'
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
@@ -220,6 +227,11 @@ class SchemaSnapshot(BaseDeployObject):
     containers: dict[ContainerReference, ContainerRequest]
     spaces: dict[SpaceReference, SpaceRequest]
     node_types: dict[NodeReference, NodeReference]
+
+
+class ResourceDeploymentPlanList(UserList):
+    def merge(self) -> Self:
+        raise NotImplementedError()
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
