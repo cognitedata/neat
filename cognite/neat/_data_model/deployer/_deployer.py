@@ -80,19 +80,20 @@ class SchemaDeployer(OnSuccessResultProducer):
         plan = self.create_deployment_plan(snapshot, data_model)
 
         if self.options.modus_operandi == "additive":
-            plan = plan.merge()
+            # Step 3: Filter out deletions and removals in additive mode
+            plan = plan.consolidate_changes()
 
         if not self.should_proceed_to_deploy(plan):
-            # Step 3: Check if deployment should proceed
+            # Step 4: Check if deployment should proceed
             return DeploymentResult(status="failure", plan=list(plan), snapshot=snapshot)
         elif self.options.dry_run:
-            # Step 4: If dry-run, return plan without applying
+            # Step 5: If dry-run, return plan without applying
             return DeploymentResult(status="pending", plan=list(plan), snapshot=snapshot)
 
-        # Step 5: Apply changes
+        # Step 6: Apply changes
         changes = self.apply_changes(plan)
 
-        # Step 6: Rollback if failed and auto_rollback is enabled
+        # Step 7: Rollback if failed and auto_rollback is enabled
         if not changes.is_success and self.options.auto_rollback:
             recovery = self.apply_changes(changes.as_recovery_plan())
             return DeploymentResult(

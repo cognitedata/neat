@@ -230,8 +230,37 @@ class SchemaSnapshot(BaseDeployObject):
 
 
 class ResourceDeploymentPlanList(UserList):
-    def merge(self) -> Self:
-        raise NotImplementedError()
+    def consolidate_changes(self) -> Self:
+        """Consolidate the deployment plans by applying field removals to the new_value of resources."""
+        consolidated_plan: list[ResourceDeploymentPlan] = []
+        for plan in self.data:
+            consolidated_resources: list[ResourceChange] = []
+            for resource in plan.resources:
+                if resource.new_value is None and resource.current_value is not None:
+                    # Deletion, keep current_value.
+                    updated_resource = resource.model_copy(update={"new_value": resource.current_value})
+                elif resource.changes and resource.new_value is not None:
+                    # Find all field removals and update new_value accordingly.
+                    removals = [change for change in resource.changes if isinstance(change, RemovedField)]
+                    new_value = self._consolidate_resource(resource.new_value, removals)
+                    updated_resource = resource.model_copy(update={"new_value": new_value})
+                else:
+                    # Creation or unchanged, keep as is.
+                    updated_resource = resource
+                consolidated_resources.append(updated_resource)
+            consolidated_plan.append(plan.model_copy(update={"resources": consolidated_resources}))
+        return type(self)(consolidated_plan)
+
+    def _consolidate_resource(self, resource: T_DataModelResource, removals: list[RemovedField]) -> T_DataModelResource:
+        if isinstance(resource, DataModelRequest):
+            raise NotImplementedError()
+        elif isinstance(resource, ViewRequest):
+            raise NotImplementedError()
+        elif isinstance(resource, ContainerRequest):
+            raise NotImplementedError()
+        elif removals:
+            raise NotImplementedError()
+        return resource
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
