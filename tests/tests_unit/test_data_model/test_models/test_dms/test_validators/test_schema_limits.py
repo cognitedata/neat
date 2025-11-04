@@ -9,12 +9,94 @@ from cognite.neat._data_model.validation.dms import DataModelLimitValidator
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
 
 
+def generate_implements_list(interface_count: int) -> str:
+    return ",".join([f"my_space:Interface{i}(version=v1)" for i in range(1, interface_count + 1)])
+
+
+def generate_properties_section(view_name: str, container_base: str, count: int) -> str:
+    return "\n".join(
+        [
+            f"""- View: {view_name}
+  View Property: prop{i}
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:{container_base}{1 + int((i + 1) / 35)}
+  Container Property: prop{i}"""
+            for i in range(count)
+        ]
+    )
+
+
+def generate_container_references(view_name: str, container_count: int) -> str:
+    return "\n".join(
+        [
+            f"""- View: {view_name}
+  View Property: prop_container_{i}
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:Container{i}
+  Container Property: prop1"""
+            for i in range(1, container_count + 1)
+        ]
+    )
+
+
+def generate_large_container_props(view_name: str, container_name: str, count: int) -> str:
+    return "\n".join(
+        [
+            f"""- View: {view_name}
+  View Property: container_prop{i}
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:{container_name}
+  Container Property: prop{i}"""
+            for i in range(count)
+        ]
+    )
+
+
+def generate_containers(container_names: list[str]) -> str:
+    return "\n".join(
+        [
+            f"""- Container: my_space:{name}
+  Used For: node"""
+            for name in container_names
+        ]
+    )
+
+
+def generate_enum_values(collection_name: str, count: int) -> str:
+    return "\n".join(
+        [
+            f"""- Collection: {collection_name}
+  Value: value{i}
+  Name: Value {i}"""
+            for i in range(1, count + 1)
+        ]
+    )
+
+
+# Container names
+container_names = [f"Container{i}" for i in range(1, 12)] + [
+    "ContainerWithTooManyProperties",
+    "DirectRelationContainer",
+    "MinCountContainer",
+    "Int32Container",
+    "Int64Container",
+    "TextListContainer",
+    "EnumContainer",
+]
+
+
 @pytest.fixture(scope="session")
 def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, set[str]]:
-    implements = ",".join([f"my_space:Interface{i}(version=v1)" for i in range(1, 12)])
-
-    yaml = (
-        """Metadata:
+    yaml = f"""Metadata:
 - Key: space
   Value: my_space
 - Key: externalId
@@ -23,126 +105,11 @@ def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, set[str]]:
   Value: v1
 Properties:
 # View with 301 properties (exceeds 300 limit)
-"""
-        + "\n".join(
-            [
-                f"""- View: ViewWithTooManyProperties
-  View Property: prop{i}
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container{1 + int((i + 1) / 35)}
-  Container Property: prop{i}"""
-                for i in range(301)
-            ]
-        )
-        + """
+{generate_properties_section("ViewWithTooManyProperties", "Container", 301)}
 # View referencing 11 containers (exceeds 10 limit)
-- View: ViewWithTooManyContainers
-  View Property: prop_container_1
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container1
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_2
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container2
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_3
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container3
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_4
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container4
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_5
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container5
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_6
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container6
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_7
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container7
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_8
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container8
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_9
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container9
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_10
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container10
-  Container Property: prop1
-- View: ViewWithTooManyContainers
-  View Property: prop_container_11
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:Container11
-  Container Property: prop1
+{generate_container_references("ViewWithTooManyContainers", 11)}
 # Container with 101 properties (exceeds 100 limit)
-"""
-        + "\n".join(
-            [
-                f"""- View: ViewWithLargeContainer
-  View Property: container_prop{i}
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Connection: null
-  Container: my_space:ContainerWithTooManyProperties
-  Container Property: prop{i}"""
-                for i in range(101)
-            ]
-        )
-        + f"""
+{generate_large_container_props("ViewWithLargeContainer", "ContainerWithTooManyProperties", 101)}
 # Direct relation list exceeding 100 limit (Max Count)
 - View: ViewWithTooManyDirectRelations
   View Property: directRelations
@@ -202,68 +169,16 @@ Views:
 - View: ViewWithTooManyEnumValues
 # View implementing 11 views (exceeds 10 limit)
 - View: ViewWithTooManyImplements
-  Implements: {implements}
-- View: Interface1
-- View: Interface2
-- View: Interface3
-- View: Interface4
-- View: Interface5
-- View: Interface6
-- View: Interface7
-- View: Interface8
-- View: Interface9
-- View: Interface10
-- View: Interface11
+  Implements: {generate_implements_list(11)}
+{chr(10).join([f"- View: Interface{i}" for i in range(1, 12)])}
 - View: TargetView
-"""
-        + "\n".join([f"- View: DataModelView{i}" for i in range(101)])
-        + """
+{chr(10).join([f"- View: DataModelView{i}" for i in range(101)])}
 Containers:
-- Container: my_space:Container1
-  Used For: node
-- Container: my_space:Container2
-  Used For: node
-- Container: my_space:Container3
-  Used For: node
-- Container: my_space:Container4
-  Used For: node
-- Container: my_space:Container5
-  Used For: node
-- Container: my_space:Container6
-  Used For: node
-- Container: my_space:Container7
-  Used For: node
-- Container: my_space:Container8
-  Used For: node
-- Container: my_space:Container9
-  Used For: node
-- Container: my_space:Container10
-  Used For: node
-- Container: my_space:Container11
-  Used For: node
-- Container: my_space:ContainerWithTooManyProperties
-  Used For: node
-- Container: my_space:DirectRelationContainer
-  Used For: node
-- Container: my_space:MinCountContainer
-  Used For: node
-- Container: my_space:Int32Container
-  Used For: node
-- Container: my_space:Int64Container
-  Used For: node
-- Container: my_space:TextListContainer
-  Used For: node
-- Container: my_space:EnumContainer
-  Used For: node
+{generate_containers(container_names)}
 Enum:
-- Collection: SomeEnums
-  Value: value1
-  Name: Value 1
-- Collection: SomeEnums
-  Value: value2
-  Name: Too Many
+{generate_enum_values("SomeEnums", 2)}
+
 """
-    )
 
     expected_problems = {
         "The data model references 123 views",
