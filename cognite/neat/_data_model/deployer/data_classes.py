@@ -198,6 +198,31 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
                     ] = change
         return constraints
 
+    @property
+    def to_upsert(self) -> list[ResourceChange[ContainerReference, ContainerRequest]]:
+        return [change for change in self.resources if change.change_type == "create" or self._is_update(change)]
+
+    @property
+    def to_update(self) -> list[ResourceChange[ContainerReference, ContainerRequest]]:
+        return [change for change in self.resources if self._is_update(change)]
+
+    @classmethod
+    def _is_update(cls, change: ResourceChange[ContainerReference, ContainerRequest]) -> bool:
+        """Whether the container change is an update.
+
+        Containers with only index or constraint removals are not considered updates, as these are handled by a
+        separate API call.
+        """
+        if change.change_type != "update":
+            return False
+        for c in change.changes:
+            if not (
+                isinstance(c, RemovedField)
+                and (c.field_path.startswith("indexes.") or c.field_path.startswith("constraints."))
+            ):
+                return True
+        return False
+
 
 class SchemaSnapshot(BaseDeployObject):
     timestamp: datetime
