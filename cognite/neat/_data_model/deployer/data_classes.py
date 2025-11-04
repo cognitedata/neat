@@ -248,7 +248,9 @@ class ResourceDeploymentPlanList(UserList):
                     # Find all field removals and update new_value accordingly.
                     removals = [change for change in resource.changes if isinstance(change, RemovedField)]
                     if removals:
-                        new_value = self._consolidate_resource(resource.new_value, removals)
+                        if resource.current_value is None:
+                            raise RuntimeError("Bug in Neat: current_value is None for a resource with removals.")
+                        new_value = self._consolidate_resource(resource.current_value, resource.new_value, removals)
                         updated_resource = resource.model_copy(
                             update={
                                 "new_value": new_value,
@@ -267,26 +269,29 @@ class ResourceDeploymentPlanList(UserList):
             consolidated_plan.append(plan.model_copy(update={"resources": consolidated_resources}))
         return type(self)(consolidated_plan)
 
-    def _consolidate_resource(self, resource: DataModelResource, removals: list[RemovedField]) -> DataModelResource:
-        if isinstance(resource, DataModelRequest):
-            return self._consolidate_data_model(resource, removals)
-        elif isinstance(resource, ViewRequest):
-            return self._consolidate_view(resource, removals)
-        elif isinstance(resource, ContainerRequest):
-            return self._consolidate_container(resource, removals)
+    def _consolidate_resource(
+        self, current: DataModelResource, new: DataModelResource, removals: list[RemovedField]
+    ) -> DataModelResource:
+        if isinstance(new, DataModelRequest):
+            if not isinstance(current, DataModelRequest):
+                # This should not happen, as only containers, views, and data models have removable fields.
+                raise RuntimeError("Bug in Neat: current value is not a DataModelRequest during consolidation.")
+            return self._consolidate_data_model(current, new)
+        elif isinstance(new, ViewRequest):
+            return self._consolidate_view(new, removals)
+        elif isinstance(new, ContainerRequest):
+            return self._consolidate_container(new, removals)
         elif removals:
             # This should not happen, as only containers, views, and data models have removable fields.
             raise RuntimeError("Bug in Neat: attempted to consolidate removals for unsupported resource type.")
-        return resource
+        return new
 
     @staticmethod
-    def _consolidate_data_model(resource: DataModelRequest, removals: list[RemovedField]) -> DataModelResource:
-        data_model_views: list[ViewReference] = []
-        for removal in removals:
-            if removal.field_path == "views":
-                data_model_views.append(cast(ViewReference, removal.current_value))
-        # We add the removed views back at the start of the views list.
-        return resource.model_copy(update={"views": data_model_views + (resource.views or []).copy()}, deep=True)
+    def _consolidate_data_model(current: DataModelRequest, new: DataModelRequest) -> DataModelResource:
+        current_views = set(v for v in (current.views or []))
+        new_only_views = [v for v in (new.views or []) if v not in current_views]
+        final_views = (current.views or []) + new_only_views
+        return new.model_copy(update={"views": final_views}, deep=True)
 
     @staticmethod
     def _consolidate_view(resource: ViewRequest, removals: list[RemovedField]) -> DataModelResource:
