@@ -122,3 +122,11 @@ class ViewDirectReference(ReferenceObject):
         max_length=255,
         pattern=CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     )
+
+
+class ContainerIndexReference(ContainerReference):
+    identifier: str
+
+
+class ContainerConstraintReference(ContainerReference):
+    identifier: str

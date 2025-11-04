@@ -9,6 +9,8 @@ from pydantic.alias_generators import to_camel
 
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
+    ContainerConstraintReference,
+    ContainerIndexReference,
     ContainerReference,
     ContainerRequest,
     DataModelReference,
@@ -155,6 +157,19 @@ class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModel
     @property
     def unchanged(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type == "unchanged"]
+
+
+class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, ContainerRequest]):
+    endpoint: Literal["containers"] = "containers"
+    resources: list[ResourceChange[ContainerReference, ContainerRequest]]
+
+    @property
+    def indexes_to_remove(self) -> list[ContainerIndexReference]:
+        raise NotImplementedError()
+
+    @property
+    def constraints_to_remove(self) -> list[ContainerConstraintReference]:
+        raise NotImplementedError()
 
 
 class SchemaSnapshot(BaseDeployObject):

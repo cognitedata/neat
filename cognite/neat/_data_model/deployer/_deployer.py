@@ -129,6 +129,7 @@ class SchemaDeployer(OnSuccessResultProducer):
         new_resources: list[T_DataModelResource],
         endpoint: DataModelEndpoint,
         differ: ItemDiffer[T_DataModelResource],
+        plan_type: type[ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]] = ResourceDeploymentPlan,
     ) -> ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]:
         resources: list[ResourceChange[T_ResourceId, T_DataModelResource]] = []
         for new_resource in new_resources:
@@ -143,7 +144,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
             )
 
-        return ResourceDeploymentPlan(endpoint=endpoint, resources=resources)
+        return plan_type(endpoint=endpoint, resources=resources)
 
     def should_proceed_to_deploy(self, plan: list[ResourceDeploymentPlan]) -> bool:
         max_severity_in_plan = SeverityType.max_severity(
