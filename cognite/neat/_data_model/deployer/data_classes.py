@@ -22,7 +22,6 @@ from cognite.neat._data_model.models.dms import (
     DataModelResource,
     Index,
     NodeReference,
-    ResourceId,
     SpaceReference,
     SpaceRequest,
     T_DataModelResource,
@@ -325,6 +324,7 @@ class ResourceDeploymentPlanList(UserList):
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
+    endpoint: DataModelEndpoint
     change: ResourceChange[T_ResourceId, T_DataModelResource]
     message: SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
 
@@ -392,25 +392,13 @@ class AppliedChanges(BaseDeployObject):
             else:
                 continue  # Unchanged resources do not need recovery.
 
-            endpoint = self._get_endpoint_from_resource_id(change.resource_id)
-            if endpoint not in recovery_plan:
-                recovery_plan[endpoint] = ResourceDeploymentPlan(endpoint=endpoint, resources=[])
-            recovery_plan[endpoint].resources.append(recovery_change)
+            if change_result.endpoint not in recovery_plan:
+                recovery_plan[change_result.endpoint] = ResourceDeploymentPlan(
+                    endpoint=change_result.endpoint, resources=[]
+                )
+            recovery_plan[change_result.endpoint].resources.append(recovery_change)
 
         return list(recovery_plan.values())
-
-    @staticmethod
-    def _get_endpoint_from_resource_id(resource_id: ResourceId) -> DataModelEndpoint:
-        if isinstance(resource_id, SpaceReference):
-            return "spaces"
-        elif isinstance(resource_id, ContainerReference):
-            return "containers"
-        elif isinstance(resource_id, ViewReference):
-            return "views"
-        elif isinstance(resource_id, DataModelReference):
-            return "datamodels"
-        else:
-            raise RuntimeError("Unsupported resource ID type for endpoint determination.")
 
 
 class DeploymentResult(BaseDeployObject):

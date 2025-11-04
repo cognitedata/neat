@@ -209,7 +209,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 body=ItemIDBody(items=list(to_delete_by_id.keys())),
             )
         )
-        return self._process_resource_responses(responses, to_delete_by_id)
+        return self._process_resource_responses(responses, to_delete_by_id, resource.endpoint)
 
     def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[ChangeResult], list[ChangeResult]]:
         to_upsert = [
@@ -225,9 +225,9 @@ class SchemaDeployer(OnSuccessResultProducer):
             )
         )
         to_create_by_id = {rc.resource_id: rc for rc in resource.to_create}
-        create_result = self._process_resource_responses(responses, to_create_by_id)
+        create_result = self._process_resource_responses(responses, to_create_by_id, resource.endpoint)
         to_update_by_id = {rc.resource_id: rc for rc in resource.to_update}
-        update_result = self._process_resource_responses(responses, to_update_by_id)
+        update_result = self._process_resource_responses(responses, to_update_by_id, resource.endpoint)
         return create_result, update_result
 
     def _remove_container_indexes(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
@@ -266,7 +266,7 @@ class SchemaDeployer(OnSuccessResultProducer):
 
     @classmethod
     def _process_resource_responses(
-        cls, responses: APIResponse, change_by_id: dict[T_ResourceId, ResourceChange]
+        cls, responses: APIResponse, change_by_id: dict[T_ResourceId, ResourceChange], endpoint: DataModelEndpoint
     ) -> list[ChangeResult]:
         results: list[ChangeResult] = []
         for response in responses:
@@ -274,7 +274,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 for id in response.ids:
                     if id not in change_by_id:
                         continue
-                    results.append(ChangeResult(change=change_by_id[id], message=response))
+                    results.append(ChangeResult(change=change_by_id[id], message=response, endpoint=endpoint))
             else:
                 # This should never happen as we do a ItemsRequest should always return ItemMessage responses
                 raise ValueError("Bug in Neat. Got an unexpected response type.")
