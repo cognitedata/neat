@@ -8,11 +8,11 @@ from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms import (
     BidirectionalConnectionMisconfigured,
+    DataModelLimitValidator,
     DmsDataModelValidation,
     ReferencedContainersExist,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
-    ViewsWithoutProperties,
 )
 from cognite.neat._issues import IssueList
 
@@ -102,24 +102,13 @@ def test_validation(validation_test_cdf_client: NeatClient, valid_dms_yaml_with_
 
     assert len(on_success.issues) == 10
     assert set(by_code.keys()) == {
-        ViewsWithoutProperties.code,
         UndefinedConnectionEndNodeTypes.code,
         VersionSpaceInconsistency.code,
         BidirectionalConnectionMisconfigured.code,
         ReferencedContainersExist.code,
+        DataModelLimitValidator.code,
     }
-    assert len(by_code[ViewsWithoutProperties.code]) == 2
-    views_without_properties_messages = [issue.message for issue in by_code[ViewsWithoutProperties.code]]
-    expected_views = {"another_space:MissingProperties(version=v2)", "my_space:MissingProperties(version=v2)"}
 
-    # Check that both expected views are mentioned in the messages
-    found_views = set()
-    for message in views_without_properties_messages:
-        for expected_view in expected_views:
-            if expected_view in message:
-                found_views.add(expected_view)
-
-    assert found_views == expected_views
     assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 3
 
     undefined_connection_messages = [issue.message for issue in by_code[UndefinedConnectionEndNodeTypes.code]]
@@ -175,3 +164,16 @@ def test_validation(validation_test_cdf_client: NeatClient, valid_dms_yaml_with_
 
     assert found_missing_containers == expected_missing_containers
     assert found_missing_container_properties == expected_missing_container_properties
+
+    assert len(by_code[DataModelLimitValidator.code]) == 2
+
+    missing_view_properties_messages = [issue.message for issue in by_code[DataModelLimitValidator.code]]
+    expected_views = {"another_space:MissingProperties(version=v2)", "my_space:MissingProperties(version=v2)"}
+
+    found_views = set()
+    for message in missing_view_properties_messages:
+        for expected_view in expected_views:
+            if expected_view in message:
+                found_views.add(expected_view)
+
+    assert found_views == expected_views

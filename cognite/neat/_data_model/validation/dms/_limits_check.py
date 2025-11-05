@@ -123,6 +123,18 @@ class DataModelLimitValidator(DataModelValidator):
                             code=self.code,
                         )
                     )
+            else:
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"View {view_ref!s} does "
+                            "not have any properties defined, either directly or through implements."
+                            " This will prohibit your from deploying the data model to CDF."
+                        ),
+                        fix="Define at least one property for view",
+                        code=self.code,
+                    )
+                )
 
             if view.implements:
                 if len(view.implements) > DMSDefaultLimits.view.implements_per_view:
@@ -167,7 +179,16 @@ class DataModelLimitValidator(DataModelValidator):
                 raise RuntimeError(f"Container {container_ref!s} not found in merged containers. This is a bug!")
 
             if not container.properties:
-                continue
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Container {container_ref!s} does not have any properties defined."
+                            " This will prohibit your from deploying the data model to CDF."
+                        ),
+                        fix="Define at least one property for container",
+                        code=self.code,
+                    )
+                )
 
             properties_by_index_type = self.container_property_by_index_type(container)
 
