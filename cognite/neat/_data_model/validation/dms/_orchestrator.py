@@ -4,12 +4,14 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._container import ContainerRequest
-from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
+from cognite.neat._data_model.models.dms._references import ContainerReference, DataModelReference, ViewReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
+from ._limits_check import DataModelLimitValidator
 from ._reverse_connection_validators import BidirectionalConnectionMisconfigured
 from ._validators import (
     ReferencedContainersExist,
@@ -23,12 +25,15 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     """Placeholder for DMS Quality Assessment functionality."""
 
     def __init__(
-        self, client: NeatClient | None = None, codes: list[str] | None = None, modus_operandi: str | None = None
+        self,
+        client: NeatClient | None = None,
+        codes: list[str] | None = None,
+        modus_operandi: ModusOperandi = "additive",
     ) -> None:
         super().__init__()
         self._client = client
         self._codes = codes or ["all"]
-        self._modus_operandi = modus_operandi  # will be used later to trigger how validators will behave
+        self._modus_operandi = modus_operandi
         self._has_run = False
 
     def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources]:
@@ -40,6 +45,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         local_ancestors_by_view_reference = analysis.ancestors_by_view(list(local_views_by_reference.values()))
         local_reverse_to_direct_mapping = analysis.reverse_to_direct_mapping
         local_containers_by_reference = analysis.container_by_reference
+        local_data_model_views = set(data_model.data_model.views) if data_model.data_model.views else set()
 
         local_resources = LocalResources(
             data_model_reference=data_model.data_model.as_reference(),
@@ -48,6 +54,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             reverse_to_direct_mapping=local_reverse_to_direct_mapping,
             containers_by_reference=local_containers_by_reference,
             connection_end_node_types=analysis.connection_end_node_types,
+            data_model_views=local_data_model_views,
         )
 
         cdf_views_by_reference = self._cdf_view_by_reference(
@@ -58,11 +65,13 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         cdf_containers_by_reference = self._cdf_container_by_reference(
             list(self._referenced_containers(local_views_by_reference, cdf_views_by_reference))
         )
+        cdf_data_model_views = self._cdf_data_model_views(data_model.data_model.as_reference())
 
         cdf_resources = CDFResources(
             views_by_reference=cdf_views_by_reference,
             ancestors_by_view_reference=cdf_ancestors_by_view_reference,
             containers_by_reference=cdf_containers_by_reference,
+            data_model_views=cdf_data_model_views,
         )
 
         return local_resources, cdf_resources
@@ -80,6 +89,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             VersionSpaceInconsistency(local_resources, cdf_resources),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources),
             ReferencedContainersExist(local_resources, cdf_resources),
+            DataModelLimitValidator(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators
@@ -88,6 +98,16 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
                 self._issues.extend(validator.run())
 
         self._has_run = True
+
+    def _cdf_data_model_views(self, data_model_ref: DataModelReference) -> set[ViewReference]:
+        """Get all data model views in CDF."""
+
+        if not self._client:
+            return set()
+
+        data_model = self._client.data_models.retrieve([data_model_ref])
+
+        return set(data_model[0].views) if data_model and data_model[0].views else set()
 
     def _cdf_view_by_reference(
         self, views: list[ViewReference], include_inherited_properties: bool = True
