@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
+from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._issues import IssueList
 
 
@@ -31,10 +32,10 @@ class OnSuccessResultProducer(OnSuccess, ABC):
     """Abstract base class for post-activity success handlers that produce desired outcomes using the data model."""
 
     def __init__(self) -> None:
-        self._results: Any | None = None
+        self._results: DeploymentResult | None = None
 
     @property
-    def result(self) -> Any:
+    def result(self) -> DeploymentResult:
         if self._results is None:
             raise RuntimeError("SchemaDeployer has not been run yet.")
         return self._results
