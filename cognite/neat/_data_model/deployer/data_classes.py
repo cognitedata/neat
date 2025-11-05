@@ -324,6 +324,7 @@ class ResourceDeploymentPlanList(UserList):
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
+    endpoint: DataModelEndpoint
     change: ResourceChange[T_ResourceId, T_DataModelResource]
     message: SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
 
@@ -357,7 +358,84 @@ class AppliedChanges(BaseDeployObject):
         )
 
     def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
-        raise NotImplementedError()
+        """Generate a recovery plan based on the applied changes."""
+        recovery_plan: dict[DataModelEndpoint, ResourceDeploymentPlan] = {}
+        for change_result in itertools.chain(self.created, self.updated, self.deletions):
+            if not isinstance(change_result.message, SuccessResponse):
+                continue  # Skip failed changes.
+            change = change_result.change
+            if change.change_type == "create":
+                # To recover a created resource, we need to delete it.
+                # MyPy wants an annotation were we want this to be generic.
+                recovery_change = ResourceChange(  # type: ignore[var-annotated]
+                    resource_id=change.resource_id,
+                    current_value=change.new_value,
+                    new_value=None,
+                    changes=[],
+                )
+            elif change.change_type == "delete":
+                # To recover a deleted resource, we need to create it.
+                recovery_change = ResourceChange(
+                    resource_id=change.resource_id,
+                    current_value=None,
+                    new_value=change.current_value,
+                    changes=[],
+                )
+            elif change.change_type == "update":
+                # To recover an updated resource, we need to revert to the previous state.
+                recovery_change = ResourceChange(
+                    resource_id=change.resource_id,
+                    current_value=change.new_value,
+                    new_value=change.current_value,
+                    changes=self._reverse_changes(change.changes),
+                )
+            else:
+                continue  # Unchanged resources do not need recovery.
+
+            if change_result.endpoint not in recovery_plan:
+                recovery_plan[change_result.endpoint] = ResourceDeploymentPlan(
+                    endpoint=change_result.endpoint, resources=[]
+                )
+            recovery_plan[change_result.endpoint].resources.append(recovery_change)
+
+        return list(recovery_plan.values())
+
+    def _reverse_changes(self, changes: list[FieldChange]) -> list[FieldChange]:
+        reversed_changes: list[FieldChange] = []
+        for change in changes:
+            if isinstance(change, AddedField):
+                reversed_changes.append(
+                    RemovedField(
+                        field_path=change.field_path,
+                        current_value=change.new_value,
+                        item_severity=change.item_severity,
+                    )
+                )
+            elif isinstance(change, RemovedField):
+                reversed_changes.append(
+                    AddedField(
+                        field_path=change.field_path,
+                        new_value=change.current_value,
+                        item_severity=change.item_severity,
+                    )
+                )
+            elif isinstance(change, ChangedField):
+                reversed_changes.append(
+                    ChangedField(
+                        field_path=change.field_path,
+                        current_value=change.new_value,
+                        new_value=change.current_value,
+                        item_severity=change.item_severity,
+                    )
+                )
+            elif isinstance(change, FieldChanges):
+                reversed_changes.append(
+                    FieldChanges(
+                        field_path=change.field_path,
+                        changes=self._reverse_changes(change.changes),
+                    )
+                )
+        return reversed_changes
 
 
 class DeploymentResult(BaseDeployObject):
