@@ -34,6 +34,15 @@ def validation_test_cdf_client(neat_client: NeatClient, respx_mock: respx.MockRo
     client = neat_client
     config = client.config
     respx_mock.post(
+        config.create_api_url("/models/datamodels/byids"),
+    ).respond(
+        status_code=200,
+        json={
+            "items": [],
+            "nextCursor": None,
+        },
+    )
+    respx_mock.post(
         config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
     ).respond(
         status_code=200,
