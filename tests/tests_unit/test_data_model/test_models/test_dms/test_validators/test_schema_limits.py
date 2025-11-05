@@ -139,12 +139,12 @@ Properties:
   Container: my_space:Int64Container
   Container Property: int64List
   Index: btree:int64List(cursorable=True)
-# Text list exceeding 1000 default limit
+# Text list exceeding 2000 default limit
 - View: ViewWithTooManyTextInList
   View Property: textList
   Value Type: text
   Min Count: 0
-  Max Count: 1001
+  Max Count: 2001
   Connection: null
   Container: my_space:TextListContainer
   Container Property: textList
@@ -189,7 +189,7 @@ Enum:
         "Container my_space:DirectRelationContainer has property directRelations with list size 101",
         "Container my_space:Int32Container has property int32List with list size 601",
         "Container my_space:Int64Container has property int64List with list size 301",
-        "Container my_space:TextListContainer has property textList with list size 1001",
+        "Container my_space:TextListContainer has property textList with list size 2001",
     }
 
     return yaml, expected_problems
