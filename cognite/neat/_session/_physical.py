@@ -1,7 +1,7 @@
 from typing import Any
 
 from cognite.neat._client import NeatClient
-from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
+from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import DMSAPIExporter, DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference

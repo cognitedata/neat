@@ -97,6 +97,18 @@ class TestNeatSession:
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
 
+    def test_write_data_model_to_cdf(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        provenance_before = len(session._store.provenance)
+        session.physical_data_model.write.cdf(dry_run=True, rollback=True)
+        assert len(session._store.provenance) == provenance_before + 1
+
+        assert len(session._store.physical_data_model) == 1
+        assert isinstance(session._store.state, states.PhysicalState)
+        # there is no state change when writing
+        assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
+        assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
+
     def test_forbid_read_in_physical_state(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session
         read_yaml = MagicMock(spec=Path)
