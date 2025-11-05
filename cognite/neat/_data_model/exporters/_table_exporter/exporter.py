@@ -2,9 +2,8 @@ from pathlib import Path
 from typing import cast
 
 import yaml
-from pyparsing import ABC
 
-from cognite.neat._data_model.exporters._base import DMSExporter
+from cognite.neat._data_model.exporters._base import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.importers._table_importer.data_classes import DMSProperty, TableDMS
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._utils.useful_types import DataModelTableType
@@ -13,7 +12,7 @@ from .workbook import WorkbookCreator, WorkbookOptions
 from .writer import DMSTableWriter
 
 
-class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
+class DMSTableExporter(DMSExporter[DataModelTableType]):
     """Exports DMS to a table structure.
 
     The tables can are expected to be a dictionary where the keys are the table names and the values
@@ -26,7 +25,7 @@ class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
     def __init__(self, exclude_none: bool = False) -> None:
         self._exclude_none = exclude_none
 
-    def _export(self, data_model: RequestSchema) -> DataModelTableType:
+    def export(self, data_model: RequestSchema) -> DataModelTableType:
         model = data_model.data_model
         tables = DMSTableWriter(model.space, model.version).write_tables(data_model)
         exclude: set[str] = set()
@@ -51,33 +50,33 @@ class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
         return output
 
 
-class DMSYamlExporter(DMSTableExporter):
+class DMSYamlExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to YAML."""
 
     def __init__(self) -> None:
         super().__init__(exclude_none=True)
 
-    def export(self, data_model: RequestSchema, file_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as a flat YAML file, which is identical to the spreadsheet representation
 
         Args:
             data_model (RequestSchema): The data model to export.
             file_path (Path): The path to the YAML file to create.
         """
-        table_format = self._export(data_model)
+        table_format = self.export(data_model)
         file_path.write_text(
             yaml.safe_dump(table_format, sort_keys=False), encoding=self.ENCODING, newline=self.NEW_LINE
         )
 
 
-class DMSExcelExporter(DMSTableExporter):
+class DMSExcelExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to Excel file."""
 
     def __init__(self, options: WorkbookOptions | None = None) -> None:
         super().__init__(exclude_none=False)
         self._options = options or WorkbookOptions()
 
-    def export(self, data_model: RequestSchema, file_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as a Excel file.
 
         Args:
@@ -85,7 +84,7 @@ class DMSExcelExporter(DMSTableExporter):
             file_path (Path): The path to the Excel file to create.
             options (WorkbookOptions | None): Options for creating the workbook.
         """
-        table_format = self._export(data_model)
+        table_format = self.export(data_model)
         workbook = WorkbookCreator(self._options).create_workbook(table_format)
         try:
             workbook.save(file_path)
@@ -93,10 +92,10 @@ class DMSExcelExporter(DMSTableExporter):
             workbook.close()
 
 
-class DMSCsvExporter(DMSTableExporter):
+class DMSCsvExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to CSV files in a directory."""
 
-    def export(self, data_model: RequestSchema, directory_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, directory_path: Path) -> None:
         """Exports the data model as a set of CSV files, one for each table.
 
         Args:
