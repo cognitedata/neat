@@ -190,7 +190,18 @@ Enum:
         "Container my_space:Int32Container has property int32List with list size 601",
         "Container my_space:Int64Container has property int64List with list size 301",
         "Container my_space:TextListContainer has property textList with list size 2001",
+        "Container my_space:MinCountContainer does not have any properties defined",
+        "TargetView(version=v1) does not have any properties defined",
+        "View my_space:ViewWithTooHighMinCount(version=v1) does not have any properties defined",
+        "View my_space:ViewWithTooManyImplements(version=v1) does not have any properties defined",
     }
+
+    expected_problems.update(
+        {f"View my_space:Interface{i}(version=v1) does not have any properties defined" for i in range(1, 12)}
+    )
+    expected_problems.update(
+        {f"View my_space:DataModelView{i}(version=v1) does not have any properties defined" for i in range(101)}
+    )
 
     return yaml, expected_problems
 

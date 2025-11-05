@@ -4,50 +4,6 @@ from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 
-class ViewsWithoutProperties(DataModelValidator):
-    """This validator checks for views without properties, i.e. views that do not have any
-    property attached to them , either directly or through implements."""
-
-    code = "NEAT-DMS-001"
-
-    def run(self) -> list[ConsistencyError]:
-        views_without_properties = []
-
-        for ref, view in self.local_resources.views_by_reference.items():
-            if not view.properties:
-                # Existing CDF view has properties
-                if (
-                    self.cdf_resources
-                    and (remote := self.cdf_resources.views_by_reference.get(ref))
-                    and remote.properties
-                ):
-                    continue
-
-                # Implemented views have properties
-                if view.implements and any(
-                    self.cdf_resources.views_by_reference
-                    and (remote_implement := self.cdf_resources.views_by_reference.get(implement))
-                    and remote_implement.properties
-                    for implement in view.implements or []
-                ):
-                    continue
-
-                views_without_properties.append(ref)
-
-        return [
-            ConsistencyError(
-                message=(
-                    f"View {ref!s} does "
-                    "not have any properties defined, either directly or through implements."
-                    " This will prohibit your from deploying the data model to CDF."
-                ),
-                fix="Define properties for the view",
-                code=self.code,
-            )
-            for ref in views_without_properties
-        ]
-
-
 class UndefinedConnectionEndNodeTypes(DataModelValidator):
     """This validator checks for connections where the end node types are not defined"""
 

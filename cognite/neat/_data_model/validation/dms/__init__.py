@@ -5,7 +5,6 @@ from ._validators import (
     ReferencedContainersExist,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
-    ViewsWithoutProperties,
 )
 
 __all__ = [
@@ -15,5 +14,4 @@ __all__ = [
     "ReferencedContainersExist",
     "UndefinedConnectionEndNodeTypes",
     "VersionSpaceInconsistency",
-    "ViewsWithoutProperties",
 ]
