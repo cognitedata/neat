@@ -41,7 +41,9 @@ class NeatStore:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
-        change, _ = self._do_activity(writer.export, on_success, data_model=self.physical_data_model[-1], **kwargs)
+        change, _ = self._do_activity(
+            writer.export_to_file, on_success, data_model=self.physical_data_model[-1], **kwargs
+        )
 
         if not change.issues:
             change.target_entity = "ExternalEntity"

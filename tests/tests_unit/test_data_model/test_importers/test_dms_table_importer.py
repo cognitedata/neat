@@ -982,7 +982,7 @@ class TestDMSTableImporter:
 class TestDMSTableExporter:
     @pytest.mark.parametrize("expected,schema", list(valid_dms_table_formats()))
     def test_export(self, expected: dict[str, list[dict[str, CellValueType]]], schema: RequestSchema) -> None:
-        result = DMSYamlExporter()._export(schema)
+        result = DMSYamlExporter().export(schema)
 
         assert result == expected
 
@@ -1159,7 +1159,7 @@ class TestYAMLTableFormat:
 
         yaml_file.read_text.assert_called_once()
         result_file = MagicMock(spec=Path)
-        DMSYamlExporter().export(data_model, result_file)
+        DMSYamlExporter().export_to_file(data_model, result_file)
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
@@ -1343,7 +1343,7 @@ class TestExcelFormat:
             importer = DMSTableImporter.from_excel(excel_file)
             data_model = importer.to_data_model()
 
-            exported = DMSExcelExporter()._export(data_model)
+            exported = DMSExcelExporter().export(data_model)
             created_workbook = WorkbookCreator().create_workbook(exported)
 
             read_tables = self._read_workbook(created_workbook)

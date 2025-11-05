@@ -8,12 +8,12 @@ from cognite.neat._data_model.models.dms import RequestSchema
 
 
 class DMSAPIExporter(DMSExporter[RequestSchema], ABC):
-    def _export(self, data_model: RequestSchema) -> RequestSchema:
+    def export(self, data_model: RequestSchema) -> RequestSchema:
         return data_model
 
 
 class DMSAPIYAMLExporter(DMSAPIExporter):
-    def export(self, data_model: RequestSchema, file_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Export the data model to a YAML file in API format."""
         if file_path.suffix.lower() not in {".yaml", ".yml"}:
             raise ValueError("The file path must have a .yaml or .yml extension.")

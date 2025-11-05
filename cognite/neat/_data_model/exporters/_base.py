@@ -14,9 +14,9 @@ class DMSExporter(ABC, Generic[T_Export]):
     ENCODING = "utf-8"
 
     @abstractmethod
-    def _export(self, data_model: RequestSchema) -> T_Export:
+    def export(self, data_model: RequestSchema) -> T_Export:
         raise NotImplementedError()
 
     @abstractmethod
-    def export(self, data_model: RequestSchema, file_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         raise NotImplementedError()

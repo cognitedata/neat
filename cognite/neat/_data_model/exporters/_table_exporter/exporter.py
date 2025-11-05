@@ -26,7 +26,7 @@ class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
     def __init__(self, exclude_none: bool = False) -> None:
         self._exclude_none = exclude_none
 
-    def _export(self, data_model: RequestSchema) -> DataModelTableType:
+    def export(self, data_model: RequestSchema) -> DataModelTableType:
         model = data_model.data_model
         tables = DMSTableWriter(model.space, model.version).write_tables(data_model)
         exclude: set[str] = set()
@@ -57,14 +57,14 @@ class DMSYamlExporter(DMSTableExporter):
     def __init__(self) -> None:
         super().__init__(exclude_none=True)
 
-    def export(self, data_model: RequestSchema, file_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as a flat YAML file, which is identical to the spreadsheet representation
 
         Args:
             data_model (RequestSchema): The data model to export.
             file_path (Path): The path to the YAML file to create.
         """
-        table_format = self._export(data_model)
+        table_format = self.export(data_model)
         file_path.write_text(
             yaml.safe_dump(table_format, sort_keys=False), encoding=self.ENCODING, newline=self.NEW_LINE
         )
@@ -77,7 +77,7 @@ class DMSExcelExporter(DMSTableExporter):
         super().__init__(exclude_none=False)
         self._options = options or WorkbookOptions()
 
-    def export(self, data_model: RequestSchema, file_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as a Excel file.
 
         Args:
@@ -85,7 +85,7 @@ class DMSExcelExporter(DMSTableExporter):
             file_path (Path): The path to the Excel file to create.
             options (WorkbookOptions | None): Options for creating the workbook.
         """
-        table_format = self._export(data_model)
+        table_format = self.export(data_model)
         workbook = WorkbookCreator(self._options).create_workbook(table_format)
         try:
             workbook.save(file_path)
@@ -96,7 +96,7 @@ class DMSExcelExporter(DMSTableExporter):
 class DMSCsvExporter(DMSTableExporter):
     """Exports DMS to CSV files in a directory."""
 
-    def export(self, data_model: RequestSchema, directory_path: Path) -> None:
+    def export_to_file(self, data_model: RequestSchema, directory_path: Path) -> None:
         """Exports the data model as a set of CSV files, one for each table.
 
         Args:
