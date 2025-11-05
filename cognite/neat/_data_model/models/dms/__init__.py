@@ -47,7 +47,9 @@ from cognite.neat._data_model.models.dms._space import Space, SpaceRequest, Spac
 from ._data_model import DataModelRequest, DataModelResponse
 from ._http import DataModelBody, DataModelResource, ResourceId, T_DataModelResource, T_ResourceId
 from ._references import (
+    ContainerConstraintReference,
     ContainerDirectReference,
+    ContainerIndexReference,
     ContainerReference,
     DataModelReference,
     NodeReference,
@@ -90,7 +92,9 @@ __all__ = [
     "ConstraintDefinition",
     "ConstraintOrIndexState",
     "Container",
+    "ContainerConstraintReference",
     "ContainerDirectReference",
+    "ContainerIndexReference",
     "ContainerPropertyDefinition",
     "ContainerReference",
     "ContainerRequest",

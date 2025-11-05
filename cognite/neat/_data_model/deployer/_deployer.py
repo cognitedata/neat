@@ -1,10 +1,12 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Literal, cast
+from typing import cast
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
 from cognite.neat._data_model.models.dms import DataModelBody, RequestSchema, T_DataModelResource, T_ResourceId
+from cognite.neat._utils.collection import chunker_sequence
 from cognite.neat._utils.http_client import (
     FailedRequestItems,
     FailedResponseItems,
@@ -13,6 +15,7 @@ from cognite.neat._utils.http_client import (
     SuccessResponseItems,
 )
 from cognite.neat._utils.http_client._data_classes import APIResponse
+from cognite.neat._utils.useful_types import ModusOperandi, T_Reference
 
 from ._differ import ItemDiffer
 from ._differ_container import ContainerDiffer
@@ -21,11 +24,15 @@ from ._differ_space import SpaceDiffer
 from ._differ_view import ViewDiffer
 from .data_classes import (
     AppliedChanges,
+    ChangedFieldResult,
     ChangeResult,
+    ContainerDeploymentPlan,
     DataModelEndpoint,
     DeploymentResult,
+    FieldChange,
     ResourceChange,
     ResourceDeploymentPlan,
+    ResourceDeploymentPlanList,
     SchemaSnapshot,
     SeverityType,
 )
@@ -40,18 +47,21 @@ class DeploymentOptions:
         auto_rollback (bool): If True, automatically roll back changes if deployment fails. Defaults to True.
         max_severity (SeverityType): Maximum allowed severity of changes to proceed with deployment.
             Defaults to SeverityType.SAFE.
-        modus_operandi (Literal["partial", "overwrite"]): Deployment mode. If "partial", only add/modify resources
-            specified in the data model. If "overwrite", remove resources not present in the data model.
-            Defaults to "partial".
+        modus_operandi (ModusOperandi): Deployment mode. If "additive", only add/modify resources
+            specified in the data model. If "rebuild", remove resources not present in the data model.
+            Defaults to "additive".
     """
 
     dry_run: bool = True
     auto_rollback: bool = True
     max_severity: SeverityType = SeverityType.SAFE
-    modus_operandi: Literal["partial", "overwrite"] = "partial"
+    modus_operandi: ModusOperandi = "additive"
 
 
 class SchemaDeployer(OnSuccessResultProducer):
+    INDEX_DELETE_BATCH_SIZE = 10
+    CONSTRAINT_DELETE_BATCH_SIZE = 10
+
     def __init__(self, client: NeatClient, options: DeploymentOptions | None = None) -> None:
         super().__init__()
         self.client: NeatClient = client
@@ -69,24 +79,29 @@ class SchemaDeployer(OnSuccessResultProducer):
         # Step 2: Create deployment plan by comparing local vs cdf
         plan = self.create_deployment_plan(snapshot, data_model)
 
-        if not self.should_proceed_to_deploy(plan):
-            # Step 3: Check if deployment should proceed
-            return DeploymentResult(status="failure", plan=plan, snapshot=snapshot)
-        elif self.options.dry_run:
-            # Step 4: If dry-run, return plan without applying
-            return DeploymentResult(status="pending", plan=plan, snapshot=snapshot)
+        if self.options.modus_operandi == "additive":
+            # Step 3: Filter out deletions and removals in additive mode
+            plan = plan.consolidate_changes()
 
-        # Step 5: Apply changes
+        if not self.should_proceed_to_deploy(plan):
+            # Step 4: Check if deployment should proceed
+            return DeploymentResult(status="failure", plan=list(plan), snapshot=snapshot)
+        elif self.options.dry_run:
+            # Step 5: If dry-run, return plan without applying
+            return DeploymentResult(status="pending", plan=list(plan), snapshot=snapshot)
+
+        # Step 6: Apply changes
         changes = self.apply_changes(plan)
 
-        # Step 6: Rollback if failed and auto_rollback is enabled
+        # Step 7: Rollback if failed and auto_rollback is enabled
         if not changes.is_success and self.options.auto_rollback:
             recovery = self.apply_changes(changes.as_recovery_plan())
             return DeploymentResult(
-                status="success", plan=plan, snapshot=snapshot, responses=changes, recovery=recovery
+                status="success", plan=list(plan), snapshot=snapshot, responses=changes, recovery=recovery
             )
-        status: Literal["success", "failure", "partial", "pending"] = "success" if changes.is_success else "partial"
-        return DeploymentResult(status=status, plan=plan, snapshot=snapshot, responses=changes)
+        return DeploymentResult(
+            status="success" if changes.is_success else "partial", plan=list(plan), snapshot=snapshot, responses=changes
+        )
 
     def fetch_cdf_state(self, data_model: RequestSchema) -> SchemaSnapshot:
         now = datetime.now(tz=timezone.utc)
@@ -112,15 +127,19 @@ class SchemaDeployer(OnSuccessResultProducer):
             node_types={node: node for node in nodes},
         )
 
-    def create_deployment_plan(
-        self, snapshot: SchemaSnapshot, data_model: RequestSchema
-    ) -> list[ResourceDeploymentPlan]:
-        return [
-            self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
-            self._create_resource_plan(snapshot.containers, data_model.containers, "containers", ContainerDiffer()),
-            self._create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
-            self._create_resource_plan(snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()),
-        ]
+    def create_deployment_plan(self, snapshot: SchemaSnapshot, data_model: RequestSchema) -> ResourceDeploymentPlanList:
+        return ResourceDeploymentPlanList(
+            [
+                self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
+                self._create_resource_plan(
+                    snapshot.containers, data_model.containers, "containers", ContainerDiffer(), ContainerDeploymentPlan
+                ),
+                self._create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
+                self._create_resource_plan(
+                    snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()
+                ),
+            ]
+        )
 
     @classmethod
     def _create_resource_plan(
@@ -129,6 +148,7 @@ class SchemaDeployer(OnSuccessResultProducer):
         new_resources: list[T_DataModelResource],
         endpoint: DataModelEndpoint,
         differ: ItemDiffer[T_DataModelResource],
+        plan_type: type[ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]] = ResourceDeploymentPlan,
     ) -> ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]:
         resources: list[ResourceChange[T_ResourceId, T_DataModelResource]] = []
         for new_resource in new_resources:
@@ -143,16 +163,16 @@ class SchemaDeployer(OnSuccessResultProducer):
                 ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
             )
 
-        return ResourceDeploymentPlan(endpoint=endpoint, resources=resources)
+        return plan_type(endpoint=endpoint, resources=resources)
 
-    def should_proceed_to_deploy(self, plan: list[ResourceDeploymentPlan]) -> bool:
+    def should_proceed_to_deploy(self, plan: Sequence[ResourceDeploymentPlan]) -> bool:
         max_severity_in_plan = SeverityType.max_severity(
             [change.severity for resource_plan in plan for change in resource_plan.resources],
             default=SeverityType.SAFE,
         )
         return max_severity_in_plan.value <= self.options.max_severity.value
 
-    def apply_changes(self, plan: list[ResourceDeploymentPlan]) -> AppliedChanges:
+    def apply_changes(self, plan: Sequence[ResourceDeploymentPlan]) -> AppliedChanges:
         """Applies the given deployment plan to CDF by making the necessary API calls.
 
         Args:
@@ -167,6 +187,10 @@ class SchemaDeployer(OnSuccessResultProducer):
             applied_changes.deletions.extend(deletions)
 
         for resource in plan:
+            if isinstance(resource, ContainerDeploymentPlan):
+                applied_changes.changed_fields.extend(self._remove_container_constraints(resource))
+                applied_changes.changed_fields.extend(self._remove_container_indexes(resource))
+
             creations, updated = self._upsert_items(resource)
             applied_changes.created.extend(creations)
             applied_changes.updated.extend(updated)
@@ -185,7 +209,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 body=ItemIDBody(items=list(to_delete_by_id.keys())),
             )
         )
-        return self._process_responses(responses, to_delete_by_id)
+        return self._process_resource_responses(responses, to_delete_by_id)
 
     def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[ChangeResult], list[ChangeResult]]:
         to_upsert = [
@@ -201,13 +225,47 @@ class SchemaDeployer(OnSuccessResultProducer):
             )
         )
         to_create_by_id = {rc.resource_id: rc for rc in resource.to_create}
-        create_result = self._process_responses(responses, to_create_by_id)
+        create_result = self._process_resource_responses(responses, to_create_by_id)
         to_update_by_id = {rc.resource_id: rc for rc in resource.to_update}
-        update_result = self._process_responses(responses, to_update_by_id)
+        update_result = self._process_resource_responses(responses, to_update_by_id)
         return create_result, update_result
 
+    def _remove_container_indexes(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
+        return self._remove_container_fields(
+            resource.indexes_to_remove,
+            "/models/containers/indexes/delete",
+            self.INDEX_DELETE_BATCH_SIZE,
+        )
+
+    def _remove_container_constraints(self, resource: ContainerDeploymentPlan) -> list[ChangedFieldResult]:
+        return self._remove_container_fields(
+            resource.constraints_to_remove,
+            "/models/containers/constraints/delete",
+            self.CONSTRAINT_DELETE_BATCH_SIZE,
+        )
+
+    def _remove_container_fields(
+        self,
+        fields_to_remove: Mapping[T_Reference, FieldChange],
+        endpoint: str,
+        batch_size: int,
+    ) -> list[ChangedFieldResult]:
+        if not fields_to_remove:
+            return []
+        results: list[ChangedFieldResult] = []
+        for batch in chunker_sequence(list(fields_to_remove.keys()), batch_size):
+            responses = self.client.http_client.request_with_retries(
+                ItemsRequest(
+                    endpoint_url=self.client.config.create_api_url(endpoint),
+                    method="POST",
+                    body=ItemIDBody(items=batch),
+                )
+            )
+            results.extend(self._process_field_responses(responses, fields_to_remove))
+        return results
+
     @classmethod
-    def _process_responses(
+    def _process_resource_responses(
         cls, responses: APIResponse, change_by_id: dict[T_ResourceId, ResourceChange]
     ) -> list[ChangeResult]:
         results: list[ChangeResult] = []
@@ -220,4 +278,20 @@ class SchemaDeployer(OnSuccessResultProducer):
             else:
                 # This should never happen as we do a ItemsRequest should always return ItemMessage responses
                 raise ValueError("Bug in Neat. Got an unexpected response type.")
+        return results
+
+    @classmethod
+    def _process_field_responses(
+        cls, responses: APIResponse, change_by_id: Mapping[T_Reference, FieldChange]
+    ) -> list[ChangedFieldResult]:
+        results: list[ChangedFieldResult] = []
+        for response in responses:
+            if isinstance(response, SuccessResponseItems | FailedResponseItems | FailedRequestItems):
+                for id in response.ids:
+                    if id not in change_by_id:
+                        continue
+                    results.append(ChangedFieldResult(field_change=change_by_id[id], message=response))
+            else:
+                # This should never happen as we do a ItemsRequest should always return ItemMessage responses
+                raise RuntimeError("Bug in Neat. Got an unexpected response type.")
         return results
