@@ -9,6 +9,7 @@ import respx
 
 from cognite.neat import _state_machine as states
 from cognite.neat._client import NeatClientConfig
+from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._issues import IssueList
@@ -17,28 +18,29 @@ from cognite.neat._session._session import NeatSession
 
 
 @pytest.fixture()
-def new_session(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> NeatSession:
-    session = NeatSession(neat_config)
-    config = session._client.config
-    respx_mock.post(
-        config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-    respx_mock.post(
-        config.create_api_url("/models/containers/byids"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-    return session
+def new_session(neat_config: NeatClientConfig) -> NeatSession:
+    return NeatSession(neat_config)
+
+
+@pytest.fixture()
+def empty_cdf(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> respx.MockRouter:
+    config = neat_config
+    for endpoint in [
+        "/models/spaces/byids",
+        "/models/containers/byids",
+        "/models/views/byids?includeInheritedProperties=true",
+        "/models/datamodels/byids",
+    ]:
+        respx_mock.post(
+            config.create_api_url(endpoint),
+        ).respond(
+            status_code=200,
+            json={
+                "items": [],
+                "nextCursor": None,
+            },
+        )
+    return respx_mock
 
 
 @pytest.fixture()
@@ -57,6 +59,7 @@ def physical_written_session(physical_state_session: NeatSession) -> NeatSession
     return physical_state_session
 
 
+@pytest.mark.usefixtures("empty_cdf")
 class TestNeatSession:
     def test_error_reading(self, new_session: NeatSession) -> None:
         session = new_session
@@ -96,6 +99,19 @@ class TestNeatSession:
         # there is no state change when writing
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
+
+    def test_write_data_model_to_cdf(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        provenance_before = len(session._store.provenance)
+        session.physical_data_model.write.cdf(dry_run=True, rollback=True)
+        assert len(session._store.provenance) == provenance_before + 1
+
+        assert len(session._store.physical_data_model) == 1
+        assert isinstance(session._store.state, states.PhysicalState)
+        # there is no state change when writing
+        assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
+        assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
+        assert isinstance(session._store.provenance[-1].result, DeploymentResult)
 
     def test_forbid_read_in_physical_state(self, physical_state_session: NeatSession) -> None:
         session = physical_state_session

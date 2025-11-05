@@ -5,7 +5,7 @@ from typing import Any, cast
 
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
-from cognite.neat._data_model.exporters import DMSTableExporter
+from cognite.neat._data_model.exporters import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._exceptions import DataModelImportException
@@ -14,7 +14,7 @@ from cognite.neat._state_machine._states import EmptyState, State
 
 from ._provenance import Change, Provenance
 
-Agents = DMSTableExporter | DMSTableImporter | DMSImporter
+Agents = DMSExporter | DMSTableImporter | DMSImporter
 
 
 class NeatStore:
@@ -37,11 +37,19 @@ class NeatStore:
 
         self.provenance.append(change)
 
-    def write_physical(self, writer: DMSTableExporter, on_success: OnSuccess | None = None, **kwargs: Any) -> None:
+    def write_physical(self, writer: DMSExporter, on_success: OnSuccess | None = None, **kwargs: Any) -> None:
         """Write object into the store"""
         self._can_agent_do_activity(writer)
 
-        change, _ = self._do_activity(writer.export, on_success, data_model=self.physical_data_model[-1], **kwargs)
+        activity: Callable
+        if isinstance(writer, DMSFileExporter):
+            activity = writer.export_to_file
+            if not kwargs.get("file_path"):
+                raise RuntimeError("file_path must be provided when using a DMSFileExporter")
+        else:
+            activity = writer.export
+
+        change, _ = self._do_activity(activity, on_success, data_model=self.physical_data_model[-1], **kwargs)
 
         if not change.issues:
             change.target_entity = "ExternalEntity"
