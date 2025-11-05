@@ -2,9 +2,8 @@ from pathlib import Path
 from typing import cast
 
 import yaml
-from pyparsing import ABC
 
-from cognite.neat._data_model.exporters._base import DMSExporter
+from cognite.neat._data_model.exporters._base import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.importers._table_importer.data_classes import DMSProperty, TableDMS
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._utils.useful_types import DataModelTableType
@@ -13,7 +12,7 @@ from .workbook import WorkbookCreator, WorkbookOptions
 from .writer import DMSTableWriter
 
 
-class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
+class DMSTableExporter(DMSExporter[DataModelTableType]):
     """Exports DMS to a table structure.
 
     The tables can are expected to be a dictionary where the keys are the table names and the values
@@ -51,7 +50,7 @@ class DMSTableExporter(DMSExporter[DataModelTableType], ABC):
         return output
 
 
-class DMSYamlExporter(DMSTableExporter):
+class DMSYamlExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to YAML."""
 
     def __init__(self) -> None:
@@ -70,7 +69,7 @@ class DMSYamlExporter(DMSTableExporter):
         )
 
 
-class DMSExcelExporter(DMSTableExporter):
+class DMSExcelExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to Excel file."""
 
     def __init__(self, options: WorkbookOptions | None = None) -> None:
@@ -93,7 +92,7 @@ class DMSExcelExporter(DMSTableExporter):
             workbook.close()
 
 
-class DMSCsvExporter(DMSTableExporter):
+class DMSCsvExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to CSV files in a directory."""
 
     def export_to_file(self, data_model: RequestSchema, directory_path: Path) -> None:

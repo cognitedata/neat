@@ -2,7 +2,7 @@ from typing import Any
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
-from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
+from cognite.neat._data_model.exporters import DMSAPIExporter, DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.validation.dms import DmsDataModelValidation
@@ -97,5 +97,6 @@ class WritePhysicalDataModel:
             rollback (bool): If true, all changes will be rolled back if any error occurs.
 
         """
+        writer = DMSAPIExporter()
         on_success = SchemaDeployer(self._client, DeploymentOptions(dry_run=dry_run, auto_rollback=rollback))
-        return self._store.write_physical(None, on_success)
+        return self._store.write_physical(writer, on_success)
