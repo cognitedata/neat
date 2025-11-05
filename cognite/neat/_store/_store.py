@@ -44,7 +44,7 @@ class NeatStore:
         activity: Callable
         if isinstance(writer, DMSFileExporter):
             activity = writer.export_to_file
-            if "file_path" not in kwargs:
+            if not kwargs.get("file_path"):
                 raise RuntimeError("file_path must be provided when using a DMSFileExporter")
         else:
             activity = writer.export
