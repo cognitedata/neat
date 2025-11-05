@@ -38,6 +38,7 @@ class LocalResources:
     reverse_to_direct_mapping: ReverseToDirectMapping
     containers_by_reference: ContainersByReference
     connection_end_node_types: ConnectionEndNodeTypes
+    data_model_views: set[ViewReference]
 
 
 @dataclass
@@ -47,6 +48,7 @@ class CDFResources:
     views_by_reference: ViewsByReference
     ancestors_by_view_reference: AncestorsByReference
     containers_by_reference: ContainersByReference
+    data_model_views: set[ViewReference]
 
 
 class DataModelValidator(ABC):
@@ -114,10 +116,26 @@ class DataModelValidator(ABC):
         return next(candidates, None)
 
     @cached_property
+    def data_model_view_references(self) -> set[ViewReference]:
+        """Get all data model view references to validate based on deployment mode.
+
+        In "rebuild" mode, returns only local data model view references.
+        In "additive" mode, returns union of local and CDF data model view references.
+
+        Returns:
+            Set of ViewReference objects representing all data model views to validate.
+        """
+        return (
+            self.local_resources.data_model_views.union(self.cdf_resources.data_model_views)
+            if self.modus_operandi == "additive"
+            else self.local_resources.data_model_views
+        )
+
+    @cached_property
     def views_references(self) -> set[ViewReference]:
         """Get all view references to validate based on deployment mode.
 
-        In "replace" mode, returns only local view references.
+        In "rebuild" mode, returns only local view references.
         In "additive" mode, returns union of local and CDF view references.
 
         Returns:
@@ -134,7 +152,7 @@ class DataModelValidator(ABC):
     def container_references(self) -> set[ContainerReference]:
         """Get all container references to validate based on deployment mode.
 
-        In "replace" mode, returns only local container references.
+        In "rebuild" mode, returns only local container references.
         In "additive" mode, returns union of local and CDF container references.
 
         Returns:
@@ -153,7 +171,7 @@ class DataModelValidator(ABC):
     def merged_views(self) -> dict[ViewReference, ViewRequest]:
         """Get views with merged properties and implements for accurate limit checking.
 
-        In "replace" mode, returns only local views.
+        In "rebuild" mode, returns only local views.
         In "additive" mode, merges local and CDF views by:
         - Combining properties from both versions (local overrides CDF)
         - Combining implements lists (union, no duplicates)
@@ -204,7 +222,7 @@ class DataModelValidator(ABC):
     def merged_containers(self) -> dict[ContainerReference, ContainerRequest]:
         """Get containers with merged properties for accurate limit checking.
 
-        In "replace" mode, returns only local containers.
+        In "rebuild" mode, returns only local containers.
         In "additive" mode, merges local and CDF containers by:
         - Combining properties from both versions (local overrides CDF)
         - Using CDF container as base if it exists, otherwise local container

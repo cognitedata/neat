@@ -54,11 +54,12 @@ class DataModelLimitValidator(DataModelValidator):
             List with single ConsistencyError if limit exceeded, empty list otherwise.
         """
 
-        if len(self.views_references) > DMSDefaultLimits.data_model.views_per_data_model:
+        if len(self.data_model_view_references) > DMSDefaultLimits.data_model.views_per_data_model:
             return [
                 ConsistencyError(
                     message=(
-                        f"The data model references {len(self.views_references)} views, which exceeds the limit of "
+                        f"The data model references {len(self.data_model_view_references)} views, "
+                        "which exceeds the limit of "
                         f"{DMSDefaultLimits.data_model.views_per_data_model} views per data model."
                     ),
                     code=self.code,
