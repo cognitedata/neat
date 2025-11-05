@@ -6,6 +6,7 @@ from cognite.client.credentials import OAuthClientCredentials, Token
 from dotenv import load_dotenv
 
 from cognite.neat._client import NeatClient
+from cognite.neat._utils.http_client import ParametersRequest, ResponseMessage
 from tests.config import ROOT
 
 
@@ -28,6 +29,7 @@ def neat_client() -> NeatClient:
         ClientConfig(
             client_name="neat_integration_tests",
             project=project,
+            base_url=f"https://{cluster}.cognitedata.com",
             credentials=OAuthClientCredentials.default_for_azure_ad(
                 tenant_id=tenant_id,
                 client_id=client_id,
@@ -36,3 +38,14 @@ def neat_client() -> NeatClient:
             ),
         )
     )
+
+
+def test_assert_neat_client(neat_client: NeatClient) -> None:
+    assert isinstance(neat_client, NeatClient)
+    config = neat_client.config
+    url = f"https://{config.cdf_cluster}.cognitedata.com/api/v1/token/inspect"
+    responses = neat_client.http_client.request(ParametersRequest(endpoint_url=url, method="GET"))
+    assert len(responses) == 1
+    response = responses[0]
+    assert isinstance(response, ResponseMessage)
+    assert response.code == 200
