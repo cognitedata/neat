@@ -1,6 +1,7 @@
 from typing import Any
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
@@ -18,7 +19,7 @@ class PhysicalDataModel:
         self._store = store
         self._client = client
         self.read = ReadPhysicalDataModel(self._store, self._client)
-        self.write = WritePhysicalDataModel(self._store)
+        self.write = WritePhysicalDataModel(self._store, self._client)
 
 
 @session_wrapper
@@ -68,8 +69,9 @@ class ReadPhysicalDataModel:
 class WritePhysicalDataModel:
     """Write physical data model to various sources from NeatSession graph store."""
 
-    def __init__(self, store: NeatStore) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient) -> None:
         self._store = store
+        self._client = client
 
     def yaml(self, io: Any) -> None:
         """Write physical data model to YAML file"""
@@ -86,3 +88,14 @@ class WritePhysicalDataModel:
         writer = DMSExcelExporter()
 
         return self._store.write_physical(writer, file_path=file_path)
+
+    def cdf(self, dry_run: bool = True, rollback: bool = True) -> None:
+        """Write physical data model to CDF
+
+        Args:
+            dry_run (bool): If true, the changes will not be applied to CDF.
+            rollback (bool): If true, all changes will be rolled back if any error occurs.
+
+        """
+        on_success = SchemaDeployer(self._client, DeploymentOptions(dry_run=dry_run, auto_rollback=rollback))
+        return self._store.write_physical(None, on_success)
