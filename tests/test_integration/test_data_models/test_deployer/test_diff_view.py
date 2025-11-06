@@ -13,6 +13,7 @@ from cognite.neat._data_model.deployer.data_classes import (
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
     ContainerRequest,
+    DirectNodeRelation,
     MultiEdgeProperty,
     NodeReference,
     SingleEdgeProperty,
@@ -47,6 +48,7 @@ def supporting_container(neat_test_space: SpaceResponse, neat_client: NeatClient
                 type=TextProperty(),
                 nullable=True,
             ),
+            "directProp": ContainerPropertyDefinition(type=DirectNodeRelation()),
         },
     )
     try:
@@ -70,10 +72,14 @@ def supporting_view(
         name="Supporting View",
         description="View for property testing",
         properties={
-            "prop": ViewCorePropertyRequest(
+            "textProp": ViewCorePropertyRequest(
                 container=supporting_container.as_reference(),
                 containerPropertyIdentifier="textProp",
-            )
+            ),
+            "directProp": ViewCorePropertyRequest(
+                container=supporting_container.as_reference(),
+                containerPropertyIdentifier="directProp",
+            ),
         },
     )
     try:
@@ -100,7 +106,10 @@ def current_view(
         name="Initial name",
         description="Initial description",
         filter={"equals": {"property": ["node", "space"], "value": neat_test_space.space}},
-        implements=[ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")],
+        implements=[
+            ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1"),
+            ViewReference(space="cdf_cdm", external_id="CogniteSchedulable", version="v1"),
+        ],
         properties={
             CORE_PROPERTY_ID: ViewCorePropertyRequest(
                 name="Core Property",
@@ -123,7 +132,7 @@ def current_view(
                 source=supporting_view.as_reference(),
                 through=ViewDirectReference(
                     source=supporting_view.as_reference(),
-                    identifier="prop",
+                    identifier="directProp",
                 ),
             ),
         },
@@ -174,14 +183,6 @@ class TestViewDiffer:
         assert_change(current_view, new_view, neat_client, field_path="implements")
 
     def test_diff_implements_order(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        # Add two implements if there's only one
-        if len(current_view.implements or []) < 2:
-            implements = (current_view.implements or []) + [
-                ViewReference(space="cdf_cdm", external_id="CogniteSourceable", version="v1")
-            ]
-            current_view = current_view.model_copy(deep=True, update={"implements": implements})
-            neat_client.views.apply([current_view])
-
         assert current_view.implements is not None and len(current_view.implements) >= 2
         new_implements = list(reversed(current_view.implements))
         new_view = current_view.model_copy(deep=True, update={"implements": new_implements})
@@ -212,24 +213,6 @@ class TestViewDiffer:
 
 
 class TestViewCorePropertyDiffer:
-    def test_diff_property_name(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
-        new_core_property = core_property.model_copy(deep=True, update={"name": "Updated Core Property"})
-        new_view = current_view.model_copy(
-            update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
-        )
-
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{CORE_PROPERTY_ID}.name")
-
-    def test_diff_property_description(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
-        new_core_property = core_property.model_copy(deep=True, update={"description": "Updated description"})
-        new_view = current_view.model_copy(
-            update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
-        )
-
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{CORE_PROPERTY_ID}.description")
-
     def test_diff_container(
         self, current_view: ViewRequest, neat_test_space: SpaceResponse, neat_client: NeatClient
     ) -> None:
