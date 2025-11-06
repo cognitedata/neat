@@ -92,7 +92,7 @@ class InstanceStatistics(_BaseStatistics):
     soft_delete_count: int | None = None
 
 
-class _DMSStatistics(BaseModel):
+class DmsStatistics(BaseModel):
     """CDF Data Modeling resource statistics."""
 
     space: SpaceStatistics = Field(default_factory=SpaceStatistics)
@@ -105,6 +105,3 @@ class _DMSStatistics(BaseModel):
         """Populate limits from API response."""
         # Implementation to parse and set limits from response can be added here
         ...
-
-
-DMSDefaultLimits = _DMSStatistics()

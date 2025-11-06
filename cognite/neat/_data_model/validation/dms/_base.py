@@ -5,6 +5,7 @@ from typing import ClassVar, Literal, TypeAlias, cast
 
 from pyparsing import cached_property
 
+from cognite.neat._client.statistics import DmsStatistics
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex, InvertedIndex
 from cognite.neat._data_model.models.dms._references import (
@@ -60,11 +61,13 @@ class DataModelValidator(ABC):
         self,
         local_resources: LocalResources,
         cdf_resources: CDFResources,
+        statistics: DmsStatistics | None = None,
         modus_operandi: ModusOperandi = "additive",
     ) -> None:
         self.local_resources = local_resources
         self.cdf_resources = cdf_resources
         self.modus_operandi = modus_operandi
+        self.statistics = statistics or DmsStatistics()
 
     @abstractmethod
     def run(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:

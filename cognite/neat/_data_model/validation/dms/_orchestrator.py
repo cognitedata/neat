@@ -89,7 +89,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             VersionSpaceInconsistency(local_resources, cdf_resources),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources),
             ReferencedContainersExist(local_resources, cdf_resources),
-            DataModelLimitValidator(local_resources, cdf_resources, self._modus_operandi),
+            DataModelLimitValidator(local_resources, cdf_resources, None, self._modus_operandi),
         ]
 
         # Run validators

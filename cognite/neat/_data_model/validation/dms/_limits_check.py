@@ -1,4 +1,3 @@
-from cognite.neat._client.statistics import DMSDefaultLimits
 from cognite.neat._data_model.models.dms._data_types import EnumProperty, ListablePropertyTypeDefinition
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
 from cognite.neat._data_model.models.dms._view_property import (
@@ -54,13 +53,13 @@ class DataModelLimitValidator(DataModelValidator):
             List with single ConsistencyError if limit exceeded, empty list otherwise.
         """
 
-        if len(self.data_model_view_references) > DMSDefaultLimits.data_model.views:
+        if len(self.data_model_view_references) > self.statistics.data_model.views:
             return [
                 ConsistencyError(
                     message=(
                         f"The data model references {len(self.data_model_view_references)} views, "
                         "which exceeds the limit of "
-                        f"{DMSDefaultLimits.data_model.views} views per data model."
+                        f"{self.statistics.data_model.views} views per data model."
                     ),
                     code=self.code,
                 )
@@ -93,12 +92,12 @@ class DataModelLimitValidator(DataModelValidator):
                 raise RuntimeError(f"View {view_ref!s} not found in merged views. This is a bug!")
 
             if view.properties:
-                if len(view.properties) > DMSDefaultLimits.view.properties:
+                if len(view.properties) > self.statistics.view.properties:
                     errors.append(
                         ConsistencyError(
                             message=(
                                 f"View {view_ref!s} has {len(view.properties)} properties, which exceeds the limit of "
-                                f"{DMSDefaultLimits.view.properties} properties per view."
+                                f"{self.statistics.view.properties} properties per view."
                             ),
                             code=self.code,
                         )
@@ -112,25 +111,25 @@ class DataModelLimitValidator(DataModelValidator):
                             if (isinstance(prop, ViewCorePropertyRequest) and prop.container)
                         }
                     )
-                ) and count > DMSDefaultLimits.view.containers:
+                ) and count > self.statistics.view.containers:
                     errors.append(
                         ConsistencyError(
                             message=(
                                 f"View {view_ref!s} references "
                                 f"{count} containers, which exceeds the limit of "
-                                f"{DMSDefaultLimits.view.containers} containers per view."
+                                f"{self.statistics.view.containers} containers per view."
                             ),
                             code=self.code,
                         )
                     )
 
             if view.implements:
-                if len(view.implements) > DMSDefaultLimits.view.implements:
+                if len(view.implements) > self.statistics.view.implements:
                     errors.append(
                         ConsistencyError(
                             message=(
                                 f"View {view_ref!s} implements {len(view.implements)} views, which exceeds the limit of"
-                                f" {DMSDefaultLimits.view.implements} implemented views per view."
+                                f" {self.statistics.view.implements} implemented views per view."
                             ),
                             code=self.code,
                         )
@@ -171,13 +170,13 @@ class DataModelLimitValidator(DataModelValidator):
 
             properties_by_index_type = self.container_property_by_index_type(container)
 
-            if len(container.properties) > DMSDefaultLimits.container.properties():
+            if len(container.properties) > self.statistics.container.properties():
                 errors.append(
                     ConsistencyError(
                         message=(
                             f"Container {container_ref!s} has {len(container.properties)} properties, "
                             "which exceeds the limit of "
-                            f"{DMSDefaultLimits.container.properties()} properties per container."
+                            f"{self.statistics.container.properties()} properties per container."
                         ),
                         code=self.code,
                     )
@@ -193,7 +192,7 @@ class DataModelLimitValidator(DataModelValidator):
                     continue
 
                 has_btree_index = property_id in properties_by_index_type[BtreeIndex.model_fields["index_type"].default]
-                limit = DMSDefaultLimits.container.properties.listable(type_, has_btree_index)
+                limit = self.statistics.container.properties.listable(type_, has_btree_index)
                 if type_.max_list_size > limit:
                     errors.append(
                         ConsistencyError(
