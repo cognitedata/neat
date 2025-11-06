@@ -8,7 +8,7 @@ from cognite.neat._data_model.models.dms._view_property import (
     ViewCoreProperty,
 )
 
-from ._differ import ItemDiffer, field_differences
+from ._differ import ItemDiffer, ObjectDiffer, field_differences
 from .data_classes import (
     ChangedField,
     FieldChange,
@@ -48,24 +48,25 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                 new.properties,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
-                differ=ViewPropertyDiffer(),
+                differ=ViewPropertyDiffer("properties"),
             )
         )
 
         return changes
 
 
-class ViewPropertyDiffer(ItemDiffer[ViewPropertyDefinition]):
+class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
     def diff(
         self,
         current: ViewPropertyDefinition,
         new: ViewPropertyDefinition,
+        identifier: str,
     ) -> list[FieldChange]:
         changes: list[FieldChange] = self._diff_name_description(current, new)
         if current.connection_type != new.connection_type:
             changes.append(
                 ChangedField(
-                    field_path="connectionType",
+                    field_path=self._get_path(f"{identifier}.connectionType"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.connection_type,
                     current_value=current.connection_type,

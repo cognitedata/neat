@@ -13,7 +13,43 @@ from .data_classes import (
 )
 
 
-class ItemDiffer(Generic[T_Item], ABC):
+class Differ(Generic[T_Item], ABC):
+    def __init__(self, parent_path: str | None = None) -> None:
+        self.parent_path = parent_path
+
+    def _get_path(self, field: str) -> str:
+        if self.parent_path:
+            return f"{self.parent_path}.{field}"
+        return field
+
+    def _diff_name_description(self, current: T_Item, new: T_Item, identifier: str | None = None) -> list[FieldChange]:
+        changes: list[FieldChange] = []
+        if hasattr(current, "name") and hasattr(new, "name"):
+            if current.name != new.name:
+                field_path = self._get_path(f"{identifier}.name" if identifier else "name")
+                changes.append(
+                    ChangedField(
+                        item_severity=SeverityType.SAFE,
+                        field_path=field_path,
+                        current_value=current.name,
+                        new_value=new.name,
+                    )
+                )
+        if hasattr(current, "description") and hasattr(new, "description"):
+            if current.description != new.description:
+                field_path = self._get_path(f"{identifier}.description" if identifier else "description")
+                changes.append(
+                    ChangedField(
+                        item_severity=SeverityType.SAFE,
+                        field_path=field_path,
+                        current_value=current.description,
+                        new_value=new.description,
+                    )
+                )
+        return changes
+
+
+class ItemDiffer(Differ[T_Item], ABC):
     """A generic class for comparing two items of the same type and reporting the differences."""
 
     @abstractmethod
@@ -29,30 +65,21 @@ class ItemDiffer(Generic[T_Item], ABC):
         """
         raise NotImplementedError()
 
-    @classmethod
-    def _diff_name_description(cls, current: T_Item, new: T_Item) -> list[FieldChange]:
-        changes: list[FieldChange] = []
-        if hasattr(current, "name") and hasattr(new, "name"):
-            if current.name != new.name:
-                changes.append(
-                    ChangedField(
-                        item_severity=SeverityType.SAFE,
-                        field_path="name",
-                        current_value=current.name,
-                        new_value=new.name,
-                    )
-                )
-        if hasattr(current, "description") and hasattr(new, "description"):
-            if current.description != new.description:
-                changes.append(
-                    ChangedField(
-                        item_severity=SeverityType.SAFE,
-                        field_path="description",
-                        current_value=current.description,
-                        new_value=new.description,
-                    )
-                )
-        return changes
+
+class ObjectDiffer(Differ[T_Item], ABC):
+    @abstractmethod
+    def diff(self, current: T_Item, new: T_Item, identifier: str) -> list[FieldChange]:
+        """Compare two dict-like objects and return a list of changes.
+
+        Args:
+            current: The resource as it is in CDF.
+            new: The resource as it is desired to be.
+            identifier: The field used to identify individual items within the objects.
+
+        Returns:
+            A list of changes between the two resources.
+        """
+        raise NotImplementedError()
 
 
 def field_differences(
@@ -61,7 +88,7 @@ def field_differences(
     new: dict[str, T_Item] | None,
     add_severity: SeverityType,
     remove_severity: SeverityType,
-    differ: ItemDiffer[T_Item],
+    differ: ObjectDiffer[T_Item],
 ) -> list[FieldChange]:
     """Diff two containers of items.
 
@@ -106,7 +133,7 @@ def field_differences(
         item_path = f"{parent_path}.{key}"
         cdf_item = current_map[key]
         desired_item = new_map[key]
-        diffs = differ.diff(cdf_item, desired_item)
+        diffs = differ.diff(cdf_item, desired_item, identifier=key)
         if diffs:
             changes.append(FieldChanges(field_path=item_path, changes=diffs))
 

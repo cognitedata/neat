@@ -190,6 +190,8 @@ class TestContainerDiffer:
         actual_diffs = ContainerDiffer().diff(self.cdf_container, resource)
         assert expected_diff == actual_diffs
 
+    CONTAINER_PROPERTY_ID = "container_property_diff_test"
+
     @pytest.mark.parametrize(
         "cdf_property,desired_property,expected_diff",
         [
@@ -271,8 +273,10 @@ class TestContainerDiffer:
         desired_property: ContainerPropertyDefinition,
         expected_diff: list[FieldChange],
     ) -> None:
-        actual = ContainerPropertyDiffer().diff(cdf_property, desired_property)
+        actual = ContainerPropertyDiffer().diff(cdf_property, desired_property, self.CONTAINER_PROPERTY_ID)
         assert expected_diff == actual
+
+    CONSTRAINT_ID = "constraint_property_diff_test"
 
     @pytest.mark.parametrize(
         "cdf_constraint,desired_constraint,expected_diff",
@@ -336,8 +340,10 @@ class TestContainerDiffer:
         desired_constraint: ConstraintDefinition,
         expected_diff: list[FieldChange],
     ) -> None:
-        actual = ConstraintDiffer().diff(cdf_constraint, desired_constraint)
+        actual = ConstraintDiffer().diff(cdf_constraint, desired_constraint, self.CONSTRAINT_ID)
         assert expected_diff == actual
+
+    INDEX_ID = "index_property_definition_test"
 
     @pytest.mark.parametrize(
         "cdf_index,desired_index,expected_diff",
@@ -398,7 +404,7 @@ class TestContainerDiffer:
     def test_index_diff(
         self, cdf_index: IndexDefinition, desired_index: IndexDefinition, expected_diff: list[FieldChange]
     ) -> None:
-        actual = IndexDiffer().diff(cdf_index, desired_index)
+        actual = IndexDiffer().diff(cdf_index, desired_index, self.INDEX_ID)
         assert actual == expected_diff
 
     @pytest.mark.parametrize(
@@ -554,6 +560,8 @@ class TestContainerDiffer:
         actual = DataTypeDiffer().diff(cdf_type, desired_type)
         assert expected_diff == actual
 
+    ENUM_VALUE_ID = "enum_value_diff_test"
+
     @pytest.mark.parametrize(
         "cdf_value,desired_value,expected_diff",
         [
@@ -568,13 +576,13 @@ class TestContainerDiffer:
                 ),
                 [
                     ChangedField(
-                        field_path="name",
+                        field_path=f"{ENUM_VALUE_ID}.name",
                         item_severity=SeverityType.SAFE,
                         current_value="Category 1",
                         new_value="Category One",
                     ),
                     ChangedField(
-                        field_path="description",
+                        field_path=f"{ENUM_VALUE_ID}.description",
                         item_severity=SeverityType.SAFE,
                         current_value="The first category",
                         new_value="The first category updated",
@@ -587,5 +595,5 @@ class TestContainerDiffer:
     def test_enum_value_diff(
         self, cdf_value: EnumValue, desired_value: EnumValue, expected_diff: list[FieldChange]
     ) -> None:
-        actual = EnumValueDiffer().diff(cdf_value, desired_value)
+        actual = EnumValueDiffer().diff(cdf_value, desired_value, self.ENUM_VALUE_ID)
         assert expected_diff == actual

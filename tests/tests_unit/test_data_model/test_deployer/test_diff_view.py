@@ -134,6 +134,8 @@ class TestViewDiffer:
         actual_diffs = ViewDiffer().diff(self.cdf_view, resource)
         assert expected_diff == actual_diffs
 
+    VIEW_PROPERTY_ID = "property_id"
+
     @pytest.mark.parametrize(
         "cdf_property,desired_property,expected_diff",
         [
@@ -328,5 +330,5 @@ class TestViewDiffer:
         desired_property: ViewCorePropertyRequest | MultiEdgeProperty | SingleReverseDirectRelationPropertyRequest,
         expected_diff: list[ChangedField],
     ) -> None:
-        actual = ViewPropertyDiffer().diff(cdf_property, desired_property)
+        actual = ViewPropertyDiffer().diff(cdf_property, desired_property, self.VIEW_PROPERTY_ID)
         assert expected_diff == actual
