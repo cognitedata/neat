@@ -66,8 +66,9 @@ class TestContainerDiffer:
         self.assert_change(current_container, new_container, neat_client, field_path="usedFor")
 
     def test_diff_property_name(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        text_property = current_container.properties[TEXT_PROPERTY_ID]
-        new_text_property = text_property.model_copy(deep=True, update={"name": "Updated Text Property"})
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True, update={"name": "Updated Text Property"}
+        )
         new_container = current_container.model_copy(
             update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
         )
