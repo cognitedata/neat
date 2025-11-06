@@ -24,7 +24,7 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
             changes.append(
                 ChangedField(
                     field_path=self._get_path("filter"),
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     new_value=str(new.filter),
                     current_value=str(current.filter),
                 )
@@ -34,7 +34,7 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
             changes.append(
                 ChangedField(
                     field_path=self._get_path("implements"),
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     new_value=str(new.implements),
                     current_value=str(current.implements),
                 )
