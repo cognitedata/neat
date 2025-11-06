@@ -349,7 +349,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 new.values,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
-                differ=EnumValueDiffer(),
+                differ=EnumValueDiffer(self._get_path("values")),
             )
         )
         return changes
@@ -357,4 +357,4 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
 
 class EnumValueDiffer(ObjectDiffer[EnumValue]):
     def diff(self, current: EnumValue, new: EnumValue, identifier: str) -> list[FieldChange]:
-        return self._diff_name_description(current, new)
+        return self._diff_name_description(current, new, identifier=identifier)

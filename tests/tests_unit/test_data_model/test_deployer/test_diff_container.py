@@ -35,6 +35,9 @@ from cognite.neat._data_model.models.dms._data_types import EnumProperty, Proper
 
 
 class TestContainerDiffer:
+    PROPERTY_TO_MODIFY_ID = "toModify"
+    CONSTRAINTS_TO_MODIFY_ID = "constraintToModify"
+    INDEX_TO_MODIFY_ID = "indexToModify"
     cdf_container = ContainerRequest(
         space="test_space",
         externalId="test_container",
@@ -42,17 +45,17 @@ class TestContainerDiffer:
         description="This is a test container.",
         usedFor="node",
         properties={
-            "toModify": ContainerPropertyDefinition(type=TextProperty()),
+            PROPERTY_TO_MODIFY_ID: ContainerPropertyDefinition(type=TextProperty()),
             "toRemove": ContainerPropertyDefinition(type=TextProperty()),
         },
         constraints={
-            "constraintToModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=True),
+            CONSTRAINTS_TO_MODIFY_ID: UniquenessConstraintDefinition(properties=["toModify"], bySpace=True),
             "constraintToRemove": RequiresConstraintDefinition(
                 require=ContainerReference(space="other_space", external_id="other_container"),
             ),
         },
         indexes={
-            "indexToModify": BtreeIndex(properties=["toModify"], cursorable=True, bySpace=False),
+            INDEX_TO_MODIFY_ID: BtreeIndex(properties=["toModify"], cursorable=True, bySpace=False),
             "indexToRemove": InvertedIndex(properties=["toModify"]),
         },
     )
@@ -63,17 +66,17 @@ class TestContainerDiffer:
         description="This is an update",
         usedFor="edge",
         properties={
-            "toModify": ContainerPropertyDefinition(type=TextProperty(list=True)),
+            PROPERTY_TO_MODIFY_ID: ContainerPropertyDefinition(type=TextProperty(list=True)),
             "toAdd": ContainerPropertyDefinition(type=Int32Property()),
         },
         constraints={
-            "constraintToModify": UniquenessConstraintDefinition(properties=["toModify"], bySpace=False),
+            CONSTRAINTS_TO_MODIFY_ID: UniquenessConstraintDefinition(properties=["toModify"], bySpace=False),
             "constraintToAdd": RequiresConstraintDefinition(
                 require=ContainerReference(space="new_space", external_id="new_container"),
             ),
         },
         indexes={
-            "indexToModify": BtreeIndex(properties=["toModify", "toAdd"], cursorable=True, bySpace=False),
+            INDEX_TO_MODIFY_ID: BtreeIndex(properties=["toModify", "toAdd"], cursorable=True, bySpace=False),
             "indexToAdd": InvertedIndex(properties=["toAdd"]),
         },
     )
@@ -120,13 +123,13 @@ class TestContainerDiffer:
                         current_value=cdf_container.properties["toRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
-                        field_path="properties.toModify",
+                        field_path=f"properties.{PROPERTY_TO_MODIFY_ID}",
                         changes=[
                             FieldChanges(
-                                field_path="type",
+                                field_path=f"properties.{PROPERTY_TO_MODIFY_ID}.type",
                                 changes=[
                                     ChangedField(
-                                        field_path="list",
+                                        field_path=f"properties.{PROPERTY_TO_MODIFY_ID}.type.list",
                                         item_severity=SeverityType.BREAKING,
                                         current_value=None,
                                         new_value=True,
@@ -148,10 +151,10 @@ class TestContainerDiffer:
                         current_value=cdf_container.constraints["constraintToRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
-                        field_path="constraints.constraintToModify",
+                        field_path=f"constraints.{CONSTRAINTS_TO_MODIFY_ID}",
                         changes=[
                             ChangedField(
-                                field_path="bySpace",
+                                field_path=f"constraints.{CONSTRAINTS_TO_MODIFY_ID}.bySpace",
                                 item_severity=SeverityType.WARNING,
                                 current_value=True,
                                 new_value=False,
@@ -171,10 +174,10 @@ class TestContainerDiffer:
                         current_value=cdf_container.indexes["indexToRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
-                        field_path="indexes.indexToModify",
+                        field_path=f"indexes.{INDEX_TO_MODIFY_ID}",
                         changes=[
                             ChangedField(
-                                field_path="properties",
+                                field_path=f"indexes.{INDEX_TO_MODIFY_ID}.properties",
                                 item_severity=SeverityType.WARNING,
                                 current_value="['toModify']",
                                 new_value="['toModify', 'toAdd']",
@@ -216,22 +219,22 @@ class TestContainerDiffer:
                 ),
                 [
                     ChangedField(
-                        field_path="name",
+                        field_path=f"{CONTAINER_PROPERTY_ID}.name",
                         item_severity=SeverityType.SAFE,
                         current_value="Name",
                         new_value="Name Updated",
                     ),
                     ChangedField(
-                        field_path="description",
+                        field_path=f"{CONTAINER_PROPERTY_ID}.description",
                         item_severity=SeverityType.SAFE,
                         current_value="The name property",
                         new_value="The updated name property",
                     ),
                     FieldChanges(
-                        field_path="type",
+                        field_path=f"{CONTAINER_PROPERTY_ID}.type",
                         changes=[
                             ChangedField(
-                                field_path="type",
+                                field_path=f"{CONTAINER_PROPERTY_ID}.type.type",
                                 item_severity=SeverityType.BREAKING,
                                 current_value="float32",
                                 new_value="text",
@@ -239,25 +242,25 @@ class TestContainerDiffer:
                         ],
                     ),
                     ChangedField(
-                        field_path="immutable",
+                        field_path=f"{CONTAINER_PROPERTY_ID}.immutable",
                         item_severity=SeverityType.BREAKING,
                         current_value=False,
                         new_value=True,
                     ),
                     ChangedField(
-                        field_path="nullable",
+                        field_path=f"{CONTAINER_PROPERTY_ID}.nullable",
                         item_severity=SeverityType.BREAKING,
                         current_value=False,
                         new_value=True,
                     ),
                     ChangedField(
-                        field_path="autoIncrement",
+                        field_path=f"{CONTAINER_PROPERTY_ID}.autoIncrement",
                         item_severity=SeverityType.BREAKING,
                         current_value=False,
                         new_value=True,
                     ),
                     ChangedField(
-                        field_path="defaultValue",
+                        field_path=f"{CONTAINER_PROPERTY_ID}.defaultValue",
                         item_severity=SeverityType.BREAKING,
                         current_value="Default Name",
                         new_value="Updated Name",
@@ -286,13 +289,13 @@ class TestContainerDiffer:
                 UniquenessConstraintDefinition(properties=["category"], bySpace=False),
                 [
                     ChangedField(
-                        field_path="properties",
+                        field_path=f"{CONSTRAINT_ID}.properties",
                         item_severity=SeverityType.WARNING,
                         current_value="['name']",
                         new_value="['category']",
                     ),
                     ChangedField(
-                        field_path="bySpace",
+                        field_path=f"{CONSTRAINT_ID}.bySpace",
                         item_severity=SeverityType.WARNING,
                         current_value=True,
                         new_value=False,
@@ -309,7 +312,7 @@ class TestContainerDiffer:
                 ),
                 [
                     ChangedField(
-                        field_path="require",
+                        field_path=f"{CONSTRAINT_ID}.require",
                         item_severity=SeverityType.WARNING,
                         current_value="other_space:other_container",
                         new_value="new_space:new_container",
@@ -324,7 +327,7 @@ class TestContainerDiffer:
                 UniquenessConstraintDefinition(properties=["id"], bySpace=True),
                 [
                     ChangedField(
-                        field_path="constraintType",
+                        field_path=f"{CONSTRAINT_ID}.constraintType",
                         item_severity=SeverityType.WARNING,
                         current_value="requires",
                         new_value="uniqueness",
@@ -353,19 +356,19 @@ class TestContainerDiffer:
                 BtreeIndex(properties=["category"], cursorable=False, bySpace=True),
                 [
                     ChangedField(
-                        field_path="properties",
+                        field_path=f"{INDEX_ID}.properties",
                         item_severity=SeverityType.WARNING,
                         current_value="['name']",
                         new_value="['category']",
                     ),
                     ChangedField(
-                        field_path="cursorable",
+                        field_path=f"{INDEX_ID}.cursorable",
                         item_severity=SeverityType.WARNING,
                         current_value=True,
                         new_value=False,
                     ),
                     ChangedField(
-                        field_path="bySpace",
+                        field_path=f"{INDEX_ID}.bySpace",
                         item_severity=SeverityType.WARNING,
                         current_value=False,
                         new_value=True,
@@ -378,7 +381,7 @@ class TestContainerDiffer:
                 InvertedIndex(properties=["name", "category"]),
                 [
                     ChangedField(
-                        field_path="properties",
+                        field_path=f"{INDEX_ID}.properties",
                         item_severity=SeverityType.WARNING,
                         current_value="['description']",
                         new_value="['name', 'category']",
@@ -391,7 +394,7 @@ class TestContainerDiffer:
                 BtreeIndex(properties=["description"]),
                 [
                     ChangedField(
-                        field_path="indexType",
+                        field_path=f"{INDEX_ID}.indexType",
                         item_severity=SeverityType.WARNING,
                         current_value="inverted",
                         new_value="btree",
@@ -539,7 +542,7 @@ class TestContainerDiffer:
                         field_path="values.toModify",
                         changes=[
                             ChangedField(
-                                field_path="name",
+                                field_path="values.toModify.name",
                                 item_severity=SeverityType.SAFE,
                                 current_value="Category 1",
                                 new_value="Category One",
