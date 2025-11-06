@@ -6,6 +6,7 @@ from cognite.client.credentials import OAuthClientCredentials, Token
 from dotenv import load_dotenv
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model.models.dms import SpaceRequest, SpaceResponse
 from cognite.neat._utils.http_client import ParametersRequest, ResponseMessage
 from tests.config import ROOT
 
@@ -38,6 +39,23 @@ def neat_client() -> NeatClient:
             ),
         )
     )
+
+
+@pytest.fixture(scope="session")
+def neat_test_space(neat_client: NeatClient) -> SpaceResponse:
+    """This is the default test space for NEAT integration tests.
+
+    It is created once and should never be deleted.
+    """
+    space_req = SpaceRequest(
+        space="neat_integration_test_space",
+        name="Neat Integration Test Space",
+        description="Space for NEAT integration tests",
+    )
+    space_response_list = neat_client.spaces.apply([space_req])
+    assert len(space_response_list) == 1
+    space_response = space_response_list[0]
+    return space_response
 
 
 def test_assert_neat_client(neat_client: NeatClient) -> None:
