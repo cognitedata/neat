@@ -68,7 +68,7 @@ class ContainersAPI(NeatAPI):
         """Delete containers by their identifiers.
 
         Args:
-            items: List of (space, external_id) tuples identifying the containers to delete.
+            items: List of ContainerReference objects identifying the containers to delete.
 
         Returns:
             List of ContainerReference objects representing the deleted containers.
