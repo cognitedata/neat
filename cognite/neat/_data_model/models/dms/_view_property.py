@@ -177,9 +177,9 @@ class ReverseDirectRelationProperty(ConnectionPropertyDefinition, ABC):
     ) -> dict[str, Any]:
         output = through.model_dump(**vars(info))
         if isinstance(through, ContainerDirectReference):
-            output["type"] = "container"
+            output["source"]["type"] = "container"
         else:
-            output["type"] = "view"
+            output["source"]["type"] = "view"
         return output
 
 
