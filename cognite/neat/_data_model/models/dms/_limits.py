@@ -72,7 +72,7 @@ class DataModelLimits(BaseModel):
     views: int = Field(100, description="Limit of views per data model.")
 
 
-class DmsLimits(BaseModel):
+class SchemaLimits(BaseModel):
     """CDF Data Modeling resource limits."""
 
     spaces: SpaceLimit = Field(default_factory=SpaceLimit)
@@ -81,7 +81,7 @@ class DmsLimits(BaseModel):
     data_models: DataModelLimits = Field(default_factory=DataModelLimits)
 
     @classmethod
-    def from_api_response(cls, response: StatisticsResponse) -> "DmsLimits":
+    def from_api_response(cls, response: StatisticsResponse) -> "SchemaLimits":
         """Populate limits from API response."""
         # Implementation to parse and set limits from response can be added here
 

@@ -7,7 +7,7 @@ from cognite.neat._client.data_classes import (
     ResourceLimit,
     StatisticsResponse,
 )
-from cognite.neat._data_model.models.dms._limits import DmsLimits
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._exceptions import CDFAPIException
 
 
@@ -91,9 +91,9 @@ class TestStatisticsAPI:
     def test_dms_statistics_from_api_response(self, example_statistics_response: dict) -> None:
         """Test DmsStatistics creation from API response."""
         api_response = StatisticsResponse.model_validate(example_statistics_response)
-        dms_stats = DmsLimits.from_api_response(api_response)
+        dms_stats = SchemaLimits.from_api_response(api_response)
 
-        assert isinstance(dms_stats, DmsLimits)
+        assert isinstance(dms_stats, SchemaLimits)
         assert dms_stats.spaces.limit == 100
         assert dms_stats.containers.limit == 1000
         assert dms_stats.containers.properties.limit == 100
@@ -102,7 +102,7 @@ class TestStatisticsAPI:
 
     def test_listable_property_limits(self) -> None:
         """Test ListablePropertyStatistics limit calculation."""
-        dms_stats = DmsLimits()
+        dms_stats = SchemaLimits()
         listable = dms_stats.containers.properties.listable
 
         # Test default limits
@@ -152,7 +152,7 @@ class TestStatisticsAPI:
 
     def test_container_property_statistics_callable(self) -> None:
         """Test ContainerPropertyStatistics as callable."""
-        dms_stats = DmsLimits()
+        dms_stats = SchemaLimits()
         container_props = dms_stats.containers.properties
 
         assert container_props() == 100  # Default limit per container

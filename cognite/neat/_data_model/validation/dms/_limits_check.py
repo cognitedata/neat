@@ -1,6 +1,6 @@
 from cognite.neat._data_model.models.dms._data_types import EnumProperty, ListablePropertyTypeDefinition
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex
-from cognite.neat._data_model.models.dms._limits import DmsLimits
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._view_property import (
     ViewCorePropertyRequest,
 )
@@ -30,7 +30,7 @@ class DataModelLimitValidator(DataModelValidator):
         self,
         local_resources: LocalResources,
         cdf_resources: CDFResources,
-        limits: DmsLimits,
+        limits: SchemaLimits,
         modus_operandi: ModusOperandi = "additive",
     ) -> None:
         super().__init__(local_resources, cdf_resources, modus_operandi)

@@ -4,7 +4,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._container import ContainerRequest
-from cognite.neat._data_model.models.dms._limits import DmsLimits
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerReference, DataModelReference, ViewReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
@@ -36,7 +36,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._modus_operandi = modus_operandi
         self._has_run = False
 
-    def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources, DmsLimits]:
+    def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources, SchemaLimits]:
         """Gather local and CDF resources needed for validation."""
 
         analysis = DataModelAnalysis(data_model)
@@ -133,12 +133,12 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             response.as_reference(): response.as_request() for response in self._client.containers.retrieve(containers)
         }
 
-    def _cdf_limits(self) -> DmsLimits:
+    def _cdf_limits(self) -> SchemaLimits:
         """Fetch DMS statistics from CDF."""
 
         if not self._client:
-            return DmsLimits()
-        return DmsLimits.from_api_response(self._client.statistics.project())
+            return SchemaLimits()
+        return SchemaLimits.from_api_response(self._client.statistics.project())
 
     def _referenced_containers(
         self,
