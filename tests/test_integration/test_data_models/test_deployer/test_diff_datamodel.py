@@ -14,12 +14,6 @@ from cognite.neat._data_model.models.dms import (
 from cognite.neat._exceptions import CDFAPIException
 from cognite.neat._utils.http_client import FailedResponse
 
-TEXT_PROPERTY_ID = "textProperty"
-LISTABLE_INT_PROPERTY_ID = "listableProperty"
-LISTABLE_BOOL_PROPERTY_ID = "listableBoolProperty"
-FLOAT_PROPERTY_ID = "floatProperty"
-ENUM_PROPERTY_ID = "enumProperty"
-
 
 @pytest.fixture(scope="function")
 def current_data_model(neat_test_space: SpaceResponse, neat_client: NeatClient) -> Iterable[DataModelRequest]:
