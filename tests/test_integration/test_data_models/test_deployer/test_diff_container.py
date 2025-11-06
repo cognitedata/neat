@@ -77,6 +77,66 @@ class TestContainerDiffer:
             current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.name"
         )
 
+    def test_diff_property_description(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True, update={"description": "Updated description"}
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.description"
+        )
+
+    def test_diff_property_immutable(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True, update={"immutable": True}
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.immutable"
+        )
+
+    def test_diff_property_nullable(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True, update={"nullable": False}
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.nullable"
+        )
+
+    def test_diff_property_auto_increment(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True, update={"auto_increment": True}
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.autoIncrement"
+        )
+
+    def test_diff_property_default_value(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True, update={"default_value": "updated default"}
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.defaultValue"
+        )
+
     @classmethod
     def assert_change(
         cls,
