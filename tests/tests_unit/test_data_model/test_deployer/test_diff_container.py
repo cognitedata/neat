@@ -290,13 +290,13 @@ class TestContainerDiffer:
                 [
                     ChangedField(
                         field_path=f"{CONSTRAINT_ID}.properties",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="['name']",
                         new_value="['category']",
                     ),
                     ChangedField(
                         field_path=f"{CONSTRAINT_ID}.bySpace",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value=True,
                         new_value=False,
                     ),
@@ -313,7 +313,7 @@ class TestContainerDiffer:
                 [
                     ChangedField(
                         field_path=f"{CONSTRAINT_ID}.require",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="other_space:other_container",
                         new_value="new_space:new_container",
                     ),
@@ -328,7 +328,7 @@ class TestContainerDiffer:
                 [
                     ChangedField(
                         field_path=f"{CONSTRAINT_ID}.constraintType",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="requires",
                         new_value="uniqueness",
                     ),
@@ -357,19 +357,19 @@ class TestContainerDiffer:
                 [
                     ChangedField(
                         field_path=f"{INDEX_ID}.properties",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="['name']",
                         new_value="['category']",
                     ),
                     ChangedField(
                         field_path=f"{INDEX_ID}.cursorable",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value=True,
                         new_value=False,
                     ),
                     ChangedField(
                         field_path=f"{INDEX_ID}.bySpace",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value=False,
                         new_value=True,
                     ),
@@ -382,7 +382,7 @@ class TestContainerDiffer:
                 [
                     ChangedField(
                         field_path=f"{INDEX_ID}.properties",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="['description']",
                         new_value="['name', 'category']",
                     ),
@@ -395,7 +395,7 @@ class TestContainerDiffer:
                 [
                     ChangedField(
                         field_path=f"{INDEX_ID}.indexType",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="inverted",
                         new_value="btree",
                     ),
