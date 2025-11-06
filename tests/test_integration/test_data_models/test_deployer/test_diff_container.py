@@ -6,6 +6,7 @@ import pytest
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
+    FieldChanges,
     SeverityType,
 )
 from cognite.neat._data_model.models.dms import (
@@ -16,6 +17,8 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._exceptions import CDFAPIException
 from cognite.neat._utils.http_client import FailedResponse
+
+TEXT_PROPERTY_ID = "textProperty"
 
 
 @pytest.fixture(scope="function")
@@ -30,7 +33,15 @@ def current_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -
         description="Initial description",
         usedFor="node",
         properties={
-            "textProperty": ContainerPropertyDefinition(type=TextProperty(), description="A text property"),
+            TEXT_PROPERTY_ID: ContainerPropertyDefinition(
+                type=TextProperty(max_text_size=100, collation="ucs_basic"),
+                name="Text Property",
+                description="A text property",
+                immutable=False,
+                nullable=True,
+                auto_increment=False,
+                default_value="default text",
+            ),
         },
     )
     try:
@@ -54,6 +65,17 @@ class TestContainerDiffer:
         new_container = current_container.model_copy(deep=True, update={"used_for": "edge"})
         self.assert_change(current_container, new_container, neat_client, field_path="usedFor")
 
+    def test_diff_property_name(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        text_property = current_container.properties[TEXT_PROPERTY_ID]
+        new_text_property = text_property.model_copy(deep=True, update={"name": "Updated Text Property"})
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.name"
+        )
+
     @classmethod
     def assert_change(
         cls,
@@ -65,6 +87,10 @@ class TestContainerDiffer:
         diffs = ContainerDiffer().diff(current_container, new_container)
         assert len(diffs) == 1
         diff = diffs[0]
+        if isinstance(diff, FieldChanges):
+            assert len(diff.changes) == 1
+            diff = diff.changes[0]
+
         assert diff.field_path == field_path
         if diff.severity == SeverityType.BREAKING:
             field_name = field_path.split(".", maxsplit=1)[-1]
@@ -89,3 +115,6 @@ class TestContainerDiffer:
     def assert_allowed_change(cls, new_container: ContainerRequest, neat_client: NeatClient) -> None:
         updated_container = neat_client.containers.apply([new_container])
         assert len(updated_container) == 1
+        assert updated_container[0].as_request().model_dump() == new_container.model_dump(), (
+            "Container after update does not match the desired state."
+        )
