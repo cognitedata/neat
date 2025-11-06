@@ -287,7 +287,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path=self._get_path("externalId"),
+                        field_path=self._get_path("unit.externalId"),
                         current_value=current.external_id,
                         new_value=new.external_id,
                     )
@@ -296,7 +296,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path=self._get_path("sourceUnit"),
+                        field_path=self._get_path("unit.sourceUnit"),
                         current_value=current.source_unit,
                         new_value=new.source_unit,
                     )
