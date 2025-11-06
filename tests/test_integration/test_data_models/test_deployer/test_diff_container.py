@@ -12,14 +12,19 @@ from cognite.neat._data_model.deployer.data_classes import (
 )
 from cognite.neat._data_model.models.dms import (
     BooleanProperty,
+    BtreeIndex,
     ContainerPropertyDefinition,
+    ContainerReference,
     ContainerRequest,
     EnumProperty,
     EnumValue,
     Float32Property,
     Int32Property,
+    InvertedIndex,
+    RequiresConstraintDefinition,
     SpaceResponse,
     TextProperty,
+    UniquenessConstraintDefinition,
 )
 from cognite.neat._data_model.models.dms._data_types import Unit
 from cognite.neat._exceptions import CDFAPIException
@@ -71,6 +76,16 @@ def current_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -
                     },
                 )
             ),
+        },
+        constraints={
+            "uniqueProperties": UniquenessConstraintDefinition(properties=[TEXT_PROPERTY_ID], bySpace=True),
+            "requiresProperties": RequiresConstraintDefinition(
+                require=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
+            ),
+        },
+        indexes={
+            "btreeIndex": BtreeIndex(properties=[TEXT_PROPERTY_ID], bySpace=True, cursorable=True),
+            "invertedIndex": InvertedIndex(properties=[LISTABLE_INT_PROPERTY_ID]),
         },
     )
     try:
@@ -449,6 +464,12 @@ class TestContainerPropertyDiffer:
         assert_change(
             current_container, new_container, neat_client, field_path=f"properties.{ENUM_PROPERTY_ID}.type.values.toAdd"
         )
+
+
+class TestContainerIndexDiffer:
+    def test_change_index_type(
+        self,
+    ) -> None: ...
 
 
 def assert_change(
