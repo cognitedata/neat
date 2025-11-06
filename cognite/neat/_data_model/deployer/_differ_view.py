@@ -62,7 +62,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         new: ViewPropertyDefinition,
         identifier: str,
     ) -> list[FieldChange]:
-        changes: list[FieldChange] = self._diff_name_description(current, new)
+        changes: list[FieldChange] = self._diff_name_description(current, new, identifier)
         if current.connection_type != new.connection_type:
             changes.append(
                 ChangedField(
