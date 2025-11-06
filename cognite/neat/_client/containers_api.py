@@ -17,7 +17,7 @@ class ContainersAPI(NeatAPI):
         """Apply (create or update) containers in CDF.
 
         Args:
-            items: List of ContainerReference objects to apply.
+            items: List of ContainerRequest objects to apply.
         Returns:
             List of ContainerResponse objects.
         """
