@@ -2,12 +2,12 @@ import pytest
 import respx
 
 from cognite.neat._client import NeatClient
-from cognite.neat._client.statistics_api import (
-    DmsStatistics,
+from cognite.neat._client.data_classes import (
     InstancesDetail,
     ResourceLimit,
     StatisticsResponse,
 )
+from cognite.neat._data_model.models.dms._limits import DmsLimits
 from cognite.neat._exceptions import CDFAPIException
 
 
@@ -91,25 +91,18 @@ class TestStatisticsAPI:
     def test_dms_statistics_from_api_response(self, example_statistics_response: dict) -> None:
         """Test DmsStatistics creation from API response."""
         api_response = StatisticsResponse.model_validate(example_statistics_response)
-        dms_stats = DmsStatistics.from_api_response(api_response)
+        dms_stats = DmsLimits.from_api_response(api_response)
 
-        assert isinstance(dms_stats, DmsStatistics)
-        assert dms_stats.spaces.count == 5
+        assert isinstance(dms_stats, DmsLimits)
         assert dms_stats.spaces.limit == 100
-        assert dms_stats.containers.count == 42
         assert dms_stats.containers.limit == 1000
-        assert dms_stats.containers.properties.count == 1234
         assert dms_stats.containers.properties.limit == 100
-        assert dms_stats.views.count == 123
         assert dms_stats.views.limit == 2000
-        assert dms_stats.data_models.count == 8
         assert dms_stats.data_models.limit == 500
-        assert dms_stats.instances.count == 15000
-        assert dms_stats.instances.limit == 5000000
 
     def test_listable_property_limits(self) -> None:
         """Test ListablePropertyStatistics limit calculation."""
-        dms_stats = DmsStatistics()
+        dms_stats = DmsLimits()
         listable = dms_stats.containers.properties.listable
 
         # Test default limits
@@ -159,7 +152,7 @@ class TestStatisticsAPI:
 
     def test_container_property_statistics_callable(self) -> None:
         """Test ContainerPropertyStatistics as callable."""
-        dms_stats = DmsStatistics()
+        dms_stats = DmsLimits()
         container_props = dms_stats.containers.properties
 
         assert container_props() == 100  # Default limit per container
