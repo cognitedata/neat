@@ -155,7 +155,7 @@ class TestContainerDiffer:
                         changes=[
                             ChangedField(
                                 field_path=f"constraints.{CONSTRAINTS_TO_MODIFY_ID}.bySpace",
-                                item_severity=SeverityType.WARNING,
+                                item_severity=SeverityType.BREAKING,
                                 current_value=True,
                                 new_value=False,
                             ),
@@ -178,7 +178,7 @@ class TestContainerDiffer:
                         changes=[
                             ChangedField(
                                 field_path=f"indexes.{INDEX_TO_MODIFY_ID}.properties",
-                                item_severity=SeverityType.WARNING,
+                                item_severity=SeverityType.BREAKING,
                                 current_value="['toModify']",
                                 new_value="['toModify', 'toAdd']",
                             ),
