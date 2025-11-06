@@ -11,6 +11,8 @@ from .data_classes import PagedResponse
 
 
 class ViewsAPI(NeatAPI):
+    ENDPOINT = "/models/views"
+
     def apply(self, items: Sequence[ViewRequest]) -> list[ViewResponse]:
         """Create or update views in CDF Project.
         Args:
@@ -24,7 +26,7 @@ class ViewsAPI(NeatAPI):
             raise ValueError("Cannot apply more than 100 views at once.")
         result = self._http_client.request_with_retries(
             ItemsRequest(
-                endpoint_url=self._config.create_api_url("/models/views"),
+                endpoint_url=self._config.create_api_url(self.ENDPOINT),
                 method="POST",
                 body=DataModelBody(items=items),
             )
@@ -54,7 +56,7 @@ class ViewsAPI(NeatAPI):
 
         result = self._http_client.request_with_retries(
             ItemsRequest(
-                endpoint_url=self._config.create_api_url("/models/views/byids"),
+                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/byids"),
                 method="POST",
                 body=ItemIDBody(items=items),
                 parameters={"includeInheritedProperties": include_inherited_properties},
@@ -77,8 +79,8 @@ class ViewsAPI(NeatAPI):
 
         result = self._http_client.request_with_retries(
             ItemsRequest(
-                endpoint_url=self._config.create_api_url("/models/views/byids"),
-                method="DELETE",
+                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/delete"),
+                method="POST",
                 body=ItemIDBody(items=items),
             )
         )
@@ -118,7 +120,7 @@ class ViewsAPI(NeatAPI):
             parameters["space"] = space
         result = self._http_client.request_with_retries(
             ParametersRequest(
-                endpoint_url=self._config.create_api_url("/models/views"),
+                endpoint_url=self._config.create_api_url(self.ENDPOINT),
                 method="GET",
                 parameters=parameters,
             )

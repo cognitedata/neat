@@ -1,8 +1,9 @@
 import re
 from abc import ABC
-from typing import Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
-from pydantic import Field, JsonValue, field_validator, model_validator
+from pydantic import Field, JsonValue, field_serializer, field_validator, model_validator
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.text import humanize_collection
 
@@ -90,6 +91,20 @@ class View(Resource, APIResource[ViewReference], ABC):
                 f"{humanize_collection(FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS)}"
             )
         return val
+
+    @field_serializer("implements", mode="plain")
+    @classmethod
+    def serialize_implements(
+        cls, implements: list[ViewReference] | None, info: FieldSerializationInfo
+    ) -> list[dict[str, Any]] | None:
+        if implements is None:
+            return None
+        output: list[dict[str, Any]] = []
+        for view in implements:
+            dumped = view.model_dump(**vars(info))
+            dumped["type"] = "view"
+            output.append(dumped)
+        return output
 
 
 class ViewRequest(View):
