@@ -87,7 +87,7 @@ class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
         if current.immutable != new.immutable:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path=self._get_path(f"{identifier}.immutable"),
                     current_value=current.immutable,
                     new_value=new.immutable,
@@ -106,7 +106,7 @@ class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
         if current.auto_increment != new.auto_increment:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path=self._get_path(f"{identifier}.autoIncrement"),
                     current_value=current.auto_increment,
                     new_value=new.auto_increment,
@@ -116,7 +116,7 @@ class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
         if current.default_value != new.default_value:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path=self._get_path(f"{identifier}.defaultValue"),
                     current_value=str(current.default_value),
                     new_value=str(new.default_value),
@@ -287,7 +287,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path=self._get_path("externalId"),
+                        field_path=self._get_path("unit.externalId"),
                         current_value=current.external_id,
                         new_value=new.external_id,
                     )
@@ -296,7 +296,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path=self._get_path("sourceUnit"),
+                        field_path=self._get_path("unit.sourceUnit"),
                         current_value=current.source_unit,
                         new_value=new.source_unit,
                     )

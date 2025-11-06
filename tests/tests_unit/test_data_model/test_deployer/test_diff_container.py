@@ -243,7 +243,7 @@ class TestContainerDiffer:
                     ),
                     ChangedField(
                         field_path=f"{CONTAINER_PROPERTY_ID}.immutable",
-                        item_severity=SeverityType.BREAKING,
+                        item_severity=SeverityType.WARNING,
                         current_value=False,
                         new_value=True,
                     ),
@@ -255,13 +255,13 @@ class TestContainerDiffer:
                     ),
                     ChangedField(
                         field_path=f"{CONTAINER_PROPERTY_ID}.autoIncrement",
-                        item_severity=SeverityType.BREAKING,
+                        item_severity=SeverityType.WARNING,
                         current_value=False,
                         new_value=True,
                     ),
                     ChangedField(
                         field_path=f"{CONTAINER_PROPERTY_ID}.defaultValue",
-                        item_severity=SeverityType.BREAKING,
+                        item_severity=SeverityType.WARNING,
                         current_value="Default Name",
                         new_value="Updated Name",
                     ),
@@ -441,13 +441,13 @@ class TestContainerDiffer:
                         field_path="unit",
                         changes=[
                             ChangedField(
-                                field_path="externalId",
+                                field_path="unit.externalId",
                                 item_severity=SeverityType.WARNING,
                                 current_value="unit:meter",
                                 new_value="unit:kilometer",
                             ),
                             ChangedField(
-                                field_path="sourceUnit",
+                                field_path="unit.sourceUnit",
                                 item_severity=SeverityType.WARNING,
                                 current_value="meter",
                                 new_value="kilometer",
