@@ -492,6 +492,6 @@ def assert_breaking_change(new_container: ContainerRequest, neat_client: NeatCli
 def assert_allowed_change(new_container: ContainerRequest, neat_client: NeatClient) -> None:
     updated_container = neat_client.containers.apply([new_container])
     assert len(updated_container) == 1
-    assert updated_container[0].as_request().model_dump(by_alias=True, exclude_none=True) == new_container.model_dump(
-        by_alias=True, exclude_none=True
+    assert updated_container[0].as_request().model_dump(by_alias=True, exclude_none=False) == new_container.model_dump(
+        by_alias=True, exclude_none=False
     ), "Container after update does not match the desired state."
