@@ -87,7 +87,7 @@ class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
         if current.immutable != new.immutable:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path=self._get_path(f"{identifier}.immutable"),
                     current_value=current.immutable,
                     new_value=new.immutable,
@@ -106,7 +106,7 @@ class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
         if current.auto_increment != new.auto_increment:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path=self._get_path(f"{identifier}.autoIncrement"),
                     current_value=current.auto_increment,
                     new_value=new.auto_increment,
@@ -116,7 +116,7 @@ class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
         if current.default_value != new.default_value:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     field_path=self._get_path(f"{identifier}.defaultValue"),
                     current_value=str(current.default_value),
                     new_value=str(new.default_value),
@@ -131,7 +131,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
         if current.constraint_type != new.constraint_type:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path(f"{identifier}.constraintType"),
                     current_value=current.constraint_type,
                     new_value=new.constraint_type,
@@ -144,7 +144,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
         ):
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path(f"{identifier}.require"),
                     current_value=str(current.require),
                     new_value=str(new.require),
@@ -155,7 +155,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
             if current.properties != new.properties:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
@@ -164,7 +164,7 @@ class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
             if current.by_space != new.by_space:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,
@@ -180,7 +180,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
         if current.index_type != new.index_type:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path(f"{identifier}.indexType"),
                     current_value=current.index_type,
                     new_value=new.index_type,
@@ -190,7 +190,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
             if current.properties != new.properties:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
@@ -200,7 +200,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
             if current.cursorable != new.cursorable:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.cursorable"),
                         current_value=current.cursorable,
                         new_value=new.cursorable,
@@ -209,7 +209,7 @@ class IndexDiffer(ObjectDiffer[IndexDefinition]):
             if current.by_space != new.by_space:
                 changes.append(
                     ChangedField(
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,
@@ -287,7 +287,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path=self._get_path("externalId"),
+                        field_path=self._get_path("unit.externalId"),
                         current_value=current.external_id,
                         new_value=new.external_id,
                     )
@@ -296,7 +296,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path=self._get_path("sourceUnit"),
+                        field_path=self._get_path("unit.sourceUnit"),
                         current_value=current.source_unit,
                         new_value=new.source_unit,
                     )

@@ -53,7 +53,7 @@ class Unit(BaseModelObject):
 
 
 class FloatProperty(ListablePropertyTypeDefinition, ABC):
-    unit: Unit | None = Field(default=None, description="The unit of the data stored in this property")
+    unit: Unit | None = Field(default=None, description="The unit of the data stored in this property", exclude=False)
 
 
 class Float32Property(FloatProperty):
