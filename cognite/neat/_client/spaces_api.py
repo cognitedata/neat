@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from cognite.neat._data_model.models.dms import SpaceResponse
+from cognite.neat._data_model.models.dms import DataModelBody, SpaceRequest, SpaceResponse
 from cognite.neat._data_model.models.dms._references import SpaceReference
 from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
@@ -10,6 +10,31 @@ from .data_classes import PagedResponse
 
 
 class SpacesAPI(NeatAPI):
+    ENDPOINT = "/models/spaces"
+
+    def apply(self, spaces: list[SpaceRequest]) -> list[SpaceResponse]:
+        """Apply (create or update) spaces in CDF.
+
+        Args:
+            spaces: List of SpaceRequest objects to apply.
+        Returns:
+            List of SpaceResponse objects.
+        """
+        if not spaces:
+            return []
+        if len(spaces) > 100:
+            raise ValueError("Cannot apply more than 100 spaces at once.")
+        result = self._http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self._config.create_api_url(self.ENDPOINT),
+                method="POST",
+                body=DataModelBody(items=spaces),
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.body)
+        return result.items
+
     def retrieve(self, spaces: list[SpaceReference]) -> list[SpaceResponse]:
         """Retrieve spaces by their identifiers.
 
@@ -26,7 +51,7 @@ class SpacesAPI(NeatAPI):
 
         result = self._http_client.request_with_retries(
             ItemsRequest(
-                endpoint_url=self._config.create_api_url("/models/spaces/byids"),
+                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/byids"),
                 method="POST",
                 body=ItemIDBody(items=spaces),
             )
@@ -57,7 +82,7 @@ class SpacesAPI(NeatAPI):
         }
         result = self._http_client.request_with_retries(
             ParametersRequest(
-                endpoint_url=self._config.create_api_url("/models/spaces"),
+                endpoint_url=self._config.create_api_url(self.ENDPOINT),
                 method="GET",
                 parameters=parameters,
             )
