@@ -100,7 +100,12 @@ class TestContainerDiffer:
 
     def test_add_property(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
         new_property_id = "newProperty"
-        new_property = ContainerPropertyDefinition(type=TextProperty(max_text_size=50))
+        new_property = ContainerPropertyDefinition(
+            type=TextProperty(max_text_size=50, collation="ucs_basic", list=False),
+            auto_increment=None,
+            immutable=False,
+            nullable=True,
+        )
         new_container = current_container.model_copy(
             update={"properties": {**current_container.properties, new_property_id: new_property}}
         )
@@ -385,7 +390,10 @@ class TestContainerPropertyDiffer:
         )
 
         assert_change(
-            current_container, new_container, neat_client, field_path=f"properties.{ENUM_PROPERTY_ID}.type.values"
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"properties.{ENUM_PROPERTY_ID}.type.values.toRemove",
         )
 
     def test_diff_enum_property_modify(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
@@ -401,7 +409,10 @@ class TestContainerPropertyDiffer:
         )
 
         assert_change(
-            current_container, new_container, neat_client, field_path=f"properties.{ENUM_PROPERTY_ID}.type.values"
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"properties.{ENUM_PROPERTY_ID}.type.values.toModify.description",
         )
 
     def test_diff_enum_property_add(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
@@ -417,7 +428,7 @@ class TestContainerPropertyDiffer:
         )
 
         assert_change(
-            current_container, new_container, neat_client, field_path=f"properties.{ENUM_PROPERTY_ID}.type.values"
+            current_container, new_container, neat_client, field_path=f"properties.{ENUM_PROPERTY_ID}.type.values.toAdd"
         )
 
 
@@ -434,7 +445,7 @@ def assert_change(
         assert len(diff.changes) == 1
         diff = diff.changes[0]
 
-    assert diff.field_path == field_path
+    assert field_path == diff.field_path, f"Expected diff on field path {field_path}, got {diff.field_path}"
     if diff.severity == SeverityType.BREAKING:
         field_name = field_path.split(".", maxsplit=1)[-1]
         assert_breaking_change(new_container, neat_client, field_name)
@@ -460,6 +471,6 @@ def assert_breaking_change(new_container: ContainerRequest, neat_client: NeatCli
 def assert_allowed_change(new_container: ContainerRequest, neat_client: NeatClient) -> None:
     updated_container = neat_client.containers.apply([new_container])
     assert len(updated_container) == 1
-    assert updated_container[0].as_request().model_dump() == new_container.model_dump(), (
-        "Container after update does not match the desired state."
-    )
+    assert updated_container[0].as_request().model_dump(by_alias=True, exclude_none=True) == new_container.model_dump(
+        by_alias=True, exclude_none=True
+    ), "Container after update does not match the desired state."
