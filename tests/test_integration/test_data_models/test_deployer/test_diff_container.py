@@ -137,6 +137,53 @@ class TestContainerDiffer:
             current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.defaultValue"
         )
 
+    def test_diff_text_property_collation(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True,
+            update={"type": current_container.properties[TEXT_PROPERTY_ID].type.model_copy(update={"collation": "en"})},
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.type.collation"
+        )
+
+    def test_diff_text_property_max_text_size_increase(
+        self, current_container: ContainerRequest, neat_client: NeatClient
+    ) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True,
+            update={
+                "type": current_container.properties[TEXT_PROPERTY_ID].type.model_copy(update={"max_text_size": 200})
+            },
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.type.maxTextSize"
+        )
+
+    def test_diff_text_property_max_text_size_decrease(
+        self, current_container: ContainerRequest, neat_client: NeatClient
+    ) -> None:
+        new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
+            deep=True,
+            update={
+                "type": current_container.properties[TEXT_PROPERTY_ID].type.model_copy(update={"max_text_size": 50})
+            },
+        )
+        new_container = current_container.model_copy(
+            update={"properties": {**current_container.properties, TEXT_PROPERTY_ID: new_text_property}}
+        )
+
+        self.assert_change(
+            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.type.maxTextSize"
+        )
+
     @classmethod
     def assert_change(
         cls,
@@ -148,7 +195,7 @@ class TestContainerDiffer:
         diffs = ContainerDiffer().diff(current_container, new_container)
         assert len(diffs) == 1
         diff = diffs[0]
-        if isinstance(diff, FieldChanges):
+        while isinstance(diff, FieldChanges):
             assert len(diff.changes) == 1
             diff = diff.changes[0]
 
