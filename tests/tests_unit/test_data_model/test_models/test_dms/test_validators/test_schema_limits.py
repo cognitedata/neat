@@ -110,13 +110,13 @@ Properties:
 {generate_container_references("ViewWithTooManyContainers", 11)}
 # Container with 101 properties (exceeds 100 limit)
 {generate_large_container_props("ViewWithLargeContainer", "ContainerWithTooManyProperties", 101)}
-# Direct relation list exceeding 100 limit (Max Count)
+# Direct relation list exceeding 1000 limit (Limit o)
 - View: ViewWithTooManyDirectRelations
   View Property: directRelations
   Connection: direct
   Value Type: my_space:TargetView(version=v1)
   Min Count: 0
-  Max Count: 101
+  Max Count: 2001
   Container: my_space:DirectRelationContainer
   Container Property: directRelations
 # Int32 list with btree exceeding 600 limit
@@ -186,10 +186,10 @@ Enum:
         "View my_space:ViewWithTooManyContainers(version=v1) references 11 containers",
         "View my_space:ViewWithTooManyImplements(version=v1) implements 11 views",
         "Container my_space:ContainerWithTooManyProperties has 101 properties",
-        "Container my_space:DirectRelationContainer has property directRelations with list size 101",
         "Container my_space:Int32Container has property int32List with list size 601",
         "Container my_space:Int64Container has property int64List with list size 301",
         "Container my_space:TextListContainer has property textList with list size 2001",
+        "Container my_space:DirectRelationContainer has property directRelations with list size 2001",
     }
 
     return yaml, expected_problems
