@@ -54,6 +54,31 @@ class TestDataModelDiffer:
 
         assert_allowed_change(new_data_model, neat_client)
 
+    def test_diff_add_view(self, current_data_model: DataModelRequest, neat_client: NeatClient) -> None:
+        new_data_model = current_data_model.model_copy(deep=True)
+        assert new_data_model.views is not None
+        new_data_model.views.append(ViewReference(space="cdf_cdm", external_id="CogniteSourceSystem", version="v1"))
+
+        assert_change(
+            current_data_model,
+            new_data_model,
+            neat_client,
+            field_path="views",
+        )
+
+    @pytest.mark.skip(reason="API returns 200 but does not add the view. What to do?")
+    def test_diff_remove_view(self, current_data_model: DataModelRequest, neat_client: NeatClient) -> None:
+        new_data_model = current_data_model.model_copy(deep=True)
+        assert new_data_model.views is not None and len(new_data_model.views) > 0, "Precondition failed."
+        new_data_model.views.pop(0)
+
+        assert_change(
+            current_data_model,
+            new_data_model,
+            neat_client,
+            field_path="views",
+        )
+
 
 def assert_change(
     current_data_model: DataModelRequest,
