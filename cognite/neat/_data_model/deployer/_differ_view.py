@@ -10,15 +10,54 @@ from cognite.neat._data_model.models.dms._view_property import (
 
 from ._differ import ItemDiffer, ObjectDiffer, field_differences
 from .data_classes import (
+    AddedField,
     ChangedField,
     FieldChange,
+    RemovedField,
     SeverityType,
 )
 
 
 class ViewDiffer(ItemDiffer[ViewRequest]):
     def diff(self, current: ViewRequest, new: ViewRequest) -> list[FieldChange]:
-        changes: list[FieldChange] = self._diff_name_description(current, new)
+        changes: list[FieldChange] = []
+        if current.implements != new.implements:
+            # Added implements
+            current_implements = set(current.implements or [])
+            for new_implements in new.implements or []:
+                if new_implements not in current_implements:
+                    changes.append(
+                        AddedField(
+                            item_severity=SeverityType.BREAKING,
+                            field_path="implements",
+                            new_value=new_implements,
+                        )
+                    )
+
+            # Removed implements
+            new_implements = set(new.implements or [])
+            for current_implements in current.implements or []:
+                if current_implements not in new_implements:
+                    changes.append(
+                        RemovedField(
+                            item_severity=SeverityType.BREAKING,
+                            field_path="implements",
+                            current_value=current_implements,
+                        )
+                    )
+
+            if not changes:
+                # If there are no added or removed implements, it means the order has changed
+                changes.append(
+                    ChangedField(
+                        item_severity=SeverityType.SAFE,
+                        field_path="implements",
+                        current_value=str(current.implements),
+                        new_value=str(new.implements),
+                    )
+                )
+
+        changes.extend(self._diff_name_description(current, new))
 
         if current.filter != new.filter:
             changes.append(
@@ -29,16 +68,7 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                     current_value=str(current.filter),
                 )
             )
-        if current.implements != new.implements:
-            # Note that order of implements list is significant
-            changes.append(
-                ChangedField(
-                    field_path=self._get_path("implements"),
-                    item_severity=SeverityType.WARNING,
-                    new_value=str(new.implements),
-                    current_value=str(current.implements),
-                )
-            )
+
         changes.extend(
             # MyPy fails to recognize that ViewPropertyDefinition and
             # the union ViewRequestProperty are the same here.
