@@ -1,7 +1,8 @@
 from abc import ABC
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field, TypeAdapter, field_serializer
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.useful_types import BaseModelObject
 
@@ -24,6 +25,13 @@ class UniquenessConstraintDefinition(ConstraintDefinition):
 class RequiresConstraintDefinition(ConstraintDefinition):
     constraint_type: Literal["requires"] = "requires"
     require: ContainerReference = Field(description="Reference to an existing container.")
+
+    @field_serializer("require", mode="plain")
+    @classmethod
+    def serialize_require(cls, require: ContainerReference, info: FieldSerializationInfo) -> dict[str, Any]:
+        output = require.model_dump(**vars(info))
+        output["type"] = "container"
+        return output
 
 
 Constraint = Annotated[

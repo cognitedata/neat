@@ -12,14 +12,19 @@ from cognite.neat._data_model.deployer.data_classes import (
 )
 from cognite.neat._data_model.models.dms import (
     BooleanProperty,
+    BtreeIndex,
     ContainerPropertyDefinition,
+    ContainerReference,
     ContainerRequest,
     EnumProperty,
     EnumValue,
     Float32Property,
     Int32Property,
+    InvertedIndex,
+    RequiresConstraintDefinition,
     SpaceResponse,
     TextProperty,
+    UniquenessConstraintDefinition,
 )
 from cognite.neat._data_model.models.dms._data_types import Unit
 from cognite.neat._exceptions import CDFAPIException
@@ -30,6 +35,10 @@ LISTABLE_INT_PROPERTY_ID = "listableProperty"
 LISTABLE_BOOL_PROPERTY_ID = "listableBoolProperty"
 FLOAT_PROPERTY_ID = "floatProperty"
 ENUM_PROPERTY_ID = "enumProperty"
+UNIQUENESS_CONSTRAINT_ID = "uniqueConstraint"
+REQUIRES_CONSTRAINT_ID = "requiresConstraint"
+BTREE_INDEX_ID = "btreeIndex"
+INVERTED_INDEX_ID = "invertedIndex"
 
 
 @pytest.fixture(scope="function")
@@ -71,6 +80,16 @@ def current_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -
                     },
                 )
             ),
+        },
+        constraints={
+            UNIQUENESS_CONSTRAINT_ID: UniquenessConstraintDefinition(properties=[TEXT_PROPERTY_ID], bySpace=True),
+            REQUIRES_CONSTRAINT_ID: RequiresConstraintDefinition(
+                require=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
+            ),
+        },
+        indexes={
+            BTREE_INDEX_ID: BtreeIndex(properties=[TEXT_PROPERTY_ID], bySpace=True, cursorable=True),
+            INVERTED_INDEX_ID: InvertedIndex(properties=[LISTABLE_INT_PROPERTY_ID]),
         },
     )
     try:
@@ -214,6 +233,8 @@ class TestContainerPropertyDiffer:
             new_container,
             neat_client,
             field_path=f"properties.{LISTABLE_BOOL_PROPERTY_ID}.type.list",
+            # The API considers the list as a type change and not a field change
+            in_error_message="type",
         )
 
     def test_diff_listable_property_list_size_increase(
@@ -451,11 +472,153 @@ class TestContainerPropertyDiffer:
         )
 
 
+class TestContainerConstraintDiffer:
+    def test_change_constraint_type(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.constraints is not None
+        new_constraint = RequiresConstraintDefinition(
+            require=ContainerReference(space="cdf_cdm", external_id="CogniteAsset")
+        )
+        new_container = current_container.model_copy(
+            update={"constraints": {**current_container.constraints, UNIQUENESS_CONSTRAINT_ID: new_constraint}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"constraints.{UNIQUENESS_CONSTRAINT_ID}.constraintType",
+            in_error_message=UNIQUENESS_CONSTRAINT_ID,
+        )
+
+    def test_change_constraint_properties(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.constraints is not None
+        uniqueness_constraint = cast(
+            UniquenessConstraintDefinition, current_container.constraints[UNIQUENESS_CONSTRAINT_ID]
+        )
+        new_constraint = uniqueness_constraint.model_copy(
+            deep=True, update={"properties": [TEXT_PROPERTY_ID, FLOAT_PROPERTY_ID]}
+        )
+        new_container = current_container.model_copy(
+            update={"constraints": {**current_container.constraints, UNIQUENESS_CONSTRAINT_ID: new_constraint}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"constraints.{UNIQUENESS_CONSTRAINT_ID}.properties",
+            in_error_message=UNIQUENESS_CONSTRAINT_ID,
+        )
+
+    def test_change_constraint_by_space(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.constraints is not None
+        uniqueness_constraint = cast(
+            UniquenessConstraintDefinition, current_container.constraints[UNIQUENESS_CONSTRAINT_ID]
+        )
+        new_constraint = uniqueness_constraint.model_copy(deep=True, update={"by_space": False})
+        new_container = current_container.model_copy(
+            update={"constraints": {**current_container.constraints, UNIQUENESS_CONSTRAINT_ID: new_constraint}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"constraints.{UNIQUENESS_CONSTRAINT_ID}.bySpace",
+            in_error_message=UNIQUENESS_CONSTRAINT_ID,
+        )
+
+    def test_change_constraint_require(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.constraints is not None
+        requires_constraint = cast(RequiresConstraintDefinition, current_container.constraints[REQUIRES_CONSTRAINT_ID])
+        new_constraint = requires_constraint.model_copy(
+            deep=True,
+            update={"require": ContainerReference(space="cdf_cdm", external_id="CogniteAsset")},
+        )
+        new_container = current_container.model_copy(
+            update={"constraints": {**current_container.constraints, REQUIRES_CONSTRAINT_ID: new_constraint}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"constraints.{REQUIRES_CONSTRAINT_ID}.require",
+            in_error_message=REQUIRES_CONSTRAINT_ID,
+        )
+
+
+class TestContainerIndexDiffer:
+    def test_change_index_type(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.indexes is not None
+        new_index = InvertedIndex(properties=[TEXT_PROPERTY_ID])
+        new_container = current_container.model_copy(
+            update={"indexes": {**current_container.indexes, BTREE_INDEX_ID: new_index}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"indexes.{BTREE_INDEX_ID}.indexType",
+            in_error_message=BTREE_INDEX_ID,
+        )
+
+    def test_change_index_properties(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.indexes is not None
+        btree_index = cast(BtreeIndex, current_container.indexes[BTREE_INDEX_ID])
+        new_index = btree_index.model_copy(deep=True, update={"properties": [TEXT_PROPERTY_ID, FLOAT_PROPERTY_ID]})
+        new_container = current_container.model_copy(
+            update={"indexes": {**current_container.indexes, BTREE_INDEX_ID: new_index}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"indexes.{BTREE_INDEX_ID}.properties",
+            in_error_message=BTREE_INDEX_ID,
+        )
+
+    def test_change_btree_index_by_space(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.indexes is not None
+        btree_index = cast(BtreeIndex, current_container.indexes[BTREE_INDEX_ID])
+        new_index = btree_index.model_copy(deep=True, update={"by_space": False})
+        new_container = current_container.model_copy(
+            update={"indexes": {**current_container.indexes, BTREE_INDEX_ID: new_index}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"indexes.{BTREE_INDEX_ID}.bySpace",
+            in_error_message=BTREE_INDEX_ID,
+        )
+
+    def test_change_btree_index_cursorable(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        assert current_container.indexes is not None
+        btree_index = cast(BtreeIndex, current_container.indexes[BTREE_INDEX_ID])
+        new_index = btree_index.model_copy(deep=True, update={"cursorable": False})
+        new_container = current_container.model_copy(
+            update={"indexes": {**current_container.indexes, BTREE_INDEX_ID: new_index}}
+        )
+
+        assert_change(
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"indexes.{BTREE_INDEX_ID}.cursorable",
+            in_error_message=BTREE_INDEX_ID,
+        )
+
+
 def assert_change(
     current_container: ContainerRequest,
     new_container: ContainerRequest,
     neat_client: NeatClient,
     field_path: str,
+    in_error_message: str | None = None,
 ) -> None:
     diffs = ContainerDiffer().diff(current_container, new_container)
     assert len(diffs) == 1
@@ -466,14 +629,15 @@ def assert_change(
 
     assert field_path == diff.field_path, f"Expected diff on field path {field_path}, got {diff.field_path}"
     if diff.severity == SeverityType.BREAKING:
-        field_name = field_path.rsplit(".", maxsplit=1)[-1]
-        assert_breaking_change(new_container, neat_client, field_name)
+        if in_error_message is None:
+            in_error_message = field_path.rsplit(".", maxsplit=1)[-1]
+        assert_breaking_change(new_container, neat_client, in_error_message)
     else:
         # Both WARNING and SAFE are allowed changes
         assert_allowed_change(new_container, neat_client)
 
 
-def assert_breaking_change(new_container: ContainerRequest, neat_client: NeatClient, field_name: str) -> None:
+def assert_breaking_change(new_container: ContainerRequest, neat_client: NeatClient, in_error_message: str) -> None:
     with pytest.raises(CDFAPIException) as exc_info:
         _ = neat_client.containers.apply([new_container])
 
@@ -485,8 +649,7 @@ def assert_breaking_change(new_container: ContainerRequest, neat_client: NeatCli
         f"Expected HTTP 400 Bad Request for breaking change, got {response.error.code} with {response.error.message}"
     )
     # The API considers the type change if the list property is changed
-    field_name = "type" if field_name == "list" else field_name
-    assert field_name in response.error.message
+    assert in_error_message in response.error.message
 
 
 def assert_allowed_change(new_container: ContainerRequest, neat_client: NeatClient) -> None:
