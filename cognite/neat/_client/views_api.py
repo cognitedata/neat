@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from cognite.neat._data_model.models.dms import ViewReference, ViewResponse
+from collections.abc import Sequence
+
+from cognite.neat._data_model.models.dms import DataModelBody, ViewReference, ViewRequest, ViewResponse
 from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
@@ -9,6 +11,28 @@ from .data_classes import PagedResponse
 
 
 class ViewsAPI(NeatAPI):
+    def apply(self, items: Sequence[ViewRequest]) -> list[ViewResponse]:
+        """Create or update views in CDF Project.
+        Args:
+            items: List of ViewRequest objects to create or update.
+        Returns:
+            List of ViewResponse objects.
+        """
+        if not items:
+            return []
+        if len(items) > 100:
+            raise ValueError("Cannot apply more than 100 views at once.")
+        result = self._http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self._config.create_api_url("/models/views"),
+                method="POST",
+                body=DataModelBody(items=items),
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
+        return result.items
+
     def retrieve(
         self,
         items: list[ViewReference],
@@ -25,8 +49,8 @@ class ViewsAPI(NeatAPI):
         """
         if not items:
             return []
-        if len(items) > 1000:
-            raise ValueError("Cannot retrieve more than 1000 views at once.")
+        if len(items) > 100:
+            raise ValueError("Cannot retrieve more than 100 views at once.")
 
         result = self._http_client.request_with_retries(
             ItemsRequest(
@@ -38,6 +62,28 @@ class ViewsAPI(NeatAPI):
         )
         result.raise_for_status()
         result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
+        return result.items
+
+    def delete(self, items: list[ViewReference]) -> list[ViewReference]:
+        """Delete views by their identifiers.
+
+        Args:
+            items: List of (space, external_id, version) tuples identifying the views to delete.
+        """
+        if not items:
+            return []
+        if len(items) > 100:
+            raise ValueError("Cannot delete more than 100 views at once.")
+
+        result = self._http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self._config.create_api_url("/models/views/byids"),
+                method="DELETE",
+                body=ItemIDBody(items=items),
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[ViewReference].model_validate_json(result.success_response.body)
         return result.items
 
     def list(
