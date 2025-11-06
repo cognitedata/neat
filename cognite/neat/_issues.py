@@ -8,6 +8,11 @@ class Issue(BaseModel):
 
     message: str
     code: str | None = None
+    fix: str | None = None
+
+    @classmethod
+    def issue_type(cls) -> str:
+        return cls.__name__
 
 
 class ModelSyntaxError(Issue):
@@ -21,8 +26,7 @@ class ImplementationWarning(Issue):
     """This is only for conceptual data model. It means that conversion to DMS
     will fail unless user implements the missing part."""
 
-    message: str
-    fix: str
+    ...
 
 
 class ConsistencyError(Issue):
@@ -31,15 +35,13 @@ class ConsistencyError(Issue):
     DMS model.
     """
 
-    message: str
-    fix: str | None = None
+    ...
 
 
 class Recommendation(Issue):
     """Best practice recommendation."""
 
-    message: str
-    fix: str | None = None
+    ...
 
 
 class IssueList(UserList[Issue]):
