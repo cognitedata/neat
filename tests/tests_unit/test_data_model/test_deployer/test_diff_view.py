@@ -25,6 +25,7 @@ from cognite.neat._data_model.models.dms import (
 
 
 class TestViewDiffer:
+    TO_MODIFY_ID = "toModify"
     cdf_view = ViewRequest(
         space="test_space",
         externalId="test_view",
@@ -34,7 +35,7 @@ class TestViewDiffer:
         filter={"equals": {"property": ["node", "type"], "value": "TestNode"}},
         implements=[ViewReference(space="core", external_id="base_view", version="1")],
         properties={
-            "toModify": ViewCorePropertyRequest(
+            TO_MODIFY_ID: ViewCorePropertyRequest(
                 container=ContainerReference(space="test_space", external_id="test_container"),
                 containerPropertyIdentifier="name",
             ),
@@ -57,7 +58,7 @@ class TestViewDiffer:
             ViewReference(space="core", external_id="extra_view", version="2"),
         ],
         properties={
-            "toModify": ViewCorePropertyRequest(
+            TO_MODIFY_ID: ViewCorePropertyRequest(
                 container=ContainerReference(space="test_space", external_id="test_container"),
                 containerPropertyIdentifier="anotherProperty",
             ),
@@ -115,10 +116,10 @@ class TestViewDiffer:
                         current_value=cdf_view.properties["toRemove"],  # type: ignore[index]
                     ),
                     FieldChanges(
-                        field_path="properties.toModify",
+                        field_path=f"properties.{TO_MODIFY_ID}",
                         changes=[
                             ChangedField(
-                                field_path="containerPropertyIdentifier",
+                                field_path=f"properties.{TO_MODIFY_ID}.containerPropertyIdentifier",
                                 item_severity=SeverityType.BREAKING,
                                 current_value="name",
                                 new_value="anotherProperty",
@@ -133,6 +134,8 @@ class TestViewDiffer:
     def test_view_diff(self, resource: ViewRequest, expected_diff: list[FieldChange]) -> None:
         actual_diffs = ViewDiffer().diff(self.cdf_view, resource)
         assert expected_diff == actual_diffs
+
+    VIEW_PROPERTY_ID = "property_id"
 
     @pytest.mark.parametrize(
         "cdf_property,desired_property,expected_diff",
@@ -154,31 +157,31 @@ class TestViewDiffer:
                 ),
                 [
                     ChangedField(
-                        field_path="name",
+                        field_path=f"{VIEW_PROPERTY_ID}.name",
                         item_severity=SeverityType.SAFE,
                         current_value="Property A",
                         new_value="Property B",
                     ),
                     ChangedField(
-                        field_path="description",
+                        field_path=f"{VIEW_PROPERTY_ID}.description",
                         item_severity=SeverityType.SAFE,
                         current_value="Description A",
                         new_value="Description B",
                     ),
                     ChangedField(
-                        field_path="container",
+                        field_path=f"{VIEW_PROPERTY_ID}.container",
                         item_severity=SeverityType.BREAKING,
                         current_value=ContainerReference(space="space_a", external_id="container_a"),
                         new_value=ContainerReference(space="space_b", external_id="container_b"),
                     ),
                     ChangedField(
-                        field_path="containerPropertyIdentifier",
+                        field_path=f"{VIEW_PROPERTY_ID}.containerPropertyIdentifier",
                         item_severity=SeverityType.BREAKING,
                         current_value="prop_a",
                         new_value="prop_b",
                     ),
                     ChangedField(
-                        field_path="source",
+                        field_path=f"{VIEW_PROPERTY_ID}.source",
                         item_severity=SeverityType.BREAKING,
                         current_value=ViewReference(space="view_space", external_id="view_a", version="1"),
                         new_value=ViewReference(space="view_space", external_id="view_b", version="2"),
@@ -205,37 +208,37 @@ class TestViewDiffer:
                 ),
                 [
                     ChangedField(
-                        field_path="name",
+                        field_path=f"{VIEW_PROPERTY_ID}.name",
                         item_severity=SeverityType.SAFE,
                         current_value="Edges",
                         new_value="Updated Edges",
                     ),
                     ChangedField(
-                        field_path="description",
+                        field_path=f"{VIEW_PROPERTY_ID}.description",
                         item_severity=SeverityType.SAFE,
                         current_value="Edge connection",
                         new_value="Updated edge connection",
                     ),
                     ChangedField(
-                        field_path="source",
+                        field_path=f"{VIEW_PROPERTY_ID}.source",
                         item_severity=SeverityType.BREAKING,
                         current_value=ViewReference(space="source_space", external_id="source_view", version="1"),
                         new_value=ViewReference(space="source_space", external_id="updated_source_view", version="2"),
                     ),
                     ChangedField(
-                        field_path="type",
+                        field_path=f"{VIEW_PROPERTY_ID}.type",
                         item_severity=SeverityType.BREAKING,
                         current_value=NodeReference(space="node_space_a", external_id="node_type_a"),
                         new_value=NodeReference(space="node_space_b", external_id="node_type_b"),
                     ),
                     ChangedField(
-                        field_path="edgeSource",
+                        field_path=f"{VIEW_PROPERTY_ID}.edgeSource",
                         item_severity=SeverityType.BREAKING,
                         current_value=ViewReference(space="edge_space", external_id="edge_view", version="1"),
                         new_value=ViewReference(space="edge_space", external_id="updated_edge_view", version="2"),
                     ),
                     ChangedField(
-                        field_path="direction",
+                        field_path=f"{VIEW_PROPERTY_ID}.direction",
                         item_severity=SeverityType.BREAKING,
                         current_value="outwards",
                         new_value="inwards",
@@ -264,19 +267,19 @@ class TestViewDiffer:
                 ),
                 [
                     ChangedField(
-                        field_path="name",
+                        field_path=f"{VIEW_PROPERTY_ID}.name",
                         item_severity=SeverityType.SAFE,
                         current_value="Reverse Relation",
                         new_value="Updated Reverse Relation",
                     ),
                     ChangedField(
-                        field_path="description",
+                        field_path=f"{VIEW_PROPERTY_ID}.description",
                         item_severity=SeverityType.SAFE,
                         current_value="A reverse direct relation",
                         new_value="An updated reverse direct relation",
                     ),
                     ChangedField(
-                        field_path="source",
+                        field_path=f"{VIEW_PROPERTY_ID}.source",
                         item_severity=SeverityType.BREAKING,
                         current_value=ViewReference(space="relation_space", external_id="relation_view", version="1"),
                         new_value=ViewReference(
@@ -284,7 +287,7 @@ class TestViewDiffer:
                         ),
                     ),
                     ChangedField(
-                        field_path="through",
+                        field_path=f"{VIEW_PROPERTY_ID}.through",
                         item_severity=SeverityType.BREAKING,
                         current_value=ViewDirectReference(
                             source=ViewReference(space="through_space", external_id="through_view", version="1"),
@@ -312,7 +315,7 @@ class TestViewDiffer:
                 ),
                 [
                     ChangedField(
-                        field_path="connectionType",
+                        field_path=f"{VIEW_PROPERTY_ID}.connectionType",
                         item_severity=SeverityType.BREAKING,
                         current_value="primary_property",
                         new_value="multi_edge_connection",
@@ -328,5 +331,5 @@ class TestViewDiffer:
         desired_property: ViewCorePropertyRequest | MultiEdgeProperty | SingleReverseDirectRelationPropertyRequest,
         expected_diff: list[ChangedField],
     ) -> None:
-        actual = ViewPropertyDiffer().diff(cdf_property, desired_property)
+        actual = ViewPropertyDiffer().diff(cdf_property, desired_property, self.VIEW_PROPERTY_ID)
         assert expected_diff == actual

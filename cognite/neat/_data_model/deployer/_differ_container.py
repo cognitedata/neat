@@ -15,7 +15,7 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._data_model.models.dms._data_types import Unit
 
-from ._differ import ItemDiffer, field_differences
+from ._differ import ItemDiffer, ObjectDiffer, field_differences
 from .data_classes import (
     AddedField,
     ChangedField,
@@ -34,7 +34,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.BREAKING,
-                    field_path="usedFor",
+                    field_path=self._get_path("usedFor"),
                     current_value=current.used_for,
                     new_value=new.used_for,
                 )
@@ -46,7 +46,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 new.properties,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
-                differ=ContainerPropertyDiffer(),
+                differ=ContainerPropertyDiffer("properties"),
             )
         )
         changes.extend(
@@ -57,7 +57,7 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 new.constraints,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.WARNING,
-                differ=ConstraintDiffer(),
+                differ=ConstraintDiffer("constraints"),
             )
         )
         changes.extend(
@@ -68,25 +68,27 @@ class ContainerDiffer(ItemDiffer[ContainerRequest]):
                 new.indexes,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.WARNING,
-                differ=IndexDiffer(),
+                differ=IndexDiffer("indexes"),
             )
         )
 
         return changes
 
 
-class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
-    def diff(self, current: ContainerPropertyDefinition, new: ContainerPropertyDefinition) -> list[FieldChange]:
-        changes = self._diff_name_description(current, new)
-        diffs = DataTypeDiffer().diff(current.type, new.type)
+class ContainerPropertyDiffer(ObjectDiffer[ContainerPropertyDefinition]):
+    def diff(
+        self, current: ContainerPropertyDefinition, new: ContainerPropertyDefinition, identifier: str
+    ) -> list[FieldChange]:
+        changes = self._diff_name_description(current, new, identifier=identifier)
+        diffs = DataTypeDiffer(self._get_path(f"{identifier}.type")).diff(current.type, new.type)
         if diffs:
-            changes.append(FieldChanges(field_path="type", changes=diffs))
+            changes.append(FieldChanges(field_path=self._get_path(f"{identifier}.type"), changes=diffs))
 
         if current.immutable != new.immutable:
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.BREAKING,
-                    field_path="immutable",
+                    field_path=self._get_path(f"{identifier}.immutable"),
                     current_value=current.immutable,
                     new_value=new.immutable,
                 )
@@ -96,7 +98,7 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.BREAKING,
-                    field_path="nullable",
+                    field_path=self._get_path(f"{identifier}.nullable"),
                     current_value=current.nullable,
                     new_value=new.nullable,
                 )
@@ -105,7 +107,7 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.BREAKING,
-                    field_path="autoIncrement",
+                    field_path=self._get_path(f"{identifier}.autoIncrement"),
                     current_value=current.auto_increment,
                     new_value=new.auto_increment,
                 )
@@ -115,7 +117,7 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.BREAKING,
-                    field_path="defaultValue",
+                    field_path=self._get_path(f"{identifier}.defaultValue"),
                     current_value=str(current.default_value),
                     new_value=str(new.default_value),
                 )
@@ -123,14 +125,14 @@ class ContainerPropertyDiffer(ItemDiffer[ContainerPropertyDefinition]):
         return changes
 
 
-class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
-    def diff(self, current: ConstraintDefinition, new: ConstraintDefinition) -> list[FieldChange]:
+class ConstraintDiffer(ObjectDiffer[ConstraintDefinition]):
+    def diff(self, current: ConstraintDefinition, new: ConstraintDefinition, identifier: str) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.constraint_type != new.constraint_type:
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.WARNING,
-                    field_path="constraintType",
+                    field_path=self._get_path(f"{identifier}.constraintType"),
                     current_value=current.constraint_type,
                     new_value=new.constraint_type,
                 )
@@ -143,7 +145,7 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.WARNING,
-                    field_path="require",
+                    field_path=self._get_path(f"{identifier}.require"),
                     current_value=str(current.require),
                     new_value=str(new.require),
                 )
@@ -154,7 +156,7 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path="properties",
+                        field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
                     )
@@ -163,7 +165,7 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path="bySpace",
+                        field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,
                     )
@@ -172,14 +174,14 @@ class ConstraintDiffer(ItemDiffer[ConstraintDefinition]):
         return changes
 
 
-class IndexDiffer(ItemDiffer[IndexDefinition]):
-    def diff(self, current: IndexDefinition, new: IndexDefinition) -> list[FieldChange]:
+class IndexDiffer(ObjectDiffer[IndexDefinition]):
+    def diff(self, current: IndexDefinition, new: IndexDefinition, identifier: str) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.index_type != new.index_type:
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.WARNING,
-                    field_path="indexType",
+                    field_path=self._get_path(f"{identifier}.indexType"),
                     current_value=current.index_type,
                     new_value=new.index_type,
                 )
@@ -189,7 +191,7 @@ class IndexDiffer(ItemDiffer[IndexDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path="properties",
+                        field_path=self._get_path(f"{identifier}.properties"),
                         current_value=str(current.properties),
                         new_value=str(new.properties),
                     )
@@ -199,7 +201,7 @@ class IndexDiffer(ItemDiffer[IndexDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path="cursorable",
+                        field_path=self._get_path(f"{identifier}.cursorable"),
                         current_value=current.cursorable,
                         new_value=new.cursorable,
                     )
@@ -208,7 +210,7 @@ class IndexDiffer(ItemDiffer[IndexDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path="bySpace",
+                        field_path=self._get_path(f"{identifier}.bySpace"),
                         current_value=current.by_space,
                         new_value=new.by_space,
                     )
@@ -223,26 +225,26 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.BREAKING,
-                    field_path="type",
+                    field_path=self._get_path("type"),
                     current_value=current.type,
                     new_value=new.type,
                 )
             )
         if isinstance(current, ListablePropertyTypeDefinition) and isinstance(new, ListablePropertyTypeDefinition):
-            changes.extend(self._check_listable_property(current, new))
+            changes.extend(self._diff_listable_property(current, new))
 
         if isinstance(current, TextProperty) and isinstance(new, TextProperty):
-            changes.extend(self._check_text_property(current, new))
+            changes.extend(self._diff_text_property(current, new))
 
         if isinstance(current, FloatProperty) and isinstance(new, FloatProperty):
-            changes.extend(self._check_float_unit(current.unit, new.unit))
+            changes.extend(self._diff_float_unit(current.unit, new.unit))
 
         if isinstance(current, EnumProperty) and isinstance(new, EnumProperty):
-            changes.extend(self._check_enum_property(current, new))
+            changes.extend(self._diff_enum_property(current, new))
 
         return changes
 
-    def _check_listable_property(
+    def _diff_listable_property(
         self, current: ListablePropertyTypeDefinition, new: ListablePropertyTypeDefinition
     ) -> list[FieldChange]:
         changes: list[FieldChange] = []
@@ -250,7 +252,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.BREAKING,
-                    field_path="list",
+                    field_path=self._get_path("list"),
                     current_value=current.list,
                     new_value=new.list,
                 )
@@ -263,25 +265,29 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                     and current.max_list_size is not None
                     and new.max_list_size < current.max_list_size
                     else SeverityType.WARNING,
-                    field_path="maxListSize",
+                    field_path=self._get_path("maxListSize"),
                     current_value=current.max_list_size,
                     new_value=new.max_list_size,
                 )
             )
         return changes
 
-    def _check_float_unit(self, current: Unit | None, new: Unit | None) -> list[FieldChange]:
+    def _diff_float_unit(self, current: Unit | None, new: Unit | None) -> list[FieldChange]:
         if current is not None and new is None:
-            return [RemovedField(field_path="unit", item_severity=SeverityType.WARNING, current_value=current)]
+            return [
+                RemovedField(
+                    field_path=self._get_path("unit"), item_severity=SeverityType.WARNING, current_value=current
+                )
+            ]
         elif current is None and new is not None:
-            return [AddedField(field_path="unit", item_severity=SeverityType.WARNING, new_value=new)]
+            return [AddedField(field_path=self._get_path("unit"), item_severity=SeverityType.WARNING, new_value=new)]
         elif current is not None and new is not None:
             changes: list[FieldChange] = []
             if current.external_id != new.external_id:
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path="externalId",
+                        field_path=self._get_path("externalId"),
                         current_value=current.external_id,
                         new_value=new.external_id,
                     )
@@ -290,16 +296,16 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 changes.append(
                     ChangedField(
                         item_severity=SeverityType.WARNING,
-                        field_path="sourceUnit",
+                        field_path=self._get_path("sourceUnit"),
                         current_value=current.source_unit,
                         new_value=new.source_unit,
                     )
                 )
             if changes:
-                return [FieldChanges(field_path="unit", changes=changes)]
+                return [FieldChanges(field_path=self._get_path("unit"), changes=changes)]
         return []  # No changes
 
-    def _check_text_property(self, current: TextProperty, new: TextProperty) -> list[FieldChange]:
+    def _diff_text_property(self, current: TextProperty, new: TextProperty) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.max_text_size != new.max_text_size:
             changes.append(
@@ -309,7 +315,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                     and current.max_text_size is not None
                     and new.max_text_size < current.max_text_size
                     else SeverityType.WARNING,
-                    field_path="maxTextSize",
+                    field_path=self._get_path("maxTextSize"),
                     current_value=current.max_text_size,
                     new_value=new.max_text_size,
                 )
@@ -318,37 +324,37 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.WARNING,
-                    field_path="collation",
+                    field_path=self._get_path("collation"),
                     current_value=current.collation,
                     new_value=new.collation,
                 )
             )
         return changes
 
-    def _check_enum_property(self, current: EnumProperty, new: EnumProperty) -> list[FieldChange]:
+    def _diff_enum_property(self, current: EnumProperty, new: EnumProperty) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.unknown_value != new.unknown_value:
             changes.append(
                 ChangedField(
                     item_severity=SeverityType.WARNING,
-                    field_path="unknownValue",
+                    field_path=self._get_path("unknownValue"),
                     current_value=current.unknown_value,
                     new_value=new.unknown_value,
                 )
             )
         changes.extend(
             field_differences(
-                "values",
+                self._get_path("values"),
                 current.values,
                 new.values,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
-                differ=EnumValueDiffer(),
+                differ=EnumValueDiffer(self._get_path("values")),
             )
         )
         return changes
 
 
-class EnumValueDiffer(ItemDiffer[EnumValue]):
-    def diff(self, current: EnumValue, new: EnumValue) -> list[FieldChange]:
-        return self._diff_name_description(current, new)
+class EnumValueDiffer(ObjectDiffer[EnumValue]):
+    def diff(self, current: EnumValue, new: EnumValue, identifier: str) -> list[FieldChange]:
+        return self._diff_name_description(current, new, identifier=identifier)
