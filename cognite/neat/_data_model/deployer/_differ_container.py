@@ -229,20 +229,20 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 )
             )
         if isinstance(current, ListablePropertyTypeDefinition) and isinstance(new, ListablePropertyTypeDefinition):
-            changes.extend(self._check_listable_property(current, new))
+            changes.extend(self._diff_listable_property(current, new))
 
         if isinstance(current, TextProperty) and isinstance(new, TextProperty):
-            changes.extend(self._check_text_property(current, new))
+            changes.extend(self._diff_text_property(current, new))
 
         if isinstance(current, FloatProperty) and isinstance(new, FloatProperty):
-            changes.extend(self._check_float_unit(current.unit, new.unit))
+            changes.extend(self._diff_float_unit(current.unit, new.unit))
 
         if isinstance(current, EnumProperty) and isinstance(new, EnumProperty):
-            changes.extend(self._check_enum_property(current, new))
+            changes.extend(self._diff_enum_property(current, new))
 
         return changes
 
-    def _check_listable_property(
+    def _diff_listable_property(
         self, current: ListablePropertyTypeDefinition, new: ListablePropertyTypeDefinition
     ) -> list[FieldChange]:
         changes: list[FieldChange] = []
@@ -270,7 +270,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             )
         return changes
 
-    def _check_float_unit(self, current: Unit | None, new: Unit | None) -> list[FieldChange]:
+    def _diff_float_unit(self, current: Unit | None, new: Unit | None) -> list[FieldChange]:
         if current is not None and new is None:
             return [RemovedField(field_path="unit", item_severity=SeverityType.WARNING, current_value=current)]
         elif current is None and new is not None:
@@ -299,7 +299,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
                 return [FieldChanges(field_path="unit", changes=changes)]
         return []  # No changes
 
-    def _check_text_property(self, current: TextProperty, new: TextProperty) -> list[FieldChange]:
+    def _diff_text_property(self, current: TextProperty, new: TextProperty) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.max_text_size != new.max_text_size:
             changes.append(
@@ -325,7 +325,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
             )
         return changes
 
-    def _check_enum_property(self, current: EnumProperty, new: EnumProperty) -> list[FieldChange]:
+    def _diff_enum_property(self, current: EnumProperty, new: EnumProperty) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.unknown_value != new.unknown_value:
             changes.append(
