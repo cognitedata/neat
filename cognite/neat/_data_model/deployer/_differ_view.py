@@ -23,7 +23,7 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
         if current.filter != new.filter:
             changes.append(
                 ChangedField(
-                    field_path="filter",
+                    field_path=self._get_path("filter"),
                     item_severity=SeverityType.BREAKING,
                     new_value=str(new.filter),
                     current_value=str(current.filter),
@@ -33,7 +33,7 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
             # Note that order of implements list is significant
             changes.append(
                 ChangedField(
-                    field_path="implements",
+                    field_path=self._get_path("implements"),
                     item_severity=SeverityType.BREAKING,
                     new_value=str(new.implements),
                     current_value=str(current.implements),
@@ -48,7 +48,7 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                 new.properties,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
-                differ=ViewPropertyDiffer("properties"),
+                differ=ViewPropertyDiffer(self._get_path("properties")),
             )
         )
 
@@ -73,13 +73,13 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
                 )
             )
         elif isinstance(current, ViewCoreProperty) and isinstance(new, ViewCoreProperty):
-            changes.extend(self._diff_core_property(current, new))
+            changes.extend(self._diff_core_property(current, new, identifier))
 
         elif isinstance(current, EdgeProperty) and isinstance(new, EdgeProperty):
-            changes.extend(self._diff_edge_property(current, new))
+            changes.extend(self._diff_edge_property(current, new, identifier))
 
         elif isinstance(current, ReverseDirectRelationProperty) and isinstance(new, ReverseDirectRelationProperty):
-            changes.extend(self._diff_reverse_direct_relation_property(current, new))
+            changes.extend(self._diff_reverse_direct_relation_property(current, new, identifier))
 
         return changes
 
@@ -87,13 +87,14 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         self,
         current: ViewCoreProperty,
         new: ViewCoreProperty,
+        identifier: str,
     ) -> list[FieldChange]:
         changes: list[FieldChange] = []
 
         if current.container != new.container:
             changes.append(
                 ChangedField(
-                    field_path="container",
+                    field_path=self._get_path(f"{identifier}.container"),
                     # Todo check container type.
                     item_severity=SeverityType.BREAKING,
                     new_value=new.container,
@@ -103,7 +104,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         if current.container_property_identifier != new.container_property_identifier:
             changes.append(
                 ChangedField(
-                    field_path="containerPropertyIdentifier",
+                    field_path=self._get_path(f"{identifier}.containerPropertyIdentifier"),
                     # Todo check container property type.
                     item_severity=SeverityType.BREAKING,
                     new_value=new.container_property_identifier,
@@ -113,7 +114,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         if current.source != new.source:
             changes.append(
                 ChangedField(
-                    field_path="source",
+                    field_path=self._get_path(f"{identifier}.source"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.source,
                     current_value=current.source,
@@ -126,12 +127,13 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         self,
         current: EdgeProperty,
         new: EdgeProperty,
+        identifier: str,
     ) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.source != new.source:
             changes.append(
                 ChangedField(
-                    field_path="source",
+                    field_path=self._get_path(f"{identifier}.source"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.source,
                     current_value=current.source,
@@ -140,7 +142,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         if current.type != new.type:
             changes.append(
                 ChangedField(
-                    field_path="type",
+                    field_path=self._get_path(f"{identifier}.type"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.type,
                     current_value=current.type,
@@ -149,7 +151,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         if current.edge_source != new.edge_source:
             changes.append(
                 ChangedField(
-                    field_path="edgeSource",
+                    field_path=self._get_path(f"{identifier}.edgeSource"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.edge_source,
                     current_value=current.edge_source,
@@ -158,7 +160,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         if current.direction != new.direction:
             changes.append(
                 ChangedField(
-                    field_path="direction",
+                    field_path=self._get_path(f"{identifier}.direction"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.direction,
                     current_value=current.direction,
@@ -170,12 +172,13 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         self,
         current: ReverseDirectRelationProperty,
         new: ReverseDirectRelationProperty,
+        identifier: str,
     ) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.source != new.source:
             changes.append(
                 ChangedField(
-                    field_path="source",
+                    field_path=self._get_path(f"{identifier}.source"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.source,
                     current_value=current.source,
@@ -185,7 +188,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         if current.through != new.through:
             changes.append(
                 ChangedField(
-                    field_path="through",
+                    field_path=self._get_path(f"{identifier}.through"),
                     item_severity=SeverityType.BREAKING,
                     new_value=new.through,
                     current_value=current.through,
