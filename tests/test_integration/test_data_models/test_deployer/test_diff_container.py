@@ -5,7 +5,9 @@ import pytest
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
-from cognite.neat._data_model.deployer.data_classes import ChangedField, SeverityType
+from cognite.neat._data_model.deployer.data_classes import (
+    SeverityType,
+)
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
     ContainerRequest,
@@ -46,19 +48,33 @@ class TestContainerDiffer:
         diffs = ContainerDiffer().diff(current_container, new_container)
         assert len(diffs) == 0
 
-        updated_container = neat_client.containers.apply([new_container])
-        assert len(updated_container) == 1
+        self.assert_allowed_change(new_container, neat_client)
 
     def test_diff_used_for(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
         new_container = current_container.model_copy(deep=True, update={"used_for": "edge"})
+        self.assert_change(current_container, new_container, neat_client, field_path="usedFor")
 
+    @classmethod
+    def assert_change(
+        cls,
+        current_container: ContainerRequest,
+        new_container: ContainerRequest,
+        neat_client: NeatClient,
+        field_path: str,
+    ) -> None:
         diffs = ContainerDiffer().diff(current_container, new_container)
         assert len(diffs) == 1
         diff = diffs[0]
-        assert isinstance(diff, ChangedField)
-        assert diff.field_path == "usedFor"
-        assert diff.item_severity == SeverityType.BREAKING
+        assert diff.field_path == field_path
+        if diff.severity == SeverityType.BREAKING:
+            field_name = field_path.split(".", maxsplit=1)[-1]
+            cls.assert_breaking_change(new_container, neat_client, field_name)
+        else:
+            # Both WARNING and SAFE are allowed changes
+            cls.assert_allowed_change(new_container, neat_client)
 
+    @classmethod
+    def assert_breaking_change(cls, new_container: ContainerRequest, neat_client: NeatClient, field_name: str) -> None:
         with pytest.raises(CDFAPIException) as exc_info:
             _ = neat_client.containers.apply([new_container])
 
@@ -67,4 +83,9 @@ class TestContainerDiffer:
         response = responses[0]
         assert isinstance(response, FailedResponse)
         assert response.error.code == 400
-        assert "usedFor" in response.error.message
+        assert field_name in response.error.message
+
+    @classmethod
+    def assert_allowed_change(cls, new_container: ContainerRequest, neat_client: NeatClient) -> None:
+        updated_container = neat_client.containers.apply([new_container])
+        assert len(updated_container) == 1
