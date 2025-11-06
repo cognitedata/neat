@@ -5,12 +5,15 @@ import pytest
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
+from cognite.neat._data_model.deployer.data_classes import ChangedField, SeverityType
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
     ContainerRequest,
     SpaceResponse,
     TextProperty,
 )
+from cognite.neat._exceptions import CDFAPIException
+from cognite.neat._utils.http_client import FailedResponse
 
 
 @pytest.fixture(scope="function")
@@ -45,3 +48,23 @@ class TestContainerDiffer:
 
         updated_container = neat_client.containers.apply([new_container])
         assert len(updated_container) == 1
+
+    def test_diff_used_for(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
+        new_container = current_container.model_copy(deep=True, update={"used_for": "edge"})
+
+        diffs = ContainerDiffer().diff(current_container, new_container)
+        assert len(diffs) == 1
+        diff = diffs[0]
+        assert isinstance(diff, ChangedField)
+        assert diff.field_path == "usedFor"
+        assert diff.item_severity == SeverityType.BREAKING
+
+        with pytest.raises(CDFAPIException) as exc_info:
+            _ = neat_client.containers.apply([new_container])
+
+        responses = exc_info.value.messages
+        assert len(responses) == 1
+        response = responses[0]
+        assert isinstance(response, FailedResponse)
+        assert response.error.code == 400
+        assert "usedFor" in response.error.message
