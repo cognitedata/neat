@@ -261,15 +261,13 @@ class TestContainerPropertyDiffer:
     def test_diff_float_property_change_source_unit(
         self, current_container: ContainerRequest, neat_client: NeatClient
     ) -> None:
+        float_property = cast(Float32Property, current_container.properties[FLOAT_PROPERTY_ID].type)
+        assert float_property.unit is not None
         new_float_property = current_container.properties[FLOAT_PROPERTY_ID].model_copy(
             deep=True,
             update={
-                "type": current_container.properties[FLOAT_PROPERTY_ID].type.model_copy(
-                    update={
-                        "unit": current_container.properties[FLOAT_PROPERTY_ID].type.unit.model_copy(
-                            update={"source_unit": "cm"}
-                        )
-                    }
+                "type": float_property.model_copy(
+                    update={"unit": float_property.unit.model_copy(update={"source_unit": "cm"})}
                 )
             },
         )
@@ -287,15 +285,13 @@ class TestContainerPropertyDiffer:
     def test_diff_float_property_change_unit_external_id(
         self, current_container: ContainerRequest, neat_client: NeatClient
     ) -> None:
-        new_float_property = current_container.properties[FLOAT_PROPERTY_ID].model_copy(
+        float_property = cast(Float32Property, current_container.properties[FLOAT_PROPERTY_ID].type)
+        assert float_property.unit is not None
+        new_float_property = float_property.model_copy(
             deep=True,
             update={
-                "type": current_container.properties[FLOAT_PROPERTY_ID].type.model_copy(
-                    update={
-                        "unit": current_container.properties[FLOAT_PROPERTY_ID].type.unit.model_copy(
-                            update={"external_id": "length:cm"}
-                        )
-                    }
+                "type": float_property.model_copy(
+                    update={"unit": float_property.unit.model_copy(update={"external_id": "length:cm"})}
                 )
             },
         )
@@ -377,13 +373,12 @@ class TestContainerPropertyDiffer:
         )
 
     def test_diff_enum_property_remove(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        new_values = current_container.properties[ENUM_PROPERTY_ID].type.values.copy()
+        enum_property = cast(EnumProperty, current_container.properties[ENUM_PROPERTY_ID].type)
+        new_values = enum_property.values.copy()
         del new_values["toRemove"]
         new_enum_property = current_container.properties[ENUM_PROPERTY_ID].model_copy(
             deep=True,
-            update={
-                "type": current_container.properties[ENUM_PROPERTY_ID].type.model_copy(update={"values": new_values})
-            },
+            update={"type": enum_property.model_copy(update={"values": new_values})},
         )
         new_container = current_container.model_copy(
             update={"properties": {**current_container.properties, ENUM_PROPERTY_ID: new_enum_property}}
@@ -394,13 +389,12 @@ class TestContainerPropertyDiffer:
         )
 
     def test_diff_enum_property_modify(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
-        new_values = current_container.properties[ENUM_PROPERTY_ID].type.values.copy()
+        enum_property = cast(EnumProperty, current_container.properties[ENUM_PROPERTY_ID].type)
+        new_values = enum_property.values.copy()
         new_values["toModify"] = EnumValue(description="Updated description")
         new_enum_property = current_container.properties[ENUM_PROPERTY_ID].model_copy(
             deep=True,
-            update={
-                "type": current_container.properties[ENUM_PROPERTY_ID].type.model_copy(update={"values": new_values})
-            },
+            update={"type": enum_property.model_copy(update={"values": new_values})},
         )
         new_container = current_container.model_copy(
             update={"properties": {**current_container.properties, ENUM_PROPERTY_ID: new_enum_property}}
