@@ -110,7 +110,7 @@ Properties:
 {generate_container_references("ViewWithTooManyContainers", 11)}
 # Container with 101 properties (exceeds 100 limit)
 {generate_large_container_props("ViewWithLargeContainer", "ContainerWithTooManyProperties", 101)}
-# Direct relation list exceeding 1000 limit (Limit o)
+# Direct relation list exceeding 1000 limit (exceeds 1000 limit)
 - View: ViewWithTooManyDirectRelations
   View Property: directRelations
   Connection: direct
