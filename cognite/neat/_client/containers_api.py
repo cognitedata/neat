@@ -17,7 +17,7 @@ class ContainersAPI(NeatAPI):
         """Apply (create or update) containers in CDF.
 
         Args:
-            items: List of ContainerReference objects to apply.
+            items: List of ContainerRequest objects to apply.
         Returns:
             List of ContainerResponse objects.
         """
@@ -68,7 +68,7 @@ class ContainersAPI(NeatAPI):
         """Delete containers by their identifiers.
 
         Args:
-            items: List of (space, external_id) tuples identifying the containers to delete.
+            items: List of ContainerReference objects identifying the containers to delete.
 
         Returns:
             List of ContainerReference objects representing the deleted containers.
