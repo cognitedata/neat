@@ -192,6 +192,13 @@ Enum:
         "Container my_space:DirectRelationContainer has property directRelations with list size 2001",
     }
 
+    expected_problems.update(
+        {f"View my_space:Interface{i}(version=v1) does not have any properties defined" for i in range(1, 12)}
+    )
+    expected_problems.update(
+        {f"View my_space:DataModelView{i}(version=v1) does not have any properties defined" for i in range(101)}
+    )
+
     return yaml, expected_problems
 
 

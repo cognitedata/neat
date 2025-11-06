@@ -18,7 +18,6 @@ from ._validators import (
     ReferencedContainersExist,
     UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
-    ViewsWithoutProperties,
 )
 
 
@@ -85,7 +84,6 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
-            ViewsWithoutProperties(local_resources, cdf_resources),
             UndefinedConnectionEndNodeTypes(local_resources, cdf_resources),
             VersionSpaceInconsistency(local_resources, cdf_resources),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources),
