@@ -23,7 +23,9 @@ def new_session(neat_config: NeatClientConfig) -> NeatSession:
 
 
 @pytest.fixture()
-def empty_cdf(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> respx.MockRouter:
+def empty_cdf(
+    neat_config: NeatClientConfig, example_statistics_response: dict, respx_mock: respx.MockRouter
+) -> respx.MockRouter:
     config = neat_config
     for endpoint in [
         "/models/spaces/byids",
@@ -40,6 +42,13 @@ def empty_cdf(neat_config: NeatClientConfig, respx_mock: respx.MockRouter) -> re
                 "nextCursor": None,
             },
         )
+
+    respx_mock.get(
+        config.create_api_url("/models/statistics"),
+    ).respond(
+        status_code=200,
+        json=example_statistics_response,
+    )
     return respx_mock
 
 

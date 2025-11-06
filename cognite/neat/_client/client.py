@@ -6,6 +6,7 @@ from .config import NeatClientConfig
 from .containers_api import ContainersAPI
 from .data_model_api import DataModelsAPI
 from .spaces_api import SpacesAPI
+from .statistics_api import StatisticsAPI
 from .views_api import ViewsAPI
 
 
@@ -17,3 +18,4 @@ class NeatClient:
         self.views = ViewsAPI(self.config, self.http_client)
         self.containers = ContainersAPI(self.config, self.http_client)
         self.spaces = SpacesAPI(self.config, self.http_client)
+        self.statistics = StatisticsAPI(self.config, self.http_client)

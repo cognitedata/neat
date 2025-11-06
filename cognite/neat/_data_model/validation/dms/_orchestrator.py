@@ -1,6 +1,7 @@
 from itertools import chain
 
 from cognite.neat._client import NeatClient
+from cognite.neat._client.statistics_api import DmsStatistics
 from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._container import ContainerRequest
@@ -36,7 +37,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._modus_operandi = modus_operandi
         self._has_run = False
 
-    def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources]:
+    def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources, DmsStatistics]:
         """Gather local and CDF resources needed for validation."""
 
         analysis = DataModelAnalysis(data_model)
@@ -74,13 +75,15 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             data_model_views=cdf_data_model_views,
         )
 
-        return local_resources, cdf_resources
+        cdf_statistics = self._cdf_statistics()
+
+        return local_resources, cdf_resources, cdf_statistics
 
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
 
         # Helper wrangled data model components
-        local_resources, cdf_resources = self._gather_resources(data_model)
+        local_resources, cdf_resources, cdf_statistics = self._gather_resources(data_model)
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
@@ -89,7 +92,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             VersionSpaceInconsistency(local_resources, cdf_resources),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources),
             ReferencedContainersExist(local_resources, cdf_resources),
-            DataModelLimitValidator(local_resources, cdf_resources, None, self._modus_operandi),
+            DataModelLimitValidator(local_resources, cdf_resources, cdf_statistics, self._modus_operandi),
         ]
 
         # Run validators
@@ -133,6 +136,14 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         return {
             response.as_reference(): response.as_request() for response in self._client.containers.retrieve(containers)
         }
+
+    def _cdf_statistics(self) -> DmsStatistics:
+        """Fetch DMS statistics from CDF."""
+
+        if not self._client:
+            return DmsStatistics()
+        stats_response = self._client.statistics.project()
+        return DmsStatistics.from_api_response(stats_response)
 
     def _referenced_containers(
         self,
