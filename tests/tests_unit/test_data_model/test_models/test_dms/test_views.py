@@ -310,4 +310,9 @@ class TestViewResponse:
             )
             for keys in response_only_prop_keys:
                 response_dumped_prop.pop(keys, None)
+            request_only_prop_keys = set(type(request_prop).model_fields.keys()) - set(
+                type(response_prop).model_fields.keys()
+            )
+            for keys in request_only_prop_keys:
+                dumped_prop.pop(keys, None)
             assert dumped_prop == response_dumped_prop
