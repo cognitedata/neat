@@ -85,6 +85,31 @@ def supporting_container2(neat_test_space: SpaceResponse, neat_client: NeatClien
 
 
 @pytest.fixture(scope="function")
+def supporting_edge_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -> Iterable[ContainerRequest]:
+    """Create a container that will be used by the view properties."""
+    random_id = str(uuid4()).replace("-", "_")
+    container = ContainerRequest(
+        space=neat_test_space.space,
+        externalId=f"test_edge_container_{random_id}",
+        name="Supporting Edge Container",
+        description="Container for view property testing",
+        usedFor="edge",
+        properties={
+            "edgeProp": ContainerPropertyDefinition(
+                type=TextProperty(),
+                nullable=True,
+            ),
+        },
+    )
+    try:
+        created = neat_client.containers.apply([container])
+        assert len(created) == 1
+        yield created[0].as_request()
+    finally:
+        neat_client.containers.delete([container.as_reference()])
+
+
+@pytest.fixture(scope="function")
 def supporting_view(
     neat_test_space: SpaceResponse, neat_client: NeatClient, supporting_container: ContainerRequest
 ) -> Iterable[ViewRequest]:
@@ -151,11 +176,70 @@ def supporting_view2(
 
 
 @pytest.fixture(scope="function")
+def supporting_edge_view(
+    neat_test_space: SpaceResponse,
+    neat_client: NeatClient,
+    supporting_edge_container: ContainerRequest,
+) -> Iterable[ViewRequest]:
+    """Create a view that will be used as edge source for edge properties."""
+    random_id = str(uuid4()).replace("-", "_")
+    view = ViewRequest(
+        space=neat_test_space.space,
+        externalId=f"test_supporting_edge_view_{random_id}",
+        version="v1",
+        name="Supporting Edge View",
+        description="View for edge property testing",
+        properties={
+            "edgeProp": ViewCorePropertyRequest(
+                container=supporting_edge_container.as_reference(),
+                containerPropertyIdentifier="edgeProp",
+            ),
+        },
+    )
+    try:
+        created = neat_client.views.apply([view])
+        assert len(created) == 1
+        yield created[0].as_request()
+    finally:
+        neat_client.views.delete([view.as_reference()])
+
+
+@pytest.fixture(scope="function")
+def supporting_edge_view2(
+    neat_test_space: SpaceResponse,
+    neat_client: NeatClient,
+    supporting_edge_container: ContainerRequest,
+) -> Iterable[ViewRequest]:
+    """Create a view that will be used as edge source for edge properties."""
+    random_id = str(uuid4()).replace("-", "_")
+    view = ViewRequest(
+        space=neat_test_space.space,
+        externalId=f"test_supporting_edge_view2_{random_id}",
+        version="v1",
+        name="Supporting Edge View 2",
+        description="View for edge property testing",
+        properties={
+            "edgeProp": ViewCorePropertyRequest(
+                container=supporting_edge_container.as_reference(),
+                containerPropertyIdentifier="edgeProp",
+            ),
+        },
+    )
+    try:
+        created = neat_client.views.apply([view])
+        assert len(created) == 1
+        yield created[0].as_request()
+    finally:
+        neat_client.views.delete([view.as_reference()])
+
+
+@pytest.fixture(scope="function")
 def current_view(
     neat_test_space: SpaceResponse,
     neat_client: NeatClient,
     supporting_container: ContainerRequest,
     supporting_view: ViewRequest,
+    supporting_edge_view: ViewRequest,
 ) -> Iterable[ViewRequest]:
     """This is the view in CDF before changes."""
     random_id = str(uuid4()).replace("-", "_")
@@ -189,7 +273,7 @@ def current_view(
                 description="An edge property",
                 source=supporting_view.as_reference(),
                 type=NodeReference(space=neat_test_space.space, external_id="NodeType"),
-                edgeSource=None,
+                edgeSource=supporting_edge_view.as_reference(),
                 direction="outwards",
             ),
             REVERSE_DIRECT_RELATION_PROPERTY_ID: SingleReverseDirectRelationPropertyRequest(
@@ -326,50 +410,33 @@ class TestViewCorePropertyDiffer:
 
 
 class TestViewEdgePropertyDiffer:
-    def test_diff_property_name(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        edge_property = cast(SingleEdgeProperty, current_view.properties[EDGE_PROPERTY_ID])
-        new_edge_property = edge_property.model_copy(deep=True, update={"name": "Updated Edge Property"})
-        new_view = current_view.model_copy(
-            update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
-        )
-
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.name")
-
-    def test_diff_property_description(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        edge_property = cast(SingleEdgeProperty, current_view.properties[EDGE_PROPERTY_ID])
-        new_edge_property = edge_property.model_copy(deep=True, update={"description": "Updated description"})
-        new_view = current_view.model_copy(
-            update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
-        )
-
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.description")
-
     def test_diff_connection_type(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        edge_property = cast(SingleEdgeProperty, current_view.properties[EDGE_PROPERTY_ID])
+        single_edge = cast(SingleEdgeProperty, current_view.properties[EDGE_PROPERTY_ID])
         # Change from single edge to multi edge
-        new_edge_property = MultiEdgeProperty(
-            name=edge_property.name,
-            description=edge_property.description,
-            source=edge_property.source,
-            type=edge_property.type,
-            edge_source=edge_property.edge_source,
-            direction=edge_property.direction,
+        new_multi_edge = MultiEdgeProperty.model_validate(
+            single_edge.model_dump(by_alias=True, exclude={"connection_type"})
         )
         new_view = current_view.model_copy(
-            update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
+            update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_multi_edge}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.connectionType")
+        assert_change(
+            current_view,
+            new_view,
+            neat_client,
+            field_path=f"properties.{EDGE_PROPERTY_ID}.connectionType",
+            in_error_message="'edgeProperty' would change type from single_edge_connection to multi_edge_connection",
+        )
 
     def test_diff_source(
-        self, current_view: ViewRequest, neat_test_space: SpaceResponse, neat_client: NeatClient
+        self,
+        current_view: ViewRequest,
+        neat_test_space: SpaceResponse,
+        neat_client: NeatClient,
+        supporting_view2: ViewRequest,
     ) -> None:
-        # Use a different CDM view as source
         edge_property = cast(SingleEdgeProperty, current_view.properties[EDGE_PROPERTY_ID])
-        new_edge_property = edge_property.model_copy(
-            deep=True,
-            update={"source": ViewReference(space="cdf_cdm", external_id="CogniteSourceable", version="v1")},
-        )
+        new_edge_property = edge_property.model_copy(deep=True, update={"source": supporting_view2.as_reference()})
         new_view = current_view.model_copy(
             update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
         )
@@ -391,10 +458,16 @@ class TestViewEdgePropertyDiffer:
         assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.type")
 
     def test_diff_edge_source(
-        self, current_view: ViewRequest, supporting_view: ViewRequest, neat_client: NeatClient
+        self,
+        current_view: ViewRequest,
+        supporting_view: ViewRequest,
+        neat_client: NeatClient,
+        supporting_edge_view2: ViewRequest,
     ) -> None:
         edge_property = cast(SingleEdgeProperty, current_view.properties[EDGE_PROPERTY_ID])
-        new_edge_property = edge_property.model_copy(deep=True, update={"edge_source": supporting_view.as_reference()})
+        new_edge_property = edge_property.model_copy(
+            deep=True, update={"edge_source": supporting_edge_view2.as_reference()}
+        )
         new_view = current_view.model_copy(
             update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
         )
