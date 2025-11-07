@@ -34,7 +34,7 @@ REVERSE_DIRECT_RELATION_PROPERTY_ID = "reverseDirectRelationProperty"
 DIRECT_PROPERTY_ID = "directProperty"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def supporting_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -> Iterable[ContainerRequest]:
     """Create a container that will be used by the view properties."""
     random_id = str(uuid4()).replace("-", "_")
@@ -61,7 +61,7 @@ def supporting_container(neat_test_space: SpaceResponse, neat_client: NeatClient
         neat_client.containers.delete([container.as_reference()])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def supporting_container2(neat_test_space: SpaceResponse, neat_client: NeatClient) -> Iterable[ContainerRequest]:
     """Create a container that will be used by the view properties."""
     random_id = str(uuid4()).replace("-", "_")
@@ -84,7 +84,7 @@ def supporting_container2(neat_test_space: SpaceResponse, neat_client: NeatClien
         neat_client.containers.delete([container.as_reference()])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def supporting_edge_container(neat_test_space: SpaceResponse, neat_client: NeatClient) -> Iterable[ContainerRequest]:
     """Create a container that will be used by the view properties."""
     random_id = str(uuid4()).replace("-", "_")
@@ -109,7 +109,7 @@ def supporting_edge_container(neat_test_space: SpaceResponse, neat_client: NeatC
         neat_client.containers.delete([container.as_reference()])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def supporting_view(
     neat_test_space: SpaceResponse, neat_client: NeatClient, supporting_container: ContainerRequest
 ) -> Iterable[ViewRequest]:
@@ -140,7 +140,7 @@ def supporting_view(
         neat_client.views.delete([view.as_reference()])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def supporting_view2(
     neat_test_space: SpaceResponse,
     neat_client: NeatClient,
@@ -175,7 +175,7 @@ def supporting_view2(
         neat_client.views.delete([view.as_reference()])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def supporting_edge_view(
     neat_test_space: SpaceResponse,
     neat_client: NeatClient,
@@ -204,7 +204,7 @@ def supporting_edge_view(
         neat_client.views.delete([view.as_reference()])
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def supporting_edge_view2(
     neat_test_space: SpaceResponse,
     neat_client: NeatClient,
@@ -485,39 +485,29 @@ class TestViewEdgePropertyDiffer:
 
 
 class TestViewReverseDirectRelationPropertyDiffer:
-    def test_diff_property_name(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
+    def test_diff_type(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         reverse_property = cast(
             SingleReverseDirectRelationPropertyRequest, current_view.properties[REVERSE_DIRECT_RELATION_PROPERTY_ID]
         )
-        new_reverse_property = reverse_property.model_copy(
-            deep=True, update={"name": "Updated Reverse Direct Relation"}
+        # Change from single reverse direct relation to multi reverse direct relation
+        new_multi_reverse_property = SingleReverseDirectRelationPropertyRequest.model_validate(
+            reverse_property.model_dump(by_alias=True, exclude={"connection_type"})
         )
         new_view = current_view.model_copy(
             update={
-                "properties": {**current_view.properties, REVERSE_DIRECT_RELATION_PROPERTY_ID: new_reverse_property}
+                "properties": {
+                    **current_view.properties,
+                    REVERSE_DIRECT_RELATION_PROPERTY_ID: new_multi_reverse_property,
+                }
             }
         )
-
-        assert_change(
-            current_view, new_view, neat_client, field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.name"
-        )
-
-    def test_diff_property_description(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
-        reverse_property = cast(
-            SingleReverseDirectRelationPropertyRequest, current_view.properties[REVERSE_DIRECT_RELATION_PROPERTY_ID]
-        )
-        new_reverse_property = reverse_property.model_copy(deep=True, update={"description": "Updated description"})
-        new_view = current_view.model_copy(
-            update={
-                "properties": {**current_view.properties, REVERSE_DIRECT_RELATION_PROPERTY_ID: new_reverse_property}
-            }
-        )
-
         assert_change(
             current_view,
             new_view,
             neat_client,
-            field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.description",
+            field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.connectionType",
+            in_error_message="'reverseDirectRelationProperty' would change type from single_reverse_direct_relation to "
+            "single_reverse_direct_relation",
         )
 
     def test_diff_source(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
