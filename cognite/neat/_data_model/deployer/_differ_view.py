@@ -221,7 +221,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
             changes.append(
                 ChangedField(
                     field_path=self._get_path(f"{identifier}.through"),
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     new_value=new.through,
                     current_value=current.through,
                 )
