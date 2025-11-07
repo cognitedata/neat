@@ -9,7 +9,7 @@ from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import BaseModelObject
 
 from ._constants import ENUM_VALUE_IDENTIFIER_PATTERN, FORBIDDEN_ENUM_VALUES, INSTANCE_ID_PATTERN
-from ._references import ContainerReference
+from ._references import ContainerReference, ViewReference
 
 
 class PropertyTypeDefinition(BaseModelObject, ABC):
@@ -108,6 +108,11 @@ class DirectNodeRelation(ListablePropertyTypeDefinition):
         "the node must exist before the direct relation is referenced and of the specified type. "
         "If no container specification is used, the node will be auto created with the built-in node "
         "container type, and it does not explicitly have to be created before the node that references it.",
+    )
+    # This property is only available in the response object. It will be ignored in the request object.
+    # In the request object, use ViewCoreProperty.source instead.
+    source: ViewReference | None = Field(
+        None, description="The hint showing the view what the direct relation points to.", exclude=True
     )
 
 

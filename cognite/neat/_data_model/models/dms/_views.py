@@ -1,11 +1,13 @@
 import re
 from abc import ABC
-from typing import Literal, TypeVar
+from typing import Any, Literal, TypeVar
 
-from pydantic import Field, JsonValue, field_validator, model_validator
+from pydantic import Field, JsonValue, field_serializer, field_validator, model_validator
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.text import humanize_collection
 
+from . import DirectNodeRelation
 from ._base import APIResource, Resource, WriteableResource
 from ._constants import (
     CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
@@ -18,6 +20,7 @@ from ._constants import (
 from ._references import ContainerReference, NodeReference, ViewReference
 from ._view_property import (
     EdgeProperty,
+    ViewCorePropertyResponse,
     ViewRequestProperty,
     ViewResponseProperty,
 )
@@ -91,6 +94,20 @@ class View(Resource, APIResource[ViewReference], ABC):
             )
         return val
 
+    @field_serializer("implements", mode="plain")
+    @classmethod
+    def serialize_implements(
+        cls, implements: list[ViewReference] | None, info: FieldSerializationInfo
+    ) -> list[dict[str, Any]] | None:
+        if implements is None:
+            return None
+        output: list[dict[str, Any]] = []
+        for view in implements:
+            dumped = view.model_dump(**vars(info))
+            dumped["type"] = "view"
+            output.append(dumped)
+        return output
+
 
 class ViewRequest(View):
     properties: dict[str, ViewRequestProperty] = Field(
@@ -146,12 +163,20 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
 
     def as_request(self) -> ViewRequest:
         dumped = self.model_dump(by_alias=True, exclude={"properties"})
-        dumped["properties"] = {
-            key: value.as_request().model_dump(by_alias=True)
-            if isinstance(value, WriteableResource)
-            else value.model_dump(by_alias=True)
-            for key, value in self.properties.items()
-        }
+        properties: dict[str, Any] = {}
+        for key, value in self.properties.items():
+            if isinstance(value, ViewCorePropertyResponse) and isinstance(value.type, DirectNodeRelation):
+                # Special case. In the request the source of DirectNodeRelation is set on the Property object,
+                # while in the response it is set on the DirectNodeRelation object.
+                request_object = value.as_request().model_dump(by_alias=True)
+                request_object["source"] = value.type.source.model_dump(by_alias=True) if value.type.source else None
+                properties[key] = request_object
+            elif isinstance(value, WriteableResource):
+                properties[key] = value.as_request().model_dump(by_alias=True)
+            else:
+                properties[key] = value.model_dump(by_alias=True)
+
+        dumped["properties"] = properties
         return ViewRequest.model_validate(dumped)
 
 

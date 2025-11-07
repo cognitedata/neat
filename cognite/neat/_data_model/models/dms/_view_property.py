@@ -1,7 +1,8 @@
 from abc import ABC
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, Json, TypeAdapter
+from pydantic import Field, Json, TypeAdapter, field_serializer
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.useful_types import BaseModelObject
 
@@ -39,14 +40,30 @@ class ViewCoreProperty(ViewPropertyDefinition, ABC):
         max_length=255,
         pattern=CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     )
+
+    @field_serializer("container", mode="plain")
+    @classmethod
+    def serialize_container(cls, container: ContainerReference, info: FieldSerializationInfo) -> dict[str, Any]:
+        output = container.model_dump(**vars(info))
+        output["type"] = "container"
+        return output
+
+
+class ViewCorePropertyRequest(ViewCoreProperty):
     source: ViewReference | None = Field(
         default=None,
         description="Indicates on what type a referenced direct relation is expected to be. "
         "Only applicable for direct relation properties.",
     )
 
-
-class ViewCorePropertyRequest(ViewCoreProperty): ...
+    @field_serializer("source", mode="plain")
+    @classmethod
+    def serialize_source(cls, source: ViewReference | None, info: FieldSerializationInfo) -> dict[str, Any] | None:
+        if source is None:
+            return None
+        output = source.model_dump(**vars(info))
+        output["type"] = "view"
+        return output
 
 
 class ConstraintOrIndexState(BaseModelObject):
@@ -119,6 +136,15 @@ class EdgeProperty(ConnectionPropertyDefinition, ABC):
         "outwards", description="The direction of the edge(s) of this connection."
     )
 
+    @field_serializer("source", "edge_source", mode="plain")
+    @classmethod
+    def serialize_source(cls, source: ViewReference | None, info: FieldSerializationInfo) -> dict[str, Any] | None:
+        if source is None:
+            return None
+        output = source.model_dump(**vars(info))
+        output["type"] = "view"
+        return output
+
 
 class SingleEdgeProperty(EdgeProperty):
     connection_type: Literal["single_edge_connection"] = "single_edge_connection"
@@ -136,6 +162,25 @@ class ReverseDirectRelationProperty(ConnectionPropertyDefinition, ABC):
     through: ContainerDirectReference | ViewDirectReference = Field(
         description="The view of the node containing the direct relation property."
     )
+
+    @field_serializer("source", mode="plain")
+    @classmethod
+    def serialize_source(cls, source: ViewReference, info: FieldSerializationInfo) -> dict[str, Any] | None:
+        output = source.model_dump(**vars(info))
+        output["type"] = "view"
+        return output
+
+    @field_serializer("through", mode="plain")
+    @classmethod
+    def serialize_through(
+        cls, through: ContainerDirectReference | ViewDirectReference, info: FieldSerializationInfo
+    ) -> dict[str, Any]:
+        output = through.model_dump(**vars(info))
+        if isinstance(through, ContainerDirectReference):
+            output["source"]["type"] = "container"
+        else:
+            output["source"]["type"] = "view"
+        return output
 
 
 class SingleReverseDirectRelationPropertyRequest(ReverseDirectRelationProperty):
