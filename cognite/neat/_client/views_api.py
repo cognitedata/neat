@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from cognite.neat._data_model.models.dms import DataModelBody, ViewReference, ViewRequest, ViewResponse
+from cognite.neat._utils.collection import chunker_sequence
 from cognite.neat._utils.http_client import ItemIDBody, ItemsRequest, ParametersRequest
 from cognite.neat._utils.useful_types import PrimitiveType
 
@@ -49,22 +50,20 @@ class ViewsAPI(NeatAPI):
         Returns:
             List of ViewResponse objects.
         """
-        if not items:
-            return []
-        if len(items) > 100:
-            raise ValueError("Cannot retrieve more than 100 views at once.")
-
-        result = self._http_client.request_with_retries(
-            ItemsRequest(
-                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/byids"),
-                method="POST",
-                body=ItemIDBody(items=items),
-                parameters={"includeInheritedProperties": include_inherited_properties},
+        results: list[ViewResponse] = []
+        for chunk in chunker_sequence(items, 100):
+            batch = self._http_client.request_with_retries(
+                ItemsRequest(
+                    endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/byids"),
+                    method="POST",
+                    body=ItemIDBody(items=chunk),
+                    parameters={"includeInheritedProperties": include_inherited_properties},
+                )
             )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
-        return result.items
+            batch.raise_for_status()
+            result = PagedResponse[ViewResponse].model_validate_json(batch.success_response.body)
+            results.extend(result.items)
+        return results
 
     def delete(self, items: list[ViewReference]) -> list[ViewReference]:
         """Delete views by their identifiers.
