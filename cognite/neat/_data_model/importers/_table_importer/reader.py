@@ -483,7 +483,7 @@ class DMSTableReader:
 
     def read_core_view_property(self, prop: DMSProperty) -> dict[str, Any]:
         source: dict[str, str | None] | None = None
-        if prop.connection is not None and str(prop.value_type) != self.CELL_MISSING:
+        if prop.connection is not None and prop.value_type.suffix != self.CELL_MISSING:
             source = self._create_view_ref(prop.value_type)
 
         return dict(
