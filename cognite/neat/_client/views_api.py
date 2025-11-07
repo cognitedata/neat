@@ -51,7 +51,7 @@ class ViewsAPI(NeatAPI):
         """
         if not items:
             return []
-        if len(items) > 100:
+        if len(items) > 1000:
             raise ValueError("Cannot retrieve more than 100 views at once.")
 
         result = self._http_client.request_with_retries(
