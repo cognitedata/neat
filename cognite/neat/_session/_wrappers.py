@@ -32,9 +32,9 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
                 print(
                     f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__} "
                     f"{'✅' if change.successful else '❌'}"
-                    f" | Issues: {total_issues}"
-                    f" (of which {errors_count} critical)"
-                    f"{newline + 'For more details run neat.issues()' if change.issues or change.errors else ''}"
+                    f"{f' | Issues: {total_issues} (of which {errors_count} critical)' if total_issues > 0 else ''}"
+                    f"{newline + 'For details on issues run neat.issues' if change.issues or change.errors else ''}"
+                    f"{newline + 'For details on result run neat.result' if change.result else ''}"
                 )
 
                 return res
