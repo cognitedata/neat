@@ -175,7 +175,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
             changes.append(
                 ChangedField(
                     field_path=self._get_path(f"{identifier}.type"),
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     new_value=new.type,
                     current_value=current.type,
                 )
@@ -193,7 +193,7 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
             changes.append(
                 ChangedField(
                     field_path=self._get_path(f"{identifier}.direction"),
-                    item_severity=SeverityType.BREAKING,
+                    item_severity=SeverityType.WARNING,
                     new_value=new.direction,
                     current_value=current.direction,
                 )
