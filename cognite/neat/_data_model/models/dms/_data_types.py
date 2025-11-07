@@ -112,7 +112,7 @@ class DirectNodeRelation(ListablePropertyTypeDefinition):
     # This property is only available in the response object. It will be ignored in the request object.
     # In the request object, use ViewCoreProperty.source instead.
     source: ViewReference | None = Field(
-        None, description="The hint showing the view what the direct relation points to."
+        None, description="The hint showing the view what the direct relation points to.", exclude=True
     )
 
 

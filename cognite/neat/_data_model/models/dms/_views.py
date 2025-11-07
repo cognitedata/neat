@@ -171,7 +171,7 @@ class ViewResponse(View, WriteableResource[ViewRequest]):
                 request_object = value.as_request().model_dump(by_alias=True)
                 request_object["source"] = value.type.source.model_dump(by_alias=True) if value.type.source else None
                 properties[key] = request_object
-            if isinstance(value, WriteableResource):
+            elif isinstance(value, WriteableResource):
                 properties[key] = value.as_request().model_dump(by_alias=True)
             else:
                 properties[key] = value.model_dump(by_alias=True)
