@@ -104,7 +104,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "View": "CogniteFile",
                     "View Property": "equipments",
                     "Connection": "direct",
-                    "Value Type": " #N/A",
+                    "Value Type": "#N/A",
                     "Min Count": 0,
                     "Max Count": 1200,
                     "Immutable": False,
