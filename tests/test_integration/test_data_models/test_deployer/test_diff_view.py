@@ -31,6 +31,7 @@ from cognite.neat._utils.http_client import FailedResponse
 CORE_PROPERTY_ID = "coreProperty"
 EDGE_PROPERTY_ID = "edgeProperty"
 REVERSE_DIRECT_RELATION_PROPERTY_ID = "reverseDirectRelationProperty"
+DIRECT_PROPERTY_ID = "directProperty"
 
 
 @pytest.fixture(scope="function")
@@ -48,6 +49,30 @@ def supporting_container(neat_test_space: SpaceResponse, neat_client: NeatClient
                 type=TextProperty(),
                 nullable=True,
             ),
+            "anotherTextProp": ContainerPropertyDefinition(type=TextProperty(), nullable=True),
+            "directProp": ContainerPropertyDefinition(type=DirectNodeRelation(), nullable=True),
+        },
+    )
+    try:
+        created = neat_client.containers.apply([container])
+        assert len(created) == 1
+        yield created[0].as_request()
+    finally:
+        neat_client.containers.delete([container.as_reference()])
+
+
+@pytest.fixture(scope="function")
+def supporting_container2(neat_test_space: SpaceResponse, neat_client: NeatClient) -> Iterable[ContainerRequest]:
+    """Create a container that will be used by the view properties."""
+    random_id = str(uuid4()).replace("-", "_")
+    container = ContainerRequest(
+        space=neat_test_space.space,
+        externalId=f"test_view_container2_{random_id}",
+        name="Supporting Container 2 ",
+        description="Container for view property testing",
+        usedFor="node",
+        properties={
+            "textProp": ContainerPropertyDefinition(type=TextProperty(), nullable=True),
             "directProp": ContainerPropertyDefinition(type=DirectNodeRelation()),
         },
     )
@@ -91,6 +116,41 @@ def supporting_view(
 
 
 @pytest.fixture(scope="function")
+def supporting_view2(
+    neat_test_space: SpaceResponse,
+    neat_client: NeatClient,
+    supporting_container2: ContainerRequest,
+    supporting_view: ViewRequest,
+) -> Iterable[ViewRequest]:
+    """Create a view that will be used as source for edge and reverse relation properties."""
+    random_id = str(uuid4()).replace("-", "_")
+    view = ViewRequest(
+        space=neat_test_space.space,
+        externalId=f"test_supporting_view2_{random_id}",
+        version="v1",
+        name="Supporting View 2",
+        description="View for property testing",
+        properties={
+            "textProp": ViewCorePropertyRequest(
+                container=supporting_container2.as_reference(),
+                containerPropertyIdentifier="textProp",
+            ),
+            "directProp": ViewCorePropertyRequest(
+                container=supporting_container2.as_reference(),
+                containerPropertyIdentifier="directProp",
+                source=supporting_view.as_reference(),
+            ),
+        },
+    )
+    try:
+        created = neat_client.views.apply([view])
+        assert len(created) == 1
+        yield created[0].as_request()
+    finally:
+        neat_client.views.delete([view.as_reference()])
+
+
+@pytest.fixture(scope="function")
 def current_view(
     neat_test_space: SpaceResponse,
     neat_client: NeatClient,
@@ -116,7 +176,13 @@ def current_view(
                 description="A core property",
                 container=supporting_container.as_reference(),
                 containerPropertyIdentifier="textProp",
-                source=None,
+            ),
+            DIRECT_PROPERTY_ID: ViewCorePropertyRequest(
+                name="Direct Property",
+                description="A direct relation property",
+                container=supporting_container.as_reference(),
+                containerPropertyIdentifier="directProp",
+                source=supporting_view.as_reference(),
             ),
             EDGE_PROPERTY_ID: SingleEdgeProperty(
                 name="Edge Property",
@@ -214,51 +280,28 @@ class TestViewDiffer:
 
 class TestViewCorePropertyDiffer:
     def test_diff_container(
-        self, current_view: ViewRequest, neat_test_space: SpaceResponse, neat_client: NeatClient
+        self,
+        current_view: ViewRequest,
+        neat_test_space: SpaceResponse,
+        neat_client: NeatClient,
+        supporting_container2: ContainerRequest,
     ) -> None:
-        # We need to create another container to reference
-        random_id = str(uuid4()).replace("-", "_")
-        other_container = ContainerRequest(
-            space=neat_test_space.space,
-            externalId=f"other_container_{random_id}",
-            name="Other Container",
-            usedFor="node",
-            properties={"textProp": ContainerPropertyDefinition(type=TextProperty(), nullable=True)},
-        )
-        try:
-            created = neat_client.containers.apply([other_container])
-            assert len(created) == 1
-
-            core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
-            new_core_property = core_property.model_copy(
-                deep=True, update={"container": other_container.as_reference()}
-            )
-            new_view = current_view.model_copy(
-                update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
-            )
-
-            assert_change(current_view, new_view, neat_client, field_path=f"properties.{CORE_PROPERTY_ID}.container")
-        finally:
-            neat_client.containers.delete([other_container.as_reference()])
-
-    def test_diff_container_property_identifier(
-        self, current_view: ViewRequest, supporting_container: ContainerRequest, neat_client: NeatClient
-    ) -> None:
-        # First, add another property to the container
-        new_container = supporting_container.model_copy(
-            update={
-                "properties": {
-                    **supporting_container.properties,
-                    "anotherTextProp": ContainerPropertyDefinition(type=TextProperty(), nullable=True),
-                }
-            }
-        )
-        neat_client.containers.apply([new_container])
-
         core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
         new_core_property = core_property.model_copy(
-            deep=True, update={"containerPropertyIdentifier": "anotherTextProp"}
+            deep=True, update={"container": supporting_container2.as_reference()}
         )
+        new_view = current_view.model_copy(
+            update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
+        )
+
+        assert_change(current_view, new_view, neat_client, field_path=f"properties.{CORE_PROPERTY_ID}.container")
+
+    def test_diff_container_property_identifier(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
+        core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
+        new_core_property = core_property.model_copy(
+            deep=True, update={"container_property_identifier": "anotherTextProp"}
+        )
+
         new_view = current_view.model_copy(
             update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
         )
@@ -271,15 +314,15 @@ class TestViewCorePropertyDiffer:
         )
 
     def test_diff_source(
-        self, current_view: ViewRequest, supporting_view: ViewRequest, neat_client: NeatClient
+        self, current_view: ViewRequest, supporting_view2: ViewRequest, neat_client: NeatClient
     ) -> None:
-        core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
-        new_core_property = core_property.model_copy(deep=True, update={"source": supporting_view.as_reference()})
+        direct_property = cast(ViewCorePropertyRequest, current_view.properties[DIRECT_PROPERTY_ID])
+        new_direct_property = direct_property.model_copy(deep=True, update={"source": supporting_view2.as_reference()})
         new_view = current_view.model_copy(
-            update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
+            update={"properties": {**current_view.properties, DIRECT_PROPERTY_ID: new_direct_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{CORE_PROPERTY_ID}.source")
+        assert_change(current_view, new_view, neat_client, field_path=f"properties.{DIRECT_PROPERTY_ID}.source")
 
 
 class TestViewEdgePropertyDiffer:
