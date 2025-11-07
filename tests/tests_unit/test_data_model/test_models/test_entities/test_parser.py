@@ -11,6 +11,11 @@ class TestEntityParser:
         "entity_str,expected",
         [
             pytest.param(
+                "#N/A",
+                ParsedEntity("", "#N/A", {}),
+                id="Special value as entity name",
+            ),
+            pytest.param(
                 "asset:MyAsset(capacity=100,type=storage)",
                 ParsedEntity("asset", "MyAsset", {"capacity": "100", "type": "storage"}),
                 id="Entity with properties",
