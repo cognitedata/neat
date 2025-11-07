@@ -15,6 +15,7 @@ from cognite.neat._data_model.models.dms import (
     ContainerRequest,
     DirectNodeRelation,
     MultiEdgeProperty,
+    MultiReverseDirectRelationPropertyRequest,
     NodeReference,
     SingleEdgeProperty,
     SingleReverseDirectRelationPropertyRequest,
@@ -490,7 +491,7 @@ class TestViewReverseDirectRelationPropertyDiffer:
             SingleReverseDirectRelationPropertyRequest, current_view.properties[REVERSE_DIRECT_RELATION_PROPERTY_ID]
         )
         # Change from single reverse direct relation to multi reverse direct relation
-        new_multi_reverse_property = SingleReverseDirectRelationPropertyRequest.model_validate(
+        new_multi_reverse_property = MultiReverseDirectRelationPropertyRequest.model_validate(
             reverse_property.model_dump(by_alias=True, exclude={"connection_type"})
         )
         new_view = current_view.model_copy(
@@ -507,16 +508,18 @@ class TestViewReverseDirectRelationPropertyDiffer:
             neat_client,
             field_path=f"properties.{REVERSE_DIRECT_RELATION_PROPERTY_ID}.connectionType",
             in_error_message="'reverseDirectRelationProperty' would change type from single_reverse_direct_relation to "
-            "single_reverse_direct_relation",
+            "multi_reverse_direct_relation",
         )
 
-    def test_diff_source(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
+    def test_diff_source(
+        self, current_view: ViewRequest, neat_client: NeatClient, supporting_view2: ViewRequest
+    ) -> None:
         reverse_property = cast(
             SingleReverseDirectRelationPropertyRequest, current_view.properties[REVERSE_DIRECT_RELATION_PROPERTY_ID]
         )
         new_reverse_property = reverse_property.model_copy(
             deep=True,
-            update={"source": ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")},
+            update={"source": supporting_view2.as_reference()},
         )
         new_view = current_view.model_copy(
             update={
@@ -529,18 +532,19 @@ class TestViewReverseDirectRelationPropertyDiffer:
         )
 
     def test_diff_through(
-        self, current_view: ViewRequest, supporting_view: ViewRequest, neat_client: NeatClient
+        self,
+        current_view: ViewRequest,
+        supporting_view: ViewRequest,
+        neat_client: NeatClient,
+        supporting_view2: ViewRequest,
     ) -> None:
         reverse_property = cast(
             SingleReverseDirectRelationPropertyRequest, current_view.properties[REVERSE_DIRECT_RELATION_PROPERTY_ID]
         )
-        # Change the through property to a different property in the same view
-        current_through = cast(ViewDirectReference, reverse_property.through)
-        new_through = ViewDirectReference(
-            source=current_through.source,
-            identifier="differentProp",
+        new_reverse_property = reverse_property.model_copy(
+            deep=True,
+            update={"through": ViewDirectReference(source=supporting_view2.as_reference(), identifier="directProp")},
         )
-        new_reverse_property = reverse_property.model_copy(deep=True, update={"through": new_through})
         new_view = current_view.model_copy(
             update={
                 "properties": {**current_view.properties, REVERSE_DIRECT_RELATION_PROPERTY_ID: new_reverse_property}
