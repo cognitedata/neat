@@ -40,11 +40,6 @@ class ViewCoreProperty(ViewPropertyDefinition, ABC):
         max_length=255,
         pattern=CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN,
     )
-    source: ViewReference | None = Field(
-        default=None,
-        description="Indicates on what type a referenced direct relation is expected to be. "
-        "Only applicable for direct relation properties.",
-    )
 
     @field_serializer("container", mode="plain")
     @classmethod
@@ -52,6 +47,14 @@ class ViewCoreProperty(ViewPropertyDefinition, ABC):
         output = container.model_dump(**vars(info))
         output["type"] = "container"
         return output
+
+
+class ViewCorePropertyRequest(ViewCoreProperty):
+    source: ViewReference | None = Field(
+        default=None,
+        description="Indicates on what type a referenced direct relation is expected to be. "
+        "Only applicable for direct relation properties.",
+    )
 
     @field_serializer("source", mode="plain")
     @classmethod
@@ -61,9 +64,6 @@ class ViewCoreProperty(ViewPropertyDefinition, ABC):
         output = source.model_dump(**vars(info))
         output["type"] = "view"
         return output
-
-
-class ViewCorePropertyRequest(ViewCoreProperty): ...
 
 
 class ConstraintOrIndexState(BaseModelObject):

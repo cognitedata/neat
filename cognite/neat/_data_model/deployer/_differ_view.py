@@ -6,6 +6,7 @@ from cognite.neat._data_model.models.dms._view_property import (
     EdgeProperty,
     ReverseDirectRelationProperty,
     ViewCoreProperty,
+    ViewCorePropertyRequest,
 )
 
 from ._differ import ItemDiffer, ObjectDiffer, field_differences
@@ -141,15 +142,16 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
                     current_value=current.container_property_identifier,
                 )
             )
-        if current.source != new.source:
-            changes.append(
-                ChangedField(
-                    field_path=self._get_path(f"{identifier}.source"),
-                    item_severity=SeverityType.BREAKING,
-                    new_value=new.source,
-                    current_value=current.source,
+        if isinstance(current, ViewCorePropertyRequest) and isinstance(new, ViewCorePropertyRequest):
+            if current.source != new.source:
+                changes.append(
+                    ChangedField(
+                        field_path=self._get_path(f"{identifier}.source"),
+                        item_severity=SeverityType.BREAKING,
+                        new_value=new.source,
+                        current_value=current.source,
+                    )
                 )
-            )
 
         return changes
 
