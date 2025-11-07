@@ -352,7 +352,7 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             name=None,
                             type=DirectNodeRelation(maxListSize=1200, list=True),
                         ),
-                        "equpiments": ContainerPropertyDefinition(
+                        "equipments": ContainerPropertyDefinition(
                             immutable=False,
                             nullable=True,
                             autoIncrement=None,
