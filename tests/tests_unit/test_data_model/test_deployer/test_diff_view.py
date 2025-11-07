@@ -132,8 +132,8 @@ class TestViewDiffer:
     )
     def test_view_diff(self, resource: ViewRequest, expected_diff: list[FieldChange]) -> None:
         actual_diffs = ViewDiffer(
-            current_containers={},
-            new_containers={},
+            current_container_map={},
+            new_container_map={},
         ).diff(self.cdf_view, resource)
         assert expected_diff == actual_diffs
 
@@ -333,7 +333,7 @@ class TestViewDiffer:
         desired_property: ViewCorePropertyRequest | MultiEdgeProperty | SingleReverseDirectRelationPropertyRequest,
         expected_diff: list[ChangedField],
     ) -> None:
-        actual = ViewPropertyDiffer(current_containers={}, new_containers={}).diff(
+        actual = ViewPropertyDiffer(current_container_map={}, new_container_map={}).diff(
             cdf_property, desired_property, self.VIEW_PROPERTY_ID
         )
         assert expected_diff == actual

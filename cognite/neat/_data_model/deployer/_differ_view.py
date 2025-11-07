@@ -26,13 +26,13 @@ from .data_classes import (
 class ViewDiffer(ItemDiffer[ViewRequest]):
     def __init__(
         self,
-        current_containers: dict[ContainerReference, ContainerRequest],
-        new_containers: dict[ContainerReference, ContainerRequest],
+        current_container_map: dict[ContainerReference, ContainerRequest],
+        new_container_map: dict[ContainerReference, ContainerRequest],
         parent_path: str | None = None,
     ):
         super().__init__(parent_path)
-        self._current_containers = current_containers
-        self._new_containers = new_containers
+        self._current_container_map = current_container_map
+        self._new_containe_map = new_container_map
 
     def diff(self, current: ViewRequest, new: ViewRequest) -> list[FieldChange]:
         changes: list[FieldChange] = []
@@ -93,7 +93,9 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                 new.properties,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
-                differ=ViewPropertyDiffer(self._current_containers, self._new_containers, self._get_path("properties")),
+                differ=ViewPropertyDiffer(
+                    self._current_container_map, self._new_containe_map, self._get_path("properties")
+                ),
             )
         )
 
@@ -103,13 +105,13 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
 class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
     def __init__(
         self,
-        current_containers: dict[ContainerReference, ContainerRequest],
-        new_containers: dict[ContainerReference, ContainerRequest],
+        current_container_map: dict[ContainerReference, ContainerRequest],
+        new_container_map: dict[ContainerReference, ContainerRequest],
         parent_path: str | None = None,
     ):
         super().__init__(parent_path)
-        self._current_containers = current_containers
-        self._new_containers = new_containers
+        self._current_container_map = current_container_map
+        self._new_container_map = new_container_map
 
     def diff(
         self,
@@ -271,10 +273,10 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
         new_property_identifier: str,
     ) -> SeverityType:
         current_container_property = self._get_container_property(
-            current_container, current_property_identifier, self._current_containers
+            current_container, current_property_identifier, self._current_container_map
         )
         new_container_property = self._get_container_property(
-            new_container, new_property_identifier, self._new_containers
+            new_container, new_property_identifier, self._new_container_map
         )
         if not current_container_property or not new_container_property:
             return SeverityType.BREAKING

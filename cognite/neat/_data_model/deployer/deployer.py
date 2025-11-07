@@ -139,8 +139,8 @@ class SchemaDeployer(OnSuccessResultProducer):
                     data_model.views,
                     "views",
                     ViewDiffer(
-                        current_containers=snapshot.containers,
-                        new_containers={container.as_reference(): container for container in data_model.containers},
+                        current_container_map=snapshot.containers,
+                        new_container_map={container.as_reference(): container for container in data_model.containers},
                     ),
                 ),
                 self._create_resource_plan(

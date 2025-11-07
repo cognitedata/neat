@@ -106,8 +106,8 @@ class TestResourceDeploymentPlanList:
                             new_value=new_view,
                             current_value=current_view,
                             changes=ViewDiffer(
-                                current_containers={current_container.as_reference(): current_container},
-                                new_containers={new_container.as_reference(): new_container},
+                                current_container_map={current_container.as_reference(): current_container},
+                                new_container_map={new_container.as_reference(): new_container},
                             ).diff(current_view, new_view),
                         )
                     ],
