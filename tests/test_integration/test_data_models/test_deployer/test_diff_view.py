@@ -15,6 +15,7 @@ from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
     DirectNodeRelation,
+    Int32Property,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
     NodeReference,
@@ -52,6 +53,7 @@ def supporting_container(neat_test_space: SpaceResponse, neat_client: NeatClient
                 nullable=True,
             ),
             "anotherTextProp": ContainerPropertyDefinition(type=TextProperty(), nullable=True),
+            "intProp": ContainerPropertyDefinition(type=Int32Property(), nullable=True),
             "directProp": ContainerPropertyDefinition(type=DirectNodeRelation(), nullable=True),
         },
     )
@@ -384,12 +386,13 @@ class TestViewDiffer:
 
 
 class TestViewCorePropertyDiffer:
-    def test_diff_container(
+    def test_diff_container_same_property_type(
         self,
         current_view: ViewRequest,
         neat_test_space: SpaceResponse,
         neat_client: NeatClient,
         supporting_container2: ContainerRequest,
+        all_supporting_containers: dict[ContainerReference, ContainerRequest],
     ) -> None:
         core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
         new_core_property = core_property.model_copy(
@@ -399,9 +402,20 @@ class TestViewCorePropertyDiffer:
             update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{CORE_PROPERTY_ID}.container")
+        assert_change(
+            current_view,
+            new_view,
+            neat_client,
+            field_path=f"properties.{CORE_PROPERTY_ID}.container",
+            all_supporting_containers=all_supporting_containers,
+        )
 
-    def test_diff_container_property_identifier(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
+    def test_diff_container_property_identifier_same_property_type(
+        self,
+        current_view: ViewRequest,
+        neat_client: NeatClient,
+        all_supporting_containers: dict[ContainerReference, ContainerRequest],
+    ) -> None:
         core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
         new_core_property = core_property.model_copy(
             deep=True, update={"container_property_identifier": "anotherTextProp"}
@@ -416,6 +430,29 @@ class TestViewCorePropertyDiffer:
             new_view,
             neat_client,
             field_path=f"properties.{CORE_PROPERTY_ID}.containerPropertyIdentifier",
+            all_supporting_containers=all_supporting_containers,
+        )
+
+    def test_diff_container_property_identifier_change_property_type(
+        self,
+        current_view: ViewRequest,
+        neat_client: NeatClient,
+        all_supporting_containers: dict[ContainerReference, ContainerRequest],
+    ) -> None:
+        core_property = cast(ViewCorePropertyRequest, current_view.properties[CORE_PROPERTY_ID])
+        new_core_property = core_property.model_copy(deep=True, update={"container_property_identifier": "intProp"})
+
+        new_view = current_view.model_copy(
+            update={"properties": {**current_view.properties, CORE_PROPERTY_ID: new_core_property}}
+        )
+
+        assert_change(
+            current_view,
+            new_view,
+            neat_client,
+            field_path=f"properties.{CORE_PROPERTY_ID}.containerPropertyIdentifier",
+            all_supporting_containers=all_supporting_containers,
+            in_error_message=f"property '{CORE_PROPERTY_ID}' would change type",
         )
 
     def test_diff_source(
