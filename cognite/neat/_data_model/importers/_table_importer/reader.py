@@ -121,6 +121,8 @@ class DMSTableReader:
 
     """
 
+    CELL_MISSING = "#N/A"
+
     # The following classes are used when creating error messages. They ensure that the column names
     # matches the names in the table, even if they are renamed in the code.
     # Note that this is not a complete list of all columns, only those that are used in error messages.
@@ -480,13 +482,17 @@ class DMSTableReader:
             return {}
 
     def read_core_view_property(self, prop: DMSProperty) -> dict[str, Any]:
+        source: dict[str, str | None] | None = None
+        if prop.connection is not None and str(prop.value_type) != self.CELL_MISSING:
+            source = self._create_view_ref(prop.value_type)
+
         return dict(
             connectionType="primary_property",
             name=prop.name,
             description=prop.description,
             container=self._create_container_ref(prop.container),
             containerPropertyIdentifier=prop.container_property,
-            source=None if prop.connection is None else self._create_view_ref(prop.value_type),
+            source=source,
         )
 
     def read_edge_view_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
