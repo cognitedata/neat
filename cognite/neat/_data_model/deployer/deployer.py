@@ -134,7 +134,15 @@ class SchemaDeployer(OnSuccessResultProducer):
                 self._create_resource_plan(
                     snapshot.containers, data_model.containers, "containers", ContainerDiffer(), ContainerDeploymentPlan
                 ),
-                self._create_resource_plan(snapshot.views, data_model.views, "views", ViewDiffer()),
+                self._create_resource_plan(
+                    snapshot.views,
+                    data_model.views,
+                    "views",
+                    ViewDiffer(
+                        current_containers=snapshot.containers,
+                        new_containers={container.as_reference(): container for container in data_model.containers},
+                    ),
+                ),
                 self._create_resource_plan(
                     snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()
                 ),

@@ -1,4 +1,7 @@
 from cognite.neat._data_model.models.dms import (
+    ContainerPropertyDefinition,
+    ContainerReference,
+    ContainerRequest,
     ViewPropertyDefinition,
     ViewRequest,
 )
@@ -10,6 +13,7 @@ from cognite.neat._data_model.models.dms._view_property import (
 )
 
 from ._differ import ItemDiffer, ObjectDiffer, field_differences
+from ._differ_container import ContainerPropertyDiffer
 from .data_classes import (
     AddedField,
     ChangedField,
@@ -20,6 +24,16 @@ from .data_classes import (
 
 
 class ViewDiffer(ItemDiffer[ViewRequest]):
+    def __init__(
+        self,
+        current_containers: dict[ContainerReference, ContainerRequest],
+        new_containers: dict[ContainerReference, ContainerRequest],
+        parent_path: str | None = None,
+    ):
+        super().__init__(parent_path)
+        self._current_containers = current_containers
+        self._new_containers = new_containers
+
     def diff(self, current: ViewRequest, new: ViewRequest) -> list[FieldChange]:
         changes: list[FieldChange] = []
         if current.implements != new.implements:
@@ -79,7 +93,7 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
                 new.properties,
                 add_severity=SeverityType.SAFE,
                 remove_severity=SeverityType.BREAKING,
-                differ=ViewPropertyDiffer(self._get_path("properties")),
+                differ=ViewPropertyDiffer(self._current_containers, self._new_containers, self._get_path("properties")),
             )
         )
 
@@ -87,6 +101,16 @@ class ViewDiffer(ItemDiffer[ViewRequest]):
 
 
 class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
+    def __init__(
+        self,
+        current_containers: dict[ContainerReference, ContainerRequest],
+        new_containers: dict[ContainerReference, ContainerRequest],
+        parent_path: str | None = None,
+    ):
+        super().__init__(parent_path)
+        self._current_containers = current_containers
+        self._new_containers = new_containers
+
     def diff(
         self,
         current: ViewPropertyDefinition,
@@ -122,26 +146,36 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
     ) -> list[FieldChange]:
         changes: list[FieldChange] = []
 
-        if current.container != new.container:
-            changes.append(
-                ChangedField(
-                    field_path=self._get_path(f"{identifier}.container"),
-                    # Todo check container type.
-                    item_severity=SeverityType.BREAKING,
-                    new_value=new.container,
-                    current_value=current.container,
-                )
+        if (current.container, current.container_property_identifier) != (
+            new.container,
+            new.container_property_identifier,
+        ):
+            item_severity = self._get_container_change_severity(
+                current.container,
+                current.container_property_identifier,
+                new.container,
+                new.container_property_identifier,
             )
-        if current.container_property_identifier != new.container_property_identifier:
-            changes.append(
-                ChangedField(
-                    field_path=self._get_path(f"{identifier}.containerPropertyIdentifier"),
-                    # Todo check container property type.
-                    item_severity=SeverityType.BREAKING,
-                    new_value=new.container_property_identifier,
-                    current_value=current.container_property_identifier,
+
+            if current.container != new.container:
+                changes.append(
+                    ChangedField(
+                        field_path=self._get_path(f"{identifier}.container"),
+                        item_severity=item_severity,
+                        new_value=new.container,
+                        current_value=current.container,
+                    )
                 )
-            )
+            if current.container_property_identifier != new.container_property_identifier:
+                changes.append(
+                    ChangedField(
+                        field_path=self._get_path(f"{identifier}.containerPropertyIdentifier"),
+                        item_severity=item_severity,
+                        new_value=new.container_property_identifier,
+                        current_value=current.container_property_identifier,
+                    )
+                )
+
         if isinstance(current, ViewCorePropertyRequest) and isinstance(new, ViewCorePropertyRequest):
             if current.source != new.source:
                 changes.append(
@@ -228,3 +262,36 @@ class ViewPropertyDiffer(ObjectDiffer[ViewPropertyDefinition]):
             )
 
         return changes
+
+    def _get_container_change_severity(
+        self,
+        current_container: ContainerReference,
+        current_property_identifier: str,
+        new_container: ContainerReference,
+        new_property_identifier: str,
+    ) -> SeverityType:
+        current_container_property = self._get_container_property(
+            current_container, current_property_identifier, self._current_containers
+        )
+        new_container_property = self._get_container_property(
+            new_container, new_property_identifier, self._new_containers
+        )
+        if not current_container_property or not new_container_property:
+            return SeverityType.BREAKING
+        differ = ContainerPropertyDiffer(parent_path=None)
+        changes = differ.diff(current_container_property, new_container_property, identifier="")
+        return SeverityType.max_severity([item.severity for item in changes], default=SeverityType.SAFE)
+
+    @staticmethod
+    def _get_container_property(
+        container_ref: ContainerReference,
+        property_identifier: str,
+        containers: dict[ContainerReference, ContainerRequest],
+    ) -> ContainerPropertyDefinition | None:
+        container = containers.get(container_ref)
+        if not container:
+            return None
+        property_def = container.properties.get(property_identifier)
+        if not property_def:
+            return None
+        return property_def

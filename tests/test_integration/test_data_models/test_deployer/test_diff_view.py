@@ -12,6 +12,7 @@ from cognite.neat._data_model.deployer.data_classes import (
 )
 from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
+    ContainerReference,
     ContainerRequest,
     DirectNodeRelation,
     MultiEdgeProperty,
@@ -297,10 +298,29 @@ def current_view(
         neat_client.views.delete([view.as_reference()])
 
 
+@pytest.fixture(scope="module")
+def all_supporting_containers(
+    supporting_container: ContainerRequest,
+    supporting_container2: ContainerRequest,
+    supporting_edge_container: ContainerRequest,
+) -> dict[ContainerReference, ContainerRequest]:
+    """Fixture to ensure all supporting containers are created before tests run."""
+    return {
+        supporting_container.as_reference(): supporting_container,
+        supporting_container2.as_reference(): supporting_container2,
+        supporting_edge_container.as_reference(): supporting_edge_container,
+    }
+
+
 class TestViewDiffer:
-    def test_diff_no_changes(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
+    def test_diff_no_changes(
+        self,
+        current_view: ViewRequest,
+        neat_client: NeatClient,
+        all_supporting_containers: dict[ContainerReference, ContainerRequest],
+    ) -> None:
         new_view = current_view.model_copy(deep=True)
-        diffs = ViewDiffer().diff(current_view, new_view)
+        diffs = ViewDiffer(all_supporting_containers, all_supporting_containers).diff(current_view, new_view)
         assert len(diffs) == 0
 
         assert_allowed_change(new_view, neat_client)
@@ -561,9 +581,10 @@ def assert_change(
     new_view: ViewRequest,
     neat_client: NeatClient,
     field_path: str,
+    all_supporting_containers: dict[ContainerReference, ContainerRequest] | None = None,
     in_error_message: str | None = None,
 ) -> None:
-    diffs = ViewDiffer().diff(current_view, new_view)
+    diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(current_view, new_view)
     assert len(diffs) == 1
     diff = diffs[0]
     while isinstance(diff, FieldChanges):
