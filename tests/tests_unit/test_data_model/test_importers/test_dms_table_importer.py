@@ -102,6 +102,17 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                 },
                 {
                     "View": "CogniteFile",
+                    "View Property": "equipments",
+                    "Connection": "direct",
+                    "Value Type": "#N/A",
+                    "Min Count": 0,
+                    "Max Count": 1200,
+                    "Immutable": False,
+                    "Container": "CogniteFile",
+                    "Container Property": "equipments",
+                },
+                {
+                    "View": "CogniteFile",
                     "View Property": "assetAnnotations",
                     "Connection": "edge(edgeSource=FileAnnotation,type=diagramAnnotation)",
                     "Value Type": "CogniteAsset",
@@ -260,6 +271,13 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             containerPropertyIdentifier="assets",
                             source=ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
                         ),
+                        "equipments": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
+                            containerPropertyIdentifier="equipments",
+                            source=None,
+                        ),
                         "assetAnnotations": MultiEdgeProperty(
                             name=None,
                             description=None,
@@ -326,6 +344,15 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     usedFor="node",
                     properties={
                         "assets": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=DirectNodeRelation(maxListSize=1200, list=True),
+                        ),
+                        "equipments": ContainerPropertyDefinition(
                             immutable=False,
                             nullable=True,
                             autoIncrement=None,
