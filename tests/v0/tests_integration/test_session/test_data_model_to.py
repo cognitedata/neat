@@ -66,6 +66,7 @@ class TestDataModelToCDF:
         assert len(result_by_name["data_models"].deleted) == 1
         assert len(result_by_name["data_models"].created) == 1
 
+    @pytest.mark.skip("This is flaky and we do not maintain v0 any more")
     def test_to_cdf_recreate_drop_data(self, neat_client: NeatClient) -> None:
         car_model = create_new_car_model(
             neat_client, "test_to_cdf_recreate_drop_data", "test_to_cdf_recreate_drop_data_data"
