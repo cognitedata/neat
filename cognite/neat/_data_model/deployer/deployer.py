@@ -1,11 +1,19 @@
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from functools import partial
 from typing import cast
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
-from cognite.neat._data_model.models.dms import DataModelBody, RequestSchema, T_DataModelResource, T_ResourceId
+from cognite.neat._data_model.models.dms import (
+    ContainerReference,
+    DataModelBody,
+    RequestSchema,
+    T_DataModelResource,
+    T_ResourceId,
+    ViewReference,
+)
 from cognite.neat._utils.collection import chunker_sequence
 from cognite.neat._utils.http_client import (
     FailedRequestItems,
@@ -140,7 +148,12 @@ class SchemaDeployer(OnSuccessResultProducer):
             [
                 self._create_resource_plan(snapshot.spaces, data_model.spaces, "spaces", SpaceDiffer()),
                 self._create_resource_plan(
-                    snapshot.containers, data_model.containers, "containers", ContainerDiffer(), ContainerDeploymentPlan
+                    snapshot.containers,
+                    data_model.containers,
+                    "containers",
+                    ContainerDiffer(),
+                    ContainerDeploymentPlan,
+                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),  # type: ignore[arg-type]
                 ),
                 self._create_resource_plan(
                     snapshot.views,
@@ -150,6 +163,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                         current_container_map=snapshot.containers,
                         new_container_map={container.as_reference(): container for container in data_model.containers},
                     ),
+                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),  # type: ignore[arg-type]
                 ),
                 self._create_resource_plan(
                     snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()
@@ -165,11 +179,15 @@ class SchemaDeployer(OnSuccessResultProducer):
         endpoint: DataModelEndpoint,
         differ: ItemDiffer[T_DataModelResource],
         plan_type: type[ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]] = ResourceDeploymentPlan,
+        skip_criteria: Callable[[T_ResourceId], str] | None = None,
     ) -> ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]:
         resources: list[ResourceChange[T_ResourceId, T_DataModelResource]] = []
         for new_resource in new_resources:
             # We know that .as_reference() will return T_ResourceId
             ref = cast(T_ResourceId, new_resource.as_reference())
+            if skip_criteria is not None and (reason := skip_criteria(ref)):
+                resources.append(ResourceChange(resource_id=ref, new_value=None, current_value=None, message=reason))
+                continue
             if ref not in current_resources:
                 resources.append(ResourceChange(resource_id=ref, new_value=new_resource))
                 continue
@@ -180,6 +198,12 @@ class SchemaDeployer(OnSuccessResultProducer):
             )
 
         return plan_type(endpoint=endpoint, resources=resources)
+
+    @classmethod
+    def _skip_resource(cls, resource_id: ContainerReference | ViewReference, model_space: str) -> str | None:
+        if resource_id.space != model_space:
+            return f"Skipping resource in space '{resource_id.space}' not matching data model space '{model_space}'."
+        return None
 
     def should_proceed_to_deploy(self, plan: Sequence[ResourceDeploymentPlan]) -> bool:
         max_severity_in_plan = SeverityType.max_severity(

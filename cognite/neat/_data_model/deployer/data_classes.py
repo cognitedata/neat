@@ -130,6 +130,7 @@ class ResourceChange(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource
     new_value: T_DataModelResource | None
     current_value: T_DataModelResource | None = None
     changes: list[FieldChange] = Field(default_factory=list)
+    message: str | None = None
 
     @property
     def change_type(self) -> Literal["create", "update", "delete", "unchanged", "skip"]:
