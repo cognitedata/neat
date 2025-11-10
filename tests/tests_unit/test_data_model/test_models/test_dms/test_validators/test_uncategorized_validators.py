@@ -62,8 +62,8 @@ Properties:
   Min Count: 0
   Max Count: 1
   Immutable: false
-  Container: cdf_cdm:CogniteSourceable
-  Container Property: source
+  Container: my_space:DirectConnectionContainer
+  Container Property: directLocal
 - View: MyDescribable
   View Property: directRemote
   Connection: direct
@@ -71,8 +71,8 @@ Properties:
   Min Count: 0
   Max Count: 1
   Immutable: false
-  Container: cdf_cdm:CogniteSourceable
-  Container Property: source
+  Container: my_space:DirectConnectionRemoteContainer
+  Container Property: directRemote
 - View: MyDescribable
   View Property: singleEdgeProperty
   Connection: edge(type=MyDescribable.singleEdgeProperty)
@@ -98,7 +98,7 @@ Views:
 Containers:
 - Container: cdf_cdm:CogniteDescribable
   Used For: node
-- Container: cdf_cdm:CogniteSourceable
+- Container: my_space:DirectConnectionContainer
   Used For: node
 """
 
@@ -210,7 +210,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 11
+        assert len(on_success.issues) == 12
         assert set(by_code.keys()) == {
             UndefinedConnectionEndNodeTypes.code,
             VersionSpaceInconsistency.code,
@@ -237,3 +237,41 @@ class TestValidators:
                     found_connections.add(expected_connection)
 
         assert found_connections == expected_connections
+
+        assert len(by_code[VersionSpaceInconsistency.code]) == 2
+        version_space_inconsistency_messages = [issue.message for issue in by_code[VersionSpaceInconsistency.code]]
+        expected_inconsistent_views = {
+            "another_space:MissingProperties(version=v2)",
+            "my_space:MissingProperties(version=v2)",
+        }
+
+        # Check that both expected views are mentioned in the messages
+        found_inconsistent_views = set()
+        for message in version_space_inconsistency_messages:
+            for expected_view in expected_inconsistent_views:
+                if expected_view in message:
+                    found_inconsistent_views.add(expected_view)
+
+        assert found_inconsistent_views == expected_inconsistent_views
+
+        assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
+        assert "reverseDirectProperty" in by_code[BidirectionalConnectionMisconfigured.code][0].message
+
+        assert len(by_code[ReferencedContainersExist.code]) == 3
+        referenced_containers_messages = [issue.message for issue in by_code[ReferencedContainersExist.code]]
+        expected_missing_containers = {"nospace:UnexistingContainer", "my_space:DirectConnectionRemoteContainer"}
+        expected_missing_container_properties = {"unexistingProperty"}
+
+        found_missing_containers = set()
+        found_missing_container_properties = set()
+
+        for message in referenced_containers_messages:
+            for expected_container in expected_missing_containers:
+                if expected_container in message:
+                    found_missing_containers.add(expected_container)
+            for expected_property in expected_missing_container_properties:
+                if expected_property in message:
+                    found_missing_container_properties.add(expected_property)
+
+        assert found_missing_containers == expected_missing_containers
+        assert found_missing_container_properties == expected_missing_container_properties

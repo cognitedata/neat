@@ -131,7 +131,24 @@ def validation_test_cdf_client(
                     createdTime=0,
                     lastUpdatedTime=1,
                     isGlobal=False,
-                )
+                ),
+                dict(
+                    space="my_space",
+                    externalId="DirectConnectionRemoteContainer",
+                    name="DirectConnectionRemoteContainer",
+                    description="DirectConnectionRemoteContainer",
+                    usedFor="node",
+                    properties={
+                        "directRemote": {
+                            "type": {"type": "direct"},
+                            "nullable": False,
+                            "immutable": False,
+                        }
+                    },
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    isGlobal=False,
+                ),
             ],
             "nextCursor": None,
         },
