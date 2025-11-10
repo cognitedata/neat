@@ -234,40 +234,44 @@ class SchemaSnapshot(BaseDeployObject):
     node_types: dict[NodeReference, NodeReference]
 
 
-class ResourceDeploymentPlanList(UserList):
+class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
     def consolidate_changes(self) -> Self:
         """Consolidate the deployment plans by applying field removals to the new_value of resources."""
         consolidated_plan: list[ResourceDeploymentPlan] = []
         for plan in self.data:
             consolidated_resources: list[ResourceChange] = []
-            for resource in plan.resources:
-                if resource.new_value is None and resource.current_value is not None:
-                    # Deletion, keep current_value.
-                    updated_resource = resource.model_copy(update={"new_value": resource.current_value})
-                elif resource.changes and resource.new_value is not None:
-                    # Find all field removals and update new_value accordingly.
-                    removals = [change for change in resource.changes if isinstance(change, RemovedField)]
-                    if removals:
-                        if resource.current_value is None:
-                            raise RuntimeError("Bug in Neat: current_value is None for a resource with removals.")
-                        new_value = self._consolidate_resource(resource.current_value, resource.new_value, removals)
-                        updated_resource = resource.model_copy(
-                            update={
-                                "new_value": new_value,
-                                "changes": [
-                                    change for change in resource.changes if not isinstance(change, RemovedField)
-                                ],
-                            }
-                        )
-                    else:
-                        # No removals, keep as is.
-                        updated_resource = resource
-                else:
-                    # Creation or unchanged, keep as is.
-                    updated_resource = resource
+            for resource_change in plan.resources:
+                updated_resource = self._consolidation_resource_change(resource_change)
                 consolidated_resources.append(updated_resource)
             consolidated_plan.append(plan.model_copy(update={"resources": consolidated_resources}))
         return type(self)(consolidated_plan)
+
+    def _consolidation_resource_change(
+        self, resource: ResourceChange[T_ResourceId, T_DataModelResource]
+    ) -> ResourceChange[T_ResourceId, T_DataModelResource]:
+        if resource.new_value is None and resource.current_value is not None:
+            # Deletion, keep current_value.
+            updated_resource = resource.model_copy(update={"new_value": resource.current_value})
+        elif resource.changes and resource.new_value is not None:
+            # Find all field removals and update new_value accordingly.
+            removals = [change for change in resource.changes if isinstance(change, RemovedField)]
+            if removals:
+                if resource.current_value is None:
+                    raise RuntimeError("Bug in Neat: current_value is None for a resource with removals.")
+                new_value = self._consolidate_resource(resource.current_value, resource.new_value, removals)
+                updated_resource = resource.model_copy(
+                    update={
+                        "new_value": new_value,
+                        "changes": [change for change in resource.changes if not isinstance(change, RemovedField)],
+                    }
+                )
+            else:
+                # No removals, keep as is.
+                updated_resource = resource
+        else:
+            # Creation or unchanged, keep as is.
+            updated_resource = resource
+        return updated_resource
 
     def _consolidate_resource(
         self, current: DataModelResource, new: DataModelResource, removals: list[RemovedField]
@@ -321,6 +325,10 @@ class ResourceDeploymentPlanList(UserList):
             update={"properties": container_properties, "indexes": indexes or None, "constraints": constraints or None},
             deep=True,
         )
+
+    def force_changes(self, drop_data: bool) -> Self:
+        """Force all container deletions to be updates if drop_data is False."""
+        raise NotImplementedError()
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):

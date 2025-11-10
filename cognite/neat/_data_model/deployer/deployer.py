@@ -54,6 +54,7 @@ class DeploymentOptions:
 
     dry_run: bool = True
     auto_rollback: bool = True
+    drop_data: bool = False
     max_severity: SeverityType = SeverityType.SAFE
     modus_operandi: ModusOperandi = "additive"
 
@@ -79,9 +80,16 @@ class SchemaDeployer(OnSuccessResultProducer):
         # Step 2: Create deployment plan by comparing local vs cdf
         plan = self.create_deployment_plan(snapshot, data_model)
 
+        # Step 3: Adjust plan based on modus operandi
         if self.options.modus_operandi == "additive":
-            # Step 3: Filter out deletions and removals in additive mode
+            # Filter out deletions and removals in additive mode
             plan = plan.consolidate_changes()
+        elif self.options.modus_operandi == "rebuild":
+            # Breaking changes are forced by deleting and recreating resources
+            # Containers are treated as additive unless drop_data is specified
+            plan = plan.force_changes(self.options.drop_data)
+        else:
+            raise NotImplementedError(f"Unsupported modus operandi: {self.options.modus_operandi!r}")
 
         if not self.should_proceed_to_deploy(plan):
             # Step 4: Check if deployment should proceed
