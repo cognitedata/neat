@@ -63,7 +63,7 @@ class DMSTableWriter:
         metadata = self.write_metadata(schema.data_model)
         container_properties = self.write_container_properties(schema.containers)
         view_properties = self.write_view_properties(schema.views, container_properties)
-        views = self.write_views(schema.views, set(schema.data_model.views or []))
+        views = self.write_views(schema.views)
         containers = self.write_containers(schema.containers)
 
         return TableDMS(
@@ -260,7 +260,7 @@ class DMSTableWriter:
         return output
 
     ### View Sheet ###
-    def write_views(self, views: list[ViewRequest], model_views: set[ViewReference]) -> list[DMSView]:
+    def write_views(self, views: list[ViewRequest]) -> list[DMSView]:
         return [
             DMSView(
                 view=self._create_view_entity(view),
@@ -270,7 +270,6 @@ class DMSTableWriter:
                 if view.implements
                 else None,
                 filter=json.dumps(view.filter) if view.filter else None,
-                in_model=None if view.as_reference() in model_views else False,
             )
             for view in views
         ]
