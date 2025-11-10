@@ -61,6 +61,8 @@ class Issues:
 
     def _repr_html_(self) -> str:
         """Generate interactive HTML representation."""
+        if not self._issues:
+            return "<b>No issues found.</b>"
         stats = self._stats
 
         template_vars = {
