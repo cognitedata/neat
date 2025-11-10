@@ -24,6 +24,7 @@ class EndpointStatistics(BaseModel):
     create: int = 0
     update: int = 0
     delete: int = 0
+    skip: int = 0
     unchanged: int = 0
 
 
@@ -33,6 +34,7 @@ class ChangeTypeStatistics(BaseModel):
     create: int = 0
     update: int = 0
     delete: int = 0
+    skip: int = 0
     unchanged: int = 0
 
 
@@ -212,6 +214,7 @@ class Result:
             "created": stats.by_change_type.create,
             "updated": stats.by_change_type.update,
             "deleted": stats.by_change_type.delete,
+            "skipped": stats.by_change_type.skip,
             "unchanged": stats.by_change_type.unchanged,
         }
 
