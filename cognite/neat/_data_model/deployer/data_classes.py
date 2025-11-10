@@ -237,14 +237,13 @@ class SchemaSnapshot(BaseDeployObject):
 class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
     def consolidate_changes(self) -> Self:
         """Consolidate the deployment plans by applying field removals to the new_value of resources."""
-        consolidated_plan: list[ResourceDeploymentPlan] = []
-        for plan in self.data:
-            consolidated_resources: list[ResourceChange] = []
-            for resource_change in plan.resources:
-                updated_resource = self._consolidation_resource_change(resource_change)
-                consolidated_resources.append(updated_resource)
-            consolidated_plan.append(plan.model_copy(update={"resources": consolidated_resources}))
-        return type(self)(consolidated_plan)
+        return type(self)([self._consolidate_resource_plan(plan) for plan in self.data])
+
+    def _consolidate_resource_plan(self, plan: ResourceDeploymentPlan) -> ResourceDeploymentPlan:
+        consolidated_resources = [
+            self._consolidation_resource_change(resource_change) for resource_change in plan.resources
+        ]
+        return plan.model_copy(update={"resources": consolidated_resources})
 
     def _consolidation_resource_change(
         self, resource: ResourceChange[T_ResourceId, T_DataModelResource]
