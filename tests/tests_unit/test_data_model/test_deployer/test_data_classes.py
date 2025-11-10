@@ -141,6 +141,41 @@ class TestResourceDeploymentPlanList:
             assert len(resource_plan.to_update) == 0
             assert len(resource_plan.to_delete) == 0
 
+    def test_force_changes_not_drop_data(self, plan_with_removals: ResourceDeploymentPlanList) -> None:
+        plan = plan_with_removals
+
+        forced_plan = plan.force_changes(drop_data=False)
+
+        assert len(forced_plan) == 3
+        for resource_plan in forced_plan.data:
+            if resource_plan.endpoint in ("views", "datamodels"):
+                # Views and data models should be recreated
+                assert len(resource_plan.unchanged) == 0
+                assert len(resource_plan.to_create) == 1
+                assert len(resource_plan.to_update) == 0
+                assert len(resource_plan.to_delete) == 1
+            elif resource_plan.endpoint == "containers":
+                # Containers should be unchanged as we do not drop data
+                assert len(resource_plan.unchanged) == 1
+                assert len(resource_plan.to_create) == 0
+                assert len(resource_plan.to_update) == 0
+                assert len(resource_plan.to_delete) == 0
+            else:
+                pytest.fail(f"Unexpected endpoint: {resource_plan.endpoint}")
+
+    def test_force_changes_drop_data(self, plan_with_removals: ResourceDeploymentPlanList) -> None:
+        plan = plan_with_removals
+
+        forced_plan = plan.force_changes(drop_data=True)
+
+        assert len(forced_plan) == 3
+        for resource_plan in forced_plan.data:
+            # All resources should be recreated
+            assert len(resource_plan.unchanged) == 0
+            assert len(resource_plan.to_create) == 1
+            assert len(resource_plan.to_update) == 0
+            assert len(resource_plan.to_delete) == 1
+
 
 class TestAppliedChanges:
     def test_as_recovery_plan(self) -> None:
