@@ -115,7 +115,6 @@ class WorkbookCreator:
     class ViewColumns:
         view = cast(str, DMSView.model_fields["view"].validation_alias)
         implements = cast(str, DMSView.model_fields["implements"].validation_alias)
-        in_model = cast(str, DMSView.model_fields["in_model"].validation_alias)
 
     class DropdownSourceColumns:
         view = 1
@@ -298,13 +297,6 @@ class WorkbookCreator:
             self.DropdownSourceColumns.implements,
             self._max_views + len(self._get_cognite_concepts()),
             index_by_sheet_name_column[(self.Sheets.views, self.ViewColumns.implements)],
-            self._max_views,
-        )
-        self._add_validation(
-            view_sheet,
-            self.DropdownSourceColumns.in_model,
-            3,  # True, False, None
-            index_by_sheet_name_column[(self.Sheets.views, self.ViewColumns.in_model)],
             self._max_views,
         )
         container_sheet = workbook[self.Sheets.containers]
