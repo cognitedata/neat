@@ -727,11 +727,7 @@ class DMSTableReader:
     def read_data_model(self, tables: TableDMS, valid_view_entities: set[ParsedEntity]) -> DataModelRequest:
         data = {
             **{meta.key: meta.value for meta in tables.metadata},
-            "views": [
-                self._create_view_ref(view.view)
-                for view in tables.views
-                if view.in_model is not False and view.view in valid_view_entities
-            ],
+            "views": [self._create_view_ref(view.view) for view in tables.views if view.view in valid_view_entities],
         }
         model = self._validate_obj(DataModelRequest, data, (self.Sheets.metadata,), field_name="value")
         if model is None:

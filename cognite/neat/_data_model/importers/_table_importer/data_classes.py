@@ -79,7 +79,6 @@ class DMSView(TableObj):
     description: str | None = None
     implements: EntityList | None = None
     filter: str | None = None
-    in_model: bool | None = None
 
 
 class DMSContainer(TableObj):
