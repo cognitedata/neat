@@ -249,7 +249,8 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         self, resource: ResourceChange[T_ResourceId, T_DataModelResource]
     ) -> ResourceChange[T_ResourceId, T_DataModelResource]:
         if resource.new_value is None and resource.current_value is not None:
-            # Deletion, keep current_value.
+            # Changed deletion (new_value is None and curren_value is not None) to unchanged by copying
+            # current_value to new_value.
             updated_resource = resource.model_copy(update={"new_value": resource.current_value})
         elif resource.changes and resource.new_value is not None:
             # Find all field removals and update new_value accordingly.
