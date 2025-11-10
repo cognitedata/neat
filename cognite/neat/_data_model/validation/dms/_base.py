@@ -72,7 +72,7 @@ class DataModelValidator(ABC):
         # do something with data model
         ...
 
-    def _select_view(self, view_ref: ViewReference, property_: str) -> ViewRequest | None:
+    def _select_view_with_property(self, view_ref: ViewReference, property_: str) -> ViewRequest | None:
         """Select the appropriate view (local or CDF) that contains desired property.
 
         Prioritizes views that contain the property  (first local than CDF),
@@ -82,9 +82,23 @@ class DataModelValidator(ABC):
             view_ref: Reference to the view.
             property_: Property name to look for.
 
+        Returns:
+            The selected ViewRequest if found, else None.
+
+        !! note "Behavior based on modus operandi"
+            - In "additive" modus operandi, local and CDF view will be considered irrirespective of their space.
+            - In "rebuild" modus operandi, local views will be considered irrispective of their space, while CDF views
+              will only be considered if they belong to the different space than the local data model space
+              (as they are considered external resources that is managed under other data model/schema space).
+
         """
+
         local_view = self.local_resources.views_by_reference.get(view_ref)
-        cdf_view = self.cdf_resources.views_by_reference.get(view_ref)
+        cdf_view = (
+            self.cdf_resources.views_by_reference.get(view_ref)
+            if view_ref.space != self.local_resources.data_model_reference.space or self.modus_operandi == "additive"
+            else None
+        )
 
         # Try views with the property first, then any available view
         candidates = chain(
@@ -94,7 +108,9 @@ class DataModelValidator(ABC):
 
         return next(candidates, None)
 
-    def _select_container(self, container_ref: ContainerReference, property_: str) -> ContainerRequest | None:
+    def _select_container_with_property(
+        self, container_ref: ContainerReference, property_: str
+    ) -> ContainerRequest | None:
         """Select the appropriate container (local or CDF) that contains the desired property.
 
         Prioritizes containers that contain the property (first local than CDF),
@@ -103,9 +119,26 @@ class DataModelValidator(ABC):
         Args:
             container_ref: Reference to the container.
             property_: Property name to look for.
+
+        Returns:
+            The selected ContainerRequest if found, else None.
+
+        !! note "Behavior based on modus operandi"
+            - In "additive" modus operandi, local and CDF containers will be considered irrirespective of their space.
+            - In "rebuild" modus operandi, local containers will be considered irrispective of their space, while CDF
+              containers will only be considered if they belong to the different space than the local data model space
+              (as they are considered external resources that is managed under other data model/schema space).
+
         """
         local_container = self.local_resources.containers_by_reference.get(container_ref)
         cdf_container = self.cdf_resources.containers_by_reference.get(container_ref)
+
+        cdf_container = (
+            self.cdf_resources.containers_by_reference.get(container_ref)
+            if container_ref.space != self.local_resources.data_model_reference.space
+            or self.modus_operandi == "additive"
+            else None
+        )
 
         # Try containers with the property first, then any available container
         candidates = chain(
