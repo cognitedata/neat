@@ -153,8 +153,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                     "containers",
                     ContainerDiffer(),
                     ContainerDeploymentPlan,
-                    # MyPy is not able to infer that the partial returned function matches the expected Callable type
-                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),  # type: ignore[arg-type]
+                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
                 ),
                 self._create_resource_plan(
                     snapshot.views,
@@ -164,8 +163,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                         current_container_map=snapshot.containers,
                         new_container_map={container.as_reference(): container for container in data_model.containers},
                     ),
-                    # MyPy is not able to infer that the partial returned function matches the expected Callable type
-                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),  # type: ignore[arg-type]
+                    skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),
                 ),
                 self._create_resource_plan(
                     snapshot.data_model, [data_model.data_model], "datamodels", DataModelDiffer()
@@ -181,7 +179,7 @@ class SchemaDeployer(OnSuccessResultProducer):
         endpoint: DataModelEndpoint,
         differ: ItemDiffer[T_DataModelResource],
         plan_type: type[ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]] = ResourceDeploymentPlan,
-        skip_criteria: Callable[[T_ResourceId], str] | None = None,
+        skip_criteria: Callable[[T_ResourceId], str | None] | None = None,
     ) -> ResourceDeploymentPlan[T_ResourceId, T_DataModelResource]:
         resources: list[ResourceChange[T_ResourceId, T_DataModelResource]] = []
         for new_resource in new_resources:
@@ -203,6 +201,15 @@ class SchemaDeployer(OnSuccessResultProducer):
 
     @classmethod
     def _skip_resource(cls, resource_id: ContainerReference | ViewReference, model_space: str) -> str | None:
+        """Checks if a resource should be skipped based on its space.
+
+        Args:
+            resource_id: The ID of the resource to check.
+            model_space: The space of the data model.
+
+        Returns:
+            A reason for skipping if the resource space does not match the model space, otherwise None.
+        """
         if resource_id.space != model_space:
             return f"Skipping resource in space '{resource_id.space}' not matching data model space '{model_space}'."
         return None
