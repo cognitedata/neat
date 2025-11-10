@@ -238,6 +238,7 @@ class SchemaDeployer(OnSuccessResultProducer):
             applied_changes.updated.extend(updated)
 
             applied_changes.unchanged.extend(resource.unchanged)
+            applied_changes.skipped.extend(resource.skip)
         return applied_changes
 
     def _delete_items(self, resource: ResourceDeploymentPlan) -> list[ChangeResult]:

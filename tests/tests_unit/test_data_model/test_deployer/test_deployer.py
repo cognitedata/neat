@@ -79,7 +79,7 @@ class TestSchemaDeployer:
         for resource_plan in plan:
             assert resource_plan.endpoint in {"spaces", "containers", "views", "datamodels"}
             if resource_plan.endpoint == "containers":
-                assert len(resource_plan.skipped) == 1, "Container with different space should be skipped"
+                assert len(resource_plan.skip) == 1, "Container with different space should be skipped"
 
     def test_deploy_dry_run(
         self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter

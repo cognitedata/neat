@@ -175,7 +175,7 @@ class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModel
         return [change for change in self.resources if change.change_type == "unchanged"]
 
     @property
-    def skipped(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
+    def skip(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type == "skip"]
 
 
@@ -389,6 +389,7 @@ class AppliedChanges(BaseDeployObject):
     updated: list[ChangeResult] = Field(default_factory=list)
     deletions: list[ChangeResult] = Field(default_factory=list)
     unchanged: list[ResourceChange] = Field(default_factory=list)
+    skipped: list[ResourceChange] = Field(default_factory=list)
     changed_fields: list[ChangedFieldResult] = Field(default_factory=list)
 
     @property
