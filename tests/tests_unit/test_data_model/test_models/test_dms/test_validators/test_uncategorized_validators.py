@@ -86,9 +86,15 @@ Properties:
   Min Count: 0
   Max Count: 1
 - View: MyDescribable
-  View Property: reverseDirectProperty
-  Connection: reverse(property=asset)
-  Value Type: my_space:UnexistingReverseConnection(version=v1)
+  View Property: reverseDirectPropertyRemote
+  Connection: reverse(property=directPropertyRemote)
+  Value Type: my_space:SourceForReverseConnectionExistRemote(version=v1)
+  Min Count: 0
+  Max Count: 1
+- View: MyDescribable
+  View Property: reverseDirectPropertyMissingOtherEnd
+  Connection: reverse(property=directPropertyLocal)
+  Value Type: my_space:UnexistingSourceForReverseConnection(version=v1)
   Min Count: 0
   Max Count: 1
 Views:
@@ -132,7 +138,7 @@ class TestValidators:
         undefined_connection_messages = [issue.message for issue in by_code[UndefinedConnectionEndNodeTypes.code]]
         expected_connections = {
             "my_space:UnexistingDirectConnectionLocal(version=v1)",
-            "my_space:UnexistingReverseConnection(version=v1)",
+            "my_space:UnexistingSourceForReverseConnection(version=v1)",
             "my_space:UnexistingEdgeConnection(version=v1)",
         }
 
@@ -162,7 +168,7 @@ class TestValidators:
         assert found_inconsistent_views == expected_inconsistent_views
 
         assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
-        assert "reverseDirectProperty" in by_code[BidirectionalConnectionMisconfigured.code][0].message
+        assert "reverseDirectPropertyMissingOtherEnd" in by_code[BidirectionalConnectionMisconfigured.code][0].message
 
         assert len(by_code[ReferencedContainersExist.code]) == 2
         referenced_containers_messages = [issue.message for issue in by_code[ReferencedContainersExist.code]]
@@ -210,7 +216,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 12
+        assert len(on_success.issues) == 14
         assert set(by_code.keys()) == {
             UndefinedConnectionEndNodeTypes.code,
             VersionSpaceInconsistency.code,
@@ -219,14 +225,14 @@ class TestValidators:
             DataModelLimitValidator.code,
         }
 
-        assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 4
+        assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 5
 
         undefined_connection_messages = [issue.message for issue in by_code[UndefinedConnectionEndNodeTypes.code]]
         expected_connections = {
             "my_space:UnexistingDirectConnectionLocal(version=v1)",
-            "my_space:UnexistingReverseConnection(version=v1)",
+            "my_space:UnexistingSourceForReverseConnection(version=v1)",
             "my_space:UnexistingEdgeConnection(version=v1)",
-            "my_space:ExistingDirectConnectionRemote(version=v1)",
+            "my_space:SourceForReverseConnectionExistRemote(version=v1)",
         }
 
         # Check that all expected connections are mentioned in the messages
@@ -254,8 +260,15 @@ class TestValidators:
 
         assert found_inconsistent_views == expected_inconsistent_views
 
-        assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
-        assert "reverseDirectProperty" in by_code[BidirectionalConnectionMisconfigured.code][0].message
+        assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 2
+        expected_affected_reverse_properties = {"reverseDirectPropertyMissingOtherEnd", "reverseDirectPropertyRemote"}
+
+        found_affected_reverse_properties = set()
+        for messsage in by_code[BidirectionalConnectionMisconfigured.code]:
+            for expected_property in expected_affected_reverse_properties:
+                if expected_property in messsage.message:
+                    found_affected_reverse_properties.add(expected_property)
+        assert found_affected_reverse_properties == expected_affected_reverse_properties
 
         assert len(by_code[ReferencedContainersExist.code]) == 3
         referenced_containers_messages = [issue.message for issue in by_code[ReferencedContainersExist.code]]
