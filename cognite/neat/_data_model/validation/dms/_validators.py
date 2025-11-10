@@ -13,11 +13,15 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
         undefined_value_types = []
 
         for (view, property_), value_type in self.local_resources.connection_end_node_types.items():
+            if value_type in self.local_resources.views_by_reference:
+                continue
+
             if (
-                value_type not in self.local_resources.views_by_reference
-                and value_type not in self.cdf_resources.views_by_reference
-            ):
-                undefined_value_types.append((view, property_, value_type))
+                self.modus_operandi == "additive" or value_type.space != self.local_resources.data_model_reference.space
+            ) and value_type in self.cdf_resources.views_by_reference:
+                continue
+
+            undefined_value_types.append((view, property_, value_type))
 
         return [
             ConsistencyError(
@@ -90,7 +94,7 @@ class ReferencedContainersExist(DataModelValidator):
                 container_ref = property_.container
                 container_property = property_.container_property_identifier
 
-                container = self._select_container(container_ref, container_property)
+                container = self._select_container_with_property(container_ref, container_property)
 
                 if not container:
                     errors.append(
