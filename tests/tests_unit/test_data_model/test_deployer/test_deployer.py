@@ -67,6 +67,20 @@ class TestSchemaDeployer:
                 "All resources should be unchanged as we use the same new as current model"
             )
 
+    def test_create_deployment_plan_container_different_space(
+        self, neat_client: NeatClient, model: RequestSchema, schema_snapshot: SchemaSnapshot
+    ) -> None:
+        assert len(model.containers) > 0, "Model must have at least one container for this test"
+        new_container = model.containers[0].model_copy(update={"space": "different_space"}, deep=True)
+        modified_model = model.model_copy(update={"containers": [new_container] + model.containers[1:]}, deep=True)
+        deployer = SchemaDeployer(neat_client)
+        plan = deployer.create_deployment_plan(schema_snapshot, modified_model)
+        assert len(plan) == 4  # spaces, containers, views, datamodels
+        for resource_plan in plan:
+            assert resource_plan.endpoint in {"spaces", "containers", "views", "datamodels"}
+            if resource_plan.endpoint == "containers":
+                assert len(resource_plan.skipped) == 1, "Container with different space should be skipped"
+
     def test_deploy_dry_run(
         self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
     ) -> None:

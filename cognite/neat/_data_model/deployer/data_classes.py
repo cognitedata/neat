@@ -174,6 +174,10 @@ class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModel
     def unchanged(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type == "unchanged"]
 
+    @property
+    def skipped(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
+        return [change for change in self.resources if change.change_type == "skip"]
+
 
 class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, ContainerRequest]):
     endpoint: Literal["containers"] = "containers"
