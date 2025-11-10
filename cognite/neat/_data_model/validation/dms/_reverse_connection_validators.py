@@ -84,7 +84,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         """
 
         # Validate source view exists
-        source_view = self._select_view(ctx.source_view_ref, ctx.through.identifier)
+        source_view = self._select_view_with_property(ctx.source_view_ref, ctx.through.identifier)
 
         if not source_view:
             return [self._create_missing_view_error(ctx)]
@@ -133,7 +133,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         container_ref = source_property.container
         container_property_id = source_property.container_property_identifier
 
-        source_container = self._select_container(container_ref, container_property_id)
+        source_container = self._select_container_with_property(container_ref, container_property_id)
         if not source_container:
             return [self._create_missing_container_error(container_ref, ctx)]
 

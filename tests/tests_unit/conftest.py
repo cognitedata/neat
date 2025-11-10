@@ -74,7 +74,69 @@ def validation_test_cdf_client(
     ).respond(
         status_code=200,
         json={
-            "items": [],
+            "items": [
+                dict(
+                    space="not_my_space",
+                    externalId="ExistingEdgeConnection",
+                    version="v1",
+                    name="My View",
+                    description="An example view",
+                    properties={},
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    writable=True,
+                    queryable=True,
+                    usedFor="node",
+                    isGlobal=False,
+                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+                ),
+                dict(
+                    space="my_space",
+                    externalId="ExistingDirectConnectionRemote",
+                    version="v1",
+                    name="My View",
+                    description="An example view",
+                    properties={},
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    writable=True,
+                    queryable=True,
+                    usedFor="node",
+                    isGlobal=False,
+                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+                ),
+                dict(
+                    space="my_space",
+                    externalId="SourceForReverseConnectionExistRemote",
+                    version="v1",
+                    name="SourceForReverseConnectionExistRemote",
+                    description="SourceForReverseConnectionExistRemote",
+                    properties={
+                        "directPropertyRemote": {
+                            "container": {"space": "my_space", "externalId": "DirectConnectionRemoteContainer"},
+                            "containerPropertyIdentifier": "directRemote",
+                            "type": {
+                                "type": "direct",
+                                "source": {
+                                    "space": "my_space",
+                                    "external_id": "MyDescribable",
+                                    "version": "v1",
+                                    "type": "view",
+                                },
+                            },
+                            "connectionType": "primary_property",
+                            "constraintState": {"nullability": "current"},
+                        }
+                    },
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    writable=True,
+                    queryable=True,
+                    usedFor="node",
+                    isGlobal=False,
+                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+                ),
+            ],
             "nextCursor": None,
         },
     )
@@ -100,7 +162,24 @@ def validation_test_cdf_client(
                     createdTime=0,
                     lastUpdatedTime=1,
                     isGlobal=False,
-                )
+                ),
+                dict(
+                    space="my_space",
+                    externalId="DirectConnectionRemoteContainer",
+                    name="DirectConnectionRemoteContainer",
+                    description="DirectConnectionRemoteContainer",
+                    usedFor="node",
+                    properties={
+                        "directRemote": {
+                            "type": {"type": "direct"},
+                            "nullable": False,
+                            "immutable": False,
+                        }
+                    },
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    isGlobal=False,
+                ),
             ],
             "nextCursor": None,
         },
