@@ -130,15 +130,18 @@ class ResourceChange(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource
     new_value: T_DataModelResource | None
     current_value: T_DataModelResource | None = None
     changes: list[FieldChange] = Field(default_factory=list)
+    message: str | None = None
 
     @property
-    def change_type(self) -> Literal["create", "update", "delete", "unchanged"]:
-        if self.current_value is None:
+    def change_type(self) -> Literal["create", "update", "delete", "unchanged", "skip"]:
+        if self.current_value is None and self.new_value is not None:
             return "create"
-        elif self.new_value is None:
+        elif self.new_value is None and self.current_value is not None:
             return "delete"
         elif self.changes:
             return "update"
+        elif self.new_value is None and self.current_value is None:
+            return "skip"
         else:
             return "unchanged"
 
@@ -170,6 +173,10 @@ class ResourceDeploymentPlan(BaseDeployObject, Generic[T_ResourceId, T_DataModel
     @property
     def unchanged(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
         return [change for change in self.resources if change.change_type == "unchanged"]
+
+    @property
+    def skip(self) -> list[ResourceChange[T_ResourceId, T_DataModelResource]]:
+        return [change for change in self.resources if change.change_type == "skip"]
 
 
 class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, ContainerRequest]):
@@ -383,6 +390,7 @@ class AppliedChanges(BaseDeployObject):
     updated: list[ChangeResult] = Field(default_factory=list)
     deletions: list[ChangeResult] = Field(default_factory=list)
     unchanged: list[ResourceChange] = Field(default_factory=list)
+    skipped: list[ResourceChange] = Field(default_factory=list)
     changed_fields: list[ChangedFieldResult] = Field(default_factory=list)
 
     @property
