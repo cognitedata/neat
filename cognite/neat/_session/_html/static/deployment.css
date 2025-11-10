@@ -97,6 +97,11 @@
     color: #991b1b;
 }
 
+.change-skip {
+    background: #fef3c7;
+    color: #92400e;
+}
+
 .change-unchanged {
     background: #f3f4f6;
     color: #4b5563;
@@ -115,6 +120,11 @@
 .dark-mode .change-delete {
     background: #7f1d1d;
     color: #fca5a5;
+}
+
+.dark-mode .change-skip {
+    background: #78350f;
+    color: #fde68a;
 }
 
 .dark-mode .change-unchanged {

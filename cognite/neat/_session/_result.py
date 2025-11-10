@@ -214,6 +214,7 @@ class Result:
             "created": stats.by_change_type.create,
             "updated": stats.by_change_type.update,
             "deleted": stats.by_change_type.delete,
+            "skipped": stats.by_change_type.skip,
             "unchanged": stats.by_change_type.unchanged,
         }
 
