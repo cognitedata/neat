@@ -153,6 +153,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                     "containers",
                     ContainerDiffer(),
                     ContainerDeploymentPlan,
+                    # MyPy is not able to infer that the partial returned function matches the expected Callable type
                     skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),  # type: ignore[arg-type]
                 ),
                 self._create_resource_plan(
@@ -163,6 +164,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                         current_container_map=snapshot.containers,
                         new_container_map={container.as_reference(): container for container in data_model.containers},
                     ),
+                    # MyPy is not able to infer that the partial returned function matches the expected Callable type
                     skip_criteria=partial(self._skip_resource, model_space=data_model.data_model.space),  # type: ignore[arg-type]
                 ),
                 self._create_resource_plan(
