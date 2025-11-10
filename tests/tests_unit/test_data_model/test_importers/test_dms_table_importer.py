@@ -932,7 +932,6 @@ def invalid_dms_table() -> Iterable[tuple]:
                 {
                     "View": "MyView",
                     "Implements": "invalid[entity,list]syntax",
-                    "In Model": "yes_but_not_boolean",
                 }
             ],
         },
@@ -942,7 +941,6 @@ def invalid_dms_table() -> Iterable[tuple]:
             "In Properties sheet row 1 column 'Auto Increment' input should be a valid "
             "boolean, unable to interpret input.",
             "In Properties sheet row 1 column 'Immutable' input should be a valid boolean, unable to interpret input.",
-            "In Views sheet row 1 column 'In Model' input should be a valid boolean, unable to interpret input.",
         },
         id="Invalid boolean and entity list values",
     )
@@ -1243,21 +1241,19 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                 ],
             ],
             "Views": [
-                ["Definition of Views", *[None] * 5],
+                ["Definition of Views", *[None] * 4],
                 [
                     "View",
                     "Name",
                     "Description",
                     "Implements",
                     "Filter",
-                    "In Model",
                 ],
                 [
                     "CogniteDescribable",
                     "Cognite Describable",
                     "The describable core concept is used as a standard way of holding the "
                     "bare minimum of information about the instance",
-                    None,
                     None,
                     None,
                 ],
@@ -1315,7 +1311,6 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                     "bare minimum of information about the instance",
                     "Implements": None,
                     "Filter": None,
-                    "In Model": None,
                 }
             ],
             Containers=[
