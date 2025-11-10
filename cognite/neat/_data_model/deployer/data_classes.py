@@ -326,8 +326,28 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         )
 
     def force_changes(self, drop_data: bool) -> Self:
-        """Force all container deletions to be updates if drop_data is False."""
-        raise NotImplementedError()
+        """Force all resources by deleting and recreating them.
+
+        Args:
+            drop_data: If True, containers will be deleted and recreated. If False, containers
+                will be consolidated instead.
+        Returns:
+            A new ResourceDeploymentPlanList with forced changes.
+        """
+        forced_plans: list[ResourceDeploymentPlan] = []
+        for plan in self.data:
+            forced_resources: list[ResourceChange] = []
+            for resource in plan.resources:
+                if resource.change_type == "update" and resource.severity == SeverityType.BREAKING:
+                    deletion = resource.model_copy(deep=True, update={"new_value": None, "changes": []})
+                    recreation = resource.model_copy(deep=True, update={"current_value": None, "changes": []})
+                    forced_resources.append(deletion)
+                    forced_resources.append(recreation)
+                else:
+                    # No need to force, keep as is.
+                    forced_resources.append(resource)
+            forced_plans.append(plan.model_copy(update={"resources": forced_resources}))
+        return type(self)(forced_plans)
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
