@@ -338,11 +338,21 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         for plan in self.data:
             forced_resources: list[ResourceChange] = []
             for resource in plan.resources:
-                if resource.change_type == "update" and resource.severity == SeverityType.BREAKING:
+                if (
+                    resource.change_type == "update"
+                    and resource.severity == SeverityType.BREAKING
+                    and (drop_data or plan.endpoint != "containers")
+                ):
                     deletion = resource.model_copy(deep=True, update={"new_value": None, "changes": []})
                     recreation = resource.model_copy(deep=True, update={"current_value": None, "changes": []})
                     forced_resources.append(deletion)
                     forced_resources.append(recreation)
+                elif resource.change_type == "update" and resource.severity == SeverityType.BREAKING:
+                    # For containers, we try to consolidate instead of deleting and recreating.
+                    # Note that there might still be breaking changes left which will cause the deployment to fail.
+                    # For example, if the usedFor field has changed from node->edge, then this cannot be consolidated.
+                    consolidated_resource = self._consolidation_resource_change(resource)
+                    forced_resources.append(consolidated_resource)
                 else:
                     # No need to force, keep as is.
                     forced_resources.append(resource)
