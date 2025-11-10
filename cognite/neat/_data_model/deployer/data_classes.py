@@ -234,40 +234,44 @@ class SchemaSnapshot(BaseDeployObject):
     node_types: dict[NodeReference, NodeReference]
 
 
-class ResourceDeploymentPlanList(UserList):
+class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
     def consolidate_changes(self) -> Self:
         """Consolidate the deployment plans by applying field removals to the new_value of resources."""
-        consolidated_plan: list[ResourceDeploymentPlan] = []
-        for plan in self.data:
-            consolidated_resources: list[ResourceChange] = []
-            for resource in plan.resources:
-                if resource.new_value is None and resource.current_value is not None:
-                    # Deletion, keep current_value.
-                    updated_resource = resource.model_copy(update={"new_value": resource.current_value})
-                elif resource.changes and resource.new_value is not None:
-                    # Find all field removals and update new_value accordingly.
-                    removals = [change for change in resource.changes if isinstance(change, RemovedField)]
-                    if removals:
-                        if resource.current_value is None:
-                            raise RuntimeError("Bug in Neat: current_value is None for a resource with removals.")
-                        new_value = self._consolidate_resource(resource.current_value, resource.new_value, removals)
-                        updated_resource = resource.model_copy(
-                            update={
-                                "new_value": new_value,
-                                "changes": [
-                                    change for change in resource.changes if not isinstance(change, RemovedField)
-                                ],
-                            }
-                        )
-                    else:
-                        # No removals, keep as is.
-                        updated_resource = resource
-                else:
-                    # Creation or unchanged, keep as is.
-                    updated_resource = resource
-                consolidated_resources.append(updated_resource)
-            consolidated_plan.append(plan.model_copy(update={"resources": consolidated_resources}))
-        return type(self)(consolidated_plan)
+        return type(self)([self._consolidate_resource_plan(plan) for plan in self.data])
+
+    def _consolidate_resource_plan(self, plan: ResourceDeploymentPlan) -> ResourceDeploymentPlan:
+        consolidated_resources = [
+            self._consolidate_resource_change(resource_change) for resource_change in plan.resources
+        ]
+        return plan.model_copy(update={"resources": consolidated_resources})
+
+    def _consolidate_resource_change(
+        self, resource: ResourceChange[T_ResourceId, T_DataModelResource]
+    ) -> ResourceChange[T_ResourceId, T_DataModelResource]:
+        if resource.new_value is None and resource.current_value is not None:
+            # Changed deletion (new_value is None and curren_value is not None) to unchanged by copying
+            # current_value to new_value.
+            updated_resource = resource.model_copy(update={"new_value": resource.current_value})
+        elif resource.changes and resource.new_value is not None:
+            # Find all field removals and update new_value accordingly.
+            removals = [change for change in resource.changes if isinstance(change, RemovedField)]
+            if removals:
+                if resource.current_value is None:
+                    raise RuntimeError("Bug in Neat: current_value is None for a resource with removals.")
+                new_value = self._consolidate_resource(resource.current_value, resource.new_value, removals)
+                updated_resource = resource.model_copy(
+                    update={
+                        "new_value": new_value,
+                        "changes": [change for change in resource.changes if not isinstance(change, RemovedField)],
+                    }
+                )
+            else:
+                # No removals, keep as is.
+                updated_resource = resource
+        else:
+            # Creation or unchanged, keep as is.
+            updated_resource = resource
+        return updated_resource
 
     def _consolidate_resource(
         self, current: DataModelResource, new: DataModelResource, removals: list[RemovedField]
@@ -321,6 +325,38 @@ class ResourceDeploymentPlanList(UserList):
             update={"properties": container_properties, "indexes": indexes or None, "constraints": constraints or None},
             deep=True,
         )
+
+    def force_changes(self, drop_data: bool) -> Self:
+        """Force all resources by deleting and recreating them.
+
+        Args:
+            drop_data: If True, containers will be deleted and recreated. If False, containers
+                will be consolidated instead.
+        Returns:
+            A new ResourceDeploymentPlanList with forced changes.
+        """
+        forced_plans: list[ResourceDeploymentPlan] = []
+        for plan in self.data:
+            forced_resources: list[ResourceChange] = []
+            for resource in plan.resources:
+                if resource.change_type == "update" and resource.severity == SeverityType.BREAKING:
+                    if drop_data or plan.endpoint != "containers":
+                        deletion = resource.model_copy(deep=True, update={"new_value": None, "changes": []})
+                        recreation = resource.model_copy(deep=True, update={"current_value": None, "changes": []})
+                        forced_resources.append(deletion)
+                        forced_resources.append(recreation)
+                    else:
+                        # For containers, we try to consolidate instead of deleting and recreating.
+                        # Note that there might still be breaking changes left which will cause the deployment to fail.
+                        # For example, if the usedFor field has changed from node->edge, then this cannot be
+                        # consolidated.
+                        consolidated_resource = self._consolidate_resource_change(resource)
+                        forced_resources.append(consolidated_resource)
+                else:
+                    # No need to force, keep as is.
+                    forced_resources.append(resource)
+            forced_plans.append(plan.model_copy(update={"resources": forced_resources}))
+        return type(self)(forced_plans)
 
 
 class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
