@@ -22,7 +22,7 @@ class SpreadsheetReadContext:
         self.skipped_rows.sort()
 
     def adjusted_row_number(self, row_no: int) -> int:
-        output = row_no
+        output = row_no + self.header_row + (1 if self.is_one_indexed else 0)
         for empty_row in self.empty_rows:
             if empty_row <= output:
                 output += 1
@@ -34,8 +34,7 @@ class SpreadsheetReadContext:
                 output += 1
             else:
                 break
-
-        return output + self.header_row + (1 if self.is_one_indexed else 0)
+        return output
 
 
 @dataclass

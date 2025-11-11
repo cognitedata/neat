@@ -1134,10 +1134,10 @@ class TestSpreadsheetRead:
                 id="with_empty_and_skipped_rows_zero_indexed",
             ),
             pytest.param(
-                2,
-                SpreadsheetReadContext(header_row=3, empty_rows=[1, 5], skipped_rows=[2, 6], is_one_indexed=True),
-                8,  # 2->3 (empty 1)->4 (skipped 2) + 3 (header) + 1 (one_indexed)
-                id="complex_case_with_all_adjustments",
+                4,
+                SpreadsheetReadContext(header_row=1, empty_rows=[6, 12], skipped_rows=[0], is_one_indexed=True),
+                8,
+                id="real_case",
             ),
         ],
     )

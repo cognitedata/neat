@@ -103,15 +103,21 @@ class DMSTableImporter(DMSImporter):
             errors.append(ModelSyntaxError(message=message))
         return errors
 
-    @staticmethod
-    def _location(loc: tuple[str | int, ...]) -> str:
+    def _location(self, loc: tuple[str | int, ...]) -> str:
         if isinstance(loc[0], str) and len(loc) == 2:  # Sheet + row.
             # We skip the row as we treat all rows as the same. For example, if a required column is missing in one
             # row, it is missing in all rows.
             return f"{loc[0]} sheet"
         elif len(loc) == 3 and isinstance(loc[0], str) and isinstance(loc[1], int) and isinstance(loc[2], str):
             # This means there is something wrong in a specific cell.
-            return f"{loc[0]} sheet row {loc[1] + 1} column {loc[2]!r}"
+
+            sheet = loc[0]
+            row = loc[1]
+            if self._source and sheet in self._source.table_read:
+                context = self._source.table_read[sheet]
+                row = context.adjusted_row_number(row) - 1
+
+            return f"{sheet} sheet row {row + 1} column {loc[2]!r}"
         # This should be unreachable as the TableDMS model only has 2 levels.
         return as_json_path(loc)
 
@@ -150,6 +156,7 @@ class DMSTableImporter(DMSImporter):
         table_rows: list[dict[str, CellValueType]] = []
         # Metadata sheet is just a key-value pair of the first two columns.
         # For other sheets, we need to find the column header row first.
+        header_set = False
         columns: list[str] = [] if sheet.title != cls.MetadataSheet else required_columns
         for row_no, row in enumerate(sheet.iter_rows(values_only=True)):
             if columns:
@@ -164,9 +171,13 @@ class DMSTableImporter(DMSImporter):
             else:
                 # Look for the column header row.
                 row_values = [str(cell) for cell in row]
-                if set(row_values).intersection(required_columns):
+                if not header_set and set(row_values).intersection(required_columns):
                     columns = row_values
                     context.header_row = row_no
-                else:
+                    header_set = True
+
+                elif not header_set:
                     context.skipped_rows.append(row_no)
+                else:
+                    raise RuntimeError("Unreachable code reached while reading table rows. Please report a bug.")
         return table_rows
