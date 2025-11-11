@@ -1,10 +1,10 @@
 import itertools
 import sys
 from abc import ABC, abstractmethod
-from collections import UserList
+from collections import UserList, defaultdict
 from datetime import datetime
 from enum import Enum
-from typing import Generic, Literal, TypeAlias, cast
+from typing import Any, Generic, Literal, TypeAlias, cast
 
 from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
@@ -496,3 +496,21 @@ class DeploymentResult(BaseDeployObject):
     @property
     def is_success(self) -> bool:
         return self.status in ("success", "pending")
+
+    def as_mixpanel_event(self) -> dict[str, Any]:
+        """Convert deployment result to mixpanel event format"""
+        output: dict[str, Any] = {
+            "status": self.status,
+            "isDryRun": self.is_dry_run,
+            "isSuccess": self.is_success,
+        }
+        if self.responses:
+            counts: dict[str, int] = defaultdict(int)
+            for change in itertools.chain(self.responses.created, self.responses.updated, self.responses.deletions):
+                suffix = type(change.message).__name__.removesuffix("[TypeVar]").removesuffix("[~T_ResourceId]")
+                # For example: containers.created.successResponseItems
+                prefix = f"{change.endpoint}.{change.change.change_type}.{suffix}"
+                counts[prefix] += len(change.message.ids)
+
+            output.update(counts)
+        return output
