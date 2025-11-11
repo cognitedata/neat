@@ -116,7 +116,7 @@ class DataModelAnalysis:
 
     @property
     def container_properties(self) -> dict[tuple[ContainerReference, str], ContainerPropertyDefinition]:
-        """Get a mapping of container references to their corresponding ContainerRequest objects."""
+        """Get a mapping from (container reference, property name) to the property definition."""
 
         return {
             (container.as_reference(), prop_name): property_
