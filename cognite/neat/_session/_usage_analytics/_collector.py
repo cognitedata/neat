@@ -3,13 +3,12 @@ import platform
 import threading
 import uuid
 from contextlib import suppress
-from functools import cached_property
 from typing import Any, Literal
 
 from mixpanel import Consumer, Mixpanel  # type: ignore[import-untyped]
 
 from cognite.neat._session._constants import IN_NOTEBOOK, IN_PYODIDE
-from cognite.neat._session._usage_analytics._storage import get_storage
+from cognite.neat._session._usage_analytics._storage import ManualReadResult, ReadResult, get_storage
 
 _NEAT_MIXPANEL_TOKEN: str = "bd630ad149d19999df3989c3a3750c4f"
 
@@ -35,14 +34,30 @@ class Collector:
         self._distinct_id_key = "neat-distinct-id"
         self.skip_tracking = skip_tracking
         self._initialized = True
+        # We trigger these reads immediately to have them ready when needed.
+        # This is necessary in a Pyodide environment were the read will not be available
+        self._opt_status_read: ReadResult | None = self._storage.read(self._opt_status_key)
+        self._distinct_id_read: ReadResult | None = self._storage.read(self._distinct_id_key)
 
-    @cached_property
+    @property
     def _opt_status(self) -> str:
-        return self._storage.read(self._opt_status_key)
+        if self._opt_status_read is None:
+            self._opt_status_read = self._storage.read(self._opt_status_key)
+        if self._opt_status_read.is_ready:
+            return self._opt_status_read.get_data()
+        return ""  # We do not have an opt status yet.
+
+    @property
+    def _distinct_id(self) -> str | None:
+        if self._distinct_id_read is None:
+            self._distinct_id_read = self._storage.read(self._distinct_id_key)
+        if self._distinct_id_read.is_ready:
+            return self._distinct_id_read.get_data()
+        return None
 
     def bust_opt_status(self) -> None:
-        self.__dict__.pop("_opt_status", None)
         self._storage.delete(self._opt_status_key)
+        self._opt_status_read = None
 
     @property
     def is_opted_out(self) -> bool:
@@ -55,16 +70,16 @@ class Collector:
     def enable(self) -> None:
         self._storage.write(self._opt_status_key, "opted-in")
         # Override cached property
-        self.__dict__["_opt_status"] = "opted-in"
+        self._opt_status_read = ManualReadResult("opted-in")
 
     def disable(self) -> None:
         self._storage.write(self._opt_status_key, "opted-out")
         # Override cached property
-        self.__dict__["_opt_status"] = "opted-out"
+        self._opt_status_read = ManualReadResult("opted-out")
 
     def get_distinct_id(self) -> str:
-        existing_id = self._storage.read(self._distinct_id_key)
-        if existing_id:
+        existing_id = self._distinct_id
+        if existing_id is not None:
             return existing_id
 
         distinct_id = f"{platform.system()}-{platform.python_version()}-{uuid.uuid4()!s}"
