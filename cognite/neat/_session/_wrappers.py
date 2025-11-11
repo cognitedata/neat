@@ -27,6 +27,11 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
             identifier = f"{cls.__name__}.{func.__name__}"
             try:
                 res = func(self, *args, **kwargs)
+                if not self._store.provenance:
+                    print(f"{display_name} ✅")
+                    if _COLLECTOR.can_collect:
+                        _COLLECTOR.collect("action", {"action": identifier, "success": True})
+                    return res
                 change = self._store.provenance[-1]
                 issues_count = len(change.issues) if change.issues else 0
                 errors_count = len(change.errors) if change.errors else 0
