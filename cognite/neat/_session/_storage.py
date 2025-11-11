@@ -8,8 +8,6 @@ from cognite.neat.v0.core._constants import IN_PYODIDE
 if TYPE_CHECKING:
     import asyncio
 
-    import js  # type: ignore[import-not-found]
-
 
 class Storage(Protocol):
     """Protocol for storage implementations."""
@@ -65,7 +63,8 @@ class LocalStorageAdapter:
 
     def __init__(self) -> None:
         self._loop = self._get_or_create_event_loop()
-        self._db_operation_func = self._create_js_function()
+        # Cache the JS code string, but not the compiled function.
+        self._js_code = self._get_js_code()
 
     @staticmethod
     def _get_or_create_event_loop() -> "asyncio.AbstractEventLoop":
@@ -79,12 +78,10 @@ class LocalStorageAdapter:
             asyncio.set_event_loop(loop)
             return loop
 
-    def _create_js_function(self) -> "js.Function":
-        """Creates a reusable JavaScript function for all database operations."""
-        import js  # type: ignore[import-not-found]
-
-        # This JS code is defined once and parameterized to avoid injection.
-        js_code = """
+    @staticmethod
+    def _get_js_code() -> str:
+        """Returns the parameterized JavaScript code for IndexedDB operations."""
+        return """
         (dbName, dbVersion, storeName, operation, key, value) => {
             return new Promise((resolve, reject) => {
                 const request = indexedDB.open(dbName, dbVersion);
@@ -131,23 +128,92 @@ class LocalStorageAdapter:
             });
         }
         """
-        return js.Function.new("dbName", "dbVersion", "storeName", "operation", "key", "value", js_code)
 
     def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> str:
-        """Executes a database operation by calling the reusable JS function."""
+        """Executes a database operation by creating and calling a JS function."""
 
         async def db_operation() -> str:
-            js_promise = self._db_operation_func(
-                self._db_name, self._db_version, self._store_name, operation, key, value
-            )
-            result = await js_promise
-            return str(result) if result is not None else ""
+            import js  # type: ignore[import-not-found]
+            from pyodide.code import run_js  # type: ignore[import-not-found]
+            from pyodide.ffi import to_js  # type: ignore[import-not-found]
+
+            # Convert Python values to JS
+            js_key = to_js(key)
+            js_value = to_js(value if value is not None else "")
+
+            # Store values in js namespace temporarily to pass them safely
+            js._idb_key = js_key
+            js._idb_value = js_value
+
+            try:
+                # Create and execute the function directly in JavaScript context using run_js
+                js_code = f"""
+                (async () => {{
+                    const dbName = "{self._db_name}";
+                    const dbVersion = {self._db_version};
+                    const storeName = "{self._store_name}";
+                    const operation = "{operation}";
+
+                    return new Promise((resolve, reject) => {{
+                        const request = indexedDB.open(dbName, dbVersion);
+
+                        request.onerror = (event) => reject(event.target.error);
+
+                        request.onupgradeneeded = (event) => {{
+                            const db = event.target.result;
+                            if (!db.objectStoreNames.contains(storeName)) {{
+                                db.createObjectStore(storeName);
+                            }}
+                        }};
+
+                        request.onsuccess = (event) => {{
+                            const db = event.target.result;
+                            const mode = (operation === "read") ? "readonly" : "readwrite";
+                            try {{
+                                const transaction = db.transaction([storeName], mode);
+                                const store = transaction.objectStore(storeName);
+
+                                let storeRequest;
+                                if (operation === "read") {{
+                                    storeRequest = store.get(_idb_key);
+                                }} else if (operation === "write") {{
+                                    storeRequest = store.put(_idb_value, _idb_key);
+                                }} else if (operation === "delete") {{
+                                    storeRequest = store.delete(_idb_key);
+                                }} else {{
+                                    db.close();
+                                    return reject(new Error(`Unknown operation: ${{operation}}`));
+                                }}
+
+                                storeRequest.onsuccess = () => resolve(storeRequest.result ?? "");
+                                storeRequest.onerror = (event) => reject(event.target.error);
+
+                                transaction.oncomplete = () => db.close();
+                                transaction.onerror = (event) => reject(event.target.error);
+
+                            }} catch (error) {{
+                                db.close();
+                                reject(error);
+                            }}
+                        }};
+                    }});
+                }})()
+                """
+
+                # Use run_js which properly returns an awaitable promise
+                result = await run_js(js_code)
+                return str(result) if result is not None else ""
+            finally:
+                # Clean up js namespace
+                try:
+                    del js._idb_key
+                    del js._idb_value
+                except Exception:
+                    pass
 
         try:
-            # Bridge the async JS call from our synchronous Python method.
             return self._loop.run_until_complete(db_operation())
         except Exception:
-            # Fallback to empty string in case of any storage errors.
             return ""
 
     def read(self, key: str) -> str:

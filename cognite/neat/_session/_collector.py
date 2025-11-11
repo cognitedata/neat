@@ -92,7 +92,8 @@ class Collector:
 
     def track_session_command(
         self,
-        even_name: Literal["action"],
+        even_name: Literal["action", "initSession"],
+        event_properties: dict[str, Any],
     ) -> None:
         raise NotImplementedError()
 

@@ -20,17 +20,17 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
 
         @wraps(func)
         def wrapper(self: HasStore, *args: Any, **kwargs: Any) -> Any:
+            identifier = f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__}"
             try:
                 res = func(self, *args, **kwargs)
                 change = self._store.provenance[-1]
-
                 issues_count = len(change.issues) if change.issues else 0
                 errors_count = len(change.errors) if change.errors else 0
                 total_issues = issues_count + errors_count
 
                 newline = "\n"  # python 3.10 compatibility
                 print(
-                    f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__} "
+                    f"{identifier} "
                     f"{'✅' if change.successful else '❌'}"
                     f"{f' | Issues: {total_issues} (of which {errors_count} critical)' if total_issues > 0 else ''}"
                     f"{newline + 'For details on issues run neat.issues' if change.issues or change.errors else ''}"
@@ -42,7 +42,7 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
             # if an error occurs, we catch it and print it out instead of
             # getting a full traceback
             except Exception as e:
-                print(f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__} ❌")
+                print(f"{identifier} ❌")
                 print(f"Error: {e}")
 
         return wrapper
