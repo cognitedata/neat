@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     import asyncio
 
-from ._constants import IN_PYODIDE
+from cognite.neat._session._constants import IN_PYODIDE
 
 
 class Storage(Protocol):

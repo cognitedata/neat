@@ -2,10 +2,9 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any, Protocol, TypeVar
 
+from cognite.neat._session._usage_analytics._collector import Collector
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils.text import split_on_capitals
-
-from ._collector import Collector
 
 
 class HasStore(Protocol):

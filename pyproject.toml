@@ -129,7 +129,7 @@ omit = [
     # such that we can increase the coverage threshold for the new code.
     "cognite/neat/v0/*",
     # The Storage is for running in pyodide and cannot be tested in the normal test suite.
-    "cognite/neat/_session/_storage",
+    "cognite/neat/_session/_usage_analytics",
 ]
 
 [tool.mypy]

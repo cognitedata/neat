@@ -13,9 +13,9 @@ from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._issues import IssueList
-from cognite.neat._session._collector import Collector
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
+from cognite.neat._session._usage_analytics._collector import Collector
 
 
 @pytest.fixture()

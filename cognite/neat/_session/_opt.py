@@ -1,6 +1,5 @@
+from cognite.neat._session._usage_analytics._collector import Collector
 from cognite.neat._session._wrappers import session_wrapper
-
-from ._collector import Collector
 
 
 @session_wrapper
