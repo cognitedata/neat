@@ -8,6 +8,8 @@ from cognite.neat._data_model.validation.dms._base import CDFResources, DataMode
 from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.useful_types import ModusOperandi
 
+_BASE_CODE = "NEAT-DMS-LIMITS"
+
 
 class DataModelLimitValidator(DataModelValidator):
     """Validates that a DMS data model adheres to all CDF resource limits.
@@ -24,7 +26,7 @@ class DataModelLimitValidator(DataModelValidator):
     All violations produce ConsistencyError issues that prevent deployment.
     """
 
-    code = "NEAT-DMS-006"
+    code = f"{_BASE_CODE}-001"
 
     def __init__(
         self,

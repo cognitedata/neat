@@ -14,6 +14,41 @@ from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
+_BASE_CODE = "NEAT-DMS-CONNECTIONS"
+
+
+class UndefinedConnectionEndNodeTypes(DataModelValidator):
+    """This validator checks for connections where the end node types are not defined"""
+
+    code = f"{_BASE_CODE}-001"
+
+    def run(self) -> list[ConsistencyError]:
+        undefined_value_types = []
+
+        for (view, property_), value_type in self.local_resources.connection_end_node_types.items():
+            if value_type in self.local_resources.views_by_reference:
+                continue
+
+            if (
+                self.modus_operandi == "additive" or value_type.space != self.local_resources.data_model_reference.space
+            ) and value_type in self.cdf_resources.views_by_reference:
+                continue
+
+            undefined_value_types.append((view, property_, value_type))
+
+        return [
+            ConsistencyError(
+                message=(
+                    f"View {view!s} property {property_!s} has value type {value_type!s} "
+                    "which is not defined as a view in the data model neither exists in CDF."
+                    " This will prohibit you from deploying the data model to CDF."
+                ),
+                fix="Define necessary view",
+                code=self.code,
+            )
+            for (view, property_, value_type) in undefined_value_types
+        ]
+
 
 @dataclass
 class ReverseConnectionContext:
@@ -55,7 +90,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         4. Direct connection points back to correct target
     """
 
-    code = "NEAT-DMS-004"
+    code = f"{_BASE_CODE}-002"
 
     def run(self) -> list[ConsistencyError | Recommendation]:
         """Run validation and return list of issues found."""
