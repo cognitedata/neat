@@ -39,7 +39,12 @@ class Collector:
 
     @cached_property
     def _opt_status(self) -> str:
-        return self._storage.read(self._opt_status_key)
+        if IN_PYODIDE:
+            # When running in Pyodide, the environment is asynchronous
+            # so we need to await the read operation. This is a bit hacky, but it works.
+            return await self._storage.read(self._opt_status_key)  # type: ignore[await-not-async, misc]
+        else:
+            return self._storage.read(self._opt_status_key)
 
     def bust_opt_status(self) -> None:
         self.__dict__.pop("_opt_status", None)
