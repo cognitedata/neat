@@ -5,12 +5,16 @@ from typing import Any, Protocol, TypeVar
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils.text import split_on_capitals
 
+from ._collector import Collector
+
 
 class HasStore(Protocol):
     _store: NeatStore
 
 
 T_Class = TypeVar("T_Class", bound=object)
+
+_COLLECTOR = Collector()
 
 
 def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
@@ -20,7 +24,8 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
 
         @wraps(func)
         def wrapper(self: HasStore, *args: Any, **kwargs: Any) -> Any:
-            identifier = f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__}"
+            display_name = f"{' '.join(split_on_capitals(cls.__name__))} - {func.__name__}"
+            identifier = f"{cls.__name__}.{func.__name__}"
             try:
                 res = func(self, *args, **kwargs)
                 change = self._store.provenance[-1]
@@ -30,20 +35,30 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
 
                 newline = "\n"  # python 3.10 compatibility
                 print(
-                    f"{identifier} "
+                    f"{display_name} "
                     f"{'✅' if change.successful else '❌'}"
                     f"{f' | Issues: {total_issues} (of which {errors_count} critical)' if total_issues > 0 else ''}"
                     f"{newline + 'For details on issues run neat.issues' if change.issues or change.errors else ''}"
                     f"{newline + 'For details on result run neat.result' if change.result else ''}"
                 )
+                if _COLLECTOR.can_collect:
+                    event = change.as_mixpanel_event()
+                    event["action"] = identifier
+                    _COLLECTOR.collect("action", event)
+                    if change.result:
+                        event = change.result.as_mixpanel_event()
+                        event["action"] = identifier
+                        _COLLECTOR.collect("deployment", event)
 
                 return res
 
             # if an error occurs, we catch it and print it out instead of
             # getting a full traceback
             except Exception as e:
-                print(f"{identifier} ❌")
+                print(f"{display_name} ❌")
                 print(f"Error: {e}")
+                if _COLLECTOR.can_collect:
+                    _COLLECTOR.collect("action", {"action": identifier, "success": False, "error_message": str(e)})
 
         return wrapper
 

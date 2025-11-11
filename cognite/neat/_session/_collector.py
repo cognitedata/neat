@@ -101,7 +101,9 @@ class Collector:
         """Check if tracking is possible."""
         return not self.skip_tracking and self.is_opted_in and "PYTEST_CURRENT_TEST" not in os.environ
 
-    def collect(self, event_name: Literal["action", "initSession"], event_properties: dict[str, Any]) -> None:
+    def collect(
+        self, event_name: Literal["action", "initSession", "deployment"], event_properties: dict[str, Any]
+    ) -> None:
         distinct_id = self.get_distinct_id()
 
         def track() -> None:
