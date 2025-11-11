@@ -1,6 +1,7 @@
 from graphlib import TopologicalSorter
 
-from cognite.neat._data_model.models.dms._container import ContainerRequest
+from cognite.neat._data_model.models.dms._container import ContainerPropertyDefinition, ContainerRequest
+from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._references import (
     ContainerDirectReference,
     ContainerReference,
@@ -40,7 +41,7 @@ class DataModelAnalysis:
                     referenced_views.add(implement)
 
         if include_connection_end_node_types:
-            referenced_views |= set(self.connection_end_node_types.values())
+            referenced_views |= {view for view in self.connection_end_node_types.values() if view is not None}
 
         return referenced_views
 
@@ -114,18 +115,39 @@ class DataModelAnalysis:
         return {container.as_reference(): container.model_copy(deep=True) for container in self.physical.containers}
 
     @property
-    def connection_end_node_types(self) -> dict[tuple[ViewReference, str], ViewReference]:
+    def container_properties(self) -> dict[tuple[ContainerReference, str], ContainerPropertyDefinition]:
+        """Get a mapping from (container reference, property name) to the property definition."""
+
+        return {
+            (container.as_reference(), prop_name): property_
+            for container in self.physical.containers
+            for prop_name, property_ in container.properties.items()
+        }
+
+    @property
+    def connection_end_node_types(self) -> dict[tuple[ViewReference, str], ViewReference | None]:
         """Get a mapping of view references to their corresponding ViewRequest objects."""
         view_by_reference = self.view_by_reference(include_inherited_properties=False)
-        connection_end_node_types: dict[tuple[ViewReference, str], ViewReference] = {}
+        connection_end_node_types: dict[tuple[ViewReference, str], ViewReference | None] = {}
+        container_properties = self.container_properties
 
         for view_ref, view in view_by_reference.items():
             if not view.properties:
                 continue
             for prop_ref, property_ in view.properties.items():
                 # direct relation
-                if isinstance(property_, ViewCorePropertyRequest) and property_.source:
-                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
+                if isinstance(property_, ViewCorePropertyRequest):
+                    # explicit set of end node type via 'source' which is View reference
+                    if property_.source:
+                        connection_end_node_types[(view_ref, prop_ref)] = property_.source
+
+                    # implicit end node type via container property, without actual knowledge of end node type
+                    elif (
+                        container_property := container_properties.get(
+                            (property_.container, property_.container_property_identifier)
+                        )
+                    ) and isinstance(container_property.type, DirectNodeRelation):
+                        connection_end_node_types[(view_ref, prop_ref)] = None
 
                 # reverse direct relation
                 if isinstance(property_, ReverseDirectRelationProperty) and property_.source:

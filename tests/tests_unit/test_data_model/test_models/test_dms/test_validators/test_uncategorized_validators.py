@@ -8,10 +8,11 @@ from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms import (
     BidirectionalConnectionMisconfigured,
+    ConnectionValueTypeExist,
+    ConnectionValueTypeNotNone,
     DataModelLimitValidator,
     DmsDataModelValidation,
     ReferencedContainersExist,
-    UndefinedConnectionEndNodeTypes,
     VersionSpaceInconsistency,
 )
 from cognite.neat._issues import IssueList
@@ -64,6 +65,15 @@ Properties:
   Immutable: false
   Container: my_space:DirectConnectionContainer
   Container Property: directLocal
+- View: MyDescribable
+  View Property: directToNowhere
+  Connection: direct
+  Value Type: '#N/A'
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: my_space:DirectConnectionContainer
+  Container Property: directToNowhere
 - View: MyDescribable
   View Property: directRemote
   Connection: direct
@@ -124,18 +134,19 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 10
+        assert len(on_success.issues) == 11
         assert set(by_code.keys()) == {
-            UndefinedConnectionEndNodeTypes.code,
+            ConnectionValueTypeExist.code,
+            ConnectionValueTypeNotNone.code,
             VersionSpaceInconsistency.code,
             BidirectionalConnectionMisconfigured.code,
             ReferencedContainersExist.code,
             DataModelLimitValidator.code,
         }
 
-        assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 3
+        assert len(by_code[ConnectionValueTypeExist.code]) == 3
 
-        undefined_connection_messages = [issue.message for issue in by_code[UndefinedConnectionEndNodeTypes.code]]
+        undefined_connection_messages = [issue.message for issue in by_code[ConnectionValueTypeExist.code]]
         expected_connections = {
             "my_space:UnexistingDirectConnectionLocal(version=v1)",
             "my_space:UnexistingSourceForReverseConnection(version=v1)",
@@ -166,6 +177,9 @@ class TestValidators:
                     found_inconsistent_views.add(expected_view)
 
         assert found_inconsistent_views == expected_inconsistent_views
+
+        assert len(by_code[ConnectionValueTypeNotNone.code]) == 1
+        assert "directToNowhere" in by_code[ConnectionValueTypeNotNone.code][0].message
 
         assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
         assert "reverseDirectPropertyMissingOtherEnd" in by_code[BidirectionalConnectionMisconfigured.code][0].message
@@ -216,18 +230,19 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 14
+        assert len(on_success.issues) == 15
         assert set(by_code.keys()) == {
-            UndefinedConnectionEndNodeTypes.code,
+            ConnectionValueTypeExist.code,
+            ConnectionValueTypeNotNone.code,
             VersionSpaceInconsistency.code,
             BidirectionalConnectionMisconfigured.code,
             ReferencedContainersExist.code,
             DataModelLimitValidator.code,
         }
 
-        assert len(by_code[UndefinedConnectionEndNodeTypes.code]) == 5
+        assert len(by_code[ConnectionValueTypeExist.code]) == 5
 
-        undefined_connection_messages = [issue.message for issue in by_code[UndefinedConnectionEndNodeTypes.code]]
+        undefined_connection_messages = [issue.message for issue in by_code[ConnectionValueTypeExist.code]]
         expected_connections = {
             "my_space:UnexistingDirectConnectionLocal(version=v1)",
             "my_space:UnexistingSourceForReverseConnection(version=v1)",
@@ -263,10 +278,13 @@ class TestValidators:
         assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 2
         expected_affected_reverse_properties = {"reverseDirectPropertyMissingOtherEnd", "reverseDirectPropertyRemote"}
 
+        assert len(by_code[ConnectionValueTypeNotNone.code]) == 1
+        assert "directToNowhere" in by_code[ConnectionValueTypeNotNone.code][0].message
+
         found_affected_reverse_properties = set()
-        for messsage in by_code[BidirectionalConnectionMisconfigured.code]:
+        for message in by_code[BidirectionalConnectionMisconfigured.code]:
             for expected_property in expected_affected_reverse_properties:
-                if expected_property in messsage.message:
+                if expected_property in message.message:
                     found_affected_reverse_properties.add(expected_property)
         assert found_affected_reverse_properties == expected_affected_reverse_properties
 

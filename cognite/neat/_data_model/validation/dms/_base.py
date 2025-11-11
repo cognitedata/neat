@@ -25,7 +25,7 @@ AncestorsByReference: TypeAlias = dict[ViewReference, set[ViewReference]]
 ReverseToDirectMapping: TypeAlias = dict[
     tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
 ]
-ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReference]
+ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReference | None]
 
 
 @dataclass

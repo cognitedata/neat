@@ -12,7 +12,7 @@ from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
-from ._connections import BidirectionalConnectionMisconfigured, UndefinedConnectionEndNodeTypes
+from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
 from ._consistency import VersionSpaceInconsistency
 from ._containers import ReferencedContainersExist
 from ._limits import DataModelLimitValidator
@@ -81,11 +81,12 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
-            UndefinedConnectionEndNodeTypes(local_resources, cdf_resources, self._modus_operandi),
-            VersionSpaceInconsistency(local_resources, cdf_resources, self._modus_operandi),
-            BidirectionalConnectionMisconfigured(local_resources, cdf_resources, self._modus_operandi),
-            ReferencedContainersExist(local_resources, cdf_resources, self._modus_operandi),
             DataModelLimitValidator(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ReferencedContainersExist(local_resources, cdf_resources, self._modus_operandi),
+            ConnectionValueTypeExist(local_resources, cdf_resources, self._modus_operandi),
+            ConnectionValueTypeNotNone(local_resources, cdf_resources, self._modus_operandi),
+            BidirectionalConnectionMisconfigured(local_resources, cdf_resources, self._modus_operandi),
+            VersionSpaceInconsistency(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators

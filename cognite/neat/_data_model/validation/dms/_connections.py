@@ -17,8 +17,8 @@ from cognite.neat._issues import ConsistencyError, Recommendation
 _BASE_CODE = "NEAT-DMS-CONNECTIONS"
 
 
-class UndefinedConnectionEndNodeTypes(DataModelValidator):
-    """This validator checks for connections where the end node types are not defined"""
+class ConnectionValueTypeExist(DataModelValidator):
+    """This validator checks whether connections value types (end node types) exist in the data model or in CDF."""
 
     code = f"{_BASE_CODE}-001"
 
@@ -26,6 +26,9 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
         undefined_value_types = []
 
         for (view, property_), value_type in self.local_resources.connection_end_node_types.items():
+            if value_type is None:
+                continue
+
             if value_type in self.local_resources.views_by_reference:
                 continue
 
@@ -39,7 +42,7 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
         return [
             ConsistencyError(
                 message=(
-                    f"View {view!s} property {property_!s} has value type {value_type!s} "
+                    f"View {view!s} connection {property_!s} has value type {value_type!s} "
                     "which is not defined as a view in the data model neither exists in CDF."
                     " This will prohibit you from deploying the data model to CDF."
                 ),
@@ -47,6 +50,31 @@ class UndefinedConnectionEndNodeTypes(DataModelValidator):
                 code=self.code,
             )
             for (view, property_, value_type) in undefined_value_types
+        ]
+
+
+class ConnectionValueTypeNotNone(DataModelValidator):
+    """This validator checks whether connection value types are not None."""
+
+    code = f"{_BASE_CODE}-002"
+
+    def run(self) -> list[Recommendation]:
+        missing_value_types = []
+
+        for (view, property_), value_type in self.local_resources.connection_end_node_types.items():
+            if not value_type:
+                missing_value_types.append((view, property_))
+
+        return [
+            Recommendation(
+                message=(
+                    f"View {view!s} connection {property_!s} is missing value type (end node type)."
+                    " This yields ambiguous data model definition."
+                ),
+                fix="Define necessary value type",
+                code=self.code,
+            )
+            for (view, property_) in missing_value_types
         ]
 
 
@@ -90,7 +118,7 @@ class BidirectionalConnectionMisconfigured(DataModelValidator):
         4. Direct connection points back to correct target
     """
 
-    code = f"{_BASE_CODE}-002"
+    code = f"{_BASE_CODE}-003"
 
     def run(self) -> list[ConsistencyError | Recommendation]:
         """Run validation and return list of issues found."""
