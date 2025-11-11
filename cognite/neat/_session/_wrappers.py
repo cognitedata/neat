@@ -11,7 +11,7 @@ class HasStore(Protocol):
     _store: NeatStore
 
 
-T_Class = TypeVar("T_Class", bound=object)
+T_Class = TypeVar("T_Class", bound=HasStore)
 
 _COLLECTOR = Collector()
 
