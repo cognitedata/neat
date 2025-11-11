@@ -105,6 +105,11 @@ class Collector:
             with suppress(ConnectionError):
                 self.mp.track(distinct_id, event_name, event_properties)
 
+        if IN_PYODIDE:
+            # We cannot spawn threads in Pyodide
+            track()
+            return None
+
         thread = threading.Thread(target=track, daemon=True)
         thread.start()
         return None
