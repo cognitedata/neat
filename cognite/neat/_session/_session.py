@@ -1,6 +1,8 @@
 from cognite.client import ClientConfig, CogniteClient
 
+from cognite.neat import _version
 from cognite.neat._client import NeatClient
+from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
 from cognite.neat._utils.useful_types import ModusOperandi
 
@@ -26,3 +28,20 @@ class NeatSession:
 
         if self.opt._collector.can_collect:
             self.opt._collector.collect("initSession", {"mode": mode})
+
+    @property
+    def version(self) -> str:
+        """Get the current version of neat."""
+        return _version.__version__
+
+    def _repr_html_(self) -> str:
+        if isinstance(self._store.state, EmptyState):
+            return (
+                "<strong>Empty session</strong>. Get started by reading for example physical data model"
+                " <em>.physical_data_model.read</em>"
+            )
+
+        if isinstance(self._store.state, PhysicalState):
+            return self.physical_data_model._repr_html_()
+
+        raise RuntimeError("Unknown session state, contact support.")
