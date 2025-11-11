@@ -4,6 +4,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._store import NeatStore
 
 from ._issues import Issues
+from ._opt import Opt
 from ._physical import PhysicalDataModel
 from ._result import Result
 
@@ -20,3 +21,4 @@ class NeatSession:
         self.physical_data_model = PhysicalDataModel(self._store, self._client)
         self.issues = Issues(self._store)
         self.result = Result(self._store)
+        self.opt = Opt()

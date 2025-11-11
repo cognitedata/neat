@@ -6,7 +6,7 @@ import uuid
 from contextlib import suppress
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 from mixpanel import Consumer, Mixpanel  # type: ignore[import-untyped]
 
@@ -19,19 +19,23 @@ class Collector:
     """Collects usage data and sends it to Mixpanel."""
 
     _instance: "Collector | None" = None
+    _initialized: bool = False
 
     def __new__(cls, *args: Any, **kwargs: Any) -> "Collector":
         # Implementing Singleton pattern
-        if not hasattr(cls, "_instance"):
+        if cls._instance is None:
             cls._instance = super().__new__(cls)
-        return cast(Collector, cls._instance)
+        return cls._instance
 
     def __init__(self, skip_tracking: bool = False) -> None:
+        if self._initialized:
+            return
         self.mp = Mixpanel(_NEAT_MIXPANEL_TOKEN, consumer=Consumer(api_host="api-eu.mixpanel.com"))
         tmp_dir = Path(tempfile.gettempdir()).resolve()
         self._opt_status_file = tmp_dir / "neat-opt-status.bin"
         self._distinct_id_file = tmp_dir / "neat-distinct-id.bin"
-        self.skip_tracking = self.opted_out or skip_tracking
+        self.skip_tracking = self.is_opted_out or skip_tracking
+        self._initialized = True
 
     @cached_property
     def _opt_status(self) -> str:
@@ -39,24 +43,27 @@ class Collector:
             return self._opt_status_file.read_text()
         return ""
 
-    def _bust_opt_status(self) -> None:
+    def bust_opt_status(self) -> None:
         self.__dict__.pop("_opt_status", None)
+        self._opt_status_file.unlink(missing_ok=True)
 
     @property
-    def opted_out(self) -> bool:
+    def is_opted_out(self) -> bool:
         return self._opt_status == "opted-out"
 
     @property
-    def opted_in(self) -> bool:
+    def is_opted_in(self) -> bool:
         return self._opt_status == "opted-in"
 
     def enable(self) -> None:
         self._opt_status_file.write_text("opted-in")
-        self._bust_opt_status()
+        # Override cached property
+        self.__dict__["_opt_status"] = "opted-in"
 
     def disable(self) -> None:
         self._opt_status_file.write_text("opted-out")
-        self._bust_opt_status()
+        # Override cached property
+        self.__dict__["_opt_status"] = "opted-out"
 
     def get_distinct_id(self) -> str:
         if self._distinct_id_file.exists():
@@ -92,7 +99,7 @@ class Collector:
         raise NotImplementedError()
 
     def _track(self, event_name: str, event_properties: dict[str, Any]) -> bool:
-        if self.skip_tracking or not self.opted_in or "PYTEST_CURRENT_TEST" in os.environ:
+        if self.skip_tracking or not self.is_opted_in or "PYTEST_CURRENT_TEST" in os.environ:
             return False
 
         distinct_id = self.get_distinct_id()

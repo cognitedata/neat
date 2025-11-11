@@ -99,6 +99,11 @@ dev = [
     "polyfactory>=2.22.2",
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "serial: mark test to run serially (not in parallel)",
+]
+
 [tool.uv]
 package = true
 

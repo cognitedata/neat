@@ -13,6 +13,7 @@ from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter
 from cognite.neat._data_model.models.dms import RequestSchema
 from cognite.neat._issues import IssueList
+from cognite.neat._session._collector import Collector
 from cognite.neat._session._physical import ReadPhysicalDataModel
 from cognite.neat._session._session import NeatSession
 
@@ -174,3 +175,37 @@ class TestNeatSession:
         assert isinstance(session._store.state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].source_state, states.EmptyState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
+
+
+@pytest.mark.serial
+class TestCollector:
+    def test_collector_is_singleton(self) -> None:
+        collector1 = Collector()
+        collector2 = Collector()
+        assert collector1 is collector2
+        before = collector1.skip_tracking
+        change = not before
+        collector1.skip_tracking = change
+        assert collector2.skip_tracking == change
+
+    def test_get_distinct_id(self) -> None:
+        collector = Collector()
+        distinct_id1 = collector.get_distinct_id()
+        distinct_id2 = collector.get_distinct_id()
+        assert distinct_id1 == distinct_id2
+        assert isinstance(distinct_id1, str)
+        assert len(distinct_id1) > 0
+
+    def test_opt_in_out(self) -> None:
+        collector = Collector()
+        collector.bust_opt_status()
+        assert not collector.is_opted_in
+        assert not collector.is_opted_out
+
+        collector.enable()
+        assert collector.is_opted_in
+        assert not collector.is_opted_out
+
+        collector.disable()
+        assert collector.is_opted_out
+        assert not collector.is_opted_in
