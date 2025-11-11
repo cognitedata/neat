@@ -38,13 +38,7 @@ class Collector:
 
     @cached_property
     def _opt_status(self) -> str:
-        if IN_PYODIDE:
-            # When running in Pyodide, the environment is asynchronous
-            # so we need to await the read operation. This is a bit hacky, but it works.
-            # We use eval to avoid a syntax error when running in a normal Python environment.
-            return eval("await self._storage.read(self._opt_status_key)")
-        else:
-            return self._storage.read(self._opt_status_key)
+        return self._storage.read(self._opt_status_key)
 
     def bust_opt_status(self) -> None:
         self.__dict__.pop("_opt_status", None)
@@ -110,6 +104,11 @@ class Collector:
             # If we are unable to connect to Mixpanel, we don't want to crash the program
             with suppress(ConnectionError):
                 self.mp.track(distinct_id, event_name, event_properties)
+
+        if IN_PYODIDE:
+            # We cannot spawn threads in Pyodide
+            track()
+            return None
 
         thread = threading.Thread(target=track, daemon=True)
         thread.start()
