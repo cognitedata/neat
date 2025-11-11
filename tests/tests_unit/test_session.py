@@ -209,3 +209,7 @@ class TestCollector:
         collector.disable()
         assert collector.is_opted_out
         assert not collector.is_opted_in
+
+    def test_can_collect(self) -> None:
+        collector = Collector()
+        assert not collector.can_collect, "We cannot collect when running pytest"
