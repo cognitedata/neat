@@ -96,17 +96,12 @@ class Collector:
             return "notebook"
         return "python"
 
-    def track_session_command(
-        self,
-        even_name: Literal["action", "initSession"],
-        event_properties: dict[str, Any],
-    ) -> None:
-        raise NotImplementedError()
+    @property
+    def can_collect(self) -> bool:
+        """Check if tracking is possible."""
+        return not self.skip_tracking and self.is_opted_in and "PYTEST_CURRENT_TEST" not in os.environ
 
-    def _track(self, event_name: str, event_properties: dict[str, Any]) -> bool:
-        if self.skip_tracking or not self.is_opted_in or "PYTEST_CURRENT_TEST" in os.environ:
-            return False
-
+    def collect(self, event_name: Literal["action", "initSession"], event_properties: dict[str, Any]) -> None:
         distinct_id = self.get_distinct_id()
 
         def track() -> None:
@@ -116,4 +111,4 @@ class Collector:
 
         thread = threading.Thread(target=track, daemon=False)
         thread.start()
-        return True
+        return None
