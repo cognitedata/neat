@@ -1,5 +1,6 @@
 from cognite.neat._session._usage_analytics._collector import Collector
 from cognite.neat._session._wrappers import session_wrapper
+from cognite.neat._store import NeatStore
 
 
 @session_wrapper
@@ -8,9 +9,10 @@ class Opt:
     information like name etc. only usage.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, store: NeatStore) -> None:
         self._collector = Collector()
         self._display()
+        self._store = store
 
     def _display(self) -> None:
         if self._collector.is_opted_in or self._collector.is_opted_out:
