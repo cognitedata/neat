@@ -42,7 +42,8 @@ class Collector:
         if IN_PYODIDE:
             # When running in Pyodide, the environment is asynchronous
             # so we need to await the read operation. This is a bit hacky, but it works.
-            return await self._storage.read(self._opt_status_key)  # type: ignore[await-not-async, misc]
+            # We use eval to avoid a syntax error when running in a normal Python environment.
+            return eval("await self._storage.read(self._opt_status_key)")
         else:
             return self._storage.read(self._opt_status_key)
 
