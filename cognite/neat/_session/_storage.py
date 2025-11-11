@@ -1,9 +1,14 @@
 """Storage abstraction for persisting data in both local filesystem and pyodide environments."""
 
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from cognite.neat.v0.core._constants import IN_PYODIDE
+
+if TYPE_CHECKING:
+    import asyncio
+
+    import js  # type: ignore[import-not-found]
 
 
 class Storage(Protocol):
@@ -47,82 +52,102 @@ class FileSystemStorage:
 
 
 class LocalStorageAdapter:
-    """Storage implementation using browser IndexedDB (for pyodide)."""
+    """
+    Storage implementation using browser IndexedDB for pyodide environments.
+
+    This adapter provides a synchronous interface to the asynchronous IndexedDB API
+    by managing an asyncio event loop.
+    """
+
+    _db_name = "neat-storage"
+    _store_name = "keyval"
+    _db_version = 1
 
     def __init__(self) -> None:
-        self._db_name = "neat-storage"
-        self._store_name = "keyval"
-        self._db_version = 1
+        self._loop = self._get_or_create_event_loop()
+        self._db_operation_func = self._create_js_function()
+
+    @staticmethod
+    def _get_or_create_event_loop() -> "asyncio.AbstractEventLoop":
+        """Gets the current asyncio event loop or creates a new one."""
+        import asyncio
+
+        try:
+            return asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop
+
+    def _create_js_function(self) -> "js.Function":
+        """Creates a reusable JavaScript function for all database operations."""
+        import js  # type: ignore[import-not-found]
+
+        # This JS code is defined once and parameterized to avoid injection.
+        js_code = """
+        (dbName, dbVersion, storeName, operation, key, value) => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(dbName, dbVersion);
+
+                request.onerror = (event) => reject(event.target.error);
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(storeName)) {
+                        db.createObjectStore(storeName);
+                    }
+                };
+
+                request.onsuccess = (event) => {
+                    const db = event.target.result;
+                    const mode = (operation === "read") ? "readonly" : "readwrite";
+                    try {
+                        const transaction = db.transaction([storeName], mode);
+                        const store = transaction.objectStore(storeName);
+
+                        let storeRequest;
+                        if (operation === "read") {
+                            storeRequest = store.get(key);
+                        } else if (operation === "write") {
+                            storeRequest = store.put(value, key);
+                        } else if (operation === "delete") {
+                            storeRequest = store.delete(key);
+                        } else {
+                            db.close();
+                            return reject(new Error(`Unknown operation: ${operation}`));
+                        }
+
+                        storeRequest.onsuccess = () => resolve(storeRequest.result ?? "");
+                        storeRequest.onerror = (event) => reject(event.target.error);
+
+                        transaction.oncomplete = () => db.close();
+                        transaction.onerror = (event) => reject(event.target.error);
+
+                    } catch (error) {
+                        db.close();
+                        reject(error);
+                    }
+                };
+            });
+        }
+        """
+        return js.Function.new("dbName", "dbVersion", "storeName", "operation", "key", "value", js_code)
 
     def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> str:
-        """Execute a database operation using IndexedDB."""
+        """Executes a database operation by calling the reusable JS function."""
+
+        async def db_operation() -> str:
+            js_promise = self._db_operation_func(
+                self._db_name, self._db_version, self._store_name, operation, key, value
+            )
+            result = await js_promise
+            return str(result) if result is not None else ""
+
         try:
-            import asyncio
-
-            import js  # type: ignore[import-not-found]
-
-            # Check if we have an event loop, if not create one
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-            # Define the async operation
-            async def db_operation() -> str:
-                # Create JavaScript promise that handles IndexedDB operations
-                js_promise = js.Promise.new(
-                    js.Function.new(
-                        "resolve",
-                        "reject",
-                        f"""
-                        const request = indexedDB.open('{self._db_name}', {self._db_version});
-
-                        request.onerror = () => reject(request.error);
-
-                        request.onupgradeneeded = (event) => {{
-                            const db = event.target.result;
-                            if (!db.objectStoreNames.contains('{self._store_name}')) {{
-                                db.createObjectStore('{self._store_name}');
-                            }}
-                        }};
-
-                        request.onsuccess = (event) => {{
-                            const db = event.target.result;
-                            const mode = {'"readwrite"' if operation in ("write", "delete") else '"readonly"'};
-                            const transaction = db.transaction(['{self._store_name}'], mode);
-                            const store = transaction.objectStore('{self._store_name}');
-
-                            let storeRequest;
-                            if ('{operation}' === 'read') {{
-                                storeRequest = store.get('{key}');
-                            }} else if ('{operation}' === 'write') {{
-                                storeRequest = store.put('{value if value else ""}', '{key}');
-                            }} else if ('{operation}' === 'delete') {{
-                                storeRequest = store.delete('{key}');
-                            }}
-
-                            storeRequest.onsuccess = () => {{
-                                db.close();
-                                resolve(storeRequest.result || '');
-                            }};
-
-                            storeRequest.onerror = () => {{
-                                db.close();
-                                reject(storeRequest.error);
-                            }};
-                        }};
-                        """,
-                    )
-                )
-
-                # Convert JS promise to Python awaitable
-                result = await js_promise
-                return str(result) if result else ""
-
-            # Run the async operation
-            return loop.run_until_complete(db_operation())
+            # Bridge the async JS call from our synchronous Python method.
+            return self._loop.run_until_complete(db_operation())
         except Exception:
+            # Fallback to empty string in case of any storage errors.
             return ""
 
     def read(self, key: str) -> str:
