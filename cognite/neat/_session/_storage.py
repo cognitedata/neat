@@ -3,10 +3,10 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
-from cognite.neat.v0.core._constants import IN_PYODIDE
-
 if TYPE_CHECKING:
     import asyncio
+
+from ._constants import IN_PYODIDE
 
 
 class Storage(Protocol):
