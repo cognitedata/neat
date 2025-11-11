@@ -1,5 +1,7 @@
 """Storage abstraction for persisting data in both local filesystem and pyodide environments."""
 
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
@@ -14,10 +16,32 @@ if TYPE_CHECKING:
 from cognite.neat._session._constants import IN_PYODIDE
 
 
+@dataclass
+class ReadResult(ABC):
+    @property
+    @abstractmethod
+    def is_ready(self) -> bool: ...
+
+    @abstractmethod
+    def get_data(self) -> str: ...
+
+
+@dataclass
+class ManualReadResult(ReadResult):
+    data: str
+
+    @property
+    def is_ready(self) -> bool:
+        return True
+
+    def get_data(self) -> str:
+        return self.data
+
+
 class Storage(Protocol):
     """Protocol for storage implementations."""
 
-    def read(self, key: str) -> str:
+    def read(self, key: str) -> ReadResult:
         """Read a value from storage."""
         ...
 
@@ -30,8 +54,22 @@ class Storage(Protocol):
         ...
 
 
+@dataclass
+class FileReadResult(ReadResult):
+    data: str
+
+    @property
+    def is_ready(self) -> bool:
+        return True
+
+    def get_data(self) -> str:
+        return self.data
+
+
 class FileSystemStorage:
     """Storage implementation using the filesystem."""
+
+    ENCODING = "utf-8"
 
     def __init__(self, base_dir: Path) -> None:
         self._base_dir = base_dir
@@ -39,19 +77,31 @@ class FileSystemStorage:
     def _get_path(self, key: str) -> Path:
         return self._base_dir / f"{key}.bin"
 
-    def read(self, key: str) -> str:
+    def read(self, key: str) -> ReadResult:
         path = self._get_path(key)
         if path.exists():
-            return path.read_text()
-        return ""
+            return FileReadResult(path.read_text(encoding=self.ENCODING))
+        return FileReadResult("")
 
     def write(self, key: str, value: str) -> None:
         path = self._get_path(key)
-        path.write_text(value)
+        path.write_text(value, encoding=self.ENCODING)
 
     def delete(self, key: str) -> None:
         path = self._get_path(key)
         path.unlink(missing_ok=True)
+
+
+@dataclass
+class PyodideResult(ReadResult):
+    task: "PyodideTask"
+
+    @property
+    def is_ready(self) -> bool:
+        return self.task.done()
+
+    def get_data(self) -> str:
+        return self.task.result()
 
 
 class LocalStorageAdapter:
@@ -168,8 +218,8 @@ class LocalStorageAdapter:
         except Exception:
             return ""
 
-    def read(self, key: str) -> str:
-        return self._execute_db_operation("read", key).result()
+    def read(self, key: str) -> ReadResult:
+        return PyodideResult(self._execute_db_operation("read", key))
 
     def write(self, key: str, value: str) -> None:
         self._execute_db_operation("write", key, value)
