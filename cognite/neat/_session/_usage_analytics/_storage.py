@@ -4,7 +4,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    import asyncio
+    try:
+        import asyncio
+
+        from pyodide.webloop import PyodideTask  # type: ignore[import-not-found]
+    except ImportError:
+        pass
 
 from cognite.neat._session._constants import IN_PYODIDE
 
@@ -76,7 +81,7 @@ class LocalStorageAdapter:
             asyncio.set_event_loop(loop)
             return loop
 
-    def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> str:
+    def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> "PyodideTask":
         """Executes a database operation by creating and calling a JS function."""
 
         async def db_operation() -> str:
@@ -164,7 +169,7 @@ class LocalStorageAdapter:
             return ""
 
     def read(self, key: str) -> str:
-        return self._execute_db_operation("read", key)
+        return self._execute_db_operation("read", key).result()
 
     def write(self, key: str, value: str) -> None:
         self._execute_db_operation("write", key, value)
