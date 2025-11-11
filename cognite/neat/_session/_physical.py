@@ -6,6 +6,7 @@ from cognite.neat._data_model.exporters import DMSAPIExporter, DMSExcelExporter,
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.validation.dms import DmsDataModelValidation
+from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
 
@@ -20,6 +21,37 @@ class PhysicalDataModel:
         self._client = client
         self.read = ReadPhysicalDataModel(self._store, self._client)
         self.write = WritePhysicalDataModel(self._store, self._client)
+
+    def _repr_html_(self) -> str:
+        if not isinstance(self._store.state, PhysicalState):
+            return "No physical data model. Get started by reading physical data model <em>.physica_data_mode.read</em>"
+
+        dm = self._store.physical_data_model[-1]
+
+        html = ["<div>"]
+        html.append(
+            f"<h3>Data Model: {dm.data_model.space}:{dm.data_model.external_id}(version={dm.data_model.version})</h3>"
+        )
+        html.append("<table style='border-collapse: collapse;'>")
+        html.append("<tr><th style='text-align: left; padding: 4px; border: 1px solid #ddd;'>Component</th>")
+        html.append("<th style='text-align: left; padding: 4px; border: 1px solid #ddd;'>Count</th></tr>")
+
+        html.append("<tr><td style='padding: 4px; border: 1px solid #ddd;'>Views</td>")
+        html.append(f"<td style='padding: 4px; border: 1px solid #ddd;'>{len(dm.views)}</td></tr>")
+
+        html.append("<tr><td style='padding: 4px; border: 1px solid #ddd;'>Containers</td>")
+        html.append(f"<td style='padding: 4px; border: 1px solid #ddd;'>{len(dm.containers)}</td></tr>")
+
+        html.append("<tr><td style='padding: 4px; border: 1px solid #ddd;'>Spaces</td>")
+        html.append(f"<td style='padding: 4px; border: 1px solid #ddd;'>{len(dm.spaces)}</td></tr>")
+
+        html.append("<tr><td style='padding: 4px; border: 1px solid #ddd;'>Node Types</td>")
+        html.append(f"<td style='padding: 4px; border: 1px solid #ddd;'>{len(dm.node_types)}</td></tr>")
+
+        html.append("</table>")
+        html.append("</div>")
+
+        return "".join(html)
 
 
 @session_wrapper
