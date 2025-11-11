@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 import pytest
 
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
@@ -6,9 +8,11 @@ from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     AppliedChanges,
     ChangeResult,
+    DeploymentResult,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
+    SchemaSnapshot,
     SeverityType,
 )
 from cognite.neat._data_model.models.dms import (
@@ -251,3 +255,49 @@ class TestAppliedChanges:
         assert len(resource_plan.to_delete) == 1
         assert resource_plan.to_delete[0].resource_id == container1.as_reference()
         assert resource_plan.to_delete[0].current_value == container1
+
+
+class TestDeploymentResult:
+    def test_as_mixpanel_event(self, plan_with_removals: ResourceDeploymentPlanList) -> None:
+        plan = plan_with_removals
+
+        deployment_result = DeploymentResult(
+            status="success",
+            plan=list(plan),
+            snapshot=SchemaSnapshot(
+                timestamp=datetime.now(tz=timezone.utc),
+                data_model={},
+                views={},
+                containers={},
+                spaces={},
+                node_types={},
+            ),
+            responses=AppliedChanges(
+                created=[],
+                updated=[
+                    ChangeResult(
+                        endpoint=resource_plan.endpoint,
+                        change=resource_change,
+                        message=SuccessResponseItems(code=200, body="", ids=[resource_change.resource_id]),
+                    )
+                    for resource_plan in plan.data
+                    for resource_change in resource_plan.resources
+                ],
+                deletions=[],
+                unchanged=[],
+                skipped=[],
+                changed_fields=[],
+            ),
+            recovery=None,
+        )
+
+        event = deployment_result.as_mixpanel_event()
+
+        assert {
+            "containers.update.SuccessResponseItems": 1,
+            "datamodels.update.SuccessResponseItems": 1,
+            "isDryRun": False,
+            "isSuccess": True,
+            "status": "success",
+            "views.update.SuccessResponseItems": 1,
+        } == event

@@ -507,7 +507,7 @@ class DeploymentResult(BaseDeployObject):
         if self.responses:
             counts: dict[str, int] = defaultdict(int)
             for change in itertools.chain(self.responses.created, self.responses.updated, self.responses.deletions):
-                suffix = type(change.message).__name__
+                suffix = type(change.message).__name__.removesuffix("[TypeVar]")
                 # For example: containers.created.successResponseItems
                 prefix = f"{change.endpoint}.{change.change.change_type}.{suffix}"
                 counts[prefix] += len(change.message.ids)
