@@ -47,32 +47,92 @@ class FileSystemStorage:
 
 
 class LocalStorageAdapter:
-    """Storage implementation using browser localStorage (for pyodide)."""
+    """Storage implementation using browser IndexedDB (for pyodide)."""
 
-    def read(self, key: str) -> str:
+    def __init__(self) -> None:
+        self._db_name = "neat-storage"
+        self._store_name = "keyval"
+        self._db_version = 1
+
+    def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> str:
+        """Execute a database operation using IndexedDB."""
         try:
-            from js import localStorage  # type: ignore[import-not-found]
+            import asyncio
 
-            value = localStorage.getItem(key)
-            return value if value is not None else ""
+            import js  # type: ignore[import-not-found]
+
+            # Check if we have an event loop, if not create one
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            # Define the async operation
+            async def db_operation() -> str:
+                # Create JavaScript promise that handles IndexedDB operations
+                js_promise = js.Promise.new(
+                    js.Function.new(
+                        "resolve",
+                        "reject",
+                        f"""
+                        const request = indexedDB.open('{self._db_name}', {self._db_version});
+
+                        request.onerror = () => reject(request.error);
+
+                        request.onupgradeneeded = (event) => {{
+                            const db = event.target.result;
+                            if (!db.objectStoreNames.contains('{self._store_name}')) {{
+                                db.createObjectStore('{self._store_name}');
+                            }}
+                        }};
+
+                        request.onsuccess = (event) => {{
+                            const db = event.target.result;
+                            const mode = {'"readwrite"' if operation in ("write", "delete") else '"readonly"'};
+                            const transaction = db.transaction(['{self._store_name}'], mode);
+                            const store = transaction.objectStore('{self._store_name}');
+
+                            let storeRequest;
+                            if ('{operation}' === 'read') {{
+                                storeRequest = store.get('{key}');
+                            }} else if ('{operation}' === 'write') {{
+                                storeRequest = store.put('{value if value else ""}', '{key}');
+                            }} else if ('{operation}' === 'delete') {{
+                                storeRequest = store.delete('{key}');
+                            }}
+
+                            storeRequest.onsuccess = () => {{
+                                db.close();
+                                resolve(storeRequest.result || '');
+                            }};
+
+                            storeRequest.onerror = () => {{
+                                db.close();
+                                reject(storeRequest.error);
+                            }};
+                        }};
+                        """,
+                    )
+                )
+
+                # Convert JS promise to Python awaitable
+                result = await js_promise
+                return str(result) if result else ""
+
+            # Run the async operation
+            return loop.run_until_complete(db_operation())
         except Exception:
             return ""
 
-    def write(self, key: str, value: str) -> None:
-        try:
-            from js import localStorage  # type: ignore[import-not-found]
+    def read(self, key: str) -> str:
+        return self._execute_db_operation("read", key)
 
-            localStorage.setItem(key, value)
-        except Exception:
-            pass
+    def write(self, key: str, value: str) -> None:
+        self._execute_db_operation("write", key, value)
 
     def delete(self, key: str) -> None:
-        try:
-            from js import localStorage  # type: ignore[import-not-found]
-
-            localStorage.removeItem(key)
-        except Exception:
-            pass
+        self._execute_db_operation("delete", key)
 
 
 def get_storage(base_dir: Path | None = None) -> Storage:

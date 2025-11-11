@@ -33,7 +33,7 @@ class Collector:
         self._storage = get_storage()
         self._opt_status_key = "neat-opt-status"
         self._distinct_id_key = "neat-distinct-id"
-        self.skip_tracking = self.is_opted_out or skip_tracking
+        self.skip_tracking = skip_tracking
         self._initialized = True
 
     @cached_property
