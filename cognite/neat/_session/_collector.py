@@ -1,15 +1,14 @@
 import os
 import platform
-import tempfile
 import threading
 import uuid
 from contextlib import suppress
 from functools import cached_property
-from pathlib import Path
 from typing import Any, Literal
 
 from mixpanel import Consumer, Mixpanel  # type: ignore[import-untyped]
 
+from cognite.neat._session._storage import get_storage
 from cognite.neat.v0.core._constants import IN_NOTEBOOK, IN_PYODIDE
 
 _NEAT_MIXPANEL_TOKEN: str = "bd630ad149d19999df3989c3a3750c4f"
@@ -31,21 +30,19 @@ class Collector:
         if self._initialized:
             return
         self.mp = Mixpanel(_NEAT_MIXPANEL_TOKEN, consumer=Consumer(api_host="api-eu.mixpanel.com"))
-        tmp_dir = Path(tempfile.gettempdir()).resolve()
-        self._opt_status_file = tmp_dir / "neat-opt-status.bin"
-        self._distinct_id_file = tmp_dir / "neat-distinct-id.bin"
+        self._storage = get_storage()
+        self._opt_status_key = "neat-opt-status"
+        self._distinct_id_key = "neat-distinct-id"
         self.skip_tracking = self.is_opted_out or skip_tracking
         self._initialized = True
 
     @cached_property
     def _opt_status(self) -> str:
-        if self._opt_status_file.exists():
-            return self._opt_status_file.read_text()
-        return ""
+        return self._storage.read(self._opt_status_key)
 
     def bust_opt_status(self) -> None:
         self.__dict__.pop("_opt_status", None)
-        self._opt_status_file.unlink(missing_ok=True)
+        self._storage.delete(self._opt_status_key)
 
     @property
     def is_opted_out(self) -> bool:
@@ -56,21 +53,22 @@ class Collector:
         return self._opt_status == "opted-in"
 
     def enable(self) -> None:
-        self._opt_status_file.write_text("opted-in")
+        self._storage.write(self._opt_status_key, "opted-in")
         # Override cached property
         self.__dict__["_opt_status"] = "opted-in"
 
     def disable(self) -> None:
-        self._opt_status_file.write_text("opted-out")
+        self._storage.write(self._opt_status_key, "opted-out")
         # Override cached property
         self.__dict__["_opt_status"] = "opted-out"
 
     def get_distinct_id(self) -> str:
-        if self._distinct_id_file.exists():
-            return self._distinct_id_file.read_text()
+        existing_id = self._storage.read(self._distinct_id_key)
+        if existing_id:
+            return existing_id
 
         distinct_id = f"{platform.system()}-{platform.python_version()}-{uuid.uuid4()!s}"
-        self._distinct_id_file.write_text(distinct_id)
+        self._storage.write(self._distinct_id_key, distinct_id)
         with suppress(ConnectionError):
             self.mp.people_set(
                 distinct_id,
