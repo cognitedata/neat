@@ -24,7 +24,7 @@ class NeatSession:
         self.physical_data_model = PhysicalDataModel(self._store, self._client)
         self.issues = Issues(self._store)
         self.result = Result(self._store)
-        self.opt = Opt()
+        self.opt = Opt(self._store)
 
         if self.opt._collector.can_collect:
             self.opt._collector.collect("initSession", {"mode": mode})
