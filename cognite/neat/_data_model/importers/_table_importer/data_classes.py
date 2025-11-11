@@ -72,6 +72,16 @@ class DMSProperty(TableObj):
     index: EntityList | None = None
     constraint: EntityList | None = None
 
+    @model_validator(mode="before")
+    def _handle_legacy_inf_max_count(cls, data: dict) -> dict:
+        """Handles the legacy 'inf' value for max_count."""
+        max_count_alias = cast(str, DMSProperty.model_fields["max_count"].validation_alias)
+        for key in [max_count_alias, "max_count"]:
+            if key in data and isinstance(data[key], str) and data[key].lower() == "inf":
+                data[key] = None
+                break
+        return data
+
 
 class DMSView(TableObj):
     view: Entity

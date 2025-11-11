@@ -976,6 +976,45 @@ def invalid_dms_table() -> Iterable[tuple]:
     )
 
 
+@pytest.fixture
+def max_count_infinity_table() -> dict:
+    return {
+        "Metadata": [
+            {"Key": "space", "Value": "test_space"},
+            {"Key": "externalId", "Value": "InfinityTest"},
+            {"Key": "version", "Value": "v1"},
+        ],
+        "Properties": [
+            {
+                "View": "TestView",
+                "View Property": "unlimitedList",
+                "Connection": "reverse(property=limitedList)",
+                "Value Type": "TestView",
+                "Min Count": 0,
+                "Max Count": "inf",  # Test infinity
+            },
+            {
+                "View": "TestView",
+                "View Property": "limitedList",
+                "Connection": "direct",
+                "Value Type": "TestTarget",
+                "Min Count": 0,
+                "Max Count": 100,  # Regular max count for comparison
+                "Immutable": False,
+                "Container": "TestContainer",
+                "Container Property": "limitedList",
+            },
+        ],
+        "Views": [
+            {"View": "TestView"},
+            {"View": "TestTarget"},
+        ],
+        "Containers": [
+            {"Container": "TestContainer", "Used For": "node"},
+        ],
+    }
+
+
 class TestDMSTableImporter:
     @pytest.mark.parametrize("data, expected_errors", list(invalid_dms_table()))
     def test_read_invalid_tables(
@@ -1002,6 +1041,16 @@ class TestDMSTableImporter:
         result_errors = {err.message for err in e.value.errors}
 
         assert result_errors == expected_errors
+
+    def test_legacy_max_count_infinity(
+        self, max_count_infinity_table: dict[str, list[dict[str, CellValueType]]]
+    ) -> None:
+        importer = DMSTableImporter(max_count_infinity_table)
+        schema = importer.to_data_model()
+
+        result = DMSYamlExporter().export(schema)
+        assert result["Properties"][0]["Max Count"] is None  # infinity represented as None
+        assert result["Properties"][1]["Max Count"] == 100
 
 
 class TestDMSTableExporter:
