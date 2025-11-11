@@ -18,8 +18,8 @@ from cognite.neat._session._constants import IN_PYODIDE
 
 @dataclass
 class ReadResult(ABC):
-    @abstractmethod
     @property
+    @abstractmethod
     def is_ready(self) -> bool: ...
 
     @abstractmethod
