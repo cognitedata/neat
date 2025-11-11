@@ -112,6 +112,6 @@ class Collector:
             with suppress(ConnectionError):
                 self.mp.track(distinct_id, event_name, event_properties)
 
-        thread = threading.Thread(target=track, daemon=False)
+        thread = threading.Thread(target=track, daemon=True)
         thread.start()
         return None

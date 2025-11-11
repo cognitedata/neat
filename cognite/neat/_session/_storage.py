@@ -63,8 +63,6 @@ class LocalStorageAdapter:
 
     def __init__(self) -> None:
         self._loop = self._get_or_create_event_loop()
-        # Cache the JS code string, but not the compiled function.
-        self._js_code = self._get_js_code()
 
     @staticmethod
     def _get_or_create_event_loop() -> "asyncio.AbstractEventLoop":
@@ -77,57 +75,6 @@ class LocalStorageAdapter:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             return loop
-
-    @staticmethod
-    def _get_js_code() -> str:
-        """Returns the parameterized JavaScript code for IndexedDB operations."""
-        return """
-        (dbName, dbVersion, storeName, operation, key, value) => {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(dbName, dbVersion);
-
-                request.onerror = (event) => reject(event.target.error);
-
-                request.onupgradeneeded = (event) => {
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(storeName)) {
-                        db.createObjectStore(storeName);
-                    }
-                };
-
-                request.onsuccess = (event) => {
-                    const db = event.target.result;
-                    const mode = (operation === "read") ? "readonly" : "readwrite";
-                    try {
-                        const transaction = db.transaction([storeName], mode);
-                        const store = transaction.objectStore(storeName);
-
-                        let storeRequest;
-                        if (operation === "read") {
-                            storeRequest = store.get(key);
-                        } else if (operation === "write") {
-                            storeRequest = store.put(value, key);
-                        } else if (operation === "delete") {
-                            storeRequest = store.delete(key);
-                        } else {
-                            db.close();
-                            return reject(new Error(`Unknown operation: ${operation}`));
-                        }
-
-                        storeRequest.onsuccess = () => resolve(storeRequest.result ?? "");
-                        storeRequest.onerror = (event) => reject(event.target.error);
-
-                        transaction.oncomplete = () => db.close();
-                        transaction.onerror = (event) => reject(event.target.error);
-
-                    } catch (error) {
-                        db.close();
-                        reject(error);
-                    }
-                };
-            });
-        }
-        """
 
     def _execute_db_operation(self, operation: str, key: str, value: str | None = None) -> str:
         """Executes a database operation by creating and calling a JS function."""
