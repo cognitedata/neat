@@ -91,6 +91,7 @@ class TestDataModelToCDF:
         assert len(result_by_name["data_models"].created) == 1
 
 
+@pytest.mark.skip("This test is flaky and we do not maintain v0 any more")
 class TestRulesStoreProvenanceSyncing:
     def test_detached_provenance(self, tmp_path: Path) -> None:
         neat = NeatSession()

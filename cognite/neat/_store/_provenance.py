@@ -35,6 +35,21 @@ class Change:
         """Check if change was successful"""
         return not self.errors
 
+    def as_mixpanel_event(self) -> dict[str, Any]:
+        """Convert change to mixpanel event format"""
+        return {
+            "agent": self.agent,
+            "activity": self.activity,
+            "sourceEntity": self.source_entity,
+            "targetEntity": self.target_entity,
+            "sourceState": type(self.source_state).__name__,
+            "targetState": type(self.target_state).__name__ if self.target_state else "None",
+            "duration_ms": int((self.end - self.start).total_seconds() * 1000),
+            "successful": self.successful,
+            "issues": [issue.code or "<no code>" for issue in self.issues] if self.issues else [],
+            "errors": [error.code or "<no code>" for error in self.errors] if self.errors else [],
+        }
+
 
 class Provenance(UserList[Change]):
     def __delitem__(self, *args: Any, **kwargs: Any) -> None:
