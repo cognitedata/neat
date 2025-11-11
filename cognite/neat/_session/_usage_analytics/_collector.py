@@ -79,7 +79,7 @@ class Collector:
 
     def get_distinct_id(self) -> str:
         existing_id = self._distinct_id
-        if existing_id is not None:
+        if existing_id:
             return existing_id
 
         distinct_id = f"{platform.system()}-{platform.python_version()}-{uuid.uuid4()!s}"
@@ -94,6 +94,7 @@ class Collector:
                     "environment": self._get_environment(),
                 },
             )
+        self._distinct_id_read = ManualReadResult(distinct_id)
         return distinct_id
 
     @staticmethod
