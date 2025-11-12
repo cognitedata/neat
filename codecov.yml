@@ -13,6 +13,10 @@ coverage:
     patch: false
     changes: false
 
+ignore:
+  - "cognite/neat/v0/**/*"
+  - "cognite/neat/_session/_usage_analytics/**/*"
+
 comment:
   layout: header, diff, files
   behavior: default
