@@ -61,6 +61,10 @@ class MetadataValue(TableObj):
     key: str
     value: CellValueType
 
+    @field_validator("key", mode="after")
+    def _legacy_external_id(cls, value: str) -> str:
+        return "externalId" if value.lower() == "external_id" else value
+
 
 class DMSProperty(TableObj):
     view: Entity

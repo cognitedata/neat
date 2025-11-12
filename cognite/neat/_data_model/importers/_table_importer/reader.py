@@ -311,6 +311,9 @@ class DMSTableReader:
         for (container_entity, index_id), index_list in read.indices.items():
             if len(index_list) == 0:
                 continue
+            # Remove duplicates based on prop_id, keeping the first occurrence
+            # Note that we have already validated that the index definitions are the same
+            index_list = list({read_index.prop_id: read_index for read_index in index_list}.values())
             index = index_list[0].index
             if len(index_list) == 1:
                 indices[container_entity][index_id] = index
@@ -339,6 +342,11 @@ class DMSTableReader:
         for (container_entity, constraint_id), constraint_list in read.constraints.items():
             if len(constraint_list) == 0:
                 continue
+            # Remove duplicates based on prop_id, keeping the first occurrence
+            # Note that we have already validated that the constraint definitions are the same
+            constraint_list = list(
+                {read_constraint.prop_id: read_constraint for read_constraint in constraint_list}.values()
+            )
             constraint = constraint_list[0].constraint
             if len(constraint_list) == 1 or not isinstance(constraint, UniquenessConstraintDefinition):
                 constraints[container_entity][constraint_id] = constraint
