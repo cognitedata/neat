@@ -342,6 +342,11 @@ class DMSTableReader:
         for (container_entity, constraint_id), constraint_list in read.constraints.items():
             if len(constraint_list) == 0:
                 continue
+            # Remove duplicates based on prop_id, keeping the first occurrence
+            # Note that we have already validated that the constraint definitions are the same
+            constraint_list = list(
+                {read_constraint.prop_id: read_constraint for read_constraint in constraint_list}.values()
+            )
             constraint = constraint_list[0].constraint
             if len(constraint_list) == 1 or not isinstance(constraint, UniquenessConstraintDefinition):
                 constraints[container_entity][constraint_id] = constraint
