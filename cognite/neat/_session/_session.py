@@ -21,7 +21,7 @@ class NeatSession:
     def __init__(self, client: CogniteClient | ClientConfig, mode: ModusOperandi = "additive") -> None:
         self._store = NeatStore()
         self._client = NeatClient(client)
-        self.physical_data_model = PhysicalDataModel(self._store, self._client)
+        self.physical_data_model = PhysicalDataModel(self._store, self._client, mode)
         self.issues = Issues(self._store)
         self.result = Result(self._store)
         self.opt = Opt(self._store)
