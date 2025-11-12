@@ -123,6 +123,18 @@ class DMSProperty(TableObj):
 
         return self
 
+    @model_validator(mode="after")
+    def _legacy_constraint(self) -> "DMSProperty":
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not self.constraint:
+            return self
+
+        for constraint in self.constraint:
+            if not constraint.prefix:
+                constraint.prefix = "uniqueness"
+
+        return self
+
 
 class DMSView(TableObj):
     view: Entity
@@ -138,6 +150,32 @@ class DMSContainer(TableObj):
     description: str | None = None
     constraint: EntityList | None = None
     used_for: str | None = None
+
+    @model_validator(mode="after")
+    def _legacy_constraint(self) -> "DMSContainer":
+        """Converts legacy constraint formats to the current standard."""
+        if not self.constraint:
+            return self
+
+        for constraint in self.constraint:
+            # Skip if already in correct format
+            if constraint.prefix in ["requires", "uniqueness"]:
+                continue
+
+            # Handle missing prefix - default to "requires"
+            if not constraint.prefix:
+                constraint.prefix = "requires"
+                constraint.properties = {"require": constraint.suffix}
+
+            # Handle legacy format with space:external_id in prefix/suffix
+            else:
+                container_space = constraint.prefix
+                container_external_id = constraint.suffix
+                constraint.prefix = "requires"
+                constraint.suffix = f"{container_space}_{container_external_id}"
+                constraint.properties = {"require": f"{container_space}:{container_external_id}"}
+
+        return self
 
 
 class DMSEnum(TableObj):
