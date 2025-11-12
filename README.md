@@ -86,4 +86,5 @@ neat.read.cdf.data_model(("my_space", "MyDataModel", "v1"))
 
 ## Documentation
 
+
 For more information, see the [documentation](https://cognite-neat.readthedocs-hosted.com/en/latest/)
