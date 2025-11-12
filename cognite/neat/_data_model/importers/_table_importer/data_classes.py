@@ -61,6 +61,10 @@ class MetadataValue(TableObj):
     key: str
     value: CellValueType
 
+    @field_validator("key", mode="after")
+    def _legacy_external_id(cls, value: str) -> str:
+        return "externalId" if value.lower() == "external_id" else value
+
 
 class DMSProperty(TableObj):
     view: Entity
@@ -88,6 +92,36 @@ class DMSProperty(TableObj):
         if isinstance(value, str) and value.lower() == "inf":
             return None
         return value
+
+    @model_validator(mode="before")
+    def _legacy_cardinality(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not data:
+            return data
+
+        if "Max Count" not in data and "Is List" in data:
+            is_list = data.pop("Is List")
+            if isinstance(is_list, bool):
+                data["Max Count"] = None if is_list else 1
+
+        if "Min Count" not in data and "Nullable" in data:
+            nullable = data.pop("Nullable")
+            if isinstance(nullable, bool):
+                data["Min Count"] = 0 if nullable else 1
+
+        return data
+
+    @model_validator(mode="after")
+    def _legacy_index(self) -> "DMSProperty":
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not self.index:
+            return self
+
+        for index in self.index:
+            if not index.prefix:
+                index.prefix = "inverted" if not self.max_count or self.max_count > 1 else "btree"
+
+        return self
 
 
 class DMSView(TableObj):
