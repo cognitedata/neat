@@ -111,6 +111,18 @@ class DMSProperty(TableObj):
 
         return data
 
+    @model_validator(mode="after")
+    def _legacy_index(self) -> "DMSProperty":
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not self.index:
+            return self
+
+        for index in self.index:
+            if not index.prefix:
+                index.prefix = "inverted" if not self.max_count or self.max_count > 1 else "btree"
+
+        return self
+
 
 class DMSView(TableObj):
     view: Entity
