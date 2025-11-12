@@ -40,6 +40,7 @@ RESERVED_PROPERTIES = frozenset(
 )
 
 
+@pytest.mark.skip(reason="Legacy tests which we no longer maintain")
 class TestExtractToLoadFlow:
     def test_snapshot_workflow_ids_to_python(
         self, cognite_client: CogniteClient, data_regression: DataRegressionFixture
