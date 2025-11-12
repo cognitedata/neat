@@ -21,3 +21,9 @@ class TestDMSTableExporter:
         tables = exporter.export(schema)
 
         assert len(tables["Properties"]) == original_property_count, "Properties from other spaces should be skipped."
+
+        exporter = DMSTableExporter(skip_properties_in_other_spaces=False)
+        tables = exporter.export(schema)
+        assert len(tables["Properties"]) == original_property_count + len(view_other_space.properties), (
+            "All properties should be included when not skipping other spaces."
+        )
