@@ -213,3 +213,20 @@ class TestCollector:
     def test_can_collect(self) -> None:
         collector = Collector()
         assert not collector.can_collect, "We cannot collect when running pytest"
+
+
+@pytest.mark.usefixtures("empty_cdf")
+class TestRender:
+    def test_render_issues(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        html_repr = session.issues._repr_html_()
+
+        assert isinstance(html_repr, str)
+
+    def test_render_results(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        session.physical_data_model.write.cdf(dry_run=True)
+
+        html_repr = session.result._repr_html_()
+
+        assert isinstance(html_repr, str)
