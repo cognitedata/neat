@@ -213,3 +213,47 @@ class TestCollector:
     def test_can_collect(self) -> None:
         collector = Collector()
         assert not collector.can_collect, "We cannot collect when running pytest"
+
+
+@pytest.mark.usefixtures("empty_cdf")
+class TestRender:
+    """This tests the HTML rendering methods of various session components.
+
+    They do not check the actual content, just that something is rendered without error.
+    """
+
+    def test_render_issues(self, new_session: NeatSession, invalid_dms_yaml_format: str) -> None:
+        session = new_session
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = invalid_dms_yaml_format
+        session.physical_data_model.read.yaml(read_yaml)
+
+        html_repr = session.issues._repr_html_()
+
+        assert isinstance(html_repr, str)
+
+    def test_render_results(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        session.physical_data_model.write.cdf(dry_run=True)
+
+        html_repr = session.result._repr_html_()
+
+        assert isinstance(html_repr, str)
+
+    def test_render_physical_model(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        html_repr = session.physical_data_model._repr_html_()
+
+        assert isinstance(html_repr, str)
+
+    def test_render_session_empty(self, new_session: NeatSession) -> None:
+        session = new_session
+        html_repr = session._repr_html_()
+
+        assert isinstance(html_repr, str)
+
+    def test_render_session_physical(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        html_repr = session._repr_html_()
+
+        assert isinstance(html_repr, str)

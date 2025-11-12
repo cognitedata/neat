@@ -60,6 +60,29 @@ class SpacesAPI(NeatAPI):
         result = PagedResponse[SpaceResponse].model_validate_json(result.success_response.body)
         return result.items
 
+    def delete(self, spaces: list[SpaceReference]) -> list[SpaceReference]:
+        """Delete spaces by their identifiers.
+
+        Args:
+            spaces: List of space identifiers to delete.
+        Returns:
+            List of SpaceReference objects representing the deleted spaces.
+        """
+        if not spaces:
+            return []
+        if len(spaces) > 100:
+            raise ValueError("Cannot delete more than 100 spaces at once.")
+        result = self._http_client.request_with_retries(
+            ItemsRequest(
+                endpoint_url=self._config.create_api_url(f"{self.ENDPOINT}/delete"),
+                method="POST",
+                body=ItemIDBody(items=spaces),
+            )
+        )
+        result.raise_for_status()
+        result = PagedResponse[SpaceReference].model_validate_json(result.success_response.body)
+        return result.items
+
     def list(
         self,
         include_global: bool = False,
