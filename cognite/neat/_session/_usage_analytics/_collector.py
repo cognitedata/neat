@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from mixpanel import Consumer, Mixpanel  # type: ignore[import-untyped]
 
-from cognite.neat._session._constants import IN_NOTEBOOK, IN_PYODIDE
+from cognite.neat._session._usage_analytics._constants import IN_NOTEBOOK, IN_PYODIDE
 from cognite.neat._session._usage_analytics._storage import ManualReadResult, ReadResult, get_storage
 
 _NEAT_MIXPANEL_TOKEN: str = "bd630ad149d19999df3989c3a3750c4f"

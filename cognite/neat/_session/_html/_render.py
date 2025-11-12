@@ -1,8 +1,10 @@
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
 from . import static, templates
 
 ENCODING = "utf-8"
+
+Template: TypeAlias = Literal["issues", "deployment"]
 
 
 def render(template_name: Literal["issues", "deployment"], variables: dict[str, Any]) -> str:
