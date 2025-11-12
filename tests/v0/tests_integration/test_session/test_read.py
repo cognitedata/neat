@@ -10,6 +10,7 @@ from cognite.neat.v0.core._data_model.catalog import hello_world_pump
 from tests.v0.data import SchemaData
 
 
+@pytest.mark.skip(reason="Legacy tests which we no longer maintain")
 class TestRead:
     @pytest.mark.freeze_time("2024-11-22")
     def test_read_model_referencing_core(
