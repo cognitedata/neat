@@ -9,6 +9,7 @@ from cognite.neat._data_model.validation.dms import DmsDataModelValidation
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
+from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._wrappers import session_wrapper
 
@@ -16,11 +17,11 @@ from ._wrappers import session_wrapper
 class PhysicalDataModel:
     """Read from a data source into NeatSession graph store."""
 
-    def __init__(self, store: NeatStore, client: NeatClient) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient, mode: ModusOperandi) -> None:
         self._store = store
         self._client = client
         self.read = ReadPhysicalDataModel(self._store, self._client)
-        self.write = WritePhysicalDataModel(self._store, self._client)
+        self.write = WritePhysicalDataModel(self._store, self._client, mode)
 
     def _repr_html_(self) -> str:
         if not isinstance(self._store.state, PhysicalState):
@@ -101,9 +102,10 @@ class ReadPhysicalDataModel:
 class WritePhysicalDataModel:
     """Write physical data model to various sources from NeatSession graph store."""
 
-    def __init__(self, store: NeatStore, client: NeatClient) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient, mode: ModusOperandi) -> None:
         self._store = store
         self._client = client
+        self._mode = mode
 
     def yaml(self, io: Any) -> None:
         """Write physical data model to YAML file"""
@@ -121,14 +123,29 @@ class WritePhysicalDataModel:
 
         return self._store.write_physical(writer, file_path=file_path)
 
-    def cdf(self, dry_run: bool = True, rollback: bool = True) -> None:
+    def cdf(self, dry_run: bool = True, rollback: bool = True, drop_data: bool = False) -> None:
         """Write physical data model to CDF
 
+        This method depends on the session mode set when creating the NeatSession.
+            - In 'additive' mode, only new or updates to data models/views/containers will be applied.
+                You cannot remove views from data models, properties from views or containers, or
+                indexes or constraints from containers.
+            - In 'rebuild' mode, the data model in CDF will be made to exactly match the data model in Neat.
+                If there are any breaking changes, Neat will delete and recreate the relevant
+                data model/view/container. However, if drop_data is set to False, Neat will treat
+                containers as 'additive' and will not delete any containers or remove properties,
+                indexes, or constraints. To fully rebuild the data model, including containers, set drop_data to True.
+
         Args:
-            dry_run (bool): If true, the changes will not be applied to CDF.
+            dry_run (bool): If true, the changes will not be applied to CDF. Instead, Neat will
+                report what changes would have been made.
             rollback (bool): If true, all changes will be rolled back if any error occurs.
+            drop_data (bool): Only applicable if the session mode is 'rebuild'. If
 
         """
         writer = DMSAPIExporter()
-        on_success = SchemaDeployer(self._client, DeploymentOptions(dry_run=dry_run, auto_rollback=rollback))
+        options = DeploymentOptions(
+            dry_run=dry_run, auto_rollback=rollback, drop_data=drop_data, modus_operandi=self._mode
+        )
+        on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)
