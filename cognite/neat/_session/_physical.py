@@ -80,17 +80,20 @@ class ReadPhysicalDataModel:
 
         return self._store.read_physical(reader, on_success)
 
-    def cdf(self, space: str, external_id: str, version: str) -> None:
+    def cdf(self, space: str, external_id: str, version: str, skip_other_spaces: bool = True) -> None:
         """Read physical data model from CDF
 
         Args:
             space (str): The schema space of the data model.
             external_id (str): The external id of the data model.
             version (str): The version of the data model.
+            skip_other_spaces (bool): If true, only include views and containers from the same space as the data model.
 
         """
         reader = DMSAPIImporter.from_cdf(
-            DataModelReference(space=space, external_id=external_id, version=version), self._client
+            DataModelReference(space=space, external_id=external_id, version=version),
+            self._client,
+            skip_other_spaces=skip_other_spaces,
         )
         on_success = DmsDataModelValidation(self._client)
 
