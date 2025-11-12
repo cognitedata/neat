@@ -4,7 +4,7 @@ from pydantic.alias_generators import to_camel
 from cognite.neat._data_model._identifiers import URI
 
 
-class BaseModelObject(BaseModel, alias_generator=to_camel, extra="ignore"):
+class BaseModelObject(BaseModel, alias_generator=to_camel, extra="ignore", populate_by_name=True):
     """Base class for all object. This includes resources and nested objects."""
 
     ...
