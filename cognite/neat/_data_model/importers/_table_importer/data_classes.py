@@ -93,6 +93,24 @@ class DMSProperty(TableObj):
             return None
         return value
 
+    @model_validator(mode="before")
+    def _legacy_cardinality(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not data:
+            return data
+
+        if "Max Count" not in data and "Is List" in data:
+            is_list = data.pop("Is List")
+            if isinstance(is_list, bool):
+                data["Max Count"] = None if is_list else 1
+
+        if "Min Count" not in data and "Nullable" in data:
+            nullable = data.pop("Nullable")
+            if isinstance(nullable, bool):
+                data["Min Count"] = 0 if nullable else 1
+
+        return data
+
 
 class DMSView(TableObj):
     view: Entity
