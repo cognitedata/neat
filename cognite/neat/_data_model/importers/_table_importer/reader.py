@@ -311,6 +311,9 @@ class DMSTableReader:
         for (container_entity, index_id), index_list in read.indices.items():
             if len(index_list) == 0:
                 continue
+            # Remove duplicates based on prop_id, keeping the first occurrence
+            # Note that we have already validated that the index definitions are the same
+            index_list = list({read_index.prop_id: read_index for read_index in index_list}.values())
             index = index_list[0].index
             if len(index_list) == 1:
                 indices[container_entity][index_id] = index
