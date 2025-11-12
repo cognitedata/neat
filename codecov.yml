@@ -8,10 +8,14 @@ coverage:
     project:
       default:
         target: auto
-        threshold: .25%
+        threshold: 25%
         base: auto
     patch: false
     changes: false
+
+ignore:
+  - "cognite/neat/v0/**/*"
+  - "cognite/neat/_session/_usage_analytics/**/*"
 
 comment:
   layout: header, diff, files
