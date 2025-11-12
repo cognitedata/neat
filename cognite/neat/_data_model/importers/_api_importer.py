@@ -41,8 +41,13 @@ class DMSAPIImporter(DMSImporter):
         if not data_models:
             raise CDFAPIException(messages=[FailedRequestMessage(message=f"Data model {data_model} not found in CDF.")])
         data_model = data_models[0]
-        views = client.views.retrieve(data_model.views or [])
-        if missing_views := set(data_model.views or []) - {view.as_reference() for view in views}:
+        view_ids = {
+            view_id
+            for view_id in data_model.views or []
+            if (skip_other_spaces and view_id.space == data_model.space) or not skip_other_spaces
+        }
+        views = client.views.retrieve(list(view_ids))
+        if missing_views := view_ids - {view.as_reference() for view in views}:
             raise CDFAPIException(
                 messages=[
                     FailedRequestMessage(
@@ -51,7 +56,14 @@ class DMSAPIImporter(DMSImporter):
                     )
                 ]
             )
-        container_ids = list({container for view in views for container in view.mapped_containers})
+        container_ids = list(
+            {
+                container
+                for view in views
+                for container in view.mapped_containers
+                if (skip_other_spaces and container.space == data_model.space) or not skip_other_spaces
+            }
+        )
         containers = client.containers.retrieve(container_ids)
         if missing_containers := set(container_ids) - {container.as_reference() for container in containers}:
             raise CDFAPIException(
