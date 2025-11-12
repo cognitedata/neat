@@ -1,9 +1,18 @@
 from collections.abc import Mapping
 from typing import Annotated, Literal, cast, get_args
 
-from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
+from pydantic import (
+    AliasGenerator,
+    BaseModel,
+    BeforeValidator,
+    Field,
+    PlainSerializer,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 from pydantic.fields import FieldInfo
+from traitlets import Any
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
@@ -72,15 +81,13 @@ class DMSProperty(TableObj):
     index: EntityList | None = None
     constraint: EntityList | None = None
 
-    @model_validator(mode="before")
-    def _handle_legacy_inf_max_count(cls, data: dict) -> dict:
-        """Handles the legacy 'inf' value for max_count."""
-        max_count_alias = cast(str, DMSProperty.model_fields["max_count"].validation_alias)
-        for key in [max_count_alias, "max_count"]:
-            if key in data and isinstance(data[key], str) and data[key].lower() == "inf":
-                data[key] = None
-                break
-        return data
+    @field_validator("max_count", mode="before")
+    @classmethod
+    def _legacy_max_count(cls, value: Any) -> Any | None:
+        """Validates and converts the max_count field if it uses the legacy 'inf' value."""
+        if isinstance(value, str) and value.lower() == "inf":
+            return None
+        return value
 
 
 class DMSView(TableObj):
