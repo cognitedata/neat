@@ -33,7 +33,9 @@ class DMSAPIImporter(DMSImporter):
             raise DataModelImportException(errors) from None
 
     @classmethod
-    def from_cdf(cls, data_model: DataModelReference, client: NeatClient) -> "DMSAPIImporter":
+    def from_cdf(
+        cls, data_model: DataModelReference, client: NeatClient, skip_other_spaces: bool = True
+    ) -> "DMSAPIImporter":
         """Create a DMSAPIImporter from a data model in CDF."""
         data_models = client.data_models.retrieve([data_model])
         if not data_models:

@@ -17,11 +17,27 @@ class TestDMSAPIImporter:
         self,
         neat_client: NeatClient,
         respx_mock_data_model: respx.MockRouter,
+        example_dms_container_response: dict[str, Any],
     ) -> None:
         """Test successful import of a data model from CDF with all dependencies."""
+        # Mock containers retrieval
+        config = neat_client.config
+        respx_mock = respx_mock_data_model
+        extra_container = example_dms_container_response.copy()
+        extra_container["space"] = "another_space"
+        respx_mock.post(config.create_api_url("/models/containers/byids")).respond(
+            status_code=200,
+            json={
+                "items": [
+                    example_dms_container_response,
+                    extra_container,
+                ]
+            },
+        )
+
         # Create the importer
         data_model_ref = DataModelReference(space="my_space", external_id="my_data_model", version="v1")
-        importer = DMSAPIImporter.from_cdf(data_model_ref, neat_client)
+        importer = DMSAPIImporter.from_cdf(data_model_ref, neat_client, skip_other_spaces=True)
 
         # Validate the importer was created
         assert isinstance(importer, DMSAPIImporter)
