@@ -22,12 +22,15 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
     class Sheets:
         properties = cast(str, TableDMS.model_fields["properties"].validation_alias)
 
-    def __init__(self, exclude_none: bool = False) -> None:
+    def __init__(self, exclude_none: bool = False, skip_properties_in_other_spaces: bool = True) -> None:
         self._exclude_none = exclude_none
+        self._skip_properties_in_other_spaces = skip_properties_in_other_spaces
 
     def export(self, data_model: RequestSchema) -> DataModelTableType:
         model = data_model.data_model
-        tables = DMSTableWriter(model.space, model.version).write_tables(data_model)
+        tables = DMSTableWriter(model.space, model.version, self._skip_properties_in_other_spaces).write_tables(
+            data_model
+        )
         exclude: set[str] = set()
         if self._exclude_none:
             if not tables.enum:
@@ -73,8 +76,10 @@ class DMSExcelExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to Excel file."""
 
     def __init__(self, options: WorkbookOptions | None = None) -> None:
-        super().__init__(exclude_none=False)
         self._options = options or WorkbookOptions()
+        super().__init__(
+            exclude_none=False, skip_properties_in_other_spaces=self._options.skip_properties_in_other_spaces
+        )
 
     def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
         """Exports the data model as a Excel file.

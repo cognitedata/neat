@@ -3,6 +3,7 @@ from typing import Any
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import DMSAPIExporter, DMSExcelExporter, DMSYamlExporter
+from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.validation.dms import DmsDataModelValidation
@@ -115,11 +116,18 @@ class WritePhysicalDataModel:
 
         return self._store.write_physical(writer, file_path=file_path)
 
-    def excel(self, io: Any) -> None:
-        """Write physical data model to Excel file"""
+    def excel(self, io: Any, skip_other_spaces: bool = True) -> None:
+        """Write physical data model to Excel file
+
+        Args:
+            io (Any): The file path or buffer to write to.
+            skip_other_spaces (bool): If true, only properties in the same space as the data model will be written.
+
+        """
 
         file_path = NeatReader.create(io).materialize_path()
-        writer = DMSExcelExporter()
+        options = WorkbookOptions(skip_properties_in_other_spaces=skip_other_spaces)
+        writer = DMSExcelExporter(options=options)
 
         return self._store.write_physical(writer, file_path=file_path)
 

@@ -61,6 +61,8 @@ class WorkbookOptions:
         max_containers (int): The maximum number of containers to support in the drop-down menus. Default is 100.
         max_properties_per_view (int): The maximum number of properties per view to support in the
             drop-down menus. Default is 100.
+        skip_properties_in_other_spaces (bool): Whether to skip properties that are in other spaces
+            in the properties sheet. Default is True.
     """
 
     adjust_column_width: bool = True
@@ -74,6 +76,7 @@ class WorkbookOptions:
     max_views: int = 100
     max_containers: int = 100
     max_properties_per_view: int = 100
+    skip_properties_in_other_spaces: bool = True
 
 
 class WorkbookCreator:

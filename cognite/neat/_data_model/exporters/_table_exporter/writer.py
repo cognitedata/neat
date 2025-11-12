@@ -54,9 +54,10 @@ class ContainerProperties:
 
 
 class DMSTableWriter:
-    def __init__(self, default_space: str, default_version: str) -> None:
+    def __init__(self, default_space: str, default_version: str, skip_properties_in_other_spaces: bool) -> None:
         self.default_space = default_space
         self.default_version = default_version
+        self.skip_properties_in_other_spaces = skip_properties_in_other_spaces
 
     ## Main Entry Point ###
     def write_tables(self, schema: RequestSchema) -> TableDMS:
@@ -278,6 +279,8 @@ class DMSTableWriter:
         output = ViewProperties()
         for view in views:
             if not view.properties:
+                continue
+            if self.skip_properties_in_other_spaces and view.space != self.default_space:
                 continue
             for prop_id, prop in view.properties.items():
                 output.properties.append(self._write_view_property(view, prop_id, prop, container))
