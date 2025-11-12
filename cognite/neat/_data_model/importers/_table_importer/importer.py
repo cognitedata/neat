@@ -156,7 +156,6 @@ class DMSTableImporter(DMSImporter):
         table_rows: list[dict[str, CellValueType]] = []
         # Metadata sheet is just a key-value pair of the first two columns.
         # For other sheets, we need to find the column header row first.
-        header_set = False
         columns: list[str] = [] if sheet.title != cls.MetadataSheet else required_columns
         for row_no, row in enumerate(sheet.iter_rows(values_only=True)):
             if columns:
@@ -171,13 +170,12 @@ class DMSTableImporter(DMSImporter):
             else:
                 # Look for the column header row.
                 row_values = [str(cell) for cell in row]
-                if not header_set and set(row_values).intersection(required_columns):
+                if set(row_values).intersection(required_columns):
                     columns = row_values
                     context.header_row = row_no
-                    header_set = True
 
-                elif not header_set:
+                elif not context.skipped_rows:
                     context.skipped_rows.append(row_no)
                 else:
-                    raise RuntimeError("Unreachable code reached while reading table rows. Please report a bug.")
+                    raise RuntimeError("This should not be reached while reading table rows. Please report a bug.")
         return table_rows
