@@ -267,6 +267,10 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                                 identifier="assets",
                             ),
                         ),
+                        "name": ViewCorePropertyRequest(
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable"),
+                            containerPropertyIdentifier="name",
+                        ),
                     },
                 ),
                 ViewRequest(
