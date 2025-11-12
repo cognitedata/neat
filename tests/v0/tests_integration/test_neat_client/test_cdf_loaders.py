@@ -47,6 +47,7 @@ def deployed_space_and_container_strongly_coupled_model(cognite_client: CogniteC
     return schema
 
 
+@pytest.mark.skip(reason="Legacy tests which we no longer maintain")
 class TestViewLoader:
     def test_force_update(self, neat_client: NeatClient, container_props: dm.Container, space: dm.Space) -> None:
         container_id = container_props.as_id()
@@ -118,6 +119,7 @@ class TestViewLoader:
             neat_client.data_modeling.views.delete(list(schema.views.keys()))
 
 
+@pytest.mark.skip(reason="Legacy tests which we no longer maintain")
 class TestContainerLoader:
     def test_force_update(self, neat_client: NeatClient, space: dm.Space) -> None:
         original = dm.ContainerApply(
@@ -192,6 +194,7 @@ class TestContainerLoader:
             neat_client.data_modeling.containers.delete([valid_container.as_id()])
 
 
+@pytest.mark.skip(reason="Legacy tests which we no longer maintain")
 class TestSchemaLoader:
     def test_retrieve_schema(self, neat_client: NeatClient, space: dm.Space) -> None:
         schema = neat_client.schema.retrieve(
