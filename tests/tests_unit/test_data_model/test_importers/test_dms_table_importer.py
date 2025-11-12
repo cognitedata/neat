@@ -1071,8 +1071,8 @@ class TestTableSource:
             pytest.param(("MyTable", 5, "field"), {}, "table 'MyTable' row 6 column 'field'", id="table_row_column"),
             pytest.param(
                 ("MyTable", 5),
-                {"MyTable": SpreadsheetReadContext(header_row=2, empty_rows=[3, 5], is_one_indexed=True)},
-                "table 'MyTable' row 10",
+                {"MyTable": SpreadsheetReadContext(header_row=2, empty_rows=[3, 5])},
+                "table 'MyTable' row 11",
                 id="with_spreadsheet_read",
             ),
             pytest.param(("Views", 1, "externalId"), {}, "table 'Views' row 2 column 'View'", id="with_field_mapping"),
@@ -1166,27 +1166,27 @@ class TestSpreadsheetRead:
         [
             pytest.param(
                 5,
-                SpreadsheetReadContext(header_row=1, empty_rows=[], skipped_rows=[], is_one_indexed=True),
-                7,  # 5 + 1 (header) + 1 (one_indexed)
+                SpreadsheetReadContext(header_row=1, empty_rows=[]),
+                8,  # 5 + 1 (header) + 1 (one_indexed) + 1 (offset for rows after header)
                 id="basic_case_with_one_indexing",
             ),
             pytest.param(
                 5,
-                SpreadsheetReadContext(header_row=2, empty_rows=[1, 3, 6], skipped_rows=[], is_one_indexed=True),
+                SpreadsheetReadContext(header_row=2, empty_rows=[1, 3, 6]),
                 11,  # 5->6 (empty 1)->7 (empty 3)->8 (empty 6) + 2 (header) + 1 (one_indexed)
                 id="with_empty_rows",
             ),
             pytest.param(
                 3,
-                SpreadsheetReadContext(header_row=1, empty_rows=[2], skipped_rows=[1, 4], is_one_indexed=False),
+                SpreadsheetReadContext(header_row=1, empty_rows=[2]),
                 7,  # 3->4 (empty 2)->5 (skipped 1) + 1 (header) + 0 (zero_indexed)
                 id="with_empty_and_skipped_rows_zero_indexed",
             ),
             pytest.param(
-                2,
-                SpreadsheetReadContext(header_row=3, empty_rows=[1, 5], skipped_rows=[2, 6], is_one_indexed=True),
-                8,  # 2->3 (empty 1)->4 (skipped 2) + 3 (header) + 1 (one_indexed)
-                id="complex_case_with_all_adjustments",
+                4,
+                SpreadsheetReadContext(header_row=1, empty_rows=[6, 12]),
+                8,
+                id="real_case",
             ),
         ],
     )
@@ -1376,9 +1376,9 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
             source="excel_file.xlsx",
             table_read={
                 "Metadata": SpreadsheetReadContext(),
-                "Properties": SpreadsheetReadContext(skipped_rows=[0]),
-                "Views": SpreadsheetReadContext(skipped_rows=[0]),
-                "Containers": SpreadsheetReadContext(skipped_rows=[0]),
+                "Properties": SpreadsheetReadContext(header_row=1),
+                "Views": SpreadsheetReadContext(header_row=1),
+                "Containers": SpreadsheetReadContext(header_row=1),
             },
         ),
         id="Minimal example",
