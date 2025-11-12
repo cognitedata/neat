@@ -190,6 +190,13 @@ class InstancesState:
         # We store them such that they can be removed in the load stage.
         self.neat_prefix_by_predicate_uri: dict[URIRef, str] = {}
         self.neat_prefix_by_type_uri: dict[URIRef, str] = {}
+        
+        # Cursors for incremental DMS sync
+        self._cursors: dict[str, str] = {}
+        self._cursors_file: Path | None = None
+        if self.storage_path:
+            self._cursors_file = self.storage_path / "dms_cursors.json"
+            self._load_cursors()
 
         # Ensure that error handling is done in the constructor
         self.store: NeatInstanceStore = _session_method_wrapper(self._create_store, "NeatSession")()
@@ -204,6 +211,39 @@ class InstancesState:
             return NeatInstanceStore.from_oxi_local_store(storage_dir=self.storage_path)
         else:
             return NeatInstanceStore.from_memory_store()
+    
+    def _load_cursors(self) -> None:
+        """Load cursors from disk if they exist."""
+        import json
+        
+        if self._cursors_file and self._cursors_file.exists():
+            try:
+                with open(self._cursors_file, "r") as f:
+                    self._cursors = json.load(f)
+            except Exception as e:
+                print(f"Warning: Could not load cursors from {self._cursors_file}: {e}")
+                self._cursors = {}
+    
+    def _save_cursors(self) -> None:
+        """Save cursors to disk."""
+        import json
+        
+        if self._cursors_file:
+            try:
+                with open(self._cursors_file, "w") as f:
+                    json.dump(self._cursors, f, indent=2)
+            except Exception as e:
+                print(f"Warning: Could not save cursors to {self._cursors_file}: {e}")
+    
+    def get_cursors(self) -> dict[str, str]:
+        """Get the current DMS sync cursors."""
+        return self._cursors.copy()
+    
+    def set_cursors(self, cursors: dict[str, str]) -> None:
+        """Set the DMS sync cursors and save to disk if using storage_path."""
+        self._cursors = cursors
+        if self._cursors_file:
+            self._save_cursors()
 
     @property
     def empty(self) -> bool:

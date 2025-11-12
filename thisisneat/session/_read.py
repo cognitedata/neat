@@ -205,26 +205,53 @@ class CDFReadAPI(BaseReadAPI):
         data_model_id: DataModelIdentifier,
         instance_space: str | SequenceNotStr[str] | None = None,
         skip_cognite_views: bool = True,
+        force_full_load: bool = False,
     ) -> IssueList:
-        """Reads a knowledge graph from Cognite Data Fusion (CDF).
+        """Reads a knowledge graph from Cognite Data Fusion (CDF) with automatic incremental sync.
 
         Args:
             data_model_id: Tuple of strings with the id of a CDF Data Model.
             instance_space: The instance spaces to extract. If None, all instance spaces are extracted.
             skip_cognite_views: If True, all Cognite Views are skipped. For example, if you have the CogniteAsset
                 view in you data model, it will ont be used to extract instances.
+            force_full_load: If True, forces a full reload even if cursors exist. Default is False (uses incremental sync).
 
         Returns:
             IssueList: A list of issues that occurred during the extraction.
 
+        Example:
+            ```python
+            # Initial load (full)
+            neat.read.cdf.graph(dm_id, instance_space="my_space")
+            
+            # Subsequent calls automatically use incremental sync
+            neat.read.cdf.graph(dm_id, instance_space="my_space")
+            
+            # Force full reload
+            neat.read.cdf.graph(dm_id, instance_space="my_space", force_full_load=True)
+            ```
+
         """
+        # Auto-sync: use stored cursors if available unless forcing full load
+        cursors = None
+        if not force_full_load:
+            stored_cursors = self._state.instances.get_cursors()
+            if stored_cursors:
+                cursors = stored_cursors
+                print(f"Using stored cursors for incremental sync ({len(cursors)} views)")
+        
         self._state._raise_exception_if_condition_not_met(
             "Read DMS Graph",
-            empty_data_model_store_required=True,
-            empty_instances_store_required=True,
+            empty_data_model_store_required=cursors is None,  # Only require empty stores if not doing incremental sync
+            empty_instances_store_required=cursors is None,
             client_required=True,
         )
-        return self._graph(data_model_id, instance_space, skip_cognite_views, unpack_json=False)
+        issues, new_cursors = self._graph(data_model_id, instance_space, skip_cognite_views, unpack_json=False, cursors=cursors)
+        
+        # Store the new cursors for next run
+        self._state.instances.set_cursors(new_cursors)
+        
+        return issues
 
     def _graph(
         self,
@@ -233,7 +260,8 @@ class CDFReadAPI(BaseReadAPI):
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
-    ) -> IssueList:
+        cursors: dict[str, str] | None = None,
+    ) -> tuple[IssueList, dict[str, str]]:
         extractor = extractors.DMSGraphExtractor.from_data_model_id(
             # We are skipping the Cognite Views
             data_model_id,
@@ -242,8 +270,19 @@ class CDFReadAPI(BaseReadAPI):
             skip_cognite_views=skip_cognite_views,
             unpack_json=unpack_json,
             str_to_ideal_type=str_to_ideal_type,
+            cursors=cursors,
         )
-        return self._state.write_graph(extractor)
+        
+        # For incremental sync (when cursors provided), only extract instances, don't re-import data model
+        if cursors is not None:
+            extract_issues = self._state.instances.store.write(extractor)
+            issues = IssueList()
+            issues.extend(extract_issues)
+        else:
+            # Initial load: import both data model and instances
+            issues = self._state.write_graph(extractor)
+        
+        return issues, extractor.get_cursors()
 
     def raw(
         self,

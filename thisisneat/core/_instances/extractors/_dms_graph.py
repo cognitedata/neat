@@ -39,6 +39,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        cursors: dict[str, str] | None = None,
     ) -> None:
         self._client = client
         self._data_model = data_model
@@ -48,10 +49,12 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         self._skip_cognite_views = skip_cognite_views
         self._unpack_json = unpack_json
         self._str_to_ideal_type = str_to_ideal_type
+        self._cursors = cursors
 
         self._views: list[dm.View] | None = None
         self._conceptual_data_model: ConceptualDataModel | None = None
         self._physical_data_model: PhysicalDataModel | None = None
+        self._result_cursors: dict[str, str] = {}
 
     @classmethod
     def from_data_model_id(
@@ -63,6 +66,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         skip_cognite_views: bool = True,
         unpack_json: bool = False,
         str_to_ideal_type: bool = False,
+        cursors: dict[str, str] | None = None,
     ) -> "DMSGraphExtractor":
         issues: list[NeatIssue] = []
         try:
@@ -78,6 +82,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 skip_cognite_views,
                 unpack_json,
                 str_to_ideal_type,
+                cursors,
             )
         if not data_model:
             issues.append(ResourceRetrievalWarning(frozenset({data_model_id}), "data model"))
@@ -90,6 +95,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
                 skip_cognite_views,
                 unpack_json,
                 str_to_ideal_type,
+                cursors,
             )
         return cls(
             data_model.latest_version(),
@@ -100,6 +106,7 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
             skip_cognite_views,
             unpack_json,
             str_to_ideal_type,
+            cursors,
         )
 
     @classmethod
@@ -137,13 +144,23 @@ class DMSGraphExtractor(KnowledgeGraphExtractor):
         if self._skip_cognite_views:
             views = [view for view in views if view.space not in COGNITE_SPACES]
 
-        yield from DMSExtractor.from_views(
+        extractor = DMSExtractor.from_views(
             self._client,
             views,
             instance_space=self._instance_space,
             unpack_json=self._unpack_json,
             str_to_ideal_type=self._str_to_ideal_type,
-        ).extract()
+            cursors=self._cursors,
+        )
+        # Store reference to extractor to get cursors after extraction
+        self._extractor = extractor
+        yield from extractor.extract()
+        # Cursors are now available after generator is consumed
+        self._result_cursors = extractor.get_cursors()
+    
+    def get_cursors(self) -> dict[str, str]:
+        """Returns the cursors from the last extraction for incremental sync."""
+        return self._result_cursors
 
     def _get_views(self) -> list[dm.View]:
         view_by_id: dict[dm.ViewId, dm.View] = {}
