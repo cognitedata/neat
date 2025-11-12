@@ -17,7 +17,7 @@ DataModelTableType: TypeAlias = dict[str, list[dict[str, CellValueType]]]
 PrimitiveType: TypeAlias = str | int | float | bool
 
 
-class BaseModelObject(BaseModel, alias_generator=to_camel, extra="ignore", populate_by_name=True):
+class BaseModelObject(BaseModel, alias_generator=to_camel, extra="ignore"):
     """Base class for all object. This includes resources and nested objects."""
 
     ...
