@@ -174,8 +174,4 @@ class DMSTableImporter(DMSImporter):
                     columns = row_values
                     context.header_row = row_no
 
-                elif not context.skipped_rows:
-                    context.skipped_rows.append(row_no)
-                else:
-                    raise RuntimeError("This should not be reached while reading table rows. Please report a bug.")
         return table_rows

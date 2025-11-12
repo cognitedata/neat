@@ -12,28 +12,34 @@ class SpreadsheetReadContext:
     such that the error/warning messages are accurate.
     """
 
-    header_row: int = 1
+    header_row: int = 0
     empty_rows: list[int] = field(default_factory=list)
-    skipped_rows: list[int] = field(default_factory=list)
-    is_one_indexed: bool = True
 
     def __post_init__(self) -> None:
         self.empty_rows.sort()
-        self.skipped_rows.sort()
 
     def adjusted_row_number(self, row_no: int) -> int:
-        output = row_no + self.header_row + (1 if self.is_one_indexed else 0)
+        """Adjusts the given row number to account for header rows and empty rows.
+
+        Args:
+            row_no (int): The original row number (0-based).
+
+        !!! note "Row Numbering"
+            Input rows are zero-indexed, while output rows are one-indexed as they appear in Excel.
+            Therefore, we are adding 1 to offset header and 1 to offset row no
+
+        """
+        output = (row_no + 1) + (self.header_row + 1)
+        counter = 0
         for empty_row in self.empty_rows:
+            if empty_row < self.header_row:
+                continue
             if empty_row <= output:
+                counter += 1
                 output += 1
             else:
                 break
 
-        for skipped_rows in self.skipped_rows:
-            if skipped_rows <= output:
-                output += 1
-            else:
-                break
         return output
 
 
