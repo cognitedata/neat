@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     except ImportError:
         pass
 
-from cognite.neat._session._constants import IN_PYODIDE
+from cognite.neat._session._usage_analytics._constants import IN_PYODIDE
 
 
 @dataclass
