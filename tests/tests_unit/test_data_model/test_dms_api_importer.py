@@ -17,25 +17,21 @@ class TestDMSAPIImporter:
         self,
         neat_client: NeatClient,
         respx_mock_data_model: respx.MockRouter,
-        example_dms_container_response: dict[str, Any],
+        example_dms_data_model_response: dict[str, Any],
     ) -> None:
         """Test successful import of a data model from CDF with all dependencies."""
         # Mock containers retrieval
         config = neat_client.config
         respx_mock = respx_mock_data_model
-        extra_container = example_dms_container_response.copy()
-        extra_container["space"] = "another_space"
-        respx_mock.post(config.create_api_url("/models/containers/byids")).respond(
+        example_dms_data_model_response["views"].append(
+            {"space": "another_space", "externalId": "OtherView", "version": "v1"}
+        )
+        respx_mock.post(config.create_api_url("/models/datamodels/byids")).respond(
             status_code=200,
-            json={
-                "items": [
-                    example_dms_container_response,
-                    extra_container,
-                ]
-            },
+            json={"items": [example_dms_data_model_response]},
         )
 
-        # Create the importer
+        # Create the importer from CDF
         data_model_ref = DataModelReference(space="my_space", external_id="my_data_model", version="v1")
         importer = DMSAPIImporter.from_cdf(data_model_ref, neat_client, skip_other_spaces=True)
 
@@ -59,6 +55,12 @@ class TestDMSAPIImporter:
 
         # Verify all expected API calls were made
         assert len(respx_mock_data_model.calls) == 4
+
+        # Since we skipped other spaces, we should not have requested the view from another_space
+        view_call = respx_mock_data_model.calls[1]
+        assert str(view_call.request.url).startswith(config.create_api_url("/models/views/byids"))
+        view_request_json = view_call.request.content
+        assert b"another_space" not in view_request_json
 
     def test_from_cdf_data_model_not_found(
         self,
