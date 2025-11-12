@@ -1,9 +1,18 @@
 from collections.abc import Mapping
 from typing import Annotated, Literal, cast, get_args
 
-from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
+from pydantic import (
+    AliasGenerator,
+    BaseModel,
+    BeforeValidator,
+    Field,
+    PlainSerializer,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 from pydantic.fields import FieldInfo
+from traitlets import Any
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
@@ -71,6 +80,14 @@ class DMSProperty(TableObj):
     container_property_description: str | None = None
     index: EntityList | None = None
     constraint: EntityList | None = None
+
+    @field_validator("max_count", mode="before")
+    @classmethod
+    def _legacy_max_count(cls, value: Any) -> Any | None:
+        """Validates and converts the max_count field if it uses the legacy 'inf' value."""
+        if isinstance(value, str) and value.lower() == "inf":
+            return None
+        return value
 
 
 class DMSView(TableObj):
