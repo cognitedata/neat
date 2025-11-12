@@ -230,3 +230,9 @@ class TestRender:
         html_repr = session.result._repr_html_()
 
         assert isinstance(html_repr, str)
+
+    def test_render_physical_model(self, physical_state_session: NeatSession) -> None:
+        session = physical_state_session
+        html_repr = session.physical_data_model._repr_html_()
+
+        assert isinstance(html_repr, str)
