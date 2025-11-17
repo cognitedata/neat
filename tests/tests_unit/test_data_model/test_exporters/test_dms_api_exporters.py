@@ -22,7 +22,7 @@ class TestYAMLExporter:
         loaded_content = yaml.safe_load(content)
         if "nodeTypes" not in example_dms_schema_request:
             assert loaded_content["nodeTypes"] is None or loaded_content["nodeTypes"] == []
-            loaded_content.pop("nodeTypes", None)  # Remove nodeTypes if present for comparison
+            loaded_content.pop("nodeTypes", None)
 
         assert loaded_content == example_dms_schema_request, "Exported YAML content does not match the original schema."
 
@@ -41,6 +41,6 @@ class TestDMSAPIJSONExporter:
         loaded_content = yaml.safe_load(content)  # Using yaml.safe_load to parse JSON content
         if "nodeTypes" not in example_dms_schema_request:
             assert loaded_content["nodeTypes"] is None or loaded_content["nodeTypes"] == []
-            loaded_content.pop("nodeTypes", None)  # Remove nodeTypes if present for comparison
+            loaded_content.pop("nodeTypes", None)
 
         assert loaded_content == example_dms_schema_request, "Exported JSON content does not match the original schema."

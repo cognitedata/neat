@@ -234,7 +234,6 @@ def example_dms_view_response() -> dict[str, Any]:
                 "container": {"space": "my_space", "externalId": "MyContainer"},
                 "containerPropertyIdentifier": "name",
                 "type": {"type": "text"},
-                "connectionType": "primary_property",
                 "constraintState": {"nullability": "current"},
             },
             "anEdge": {
