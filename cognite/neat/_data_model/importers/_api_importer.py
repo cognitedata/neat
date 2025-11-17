@@ -37,7 +37,9 @@ class DMSAPIImporter(DMSImporter):
         """Create a DMSAPIImporter from a data model in CDF."""
         data_models = client.data_models.retrieve([data_model])
         if not data_models:
-            raise CDFAPIException(messages=[FailedRequestMessage(message=f"Data model {data_model} not found in CDF.")])
+            raise CDFAPIException(
+                messages=[FailedRequestMessage(message=f"Data model {data_model!s} not found in CDF.")]
+            )
         data_model = data_models[0]
         views = client.views.retrieve(data_model.views or [])
         if missing_views := set(data_model.views or []) - {view.as_reference() for view in views}:

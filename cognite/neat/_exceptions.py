@@ -27,3 +27,6 @@ class CDFAPIException(NeatException):
 
     def __init__(self, messages: "list[HTTPMessage]") -> None:
         self.messages = messages
+
+    def __str__(self) -> str:
+        return f"{type(self).__name__}: " + "; ".join(map(str, self.messages))
