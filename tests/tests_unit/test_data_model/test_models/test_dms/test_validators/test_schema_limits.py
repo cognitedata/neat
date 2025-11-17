@@ -5,7 +5,14 @@ import pytest
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
-from cognite.neat._data_model.validation.dms import DataModelLimitValidator
+from cognite.neat._data_model.validation.dms._limits import (
+    ContainerPropertyCountIsOutOfLimits,
+    ContainerPropertyListSizeIsOutOfLimits,
+    DataModelViewCountIsOutOfLimits,
+    ViewContainerCountIsOutOfLimits,
+    ViewImplementsCountIsOutOfLimits,
+    ViewPropertyCountIsOutOfLimits,
+)
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
 
 
@@ -95,7 +102,7 @@ container_names = [f"Container{i}" for i in range(1, 12)] + [
 
 
 @pytest.fixture(scope="session")
-def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, set[str]]:
+def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, dict[str, set]]:
     yaml = f"""Metadata:
 - Key: space
   Value: my_space
@@ -181,33 +188,43 @@ Enum:
 """
 
     expected_problems = {
-        "The data model references 123 views",
-        "View my_space:ViewWithTooManyProperties(version=v1) has 301 properties",
-        "View my_space:ViewWithTooManyContainers(version=v1) references 11 containers",
-        "View my_space:ViewWithTooManyImplements(version=v1) implements 11 views",
-        "Container my_space:ContainerWithTooManyProperties has 101 properties",
-        "Container my_space:Int32Container has property int32List with list size 601",
-        "Container my_space:Int64Container has property int64List with list size 301",
-        "Container my_space:TextListContainer has property textList with list size 2001",
-        "Container my_space:DirectRelationContainer has property directRelations with list size 2001",
-        "View my_space:ViewWithTooHighMinCount(version=v1) does not have any properties defined",
-        "View my_space:ViewWithTooManyImplements(version=v1) does not have any properties defined",
-        "View my_space:TargetView(version=v1) does not have any properties defined",
-        "Container my_space:MinCountContainer does not have any properties defined",
+        DataModelViewCountIsOutOfLimits.code: {"The data model references 123 views"},
+        ViewPropertyCountIsOutOfLimits.code: {
+            "View my_space:ViewWithTooManyProperties(version=v1) has 301 properties",
+            "View my_space:ViewWithTooHighMinCount(version=v1) does not have any properties defined",
+            "View my_space:ViewWithTooManyImplements(version=v1) does not have any properties defined",
+            "View my_space:TargetView(version=v1) does not have any properties defined",
+        },
+        ViewContainerCountIsOutOfLimits.code: {
+            "View my_space:ViewWithTooManyContainers(version=v1) references 11 containers"
+        },
+        ViewImplementsCountIsOutOfLimits.code: {
+            "View my_space:ViewWithTooManyImplements(version=v1) implements 11 views"
+        },
+        ContainerPropertyCountIsOutOfLimits.code: {
+            "Container my_space:ContainerWithTooManyProperties has 101 properties",
+            "Container my_space:MinCountContainer does not have any properties defined",
+        },
+        ContainerPropertyListSizeIsOutOfLimits.code: {
+            "Container my_space:Int32Container has property int32List with list size 601",
+            "Container my_space:Int64Container has property int64List with list size 301",
+            "Container my_space:TextListContainer has property textList with list size 2001",
+            "Container my_space:DirectRelationContainer has property directRelations with list size 2001",
+        },
     }
 
-    expected_problems.update(
-        {f"View my_space:Interface{i}(version=v1) does not have any properties defined" for i in range(1, 12)}
-    )
-    expected_problems.update(
-        {f"View my_space:DataModelView{i}(version=v1) does not have any properties defined" for i in range(101)}
-    )
+    expected_problems[ViewPropertyCountIsOutOfLimits.code] |= {
+        f"View my_space:Interface{i}(version=v1) does not have any properties defined" for i in range(1, 12)
+    }
+    expected_problems[ViewPropertyCountIsOutOfLimits.code] |= {
+        f"View my_space:DataModelView{i}(version=v1) does not have any properties defined" for i in range(101)
+    }
 
     return yaml, expected_problems
 
 
 def test_validation(
-    validation_test_cdf_client: NeatClient, dms_yaml_hitting_all_the_data_model_limits: tuple[str, list[str]]
+    validation_test_cdf_client: NeatClient, dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]]
 ) -> None:
     yaml_content, expected_problems = dms_yaml_hitting_all_the_data_model_limits
 
@@ -222,17 +239,16 @@ def test_validation(
 
     by_code = on_success.issues.by_code()
 
-    # number of problematic reversals should match number of issues found
-    assert len(by_code[DataModelLimitValidator.code]) == len(expected_problems)
+    assert by_code.keys() == expected_problems.keys(), (
+        f"Mismatch in issue codes. Expected {expected_problems.keys()}, found {by_code.keys()}"
+    )
 
-    found_issues = []
-    # here we check that all expected problematic reversals are found
-    found_problems = set()
-    for problem in expected_problems:
-        for issue in by_code[DataModelLimitValidator.code]:
-            if problem in issue.message:
-                found_problems.add(problem)
-                found_issues.append(issue)
-                break
+    for code, issues in by_code.items():
+        assert len(issues) == len(expected_problems[code]), (
+            f"Number of issues for {code} expected {len(expected_problems[code])}, found {len(issues)}"
+        )
 
-    assert found_problems == expected_problems
+        for expected_message in expected_problems[code]:
+            assert any(expected_message in issue.message for issue in issues), (
+                f"Expected message '{expected_message}' for code {code} not found in issues."
+            )

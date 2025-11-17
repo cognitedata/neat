@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import chain
-from typing import ClassVar, Literal, TypeAlias, cast
+from typing import ClassVar, TypeAlias, cast
 
 from pyparsing import cached_property
 
 from cognite.neat._data_model.models.dms._container import ContainerRequest
-from cognite.neat._data_model.models.dms._indexes import BtreeIndex, InvertedIndex
 from cognite.neat._data_model.models.dms._references import (
     ContainerDirectReference,
     ContainerReference,
@@ -294,38 +293,8 @@ class DataModelValidator(ABC):
 
         return merged_containers
 
-    @staticmethod
-    def container_property_by_index_type(container: ContainerRequest) -> dict[Literal["btree", "inverted"], list]:
-        """Map container properties to their index types for limit validation.
 
-        Categorizes container properties by their index configuration:
-        - "btree": Properties with btree indexes (have stricter list size limits)
-        - "inverted": Properties with inverted indexes
+class GroupedDataModelValidator(DataModelValidator):
+    """Used to run grouped data model validators together."""
 
-        This mapping is used to determine the appropriate list size limit for
-        each property based on whether it has a btree index.
-
-        Args:
-            container: The container to analyze.
-
-        Returns:
-            Dictionary with index type strings as keys and lists of property identifiers
-            as values. Returns empty lists for both index types if container has no indexes.
-        """
-
-        container_property_by_index_type: dict[Literal["btree", "inverted"], list] = {
-            BtreeIndex.model_fields["index_type"].default: [],
-            InvertedIndex.model_fields["index_type"].default: [],
-        }
-        if not container.indexes:
-            return container_property_by_index_type
-
-        for index in container.indexes.values():
-            if isinstance(index, BtreeIndex):
-                container_property_by_index_type[BtreeIndex.model_fields["index_type"].default].extend(index.properties)
-            elif isinstance(index, InvertedIndex):
-                container_property_by_index_type[InvertedIndex.model_fields["index_type"].default].extend(
-                    index.properties
-                )
-
-        return container_property_by_index_type
+    ...
