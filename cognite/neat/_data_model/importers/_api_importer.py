@@ -1,5 +1,5 @@
-from pathlib import Path
 import difflib
+from pathlib import Path
 from typing import Any
 
 import yaml
