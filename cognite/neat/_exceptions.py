@@ -43,3 +43,14 @@ class FileReadException(NeatException):
 
     def __str__(self) -> str:
         return f"Error reading file {self.filepath}: {self.message}"
+
+
+class UserInputError(NeatException):
+    """Raised when there is an error in user input."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self) -> str:
+        return f"User input error: {self.message}"
