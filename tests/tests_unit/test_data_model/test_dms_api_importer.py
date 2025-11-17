@@ -57,6 +57,12 @@ class TestDMSAPIImporter:
             status_code=200,
             json={"items": []},
         )
+        respx_mock.get(
+            config.create_api_url("/models/datamodels?allVersions=false&includeGlobal=true&limit=1000")
+        ).respond(
+            status_code=200,
+            json={"items": []},
+        )
 
         data_model_ref = DataModelReference(space="my_space", external_id="missing_model", version="v1")
 
@@ -68,7 +74,9 @@ class TestDMSAPIImporter:
         assert isinstance(request_message, FailedRequestMessage)
         error_message = request_message.message
         assert "not found in CDF" in error_message
-        assert len(respx_mock.calls) == 1
+        assert len(respx_mock.calls) == 2, (
+            "Expected two API calls to be made. One for data model and one for listing available models."
+        )
 
     def test_from_cdf_missing_views(
         self,
