@@ -12,16 +12,15 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
 
     ## What it does
     Validates that for each view property that maps to a container and container property,
-    the referenced container and container property exist either in the data model or in CDF.
+    the referenced container and container property exist.
 
     ## Why is this bad?
     If a view property references a container or container property that does not exist,
     the data model cannot be deployed to CDF. This means that view property will not be able to function.
 
     ## Example
-    View WindTurbine has property location that references container WindTurbineContainer and property gpsCoordinates.
-    If WindTurbineContainer and/or property gpsCoordinates do not exist in the data model nor in CDF,
-    the data model cannot be deployed to CDF.
+    View WindTurbine has property location that maps to container WindTurbineContainer and property gpsCoordinates.
+    If WindTurbineContainer and/or property gpsCoordinates do not exist, the data model cannot be deployed to CDF.
     """
 
     code = f"{_BASE_CODE}-001"
@@ -43,9 +42,8 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
                     errors.append(
                         ConsistencyError(
                             message=(
-                                f"View {view_ref!s} property {property_ref!s} references "
-                                f"container {container_ref!s} which does not exist "
-                                "in the data model nor in CDF."
+                                f"View {view_ref!s} property {property_ref!s} maps to "
+                                f"container {container_ref!s} which does not exist."
                             ),
                             fix="Define necessary container",
                             code=self.code,
@@ -55,9 +53,9 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
                     errors.append(
                         ConsistencyError(
                             message=(
-                                f"View {view_ref!s} property {property_ref!s} references "
+                                f"View {view_ref!s} property {property_ref!s} maps to "
                                 f"container {container_ref!s} which does not have "
-                                f"property '{container_property}' defined."
+                                f"property '{container_property}'."
                             ),
                             fix="Define necessary container property",
                             code=self.code,
