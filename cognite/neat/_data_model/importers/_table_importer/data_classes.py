@@ -1,9 +1,18 @@
 from collections.abc import Mapping
 from typing import Annotated, Literal, cast, get_args
 
-from pydantic import AliasGenerator, BaseModel, BeforeValidator, Field, PlainSerializer, model_validator
+from pydantic import (
+    AliasGenerator,
+    BaseModel,
+    BeforeValidator,
+    Field,
+    PlainSerializer,
+    field_validator,
+    model_validator,
+)
 from pydantic.alias_generators import to_camel
 from pydantic.fields import FieldInfo
+from traitlets import Any
 
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
@@ -52,6 +61,10 @@ class MetadataValue(TableObj):
     key: str
     value: CellValueType
 
+    @field_validator("key", mode="after")
+    def _legacy_external_id(cls, value: str) -> str:
+        return "externalId" if value.lower() == "external_id" else value
+
 
 class DMSProperty(TableObj):
     view: Entity
@@ -72,6 +85,56 @@ class DMSProperty(TableObj):
     index: EntityList | None = None
     constraint: EntityList | None = None
 
+    @field_validator("max_count", mode="before")
+    @classmethod
+    def _legacy_max_count(cls, value: Any) -> Any | None:
+        """Validates and converts the max_count field if it uses the legacy 'inf' value."""
+        if isinstance(value, str) and value.lower() == "inf":
+            return None
+        return value
+
+    @model_validator(mode="before")
+    def _legacy_cardinality(cls, data: dict[str, Any]) -> dict[str, Any]:
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not data:
+            return data
+
+        if "Max Count" not in data and "Is List" in data:
+            is_list = data.pop("Is List")
+            if isinstance(is_list, bool):
+                data["Max Count"] = None if is_list else 1
+
+        if "Min Count" not in data and "Nullable" in data:
+            nullable = data.pop("Nullable")
+            if isinstance(nullable, bool):
+                data["Min Count"] = 0 if nullable else 1
+
+        return data
+
+    @model_validator(mode="after")
+    def _legacy_index(self) -> "DMSProperty":
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not self.index:
+            return self
+
+        for index in self.index:
+            if not index.prefix:
+                index.prefix = "inverted" if not self.max_count or self.max_count > 1 else "btree"
+
+        return self
+
+    @model_validator(mode="after")
+    def _legacy_constraint(self) -> "DMSProperty":
+        """Converts Is List to Max Count and Nullable to Min Count."""
+        if not self.constraint:
+            return self
+
+        for constraint in self.constraint:
+            if not constraint.prefix:
+                constraint.prefix = "uniqueness"
+
+        return self
+
 
 class DMSView(TableObj):
     view: Entity
@@ -79,7 +142,6 @@ class DMSView(TableObj):
     description: str | None = None
     implements: EntityList | None = None
     filter: str | None = None
-    in_model: bool | None = None
 
 
 class DMSContainer(TableObj):
@@ -88,6 +150,32 @@ class DMSContainer(TableObj):
     description: str | None = None
     constraint: EntityList | None = None
     used_for: str | None = None
+
+    @model_validator(mode="after")
+    def _legacy_constraint(self) -> "DMSContainer":
+        """Converts legacy constraint formats to the current standard."""
+        if not self.constraint:
+            return self
+
+        for constraint in self.constraint:
+            # Skip if already in correct format
+            if constraint.prefix in ["requires", "uniqueness"]:
+                continue
+
+            # Handle missing prefix - default to "requires"
+            if not constraint.prefix:
+                constraint.prefix = "requires"
+                constraint.properties = {"require": constraint.suffix}
+
+            # Handle legacy format with space:external_id in prefix/suffix
+            else:
+                container_space = constraint.prefix
+                container_external_id = constraint.suffix
+                constraint.prefix = "requires"
+                constraint.suffix = f"{container_space}_{container_external_id}"
+                constraint.properties = {"require": f"{container_space}:{container_external_id}"}
+
+        return self
 
 
 class DMSEnum(TableObj):

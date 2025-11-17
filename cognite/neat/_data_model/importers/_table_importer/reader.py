@@ -121,6 +121,8 @@ class DMSTableReader:
 
     """
 
+    CELL_MISSING = "#N/A"
+
     # The following classes are used when creating error messages. They ensure that the column names
     # matches the names in the table, even if they are renamed in the code.
     # Note that this is not a complete list of all columns, only those that are used in error messages.
@@ -309,6 +311,9 @@ class DMSTableReader:
         for (container_entity, index_id), index_list in read.indices.items():
             if len(index_list) == 0:
                 continue
+            # Remove duplicates based on prop_id, keeping the first occurrence
+            # Note that we have already validated that the index definitions are the same
+            index_list = list({read_index.prop_id: read_index for read_index in index_list}.values())
             index = index_list[0].index
             if len(index_list) == 1:
                 indices[container_entity][index_id] = index
@@ -337,6 +342,11 @@ class DMSTableReader:
         for (container_entity, constraint_id), constraint_list in read.constraints.items():
             if len(constraint_list) == 0:
                 continue
+            # Remove duplicates based on prop_id, keeping the first occurrence
+            # Note that we have already validated that the constraint definitions are the same
+            constraint_list = list(
+                {read_constraint.prop_id: read_constraint for read_constraint in constraint_list}.values()
+            )
             constraint = constraint_list[0].constraint
             if len(constraint_list) == 1 or not isinstance(constraint, UniquenessConstraintDefinition):
                 constraints[container_entity][constraint_id] = constraint
@@ -480,13 +490,17 @@ class DMSTableReader:
             return {}
 
     def read_core_view_property(self, prop: DMSProperty) -> dict[str, Any]:
+        source: dict[str, str | None] | None = None
+        if prop.connection is not None and prop.value_type.suffix != self.CELL_MISSING:
+            source = self._create_view_ref(prop.value_type)
+
         return dict(
             connectionType="primary_property",
             name=prop.name,
             description=prop.description,
             container=self._create_container_ref(prop.container),
             containerPropertyIdentifier=prop.container_property,
-            source=None if prop.connection is None else self._create_view_ref(prop.value_type),
+            source=source,
         )
 
     def read_edge_view_property(self, prop: DMSProperty, loc: tuple[str | int, ...]) -> dict[str, Any]:
@@ -721,11 +735,7 @@ class DMSTableReader:
     def read_data_model(self, tables: TableDMS, valid_view_entities: set[ParsedEntity]) -> DataModelRequest:
         data = {
             **{meta.key: meta.value for meta in tables.metadata},
-            "views": [
-                self._create_view_ref(view.view)
-                for view in tables.views
-                if view.in_model is not False and view.view in valid_view_entities
-            ],
+            "views": [self._create_view_ref(view.view) for view in tables.views if view.view in valid_view_entities],
         }
         model = self._validate_obj(DataModelRequest, data, (self.Sheets.metadata,), field_name="value")
         if model is None:

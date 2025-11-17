@@ -1,3 +1,4 @@
+import difflib
 from typing import Any
 
 from pydantic import ValidationError
@@ -37,7 +38,18 @@ class DMSAPIImporter(DMSImporter):
         """Create a DMSAPIImporter from a data model in CDF."""
         data_models = client.data_models.retrieve([data_model])
         if not data_models:
-            raise CDFAPIException(messages=[FailedRequestMessage(message=f"Data model {data_model} not found in CDF.")])
+            available_data_models = [
+                str(model.as_reference()) for model in client.data_models.list(limit=1000, include_global=True)
+            ]
+            close_matches = difflib.get_close_matches(str(data_model), available_data_models, n=1, cutoff=0.9)
+            suggestion_msg = ""
+            if close_matches:
+                suggestion_msg = f" Did you mean: {close_matches[0]!r}?"
+            raise CDFAPIException(
+                messages=[
+                    FailedRequestMessage(message=f"Data model '{data_model!s}' not found in CDF.{suggestion_msg}")
+                ]
+            )
         data_model = data_models[0]
         views = client.views.retrieve(data_model.views or [])
         if missing_views := set(data_model.views or []) - {view.as_reference() for view in views}:

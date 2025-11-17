@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
+from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine import State
 
@@ -21,7 +22,7 @@ class Change:
     issues: IssueList | None = field(default=None)
     errors: IssueList | None = field(default=None)
     # for time being setting to Any, can be refined later
-    result: Any | None = field(default=None)
+    result: DeploymentResult | None = field(default=None)
     description: str | None = field(default=None)
 
     @staticmethod
@@ -33,6 +34,21 @@ class Change:
     def successful(self) -> bool:
         """Check if change was successful"""
         return not self.errors
+
+    def as_mixpanel_event(self) -> dict[str, Any]:
+        """Convert change to mixpanel event format"""
+        return {
+            "agent": self.agent,
+            "activity": self.activity,
+            "sourceEntity": self.source_entity,
+            "targetEntity": self.target_entity,
+            "sourceState": type(self.source_state).__name__,
+            "targetState": type(self.target_state).__name__ if self.target_state else "None",
+            "duration_ms": int((self.end - self.start).total_seconds() * 1000),
+            "successful": self.successful,
+            "issues": [issue.code or "<no code>" for issue in self.issues] if self.issues else [],
+            "errors": [error.code or "<no code>" for error in self.errors] if self.errors else [],
+        }
 
 
 class Provenance(UserList[Change]):
