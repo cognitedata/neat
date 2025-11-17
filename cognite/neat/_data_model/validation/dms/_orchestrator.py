@@ -15,7 +15,7 @@ from ._base import CDFResources, DataModelValidator, LocalResources
 from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
 from ._consistency import VersionSpaceInconsistency
 from ._containers import ReferencedContainersExist
-from ._limits import DataModelLimitValidator
+from ._limits import ContainerLimitGroupValidator, DataModelViewCountIsOutOfLimits, ViewLimitGroupValidator
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -81,7 +81,9 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
-            DataModelLimitValidator(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            DataModelViewCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ContainerLimitGroupValidator(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ViewLimitGroupValidator(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             ReferencedContainersExist(local_resources, cdf_resources, self._modus_operandi),
             ConnectionValueTypeExist(local_resources, cdf_resources, self._modus_operandi),
             ConnectionValueTypeNotNone(local_resources, cdf_resources, self._modus_operandi),

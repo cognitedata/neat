@@ -1,32 +1,45 @@
+""" "Validator for checking if defined data model is within CDF DMS limits."""
+
+from typing import Literal
+
+from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import EnumProperty, ListablePropertyTypeDefinition
-from cognite.neat._data_model.models.dms._indexes import BtreeIndex
+from cognite.neat._data_model.models.dms._indexes import BtreeIndex, InvertedIndex
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._view_property import (
     ViewCorePropertyRequest,
 )
-from cognite.neat._data_model.validation.dms._base import CDFResources, DataModelValidator, LocalResources
+from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._data_model.validation.dms._base import (
+    CDFResources,
+    DataModelValidator,
+    GroupedDataModelValidator,
+    LocalResources,
+)
 from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.useful_types import ModusOperandi
 
 _BASE_CODE = "NEAT-DMS-LIMITS"
 
 
-class DataModelLimitValidator(DataModelValidator):
-    """Validates that a DMS data model adheres to all CDF resource limits.
+class DataModelViewCountIsOutOfLimits(DataModelValidator):
+    """Validates that the data model does not exceed the maximum number of views.
 
-    This validator performs comprehensive limit checking across three levels:
-    - Data Model Level
-    - View Level
-    - Container Level
+    ## What it does
+    This validator checks that the total number of views referenced by the data model
+    does not exceed the limit defined in the CDF project.
 
-    The validator supports two deployment modes:
-    - **"rebuild" mode**: Validates only local data model resources
-    - **"additive" mode**: Merges local + CDF resources for accurate limit checking
+    ## Why is this bad?
+    CDF enforces limits on the number of views per data model to ensure optimal performance
+    and resource utilization.
 
-    All violations produce ConsistencyError issues that prevent deployment.
+    ## Example
+    If the CDF project has a limit of 100 views per data model, and the data model
+    references 120 views, this validator will raise a ConsistencyError issue.
+
     """
 
-    code = f"{_BASE_CODE}-001"
+    code = f"{_BASE_CODE}-DATA-MODEL-001"
 
     def __init__(
         self,
@@ -39,34 +52,6 @@ class DataModelLimitValidator(DataModelValidator):
         self.limits = limits
 
     def run(self) -> list[ConsistencyError]:
-        """Execute all limit validations on the data model.
-
-        Performs three levels of validation:
-        1. Data model limits (view count)
-        2. View limits (properties, containers, implements)
-        3. Container limits (properties, list sizes)
-
-        Returns:
-            List of ConsistencyError issues for any limit violations found.
-            Empty list if all limits are satisfied.
-        """
-        errors: list[ConsistencyError] = []
-
-        errors.extend(self._data_model_limit_check())
-        errors.extend(self._views_limit_check())
-        errors.extend(self._containers_limit_check())
-
-        return errors
-
-    def _data_model_limit_check(self) -> list[ConsistencyError]:
-        """Validate that the data model does not exceed the maximum number of views.
-
-        Checks that total view count (local + CDF in additive mode) does not exceed the limit.
-
-        Returns:
-            List with single ConsistencyError if limit exceeded, empty list otherwise.
-        """
-
         if len(self.data_model_view_references) > self.limits.data_models.views:
             return [
                 ConsistencyError(
@@ -80,164 +65,386 @@ class DataModelLimitValidator(DataModelValidator):
             ]
         return []
 
-    def _views_limit_check(self) -> list[ConsistencyError]:
-        """Validate that no view exceeds properties, containers, or implements limits.
 
-        For each view in the data model, checks:
-        - Properties count
-        - Unique container references
-        - Implemented views count
+### View level limits
 
-        In additive mode, counts include properties and implements from both local
-        and CDF versions of the view.
+
+class ViewPropertyCountIsOutOfLimits(DataModelValidator):
+    """Validates that a view does not exceed the maximum number of properties.
+
+    ## What it does
+    Checks that the view has no more properties than the CDF limit allows.
+
+    ## Why is this bad?
+    CDF enforces limits on the number of properties per view to ensure optimal performance.
+
+    ## Example
+    If a view has 150 properties and the CDF limit is 100 properties per view,
+    this validator will raise a ConsistencyError issue.
+    """
+
+    code = f"{_BASE_CODE}-VIEW-001"
+
+    def __init__(self, limits: SchemaLimits) -> None:
+        self.limits = limits
+
+    def run(self, view: ViewRequest) -> list[ConsistencyError]:
+        """Validate a single view's property count."""
+        if view.properties and len(view.properties) > self.limits.views.properties:
+            return [
+                ConsistencyError(
+                    message=(
+                        f"View {view.as_reference()!s} has {len(view.properties)} properties,"
+                        " which exceeds the limit of "
+                        f"{self.limits.views.properties} properties per view."
+                    ),
+                    code=self.code,
+                )
+            ]
+
+        elif not view.properties:
+            return [
+                ConsistencyError(
+                    message=(
+                        f"View {view.as_reference()!s} does "
+                        "not have any properties defined, either directly or through implements."
+                        " This will prohibit your from deploying the data model to CDF."
+                    ),
+                    fix="Define at least one property for view",
+                    code=self.code,
+                )
+            ]
+        return []
+
+
+class ViewContainerCountIsOutOfLimits(DataModelValidator):
+    """Validates that a view does not reference too many containers.
+
+    ## What it does
+    Checks that the view references no more containers than the CDF limit allows.
+
+    ## Why is this bad?
+    CDF enforces limits on the number of containers per view to prevent overly complex view definitions, leading
+    to too many joins and performance degradation.
+
+    ## Example
+    If a view references 20 containers and the CDF limit is 10 containers per view,
+    this validator will raise a ConsistencyError issue.
+    """
+
+    code = f"{_BASE_CODE}-VIEW-002"
+
+    def __init__(self, limits: SchemaLimits) -> None:
+        self.limits = limits
+
+    def run(self, view: ViewRequest) -> list[ConsistencyError]:
+        """Validate a single view's container count."""
+        if view.properties:
+            count = len(
+                {
+                    prop.container
+                    for prop in view.properties.values()
+                    if (isinstance(prop, ViewCorePropertyRequest) and prop.container)
+                }
+            )
+            if count > self.limits.views.containers:
+                return [
+                    ConsistencyError(
+                        message=(
+                            f"View {view.as_reference()!s} references "
+                            f"{count} containers, which exceeds the limit of "
+                            f"{self.limits.views.containers} containers per view."
+                        ),
+                        code=self.code,
+                    )
+                ]
+
+        return []
+
+
+class ViewImplementsCountIsOutOfLimits(DataModelValidator):
+    """Validates that a view does not implement too many other views.
+
+    ## What it does
+    Checks that the view implements no more views than the CDF limit allows.
+
+    ## Why is this bad?
+    CDF enforces limits on the number of implemented views to prevent overly deep inheritance hierarchies.
+
+    ## Example
+    If a view implements 15 other views and the CDF limit is 10 implemented views per view,
+    this validator will raise a ConsistencyError issue.
+    """
+
+    code = f"{_BASE_CODE}-VIEW-003"
+
+    def __init__(self, limits: SchemaLimits) -> None:
+        self.limits = limits
+
+    def run(self, view: ViewRequest) -> list[ConsistencyError]:
+        """Validate a single view's implements count."""
+        if view.implements and len(view.implements) > self.limits.views.implements:
+            return [
+                ConsistencyError(
+                    message=(
+                        f"View {view.as_reference()!s} implements {len(view.implements)} views,"
+                        " which exceeds the limit of"
+                        f" {self.limits.views.implements} implemented views per view."
+                    ),
+                    code=self.code,
+                )
+            ]
+        return []
+
+
+class ViewLimitGroupValidator(GroupedDataModelValidator):
+    """Run all view limit validators in a single pass over all views for efficiency."""
+
+    code = f"{_BASE_CODE}-VIEW-GROUP-LIMITS"
+
+    def __init__(
+        self,
+        local_resources: LocalResources,
+        cdf_resources: CDFResources,
+        limits: SchemaLimits,
+        modus_operandi: ModusOperandi = "additive",
+    ) -> None:
+        super().__init__(local_resources, cdf_resources, modus_operandi)
+        self.limits = limits
+
+        # Initialize all view validators
+        self.validators: list[
+            ViewPropertyCountIsOutOfLimits | ViewContainerCountIsOutOfLimits | ViewImplementsCountIsOutOfLimits
+        ] = [
+            ViewPropertyCountIsOutOfLimits(limits),
+            ViewContainerCountIsOutOfLimits(limits),
+            ViewImplementsCountIsOutOfLimits(limits),
+        ]
+
+    def run(self) -> list[ConsistencyError]:
+        """Validate all views against all limit validators in a single pass.
+
+        For each view in the data model, runs all validators and collects errors.
+        This is more efficient than running each validator separately.
 
         Returns:
-            List of ConsistencyError issues, one per limit violation found.
-            Empty list if all views are within limits.
+            List of ConsistencyError issues found across all validators.
         """
-
         errors: list[ConsistencyError] = []
-
         merged_views = self.merged_views
 
+        # Single loop over all views
         for view_ref in self.local_resources.views_by_reference.keys():
             view = merged_views.get(view_ref)
             if not view:
                 raise RuntimeError(f"View {view_ref!s} not found in merged views. This is a bug!")
 
-            if view.properties:
-                if len(view.properties) > self.limits.views.properties:
-                    errors.append(
-                        ConsistencyError(
-                            message=(
-                                f"View {view_ref!s} has {len(view.properties)} properties, which exceeds the limit of "
-                                f"{self.limits.views.properties} properties per view."
-                            ),
-                            code=self.code,
-                        )
-                    )
+            # Run all validators on this view
+            for validator in self.validators:
+                error = validator.run(view)
+                if error:
+                    errors.extend(error)
 
-                if (
-                    count := len(
-                        {
-                            prop.container
-                            for prop in view.properties.values()
-                            if (isinstance(prop, ViewCorePropertyRequest) and prop.container)
-                        }
-                    )
-                ) and count > self.limits.views.containers:
-                    errors.append(
-                        ConsistencyError(
-                            message=(
-                                f"View {view_ref!s} references "
-                                f"{count} containers, which exceeds the limit of "
-                                f"{self.limits.views.containers} containers per view."
-                            ),
-                            code=self.code,
-                        )
-                    )
-            else:
+        return errors
+
+
+### Container level limits
+
+
+class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
+    """Validates that a container does not exceed the maximum number of properties.
+
+    ## What it does
+    Checks that the container has no more properties than the CDF limit allows.
+
+    ## Why is this bad?
+    CDF enforces limits on the number of properties per container to ensure optimal performance
+    and prevent PostGres tables that have too many columns.
+
+    ## Example
+    If a container has 150 properties and the CDF limit is 100 properties per container,
+    this validator will raise a ConsistencyError issue.
+    """
+
+    code = f"{_BASE_CODE}-CONTAINER-001"
+
+    def __init__(self, limits: SchemaLimits) -> None:
+        self.limits = limits
+
+    def run(self, container: ContainerRequest) -> list[ConsistencyError]:
+        """Validate a single container's property count."""
+        if container.properties and len(container.properties) > self.limits.containers.properties():
+            return [
+                ConsistencyError(
+                    message=(
+                        f"Container {container.as_reference()!s} has {len(container.properties)} properties, "
+                        "which exceeds the limit of "
+                        f"{self.limits.containers.properties()} properties per container."
+                    ),
+                    code=self.code,
+                )
+            ]
+        elif not container.properties:
+            return [
+                ConsistencyError(
+                    message=(
+                        f"Container {container.as_reference()!s} does not have any properties defined."
+                        " This will prohibit your from deploying the data model to CDF."
+                    ),
+                    fix="Define at least one property for container",
+                    code=self.code,
+                )
+            ]
+
+        return []
+
+
+class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
+    """Validates that container property list sizes do not exceed CDF limits.
+
+    ## What it does
+    Checks that list-type properties (max_list_size) do not exceed the appropriate limit based on:
+    - Data type (Int32, Int64, DirectRelation, etc.)
+    - Presence of btree index
+    - Default vs maximum limits
+
+    ## Why is this bad?
+    CDF enforces different list size limits for different data types and indexing configurations
+    to ensure optimal performance and prevent resource exhaustion.
+
+    ## Example
+    If a DirectRelation property has max_list_size=2000 with a btree index, but the limit
+    is 1000 for indexed DirectRelations, this validator will raise a ConsistencyError issue.
+
+    ## Note
+    Enum properties are skipped as they have a separate 32-value limit checked during read time of data model to neat
+    as a SyntaxError check.
+    """
+
+    code = f"{_BASE_CODE}-CONTAINER-002"
+
+    def __init__(self, limits: SchemaLimits) -> None:
+        self.limits = limits
+
+    def run(self, container: ContainerRequest) -> list[ConsistencyError]:
+        """Validate all property list sizes in a container."""
+        errors: list[ConsistencyError] = []
+
+        if not container.properties:
+            return errors
+
+        properties_by_index_type = self.container_property_by_index_type(container)
+
+        for property_id, property_ in container.properties.items():
+            type_ = property_.type
+
+            # Skip enum properties (have separate 32-value limit)
+            if isinstance(type_, EnumProperty):
+                continue
+
+            # Only check listable properties with max_list_size set
+            if not isinstance(type_, ListablePropertyTypeDefinition) or type_.max_list_size is None:
+                continue
+
+            has_btree_index = property_id in properties_by_index_type[BtreeIndex.model_fields["index_type"].default]
+            limit = self.limits.containers.properties.listable(type_, has_btree_index)
+
+            if type_.max_list_size > limit:
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"View {view_ref!s} does "
-                            "not have any properties defined, either directly or through implements."
-                            " This will prohibit your from deploying the data model to CDF."
+                            f"Container {container.as_reference()!s} has property {property_id} with list size "
+                            f"{type_.max_list_size}, which exceeds the limit of {limit} "
+                            f"for data type {type_.__class__.__name__}."
                         ),
-                        fix="Define at least one property for view",
                         code=self.code,
                     )
                 )
 
-            if view.implements:
-                if len(view.implements) > self.limits.views.implements:
-                    errors.append(
-                        ConsistencyError(
-                            message=(
-                                f"View {view_ref!s} implements {len(view.implements)} views, which exceeds the limit of"
-                                f" {self.limits.views.implements} implemented views per view."
-                            ),
-                            code=self.code,
-                        )
-                    )
-
         return errors
 
-    def _containers_limit_check(self) -> list[ConsistencyError]:
-        """Validate that no container exceeds properties or list size limits.
+    @staticmethod
+    def container_property_by_index_type(container: ContainerRequest) -> dict[Literal["btree", "inverted"], list]:
+        """Map container properties to their index types for limit validation.
 
-        For each container in the data model, checks:
-        - List size (max_list_size) ≤ appropriate limit based on:
-          * Data type (Int32, Int64, DirectRelation, etc.)
-          * Presence of btree index
-          * Default vs maximum limits
+        Categorizes container properties by their index configuration:
+        - "btree": Properties with btree indexes (have stricter list size limits)
+        - "inverted": Properties with inverted indexes
 
-        Enum properties are skipped (have separate 32-value limit), which is checked on read time as SyntaxError check.
+        This mapping is used to determine the appropriate list size limit for
+        each property based on whether it has a btree index.
 
-        In additive mode, counts include properties from both local and CDF
-        versions of the container.
+        Args:
+            container: The container to analyze.
 
         Returns:
-            List of ConsistencyError issues, one per limit violation found.
-            Empty list if all containers are within limits.
+            Dictionary with index type strings as keys and lists of property identifiers
+            as values. Returns empty lists for both index types if container has no indexes.
         """
 
-        errors: list[ConsistencyError] = []
+        container_property_by_index_type: dict[Literal["btree", "inverted"], list] = {
+            BtreeIndex.model_fields["index_type"].default: [],
+            InvertedIndex.model_fields["index_type"].default: [],
+        }
+        if not container.indexes:
+            return container_property_by_index_type
 
+        for index in container.indexes.values():
+            if isinstance(index, BtreeIndex):
+                container_property_by_index_type[BtreeIndex.model_fields["index_type"].default].extend(index.properties)
+            elif isinstance(index, InvertedIndex):
+                container_property_by_index_type[InvertedIndex.model_fields["index_type"].default].extend(
+                    index.properties
+                )
+
+        return container_property_by_index_type
+
+
+class ContainerLimitGroupValidator(GroupedDataModelValidator):
+    """Orchestrator that validates all container-related limits efficiently."""
+
+    code = f"{_BASE_CODE}-CONTAINER-GROUP-LIMITS"
+
+    def __init__(
+        self,
+        local_resources: LocalResources,
+        cdf_resources: CDFResources,
+        limits: SchemaLimits,
+        modus_operandi: ModusOperandi = "additive",
+    ) -> None:
+        super().__init__(local_resources, cdf_resources, modus_operandi)
+        self.limits = limits
+
+        # Initialize all container validators
+        self.validators: list[ContainerPropertyCountIsOutOfLimits | ContainerPropertyListSizeIsOutOfLimits] = [
+            ContainerPropertyCountIsOutOfLimits(limits),
+            ContainerPropertyListSizeIsOutOfLimits(limits),
+        ]
+
+    def run(self) -> list[ConsistencyError]:
+        """Validate all containers against all limit validators in a single pass.
+
+        For each container in the data model, runs all validators and collects errors.
+        This is more efficient than running each validator separately.
+
+        Returns:
+            List of ConsistencyError issues found across all validators.
+            Empty list if all containers are within limits.
+        """
+        errors: list[ConsistencyError] = []
         merged_containers = self.merged_containers
 
+        # Single loop over all containers
         for container_ref in self.local_resources.containers_by_reference.keys():
             container = merged_containers.get(container_ref)
             if not container:
                 raise RuntimeError(f"Container {container_ref!s} not found in merged containers. This is a bug!")
 
-            if not container.properties:
-                errors.append(
-                    ConsistencyError(
-                        message=(
-                            f"Container {container_ref!s} does not have any properties defined."
-                            " This will prohibit your from deploying the data model to CDF."
-                        ),
-                        fix="Define at least one property for container",
-                        code=self.code,
-                    )
-                )
+            # Run all validators on this container
+            for validator in self.validators:
+                result = validator.run(container)
 
-            properties_by_index_type = self.container_property_by_index_type(container)
-
-            if len(container.properties) > self.limits.containers.properties():
-                errors.append(
-                    ConsistencyError(
-                        message=(
-                            f"Container {container_ref!s} has {len(container.properties)} properties, "
-                            "which exceeds the limit of "
-                            f"{self.limits.containers.properties()} properties per container."
-                        ),
-                        code=self.code,
-                    )
-                )
-
-            for property_id, property_ in container.properties.items():
-                type_ = property_.type
-
-                if isinstance(type_, EnumProperty):
-                    continue
-
-                if not isinstance(type_, ListablePropertyTypeDefinition) or type_.max_list_size is None:
-                    continue
-
-                has_btree_index = property_id in properties_by_index_type[BtreeIndex.model_fields["index_type"].default]
-                limit = self.limits.containers.properties.listable(type_, has_btree_index)
-                if type_.max_list_size > limit:
-                    errors.append(
-                        ConsistencyError(
-                            message=(
-                                f"Container {container_ref!s} has property {property_id} with list size "
-                                f"{type_.max_list_size}, which exceeds the limit of {limit} "
-                                f"for data type {type_.__class__.__name__}."
-                            ),
-                            code=self.code,
-                        )
-                    )
+                if result:
+                    errors.extend(result)
 
         return errors

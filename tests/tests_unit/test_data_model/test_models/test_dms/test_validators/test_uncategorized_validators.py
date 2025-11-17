@@ -10,11 +10,11 @@ from cognite.neat._data_model.validation.dms import (
     BidirectionalConnectionMisconfigured,
     ConnectionValueTypeExist,
     ConnectionValueTypeNotNone,
-    DataModelLimitValidator,
     DmsDataModelValidation,
     ReferencedContainersExist,
     VersionSpaceInconsistency,
 )
+from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
 
 
@@ -141,7 +141,7 @@ class TestValidators:
             VersionSpaceInconsistency.code,
             BidirectionalConnectionMisconfigured.code,
             ReferencedContainersExist.code,
-            DataModelLimitValidator.code,
+            ViewPropertyCountIsOutOfLimits.code,
         }
 
         assert len(by_code[ConnectionValueTypeExist.code]) == 3
@@ -203,9 +203,9 @@ class TestValidators:
         assert found_missing_containers == expected_missing_containers
         assert found_missing_container_properties == expected_missing_container_properties
 
-        assert len(by_code[DataModelLimitValidator.code]) == 2
+        assert len(by_code[ViewPropertyCountIsOutOfLimits.code]) == 2
 
-        missing_view_properties_messages = [issue.message for issue in by_code[DataModelLimitValidator.code]]
+        missing_view_properties_messages = [issue.message for issue in by_code[ViewPropertyCountIsOutOfLimits.code]]
         expected_views = {"another_space:MissingProperties(version=v2)", "my_space:MissingProperties(version=v2)"}
 
         found_views = set()
@@ -237,7 +237,7 @@ class TestValidators:
             VersionSpaceInconsistency.code,
             BidirectionalConnectionMisconfigured.code,
             ReferencedContainersExist.code,
-            DataModelLimitValidator.code,
+            ViewPropertyCountIsOutOfLimits.code,
         }
 
         assert len(by_code[ConnectionValueTypeExist.code]) == 5
