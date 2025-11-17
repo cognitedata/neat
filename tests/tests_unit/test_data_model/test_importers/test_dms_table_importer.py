@@ -8,7 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._data_model.exporters._table_exporter.exporter import (
     DMSExcelExporter,
-    DMSYamlExporter,
+    DMSTableYamlExporter,
 )
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.importers import DMSTableImporter
@@ -1065,7 +1065,7 @@ class TestDMSTableImporter:
         importer = DMSTableImporter(max_count_infinity_table)
         schema = importer.to_data_model()
 
-        result = DMSYamlExporter().export(schema)
+        result = DMSTableYamlExporter().export(schema)
         assert result["Properties"][0]["Max Count"] is None  # infinity represented as None
         assert result["Properties"][1]["Max Count"] == 100
 
@@ -1073,7 +1073,7 @@ class TestDMSTableImporter:
 class TestDMSTableExporter:
     @pytest.mark.parametrize("expected,schema", list(valid_dms_table_formats()))
     def test_export(self, expected: dict[str, list[dict[str, CellValueType]]], schema: RequestSchema) -> None:
-        result = DMSYamlExporter().export(schema)
+        result = DMSTableYamlExporter().export(schema)
 
         assert result == expected
 
@@ -1250,7 +1250,7 @@ class TestYAMLTableFormat:
 
         yaml_file.read_text.assert_called_once()
         result_file = MagicMock(spec=Path)
-        DMSYamlExporter().export_to_file(data_model, result_file)
+        DMSTableYamlExporter().export_to_file(data_model, result_file)
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]

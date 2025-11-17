@@ -1,6 +1,6 @@
 from ._api_exporter import DMSAPIExporter, DMSAPIJSONExporter, DMSAPIYAMLExporter
 from ._base import DMSExporter, DMSFileExporter
-from ._table_exporter.exporter import DMSExcelExporter, DMSTableExporter, DMSYamlExporter
+from ._table_exporter.exporter import DMSExcelExporter, DMSTableExporter, DMSTableJSONExporter, DMSTableYamlExporter
 
 __all__ = [
     "DMSAPIExporter",
@@ -10,5 +10,6 @@ __all__ = [
     "DMSExporter",
     "DMSFileExporter",
     "DMSTableExporter",
-    "DMSYamlExporter",
+    "DMSTableJSONExporter",
+    "DMSTableYamlExporter",
 ]
