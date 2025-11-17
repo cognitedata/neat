@@ -31,3 +31,15 @@ class CDFAPIException(NeatException):
 
     def __str__(self) -> str:
         return f"{type(self).__name__}: " + "; ".join(map(str, self.messages))
+
+
+class FileReadException(NeatException):
+    """Raised when there is an error reading a file."""
+
+    def __init__(self, filepath: str, message: str) -> None:
+        super().__init__(f"Error reading file {filepath}: {message}")
+        self.filepath = filepath
+        self.message = message
+
+    def __str__(self) -> str:
+        return f"Error reading file {self.filepath}: {self.message}"
