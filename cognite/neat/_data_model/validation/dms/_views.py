@@ -20,7 +20,7 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
 
     ## Example
     View WindTurbine has property location that maps to container WindTurbineContainer and property gpsCoordinates.
-    If WindTurbineContainer and/or property gpsCoordinates do not exist, the data model cannot be deployed to CDF.
+    If WindTurbineContainer and/or property gpsCoordinates does not exist, the data model cannot be deployed to CDF.
     """
 
     code = f"{_BASE_CODE}-001"
