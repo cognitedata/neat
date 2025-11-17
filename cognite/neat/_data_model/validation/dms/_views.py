@@ -1,12 +1,27 @@
+"""Validators for checking containers in the data model."""
+
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError
 
-_BASE_CODE = "NEAT-DMS-CONTAINERS"
+_BASE_CODE = "NEAT-DMS-VIEW"
 
 
-class ReferencedContainersExist(DataModelValidator):
-    """This validator checks that all referenced containers in the data model exist either locally or in CDF."""
+class ViewToContainerMappingNotPossible(DataModelValidator):
+    """Validates that container and container property referenced by view property exist.
+
+    ## What it does
+    Validates that for each view property that maps to a container and container property,
+    the referenced container and container property exist.
+
+    ## Why is this bad?
+    If a view property references a container or container property that does not exist,
+    the data model cannot be deployed to CDF. This means that view property will not be able to function.
+
+    ## Example
+    View WindTurbine has property location that maps to container WindTurbineContainer and property gpsCoordinates.
+    If WindTurbineContainer and/or property gpsCoordinates does not exist, the data model cannot be deployed to CDF.
+    """
 
     code = f"{_BASE_CODE}-001"
 
@@ -27,10 +42,8 @@ class ReferencedContainersExist(DataModelValidator):
                     errors.append(
                         ConsistencyError(
                             message=(
-                                f"View {view_ref!s} property {property_ref!s} references "
-                                f"container {container_ref!s} which does not exist "
-                                "in the data model nor in CDF."
-                                " This will prohibit you from deploying the data model to CDF."
+                                f"View {view_ref!s} property {property_ref!s} maps to "
+                                f"container {container_ref!s} which does not exist."
                             ),
                             fix="Define necessary container",
                             code=self.code,
@@ -40,10 +53,9 @@ class ReferencedContainersExist(DataModelValidator):
                     errors.append(
                         ConsistencyError(
                             message=(
-                                f"View {view_ref!s} property {property_ref!s} references "
+                                f"View {view_ref!s} property {property_ref!s} maps to "
                                 f"container {container_ref!s} which does not have "
-                                f"property '{container_property}' defined."
-                                " This will prohibit you from deploying the data model to CDF."
+                                f"property '{container_property}'."
                             ),
                             fix="Define necessary container property",
                             code=self.code,

@@ -9,13 +9,20 @@ from cognite.neat._data_model.models.dms._references import ContainerReference, 
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._data_model.validation.dms._limits import (
+    ContainerPropertyCountIsOutOfLimits,
+    ContainerPropertyListSizeIsOutOfLimits,
+    DataModelViewCountIsOutOfLimits,
+    ViewContainerCountIsOutOfLimits,
+    ViewImplementsCountIsOutOfLimits,
+    ViewPropertyCountIsOutOfLimits,
+)
 from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
 from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
 from ._consistency import VersionSpaceInconsistency
-from ._containers import ReferencedContainersExist
-from ._limits import DataModelLimitValidator
+from ._views import ViewToContainerMappingNotPossible
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -81,8 +88,14 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
-            DataModelLimitValidator(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
-            ReferencedContainersExist(local_resources, cdf_resources, self._modus_operandi),
+            # Limits
+            DataModelViewCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ViewPropertyCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ViewImplementsCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ViewContainerCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ContainerPropertyCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ContainerPropertyListSizeIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            ViewToContainerMappingNotPossible(local_resources, cdf_resources, self._modus_operandi),
             ConnectionValueTypeExist(local_resources, cdf_resources, self._modus_operandi),
             ConnectionValueTypeNotNone(local_resources, cdf_resources, self._modus_operandi),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources, self._modus_operandi),
