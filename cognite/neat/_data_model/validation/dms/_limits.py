@@ -348,55 +348,6 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
 
             properties_by_index_type = self.container_property_by_index_type(container)
 
-        return errors
-
-
-class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
-    """Validates that container property list sizes do not exceed CDF limits.
-
-    ## What it does
-    Checks that list-type properties (max_list_size) do not exceed the appropriate limit based on:
-    - Data type (Int32, Int64, DirectRelation, etc.)
-    - Presence of btree index
-    - Default vs maximum limits
-
-    ## Why is this bad?
-    CDF enforces different list size limits for different data types and indexing configurations
-    to ensure optimal performance and prevent resource exhaustion.
-
-    ## Example
-    If a DirectRelation property has max_list_size=2000 with a btree index, but the limit
-    is 1000 for indexed DirectRelations, this validator will raise a ConsistencyError issue.
-
-    ## Note
-    Enum properties are skipped as they have a separate 32-value limit checked during read time of data model to neat
-    as a SyntaxError check.
-    """
-
-    code = f"{_BASE_CODE}-CONTAINER-002"
-
-    def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        limits: SchemaLimits,
-        modus_operandi: ModusOperandi = "additive",
-    ) -> None:
-        super().__init__(local_resources, cdf_resources, modus_operandi)
-        self.limits = limits
-
-    def run(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
-        merged_containers = self.merged_containers
-
-        # Single loop over all containers
-        for container_ref in self.local_resources.containers_by_reference.keys():
-            container = merged_containers.get(container_ref)
-            if not container:
-                raise RuntimeError(f"Container {container_ref!s} not found in merged containers. This is a bug!")
-
-            properties_by_index_type = self.container_property_by_index_type(container)
-
             for property_id, property_ in container.properties.items():
                 type_ = property_.type
 
