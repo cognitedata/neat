@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import cast
 
@@ -53,7 +54,7 @@ class DMSTableExporter(DMSExporter[DataModelTableType]):
         return output
 
 
-class DMSYamlExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
+class DMSTableYamlExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
     """Exports DMS to YAML."""
 
     def __init__(self) -> None:
@@ -70,6 +71,23 @@ class DMSYamlExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
         file_path.write_text(
             yaml.safe_dump(table_format, sort_keys=False), encoding=self.ENCODING, newline=self.NEW_LINE
         )
+
+
+class DMSTableJSONExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):
+    """Exports DMS to JSON."""
+
+    def __init__(self) -> None:
+        super().__init__(exclude_none=True)
+
+    def export_to_file(self, data_model: RequestSchema, file_path: Path) -> None:
+        """Exports the data model as a flat JSON file, which is identical to the spreadsheet representation
+
+        Args:
+            data_model (RequestSchema): The data model to export.
+            file_path (Path): The path to the JSON file to create.
+        """
+        table_format = self.export(data_model)
+        file_path.write_text(json.dumps(table_format), encoding=self.ENCODING, newline=self.NEW_LINE)
 
 
 class DMSExcelExporter(DMSTableExporter, DMSFileExporter[DataModelTableType]):

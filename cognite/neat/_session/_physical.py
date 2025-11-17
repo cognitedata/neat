@@ -2,7 +2,15 @@ from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
-from cognite.neat._data_model.exporters import DMSAPIExporter, DMSExcelExporter, DMSYamlExporter
+from cognite.neat._data_model.exporters import (
+    DMSAPIExporter,
+    DMSAPIJSONExporter,
+    DMSAPIYAMLExporter,
+    DMSExcelExporter,
+    DMSExporter,
+    DMSTableJSONExporter,
+    DMSTableYamlExporter,
+)
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
 from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
@@ -146,11 +154,45 @@ class WritePhysicalDataModel:
         self._client = client
         self._mode = mode
 
-    def yaml(self, io: Any) -> None:
-        """Write physical data model to YAML file"""
+    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
+        """Write physical data model to YAML file
+
+        Args:
+            io (Any): The file path or buffer to write to.
+            format (Literal["neat", "toolkit"]): The format of the output file
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        """
 
         file_path = NeatReader.create(io).materialize_path()
-        writer = DMSYamlExporter()
+        writer: DMSExporter
+        if format == "neat":
+            writer = DMSTableYamlExporter()
+        elif format == "toolkit":
+            writer = DMSAPIYAMLExporter()
+        else:
+            raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
+
+        return self._store.write_physical(writer, file_path=file_path)
+
+    def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
+        """Write physical data model to JSON file
+
+        Args:
+            io (Any): The file path or buffer to write to.
+            format (Literal["neat", "toolkit"]): The format of the output file
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        """
+
+        file_path = NeatReader.create(io).materialize_path()
+        writer: DMSExporter
+        if format == "neat":
+            writer = DMSTableJSONExporter()
+        elif format == "toolkit":
+            writer = DMSAPIJSONExporter()
+        else:
+            raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
 
         return self._store.write_physical(writer, file_path=file_path)
 
