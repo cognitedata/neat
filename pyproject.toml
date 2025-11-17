@@ -99,6 +99,11 @@ dev = [
     "polyfactory>=2.22.2",
 ]
 
+[tool.pytest.ini_options]
+markers = [
+    "serial: mark test to run serially (not in parallel)",
+]
+
 [tool.uv]
 package = true
 
@@ -123,6 +128,9 @@ omit = [
     # This contains the legacy code. We want to exclude it from coverage reports
     # such that we can increase the coverage threshold for the new code.
     "cognite/neat/v0/*",
+    # The Storage is for running in pyodide and cannot be tested in the normal test suite.
+    # We alro exclude the calling of mixpanel in testing.
+    "cognite/neat/_session/_usage_analytics/*",
 ]
 
 [tool.mypy]

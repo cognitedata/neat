@@ -56,6 +56,11 @@ class DMSTableImporter(DMSImporter):
         return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
 
     @classmethod
+    def from_json(cls, json_file: Path) -> "DMSTableImporter":
+        """Create a DMSTableImporter from a JSON file."""
+        return cls.from_yaml(json_file)
+
+    @classmethod
     def from_excel(cls, excel_file: Path) -> "DMSTableImporter":
         """Create a DMSTableImporter from an Excel file."""
         tables: DataModelTableType = {}
@@ -103,15 +108,21 @@ class DMSTableImporter(DMSImporter):
             errors.append(ModelSyntaxError(message=message))
         return errors
 
-    @staticmethod
-    def _location(loc: tuple[str | int, ...]) -> str:
+    def _location(self, loc: tuple[str | int, ...]) -> str:
         if isinstance(loc[0], str) and len(loc) == 2:  # Sheet + row.
             # We skip the row as we treat all rows as the same. For example, if a required column is missing in one
             # row, it is missing in all rows.
             return f"{loc[0]} sheet"
         elif len(loc) == 3 and isinstance(loc[0], str) and isinstance(loc[1], int) and isinstance(loc[2], str):
             # This means there is something wrong in a specific cell.
-            return f"{loc[0]} sheet row {loc[1] + 1} column {loc[2]!r}"
+
+            sheet = loc[0]
+            row = loc[1]
+            if self._source and sheet in self._source.table_read:
+                context = self._source.table_read[sheet]
+                row = context.adjusted_row_number(row) - 1
+
+            return f"{sheet} sheet row {row + 1} column {loc[2]!r}"
         # This should be unreachable as the TableDMS model only has 2 levels.
         return as_json_path(loc)
 
@@ -167,6 +178,5 @@ class DMSTableImporter(DMSImporter):
                 if set(row_values).intersection(required_columns):
                     columns = row_values
                     context.header_row = row_no
-                else:
-                    context.skipped_rows.append(row_no)
+
         return table_rows

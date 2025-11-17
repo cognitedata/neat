@@ -8,7 +8,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from cognite.neat._data_model.exporters._table_exporter.exporter import (
     DMSExcelExporter,
-    DMSYamlExporter,
+    DMSTableYamlExporter,
 )
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookCreator
 from cognite.neat._data_model.importers import DMSTableImporter
@@ -90,6 +90,19 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Max Count": None,
                 },
                 {
+                    "View": "CogniteAsset",
+                    "View Property": "name",
+                    "Connection": None,
+                    "Value Type": "text(maxTextSize=400)",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Container": "CogniteDescribable",
+                    "Container Property": "name",
+                    "Index": "btree:name(cursorable=False)",
+                    "Constraint": "uniqueness:uniqueName(bySpace=True)",
+                },
+                {
                     "View": "CogniteFile",
                     "View Property": "assets",
                     "Connection": "direct",
@@ -99,6 +112,17 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     "Immutable": False,
                     "Container": "CogniteFile",
                     "Container Property": "assets",
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "equipments",
+                    "Connection": "direct",
+                    "Value Type": "#N/A",
+                    "Min Count": 0,
+                    "Max Count": 1200,
+                    "Immutable": False,
+                    "Container": "CogniteFile",
+                    "Container Property": "equipments",
                 },
                 {
                     "View": "CogniteFile",
@@ -243,6 +267,10 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                                 identifier="assets",
                             ),
                         ),
+                        "name": ViewCorePropertyRequest(
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable"),
+                            containerPropertyIdentifier="name",
+                        ),
                     },
                 ),
                 ViewRequest(
@@ -259,6 +287,13 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                             container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
                             containerPropertyIdentifier="assets",
                             source=ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
+                        ),
+                        "equipments": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
+                            containerPropertyIdentifier="equipments",
+                            source=None,
                         ),
                         "assetAnnotations": MultiEdgeProperty(
                             name=None,
@@ -326,6 +361,15 @@ def valid_dms_table_formats() -> Iterable[tuple]:
                     usedFor="node",
                     properties={
                         "assets": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=DirectNodeRelation(maxListSize=1200, list=True),
+                        ),
+                        "equipments": ContainerPropertyDefinition(
                             immutable=False,
                             nullable=True,
                             autoIncrement=None,
@@ -905,7 +949,6 @@ def invalid_dms_table() -> Iterable[tuple]:
                 {
                     "View": "MyView",
                     "Implements": "invalid[entity,list]syntax",
-                    "In Model": "yes_but_not_boolean",
                 }
             ],
         },
@@ -915,7 +958,6 @@ def invalid_dms_table() -> Iterable[tuple]:
             "In Properties sheet row 1 column 'Auto Increment' input should be a valid "
             "boolean, unable to interpret input.",
             "In Properties sheet row 1 column 'Immutable' input should be a valid boolean, unable to interpret input.",
-            "In Views sheet row 1 column 'In Model' input should be a valid boolean, unable to interpret input.",
         },
         id="Invalid boolean and entity list values",
     )
@@ -951,6 +993,45 @@ def invalid_dms_table() -> Iterable[tuple]:
     )
 
 
+@pytest.fixture
+def max_count_infinity_table() -> dict:
+    return {
+        "Metadata": [
+            {"Key": "space", "Value": "test_space"},
+            {"Key": "externalId", "Value": "InfinityTest"},
+            {"Key": "version", "Value": "v1"},
+        ],
+        "Properties": [
+            {
+                "View": "TestView",
+                "View Property": "unlimitedList",
+                "Connection": "reverse(property=limitedList)",
+                "Value Type": "TestView",
+                "Min Count": 0,
+                "Max Count": "inf",  # Test infinity
+            },
+            {
+                "View": "TestView",
+                "View Property": "limitedList",
+                "Connection": "direct",
+                "Value Type": "TestTarget",
+                "Min Count": 0,
+                "Max Count": 100,  # Regular max count for comparison
+                "Immutable": False,
+                "Container": "TestContainer",
+                "Container Property": "limitedList",
+            },
+        ],
+        "Views": [
+            {"View": "TestView"},
+            {"View": "TestTarget"},
+        ],
+        "Containers": [
+            {"Container": "TestContainer", "Used For": "node"},
+        ],
+    }
+
+
 class TestDMSTableImporter:
     @pytest.mark.parametrize("data, expected_errors", list(invalid_dms_table()))
     def test_read_invalid_tables(
@@ -978,11 +1059,21 @@ class TestDMSTableImporter:
 
         assert result_errors == expected_errors
 
+    def test_legacy_max_count_infinity(
+        self, max_count_infinity_table: dict[str, list[dict[str, CellValueType]]]
+    ) -> None:
+        importer = DMSTableImporter(max_count_infinity_table)
+        schema = importer.to_data_model()
+
+        result = DMSTableYamlExporter().export(schema)
+        assert result["Properties"][0]["Max Count"] is None  # infinity represented as None
+        assert result["Properties"][1]["Max Count"] == 100
+
 
 class TestDMSTableExporter:
     @pytest.mark.parametrize("expected,schema", list(valid_dms_table_formats()))
     def test_export(self, expected: dict[str, list[dict[str, CellValueType]]], schema: RequestSchema) -> None:
-        result = DMSYamlExporter()._export(schema)
+        result = DMSTableYamlExporter().export(schema)
 
         assert result == expected
 
@@ -997,8 +1088,8 @@ class TestTableSource:
             pytest.param(("MyTable", 5, "field"), {}, "table 'MyTable' row 6 column 'field'", id="table_row_column"),
             pytest.param(
                 ("MyTable", 5),
-                {"MyTable": SpreadsheetReadContext(header_row=2, empty_rows=[3, 5], is_one_indexed=True)},
-                "table 'MyTable' row 10",
+                {"MyTable": SpreadsheetReadContext(header_row=2, empty_rows=[3, 5])},
+                "table 'MyTable' row 11",
                 id="with_spreadsheet_read",
             ),
             pytest.param(("Views", 1, "externalId"), {}, "table 'Views' row 2 column 'View'", id="with_field_mapping"),
@@ -1092,27 +1183,27 @@ class TestSpreadsheetRead:
         [
             pytest.param(
                 5,
-                SpreadsheetReadContext(header_row=1, empty_rows=[], skipped_rows=[], is_one_indexed=True),
-                7,  # 5 + 1 (header) + 1 (one_indexed)
+                SpreadsheetReadContext(header_row=1, empty_rows=[]),
+                8,  # 5 + 1 (header) + 1 (one_indexed) + 1 (offset for rows after header)
                 id="basic_case_with_one_indexing",
             ),
             pytest.param(
                 5,
-                SpreadsheetReadContext(header_row=2, empty_rows=[1, 3, 6], skipped_rows=[], is_one_indexed=True),
+                SpreadsheetReadContext(header_row=2, empty_rows=[1, 3, 6]),
                 11,  # 5->6 (empty 1)->7 (empty 3)->8 (empty 6) + 2 (header) + 1 (one_indexed)
                 id="with_empty_rows",
             ),
             pytest.param(
                 3,
-                SpreadsheetReadContext(header_row=1, empty_rows=[2], skipped_rows=[1, 4], is_one_indexed=False),
+                SpreadsheetReadContext(header_row=1, empty_rows=[2]),
                 7,  # 3->4 (empty 2)->5 (skipped 1) + 1 (header) + 0 (zero_indexed)
                 id="with_empty_and_skipped_rows_zero_indexed",
             ),
             pytest.param(
-                2,
-                SpreadsheetReadContext(header_row=3, empty_rows=[1, 5], skipped_rows=[2, 6], is_one_indexed=True),
-                8,  # 2->3 (empty 1)->4 (skipped 2) + 3 (header) + 1 (one_indexed)
-                id="complex_case_with_all_adjustments",
+                4,
+                SpreadsheetReadContext(header_row=1, empty_rows=[6, 12]),
+                8,
+                id="real_case",
             ),
         ],
     )
@@ -1159,7 +1250,7 @@ class TestYAMLTableFormat:
 
         yaml_file.read_text.assert_called_once()
         result_file = MagicMock(spec=Path)
-        DMSYamlExporter().export(data_model, result_file)
+        DMSTableYamlExporter().export_to_file(data_model, result_file)
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
@@ -1216,21 +1307,19 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                 ],
             ],
             "Views": [
-                ["Definition of Views", *[None] * 5],
+                ["Definition of Views", *[None] * 4],
                 [
                     "View",
                     "Name",
                     "Description",
                     "Implements",
                     "Filter",
-                    "In Model",
                 ],
                 [
                     "CogniteDescribable",
                     "Cognite Describable",
                     "The describable core concept is used as a standard way of holding the "
                     "bare minimum of information about the instance",
-                    None,
                     None,
                     None,
                 ],
@@ -1288,7 +1377,6 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
                     "bare minimum of information about the instance",
                     "Implements": None,
                     "Filter": None,
-                    "In Model": None,
                 }
             ],
             Containers=[
@@ -1305,9 +1393,9 @@ def valid_dms_excel_formats() -> Iterable[tuple]:
             source="excel_file.xlsx",
             table_read={
                 "Metadata": SpreadsheetReadContext(),
-                "Properties": SpreadsheetReadContext(skipped_rows=[0]),
-                "Views": SpreadsheetReadContext(skipped_rows=[0]),
-                "Containers": SpreadsheetReadContext(skipped_rows=[0]),
+                "Properties": SpreadsheetReadContext(header_row=1),
+                "Views": SpreadsheetReadContext(header_row=1),
+                "Containers": SpreadsheetReadContext(header_row=1),
             },
         ),
         id="Minimal example",
@@ -1343,7 +1431,7 @@ class TestExcelFormat:
             importer = DMSTableImporter.from_excel(excel_file)
             data_model = importer.to_data_model()
 
-            exported = DMSExcelExporter()._export(data_model)
+            exported = DMSExcelExporter().export(data_model)
             created_workbook = WorkbookCreator().create_workbook(exported)
 
             read_tables = self._read_workbook(created_workbook)

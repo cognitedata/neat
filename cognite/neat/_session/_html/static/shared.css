@@ -1,0 +1,186 @@
+:root {
+    --bg-primary: white;
+    --bg-secondary: #f8f9fa;
+    --bg-header: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --border-light: #e9ecef;
+    --hover-bg: #f8f9fa;
+    --stat-bg: rgba(255, 255, 255, 0.2);
+    --stat-hover-bg: rgba(255, 255, 255, 0.3);
+    --stat-active-bg: rgba(255, 255, 255, 0.4);
+    --code-bg: #e9ecef;
+    --fix-bg: #e7f5ff;
+    --fix-border: #1971c2;
+    --fix-text: #1864ab;
+    --export-btn-bg: rgba(255, 255, 255, 0.2);
+    --export-btn-hover-bg: rgba(255, 255, 255, 0.3);
+    --export-btn-border: rgba(255, 255, 255, 0.5);
+}
+
+.dark-mode {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2d2d30;
+    --bg-header: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    --text-primary: #e4e4e7;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --border-color: #3f3f46;
+    --border-light: #27272a;
+    --hover-bg: #27272a;
+    --stat-bg: rgba(255, 255, 255, 0.1);
+    --stat-hover-bg: rgba(255, 255, 255, 0.15);
+    --stat-active-bg: rgba(255, 255, 255, 0.2);
+    --code-bg: #27272a;
+    --fix-bg: #1e293b;
+    --fix-border: #3b82f6;
+    --fix-text: #60a5fa;
+    --export-btn-bg: rgba(255, 255, 255, 0.1);
+    --export-btn-hover-bg: rgba(255, 255, 255, 0.2);
+    --export-btn-border: rgba(255, 255, 255, 0.3);
+}
+
+
+.issues-container,
+.deployment-container {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    max-width: 100%;
+    margin: 10px 0;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.issues-header,
+.deployment-header {
+    background: var(--bg-header);
+    color: white;
+    padding: 20px;
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+    position: relative;
+}
+
+.theme-toggle {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.issues-title,
+.deployment-title {
+    margin: 0 0 15px 0;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.issues-stats,
+.deployment-stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding-right: 100px;
+}
+
+.stat-item {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.stat-item.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.stat-number {
+    font-weight: 700;
+    font-size: 18px;
+    margin-right: 4px;
+}
+
+.export-btn {
+    margin-left: auto;
+    padding: 6px 14px;
+    border: 1px solid var(--export-btn-border);
+    background: var(--export-btn-bg);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.export-btn:hover {
+    background: var(--export-btn-hover-bg);
+    border-color: white;
+}
+
+.issues-controls,
+.deployment-controls {
+    background: var(--bg-secondary);
+    padding: 15px 20px;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+}
+
+.control-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--fix-border);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input::placeholder {
+    color: var(--text-primary);
+    opacity: 0.7;
+    font-style: italic;
+}
+
+.no-issues,
+.no-changes {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+}

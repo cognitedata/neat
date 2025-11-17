@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -5,7 +6,7 @@ if TYPE_CHECKING:
     from cognite.neat._utils.http_client import HTTPMessage
 
 
-class NeatException(Exception):
+class NeatException(Exception, ABC):
     """Base class for all exceptions raised by Neat."""
 
     pass
@@ -27,3 +28,29 @@ class CDFAPIException(NeatException):
 
     def __init__(self, messages: "list[HTTPMessage]") -> None:
         self.messages = messages
+
+    def __str__(self) -> str:
+        return f"{type(self).__name__}: " + "; ".join(map(str, self.messages))
+
+
+class FileReadException(NeatException):
+    """Raised when there is an error reading a file."""
+
+    def __init__(self, filepath: str, message: str) -> None:
+        super().__init__(f"Error reading file {filepath}: {message}")
+        self.filepath = filepath
+        self.message = message
+
+    def __str__(self) -> str:
+        return f"Error reading file {self.filepath}: {self.message}"
+
+
+class UserInputError(NeatException):
+    """Raised when there is an error in user input."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        self.message = message
+
+    def __str__(self) -> str:
+        return f"User input error: {self.message}"

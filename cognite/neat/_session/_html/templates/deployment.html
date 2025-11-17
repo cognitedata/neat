@@ -1,0 +1,74 @@
+<style>
+{{SHARED_CSS}}
+{{SPECIFIC_CSS}}
+</style>
+
+<div class="issues-container deployment-container" id="deploymentContainer">
+    <div class="issues-header deployment-header">
+        <button class="theme-toggle" id="themeToggle">
+            <span id="themeIcon">🌙</span>
+            <span id="themeText">Dark</span>
+        </button>
+        <h2 class="deployment-title issues-title">
+            <span>Deployment Result</span>
+            <span class="status-badge status-{{status}}" id="statusBadge">
+                <span id="statusIcon"></span>
+                <span id="statusText"></span>
+            </span>
+        </h2>
+        <div class="deployment-stats issues-stats">
+            <div class="stat-item active" data-filter="all">
+                <span class="stat-number">{{total_changes}}</span> Total Changes
+            </div>
+            <div class="stat-item" data-filter="create">
+                <span class="stat-number">{{created}}</span> Created
+            </div>
+            <div class="stat-item" data-filter="update">
+                <span class="stat-number">{{updated}}</span> Updated
+            </div>
+            <div class="stat-item" data-filter="delete">
+                <span class="stat-number">{{deleted}}</span> Deleted
+            </div>
+            <div class="stat-item" data-filter="skip">
+                <span class="stat-number">{{skipped}}</span> Skipped
+            </div>
+            <div class="stat-item" data-filter="unchanged">
+                <span class="stat-number">{{unchanged}}</span> Unchanged
+            </div>
+            <button class="export-btn" onclick="exportDeployment()">Export Report</button>
+        </div>
+    </div>
+
+    <div class="deployment-controls issues-controls">
+        <div class="filter-group">
+            <span class="filter-label">Endpoint:</span>
+            <button class="filter-btn active" data-filter-type="endpoint" data-filter="all">All</button>
+            <button class="filter-btn" data-filter-type="endpoint" data-filter="spaces">Spaces</button>
+            <button class="filter-btn" data-filter-type="endpoint" data-filter="datamodels">Data Models</button>
+            <button class="filter-btn" data-filter-type="endpoint" data-filter="views">Views</button>
+            <button class="filter-btn" data-filter-type="endpoint" data-filter="containers">Containers</button>
+        </div>
+
+        <div class="filter-group">
+            <span class="filter-label">Severity:</span>
+            <button class="filter-btn active" data-filter-type="severity" data-filter="all">All</button>
+            <button class="filter-btn" data-filter-type="severity" data-filter="SAFE">Safe</button>
+            <button class="filter-btn" data-filter-type="severity" data-filter="WARNING">Warning</button>
+            <button class="filter-btn" data-filter-type="severity" data-filter="BREAKING">Breaking</button>
+        </div>
+
+        <div class="control-group">
+            <input type="text" class="search-input" placeholder="🔍 Search resource IDs, changes..." id="searchInput">
+        </div>
+    </div>
+
+    <div class="deployment-list issues-list" id="deploymentList"></div>
+</div>
+
+<script>
+(function() {
+    const changes = {{CHANGES_JSON}};
+    const stats = {{STATS_JSON}};
+    {{SCRIPTS}}
+})();
+</script>

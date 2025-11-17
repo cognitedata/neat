@@ -54,16 +54,17 @@ class ContainerProperties:
 
 
 class DMSTableWriter:
-    def __init__(self, default_space: str, default_version: str) -> None:
+    def __init__(self, default_space: str, default_version: str, skip_properties_in_other_spaces: bool) -> None:
         self.default_space = default_space
         self.default_version = default_version
+        self.skip_properties_in_other_spaces = skip_properties_in_other_spaces
 
     ## Main Entry Point ###
     def write_tables(self, schema: RequestSchema) -> TableDMS:
         metadata = self.write_metadata(schema.data_model)
         container_properties = self.write_container_properties(schema.containers)
         view_properties = self.write_view_properties(schema.views, container_properties)
-        views = self.write_views(schema.views, set(schema.data_model.views or []))
+        views = self.write_views(schema.views)
         containers = self.write_containers(schema.containers)
 
         return TableDMS(
@@ -260,7 +261,7 @@ class DMSTableWriter:
         return output
 
     ### View Sheet ###
-    def write_views(self, views: list[ViewRequest], model_views: set[ViewReference]) -> list[DMSView]:
+    def write_views(self, views: list[ViewRequest]) -> list[DMSView]:
         return [
             DMSView(
                 view=self._create_view_entity(view),
@@ -270,7 +271,6 @@ class DMSTableWriter:
                 if view.implements
                 else None,
                 filter=json.dumps(view.filter) if view.filter else None,
-                in_model=None if view.as_reference() in model_views else False,
             )
             for view in views
         ]
@@ -279,6 +279,8 @@ class DMSTableWriter:
         output = ViewProperties()
         for view in views:
             if not view.properties:
+                continue
+            if self.skip_properties_in_other_spaces and view.space != self.default_space:
                 continue
             for prop_id, prop in view.properties.items():
                 output.properties.append(self._write_view_property(view, prop_id, prop, container))

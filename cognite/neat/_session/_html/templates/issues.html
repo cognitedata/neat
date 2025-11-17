@@ -1,0 +1,44 @@
+<style>
+{{SHARED_CSS}}
+{{SPECIFIC_CSS}}
+</style>
+
+<div class="issues-container" id="issuesContainer">
+    <div class="issues-header">
+        <button class="theme-toggle" id="themeToggle">
+            <span id="themeIcon">🌙</span>
+            <span id="themeText">Dark</span>
+        </button>
+        <h2 class="issues-title">Session Issues</h2>
+        <div class="issues-stats">
+            <div class="stat-item active" data-filter="all">
+                <span class="stat-number">{{total}}</span> Total Issues
+            </div>
+            <div class="stat-item" data-filter="ModelSyntaxError">
+                <span class="stat-number">{{syntax_errors}}</span> Syntax Errors
+            </div>
+            <div class="stat-item" data-filter="ConsistencyError">
+                <span class="stat-number">{{consistency_errors}}</span> Consistency Errors
+            </div>
+            <div class="stat-item" data-filter="Recommendation">
+                <span class="stat-number">{{recommendations}}</span> Recommendations
+            </div>
+            <button class="export-btn" onclick="exportIssues()">Export CSV</button>
+        </div>
+    </div>
+
+    <div class="issues-controls">
+        <div class="control-group">
+            <input type="text" class="search-input" placeholder="🔍 Search messages, codes, fixes..." id="searchInput">
+        </div>
+    </div>
+
+    <div class="issues-list" id="issuesList"></div>
+</div>
+
+<script>
+(function() {
+    const issues = {{JSON}};
+    {{SCRIPTS}}
+})();
+</script>

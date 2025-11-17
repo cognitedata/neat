@@ -50,10 +50,10 @@ The plot below shows the NEAT authorship from the start until present day.
 ### Contributors
 We are very grateful for the contributions made by:
 
+- [Kristina Tomičić](https://www.linkedin.com/in/kristina-tomicic-6bb443108/), who implemented Data Model and Instances visualization
 - [Marie Solvik Lepoutre](https://www.linkedin.com/in/mslepoutre/), who improved RDF triples projections to Cognite Data Fusion
 - [Bård Henning Tvedt](https://www.linkedin.com/in/bhtvedt/), who implemented IMF importer
 - [Hassan Gomaa](https://www.linkedin.com/in/dr-hassan-gomaa-232638121/), who extended the DEXPI extractor
-- [Kristina Tomičić](https://www.linkedin.com/in/kristina-tomicic-6bb443108/), who implemented Data Model and Instances visualization
 
 
 ## Sponsors
@@ -85,5 +85,6 @@ neat.read.cdf.data_model(("my_space", "MyDataModel", "v1"))
 ```
 
 ## Documentation
+
 
 For more information, see the [documentation](https://cognite-neat.readthedocs-hosted.com/en/latest/)

@@ -1,6 +1,8 @@
 from abc import ABC
+from typing import Any
 
-from pydantic import Field
+from pydantic import Field, field_serializer
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from ._base import APIResource, Resource, WriteableResource
 from ._constants import (
@@ -58,6 +60,20 @@ class DataModel(Resource, APIResource[DataModelReference], ABC):
             external_id=self.external_id,
             version=self.version,
         )
+
+    @field_serializer("views", mode="plain")
+    @classmethod
+    def serialize_views(
+        cls, views: list[ViewReference] | None, info: FieldSerializationInfo
+    ) -> list[dict[str, Any]] | None:
+        if views is None:
+            return None
+        output: list[dict[str, Any]] = []
+        for view in views:
+            dumped = view.model_dump(**vars(info))
+            dumped["type"] = "view"
+            output.append(dumped)
+        return output
 
 
 class DataModelRequest(DataModel): ...

@@ -26,6 +26,9 @@ class HTTPMessage(BaseModel):
 class FailedRequestMessage(HTTPMessage):
     message: str
 
+    def __str__(self) -> str:
+        return self.message
+
 
 class ResponseMessage(HTTPMessage):
     code: StatusCode
@@ -58,6 +61,9 @@ class _ErrorResponse(BaseModel):
 
 class FailedResponse(ResponseMessage):
     error: ErrorDetails
+
+    def __str__(self) -> str:
+        return f"HTTP {self.code} | {self.error.message}"
 
 
 class RequestMessage(HTTPMessage, ABC):
@@ -148,7 +154,7 @@ class ItemBody(BaseModel, Generic[T_Reference, T_BaseModel], ABC):
     @model_serializer(mode="plain", return_type=dict)
     def serialize(self) -> dict[str, JsonValue]:
         data: dict[str, JsonValue] = {
-            "items": [item.model_dump(exclude_unset=True, by_alias=True) for item in self.items]
+            "items": [item.model_dump(exclude_unset=False, by_alias=True, exclude_none=False) for item in self.items]
         }
         if isinstance(self.extra_args, dict):
             data.update(self.extra_args)
