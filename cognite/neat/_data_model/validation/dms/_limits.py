@@ -1,4 +1,4 @@
-""" "Validator for checking if defined data model is within CDF DMS limits."""
+"""Validators for checking if defined data model is within CDF DMS schema limits."""
 
 from typing import Literal
 
