@@ -60,7 +60,7 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
             # getting a full traceback
             except Exception as e:
                 print(f"{display_name} ❌")
-                print(f"Error: {e}")
+                print(f"{e!s}")
                 if _COLLECTOR.can_collect:
                     _COLLECTOR.collect("action", {"action": identifier, "success": False, "error_message": str(e)})
 

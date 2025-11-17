@@ -26,6 +26,9 @@ class HTTPMessage(BaseModel):
 class FailedRequestMessage(HTTPMessage):
     message: str
 
+    def __str__(self) -> str:
+        return self.message
+
 
 class ResponseMessage(HTTPMessage):
     code: StatusCode
@@ -58,6 +61,9 @@ class _ErrorResponse(BaseModel):
 
 class FailedResponse(ResponseMessage):
     error: ErrorDetails
+
+    def __str__(self) -> str:
+        return f"HTTP {self.code} | {self.error.message}"
 
 
 class RequestMessage(HTTPMessage, ABC):
