@@ -77,6 +77,8 @@ class TestDMSAPIImporter:
         assert len(respx_mock.calls) == 2, (
             "Expected two API calls to be made. One for data model and one for listing available models."
         )
+        user_message = str(exc_info.value)
+        assert "my_space:missing_model(version=v1)" in user_message
 
     def test_from_cdf_missing_views(
         self,
