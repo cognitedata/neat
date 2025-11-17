@@ -44,7 +44,6 @@ class ConnectionValueTypeExist(DataModelValidator):
                 message=(
                     f"View {view!s} connection {property_!s} has value type {value_type!s} "
                     "which is not defined as a view in the data model neither exists in CDF."
-                    " This will prohibit you from deploying the data model to CDF."
                 ),
                 fix="Define necessary view",
                 code=self.code,

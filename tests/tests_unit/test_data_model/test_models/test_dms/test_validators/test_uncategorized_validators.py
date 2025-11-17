@@ -11,8 +11,8 @@ from cognite.neat._data_model.validation.dms import (
     ConnectionValueTypeExist,
     ConnectionValueTypeNotNone,
     DmsDataModelValidation,
-    ReferencedContainersExist,
     VersionSpaceInconsistency,
+    ViewToContainerMappingNotPossible,
 )
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
@@ -140,7 +140,7 @@ class TestValidators:
             ConnectionValueTypeNotNone.code,
             VersionSpaceInconsistency.code,
             BidirectionalConnectionMisconfigured.code,
-            ReferencedContainersExist.code,
+            ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
         }
 
@@ -184,8 +184,8 @@ class TestValidators:
         assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
         assert "reverseDirectPropertyMissingOtherEnd" in by_code[BidirectionalConnectionMisconfigured.code][0].message
 
-        assert len(by_code[ReferencedContainersExist.code]) == 2
-        referenced_containers_messages = [issue.message for issue in by_code[ReferencedContainersExist.code]]
+        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 2
+        referenced_containers_messages = [issue.message for issue in by_code[ViewToContainerMappingNotPossible.code]]
         expected_missing_containers = {"nospace:UnexistingContainer"}
         expected_missing_container_properties = {"unexistingProperty"}
 
@@ -236,7 +236,7 @@ class TestValidators:
             ConnectionValueTypeNotNone.code,
             VersionSpaceInconsistency.code,
             BidirectionalConnectionMisconfigured.code,
-            ReferencedContainersExist.code,
+            ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
         }
 
@@ -288,8 +288,8 @@ class TestValidators:
                     found_affected_reverse_properties.add(expected_property)
         assert found_affected_reverse_properties == expected_affected_reverse_properties
 
-        assert len(by_code[ReferencedContainersExist.code]) == 3
-        referenced_containers_messages = [issue.message for issue in by_code[ReferencedContainersExist.code]]
+        assert len(by_code[ViewToContainerMappingNotPossible.code]) == 3
+        referenced_containers_messages = [issue.message for issue in by_code[ViewToContainerMappingNotPossible.code]]
         expected_missing_containers = {"nospace:UnexistingContainer", "my_space:DirectConnectionRemoteContainer"}
         expected_missing_container_properties = {"unexistingProperty"}
 
