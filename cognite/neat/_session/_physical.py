@@ -1,12 +1,13 @@
-from typing import Any
+from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import DMSAPIExporter, DMSExcelExporter, DMSYamlExporter
 from cognite.neat._data_model.exporters._table_exporter.workbook import WorkbookOptions
-from cognite.neat._data_model.importers import DMSAPIImporter, DMSTableImporter
+from cognite.neat._data_model.importers import DMSAPIImporter, DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import DataModelReference
 from cognite.neat._data_model.validation.dms import DmsDataModelValidation
+from cognite.neat._exceptions import UserInputError
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
@@ -64,11 +65,48 @@ class ReadPhysicalDataModel:
         self._store = store
         self._client = client
 
-    def yaml(self, io: Any) -> None:
-        """Read physical data model from YAML file"""
+    def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
+        """Read physical data model from YAML file(s)
+
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        """
 
         path = NeatReader.create(io).materialize_path()
-        reader = DMSTableImporter.from_yaml(path)
+
+        reader: DMSImporter
+        if format == "neat":
+            reader = DMSTableImporter.from_yaml(path)
+        elif format == "toolkit":
+            reader = DMSAPIImporter.from_yaml(path)
+        else:
+            raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
+        on_success = DmsDataModelValidation(self._client)
+
+        return self._store.read_physical(reader, on_success)
+
+    def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
+        """Read physical data model from JSON file(s)
+
+        Args:
+            io (Any): The file or directory path or buffer to read from.
+            format (Literal["neat", "toolkit"]): The format of the input file(s).
+                - "neat": Neat's DMS table format.
+                - "toolkit": Cognite DMS API format which is the format used by Cognite Toolkit.
+        """
+
+        path = NeatReader.create(io).materialize_path()
+
+        reader: DMSImporter
+        if format == "neat":
+            reader = DMSTableImporter.from_json(path)
+        elif format == "toolkit":
+            reader = DMSAPIImporter.from_json(path)
+        else:
+            raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
         on_success = DmsDataModelValidation(self._client)
 
         return self._store.read_physical(reader, on_success)

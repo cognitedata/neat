@@ -56,6 +56,11 @@ class DMSTableImporter(DMSImporter):
         return cls(yaml.safe_load(yaml_file.read_text()), TableSource(source.as_posix()))
 
     @classmethod
+    def from_json(cls, json_file: Path) -> "DMSTableImporter":
+        """Create a DMSTableImporter from a JSON file."""
+        return cls.from_yaml(json_file)
+
+    @classmethod
     def from_excel(cls, excel_file: Path) -> "DMSTableImporter":
         """Create a DMSTableImporter from an Excel file."""
         tables: DataModelTableType = {}
