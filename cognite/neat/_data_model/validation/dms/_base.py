@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import chain
-from typing import Any, ClassVar, TypeAlias, cast
+from typing import ClassVar, TypeAlias, cast
 
 from pyparsing import cached_property
 
@@ -66,9 +66,7 @@ class DataModelValidator(ABC):
         self.modus_operandi = modus_operandi
 
     @abstractmethod
-    def run(
-        self, *args: Any
-    ) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:
+    def run(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:
         """Execute the success handler on the data model."""
         # do something with data model
         ...
