@@ -6,6 +6,12 @@ from cognite.client import ClientConfig
 from cognite.client.credentials import Token
 
 from cognite.neat._client import NeatClient, NeatClientConfig
+from cognite.neat._data_model.models.dms import (
+    ContainerResponse,
+    DataModelResponse,
+    SpaceResponse,
+    ViewResponse,
+)
 
 BASE_URL = "http://neat.cognitedata.com"
 
@@ -284,7 +290,7 @@ def example_dms_space_response() -> dict[str, Any]:
 
 
 @pytest.fixture
-def example_dms_schema(
+def example_dms_schema_response(
     example_dms_data_model_response: dict[str, Any],
     example_dms_view_response: dict[str, Any],
     example_dms_container_response: dict[str, Any],
@@ -295,6 +301,35 @@ def example_dms_schema(
         "views": [example_dms_view_response],
         "containers": [example_dms_container_response],
         "spaces": [example_dms_space_response],
+    }
+
+
+@pytest.fixture
+def example_dms_schema_request(
+    example_dms_data_model_response: dict[str, Any],
+    example_dms_view_response: dict[str, Any],
+    example_dms_container_response: dict[str, Any],
+    example_dms_space_response: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "dataModel": DataModelResponse.model_validate(example_dms_data_model_response)
+        .as_request()
+        .model_dump(by_alias=True, exclude_unset=True),
+        "views": [
+            ViewResponse.model_validate(example_dms_view_response)
+            .as_request()
+            .model_dump(by_alias=True, exclude_unset=True)
+        ],
+        "containers": [
+            ContainerResponse.model_validate(example_dms_container_response)
+            .as_request()
+            .model_dump(by_alias=True, exclude_unset=True)
+        ],
+        "spaces": [
+            SpaceResponse.model_validate(example_dms_space_response)
+            .as_request()
+            .model_dump(by_alias=True, exclude_unset=True)
+        ],
     }
 
 

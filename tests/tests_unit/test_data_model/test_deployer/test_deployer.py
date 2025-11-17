@@ -32,8 +32,8 @@ from cognite.neat._data_model.models.dms import (
 
 
 @pytest.fixture()
-def model(example_dms_schema: dict[str, Any]) -> RequestSchema:
-    return RequestSchema.model_validate(example_dms_schema)
+def model(example_dms_schema_response: dict[str, Any]) -> RequestSchema:
+    return RequestSchema.model_validate(example_dms_schema_response)
 
 
 @pytest.fixture()
