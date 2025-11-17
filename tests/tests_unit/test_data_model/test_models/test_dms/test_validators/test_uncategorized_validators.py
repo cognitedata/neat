@@ -11,7 +11,7 @@ from cognite.neat._data_model.validation.dms import (
     ConnectionValueTypeExist,
     ConnectionValueTypeNotNone,
     DmsDataModelValidation,
-    VersionSpaceInconsistency,
+    ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
@@ -138,7 +138,7 @@ class TestValidators:
         assert set(by_code.keys()) == {
             ConnectionValueTypeExist.code,
             ConnectionValueTypeNotNone.code,
-            VersionSpaceInconsistency.code,
+            ViewSpaceVersionInconsistentWithDataModel.code,
             BidirectionalConnectionMisconfigured.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
@@ -162,8 +162,10 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[VersionSpaceInconsistency.code]) == 2
-        version_space_inconsistency_messages = [issue.message for issue in by_code[VersionSpaceInconsistency.code]]
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 2
+        version_space_inconsistency_messages = [
+            issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
+        ]
         expected_inconsistent_views = {
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
@@ -234,7 +236,7 @@ class TestValidators:
         assert set(by_code.keys()) == {
             ConnectionValueTypeExist.code,
             ConnectionValueTypeNotNone.code,
-            VersionSpaceInconsistency.code,
+            ViewSpaceVersionInconsistentWithDataModel.code,
             BidirectionalConnectionMisconfigured.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
@@ -259,8 +261,10 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[VersionSpaceInconsistency.code]) == 2
-        version_space_inconsistency_messages = [issue.message for issue in by_code[VersionSpaceInconsistency.code]]
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 2
+        version_space_inconsistency_messages = [
+            issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
+        ]
         expected_inconsistent_views = {
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",

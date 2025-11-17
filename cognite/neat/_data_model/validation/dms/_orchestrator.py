@@ -21,7 +21,7 @@ from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
 from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
-from ._consistency import VersionSpaceInconsistency
+from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._views import ViewToContainerMappingNotPossible
 
 
@@ -99,7 +99,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ConnectionValueTypeExist(local_resources, cdf_resources, self._modus_operandi),
             ConnectionValueTypeNotNone(local_resources, cdf_resources, self._modus_operandi),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources, self._modus_operandi),
-            VersionSpaceInconsistency(local_resources, cdf_resources, self._modus_operandi),
+            ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators
