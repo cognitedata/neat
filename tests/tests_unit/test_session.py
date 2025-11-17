@@ -156,10 +156,10 @@ class TestNeatSession:
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
 
-    def test_read_dms_from_cdf(self, example_dms_schema: dict[str, Any], new_session: NeatSession) -> None:
+    def test_read_dms_from_cdf(self, example_dms_schema_response: dict[str, Any], new_session: NeatSession) -> None:
         session = new_session
         mock_importer = MagicMock(spec=DMSAPIImporter)
-        mock_importer.to_data_model.return_value = RequestSchema.model_validate(example_dms_schema)
+        mock_importer.to_data_model.return_value = RequestSchema.model_validate(example_dms_schema_response)
         mock_importer.to_data_model.__name__ = DMSImporter.to_data_model.__name__
 
         provenance_before = len(session._store.provenance)

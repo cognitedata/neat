@@ -5,9 +5,9 @@ from cognite.neat._data_model.models.dms import RequestSchema
 
 
 class TestDMSTableExporter:
-    def test_export_table_skip_properties_other_spaces(self, example_dms_schema: dict[str, Any]) -> None:
+    def test_export_table_skip_properties_other_spaces(self, example_dms_schema_response: dict[str, Any]) -> None:
         """Test exporting DMS to table format while skipping properties in other spaces."""
-        schema = RequestSchema.model_validate(example_dms_schema)
+        schema = RequestSchema.model_validate(example_dms_schema_response)
         assert len(schema.views) > 0, "Example DMS schema should have at least one view for this test."
         original_property_count = sum(len(view.properties) for view in schema.views)
         first = schema.views[0]
