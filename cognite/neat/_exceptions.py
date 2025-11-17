@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -5,7 +6,7 @@ if TYPE_CHECKING:
     from cognite.neat._utils.http_client import HTTPMessage
 
 
-class NeatException(Exception):
+class NeatException(Exception, ABC):
     """Base class for all exceptions raised by Neat."""
 
     pass
