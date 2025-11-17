@@ -132,7 +132,7 @@ class DMSAPIImporter(DMSImporter):
         """Read all YAML files in a directory and combine them into a single dictionary."""
         schema_data: dict[str, Any] = {}
         data_model: dict[str, Any] | None = None
-        for yaml_file in directory.glob("**/*"):
+        for yaml_file in directory.rglob("**/*"):
             if yaml_file.suffix.lower() not in {".yaml", ".yml", ".json"}:
                 continue
             stem = yaml_file.stem.casefold()
@@ -142,21 +142,22 @@ class DMSAPIImporter(DMSImporter):
                     "Multiple data model files found in directory.",
                 )
             data = yaml.safe_load(yaml_file.read_text(encoding=cls.ENCODING))
+            list_data = data if isinstance(data, list) else [data]
             if stem.endswith("datamodel"):
                 data_model = data
             elif stem.endswith("container"):
-                schema_data.setdefault("Containers", []).extend(data.get("Containers", []))
+                schema_data.setdefault("containers", []).extend(list_data)
             elif stem.endswith("view"):
-                schema_data.setdefault("Views", []).extend(data.get("Views", []))
+                schema_data.setdefault("views", []).extend(list_data)
             elif stem.endswith("space"):
-                schema_data.setdefault("Spaces", []).extend(data.get("Spaces", []))
+                schema_data.setdefault("spaces", []).extend(list_data)
             elif stem.endswith("node"):
-                schema_data.setdefault("NodeTypes", []).extend(data.get("NodeTypes", []))
+                schema_data.setdefault("nodeTypes", []).extend(list_data)
             # Ignore other files
         if data_model is None:
             raise FileReadException(
                 cls._display_name(directory).as_posix(),
                 "No data model file found in directory.",
             )
-        schema_data["DataModel"] = data_model.get("DataModel", {})
+        schema_data["dataModel"] = data_model
         return schema_data
