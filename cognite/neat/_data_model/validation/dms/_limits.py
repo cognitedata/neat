@@ -120,7 +120,6 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
                         message=(
                             f"View {view_ref!s} does "
                             "not have any properties defined, either directly or through implements."
-                            " This will prohibit your from deploying the data model to CDF."
                         ),
                         fix="Define at least one property for view",
                         code=self.code,
@@ -294,10 +293,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
             elif not container.properties:
                 errors.append(
                     ConsistencyError(
-                        message=(
-                            f"Container {container.as_reference()!s} does not have any properties defined."
-                            " This will prohibit your from deploying the data model to CDF."
-                        ),
+                        message=(f"Container {container.as_reference()!s} does not have any properties defined."),
                         fix="Define at least one property for container",
                         code=self.code,
                     )
