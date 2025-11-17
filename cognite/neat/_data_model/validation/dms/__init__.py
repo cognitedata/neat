@@ -1,4 +1,8 @@
-from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
+from ._connections import (
+    BidirectionalConnectionMisconfigured,
+    ConnectionValueTypeUndefined,
+    ConnectionValueTypeUnexisting,
+)
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._limits import (
     ContainerPropertyCountIsOutOfLimits,
@@ -13,8 +17,8 @@ from ._views import ViewToContainerMappingNotPossible
 
 __all__ = [
     "BidirectionalConnectionMisconfigured",
-    "ConnectionValueTypeExist",
-    "ConnectionValueTypeNotNone",
+    "ConnectionValueTypeUndefined",
+    "ConnectionValueTypeUnexisting",
     "ContainerPropertyCountIsOutOfLimits",
     "ContainerPropertyListSizeIsOutOfLimits",
     "ContainerPropertyListSizeIsOutOfLimits",

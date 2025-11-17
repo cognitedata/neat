@@ -17,8 +17,20 @@ from cognite.neat._issues import ConsistencyError, Recommendation
 _BASE_CODE = "NEAT-DMS-CONNECTIONS"
 
 
-class ConnectionValueTypeExist(DataModelValidator):
-    """This validator checks whether connections value types (end node types) exist in the data model or in CDF."""
+class ConnectionValueTypeUnexisting(DataModelValidator):
+    """Validates that connection value types exist.
+
+    ## What it does
+    Validates that all connection value types defined in the data model exist.
+
+    ## Why is this bad?
+    If a connection value type does not exist, the data model cannot be deployed to CDF.
+    This means that the connection will not be able to function.
+
+    ## Example
+    If view WindTurbine has a connection property windFarm with value type WindFarm, but WindFarm view is not defined,
+    the data model cannot be deployed to CDF.
+    """
 
     code = f"{_BASE_CODE}-001"
 
@@ -52,8 +64,22 @@ class ConnectionValueTypeExist(DataModelValidator):
         ]
 
 
-class ConnectionValueTypeNotNone(DataModelValidator):
-    """This validator checks whether connection value types are not None."""
+class ConnectionValueTypeUndefined(DataModelValidator):
+    """Validates that connection value types are not None, i.e. undefined.
+
+    ## What it does
+    Validates that connections have explicitly defined value types (i.e., end connection node type).
+
+    ## Why is this bad?
+    If a connection value type is None (undefined), there is no type information about the end node of the connection.
+    This yields an ambiguous data model definition, which may lead to issues during consumption of data from CDF.
+
+    ## Example
+    Consider a scenario where we have views WindTurbine,ArrayCable and Substation. Lets say WindTurbine has a connection
+    `connectsTo` with value type None (undefined), then it is unclear what type of view the connection points to as
+    both ArrayCable and Substation are valid targets for the connection.
+
+    """
 
     code = f"{_BASE_CODE}-002"
 

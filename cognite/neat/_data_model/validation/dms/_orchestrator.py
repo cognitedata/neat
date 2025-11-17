@@ -20,7 +20,11 @@ from cognite.neat._data_model.validation.dms._limits import (
 from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
-from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
+from ._connections import (
+    BidirectionalConnectionMisconfigured,
+    ConnectionValueTypeUndefined,
+    ConnectionValueTypeUnexisting,
+)
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._views import ViewToContainerMappingNotPossible
 
@@ -96,8 +100,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ContainerPropertyCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             ContainerPropertyListSizeIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             ViewToContainerMappingNotPossible(local_resources, cdf_resources, self._modus_operandi),
-            ConnectionValueTypeExist(local_resources, cdf_resources, self._modus_operandi),
-            ConnectionValueTypeNotNone(local_resources, cdf_resources, self._modus_operandi),
+            ConnectionValueTypeUnexisting(local_resources, cdf_resources, self._modus_operandi),
+            ConnectionValueTypeUndefined(local_resources, cdf_resources, self._modus_operandi),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources, self._modus_operandi),
             ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
         ]
