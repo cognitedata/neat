@@ -67,7 +67,7 @@ PROPERTIES_QUERY = """ SELECT ?concept ?property_ ?name ?description ?value_type
             FILTER(!isBlank(?parent_domain_node))
             BIND(?parent_domain_node AS ?inherited_concept)
         }}
-        
+
         # Final Concept Assignment with Priority ---
         # COALESCE prioritizes ?explicit_concept over ?inherited_concept
         BIND(COALESCE(?explicit_concept, ?inherited_concept) AS ?concept)
@@ -95,8 +95,6 @@ PROPERTIES_QUERY = """ SELECT ?concept ?property_ ?name ?description ?value_type
 
         # FILTERS
         FILTER (!isBlank(?property_))
-        # Filter out properties that had neither an explicit nor an inherited domain
-        FILTER (bound(?concept)) 
         FILTER (!bound(?name) || LANG(?name) = "" || LANGMATCHES(LANG(?name), "{language}"))
         FILTER (!bound(?description) || LANG(?description) = "" || LANGMATCHES(LANG(?description), "{language}"))
     }}
