@@ -60,3 +60,8 @@ COGNITE_CONCEPTS: tuple[str, ...] = (
 )
 
 COGNITE_SPACES = (CDF_CDM_SPACE,)
+
+# Defaults from https://docs.cognite.com/cdf/dm/dm_reference/dm_limits_and_restrictions#list-size-limits
+
+DEFAULT_MAX_LIST_SIZE = 1000
+DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS = 100
