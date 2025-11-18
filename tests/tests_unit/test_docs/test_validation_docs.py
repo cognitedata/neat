@@ -6,8 +6,8 @@ import yaml
 
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
-from tests.tests_unit.test_docs import utils
-from tests.tests_unit.test_docs.utils import (
+from tests.tests_unit.test_docs import generate_docs
+from tests.tests_unit.test_docs.generate_docs import (
     ENCODING,
     MKDOCS_FILE,
     VALIDATION_DIRECTORY,
@@ -18,7 +18,7 @@ from tests.tests_unit.test_docs.utils import (
     get_validator_group_heading,
 )
 
-RUN_SCRIPT = f"python {utils.__file__}"
+RUN_SCRIPT = f"python {generate_docs.__file__}"
 
 
 class TestValidationDocs:
