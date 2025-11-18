@@ -287,6 +287,15 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
                             "which exceeds the limit of "
                             f"{self.limits.containers.properties()} properties per container."
                         ),
+                        fix="Define at least one property for container",
+                        code=self.code,
+                    )
+                )
+            elif not container.properties:
+                errors.append(
+                    ConsistencyError(
+                        message=(f"Container {container.as_reference()!s} does not have any properties defined."),
+                        fix="Define at least one property for container",
                         code=self.code,
                     )
                 )
