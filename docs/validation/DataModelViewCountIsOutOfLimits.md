@@ -11,4 +11,3 @@ and resource utilization.
 ## Example
 If the CDF project has a limit of 100 views per data model, and the data model
 references 120 views, this validator will raise a ConsistencyError issue.
-
