@@ -36,6 +36,8 @@ class TestValidationDocs:
         expected_content = generate_validation_markdown_docs(validator_cls)
         file_path = VALIDATION_DIRECTORY / get_filename(validator_cls)
         actual_content = file_path.read_text(encoding=ENCODING)
+        if actual_content.endswith("\n"):
+            actual_content = actual_content[:-1]
         assert actual_content == expected_content, (
             f"The validation markdown documentation for {validator_cls.__name__} is out of date. "
             "Please run the documentation generation script to update it:\n\n"
