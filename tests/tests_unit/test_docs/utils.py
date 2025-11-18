@@ -9,7 +9,9 @@ from typing import cast
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
-VALIDATION_DIRECTORY = Path(__file__).parent.resolve(strict=True).parents[2] / "docs" / "validation"
+NEAT_DIRECTORY = Path(__file__).parent.resolve(strict=True).parents[2]
+MKDOCS_FILE = NEAT_DIRECTORY / "mkdocs.yml"
+VALIDATION_DIRECTORY = NEAT_DIRECTORY / "docs" / "validation"
 VALIDATION_INDEX_MD = VALIDATION_DIRECTORY / "index.md"
 
 ENCODING = "utf-8"
