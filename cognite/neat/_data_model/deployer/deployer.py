@@ -230,7 +230,7 @@ class SchemaDeployer(OnSuccessResultProducer):
             ):
                 if "." not in diff.field_path:
                     # Should not happen, but just in case
-                    raise ValueError("Bug in Neat. Malformed field path for constraint/index change.")
+                    raise RuntimeError("Bug in Neat. Malformed field path for constraint/index change.")
                 # Field type is either "constraints" or "indexes"
                 field_type, identifier, *_ = diff.field_path.split(".", maxsplit=2)
                 # Mark for removal
