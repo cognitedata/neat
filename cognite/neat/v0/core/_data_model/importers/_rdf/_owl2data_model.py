@@ -32,34 +32,42 @@ PROPERTIES_QUERY = """ SELECT ?concept ?property_ ?name ?description ?value_type
         ?property_ a ?property_Type.
         FILTER (?property_Type IN (owl:ObjectProperty, owl:DatatypeProperty ) )
 
-        # A & B. Handling explicit domain (restriction or single concept)
+        # --- 1. Explicit Domain Discovery ---
+
+        # A. Handling owl:domain when it is expressed as owl restriction
         OPTIONAL {{
             ?property_ rdfs:domain ?domain_exp_node .
-            {{
-                FILTER(isBlank(?domain_exp_node))
-                ?domain_exp_node owl:unionOf|owl:intersectionOf ?exp_concepts_list .
-                ?exp_concepts_list rdf:rest*/rdf:first ?explicit_concept.
-            }} UNION {{
-                FILTER(!isBlank(?domain_exp_node))
-                BIND(?domain_exp_node AS ?explicit_concept)
-            }}
+            FILTER(isBlank(?domain_exp_node))
+            ?domain_exp_node owl:unionOf|owl:intersectionOf ?exp_concepts_list .
+            ?exp_concepts_list rdf:rest*/rdf:first ?explicit_concept.
         }}
 
-        # Inherited Domain Discovery (Fallback) ---
-        # C & D. Handling inherited domain (restriction or single concept)
+        # B. Handling the domain when it is a single concept
+        OPTIONAL {{
+            ?property_ rdfs:domain ?domain_exp_node .
+            FILTER(!isBlank(?domain_exp_node))
+            BIND(?domain_exp_node AS ?explicit_concept)
+        }}
+
+        # --- 2. Inherited Domain Discovery (Fallback) ---
+
+        # C. Handling inherited domain when parent domain is a restriction
         OPTIONAL {{
             ?property_ rdfs:subPropertyOf ?parent_property .
             ?parent_property rdfs:domain ?parent_domain_node .
-            {{
-                FILTER(isBlank(?parent_domain_node))
-                ?parent_domain_node owl:unionOf|owl:intersectionOf ?parent_concepts_list .
-                ?parent_concepts_list rdf:rest*/rdf:first ?inherited_concept.
-            }} UNION {{
-                FILTER(!isBlank(?parent_domain_node))
-                BIND(?parent_domain_node AS ?inherited_concept)
-            }}
+            FILTER(isBlank(?parent_domain_node))
+            ?parent_domain_node owl:unionOf|owl:intersectionOf ?parent_concepts_list .
+            ?parent_concepts_list rdf:rest*/rdf:first ?inherited_concept.
         }}
 
+        # D. Handling inherited domain when parent domain is a single concept
+        OPTIONAL {{
+            ?property_ rdfs:subPropertyOf ?parent_property .
+            ?parent_property rdfs:domain ?parent_domain_node .
+            FILTER(!isBlank(?parent_domain_node))
+            BIND(?parent_domain_node AS ?inherited_concept)
+        }}
+        
         # Final Concept Assignment with Priority ---
         # COALESCE prioritizes ?explicit_concept over ?inherited_concept
         BIND(COALESCE(?explicit_concept, ?inherited_concept) AS ?concept)
