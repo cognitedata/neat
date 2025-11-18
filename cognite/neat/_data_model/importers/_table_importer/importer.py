@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, cast
@@ -162,6 +163,11 @@ class DMSTableImporter(DMSImporter):
         # Metadata sheet is just a key-value pair of the first two columns.
         # For other sheets, we need to find the column header row first.
         columns: list[str] = [] if sheet.title != cls.MetadataSheet else required_columns
+        # Ignore warnings about Data Validation extension not being supported in read-only mode.
+        warnings.filterwarnings("ignore", category=UserWarning, message="Data Validation extension is not supported*")
+        # The .iter_rows with values_only=True raises the warning `UserWarning: Data Validation extension is
+        # not supported and will be removed`
+        # which confuses the user and we do not depend on data validation here, so we suppress it.
         for row_no, row in enumerate(sheet.iter_rows(values_only=True)):
             if columns:
                 # We have found the column header row, read the data rows.
