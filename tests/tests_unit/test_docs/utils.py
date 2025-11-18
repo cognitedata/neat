@@ -12,6 +12,9 @@ from cognite.neat._utils.auxiliary import get_concrete_subclasses
 VALIDATION_DIRECTORY = Path(__file__).parent.resolve(strict=True).parents[2] / "docs" / "validation"
 INDEX_MD = VALIDATION_DIRECTORY / "index.md"
 
+ENCODING = "utf-8"
+NEWLINE = "\n"
+
 
 @dataclass(order=True)
 class Validator:
@@ -33,7 +36,7 @@ def write_validation_markdown_docs() -> int:
     for validator in get_concrete_subclasses(DataModelValidator):
         doc_content = generate_validation_markdown_docs(validator)
         file_path = VALIDATION_DIRECTORY / get_filename(validator)
-        file_path.write_text(doc_content, encoding="utf-8")
+        file_path.write_text(doc_content, encoding=ENCODING, newline=NEWLINE)
         count += 1
     return count
 
@@ -85,7 +88,7 @@ def generate_validation_index_markdown_docs() -> str:
 
 def write_validation_index_markdown_docs() -> None:
     index_content = generate_validation_index_markdown_docs()
-    INDEX_MD.write_text(index_content, encoding="utf-8")
+    INDEX_MD.write_text(index_content, encoding=ENCODING, newline=NEWLINE)
 
 
 if __name__ == "__main__":
