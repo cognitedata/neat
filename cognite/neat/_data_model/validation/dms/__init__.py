@@ -1,6 +1,5 @@
 from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
 from ._consistency import VersionSpaceInconsistency
-from ._containers import ReferencedContainersExist
 from ._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -10,6 +9,7 @@ from ._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from ._orchestrator import DmsDataModelValidation
+from ._views import ViewToContainerMappingNotPossible
 
 __all__ = [
     "BidirectionalConnectionMisconfigured",
@@ -20,9 +20,9 @@ __all__ = [
     "ContainerPropertyListSizeIsOutOfLimits",
     "DataModelViewCountIsOutOfLimits",
     "DmsDataModelValidation",
-    "ReferencedContainersExist",
     "VersionSpaceInconsistency",
     "ViewContainerCountIsOutOfLimits",
     "ViewImplementsCountIsOutOfLimits",
     "ViewPropertyCountIsOutOfLimits",
+    "ViewToContainerMappingNotPossible",
 ]

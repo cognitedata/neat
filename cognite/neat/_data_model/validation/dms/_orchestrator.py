@@ -22,7 +22,7 @@ from cognite.neat._utils.useful_types import ModusOperandi
 from ._base import CDFResources, DataModelValidator, LocalResources
 from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
 from ._consistency import VersionSpaceInconsistency
-from ._containers import ReferencedContainersExist
+from ._views import ViewToContainerMappingNotPossible
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -95,7 +95,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ViewContainerCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             ContainerPropertyCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             ContainerPropertyListSizeIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
-            ReferencedContainersExist(local_resources, cdf_resources, self._modus_operandi),
+            ViewToContainerMappingNotPossible(local_resources, cdf_resources, self._modus_operandi),
             ConnectionValueTypeExist(local_resources, cdf_resources, self._modus_operandi),
             ConnectionValueTypeNotNone(local_resources, cdf_resources, self._modus_operandi),
             BidirectionalConnectionMisconfigured(local_resources, cdf_resources, self._modus_operandi),
