@@ -10,7 +10,7 @@ from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 
 VALIDATION_DIRECTORY = Path(__file__).parent.resolve(strict=True).parents[2] / "docs" / "validation"
-INDEX_MD = VALIDATION_DIRECTORY / "index.md"
+VALIDATION_INDEX_MD = VALIDATION_DIRECTORY / "index.md"
 
 ENCODING = "utf-8"
 NEWLINE = "\n"
@@ -88,7 +88,7 @@ def generate_validation_index_markdown_docs() -> str:
 
 def write_validation_index_markdown_docs() -> None:
     index_content = generate_validation_index_markdown_docs()
-    INDEX_MD.write_text(index_content, encoding=ENCODING, newline=NEWLINE)
+    VALIDATION_INDEX_MD.write_text(index_content, encoding=ENCODING, newline=NEWLINE)
 
 
 if __name__ == "__main__":
