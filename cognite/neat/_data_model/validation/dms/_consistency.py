@@ -4,7 +4,7 @@ from cognite.neat._data_model._constants import COGNITE_SPACES
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import Recommendation
 
-_BASE_CODE = "NEAT-DMS-CONSISTENCY"
+BASE_CODE = "NEAT-DMS-CONSISTENCY"
 
 
 class ViewSpaceVersionInconsistentWithDataModel(DataModelValidator):
@@ -22,7 +22,7 @@ class ViewSpaceVersionInconsistentWithDataModel(DataModelValidator):
     version "v2", this requires additional attention during deployment and maintenance of the data model.
     """
 
-    code = f"{_BASE_CODE}-001"
+    code = f"{BASE_CODE}-001"
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []

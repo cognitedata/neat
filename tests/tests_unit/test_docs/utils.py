@@ -55,14 +55,18 @@ def generate_validation_index_markdown_docs() -> str:
         module = importlib.import_module(module_name)
         lines.append(f"## {module_name} ({module.BASE_CODE}")
         lines.append("")
-        lines.append(cast(str, module.__doc__))
+        if module.__doc__ is None:
+            raise NotImplementedError(f"Module {module_name} is missing a docstring.")
+        lines.append(module.__doc__)
         lines.append("")
         lines.append("| code | name | message |")
         lines.append("|------|------|---------|")
         for validator in validator_group:
             code = validator.cls.code
             name = validator.cls.__name__
-            message = cast(str, validator.cls.__doc__).strip().splitlines()[0]
+            if validator.cls.__doc__ is None:
+                raise NotImplementedError(f"Validator {name} is missing a docstring.")
+            message = validator.cls.__doc__.strip().splitlines()[0]
             filename = get_filename(validator.cls)
             lines.append(f"| {code} | [{name}]({filename}) | {message} |")
     return "\n".join(lines)

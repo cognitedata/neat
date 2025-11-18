@@ -17,7 +17,7 @@ from cognite.neat._data_model.validation.dms._base import (
 from cognite.neat._issues import ConsistencyError
 from cognite.neat._utils.useful_types import ModusOperandi
 
-_BASE_CODE = "NEAT-DMS-LIMITS"
+BASE_CODE = "NEAT-DMS-LIMITS"
 
 
 class DataModelViewCountIsOutOfLimits(DataModelValidator):
@@ -37,7 +37,7 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
 
     """
 
-    code = f"{_BASE_CODE}-DATA-MODEL-001"
+    code = f"{BASE_CODE}-DATA-MODEL-001"
 
     def __init__(
         self,
@@ -81,7 +81,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     this validator will raise a ConsistencyError issue.
     """
 
-    code = f"{_BASE_CODE}-VIEW-001"
+    code = f"{BASE_CODE}-VIEW-001"
 
     def __init__(
         self,
@@ -144,7 +144,7 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
     this validator will raise a ConsistencyError issue.
     """
 
-    code = f"{_BASE_CODE}-VIEW-002"
+    code = f"{BASE_CODE}-VIEW-002"
 
     def __init__(
         self,
@@ -203,7 +203,7 @@ class ViewImplementsCountIsOutOfLimits(DataModelValidator):
     this validator will raise a ConsistencyError issue.
     """
 
-    code = f"{_BASE_CODE}-VIEW-003"
+    code = f"{BASE_CODE}-VIEW-003"
 
     def __init__(
         self,
@@ -257,7 +257,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
     this validator will raise a ConsistencyError issue.
     """
 
-    code = f"{_BASE_CODE}-CONTAINER-001"
+    code = f"{BASE_CODE}-CONTAINER-001"
 
     def __init__(
         self,
@@ -325,7 +325,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
     as a SyntaxError check.
     """
 
-    code = f"{_BASE_CODE}-CONTAINER-002"
+    code = f"{BASE_CODE}-CONTAINER-002"
 
     def __init__(
         self,
