@@ -13,7 +13,7 @@ theme:
 
 nav:
   - Home: index.md
-  - Validation:
+  - Validations:
       - Connections (NEAT-DMS-CONNECTIONS): validation/index.html#connections-neat-dms-connections
       - Consistency (NEAT-DMS-CONSISTENCY): validation/index.html#consistency-neat-dms-consistency
       - Limits (NEAT-DMS-LIMITS): validation/index.html#limits-neat-dms-limits

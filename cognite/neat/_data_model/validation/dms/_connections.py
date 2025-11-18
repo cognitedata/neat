@@ -1,3 +1,5 @@
+"""Validators for connections in data model specifications."""
+
 from dataclasses import dataclass
 
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
