@@ -1,24 +1,32 @@
 from dataclasses import dataclass
 
-from pyparsing import cast
-
-from cognite.neat._data_model.models.dms._data_types import DataType, DirectNodeRelation
+from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._references import (
     ContainerDirectReference,
-    ContainerReference,
     ViewDirectReference,
     ViewReference,
 )
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 _BASE_CODE = "NEAT-DMS-CONNECTIONS"
 
 
-class ConnectionValueTypeExist(DataModelValidator):
-    """This validator checks whether connections value types (end node types) exist in the data model or in CDF."""
+class ConnectionValueTypeUnexisting(DataModelValidator):
+    """Validates that connection value types exist.
+
+    ## What it does
+    Validates that all connection value types defined in the data model exist.
+
+    ## Why is this bad?
+    If a connection value type does not exist, the data model cannot be deployed to CDF.
+    This means that the connection will not be able to function.
+
+    ## Example
+    If view WindTurbine has a connection property windFarm with value type WindFarm, but WindFarm view is not defined,
+    the data model cannot be deployed to CDF.
+    """
 
     code = f"{_BASE_CODE}-001"
 
@@ -52,8 +60,22 @@ class ConnectionValueTypeExist(DataModelValidator):
         ]
 
 
-class ConnectionValueTypeNotNone(DataModelValidator):
-    """This validator checks whether connection value types are not None."""
+class ConnectionValueTypeUndefined(DataModelValidator):
+    """Validates that connection value types are not None, i.e. undefined.
+
+    ## What it does
+    Validates that connections have explicitly defined value types (i.e., end connection node type).
+
+    ## Why is this bad?
+    If a connection value type is None (undefined), there is no type information about the end node of the connection.
+    This yields an ambiguous data model definition, which may lead to issues during consumption of data from CDF.
+
+    ## Example
+    Consider a scenario where we have views WindTurbine,ArrayCable and Substation. Lets say WindTurbine has a connection
+    `connectsTo` with value type None (undefined), then it is unclear what type of view the connection points to as
+    both ArrayCable and Substation are valid targets for the connection.
+
+    """
 
     code = f"{_BASE_CODE}-002"
 
@@ -100,275 +122,504 @@ class ReverseConnectionContext:
     source_view_ref: ViewReference
 
 
-class BidirectionalConnectionMisconfigured(DataModelValidator):
-    """This validator checks bidirectional connections to ensure reverse and direct connection pairs
-    are properly configured.
+def _normalize_through_reference(
+    source_view_ref: ViewReference, through: ContainerDirectReference | ViewDirectReference
+) -> ViewDirectReference:
+    """Normalize through reference to ViewDirectReference for consistent processing."""
+    if isinstance(through, ContainerDirectReference):
+        return ViewDirectReference(source=source_view_ref, identifier=through.identifier)
+    return through
 
-    A bidirectional connection consists of:
-    - A direct connection property in a source view that points to the target view
-      SourceView -- [directConnection] --> TargetView
-    - A reverse connection property in a target view, pointing to a source view through a direct connection property
-      TargetView -- [reverseConnection, through(SourceView, SourceView.directConnection)] --> SourceView
 
-    Validation checks:
-        1. Source view and property exist
-        2. Property is a direct connection type
-        3. Container mapping is correct
-        4. Direct connection points back to correct target
+class ReverseConnectionSourceViewMissing(DataModelValidator):
+    """Validates that source view referenced in reverse connection exist.
+
+    ## What it does
+    Checks that the source view used to configure a reverse connection exists.
+
+    ## Why is this bad?
+    A reverse connection requires a corresponding direct connection in the source view.
+    If the source view doesn't exist, the reverse connection is invalid.
+
+    ## Example
+    If WindFarm has a reverse property `turbines` through `WindTurbine.windFarm`,
+    but WindTurbine view doesn't exist, the reverse connection cannot function.
     """
 
-    code = f"{_BASE_CODE}-003"
+    code = f"{_BASE_CODE}-REVERSE-001"
 
-    def run(self) -> list[ConsistencyError | Recommendation]:
-        """Run validation and return list of issues found."""
-        issues: list[ConsistencyError | Recommendation] = []
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
             through,
         ) in self.local_resources.reverse_to_direct_mapping.items():
-            through = self._normalize_through_reference(source_view_ref, through)
-            context = ReverseConnectionContext(target_view_ref, reverse_prop_name, through, source_view_ref)
-            issues.extend(self._validate_bidirectional_connection(context))
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
 
-        return issues
-
-    def _validate_bidirectional_connection(
-        self, ctx: ReverseConnectionContext
-    ) -> list[ConsistencyError] | list[Recommendation]:
-        """Validate a single bidirectional connection pair.
-
-        Args:
-            ctx: Connection context containing all necessary references
-
-        Returns:
-            List of validation issues found
-        """
-
-        # Validate source view exists
-        source_view = self._select_view_with_property(ctx.source_view_ref, ctx.through.identifier)
-
-        if not source_view:
-            return [self._create_missing_view_error(ctx)]
-
-        if error := self._check_source_property(source_view, ctx):
-            return [error]
-
-        source_property = cast(ViewCorePropertyRequest, source_view.properties[ctx.through.identifier])
-
-        # Validate container mapping
-        if container_errors := self._check_container_property_type(source_property, ctx):
-            return container_errors
-
-        # Validate target view reference
-        return self._validate_target_reference(source_property, ctx)
-
-    def _normalize_through_reference(
-        self, source_view_ref: ViewReference, through: ContainerDirectReference | ViewDirectReference
-    ) -> ViewDirectReference:
-        """Normalize through reference to ViewDirectReference for consistent processing."""
-
-        if isinstance(through, ContainerDirectReference):
-            return ViewDirectReference(source=source_view_ref, identifier=through.identifier)
-        return through
-
-    def _check_source_property(
-        self, source_view: ViewRequest, ctx: ReverseConnectionContext
-    ) -> "ConsistencyError | None":
-        """Check if source property exists and is of correct type."""
-        if not source_view.properties:
-            return self._create_missing_property_error(ctx)
-
-        source_property = source_view.properties.get(ctx.through.identifier)
-        if not source_property:
-            return self._create_missing_property_error(ctx)
-
-        if not isinstance(source_property, ViewCorePropertyRequest):
-            return self._create_wrong_property_type_error(ctx)
-
-        return None
-
-    def _check_container_property_type(
-        self, source_property: ViewCorePropertyRequest, ctx: ReverseConnectionContext
-    ) -> list[ConsistencyError]:
-        """Validate that the container and container property are correctly configured."""
-        container_ref = source_property.container
-        container_property_id = source_property.container_property_identifier
-
-        source_container = self._select_container_with_property(container_ref, container_property_id)
-        if not source_container:
-            return [self._create_missing_container_error(container_ref, ctx)]
-
-        container_property = source_container.properties.get(container_property_id)
-        if not container_property:
-            return [self._create_missing_container_property_error(container_ref, container_property_id, ctx)]
-
-        if not isinstance(container_property.type, DirectNodeRelation):
-            return [
-                self._create_wrong_container_type_error(
-                    container_ref, container_property_id, container_property.type, ctx
+            if not source_view:
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Source view {source_view_ref!s} used to configure reverse connection "
+                            f"'{reverse_prop_name}' in target view {target_view_ref!s} "
+                            "does not exist in the data model or CDF."
+                        ),
+                        fix="Define the missing source view",
+                        code=self.code,
+                    )
                 )
-            ]
 
-        return []
+        return errors
 
-    def _validate_target_reference(
-        self, source_property: ViewCorePropertyRequest, ctx: ReverseConnectionContext
-    ) -> list[ConsistencyError] | list[Recommendation]:
-        """Validate that the direct connection points back to the correct target view."""
-        actual_target_view = source_property.source
 
-        # Check for missing target view (SEARCH hack)
-        if not actual_target_view:
-            return [self._create_missing_target_recommendation(ctx)]
+class ReverseConnectionSourcePropertyMissing(DataModelValidator):
+    """Validates that source property referenced in reverse connections exist.
 
-        # Check if pointing to ancestor
-        if self._is_ancestor_of_target(actual_target_view, ctx.target_view_ref):
-            return [self._create_ancestor_recommendation(actual_target_view, ctx)]
+    ## What it does
+    Checks that the direct connection property in the source view (used in the reverse connection's 'through')
+    actually exists in the source view.
 
-        # Check if pointing to wrong view
-        if actual_target_view != ctx.target_view_ref:
-            return [self._create_wrong_target_error(actual_target_view, ctx)]
+    ## Why is this bad?
+    A reverse connection requires a corresponding direct connection property in the source view.
+    If this property doesn't exist, the bidirectional connection is incomplete.
 
-        return []
+    ## Example
+    If WindFarm has a reverse property `turbines` through `WindTurbine.windFarm`,
+    but WindTurbine view doesn't have a `windFarm` property, the reverse connection is invalid.
+    """
 
-    def _is_ancestor_of_target(self, potential_ancestor: ViewReference, target_view_ref: ViewReference) -> bool:
-        """Check if a view is an ancestor of the target view."""
-        return potential_ancestor in self.local_resources.ancestors_by_view_reference.get(
-            target_view_ref, set()
-        ) or potential_ancestor in self.cdf_resources.ancestors_by_view_reference.get(target_view_ref, set())
+    code = f"{_BASE_CODE}-REVERSE-002"
 
-    # Error and Recommendation creation methods
-    def _create_missing_view_error(self, ctx: ReverseConnectionContext) -> ConsistencyError:
-        """Create error for missing source view."""
-        return ConsistencyError(
-            message=(
-                f"Source view {ctx.source_view_ref!s} used to configure reverse connection "
-                f"'{ctx.reverse_property}' in target view {ctx.target_view_ref!s} "
-                "does not exist in the data model or CDF."
-            ),
-            fix="Define the missing source view",
-            code=self.code,
-        )
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
 
-    def _create_missing_property_error(self, ctx: ReverseConnectionContext) -> ConsistencyError:
-        """Create error for missing source property."""
-        return ConsistencyError(
-            message=(
-                f"Source view {ctx.source_view_ref!s} is missing property '{ctx.through.identifier}' "
-                f"which is required to configure the reverse connection "
-                f"'{ctx.reverse_property}' in target view {ctx.target_view_ref!s}."
-            ),
-            fix="Add the missing property to the source view",
-            code=self.code,
-        )
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
 
-    def _create_wrong_property_type_error(self, ctx: ReverseConnectionContext) -> ConsistencyError:
-        """Create error for incorrect property type."""
-        return ConsistencyError(
-            message=(
-                f"Source view {ctx.source_view_ref!s} property '{ctx.through.identifier}' "
-                f"used for configuring the reverse connection '{ctx.reverse_property}' "
-                f"in target view {ctx.target_view_ref!s} is not a direct connection property."
-            ),
-            fix="Update view property to be a direct connection property",
-            code=self.code,
-        )
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-    def _create_missing_container_error(
-        self, container_ref: ContainerReference, ctx: ReverseConnectionContext
-    ) -> ConsistencyError:
-        """Create error for missing container."""
-        return ConsistencyError(
-            message=(
-                f"Container {container_ref!s} is missing in both the data model and CDF. "
-                f"This container is required by view {ctx.source_view_ref!s}"
-                f" property '{ctx.through.identifier}', "
-                f"which configures the reverse connection '{ctx.reverse_property}'"
-                f" in target view {ctx.target_view_ref!s}."
-            ),
-            fix="Define the missing container",
-            code=self.code,
-        )
+            if not source_view.properties or through.identifier not in source_view.properties:
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Source view {source_view_ref!s} is missing property '{through.identifier}' "
+                            f"which is required to configure the reverse connection "
+                            f"'{reverse_prop_name}' in target view {target_view_ref!s}."
+                        ),
+                        fix="Add the missing property to the source view",
+                        code=self.code,
+                    )
+                )
 
-    def _create_missing_container_property_error(
-        self, container_ref: ContainerReference, container_property_id: str, ctx: ReverseConnectionContext
-    ) -> ConsistencyError:
-        """Create error for missing container property."""
-        return ConsistencyError(
-            message=(
-                f"Container {container_ref!s} is missing property '{container_property_id}'. "
-                f"This property is required by the source view {ctx.source_view_ref!s}"
-                f" property '{ctx.through.identifier}', "
-                f"which configures the reverse connection '{ctx.reverse_property}' "
-                f"in target view {ctx.target_view_ref!s}."
-            ),
-            fix="Add the missing property to the container",
-            code=self.code,
-        )
+        return errors
 
-    def _create_wrong_container_type_error(
-        self,
-        container_ref: ContainerReference,
-        container_property_id: str,
-        actual_type: DataType,
-        ctx: ReverseConnectionContext,
-    ) -> ConsistencyError:
-        """Create error for incorrect container property type."""
-        return ConsistencyError(
-            message=(
-                f"Container property '{container_property_id}' in container {container_ref!s} "
-                f"must be a direct connection, but found type '{actual_type!s}'. "
-                f"This property is used by source view {ctx.source_view_ref!s} property '{ctx.through.identifier}' "
-                f"to configure reverse connection '{ctx.reverse_property}' in target view {ctx.target_view_ref!s}."
-            ),
-            fix="Change container property type to be a direct connection",
-            code=self.code,
-        )
 
-    def _create_missing_target_recommendation(self, ctx: ReverseConnectionContext) -> Recommendation:
-        """Create recommendation for missing target view (SEARCH hack)."""
-        return Recommendation(
-            message=(
-                f"Source view {ctx.source_view_ref!s} property '{ctx.through.identifier}' "
-                f"has no target view specified (value type is None). "
-                f"This property is used for reverse connection '{ctx.reverse_property}' "
-                f"in target view {ctx.target_view_ref!s}. "
-                f"While this works as a hack for multi-value relations in CDF Search, "
-                f"it's recommended to explicitly define the target view as {ctx.target_view_ref!s}."
-            ),
-            fix="Set the property's value type to the target view for better clarity",
-            code=self.code,
-        )
+class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
+    """Validates that source property for the reverse connections is a direct relation.
 
-    def _create_ancestor_recommendation(
-        self, actual_target_view: ViewReference, ctx: ReverseConnectionContext
-    ) -> Recommendation:
-        """Create recommendation when direct connection points to ancestor."""
-        return Recommendation(
-            message=(
-                f"The direct connection property '{ctx.through.identifier}' in view {ctx.source_view_ref!s} "
-                f"configures the reverse connection '{ctx.reverse_property}' in {ctx.target_view_ref!s}. "
-                f"Therefore, it is expected that '{ctx.through.identifier}' points to {ctx.target_view_ref!s}. "
-                f"However, it currently points to {actual_target_view!s}, which is an ancestor of "
-                f"{ctx.target_view_ref!s}. "
-                "While this will allow for model to be valid, it can be a source of confusion and mistakes."
-            ),
-            fix="Update the direct connection property to point to the target view instead of its ancestor",
-            code=self.code,
-        )
+    ## What it does
+    Checks that the property referenced in a reverse connection's 'through' clause
+    is actually a direct connection property (not a primitive or other type).
 
-    def _create_wrong_target_error(
-        self, actual_target_view: ViewReference, ctx: ReverseConnectionContext
-    ) -> ConsistencyError:
-        """Create error when direct connection points to wrong view."""
-        return ConsistencyError(
-            message=(
-                f"The reverse connection '{ctx.reverse_property}' in view {ctx.target_view_ref!s} "
-                f"expects its corresponding direct connection in view {ctx.source_view_ref!s} "
-                f"(property '{ctx.through.identifier}') to point back to {ctx.target_view_ref!s}, "
-                f"but it actually points to {actual_target_view!s}."
-            ),
-            fix="Update the direct connection property to point back to the correct target view",
-            code=self.code,
-        )
+    ## Why is this bad?
+    Reverse connections can only work with direct connection properties.
+    Using other property types breaks the bidirectional relationship.
+
+    ## Example
+    If WindFarm has a reverse property `turbines` through `WindTurbine.name`,
+    but `name` is a Text property (not a direct connection), the reverse connection is invalid.
+    """
+
+    code = f"{_BASE_CODE}-REVERSE-003"
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
+
+            if not source_view or not source_view.properties:
+                continue  # Handled by other validators
+
+            source_property = source_view.properties.get(through.identifier)
+            if not source_property:
+                continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            if not isinstance(source_property, ViewCorePropertyRequest):
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Source view {source_view_ref!s} property '{through.identifier}' "
+                            f"used for configuring the reverse connection '{reverse_prop_name}' "
+                            f"in target view {target_view_ref!s} is not a direct connection property."
+                        ),
+                        fix="Update view property to be a direct connection property",
+                        code=self.code,
+                    )
+                )
+
+        return errors
+
+
+class ReverseConnectionContainerMissing(DataModelValidator):
+    """Validates that the container referenced by the reverse connection source properties exist.
+
+    ## What it does
+    Checks that the container holding the direct connection property (used in reverse connection) exists.
+
+    ## Why is this bad?
+    The direct connection property must be stored in a container.
+    If the container doesn't exist, the connection cannot be persisted.
+
+    ## Example
+    If WindTurbine.windFarm maps to container `WindTurbine`, but this container doesn't exist,
+    the reverse connection from WindFarm cannot function.
+    """
+
+    code = f"{_BASE_CODE}-REVERSE-004"
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
+
+            if not source_view or not source_view.properties:
+                continue  # Handled by other validators
+
+            source_property = source_view.properties.get(through.identifier)
+            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by other validators
+
+            container_ref = source_property.container
+            container_property_id = source_property.container_property_identifier
+
+            source_container = self._select_container_with_property(container_ref, container_property_id)
+            if not source_container:
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Container {container_ref!s} is missing in both the data model and CDF. "
+                            f"This container is required by view {source_view_ref!s}"
+                            f" property '{through.identifier}', "
+                            f"which configures the reverse connection '{reverse_prop_name}'"
+                            f" in target view {target_view_ref!s}."
+                        ),
+                        fix="Define the missing container",
+                        code=self.code,
+                    )
+                )
+
+        return errors
+
+
+class ReverseConnectionContainerPropertyMissing(DataModelValidator):
+    """Validates that container property referenced by the reverse connections exists.
+
+    ## What it does
+    Checks that the property in the container (mapped from the view's direct connection property)
+    actually exists in the container.
+
+    ## Why is this bad?
+    The view property must map to an actual container property for data persistence.
+    If the container property doesn't exist, data cannot be stored.
+
+    ## Example
+    If WindTurbine.windFarm maps to container property `WindTurbine.windFarm`,
+    but this container property doesn't exist, the connection cannot be stored.
+    """
+
+    code = f"{_BASE_CODE}-REVERSE-005"
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
+
+            if not source_view or not source_view.properties:
+                continue  # Handled by other validators
+
+            source_property = source_view.properties.get(through.identifier)
+            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by other validators
+
+            container_ref = source_property.container
+            container_property_id = source_property.container_property_identifier
+
+            source_container = self._select_container_with_property(container_ref, container_property_id)
+            if not source_container:
+                continue  # Handled by ReverseConnectionContainerMissing
+
+            if not source_container.properties or container_property_id not in source_container.properties:
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Container {container_ref!s} is missing property '{container_property_id}'. "
+                            f"This property is required by the source view {source_view_ref!s}"
+                            f" property '{through.identifier}', "
+                            f"which configures the reverse connection '{reverse_prop_name}' "
+                            f"in target view {target_view_ref!s}."
+                        ),
+                        fix="Add the missing property to the container",
+                        code=self.code,
+                    )
+                )
+
+        return errors
+
+
+class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
+    """Validates that the container property used in reverse connection is the direct relations.
+
+    ## What it does
+    Checks that the container property (mapped from view's direct connection property)
+    has type DirectNodeRelation.
+
+    ## Why is this bad?
+    Container properties backing connection view properties must be DirectNodeRelation type.
+    Other types cannot represent connections in the underlying storage.
+
+    ## Example
+    If WindTurbine.windFarm maps to container property with type Text instead of DirectNodeRelation,
+    the connection cannot be stored correctly.
+    """
+
+    code = f"{_BASE_CODE}-REVERSE-006"
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
+
+            if not source_view or not source_view.properties:
+                continue  # Handled by other validators
+
+            source_property = source_view.properties.get(through.identifier)
+            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by other validators
+
+            container_ref = source_property.container
+            container_property_id = source_property.container_property_identifier
+
+            source_container = self._select_container_with_property(container_ref, container_property_id)
+            if not source_container or not source_container.properties:
+                continue  # Handled by other validators
+
+            container_property = source_container.properties.get(container_property_id)
+            if not container_property:
+                continue  # Handled by ReverseConnectionContainerPropertyMissing
+
+            if not isinstance(container_property.type, DirectNodeRelation):
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"Container property '{container_property_id}' in container {container_ref!s} "
+                            f"must be a direct connection, but found type '{container_property.type!s}'. "
+                            f"This property is used by source view {source_view_ref!s} property '{through.identifier}' "
+                            f"to configure reverse connection '{reverse_prop_name}' in target view {target_view_ref!s}."
+                        ),
+                        fix="Change container property type to be a direct connection",
+                        code=self.code,
+                    )
+                )
+
+        return errors
+
+
+class ReverseConnectionTargetMissing(DataModelValidator):
+    """Validates that the direct connection in reverse connection pair have target views specified.
+
+    ## What it does
+    Checks whether the direct connection property (referenced by reverse connection) has a value type.
+
+    ## Why is this bad?
+    While CDF allows value type None as a SEARCH hack for multi-value relations,
+    it's better to explicitly specify the target view for clarity and maintainability.
+
+    ## Example
+    If WindTurbine.windFarm has value type None instead of WindFarm,
+    this validator recommends specifying WindFarm explicitly.
+    """
+
+    code = f"{_BASE_CODE}-REVERSE-007"
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
+
+            if not source_view or not source_view.properties:
+                continue  # Handled by other validators
+
+            source_property = source_view.properties.get(through.identifier)
+            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by other validators
+
+            actual_target_view = source_property.source
+
+            if not actual_target_view:
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"Source view {source_view_ref!s} property '{through.identifier}' "
+                            f"has no target view specified (value type is None). "
+                            f"This property is used for reverse connection '{reverse_prop_name}' "
+                            f"in target view {target_view_ref!s}. "
+                            f"While this works as a hack for multi-value relations in CDF Search, "
+                            f"it's recommended to explicitly define the target view as {target_view_ref!s}."
+                        ),
+                        fix="Set the property's value type to the target view for better clarity",
+                        code=self.code,
+                    )
+                )
+
+        return recommendations
+
+
+class ReverseConnectionPointsToAncestor(DataModelValidator):
+    """Validates that direct connections point to specific views rather than ancestors.
+
+    ## What it does
+    Checks whether the direct connection property points to an ancestor of the expected target view
+    and recommends pointing to the specific target instead.
+
+    ## Why is this bad?
+    While technically valid, pointing to ancestors can be confusing and may lead to mistakes.
+    It's clearer to point to the specific target view.
+
+    ## Example
+    If WindFarm.turbines expects WindTurbine.windFarm to point to WindFarm,
+    but it points to Asset (ancestor of WindFarm), this validator recommends the change.
+    """
+
+    code = f"{_BASE_CODE}-REVERSE-008"
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
+
+            if not source_view or not source_view.properties:
+                continue  # Handled by other validators
+
+            source_property = source_view.properties.get(through.identifier)
+            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by other validators
+
+            actual_target_view = source_property.source
+
+            if not actual_target_view:
+                continue  # Handled by ReverseConnectionTargetMissing
+
+            if self._is_ancestor_of_target(actual_target_view, target_view_ref):
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"The direct connection property '{through.identifier}' in view {source_view_ref!s} "
+                            f"configures the reverse connection '{reverse_prop_name}' in {target_view_ref!s}. "
+                            f"Therefore, it is expected that '{through.identifier}' points to {target_view_ref!s}. "
+                            f"However, it currently points to {actual_target_view!s}, which is an ancestor of "
+                            f"{target_view_ref!s}. "
+                            "While this will allow for model to be valid, it can be a source of confusion and mistakes."
+                        ),
+                        fix="Update the direct connection property to point to the target view instead of its ancestor",
+                        code=self.code,
+                    )
+                )
+
+        return recommendations
+
+
+class ReverseConnectionTargetMismatch(DataModelValidator):
+    """Validates that direct connections point to the correct target views.
+
+    ## What it does
+    Checks that the direct connection property points to the expected target view
+    (the view containing the reverse connection).
+
+    ## Why is this bad?
+    The reverse connection expects a bidirectional relationship.
+    If the direct connection points to a different view, the relationship is broken.
+
+    ## Example
+    If WindFarm.turbines is a reverse through WindTurbine.windFarm,
+    but WindTurbine.windFarm points to SolarFarm instead of WindFarm, the connection is invalid.
+    """
+
+    code = f"{_BASE_CODE}-REVERSE-009"
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for (target_view_ref, reverse_prop_name), (
+            source_view_ref,
+            through,
+        ) in self.local_resources.reverse_to_direct_mapping.items():
+            through = _normalize_through_reference(source_view_ref, through)
+            source_view = self._select_view_with_property(source_view_ref, through.identifier)
+
+            if not source_view or not source_view.properties:
+                continue  # Handled by other validators
+
+            source_property = source_view.properties.get(through.identifier)
+            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by other validators
+
+            actual_target_view = source_property.source
+
+            if not actual_target_view:
+                continue  # Handled by ReverseConnectionTargetMissing
+
+            if self._is_ancestor_of_target(actual_target_view, target_view_ref):
+                continue  # Handled by ReverseConnectionTargetAncestor
+
+            if actual_target_view != target_view_ref:
+                errors.append(
+                    ConsistencyError(
+                        message=(
+                            f"The reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
+                            f"expects its corresponding direct connection in view {source_view_ref!s} "
+                            f"(property '{through.identifier}') to point back to {target_view_ref!s}, "
+                            f"but it actually points to {actual_target_view!s}."
+                        ),
+                        fix="Update the direct connection property to point back to the correct target view",
+                        code=self.code,
+                    )
+                )
+
+        return errors
