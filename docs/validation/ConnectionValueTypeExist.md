@@ -1,1 +1,0 @@
-This validator checks whether connections value types (end node types) exist in the data model or in CDF.
