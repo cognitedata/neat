@@ -1,4 +1,4 @@
-**Neat supports 11 validation rules** for data modeling. These rules are learned
+**Neat supports 19 validation rules** for data modeling. These rules are learned
  from best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
  helping customers build and maintain their data models.
 
@@ -10,9 +10,17 @@ Validators for connections in data model specifications.
 
 | code | name | message |
 |------|------|---------|
-| NEAT-DMS-CONNECTIONS-001 | [ConnectionValueTypeExist](ConnectionValueTypeExist.md) | This validator checks whether connections value types (end node types) exist in the data model or in CDF. |
-| NEAT-DMS-CONNECTIONS-002 | [ConnectionValueTypeNotNone](ConnectionValueTypeNotNone.md) | This validator checks whether connection value types are not None. |
-| NEAT-DMS-CONNECTIONS-003 | [BidirectionalConnectionMisconfigured](BidirectionalConnectionMisconfigured.md) | This validator checks bidirectional connections to ensure reverse and direct connection pairs |
+| NEAT-DMS-CONNECTIONS-001 | [ConnectionValueTypeUnexisting](ConnectionValueTypeUnexisting.md) | Validates that connection value types exist. |
+| NEAT-DMS-CONNECTIONS-002 | [ConnectionValueTypeUndefined](ConnectionValueTypeUndefined.md) | Validates that connection value types are not None, i.e. undefined. |
+| NEAT-DMS-CONNECTIONS-REVERSE-001 | [ReverseConnectionSourceViewMissing](ReverseConnectionSourceViewMissing.md) | Validates that source view referenced in reverse connection exist. |
+| NEAT-DMS-CONNECTIONS-REVERSE-002 | [ReverseConnectionSourcePropertyMissing](ReverseConnectionSourcePropertyMissing.md) | Validates that source property referenced in reverse connections exist. |
+| NEAT-DMS-CONNECTIONS-REVERSE-003 | [ReverseConnectionSourcePropertyWrongType](ReverseConnectionSourcePropertyWrongType.md) | Validates that source property for the reverse connections is a direct relation. |
+| NEAT-DMS-CONNECTIONS-REVERSE-004 | [ReverseConnectionContainerMissing](ReverseConnectionContainerMissing.md) | Validates that the container referenced by the reverse connection source properties exist. |
+| NEAT-DMS-CONNECTIONS-REVERSE-005 | [ReverseConnectionContainerPropertyMissing](ReverseConnectionContainerPropertyMissing.md) | Validates that container property referenced by the reverse connections exists. |
+| NEAT-DMS-CONNECTIONS-REVERSE-006 | [ReverseConnectionContainerPropertyWrongType](ReverseConnectionContainerPropertyWrongType.md) | Validates that the container property used in reverse connection is the direct relations. |
+| NEAT-DMS-CONNECTIONS-REVERSE-007 | [ReverseConnectionTargetMissing](ReverseConnectionTargetMissing.md) | Validates that the direct connection in reverse connection pair have target views specified. |
+| NEAT-DMS-CONNECTIONS-REVERSE-008 | [ReverseConnectionPointsToAncestor](ReverseConnectionPointsToAncestor.md) | Validates that direct connections point to specific views rather than ancestors. |
+| NEAT-DMS-CONNECTIONS-REVERSE-009 | [ReverseConnectionTargetMismatch](ReverseConnectionTargetMismatch.md) | Validates that direct connections point to the correct target views. |
 
 ### Consistency (NEAT-DMS-CONSISTENCY)
 
