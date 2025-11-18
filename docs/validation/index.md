@@ -1,4 +1,4 @@
-**Neat supports over 10 and growing validation rules** for data modeling. These rules are learned from
+**Neat supports more than 10 validation rules** for data modeling. These rules are learned from
 best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
 helping customers build and maintain their data models.
 
