@@ -29,7 +29,7 @@ def generate_validation_markdown_docs(validation: type[DataModelValidator]) -> s
 
 
 def get_filename(validation: type[DataModelValidator]) -> str:
-    return f"{validation.code}.md"
+    return f"{validation.code.casefold()}.md"
 
 
 def write_validation_markdown_docs() -> int:
