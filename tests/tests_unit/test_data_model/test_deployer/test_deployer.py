@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 import respx
 
+
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
@@ -21,6 +22,7 @@ from cognite.neat._data_model.deployer.deployer import DeploymentOptions, Schema
 from cognite.neat._data_model.models.dms import (
     BtreeIndex,
     ContainerConstraintReference,
+    UniquenessConstraintDefinition,
     ContainerIndexReference,
     ContainerPropertyDefinition,
     ContainerReference,
@@ -80,6 +82,28 @@ class TestSchemaDeployer:
             assert resource_plan.endpoint in {"spaces", "containers", "views", "datamodels"}
             if resource_plan.endpoint == "containers":
                 assert len(resource_plan.skip) == 1, "Container with different space should be skipped"
+
+    def test_creat_deployment_plan_container_index_constraint_changes(
+        self, neat_client: NeatClient, model: RequestSchema, schema_snapshot: SchemaSnapshot
+    ) -> None:
+        assert len(model.containers) > 0, "Model must have at least one container for this test"
+        current_container = model.containers[0]
+        prop_id, prop = next(iter(current_container.properties.items()))
+        constraint = UniquenessConstraintDefinition(properties=[prop_id], by_space=False)
+        index = BtreeIndex(properties=[prop_id], by_space=False)
+        current_container.indexes = {""}
+        modified_model = model.model_copy(update={"containers": [new_container] + model.containers[1:]}, deep=True)
+
+
+        deployer = SchemaDeployer(neat_client)
+        plan = deployer.create_deployment_plan(schema_snapshot, modified_model)
+        assert len(plan) == 4  # spaces, containers, views, datamodels
+        for resource_plan in plan:
+            assert resource_plan.endpoint in {"spaces", "containers", "views", "datamodels"}
+            if resource_plan.endpoint == "containers":
+                assert len(resource_plan.resources) == 1
+                container_change = resource_plan.resources[0]
+                assert len(container_change.changes) == 2  # One for index addition, one for constraint addition):
 
     def test_deploy_dry_run(
         self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
