@@ -1662,6 +1662,33 @@ Containers:
         id="Minimal example",
     )
 
+    yield pytest.param(
+        """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+Properties:
+- View: CogniteDescribable
+  View Property: name
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: cdf_cdm:CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Connection: null
+Views:
+- View: CogniteDescribable
+Containers:
+- Container: CogniteDescribable
+  Used For: node""",
+        id="Specifying default space",
+    )
+
 
 class TestYAMLTableFormat:
     @pytest.mark.parametrize("yaml_str", list(valid_dms_yaml_formats()))
