@@ -1,3 +1,5 @@
+"""Validators for connections in data model specifications."""
+
 from dataclasses import dataclass
 
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
@@ -10,7 +12,7 @@ from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyR
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
-_BASE_CODE = "NEAT-DMS-CONNECTIONS"
+BASE_CODE = "NEAT-DMS-CONNECTIONS"
 
 
 class ConnectionValueTypeUnexisting(DataModelValidator):
@@ -28,7 +30,7 @@ class ConnectionValueTypeUnexisting(DataModelValidator):
     the data model cannot be deployed to CDF.
     """
 
-    code = f"{_BASE_CODE}-001"
+    code = f"{BASE_CODE}-001"
 
     def run(self) -> list[ConsistencyError]:
         undefined_value_types = []
@@ -77,7 +79,7 @@ class ConnectionValueTypeUndefined(DataModelValidator):
 
     """
 
-    code = f"{_BASE_CODE}-002"
+    code = f"{BASE_CODE}-002"
 
     def run(self) -> list[Recommendation]:
         missing_value_types = []
@@ -146,7 +148,7 @@ class ReverseConnectionSourceViewMissing(DataModelValidator):
     but WindTurbine view doesn't exist, the reverse connection cannot function.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-001"
+    code = f"{BASE_CODE}-REVERSE-001"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -190,7 +192,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
     but WindTurbine view doesn't have a `windFarm` property, the reverse connection is invalid.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-002"
+    code = f"{BASE_CODE}-REVERSE-002"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -237,7 +239,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
     but `name` is a Text property (not a direct connection), the reverse connection is invalid.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-003"
+    code = f"{BASE_CODE}-REVERSE-003"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -287,7 +289,7 @@ class ReverseConnectionContainerMissing(DataModelValidator):
     the reverse connection from WindFarm cannot function.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-004"
+    code = f"{BASE_CODE}-REVERSE-004"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -344,7 +346,7 @@ class ReverseConnectionContainerPropertyMissing(DataModelValidator):
     but this container property doesn't exist, the connection cannot be stored.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-005"
+    code = f"{BASE_CODE}-REVERSE-005"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -404,7 +406,7 @@ class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
     the connection cannot be stored correctly.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-006"
+    code = f"{BASE_CODE}-REVERSE-006"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -466,7 +468,7 @@ class ReverseConnectionTargetMissing(DataModelValidator):
     this validator recommends specifying WindFarm explicitly.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-007"
+    code = f"{BASE_CODE}-REVERSE-007"
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -522,7 +524,7 @@ class ReverseConnectionPointsToAncestor(DataModelValidator):
     but it points to Asset (ancestor of WindFarm), this validator recommends the change.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-008"
+    code = f"{BASE_CODE}-REVERSE-008"
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -581,7 +583,7 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
     but WindTurbine.windFarm points to SolarFarm instead of WindFarm, the connection is invalid.
     """
 
-    code = f"{_BASE_CODE}-REVERSE-009"
+    code = f"{BASE_CODE}-REVERSE-009"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
