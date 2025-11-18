@@ -20,7 +20,19 @@ from cognite.neat._data_model.validation.dms._limits import (
 from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._base import CDFResources, DataModelValidator, LocalResources
-from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
+from ._connections import (
+    ConnectionValueTypeUndefined,
+    ConnectionValueTypeUnexisting,
+    ReverseConnectionContainerMissing,
+    ReverseConnectionContainerPropertyMissing,
+    ReverseConnectionContainerPropertyWrongType,
+    ReverseConnectionPointsToAncestor,
+    ReverseConnectionSourcePropertyMissing,
+    ReverseConnectionSourcePropertyWrongType,
+    ReverseConnectionSourceViewMissing,
+    ReverseConnectionTargetMismatch,
+    ReverseConnectionTargetMissing,
+)
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._views import ViewToContainerMappingNotPossible
 
@@ -95,11 +107,22 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ViewContainerCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             ContainerPropertyCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             ContainerPropertyListSizeIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            # Views
             ViewToContainerMappingNotPossible(local_resources, cdf_resources, self._modus_operandi),
-            ConnectionValueTypeExist(local_resources, cdf_resources, self._modus_operandi),
-            ConnectionValueTypeNotNone(local_resources, cdf_resources, self._modus_operandi),
-            BidirectionalConnectionMisconfigured(local_resources, cdf_resources, self._modus_operandi),
+            # Consistency
             ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
+            # Connections
+            ConnectionValueTypeUnexisting(local_resources, cdf_resources, self._modus_operandi),
+            ConnectionValueTypeUndefined(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionContainerMissing(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionContainerPropertyMissing(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionContainerPropertyWrongType(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionSourceViewMissing(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionSourcePropertyMissing(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionSourcePropertyWrongType(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionPointsToAncestor(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionTargetMismatch(local_resources, cdf_resources, self._modus_operandi),
+            ReverseConnectionTargetMissing(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators
