@@ -1,10 +1,9 @@
 import importlib
+import inspect
 import itertools
-import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 from types import ModuleType
-from typing import cast
 
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
@@ -26,7 +25,7 @@ class Validator:
 
 
 def generate_validation_markdown_docs(validation: type[DataModelValidator]) -> str:
-    return textwrap.dedent(cast(str, validation.__doc__))
+    return inspect.cleandoc(validation.__doc__ or "")
 
 
 def get_filename(validation: type[DataModelValidator]) -> str:
