@@ -228,7 +228,7 @@ class SchemaDeployer(OnSuccessResultProducer):
             if (diff.field_path.startswith("constraints") or diff.field_path.startswith("indexes")) and isinstance(
                 diff, FieldChanges
             ):
-                if diff.field_path.count(".") < 1:
+                if "." not in diff.field_path:
                     # Should not happen, but just in case
                     raise ValueError("Bug in Neat. Malformed field path for constraint/index change.")
                 # Field type is either "constraints" or "indexes"
