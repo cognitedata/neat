@@ -8,6 +8,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
+    ContainerRequest,
     DataModelBody,
     RequestSchema,
     T_DataModelResource,
@@ -31,6 +32,7 @@ from ._differ_data_model import DataModelDiffer
 from ._differ_space import SpaceDiffer
 from ._differ_view import ViewDiffer
 from .data_classes import (
+    AddedField,
     AppliedChanges,
     ChangedFieldResult,
     ChangeResult,
@@ -38,6 +40,8 @@ from .data_classes import (
     DataModelEndpoint,
     DeploymentResult,
     FieldChange,
+    FieldChanges,
+    RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
@@ -171,9 +175,8 @@ class SchemaDeployer(OnSuccessResultProducer):
             ]
         )
 
-    @classmethod
     def _create_resource_plan(
-        cls,
+        self,
         current_resources: dict[T_ResourceId, T_DataModelResource],
         new_resources: list[T_DataModelResource],
         endpoint: DataModelEndpoint,
@@ -193,11 +196,62 @@ class SchemaDeployer(OnSuccessResultProducer):
                 continue
             current_resource = current_resources[ref]
             diffs = differ.diff(current_resource, new_resource)
+            if (
+                isinstance(current_resource, ContainerRequest)
+                and isinstance(new_resource, ContainerRequest)
+                and self.options.modus_operandi == "additive"
+            ):
+                # In additive mode, changes to constraints and indexes require removal and re-adding
+                # In rebuild mode, all changes are forced via deletion and re-adding
+                diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
             resources.append(
                 ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
             )
 
         return plan_type(endpoint=endpoint, resources=resources)
+
+    @classmethod
+    def remove_readd_modified_indexes_and_constraints(
+        cls, diffs: list[FieldChange], current_resource: ContainerRequest, new_resource: ContainerRequest
+    ) -> list[FieldChange]:
+        """Constraints and indexes cannot be modified directly; they must be removed and re-added.
+
+        Args:
+            diffs: The list of field changes detected by the differ.
+            current_resource: The current state of the container.
+            new_resource: The desired state of the container.
+        Returns:
+            A modified list of field changes with constraints and indexes handled appropriately.
+        """
+        modified_diffs: list[FieldChange] = []
+        for diff in diffs:
+            if (diff.field_path.startswith("constraints") or diff.field_path.startswith("indexes")) and isinstance(
+                diff, FieldChanges
+            ):
+                if "." not in diff.field_path:
+                    # Should not happen, but just in case
+                    raise RuntimeError("Bug in Neat. Malformed field path for constraint/index change.")
+                # Field type is either "constraints" or "indexes"
+                field_type, identifier, *_ = diff.field_path.split(".", maxsplit=2)
+                # Mark for removal
+                modified_diffs.append(
+                    RemovedField(
+                        field_path=f"{field_type}.{identifier}",
+                        item_severity=SeverityType.WARNING,
+                        current_value=getattr(current_resource, field_type)[identifier],
+                    )
+                )
+                # Mark for addition
+                modified_diffs.append(
+                    AddedField(
+                        field_path=f"{field_type}.{identifier}",
+                        item_severity=SeverityType.SAFE,
+                        new_value=getattr(new_resource, field_type)[identifier],
+                    )
+                )
+            else:
+                modified_diffs.append(diff)
+        return modified_diffs
 
     @classmethod
     def _skip_resource(cls, resource_id: ContainerReference | ViewReference, model_space: str) -> str | None:

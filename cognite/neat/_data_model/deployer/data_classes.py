@@ -262,14 +262,23 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         elif resource.changes and resource.new_value is not None:
             # Find all field removals and update new_value accordingly.
             removals = [change for change in resource.changes if isinstance(change, RemovedField)]
+            addition_paths = {change.field_path for change in resource.changes if isinstance(change, AddedField)}
             if removals:
                 if resource.current_value is None:
                     raise RuntimeError("Bug in Neat: current_value is None for a resource with removals.")
-                new_value = self._consolidate_resource(resource.current_value, resource.new_value, removals)
+                new_value = self._consolidate_resource(
+                    resource.current_value, resource.new_value, removals, addition_paths
+                )
+
                 updated_resource = resource.model_copy(
                     update={
                         "new_value": new_value,
-                        "changes": [change for change in resource.changes if not isinstance(change, RemovedField)],
+                        "changes": [
+                            change
+                            for change in resource.changes
+                            if not isinstance(change, RemovedField)
+                            or (isinstance(change, RemovedField) and change.field_path in addition_paths)
+                        ],
                     }
                 )
             else:
@@ -281,7 +290,7 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         return updated_resource
 
     def _consolidate_resource(
-        self, current: DataModelResource, new: DataModelResource, removals: list[RemovedField]
+        self, current: DataModelResource, new: DataModelResource, removals: list[RemovedField], addition_paths: set[str]
     ) -> DataModelResource:
         if isinstance(new, DataModelRequest):
             if not isinstance(current, DataModelRequest):
@@ -291,7 +300,7 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         elif isinstance(new, ViewRequest):
             return self._consolidate_view(new, removals)
         elif isinstance(new, ContainerRequest):
-            return self._consolidate_container(new, removals)
+            return self._consolidate_container(new, removals, addition_paths)
         elif removals:
             # This should not happen, as only containers, views, and data models have removable fields.
             raise RuntimeError("Bug in Neat: attempted to consolidate removals for unsupported resource type.")
@@ -314,7 +323,9 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         return resource.model_copy(update={"properties": view_properties}, deep=True)
 
     @staticmethod
-    def _consolidate_container(resource: ContainerRequest, removals: list[RemovedField]) -> DataModelResource:
+    def _consolidate_container(
+        resource: ContainerRequest, removals: list[RemovedField], addition_paths: set[str]
+    ) -> DataModelResource:
         container_properties = resource.properties.copy()
         indexes = (resource.indexes or {}).copy()
         constraints = (resource.constraints or {}).copy()
@@ -322,10 +333,12 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
             if removal.field_path.startswith("properties."):
                 prop_key = removal.field_path.removeprefix("properties.")
                 container_properties[prop_key] = cast(ContainerPropertyDefinition, removal.current_value)
-            elif removal.field_path.startswith("indexes."):
+            elif removal.field_path.startswith("indexes.") and removal.field_path not in addition_paths:
+                # Index was removed and not re-added, so we need to restore it.
                 index_key = removal.field_path.removeprefix("indexes.")
                 indexes[index_key] = cast(Index, removal.current_value)
-            elif removal.field_path.startswith("constraints."):
+            elif removal.field_path.startswith("constraints.") and removal.field_path not in addition_paths:
+                # Constraint was removed and not re-added, so we need to restore it.
                 constraint_key = removal.field_path.removeprefix("constraints.")
                 constraints[constraint_key] = cast(Constraint, removal.current_value)
         return resource.model_copy(
