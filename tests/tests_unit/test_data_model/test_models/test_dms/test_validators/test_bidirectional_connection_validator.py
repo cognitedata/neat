@@ -8,13 +8,21 @@ from cognite.neat._data_model.importers._table_importer.importer import DMSTable
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
 from cognite.neat._data_model.validation.dms import (
-    BidirectionalConnectionMisconfigured,
     DmsDataModelValidation,
+    ReverseConnectionContainerMissing,
+    ReverseConnectionContainerPropertyMissing,
+    ReverseConnectionContainerPropertyWrongType,
+    ReverseConnectionPointsToAncestor,
+    ReverseConnectionSourcePropertyMissing,
+    ReverseConnectionSourcePropertyWrongType,
+    ReverseConnectionSourceViewMissing,
+    ReverseConnectionTargetMismatch,
+    ReverseConnectionTargetMissing,
 )
 
 
 @pytest.fixture(scope="session")
-def valid_dms_yaml_with_consistency_errors() -> tuple[str, set[str]]:
+def valid_dms_yaml_with_consistency_errors() -> tuple[str, dict[str, set]]:
     yaml_content = """Metadata:
 - Key: space
   Value: my_space
@@ -238,24 +246,26 @@ Containers:
 """
 
     expected_problematic_reversals = {
-        "reverseSourceToTargetViewConnection",
-        "reverseUnknownToTargetViewConnection",
-        "reverseToEdgeConnection",
-        "reverseToDirectConnectionWithoutContainer",
-        "reverseToDirectThatDoesNotExist",
-        "reverseToViewWithoutProperties",
-        "reverseToAttribute",
-        "reverseToDirectWhichDoesHaveStorage",
-        "reverseToDirectWithoutTyping",
-        "reverseThroughContainerDirectReferenceFailing",
-        "innerReflection",
+        ReverseConnectionSourceViewMissing.code: {"reverseUnknownToTargetViewConnection"},
+        ReverseConnectionSourcePropertyMissing.code: {
+            "reverseToDirectThatDoesNotExist",
+            "reverseToViewWithoutProperties",
+            "reverseThroughContainerDirectReferenceFailing",
+        },
+        ReverseConnectionSourcePropertyWrongType.code: {"reverseToEdgeConnection"},
+        ReverseConnectionContainerMissing.code: {"reverseToDirectConnectionWithoutContainer"},
+        ReverseConnectionContainerPropertyMissing.code: {"reverseToDirectWhichDoesHaveStorage"},
+        ReverseConnectionContainerPropertyWrongType.code: {"reverseToAttribute"},
+        ReverseConnectionTargetMissing.code: {"reverseToAttribute", "reverseToDirectWithoutTyping"},
+        ReverseConnectionPointsToAncestor.code: {"innerReflection"},
+        ReverseConnectionTargetMismatch.code: {"reverseSourceToTargetViewConnection"},
     }
 
     return yaml_content, expected_problematic_reversals
 
 
 def test_validation(
-    validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, list[str]]
+    validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, dict[str, set]]
 ) -> None:
     yaml_content, expected_problematic_reversals = valid_dms_yaml_with_consistency_errors
 
@@ -289,15 +299,17 @@ def test_validation(
 
     by_code = on_success.issues.by_code()
 
-    # number of problematic reversals should match number of issues found
-    assert len(by_code[BidirectionalConnectionMisconfigured.code]) == len(expected_problematic_reversals)
+    assert set(expected_problematic_reversals.keys()) - set(by_code.keys()) == set()
 
     # here we check that all expected problematic reversals are found
     found_problematic_reversals = set()
-    for reversal in expected_problematic_reversals:
-        for issue in by_code[BidirectionalConnectionMisconfigured.code]:
-            if reversal in issue.message:
-                found_problematic_reversals.add(reversal)
-                break
+    actual_problematic_reversal = set()
+    for code, ill_reverse_connections in expected_problematic_reversals.items():
+        for ill_reverse in ill_reverse_connections:
+            actual_problematic_reversal.add(ill_reverse)
+            for issue in by_code[code]:
+                if ill_reverse in issue.message:
+                    found_problematic_reversals.add(ill_reverse)
+                    break
 
-    assert found_problematic_reversals == set(expected_problematic_reversals)
+    assert found_problematic_reversals == actual_problematic_reversal

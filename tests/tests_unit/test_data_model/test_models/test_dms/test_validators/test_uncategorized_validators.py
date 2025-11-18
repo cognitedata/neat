@@ -7,10 +7,10 @@ import pytest
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms import (
-    BidirectionalConnectionMisconfigured,
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
     DmsDataModelValidation,
+    ReverseConnectionSourceViewMissing,
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
@@ -139,9 +139,9 @@ class TestValidators:
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
             ViewSpaceVersionInconsistentWithDataModel.code,
-            BidirectionalConnectionMisconfigured.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
+            ReverseConnectionSourceViewMissing.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -183,8 +183,8 @@ class TestValidators:
         assert len(by_code[ConnectionValueTypeUndefined.code]) == 1
         assert "directToNowhere" in by_code[ConnectionValueTypeUndefined.code][0].message
 
-        assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
-        assert "reverseDirectPropertyMissingOtherEnd" in by_code[BidirectionalConnectionMisconfigured.code][0].message
+        assert len(by_code[ReverseConnectionSourceViewMissing.code]) == 1
+        assert "reverseDirectPropertyMissingOtherEnd" in by_code[ReverseConnectionSourceViewMissing.code][0].message
 
         assert len(by_code[ViewToContainerMappingNotPossible.code]) == 2
         referenced_containers_messages = [issue.message for issue in by_code[ViewToContainerMappingNotPossible.code]]
@@ -237,7 +237,7 @@ class TestValidators:
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
             ViewSpaceVersionInconsistentWithDataModel.code,
-            BidirectionalConnectionMisconfigured.code,
+            ReverseConnectionSourceViewMissing.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
         }
@@ -279,14 +279,14 @@ class TestValidators:
 
         assert found_inconsistent_views == expected_inconsistent_views
 
-        assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 2
+        assert len(by_code[ReverseConnectionSourceViewMissing.code]) == 2
         expected_affected_reverse_properties = {"reverseDirectPropertyMissingOtherEnd", "reverseDirectPropertyRemote"}
 
         assert len(by_code[ConnectionValueTypeUndefined.code]) == 1
         assert "directToNowhere" in by_code[ConnectionValueTypeUndefined.code][0].message
 
         found_affected_reverse_properties = set()
-        for message in by_code[BidirectionalConnectionMisconfigured.code]:
+        for message in by_code[ReverseConnectionSourceViewMissing.code]:
             for expected_property in expected_affected_reverse_properties:
                 if expected_property in message.message:
                     found_affected_reverse_properties.add(expected_property)

@@ -292,9 +292,3 @@ class DataModelValidator(ABC):
                     merged_containers[view_ref].properties.update(local_container.properties)
 
         return merged_containers
-
-
-class GroupedDataModelValidator(DataModelValidator):
-    """Used to run grouped data model validators together."""
-
-    ...
