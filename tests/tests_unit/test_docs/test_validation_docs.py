@@ -4,9 +4,9 @@ import re
 import pytest
 import yaml
 
-import tests.tests_unit.test_docs.utils
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
+from tests.tests_unit.test_docs import utils
 from tests.tests_unit.test_docs.utils import (
     ENCODING,
     MKDOCS_FILE,
@@ -18,7 +18,7 @@ from tests.tests_unit.test_docs.utils import (
     get_validator_group_heading,
 )
 
-RUN_SCRIPT = f"python {tests.tests_unit.test_docs.utils.__file__}"
+RUN_SCRIPT = f"python {utils.__file__}"
 
 
 class TestValidationDocs:
@@ -47,7 +47,7 @@ class TestValidationDocs:
         try:
             nav_list = mkdocs_file["nav"]
             validation_list = next(item["Validations"] for item in nav_list if "Validations" in item)
-        except (KeyError, TypeError):
+        except (KeyError, TypeError, StopIteration):
             raise AssertionError(
                 "The mkdocs.yml file is missing the 'Validations' section in the 'nav' configuration."
             ) from None
