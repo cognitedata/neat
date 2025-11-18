@@ -1,5 +1,6 @@
 import gzip
 import json
+from collections import Counter
 from typing import Any
 from unittest.mock import patch
 
@@ -9,6 +10,7 @@ import respx
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
+    AddedField,
     ChangedField,
     ContainerDeploymentPlan,
     RemovedField,
@@ -91,11 +93,12 @@ class TestSchemaDeployer:
         current_container = next(iter(schema_snapshot.containers.values()))
         prop_id, prop = next(iter(current_container.properties.items()))
         constraint_id = "unique_constraint_1"
-        constraint = UniquenessConstraintDefinition(properties=[prop_id], by_space=False)
+        constraint = UniquenessConstraintDefinition(properties=[prop_id], bySpace=False)
+        current_container.constraints = {constraint_id: constraint, **(current_container.constraints or {})}
         index_id = "btree_index_1"
-        index = BtreeIndex(properties=[prop_id], by_space=False)
-        current_container.indexes = {constraint_id: index, **(current_container.indexes or {})}
-        current_container.constraints = {index_id: constraint, **(current_container.constraints or {})}
+        index = BtreeIndex(properties=[prop_id], bySpace=False)
+        current_container.indexes = {index_id: index, **(current_container.indexes or {})}
+        schema_snapshot.containers[current_container.as_reference()] = current_container
 
         # Modify the model to have the index and constraint modified by setting by_space=True
         modified_container = current_container.model_copy(
@@ -103,11 +106,11 @@ class TestSchemaDeployer:
             update={
                 "indexes": {
                     **(current_container.indexes or {}),
-                    index_id: BtreeIndex(properties=[prop_id], by_space=True),
+                    index_id: BtreeIndex(properties=[prop_id], bySpace=True),
                 },
                 "constraints": {
                     **(current_container.constraints or {}),
-                    constraint_id: UniquenessConstraintDefinition(properties=[prop_id], by_space=True),
+                    constraint_id: UniquenessConstraintDefinition(properties=[prop_id], bySpace=True),
                 },
             },
         )
@@ -129,6 +132,16 @@ class TestSchemaDeployer:
             None,
         )
         assert resource_plan is not None
+        change_types = Counter(
+            type(change)
+            for change in resource_plan.changes
+            if change.field_path.startswith("indexes.") or change.field_path.startswith("constraints.")
+        )
+        assert change_types == {
+            # One for index, one for constraint
+            RemovedField: 2,  # type: ignore[dict-item]
+            AddedField: 2,
+        }
 
     def test_deploy_dry_run(
         self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
