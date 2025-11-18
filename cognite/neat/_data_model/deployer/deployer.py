@@ -67,7 +67,7 @@ class DeploymentOptions:
     dry_run: bool = True
     auto_rollback: bool = True
     drop_data: bool = False
-    max_severity: SeverityType = SeverityType.SAFE
+    max_severity: SeverityType = SeverityType.WARNING
     modus_operandi: ModusOperandi = "additive"
 
 
