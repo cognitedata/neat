@@ -175,9 +175,8 @@ class SchemaDeployer(OnSuccessResultProducer):
             ]
         )
 
-    @classmethod
     def _create_resource_plan(
-        cls,
+        self,
         current_resources: dict[T_ResourceId, T_DataModelResource],
         new_resources: list[T_DataModelResource],
         endpoint: DataModelEndpoint,
@@ -197,8 +196,14 @@ class SchemaDeployer(OnSuccessResultProducer):
                 continue
             current_resource = current_resources[ref]
             diffs = differ.diff(current_resource, new_resource)
-            if isinstance(current_resource, ContainerRequest) and isinstance(new_resource, ContainerRequest):
-                diffs = cls._special_handle_constraints_and_index_diffs(diffs, current_resource, new_resource)
+            if (
+                isinstance(current_resource, ContainerRequest)
+                and isinstance(new_resource, ContainerRequest)
+                and self.options.modus_operandi == "additive"
+            ):
+                # In additive mode, changes to constraints and indexes require removal and re-adding
+                # In rebuild mode, all changes are forced via deletion and re-adding
+                diffs = self._special_handle_constraints_and_index_diffs(diffs, current_resource, new_resource)
             resources.append(
                 ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
             )
