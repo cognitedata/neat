@@ -6,7 +6,6 @@ from unittest.mock import patch
 import pytest
 import respx
 
-
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
@@ -22,7 +21,6 @@ from cognite.neat._data_model.deployer.deployer import DeploymentOptions, Schema
 from cognite.neat._data_model.models.dms import (
     BtreeIndex,
     ContainerConstraintReference,
-    UniquenessConstraintDefinition,
     ContainerIndexReference,
     ContainerPropertyDefinition,
     ContainerReference,
@@ -30,6 +28,7 @@ from cognite.neat._data_model.models.dms import (
     RequestSchema,
     RequiresConstraintDefinition,
     TextProperty,
+    UniquenessConstraintDefinition,
 )
 
 
@@ -86,24 +85,50 @@ class TestSchemaDeployer:
     def test_creat_deployment_plan_container_index_constraint_changes(
         self, neat_client: NeatClient, model: RequestSchema, schema_snapshot: SchemaSnapshot
     ) -> None:
-        assert len(model.containers) > 0, "Model must have at least one container for this test"
-        current_container = model.containers[0]
-        prop_id, prop = next(iter(current_container.properties.items()))
-        constraint = UniquenessConstraintDefinition(properties=[prop_id], by_space=False)
-        index = BtreeIndex(properties=[prop_id], by_space=False)
-        current_container.indexes = {""}
-        modified_model = model.model_copy(update={"containers": [new_container] + model.containers[1:]}, deep=True)
+        assert len(schema_snapshot.containers) > 0, "Model must have at least one container for this test"
 
+        # Add an index and a constraint to the current container in the snapshot
+        current_container = next(iter(schema_snapshot.containers.values()))
+        prop_id, prop = next(iter(current_container.properties.items()))
+        constraint_id = "unique_constraint_1"
+        constraint = UniquenessConstraintDefinition(properties=[prop_id], by_space=False)
+        index_id = "btree_index_1"
+        index = BtreeIndex(properties=[prop_id], by_space=False)
+        current_container.indexes = {constraint_id: index, **(current_container.indexes or {})}
+        current_container.constraints = {index_id: constraint, **(current_container.constraints or {})}
+
+        # Modify the model to have the index and constraint modified by setting by_space=True
+        modified_container = current_container.model_copy(
+            deep=True,
+            update={
+                "indexes": {
+                    **(current_container.indexes or {}),
+                    index_id: BtreeIndex(properties=[prop_id], by_space=True),
+                },
+                "constraints": {
+                    **(current_container.constraints or {}),
+                    constraint_id: UniquenessConstraintDefinition(properties=[prop_id], by_space=True),
+                },
+            },
+        )
+        model.containers = [
+            modified_container if container.as_reference() == modified_container.as_reference() else container
+            for container in model.containers
+        ]
 
         deployer = SchemaDeployer(neat_client)
-        plan = deployer.create_deployment_plan(schema_snapshot, modified_model)
-        assert len(plan) == 4  # spaces, containers, views, datamodels
-        for resource_plan in plan:
-            assert resource_plan.endpoint in {"spaces", "containers", "views", "datamodels"}
-            if resource_plan.endpoint == "containers":
-                assert len(resource_plan.resources) == 1
-                container_change = resource_plan.resources[0]
-                assert len(container_change.changes) == 2  # One for index addition, one for constraint addition):
+        plan = deployer.create_deployment_plan(schema_snapshot, model)
+
+        container_plan = next(rp for rp in plan if rp.endpoint == "containers")
+        assert len(container_plan.resources) == 1
+        assert isinstance(container_plan, ContainerDeploymentPlan)
+        assert len(container_plan.indexes_to_remove) == 1
+        assert len(container_plan.constraints_to_remove) == 1
+        resource_plan = next(
+            (change for change in container_plan.resources if change.resource_id == modified_container.as_reference()),
+            None,
+        )
+        assert resource_plan is not None
 
     def test_deploy_dry_run(
         self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
