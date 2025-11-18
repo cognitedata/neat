@@ -13,6 +13,11 @@ theme:
 
 nav:
   - Home: index.md
+  - Validation: validation/index.md
+      - Connections (NEAT-DMS-CONNECTIONS): validation/index.md#connections
+      - Consistency (NEAT-DMS-CONSISTENCY): validation/index.md#consistency
+      - Limits (NEAT-DMS-LIMITS): validation/index.md#limits
+      - Views (NEAT-DMS-VIEW): validation/index.md#views
   - Data Modeling Principles: data-modeling-principles.md
   - Getting Started:
       - Why NEAT?: gettingstarted/why-neat.md
