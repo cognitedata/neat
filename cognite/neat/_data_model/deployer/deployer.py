@@ -203,7 +203,7 @@ class SchemaDeployer(OnSuccessResultProducer):
             ):
                 # In additive mode, changes to constraints and indexes require removal and re-adding
                 # In rebuild mode, all changes are forced via deletion and re-adding
-                diffs = self._special_handle_constraints_and_index_diffs(diffs, current_resource, new_resource)
+                diffs = self.remove_readd_modified_indexes_and_constraints(diffs, current_resource, new_resource)
             resources.append(
                 ResourceChange(resource_id=ref, new_value=new_resource, current_value=current_resource, changes=diffs)
             )
@@ -211,13 +211,15 @@ class SchemaDeployer(OnSuccessResultProducer):
         return plan_type(endpoint=endpoint, resources=resources)
 
     @classmethod
-    def _special_handle_constraints_and_index_diffs(
+    def remove_readd_modified_indexes_and_constraints(
         cls, diffs: list[FieldChange], current_resource: ContainerRequest, new_resource: ContainerRequest
     ) -> list[FieldChange]:
         """Constraints and indexes cannot be modified directly; they must be removed and re-added.
 
         Args:
             diffs: The list of field changes detected by the differ.
+            current_resource: The current state of the container.
+            new_resource: The desired state of the container.
         Returns:
             A modified list of field changes with constraints and indexes handled appropriately.
         """

@@ -276,7 +276,8 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
                         "changes": [
                             change
                             for change in resource.changes
-                            if not isinstance(change, RemovedField) or change.field_path in addition_paths
+                            if not isinstance(change, RemovedField)
+                            or (isinstance(change, RemovedField) and change.field_path in addition_paths)
                         ],
                     }
                 )
