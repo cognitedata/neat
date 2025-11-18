@@ -71,7 +71,7 @@ def physical_written_session(physical_state_session: NeatSession) -> NeatSession
 
 @pytest.mark.usefixtures("empty_cdf")
 class TestNeatSession:
-    def test_error_reading(self, new_session: NeatSession) -> None:
+    def test_error_reading_writing(self, new_session: NeatSession) -> None:
         session = new_session
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -82,6 +82,13 @@ class TestNeatSession:
         assert len(session._store.physical_data_model) == 0
         assert len(session._store.provenance) == 0
         assert isinstance(session._store.state, states.EmptyState)
+
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            session.physical_data_model.write.yaml("./invalid_path.yaml")
+
+        printed_statements = output.getvalue()
+        assert "⚠️ Cannot write data model, there is no data model in the session" in str(printed_statements)
 
     def test_read_data_model(self, valid_dms_yaml_format: str, new_session: NeatSession) -> None:
         session = new_session
@@ -133,7 +140,7 @@ class TestNeatSession:
             session.physical_data_model.read.yaml(read_yaml)
 
         printed_statements = output.getvalue()
-        assert "Cannot run DMSTableImporter in state PhysicalState" in str(printed_statements)
+        assert "⚠️ Cannot read data model, there is already a data model in the session" in str(printed_statements)
         assert len(session._store.physical_data_model) == 1
 
         # no change took place
