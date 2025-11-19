@@ -1,8 +1,19 @@
-**Neat supports 19 validation rules** for data modeling. These rules are learned
+**Neat supports 23 validation rules** for data modeling. These rules are learned
  from best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
  helping customers build and maintain their data models.
 
 
+
+### Ai_Readiness (NEAT-DMS-AI-READINESS)
+
+Validators for checking if data model is AI-ready.
+
+| code | name | message |
+|------|------|---------|
+| NEAT-DMS-AI-READINESS-001 | [DataModelMissingName](neat-dms-ai-readiness-001.md) | Validates that data model has a human-readable name. |
+| NEAT-DMS-AI-READINESS-002 | [DataModelMissingDescription](neat-dms-ai-readiness-002.md) | Validates that data model has a human-readable description. |
+| NEAT-DMS-AI-READINESS-003 | [ViewMissingName](neat-dms-ai-readiness-003.md) | Validates that a View has a human-readable name. |
+| NEAT-DMS-AI-READINESS-004 | [ViewMissingDescription](neat-dms-ai-readiness-004.md) | Validates that a View has a human-readable description. |
 
 ### Connections (NEAT-DMS-CONNECTIONS)
 

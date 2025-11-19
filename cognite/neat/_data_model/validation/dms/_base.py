@@ -32,12 +32,14 @@ class LocalResources:
     """Local data model resources."""
 
     data_model_reference: DataModelReference
+    data_model_views: set[ViewReference]
+    data_model_description: str | None
+    data_model_name: str | None
     views_by_reference: ViewsByReference
     ancestors_by_view_reference: AncestorsByReference
     reverse_to_direct_mapping: ReverseToDirectMapping
     containers_by_reference: ContainersByReference
     connection_end_node_types: ConnectionEndNodeTypes
-    data_model_views: set[ViewReference]
 
 
 @dataclass

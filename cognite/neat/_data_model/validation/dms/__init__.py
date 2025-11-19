@@ -1,3 +1,4 @@
+from ._ai_readiness import DataModelMissingDescription, DataModelMissingName, ViewMissingDescription, ViewMissingName
 from ._connections import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
@@ -29,6 +30,8 @@ __all__ = [
     "ContainerPropertyCountIsOutOfLimits",
     "ContainerPropertyListSizeIsOutOfLimits",
     "ContainerPropertyListSizeIsOutOfLimits",
+    "DataModelMissingDescription",
+    "DataModelMissingName",
     "DataModelViewCountIsOutOfLimits",
     "DmsDataModelValidation",
     "ReverseConnectionContainerMissing",
@@ -42,6 +45,8 @@ __all__ = [
     "ReverseConnectionTargetMissing",
     "ViewContainerCountIsOutOfLimits",
     "ViewImplementsCountIsOutOfLimits",
+    "ViewMissingDescription",
+    "ViewMissingName",
     "ViewPropertyCountIsOutOfLimits",
     "ViewSpaceVersionInconsistentWithDataModel",
     "ViewToContainerMappingNotPossible",

@@ -19,6 +19,7 @@ from cognite.neat._data_model.validation.dms._limits import (
 )
 from cognite.neat._utils.useful_types import ModusOperandi
 
+from ._ai_readiness import DataModelMissingDescription, DataModelMissingName, ViewMissingDescription, ViewMissingName
 from ._base import CDFResources, DataModelValidator, LocalResources
 from ._connections import (
     ConnectionValueTypeUndefined,
@@ -64,6 +65,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         local_data_model_views = set(data_model.data_model.views) if data_model.data_model.views else set()
 
         local_resources = LocalResources(
+            data_model_description=data_model.data_model.description,
+            data_model_name=data_model.data_model.name,
             data_model_reference=data_model.data_model.as_reference(),
             views_by_reference=local_views_by_reference,
             ancestors_by_view_reference=local_ancestors_by_view_reference,
@@ -123,6 +126,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ReverseConnectionPointsToAncestor(local_resources, cdf_resources, self._modus_operandi),
             ReverseConnectionTargetMismatch(local_resources, cdf_resources, self._modus_operandi),
             ReverseConnectionTargetMissing(local_resources, cdf_resources, self._modus_operandi),
+            # AI Readiness
+            DataModelMissingName(local_resources, cdf_resources, self._modus_operandi),
+            DataModelMissingDescription(local_resources, cdf_resources, self._modus_operandi),
+            ViewMissingName(local_resources, cdf_resources, self._modus_operandi),
+            ViewMissingDescription(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators

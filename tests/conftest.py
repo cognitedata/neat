@@ -10,6 +10,10 @@ def valid_dms_yaml_format() -> str:
   Value: CogniteDataModel
 - Key: version
   Value: v1
+- Key: description
+  Value: Sample Cognite Data Model
+- Key: name
+  Value: Cognite Data Model
 Properties:
 - View: CogniteDescribable
   View Property: name
@@ -23,6 +27,8 @@ Properties:
   Connection: null
 Views:
 - View: CogniteDescribable
+  Name: Describable View
+  Description: View for describable entities
 Containers:
 - Container: CogniteDescribable
   Used For: node

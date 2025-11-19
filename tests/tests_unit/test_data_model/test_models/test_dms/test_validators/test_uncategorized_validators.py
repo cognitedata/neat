@@ -9,8 +9,12 @@ from cognite.neat._data_model.importers._table_importer.importer import DMSTable
 from cognite.neat._data_model.validation.dms import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
+    DataModelMissingDescription,
+    DataModelMissingName,
     DmsDataModelValidation,
     ReverseConnectionSourceViewMissing,
+    ViewMissingDescription,
+    ViewMissingName,
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
@@ -134,7 +138,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 11
+        assert len(on_success.issues) == 19
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -142,6 +146,10 @@ class TestValidators:
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
             ReverseConnectionSourceViewMissing.code,
+            DataModelMissingName.code,
+            DataModelMissingDescription.code,
+            ViewMissingDescription.code,
+            ViewMissingName.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -218,6 +226,11 @@ class TestValidators:
 
         assert found_views == expected_views
 
+        assert len(by_code[DataModelMissingName.code]) == 1
+        assert len(by_code[DataModelMissingDescription.code]) == 1
+        assert len(by_code[ViewMissingDescription.code]) == 3
+        assert len(by_code[ViewMissingName.code]) == 3
+
     def test_rebuild_modus_operandi(
         self, validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str
     ) -> None:
@@ -232,7 +245,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 15
+        assert len(on_success.issues) == 23
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -240,6 +253,10 @@ class TestValidators:
             ReverseConnectionSourceViewMissing.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
+            DataModelMissingName.code,
+            DataModelMissingDescription.code,
+            ViewMissingDescription.code,
+            ViewMissingName.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
@@ -310,3 +327,8 @@ class TestValidators:
 
         assert found_missing_containers == expected_missing_containers
         assert found_missing_container_properties == expected_missing_container_properties
+
+        assert len(by_code[DataModelMissingName.code]) == 1
+        assert len(by_code[DataModelMissingDescription.code]) == 1
+        assert len(by_code[ViewMissingDescription.code]) == 3
+        assert len(by_code[ViewMissingName.code]) == 3
