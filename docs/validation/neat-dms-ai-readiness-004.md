@@ -10,8 +10,8 @@ should be used. The description can provide important information about the view
 
 ## Example
 A view Site has no description. Users may find it difficult to understand what this view represents, unless
-extra context is provided. Even if we know that Site is used in the context of wind energy developments, a description
-is necessary as it can be used in various context within the same domain such as:
+extra context is provided. Even if we know that Site is used in the context of wind energy developments, a
+description is necessary as it can be used in various context within the same domain such as:
 
 Option 1 — Project area
 This view represents a geographical area where wind energy projects are developed and managed.
