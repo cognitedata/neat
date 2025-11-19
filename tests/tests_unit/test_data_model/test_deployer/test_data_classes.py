@@ -8,6 +8,7 @@ from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     AppliedChanges,
     ChangeResult,
+    ContainerDeploymentPlan,
     DeploymentResult,
     ResourceChange,
     ResourceDeploymentPlan,
@@ -15,6 +16,7 @@ from cognite.neat._data_model.deployer.data_classes import (
     SchemaSnapshot,
     SeverityType,
 )
+from cognite.neat._data_model.deployer.deployer import SchemaDeployer
 from cognite.neat._data_model.models.dms import (
     BtreeIndex,
     ContainerPropertyDefinition,
@@ -144,6 +146,52 @@ class TestResourceDeploymentPlanList:
             assert len(resource_plan.to_create) == 0
             assert len(resource_plan.to_update) == 0
             assert len(resource_plan.to_delete) == 0
+
+    def test_consolidate_container_index_modifications(self) -> None:
+        current_container = ContainerRequest(
+            space="space1",
+            externalId="container1",
+            name="container1",
+            properties={"prop1": ContainerPropertyDefinition(type=TextProperty())},
+            indexes={
+                "index1": BtreeIndex(properties=["prop1"], bySpace=True),
+            },
+        )
+        new_container = current_container.model_copy(
+            update={"indexes": {"index1": BtreeIndex(properties=["prop1"], bySpace=False)}}
+        )
+        changes = SchemaDeployer.remove_readd_modified_indexes_and_constraints(
+            ContainerDiffer().diff(current_container, new_container), current_container, new_container
+        )
+
+        plan = ResourceDeploymentPlanList(
+            [
+                ContainerDeploymentPlan(
+                    endpoint="containers",
+                    resources=[
+                        ResourceChange(
+                            resource_id=current_container.as_reference(),
+                            new_value=new_container,
+                            current_value=current_container,
+                            changes=changes,
+                        )
+                    ],
+                )
+            ]
+        )
+
+        consolidated_plan = plan.consolidate_changes()
+
+        assert len(consolidated_plan) == 1
+        resource_plan = consolidated_plan.data[0]
+        assert isinstance(resource_plan, ContainerDeploymentPlan)
+        assert len(resource_plan.to_update) == 1
+        assert len(resource_plan.to_create) == 0
+        assert len(resource_plan.unchanged) == 0
+        assert len(resource_plan.to_delete) == 0
+        assert len(resource_plan.indexes_to_remove) == 1, (
+            "Index removal should not be consolidated as it is removed and re-added"
+        )
 
     def test_force_changes_not_drop_data(self, plan_with_removals: ResourceDeploymentPlanList) -> None:
         plan = plan_with_removals

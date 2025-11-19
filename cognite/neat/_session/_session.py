@@ -1,9 +1,12 @@
+import json
+
 from cognite.client import ClientConfig, CogniteClient
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
+from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
 from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._issues import Issues
@@ -28,6 +31,25 @@ class NeatSession:
 
         if self.opt._collector.can_collect:
             self.opt._collector.collect("initSession", {"mode": mode})
+
+        self._welcome_message()
+
+    def _welcome_message(self) -> None:
+        cdf_project = self._client.config.project
+        message = f"Neat session started for CDF project: '{cdf_project}'"
+        responses = self._client.http_client.request(
+            ParametersRequest(endpoint_url=self._client.config.create_api_url(""), method="GET")
+        )
+        if len(responses) == 1 and isinstance(response := responses[0], SuccessResponse):
+            organization = ""
+            try:
+                organization = json.loads(response.body)["organization"]
+            except (KeyError, ValueError):
+                ...
+            if organization:
+                message += f" (Organization: '{organization}')"
+
+        print(message)
 
     @property
     def version(self) -> str:

@@ -79,9 +79,19 @@ class View(Resource, APIResource[ViewReference], ABC):
         # The reason we set connectionType it easy for pydantic to discriminate the union.
         # This also leads to better error messages, as if there is a union and pydantic do not know which
         # type to pick it will give errors from all type in the union.
-        for prop in properties.values():
+        new_properties: dict[str, Any] = {}
+        for prop_id, prop in properties.items():
             if isinstance(prop, dict) and "connectionType" not in prop:
-                prop["connectionType"] = "primary_property"
+                prop_copy = prop.copy()
+                prop_copy["connectionType"] = "primary_property"
+                new_properties[prop_id] = prop_copy
+            else:
+                new_properties[prop_id] = prop
+        if new_properties:
+            new_data = data.copy()
+            new_data["properties"] = new_properties
+            return new_data
+
         return data
 
     @field_validator("external_id", mode="after")
