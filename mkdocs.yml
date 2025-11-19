@@ -14,6 +14,7 @@ theme:
 nav:
   - Home: index.md
   - Validations:
+      - Ai_Readiness (NEAT-DMS-AI-READINESS): validation/index.html#ai_readiness-neat-dms-ai-readiness
       - Connections (NEAT-DMS-CONNECTIONS): validation/index.html#connections-neat-dms-connections
       - Consistency (NEAT-DMS-CONSISTENCY): validation/index.html#consistency-neat-dms-consistency
       - Limits (NEAT-DMS-LIMITS): validation/index.html#limits-neat-dms-limits
