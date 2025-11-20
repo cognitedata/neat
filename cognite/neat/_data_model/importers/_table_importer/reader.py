@@ -25,7 +25,7 @@ from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat._utils.validation import humanize_validation_error
+from cognite.neat._utils.validation import ValidationContext, humanize_validation_error
 
 from .data_classes import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
 from .source import TableSource
@@ -855,16 +855,21 @@ class DMSTableReader:
         parent_loc: tuple[str | int, ...],
         field_name: Literal["field", "column", "value"] = "column",
     ) -> None:
-        seen: set[str] = set()
-        for message in humanize_validation_error(
-            error,
+        context = ValidationContext(
             parent_loc=parent_loc,
             humanize_location=self.source.location,
             field_name=field_name,
-            field_renaming=self.source.field_mapping(parent_loc[0]),
             missing_required_descriptor="empty" if field_name == "column" else "missing",
-        ):
+        )
+
+        if field_renaming := self.source.field_mapping(parent_loc[0]):
+            context.field_renaming = field_renaming
+
+        seen: set[str] = set()
+        for error_details in error.errors(include_input=True, include_url=False):
+            message = humanize_validation_error(error_details, context)
             if message in seen:
                 continue
+
             seen.add(message)
             self.errors.append(ModelSyntaxError(message=message))
