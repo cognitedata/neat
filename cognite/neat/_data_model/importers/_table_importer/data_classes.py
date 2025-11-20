@@ -1,3 +1,4 @@
+import json
 from collections.abc import Mapping
 from typing import Annotated, Literal, cast, get_args
 
@@ -17,6 +18,11 @@ from traitlets import Any
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
 from cognite.neat._utils.useful_types import CellValueType
+from cognite.neat.v0.core._data_model.models.entities import (
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
+)
 
 
 def parse_entity_str(v: str) -> ParsedEntity:
@@ -142,6 +148,22 @@ class DMSView(TableObj):
     description: str | None = None
     implements: EntityList | None = None
     filter: str | None = None
+
+    @field_validator("filter", mode="after")
+    def _legacy_filter(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+
+        value_lower = value.lower()
+
+        if value_lower.startswith("hasdata("):
+            return json.dumps(HasDataFilter.load(value).as_dms_filter().dump())
+        elif value_lower.startswith("nodetype("):
+            return json.dumps(NodeTypeFilter.load(value).as_dms_filter().dump())
+        elif value_lower.startswith("rawfilter("):
+            return json.dumps(RawFilter.load(value).as_dms_filter().dump())
+
+        return value
 
 
 class DMSContainer(TableObj):
