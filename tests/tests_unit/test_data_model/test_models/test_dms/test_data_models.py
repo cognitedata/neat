@@ -149,8 +149,7 @@ class TestDataModelRequest:
     def test_invalid_definitions(self, data: dict[str, Any], expected_errors: set[str]) -> None:
         with pytest.raises(ValidationError) as excinfo:
             DataModelRequest.model_validate(data)
-        errors = set(humanize_validation_error(excinfo.value))
-        assert errors == expected_errors
+        assert {humanize_validation_error(error) for error in excinfo.value.errors()} == expected_errors
 
 
 class TestDataModelResponse:

@@ -16,7 +16,7 @@ from cognite.neat._exceptions import CDFAPIException, DataModelImportException, 
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.http_client import FailedRequestMessage
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat._utils.validation import humanize_validation_error
+from cognite.neat._utils.validation import ValidationContext, humanize_validation_error
 
 
 class DMSAPIImporter(DMSImporter):
@@ -33,8 +33,11 @@ class DMSAPIImporter(DMSImporter):
         try:
             return RequestSchema.model_validate(self._schema)
         except ValidationError as e:
-            humanized_errors = humanize_validation_error(e)
-            errors = [ModelSyntaxError(message=error) for error in humanized_errors]
+            context = ValidationContext()
+            errors = [
+                ModelSyntaxError(message=humanize_validation_error(error, context))
+                for error in e.errors(include_input=True, include_url=False)
+            ]
             raise DataModelImportException(errors) from None
 
     @classmethod

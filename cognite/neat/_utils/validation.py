@@ -1,7 +1,7 @@
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
 from typing import Literal
 
-from pydantic import ValidationError
 from pydantic_core import ErrorDetails
 
 
@@ -25,20 +25,15 @@ def as_json_path(loc: tuple[str | int, ...]) -> str:
     return f"{prefix}{suffix}"
 
 
-def humanize_validation_error(
-    error: ValidationError,
-    parent_loc: tuple[int | str, ...] = tuple(),
-    humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path,
-    field_name: Literal["field", "column", "value"] = "field",
-    field_renaming: Mapping[str, str] | None = None,
-    missing_required_descriptor: Literal["empty", "missing"] = "missing",
-) -> list[str]:
-    """Converts a ValidationError to a human-readable format.
+@dataclass
+class ValidationContext:
+    """
+    Context for validation errors providing configuration for error message formatting.
 
-    This overwrites the default error messages from Pydantic to be better suited for Toolkit users.
+    This class configures how validation errors are reported, including location formatting,
+    field naming conventions, and how to present missing required fields.
 
-    Args:
-        error: The ValidationError to convert.
+    Attributes:
         parent_loc: Optional location tuple to prepend to each error location.
             This is useful when the error is for a nested model and you want to include the location
             of the parent model.
@@ -53,62 +48,81 @@ def humanize_validation_error(
             you can provide a mapping {"asset_id": "Asset ID"} to have the error messages use the source names.
         missing_required_descriptor: How to describe missing required fields. Default is "missing".
             Other option is "empty" which can be more suitable for table data.
-    Returns:
-        A list of human-readable error messages.
     """
-    errors: list[str] = []
-    item: ErrorDetails
-    field_renaming = field_renaming or {}
-    for item in error.errors(include_input=True, include_url=False):
-        loc = (*parent_loc, *item["loc"])
-        error_type = item["type"]
-        if error_type == "missing":
-            msg = f"Missing required {field_name}: {loc[-1]!r}"
-        elif error_type == "extra_forbidden":
-            msg = f"Unused {field_name}: {loc[-1]!r}"
-        elif error_type == "value_error":
-            msg = str(item["ctx"]["error"])
-        elif error_type == "literal_error":
-            msg = f"{item['msg']}. Got {item['input']!r}."
-        elif error_type == "string_type":
+
+    parent_loc: tuple[int | str, ...] = field(default_factory=tuple)
+    humanize_location: Callable[[tuple[int | str, ...]], str] = as_json_path
+    field_name: Literal["field", "column", "value"] = "field"
+    field_renaming: Mapping[str, str] = field(default_factory=dict)
+    missing_required_descriptor: Literal["empty", "missing"] = "missing"
+
+
+def humanize_validation_error(
+    error: ErrorDetails,
+    context: ValidationContext | None = None,
+) -> str:
+    """Converts a pydantic ErrorDetails object to a human-readable format.
+    This overwrites the default error messages from Pydantic to be better suited for NEAT users.
+    Args:
+        error: The ErrorDetails object to convert.
+        context: The context for humanizing the error.
+    Returns:
+        A human-readable error message.
+    """
+
+    context = context or ValidationContext()
+
+    loc = (*context.parent_loc, *error["loc"])
+    type_ = error["type"]
+
+    if type_ == "missing":
+        msg = f"Missing required {context.field_name}: {loc[-1]!r}"
+    elif type_ == "extra_forbidden":
+        msg = f"Unused {context.field_name}: {loc[-1]!r}"
+    elif type_ == "value_error":
+        msg = str(error["ctx"]["error"])
+    elif type_ == "literal_error":
+        msg = f"{error['msg']}. Got {error['input']!r}."
+    elif type_ == "string_type":
+        msg = (
+            f"{error['msg']}. Got {error['input']!r} of type {type(error['input']).__name__}. "
+            f"Hint: Use double quotes to force string."
+        )
+    elif type_ == "model_type":
+        model_name = error["ctx"].get("class_name", "unknown")
+        msg = (
+            f"Input must be an object of type {model_name}. Got {error['input']!r} of "
+            f"type {type(error['input']).__name__}."
+        )
+    elif type_.endswith("_type"):
+        msg = f"{error['msg']}. Got {error['input']!r} of type {type(error['input']).__name__}."
+    else:
+        # Default to the Pydantic error message
+        msg = error["msg"]
+
+    if type_.endswith("dict_type") and len(loc) > 1:
+        # If this is a dict_type error for a JSON field, the location will be:
+        #  dict[str,json-or-python[json=any,python=tagged-union[list[...],dict[str,...],str,bool,int,float,none]]]
+        #  This is hard to read, so we simplify it to just the field name.
+        loc = tuple(["dict" if isinstance(x, str) and "json-or-python" in x else x for x in loc])
+
+    error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
+
+    if len(loc) > 1 and type_ in {"extra_forbidden", "missing"}:
+        if context.missing_required_descriptor == "empty" and type_ == "missing":
+            # This is a table so we modify the error message.
             msg = (
-                f"{item['msg']}. Got {item['input']!r} of type {type(item['input']).__name__}. "
-                f"Hint: Use double quotes to force string."
+                f"In {context.humanize_location(loc[:-1])} the {context.field_name}"
+                f" {context.field_renaming.get(str(loc[-1]), loc[-1])!r} "
+                "cannot be empty."
             )
-        elif error_type == "model_type":
-            model_name = item["ctx"].get("class_name", "unknown")
-            msg = (
-                f"Input must be an object of type {model_name}. Got {item['input']!r} of "
-                f"type {type(item['input']).__name__}."
-            )
-        elif error_type.endswith("_type"):
-            msg = f"{item['msg']}. Got {item['input']!r} of type {type(item['input']).__name__}."
         else:
-            # Default to the Pydantic error message
-            msg = item["msg"]
-
-        if error_type.endswith("dict_type") and len(loc) > 1:
-            # If this is a dict_type error for a JSON field, the location will be:
-            #  dict[str,json-or-python[json=any,python=tagged-union[list[...],dict[str,...],str,bool,int,float,none]]]
-            #  This is hard to read, so we simplify it to just the field name.
-            loc = tuple(["dict" if isinstance(x, str) and "json-or-python" in x else x for x in loc])
-
-        error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
-        if len(loc) > 1 and error_type in {"extra_forbidden", "missing"}:
-            if missing_required_descriptor == "empty" and error_type == "missing":
-                # This is a table so we modify the error message.
-                msg = (
-                    f"In {humanize_location(loc[:-1])} the {field_name} {field_renaming.get(str(loc[-1]), loc[-1])!r} "
-                    "cannot be empty."
-                )
-            else:
-                # We skip the last element as this is in the message already
-                msg = f"In {humanize_location(loc[:-1])} {error_suffix.replace('field', field_name)}"
-        elif len(loc) > 1:
-            msg = f"In {humanize_location(loc)} {error_suffix}"
-        elif len(loc) == 1 and isinstance(loc[0], str) and error_type not in {"extra_forbidden", "missing"}:
-            msg = f"In {field_name} {loc[0]!r}, {error_suffix}"
-        if not msg.endswith("."):
-            msg += "."
-        errors.append(msg)
-    return errors
+            # We skip the last element as this is in the message already
+            msg = f"In {context.humanize_location(loc[:-1])} {error_suffix.replace('field', context.field_name)}"
+    elif len(loc) > 1:
+        msg = f"In {context.humanize_location(loc)} {error_suffix}"
+    elif len(loc) == 1 and isinstance(loc[0], str) and type_ not in {"extra_forbidden", "missing"}:
+        msg = f"In {context.field_name} {loc[0]!r}, {error_suffix}"
+    if not msg.endswith("."):
+        msg += "."
+    return msg

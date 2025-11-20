@@ -1520,7 +1520,10 @@ class TestTableSource:
             pytest.param((0, 5), {}, "row 6", id="row_only"),
             pytest.param((0, "not_int", "field"), {}, "column 'field'", id="column_only"),
             pytest.param(
-                ("MyTable", 1, "field", "extra"), {}, "table 'MyTable' row 2 column 'field'", id="path_length_exactly_4"
+                ("MyTable", 1, "field", "extra"),
+                {},
+                "table 'MyTable' row 2 column 'field' -> extra",
+                id="path_length_exactly_4",
             ),
             pytest.param(
                 ("MyTable", 1, "field", "a", "b", "c"),
