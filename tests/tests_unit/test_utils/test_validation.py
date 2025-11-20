@@ -107,7 +107,7 @@ class TestHumanizeValidationError:
         ],
     )
     def test_humanize_validation_error(
-        self, error: ErrorDetails, context: ValidationContext, expected_errors: set[str]
+        self, error: ErrorDetails, context: ValidationContext, expected_errors: str
     ) -> None:
         assert humanize_validation_error(error, context) == expected_errors
 
