@@ -282,6 +282,7 @@ DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
         "space": "View",
         "externalId": "View",
         "property": "ViewProperty",
+        "type": "Value Type",
         **{
             cast(str, field_.alias): cast(str, field_.validation_alias)
             for field_id, field_ in DMSProperty.model_fields.items()

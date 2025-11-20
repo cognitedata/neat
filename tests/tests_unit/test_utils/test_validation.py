@@ -3,6 +3,7 @@ from typing import cast
 import pytest
 from pydantic_core import ErrorDetails
 
+from cognite.neat._data_model.importers._table_importer.source import TableSource
 from cognite.neat._utils.validation import ValidationContext, as_json_path, humanize_validation_error
 
 
@@ -10,6 +11,28 @@ class TestHumanizeValidationError:
     @pytest.mark.parametrize(
         "error,context,expected_errors",
         [
+            pytest.param(
+                ErrorDetails(
+                    **{
+                        "type": "missing",
+                        "loc": ("type", "enum", "values"),
+                        "msg": "Field required",
+                        "input": {"maxListSize": None, "list": False, "type": "enum"},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Properties", 276),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Properties' row 277 column 'Value Type' -> enum"
+                    " definition is missing the collection reference."
+                ),
+                id="Missing enum collection reference in table",
+            ),
             pytest.param(
                 ErrorDetails(
                     type="missing",
