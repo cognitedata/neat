@@ -61,15 +61,13 @@ def humanize_validation_error(
     error: ErrorDetails,
     context: ValidationContext | None = None,
 ) -> str:
-    """Converts a ValidationError to a human-readable format.
+    """Converts a pydantic ErrorDetails object to a human-readable format.
     This overwrites the default error messages from Pydantic to be better suited for NEAT users.
-
     Args:
-        error: The ValidationError to convert.
+        error: The ErrorDetails object to convert.
         context: The context for humanizing the error.
-
     Returns:
-        A human-readable error messages.
+        A human-readable error message.
     """
 
     context = context or ValidationContext()
