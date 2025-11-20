@@ -111,11 +111,14 @@ def humanize_validation_error(
     if len(loc) > 1 and type_ in {"extra_forbidden", "missing"}:
         if context.missing_required_descriptor == "empty" and type_ == "missing":
             # This is a table so we modify the error message.
-            msg = (
-                f"In {context.humanize_location(loc[:-1])} the {context.field_name}"
-                f" {context.field_renaming.get(str(loc[-1]), loc[-1])!r} "
-                "cannot be empty."
-            )
+            if context.field_name == "column" and "enum" in loc and len(loc) == 5:
+                msg = _enum_message(loc, context)
+            else:
+                msg = (
+                    f"In {context.humanize_location(loc[:-1])} the {context.field_name}"
+                    f" {context.field_renaming.get(str(loc[-1]), loc[-1])!r} "
+                    "cannot be empty."
+                )
         else:
             # We skip the last element as this is in the message already
             msg = f"In {context.humanize_location(loc[:-1])} {error_suffix.replace('field', context.field_name)}"
@@ -126,3 +129,12 @@ def humanize_validation_error(
     if not msg.endswith("."):
         msg += "."
     return msg
+
+
+def _enum_message(loc: tuple[int | str, ...], context: ValidationContext) -> str:
+    """Special handling of enum errors in table columns."""
+
+    if loc[-1] != "values":
+        raise RuntimeError("This is a neat bug, report to the team.")
+
+    return f"In {context.humanize_location(loc[:-1])} definition is missing the collection reference"
