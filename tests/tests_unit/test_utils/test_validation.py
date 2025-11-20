@@ -1,13 +1,9 @@
+from typing import cast
+
 import pytest
-from pydantic import BaseModel, Field
 from pydantic_core import ErrorDetails
 
 from cognite.neat._utils.validation import ValidationContext, as_json_path, humanize_validation_error
-
-
-class Person(BaseModel):
-    name: str
-    age: int = Field(..., gt=0)
 
 
 class TestHumanizeValidationError:
@@ -24,7 +20,7 @@ class TestHumanizeValidationError:
                 ),
                 ValidationContext(
                     parent_loc=("People", 1),
-                    humanize_location=lambda loc: f"row {loc[1] + 1} at table {loc[0]!r}",
+                    humanize_location=lambda loc: f"row {cast(int, loc[1]) + 1} at table {loc[0]!r}",
                     field_name="column",
                     field_renaming={"age": "Age"},
                     missing_required_descriptor="empty",
