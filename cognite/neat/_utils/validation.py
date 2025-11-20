@@ -111,7 +111,7 @@ def humanize_validation_error(
     if len(loc) > 1 and type_ in {"extra_forbidden", "missing"}:
         if context.missing_required_descriptor == "empty" and type_ == "missing":
             # This is a table so we modify the error message.
-            if context.field_name == "column" and "enum" in loc and len(loc) == 5:
+            if context.field_name == "column" and len(loc) >= 3 and loc[-3:] == ("type", "enum", "values"):
                 msg = _enum_message(loc, context)
             else:
                 msg = (
