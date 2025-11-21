@@ -480,15 +480,7 @@ class DMSTableReader:
             read.container[(container_ref_entity, prop.container_property)].append(
                 ReadContainerProperty(prop.container_property, row_no, container_prop)
             )
-        else:
-            self.errors.append(
-                ModelSyntaxError(
-                    message=(
-                        f"In {self.source.location(loc)} the Container '{prop.container!s}' "
-                        f"was not found in the {self.Sheets.containers!r} table."
-                    )
-                )
-            )
+        # Container can be in CDF, this will be reported by a validator later.
         return None
 
     def _process_index(
