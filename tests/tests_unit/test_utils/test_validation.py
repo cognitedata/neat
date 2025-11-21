@@ -14,6 +14,25 @@ class TestHumanizeValidationError:
             pytest.param(
                 ErrorDetails(
                     **{
+                        "type": "string_type",
+                        "loc": ("externalId",),
+                        "msg": "Input should be a valid string",
+                        "input": None,
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Metadata",),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="value",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="missing",
+                ),
+                ("In table 'Metadata' 'externalId' input should be a valid string. Got None of type NoneType."),
+                id="Missing externalId value in table",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    **{
                         "type": "missing",
                         "loc": ("type", "enum", "values"),
                         "msg": "Field required",
@@ -123,10 +142,7 @@ class TestHumanizeValidationError:
                     url="https://errors.pydantic.dev/2.11/v/string_type",
                 ),
                 ValidationContext(field_name="value"),
-                (
-                    "In value 'name', input should be a valid string. Got 123 of type int. Hint: "
-                    "Use double quotes to force string."
-                ),
+                ("In value 'name', input should be a valid string. Got 123 of type int."),
                 id="String type error with custom field_name",
             ),
             pytest.param(

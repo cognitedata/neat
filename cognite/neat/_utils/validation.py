@@ -84,10 +84,7 @@ def humanize_validation_error(
     elif type_ == "literal_error":
         msg = f"{error['msg']}. Got {error['input']!r}."
     elif type_ == "string_type":
-        msg = (
-            f"{error['msg']}. Got {error['input']!r} of type {type(error['input']).__name__}. "
-            f"Hint: Use double quotes to force string."
-        )
+        msg = f"{error['msg']}. Got {error['input']!r} of type {type(error['input']).__name__}. "
     elif type_ == "model_type":
         model_name = error["ctx"].get("class_name", "unknown")
         msg = (
@@ -126,9 +123,14 @@ def humanize_validation_error(
             # We skip the last element as this is in the message already
             msg = f"In {context.humanize_location(loc[:-1])} {error_suffix.replace('field', context.field_name)}"
     elif len(loc) > 1:
-        msg = f"In {context.humanize_location(loc)} {error_suffix}"
+        if context.parent_loc == ("Metadata",) and len(loc) == 2:
+            msg = f"In table '{loc[0]}' '{loc[1]}' {error_suffix}"
+        else:
+            msg = f"In {context.humanize_location(loc)} {error_suffix}"
     elif len(loc) == 1 and isinstance(loc[0], str) and type_ not in {"extra_forbidden", "missing"}:
         msg = f"In {context.field_name} {loc[0]!r}, {error_suffix}"
+
+    msg = msg.strip()
     if not msg.endswith("."):
         msg += "."
     return msg
