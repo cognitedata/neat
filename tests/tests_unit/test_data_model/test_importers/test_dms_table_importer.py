@@ -1024,6 +1024,7 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
                 " 'CogniteDescribable' has an invalid type 'requiresssss'. "
                 "Only 'requires' constraints are supported at the container level."
             ),
+            "In table 'Properties' row 1 the View 'CogniteDescribable' was not found in the 'Views' table.",
         },
         id="Missing required metadata fields",
     )
