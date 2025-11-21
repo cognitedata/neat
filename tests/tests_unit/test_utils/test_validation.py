@@ -35,6 +35,34 @@ class TestHumanizeValidationError:
             ),
             pytest.param(
                 ErrorDetails(
+                    **{
+                        "type": "union_tag_invalid",
+                        "loc": ("type",),
+                        "msg": (
+                            "Input tag 'primitive' found using 'type' does not match any of the expected tags:"
+                            " 'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', "
+                            "'json', 'timeseries', 'file', 'sequence', 'enum', 'direct'"
+                        ),
+                        "input": {"maxListSize": None, "list": False, "type": "primitive"},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Properties", 276),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Properties' row 277 column 'Value Type' input value 'primitive' "
+                    "does not match any of the expected values: "
+                    "'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', 'json', "
+                    "'timeseries', 'file', 'sequence', 'enum'."
+                ),
+                id="Not existing tag",
+            ),
+            pytest.param(
+                ErrorDetails(
                     type="missing",
                     loc=("age",),
                     msg="Field required",
