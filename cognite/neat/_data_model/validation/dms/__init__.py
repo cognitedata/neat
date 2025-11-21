@@ -22,7 +22,7 @@ from ._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from ._orchestrator import DmsDataModelValidation
-from ._views import ViewToContainerMappingNotPossible
+from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
 
 __all__ = [
     "ConnectionValueTypeUndefined",
@@ -34,6 +34,7 @@ __all__ = [
     "DataModelMissingName",
     "DataModelViewCountIsOutOfLimits",
     "DmsDataModelValidation",
+    "ImplementedViewNotExisting",
     "ReverseConnectionContainerMissing",
     "ReverseConnectionContainerPropertyMissing",
     "ReverseConnectionContainerPropertyWrongType",

@@ -35,7 +35,7 @@ from ._connections import (
     ReverseConnectionTargetMissing,
 )
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
-from ._views import ViewToContainerMappingNotPossible
+from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -112,6 +112,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ContainerPropertyListSizeIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
             # Views
             ViewToContainerMappingNotPossible(local_resources, cdf_resources, self._modus_operandi),
+            ImplementedViewNotExisting(local_resources, cdf_resources, self._modus_operandi),
             # Consistency
             ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
             # Connections
