@@ -1,5 +1,8 @@
 """Validators for checking containers in the data model."""
 
+from pyparsing import cast
+
+from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError
@@ -72,6 +75,59 @@ class ExternalContainerDoesNotExist(DataModelValidator):
                                 f"property '{property_.container_property_identifier}' in CDF."
                             ),
                             fix="Define necessary container property in CDF",
+                            code=self.code,
+                        )
+                    )
+
+        return errors
+
+
+class RequiredContainerDoesNotExist(DataModelValidator):
+    """
+    Validates that any container required by another container exists in the data model.
+
+    ## What it does
+    For each container in the data model, this validator checks that any container it
+    requires (via requires constraints) exists either in the data model or in CDF.
+
+    ## Why is this bad?
+    If a container requires another container that does not exist in the data model or in CDF,
+    the data model cannot be deployed. The affected container will not function, and
+    the deployment of the entire data model will fail.
+
+    ## Example
+    Container `windy_space:WindTurbineContainer` has a constraint requiring `windy_space:LocationContainer`.
+    If `windy_space:LocationContainer` does not exist in the data model or in CDF, deployment will fail.
+    """
+
+    code = f"{BASE_CODE}-002"
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for container_ref, container in self.local_resources.containers_by_reference.items():
+            if not container.constraints:
+                continue
+
+            for external_id, constraint in cast(dict[str, Constraint], container.constraints).items():
+                if not isinstance(constraint, RequiresConstraintDefinition):
+                    continue
+
+                is_local = constraint.require.space == self.local_resources.data_model_reference.space
+                container_exists = (
+                    constraint.require in self.merged_containers
+                    if is_local
+                    else constraint.require in self.cdf_resources.containers_by_reference
+                )
+
+                if not container_exists:
+                    errors.append(
+                        ConsistencyError(
+                            message=(
+                                f"Container '{container_ref!s}' constraint '{external_id}' requires container "
+                                f"'{constraint.require!s}' which does not exist."
+                            ),
+                            fix="Define necessary container in the data model",
                             code=self.code,
                         )
                     )

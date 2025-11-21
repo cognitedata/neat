@@ -1,5 +1,6 @@
 from graphlib import TopologicalSorter
 
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerPropertyDefinition, ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._references import (
@@ -57,6 +58,10 @@ class DataModelAnalysis:
 
         for container in self.physical.containers:
             referenced_containers.add(container.as_reference())
+            if container.constraints:
+                for constraint in container.constraints.values():
+                    if isinstance(constraint, RequiresConstraintDefinition):
+                        referenced_containers.add(constraint.require)
 
         return referenced_containers
 
