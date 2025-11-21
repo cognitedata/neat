@@ -94,6 +94,9 @@ def humanize_validation_error(
             f"Input must be an object of type {model_name}. Got {error['input']!r} of "
             f"type {type(error['input']).__name__}."
         )
+    elif type_ == "union_tag_invalid":
+        msg = error["msg"].replace(", 'direct'", "").replace("found using 'type' ", "").replace("tag", "value")
+
     elif type_.endswith("_type"):
         msg = f"{error['msg']}. Got {error['input']!r} of type {type(error['input']).__name__}."
     else:
