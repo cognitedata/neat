@@ -1,4 +1,4 @@
-**Neat supports 25 validation rules** for data modeling. These rules are learned
+**Neat supports 26 validation rules** for data modeling. These rules are learned
  from best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
  helping customers build and maintain their data models.
 
@@ -48,6 +48,7 @@ Validators for checking containers in the data model.
 | code | name | message |
 |------|------|---------|
 | NEAT-DMS-CONTAINER-001 | [ExternalContainerDoesNotExist](neat-dms-container-001.md) | Validates that any container or container property referenced by a view property, when the |
+| NEAT-DMS-CONTAINER-002 | [RequiredContainerDoesNotExist](neat-dms-container-002.md) | Validates that any container required by another container exists in the data model. |
 
 ### Limits (NEAT-DMS-LIMITS)
 
