@@ -13,6 +13,7 @@ from ._connections import (
     ReverseConnectionTargetMissing,
 )
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
+from ._containers import ExternalContainerDoesNotExist
 from ._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -34,6 +35,7 @@ __all__ = [
     "DataModelMissingName",
     "DataModelViewCountIsOutOfLimits",
     "DmsDataModelValidation",
+    "ExternalContainerDoesNotExist",
     "ImplementedViewNotExisting",
     "ReverseConnectionContainerMissing",
     "ReverseConnectionContainerPropertyMissing",

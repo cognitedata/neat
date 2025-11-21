@@ -185,6 +185,23 @@ def validation_test_cdf_client(
                     isGlobal=False,
                 ),
                 dict(
+                    space="cdf_cdm",
+                    externalId="CogniteDescribable",
+                    name="ExistingContainer",
+                    description="ExistingContainer",
+                    usedFor="node",
+                    properties={
+                        "name": {
+                            "type": {"type": "text"},
+                            "nullable": False,
+                            "immutable": False,
+                        }
+                    },
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    isGlobal=False,
+                ),
+                dict(
                     space="my_space",
                     externalId="DirectConnectionRemoteContainer",
                     name="DirectConnectionRemoteContainer",
