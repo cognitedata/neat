@@ -111,17 +111,17 @@ def humanize_validation_error(
 
     error_suffix = f"{msg[:1].casefold()}{msg[1:]}"
 
-    if len(loc) > 1 and type_ in {"extra_forbidden", "missing"}:
+    if len(loc) >= 3 and context.field_name == "column" and loc[-3:] == ("type", "enum", "values"):
+        # Special handling for enum errors in table columns
+        msg = _enum_message(type_, loc, context)
+    elif len(loc) > 1 and type_ in {"extra_forbidden", "missing"}:
         if context.missing_required_descriptor == "empty" and type_ == "missing":
             # This is a table so we modify the error message.
-            if context.field_name == "column" and len(loc) >= 3 and loc[-3:] == ("type", "enum", "values"):
-                msg = _enum_message(loc, context)
-            else:
-                msg = (
-                    f"In {context.humanize_location(loc[:-1])} the {context.field_name}"
-                    f" {context.field_renaming.get(str(loc[-1]), loc[-1])!r} "
-                    "cannot be empty."
-                )
+            msg = (
+                f"In {context.humanize_location(loc[:-1])} the {context.field_name}"
+                f" {context.field_renaming.get(str(loc[-1]), loc[-1])!r} "
+                "cannot be empty."
+            )
         else:
             # We skip the last element as this is in the message already
             msg = f"In {context.humanize_location(loc[:-1])} {error_suffix.replace('field', context.field_name)}"
@@ -134,10 +134,14 @@ def humanize_validation_error(
     return msg
 
 
-def _enum_message(loc: tuple[int | str, ...], context: ValidationContext) -> str:
+def _enum_message(type_: str, loc: tuple[int | str, ...], context: ValidationContext) -> str:
     """Special handling of enum errors in table columns."""
 
     if loc[-1] != "values":
         raise RuntimeError("This is a neat bug, report to the team.")
-
-    return f"In {context.humanize_location(loc[:-1])} definition is missing the collection reference"
+    if type_ == "missing":
+        return f"In {context.humanize_location(loc[:-1])} definition is missing the collection reference"
+    elif type_ == "too_short":
+        return f"In {context.humanize_location(loc[:-1])} collection is not defined in 'Enum' sheet"
+    else:
+        raise RuntimeError("This is a neat bug, report to the team.")
