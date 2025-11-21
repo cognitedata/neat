@@ -180,16 +180,15 @@ class DMSContainer(TableObj):
             return self
 
         for constraint in self.constraint:
-            # Skip if already in correct format
-            if constraint.prefix in ["requires", "uniqueness"]:
+            # Skip if already in correct format or being wrong but not legacy
+            if constraint.prefix == "requires" or constraint.properties:
                 continue
 
-            # Handle missing prefix - default to "requires"
+            # This part handles legacy constraints
             if not constraint.prefix:
                 constraint.prefix = "requires"
                 constraint.properties = {"require": constraint.suffix}
 
-            # Handle legacy format with space:external_id in prefix/suffix
             else:
                 container_space = constraint.prefix
                 container_external_id = constraint.suffix
