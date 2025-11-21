@@ -20,6 +20,7 @@ from cognite.neat._data_model.validation.dms import (
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
+from cognite.neat._data_model.validation.dms._containers import RequiredContainerDoesNotExist
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
 
@@ -121,8 +122,10 @@ Views:
 Containers:
 - Container: cdf_cdm:CogniteDescribable
   Used For: node
+  Constraint: requires:my_constraint(require=idonotexist:AndWillNeverExist)
 - Container: my_space:DirectConnectionContainer
   Used For: node
+  Constraint: requires:my_constraint(require=my_space:SomethingThatDoesNotExist)
 """
 
 
@@ -141,7 +144,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 21
+        assert len(on_success.issues) == 23
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -154,6 +157,7 @@ class TestValidators:
             ViewMissingDescription.code,
             ViewMissingName.code,
             ExternalContainerDoesNotExist.code,
+            RequiredContainerDoesNotExist.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -245,6 +249,16 @@ class TestValidators:
                     found_missing_items.add(expected_item)
         assert found_missing_items == expected_missing_items
 
+        assert len(by_code[RequiredContainerDoesNotExist.code]) == 2
+
+        expected_missing_items = {"idonotexist:AndWillNeverExist", "my_space:SomethingThatDoesNotExist"}
+        found_missing_items = set()
+        for issue in by_code[RequiredContainerDoesNotExist.code]:
+            for expected_item in expected_missing_items:
+                if expected_item in issue.message:
+                    found_missing_items.add(expected_item)
+        assert found_missing_items == expected_missing_items
+
     def test_rebuild_modus_operandi(
         self, validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: str
     ) -> None:
@@ -259,7 +273,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 26
+        assert len(on_success.issues) == 28
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -273,6 +287,7 @@ class TestValidators:
             ViewMissingName.code,
             ImplementedViewNotExisting.code,
             ExternalContainerDoesNotExist.code,
+            RequiredContainerDoesNotExist.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
@@ -355,6 +370,14 @@ class TestValidators:
         expected_missing_items = {"nospace:UnexistingContainer", "unexistingProperty"}
         found_missing_items = set()
         for issue in by_code[ExternalContainerDoesNotExist.code]:
+            for expected_item in expected_missing_items:
+                if expected_item in issue.message:
+                    found_missing_items.add(expected_item)
+        assert found_missing_items == expected_missing_items
+
+        expected_missing_items = {"idonotexist:AndWillNeverExist", "my_space:SomethingThatDoesNotExist"}
+        found_missing_items = set()
+        for issue in by_code[RequiredContainerDoesNotExist.code]:
             for expected_item in expected_missing_items:
                 if expected_item in issue.message:
                     found_missing_items.add(expected_item)

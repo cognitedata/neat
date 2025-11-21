@@ -35,7 +35,7 @@ from ._connections import (
     ReverseConnectionTargetMissing,
 )
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
-from ._containers import ExternalContainerDoesNotExist
+from ._containers import ExternalContainerDoesNotExist, RequiredContainerDoesNotExist
 from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
 
 
@@ -116,6 +116,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ImplementedViewNotExisting(local_resources, cdf_resources, self._modus_operandi),
             # Containers
             ExternalContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
+            RequiredContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
             # Consistency
             ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
             # Connections
