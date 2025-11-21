@@ -41,6 +41,14 @@ class TestHumanizeValidationError:
                         "msg": "Dictionary should have at least 1 item after validation, not 0",
                         "input": {},
                         "ctx": {"field_type": "Dictionary", "min_length": 1, "actual_length": 0},
+                        "type": "union_tag_invalid",
+                        "loc": ("type",),
+                        "msg": (
+                            "Input tag 'primitive' found using 'type' does not match any of the expected tags:"
+                            " 'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', "
+                            "'json', 'timeseries', 'file', 'sequence', 'enum', 'direct'"
+                        ),
+                        "input": {"maxListSize": None, "list": False, "type": "primitive"},
                     }
                 ),
                 ValidationContext(
@@ -55,6 +63,12 @@ class TestHumanizeValidationError:
                     " collection is not defined in 'Enum' sheet."
                 ),
                 id="Missing enum collection",
+                    "In table 'Properties' row 277 column 'Value Type' input value 'primitive' "
+                    "does not match any of the expected values: "
+                    "'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', 'json', "
+                    "'timeseries', 'file', 'sequence', 'enum'."
+                ),
+                id="Not existing tag",
             ),
             pytest.param(
                 ErrorDetails(

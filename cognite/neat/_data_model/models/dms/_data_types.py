@@ -183,8 +183,8 @@ DataType = Annotated[
     | TimeseriesCDFExternalIdReference
     | FileCDFExternalIdReference
     | SequenceCDFExternalIdReference
-    | DirectNodeRelation
-    | EnumProperty,
+    | EnumProperty
+    | DirectNodeRelation,
     Field(discriminator="type"),
 ]
 
