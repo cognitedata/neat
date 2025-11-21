@@ -41,6 +41,24 @@ class TestHumanizeValidationError:
                         "msg": "Dictionary should have at least 1 item after validation, not 0",
                         "input": {},
                         "ctx": {"field_type": "Dictionary", "min_length": 1, "actual_length": 0},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Properties", 276),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Properties' row 277 column 'Value Type' -> enum"
+                    " collection is not defined in 'Enum' sheet."
+                ),
+                id="Missing enum collection",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    **{
                         "type": "union_tag_invalid",
                         "loc": ("type",),
                         "msg": (
@@ -59,10 +77,6 @@ class TestHumanizeValidationError:
                     missing_required_descriptor="empty",
                 ),
                 (
-                    "In table 'Properties' row 277 column 'Value Type' -> enum"
-                    " collection is not defined in 'Enum' sheet."
-                ),
-                id="Missing enum collection",
                     "In table 'Properties' row 277 column 'Value Type' input value 'primitive' "
                     "does not match any of the expected values: "
                     "'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', 'json', "
