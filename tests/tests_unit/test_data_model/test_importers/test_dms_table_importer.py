@@ -1671,7 +1671,7 @@ Containers:
 - Key: version
   Value: v1
 Properties:
-- View: CogniteDescribable
+- View: cdf_cdm:CogniteDescribable(version=v1)
   View Property: name
   Value Type: text
   Min Count: 0
@@ -1680,6 +1680,7 @@ Properties:
   Container: cdf_cdm:CogniteDescribable
   Container Property: name
   Index: btree:name(cursorable=True)
+  Constraint: uniqueness:nameUnique(order=1)
   Connection: null
 Views:
 - View: CogniteDescribable
@@ -1703,12 +1704,14 @@ Properties:
   Container: CogniteDescribable
   Container Property: name
   Index: btree:name(cursorable=True)
+  Constraint: uniqueness:nameUnique
   Connection: null
 Views:
 - View: CogniteDescribable
 Containers:
 - Container: CogniteDescribable
-  Used For: node""",
+  Used For: node
+""",
         id="Specifying default space",
     )
 
@@ -1726,7 +1729,7 @@ class TestYAMLTableFormat:
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
-        assert written_yaml == expected_str or yaml_str
+        assert written_yaml == (expected_str or yaml_str)
 
 
 def valid_dms_excel_formats() -> Iterable[tuple]:
