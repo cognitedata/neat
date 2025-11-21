@@ -12,6 +12,7 @@ from cognite.neat._data_model.validation.dms import (
     DataModelMissingDescription,
     DataModelMissingName,
     DmsDataModelValidation,
+    ImplementedViewNotExisting,
     ReverseConnectionSourceViewMissing,
     ViewMissingDescription,
     ViewMissingName,
@@ -113,6 +114,7 @@ Properties:
   Max Count: 1
 Views:
 - View: MyDescribable
+  Implements: DomainDescribable
 - View: another_space:MissingProperties(version=v2)
 - View: my_space:MissingProperties(version=v2)
 Containers:
@@ -245,7 +247,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 23
+        assert len(on_success.issues) == 24
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -257,6 +259,7 @@ class TestValidators:
             DataModelMissingDescription.code,
             ViewMissingDescription.code,
             ViewMissingName.code,
+            ImplementedViewNotExisting.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
@@ -332,3 +335,6 @@ class TestValidators:
         assert len(by_code[DataModelMissingDescription.code]) == 1
         assert len(by_code[ViewMissingDescription.code]) == 3
         assert len(by_code[ViewMissingName.code]) == 3
+
+        assert len(by_code[ImplementedViewNotExisting.code]) == 1
+        assert "my_space:DomainDescribable(version=v1)" in by_code[ImplementedViewNotExisting.code][0].message
