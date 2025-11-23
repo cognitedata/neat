@@ -1,7 +1,7 @@
 from abc import ABC
-from typing import Any
+from typing import Annotated, Any, Literal, TypeAlias
 
-from pydantic import Field, JsonValue, TypeAdapter, model_serializer, model_validator
+from pydantic import BeforeValidator, Field, JsonValue, TypeAdapter, model_serializer, model_validator
 from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.useful_types import BaseModelObject
@@ -9,25 +9,34 @@ from cognite.neat._utils.useful_types import BaseModelObject
 from ._references import ContainerReference, NodeReference, ViewReference
 
 
-class PropertyReference(BaseModelObject, ABC):
+class Parameter(BaseModelObject):
+    parameter: str
+
+
+class FilterDataDefinition(BaseModelObject, ABC):
+    """Base class for filter data models."""
+
+    filter_type: str = Field(..., exclude=True)
+
+
+class PropertyReference(FilterDataDefinition, ABC):
     """Represents the property path in filters."""
 
     property: list[str] = Field(..., min_length=2, max_length=3)
 
 
-class Parameter(BaseModelObject):
-    parameter: str
-
-
 class EqualsData(PropertyReference):
+    filter_type: Literal["equals"] = Field("equals", exclude=True)
     value: JsonValue | PropertyReference
 
 
 class InData(PropertyReference):
+    filter_type: Literal["in"] = "in"
     values: list[JsonValue] | PropertyReference
 
 
 class RangeData(PropertyReference):
+    filter_type: Literal["range"] = "range"
     gt: str | int | float | PropertyReference | None = None
     gte: str | int | float | PropertyReference | None = None
     lt: str | int | float | PropertyReference | None = None
@@ -35,30 +44,36 @@ class RangeData(PropertyReference):
 
 
 class PrefixData(PropertyReference):
+    filter_type: Literal["prefix"] = "prefix"
     value: str | Parameter
 
 
-class ExistsData(PropertyReference): ...
+class ExistsData(PropertyReference):
+    filter_type: Literal["exists"] = "exists"
 
 
 class ContainsAnyData(PropertyReference):
+    filter_type: Literal["containsAny"] = "containsAny"
     values: list[JsonValue] | PropertyReference
 
 
 class ContainsAllData(PropertyReference):
+    filter_type: Literal["containsAll"] = "containsAll"
     values: list[JsonValue] | PropertyReference
 
 
-class MatchAllData(BaseModelObject):
-    pass
+class MatchAllData(FilterDataDefinition):
+    filter_type: Literal["matchAll"] = "matchAll"
 
 
 class NestedData(PropertyReference):
+    filter_type: Literal["nested"] = "nested"
     scope: list[str] = Field(..., min_length=1, max_length=3)
     filter: "Filter"
 
 
 class OverlapsData(PropertyReference):
+    filter_type: Literal["overlaps"] = "overlaps"
     start_property: list[str] = Field(..., min_length=1, max_length=3)
     end_property: list[str] = Field(..., min_length=1, max_length=3)
     gt: str | int | float | PropertyReference | None = None
@@ -170,22 +185,49 @@ class InstanceReferencesFilter(BaseModelObject):
         return {"instanceReferences": [ref.model_dump(**vars(info)) for ref in self.references]}
 
 
-Filter = (
-    AndFilter
-    | OrFilter
-    | NotFilter
-    | EqualsFilter
-    | PrefixFilter
-    | InFilter
-    | RangeFilter
-    | ExistsFilter
-    | ContainsAnyFilter
-    | ContainsAllFilter
-    | MatchAllFilter
-    | NestedFilter
-    | OverlapsFilter
-    | HasDataFilter
-    | InstanceReferencesFilter
-)
+FilterData = Annotated[
+    EqualsData
+    | PrefixData
+    | InData
+    | RangeData
+    | ExistsData
+    | ContainsAnyData
+    | ContainsAllData
+    | MatchAllData
+    | NestedData
+    | OverlapsData,
+    Field(discriminator="filter_type"),
+]
+
+
+FilterTypes: TypeAlias = Literal[
+    "equals",
+    "prefix",
+    "in",
+    "range",
+    "exists",
+    "containsAny",
+    "containsAll",
+    "matchAll",
+    "nested",
+    "overlaps",
+    "and",
+    "or",
+    "not",
+    "hasData",
+    "instanceReferences",
+]
+
+
+def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
+    if len(data) != 1:
+        raise ValueError("Filter data must have exactly one key.")
+    key, data = next(iter(data.items()))
+    output = data.copy()
+    output["filter_type"] = key
+    return {key: output}
+
+
+Filter = Annotated[dict[FilterTypes, FilterData], BeforeValidator(_move_filter_key)]
 
 FilterAdapter: TypeAdapter[Filter] = TypeAdapter(Filter)

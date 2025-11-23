@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from cognite.neat._data_model.models.dms import Filter, FilterAdapter
+from cognite.neat._data_model.models.dms import FilterAdapter
 from cognite.neat._utils.validation import humanize_validation_error
 
 
@@ -125,9 +125,9 @@ class TestViewFilters:
     @pytest.mark.parametrize("raw_data", list(view_filter_raw_data()))
     def test_roundtrip_serialization(self, raw_data: dict[str, Any]) -> None:
         loaded = FilterAdapter.validate_python(raw_data)
-        assert isinstance(loaded, Filter)
+        assert isinstance(loaded, dict)
 
-        dumped = loaded.model_dump(by_alias=True, exclude_unset=True)
+        dumped = FilterAdapter.dump_python(loaded)
         assert dumped == raw_data
 
     @pytest.mark.parametrize(
