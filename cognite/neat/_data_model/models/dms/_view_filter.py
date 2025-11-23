@@ -123,6 +123,7 @@ class HasDataFilter(BaseModelObject):
     references: list[ViewReference | ContainerReference]
 
     @model_validator(mode="before")
+    @classmethod
     def validate_model(cls, data: Any) -> dict[str, Any]:
         if isinstance(data, list):
             return {"references": data}
@@ -130,7 +131,12 @@ class HasDataFilter(BaseModelObject):
             return {"references": data["hasData"]}
         return data
 
-    @model_serializer(mode="plain", return_type=dict[str, Any])
+    # MyPy says that the model_serializer decorator does not take
+    # 'Callable[[HasDataFilter, FieldSerializationInfo]], dict[str, Any]]' type: ignore[ERA001]
+    # However, checking the pydantic source code, it is clear that it does
+    # (Callable[[Any, FieldSerializationInfo]], Any]) is the expected type.)
+    # In addition, the tests confirm that this works as intended.
+    @model_serializer(mode="plain")  # type: ignore[type-var]
     def serialize_model(self, info: FieldSerializationInfo) -> dict[str, Any]:
         references: list[dict[str, Any]] = []
         for ref in self.references:
@@ -154,7 +160,12 @@ class InstanceReferencesFilter(BaseModelObject):
             return {"references": data["instanceReferences"]}
         return data
 
-    @model_serializer(mode="plain", return_type=dict[str, Any])
+    # MyPy says that the model_serializer decorator does not take
+    # 'Callable[[InstanceReferencesFilter,FieldSerializationInfo]], dict[str, Any]]' type: ignore[ERA001]
+    # However, checking the pydantic source code, it is clear that it does
+    # (Callable[[Any, FieldSerializationInfo]], Any]) is the expected type.)
+    # In addition, the tests confirm that this works as intended.
+    @model_serializer(mode="plain")  # type: ignore[type-var]
     def serialize_model(self, info: FieldSerializationInfo) -> dict[str, Any]:
         return {"instanceReferences": [ref.model_dump(**vars(info)) for ref in self.references]}
 
