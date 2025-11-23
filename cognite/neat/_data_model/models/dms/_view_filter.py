@@ -1,12 +1,7 @@
-from __future__ import annotations
-
 from abc import ABC
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from pydantic import Field, JsonValue, TypeAdapter, model_serializer, model_validator
-
-if TYPE_CHECKING:
-    pass
 
 from cognite.neat._utils.useful_types import BaseModelObject
 
@@ -23,52 +18,104 @@ class Parameter(BaseModelObject):
     parameter: str
 
 
-class EqualsFilter(PropertyReference):
+class EqualsData(PropertyReference):
     value: JsonValue | PropertyReference
 
 
-class InFilter(PropertyReference):
+class InData(PropertyReference):
     values: list[JsonValue] | PropertyReference
 
 
-class RangeFilter(PropertyReference):
+class RangeData(PropertyReference):
     gt: str | int | float | PropertyReference | None = None
     gte: str | int | float | PropertyReference | None = None
     lt: str | int | float | PropertyReference | None = None
     lte: str | int | float | PropertyReference | None = None
 
 
-class PrefixFilter(PropertyReference):
+class PrefixData(PropertyReference):
     value: str | Parameter
 
 
-class ExistsFilter(PropertyReference): ...
+class ExistsData(PropertyReference): ...
 
 
-class ContainsAnyFilter(PropertyReference):
+class ContainsAnyData(PropertyReference):
     values: list[JsonValue] | PropertyReference
 
 
-class ContainsAllFilter(PropertyReference):
+class ContainsAllData(PropertyReference):
     values: list[JsonValue] | PropertyReference
 
 
-class MatchAllFilter(BaseModelObject):
+class MatchAllData(BaseModelObject):
     pass
 
 
-class NestedFilter(PropertyReference):
+class NestedData(PropertyReference):
     scope: list[str] = Field(..., min_length=1, max_length=3)
-    filter: Filter
+    filter: "Filter"
 
 
-class OverlapsFilter(PropertyReference):
+class OverlapsData(PropertyReference):
     start_property: list[str] = Field(..., min_length=1, max_length=3)
     end_property: list[str] = Field(..., min_length=1, max_length=3)
     gt: str | int | float | PropertyReference | None = None
     gte: str | int | float | PropertyReference | None = None
     lt: str | int | float | PropertyReference | None = None
     lte: str | int | float | PropertyReference | None = None
+
+
+class AndFilter(BaseModelObject):
+    and_: "list[Filter]" = Field(alias="and")
+
+
+class OrFilter(BaseModelObject):
+    or_: "list[Filter]" = Field(alias="or")
+
+
+class NotFilter(BaseModelObject):
+    not_: "Filter" = Field(alias="not")
+
+
+class EqualsFilter(BaseModelObject):
+    equals: EqualsData
+
+
+class PrefixFilter(BaseModelObject):
+    prefix: PrefixData
+
+
+class InFilter(BaseModelObject):
+    in_: InData = Field(alias="in")
+
+
+class RangeFilter(BaseModelObject):
+    range: RangeData
+
+
+class ExistsFilter(BaseModelObject):
+    exists: ExistsData
+
+
+class ContainsAnyFilter(BaseModelObject):
+    containsAny: ContainsAnyData
+
+
+class ContainsAllFilter(BaseModelObject):
+    containsAll: ContainsAllData
+
+
+class MatchAllFilter(BaseModelObject):
+    matchAll: MatchAllData
+
+
+class NestedFilter(BaseModelObject):
+    nested: NestedData
+
+
+class OverlapsFilter(BaseModelObject):
+    overlaps: OverlapsData
 
 
 class HasDataFilter(BaseModelObject):
@@ -86,67 +133,19 @@ class HasDataFilter(BaseModelObject):
         return data
 
 
-# We need to use a different approach - wrap each filter type in a discriminated union
+class InstanceReferencesFilter(BaseModelObject):
+    references: list[NodeReference]
 
+    @model_serializer
+    def serialize_model(self) -> list[dict[str, Any]]:
+        # Custom serialization logic
+        return [ref.model_dump() for ref in self.references]
 
-class AndFilter(BaseModelObject):
-    and_: list[Filter] = Field(alias="and")
-
-
-class OrFilter(BaseModelObject):
-    or_: list[Filter] = Field(alias="or")
-
-
-class NotFilter(BaseModelObject):
-    not_: Filter = Field(alias="not")
-
-
-class EqualsFilterWrapper(BaseModelObject):
-    equals: EqualsFilter
-
-
-class PrefixFilterWrapper(BaseModelObject):
-    prefix: PrefixFilter
-
-
-class InFilterWrapper(BaseModelObject):
-    in_: InFilter = Field(alias="in")
-
-
-class RangeFilterWrapper(BaseModelObject):
-    range: RangeFilter
-
-
-class ExistsFilterWrapper(BaseModelObject):
-    exists: ExistsFilter
-
-
-class ContainsAnyFilterWrapper(BaseModelObject):
-    containsAny: ContainsAnyFilter
-
-
-class ContainsAllFilterWrapper(BaseModelObject):
-    containsAll: ContainsAllFilter
-
-
-class MatchAllFilterWrapper(BaseModelObject):
-    matchAll: MatchAllFilter
-
-
-class NestedFilterWrapper(BaseModelObject):
-    nested: NestedFilter
-
-
-class OverlapsFilterWrapper(BaseModelObject):
-    overlaps: OverlapsFilter
-
-
-class HasDataFilterWrapper(BaseModelObject):
-    hasData: HasDataFilter
-
-
-class InstanceReferencesFilterWrapper(BaseModelObject):
-    instanceReferences: list[NodeReference]
+    @model_validator(mode="before")
+    def validate_model(cls, data: Any) -> dict[str, Any]:
+        if isinstance(data, list):
+            return {"references": data}
+        return data
 
 
 # Now create the discriminated union
@@ -154,18 +153,18 @@ Filter = (
     AndFilter
     | OrFilter
     | NotFilter
-    | EqualsFilterWrapper
-    | PrefixFilterWrapper
-    | InFilterWrapper
-    | RangeFilterWrapper
-    | ExistsFilterWrapper
-    | ContainsAnyFilterWrapper
-    | ContainsAllFilterWrapper
-    | MatchAllFilterWrapper
-    | NestedFilterWrapper
-    | OverlapsFilterWrapper
-    | HasDataFilterWrapper
-    | InstanceReferencesFilterWrapper
+    | EqualsFilter
+    | PrefixFilter
+    | InFilter
+    | RangeFilter
+    | ExistsFilter
+    | ContainsAnyFilter
+    | ContainsAllFilter
+    | MatchAllFilter
+    | NestedFilter
+    | OverlapsFilter
+    | HasDataFilter
+    | InstanceReferencesFilter
 )
 
 FilterAdapter: TypeAdapter[Filter] = TypeAdapter(Filter)
