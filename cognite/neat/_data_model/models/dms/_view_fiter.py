@@ -1,7 +1,7 @@
 from abc import ABC
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, JsonValue, TypeAdapter
+from pydantic import Field, JsonValue, TypeAdapter, model_serializer, model_validator
 
 from cognite.neat._utils.useful_types import BaseModelObject
 
@@ -66,6 +66,21 @@ class OverlapsFilter(PropertyReference):
     lte: str | int | float | PropertyReference | None = None
 
 
+class HasDataFilter(BaseModelObject):
+    references: list[ViewReference | ContainerReference]
+
+    @model_serializer
+    def serialize_model(self) -> list[dict[str, Any]]:
+        # Custom serialization logic
+        return [ref.model_dump() for ref in self.references]
+
+    @model_validator(mode="before")
+    def validate_model(cls, data: Any) -> dict[str, Any]:
+        if isinstance(data, list):
+            return {"references": data}
+        return data
+
+
 # Forward reference for recursive definition
 Filter = Annotated[
     dict[Literal["and"], list["Filter"]]
@@ -81,7 +96,7 @@ Filter = Annotated[
     | dict[Literal["matchAll"], MatchAllFilter]
     | dict[Literal["nested"], NestedFilter]
     | dict[Literal["overlaps"], OverlapsFilter]
-    | dict[Literal["hasData"], list[ViewReference | ContainerReference]]
+    | dict[Literal["hasData"], HasDataFilter]
     | dict[Literal["instanceReferences"], list[NodeReference]],
     Field(discriminator=None),
 ]
