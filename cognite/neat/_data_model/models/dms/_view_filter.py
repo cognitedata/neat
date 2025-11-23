@@ -101,4 +101,4 @@ Filter = Annotated[
     Field(discriminator=None),
 ]
 
-ViewRequestPropertyAdapter: TypeAdapter[Filter] = TypeAdapter(Filter)
+FilterAdapter: TypeAdapter[Filter] = TypeAdapter(Filter)

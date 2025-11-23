@@ -58,6 +58,10 @@ from ._references import (
     ViewReference,
 )
 from ._schema import RequestSchema
+from ._view_filter import (
+    Filter,
+    FilterAdapter,
+)
 from ._view_property import (
     ConnectionPropertyDefinition,
     ConstraintOrIndexState,
@@ -111,6 +115,8 @@ __all__ = [
     "EnumProperty",
     "EnumValue",
     "FileCDFExternalIdReference",
+    "Filter",
+    "FilterAdapter",
     "Float32Property",
     "Float64Property",
     "FloatProperty",
