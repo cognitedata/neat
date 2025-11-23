@@ -2,8 +2,10 @@ from collections.abc import Iterable
 from typing import Any
 
 import pytest
+from pydantic import ValidationError
 
 from cognite.neat._data_model.models.dms import Filter, FilterAdapter
+from cognite.neat._utils.validation import humanize_validation_error
 
 
 def view_filter_raw_data() -> Iterable[tuple]:
@@ -127,3 +129,36 @@ class TestViewFilters:
 
         dumped = loaded.model_dump(by_alias=True, exclude_unset=True)
         assert dumped == raw_data
+
+    @pytest.mark.parametrize(
+        "raw_data, expected_error_msg",
+        [
+            (
+                {"equals": {"property": ["node", "space"]}},
+                "Missing required field: 'value'",
+            ),
+            (
+                {"range": {"property": ["node", "viewId/v1", "temperature"], "gte": "low", "lt": 30.0}},
+                "Input must be a float. Got 'low' of type str.",
+            ),
+            (
+                {"in": {"property": ["node", "space"], "values": "not-a-list"}},
+                "Input must be a list. Got 'not-a-list' of type str.",
+            ),
+            (
+                {"unknownFilterType": {"property": ["node", "space"], "value": "my_space"}},
+                "Input must be an object of type Filter. Got {'unknownFilterType': "
+                "{'property': ['node', 'space'], 'value': 'my_space'}} of type dict.",
+            ),
+        ],
+    )
+    def test_validation_errors(self, raw_data: dict[str, Any], expected_error_msg: str) -> None:
+        try:
+            FilterAdapter.validate_python(raw_data)
+        except ValidationError as e:
+            errors = e.errors()
+            assert len(errors) == 1
+            error_msg = humanize_validation_error(errors[0])
+            assert error_msg == expected_error_msg
+        else:
+            raise AssertionError("ValidationError was expected but not raised.")
