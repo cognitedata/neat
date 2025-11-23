@@ -2,6 +2,7 @@ from abc import ABC
 from typing import Any
 
 from pydantic import Field, JsonValue, TypeAdapter, model_serializer, model_validator
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.useful_types import BaseModelObject
 
@@ -121,34 +122,43 @@ class OverlapsFilter(BaseModelObject):
 class HasDataFilter(BaseModelObject):
     references: list[ViewReference | ContainerReference]
 
-    @model_serializer
-    def serialize_model(self) -> list[dict[str, Any]]:
-        # Custom serialization logic
-        return [ref.model_dump() for ref in self.references]
-
     @model_validator(mode="before")
     def validate_model(cls, data: Any) -> dict[str, Any]:
         if isinstance(data, list):
             return {"references": data}
+        elif isinstance(data, dict) and "hasData" in data:
+            return {"references": data["hasData"]}
         return data
+
+    @model_serializer(mode="plain", return_type=dict[str, Any])
+    def serialize_model(self, info: FieldSerializationInfo) -> dict[str, Any]:
+        references: list[dict[str, Any]] = []
+        for ref in self.references:
+            dumped = ref.model_dump(**vars(info))
+            if isinstance(ref, ViewReference):
+                dumped["type"] = "view"
+            elif isinstance(ref, ContainerReference):
+                dumped["type"] = "container"
+            references.append(dumped)
+        return {"hasData": references}
 
 
 class InstanceReferencesFilter(BaseModelObject):
     references: list[NodeReference]
 
-    @model_serializer
-    def serialize_model(self) -> list[dict[str, Any]]:
-        # Custom serialization logic
-        return [ref.model_dump() for ref in self.references]
-
     @model_validator(mode="before")
     def validate_model(cls, data: Any) -> dict[str, Any]:
         if isinstance(data, list):
             return {"references": data}
+        elif isinstance(data, dict) and "instanceReferences" in data:
+            return {"references": data["instanceReferences"]}
         return data
 
+    @model_serializer(mode="plain", return_type=dict[str, Any])
+    def serialize_model(self, info: FieldSerializationInfo) -> dict[str, Any]:
+        return {"instanceReferences": [ref.model_dump(**vars(info)) for ref in self.references]}
 
-# Now create the discriminated union
+
 Filter = (
     AndFilter
     | OrFilter

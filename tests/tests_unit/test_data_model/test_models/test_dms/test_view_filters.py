@@ -99,6 +99,24 @@ def view_filter_raw_data() -> Iterable[tuple]:
         },
         id="overlaps_filter",
     )
+    yield pytest.param(
+        {
+            "hasData": [
+                {"space": "my_space", "externalId": "MyView", "version": "v1", "type": "view"},
+                {"space": "my_space", "externalId": "MyContainer", "type": "container"},
+            ]
+        },
+        id="has_data_filter",
+    )
+    yield pytest.param(
+        {
+            "instanceReferences": [
+                {"space": "my_space", "externalId": "node1"},
+                {"space": "my_space", "externalId": "node2"},
+            ]
+        },
+        id="instance_references_filter",
+    )
 
 
 class TestViewFilters:
