@@ -20,6 +20,85 @@ def view_filter_raw_data() -> Iterable[tuple]:
         },
         id="and_filter",
     )
+    yield pytest.param(
+        {
+            "or": [
+                {"equals": {"property": ["node", "space"], "value": "space1"}},
+                {"equals": {"property": ["node", "space"], "value": "space2"}},
+            ]
+        },
+        id="or_filter",
+    )
+    yield pytest.param(
+        {"not": {"equals": {"property": ["node", "space"], "value": "excluded_space"}}},
+        id="not_filter",
+    )
+    yield pytest.param(
+        {"prefix": {"property": ["node", "viewId/v1", "name"], "value": "test"}},
+        id="prefix_filter",
+    )
+    yield pytest.param(
+        {"in": {"property": ["node", "space"], "values": ["space1", "space2", "space3"]}},
+        id="in_filter",
+    )
+    yield pytest.param(
+        {
+            "range": {
+                "property": ["node", "viewId/v1", "temperature"],
+                "gte": 20.0,
+                "lt": 30.0,
+            }
+        },
+        id="range_filter",
+    )
+    yield pytest.param(
+        {"exists": {"property": ["node", "externalId"]}},
+        id="exists_filter",
+    )
+    yield pytest.param(
+        {
+            "containsAny": {
+                "property": ["node", "viewId/v1", "tags"],
+                "values": ["tag1", "tag2", "tag3"],
+            }
+        },
+        id="contains_any_filter",
+    )
+    yield pytest.param(
+        {
+            "containsAll": {
+                "property": ["node", "viewId/v1", "requiredTags"],
+                "values": ["required1", "required2"],
+            }
+        },
+        id="contains_all_filter",
+    )
+    yield pytest.param(
+        {"matchAll": {}},
+        id="match_all_filter",
+    )
+    yield pytest.param(
+        {
+            "nested": {
+                "property": ["edge", "endNode"],
+                "scope": ["node"],
+                "filter": {"equals": {"property": ["node", "space"], "value": "my_space"}},
+            }
+        },
+        id="nested_filter",
+    )
+    yield pytest.param(
+        {
+            "overlaps": {
+                "property": ["node", "viewId/v1", "timeseries"],
+                "startProperty": ["node", "viewId/v1", "startTime"],
+                "endProperty": ["node", "viewId/v1", "endTime"],
+                "gte": "2023-01-01T00:00:00Z",
+                "lt": "2024-01-01T00:00:00Z",
+            }
+        },
+        id="overlaps_filter",
+    )
 
 
 class TestViewFilters:
