@@ -1,7 +1,12 @@
+from __future__ import annotations
+
 from abc import ABC
-from typing import Annotated, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from pydantic import Field, JsonValue, TypeAdapter, model_serializer, model_validator
+
+if TYPE_CHECKING:
+    pass
 
 from cognite.neat._utils.useful_types import BaseModelObject
 
@@ -54,7 +59,7 @@ class MatchAllFilter(BaseModelObject):
 
 class NestedFilter(PropertyReference):
     scope: list[str] = Field(..., min_length=1, max_length=3)
-    filter: "Filter"
+    filter: Filter
 
 
 class OverlapsFilter(PropertyReference):
@@ -81,24 +86,86 @@ class HasDataFilter(BaseModelObject):
         return data
 
 
-# Forward reference for recursive definition
-Filter = Annotated[
-    dict[Literal["and"], list["Filter"]]
-    | dict[Literal["or"], list["Filter"]]
-    | dict[Literal["not"], "Filter"]
-    | dict[Literal["equals"], EqualsFilter]
-    | dict[Literal["prefix"], PrefixFilter]
-    | dict[Literal["in"], InFilter]
-    | dict[Literal["range"], RangeFilter]
-    | dict[Literal["exists"], ExistsFilter]
-    | dict[Literal["containsAny"], ContainsAnyFilter]
-    | dict[Literal["containsAll"], ContainsAllFilter]
-    | dict[Literal["matchAll"], MatchAllFilter]
-    | dict[Literal["nested"], NestedFilter]
-    | dict[Literal["overlaps"], OverlapsFilter]
-    | dict[Literal["hasData"], HasDataFilter]
-    | dict[Literal["instanceReferences"], list[NodeReference]],
-    Field(discriminator=None),
-]
+# We need to use a different approach - wrap each filter type in a discriminated union
+
+
+class AndFilter(BaseModelObject):
+    and_: list[Filter] = Field(alias="and")
+
+
+class OrFilter(BaseModelObject):
+    or_: list[Filter] = Field(alias="or")
+
+
+class NotFilter(BaseModelObject):
+    not_: Filter = Field(alias="not")
+
+
+class EqualsFilterWrapper(BaseModelObject):
+    equals: EqualsFilter
+
+
+class PrefixFilterWrapper(BaseModelObject):
+    prefix: PrefixFilter
+
+
+class InFilterWrapper(BaseModelObject):
+    in_: InFilter = Field(alias="in")
+
+
+class RangeFilterWrapper(BaseModelObject):
+    range: RangeFilter
+
+
+class ExistsFilterWrapper(BaseModelObject):
+    exists: ExistsFilter
+
+
+class ContainsAnyFilterWrapper(BaseModelObject):
+    containsAny: ContainsAnyFilter
+
+
+class ContainsAllFilterWrapper(BaseModelObject):
+    containsAll: ContainsAllFilter
+
+
+class MatchAllFilterWrapper(BaseModelObject):
+    matchAll: MatchAllFilter
+
+
+class NestedFilterWrapper(BaseModelObject):
+    nested: NestedFilter
+
+
+class OverlapsFilterWrapper(BaseModelObject):
+    overlaps: OverlapsFilter
+
+
+class HasDataFilterWrapper(BaseModelObject):
+    hasData: HasDataFilter
+
+
+class InstanceReferencesFilterWrapper(BaseModelObject):
+    instanceReferences: list[NodeReference]
+
+
+# Now create the discriminated union
+Filter = (
+    AndFilter
+    | OrFilter
+    | NotFilter
+    | EqualsFilterWrapper
+    | PrefixFilterWrapper
+    | InFilterWrapper
+    | RangeFilterWrapper
+    | ExistsFilterWrapper
+    | ContainsAnyFilterWrapper
+    | ContainsAllFilterWrapper
+    | MatchAllFilterWrapper
+    | NestedFilterWrapper
+    | OverlapsFilterWrapper
+    | HasDataFilterWrapper
+    | InstanceReferencesFilterWrapper
+)
 
 FilterAdapter: TypeAdapter[Filter] = TypeAdapter(Filter)
