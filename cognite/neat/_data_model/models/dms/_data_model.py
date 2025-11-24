@@ -6,6 +6,7 @@ from pydantic_core.core_schema import FieldSerializationInfo
 
 from ._base import APIResource, Resource, WriteableResource
 from ._constants import (
+    DATA_MODEL_DESCRIPTION_MAX_LENGTH,
     DM_EXTERNAL_ID_PATTERN,
     DM_VERSION_PATTERN,
     SPACE_FORMAT_PATTERN,
@@ -46,7 +47,7 @@ class DataModel(Resource, APIResource[DataModelReference], ABC):
     description: str | None = Field(
         default=None,
         description="Description of the data model.",
-        max_length=1024,
+        max_length=DATA_MODEL_DESCRIPTION_MAX_LENGTH,
     )
     # The API supports View here, but in Neat we will only use ViewReference
     views: list[ViewReference] | None = Field(
