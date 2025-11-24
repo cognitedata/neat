@@ -99,7 +99,7 @@ class DMSTableWriter:
     @staticmethod
     def _serialize_description(description: str | None) -> tuple[str | None, str | None]:
         """DataModelRequest does not have a 'creator' field, this is a special addition that the Neat tables
-        format supports (and recommends using). If the data model was create using Neat, the suffix of the
+        format supports (and recommends using). If the data model was created using Neat, the suffix of the
         description will be Creator: <creator>. This function extracts that information."""
         if description is None:
             return None, None
