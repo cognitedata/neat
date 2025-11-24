@@ -104,7 +104,15 @@ class HasDataFilter(ListFilterDataDefinition):
     # And tests are passing fine.
     @model_serializer(mode="plain")  # type: ignore[type-var]
     def serialize_model(self, info: FieldSerializationInfo) -> list[dict[str, Any]]:
-        return [item.model_dump(**vars(info)) for item in self.data]
+        output: list[dict[str, Any]] = []
+        for item in self.data:
+            item_dict = item.model_dump(**vars(info))
+            if isinstance(item, ViewReference):
+                item_dict["type"] = "view"
+            elif isinstance(item, ContainerReference):
+                item_dict["type"] = "container"
+            output.append(item_dict)
+        return output
 
 
 class InstanceReferencesData(ListFilterDataDefinition):
@@ -217,10 +225,8 @@ def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
         return data
     key, data = next(iter(data.items()))
     if isinstance(data, dict) and key == "not":
-        output = data.copy()
-        output = _move_filter_key(output)
-        output["filterType"] = key
-        return {key: output}
+        output = _move_filter_key(data.copy())
+        return {key: {"filterType": key, "data": output}}
     elif isinstance(data, dict):
         output = data.copy()
         output["filterType"] = key
