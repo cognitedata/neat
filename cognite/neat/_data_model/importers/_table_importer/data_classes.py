@@ -24,6 +24,10 @@ from cognite.neat.v0.core._data_model.models.entities import (
     RawFilter,
 )
 
+# This marker is used to identify creator in the description field.
+CREATOR_MARKER = "Creator: "
+CREATOR_KEY = "creator"
+
 
 def parse_entity_str(v: str) -> ParsedEntity:
     if isinstance(v, ParsedEntity):
