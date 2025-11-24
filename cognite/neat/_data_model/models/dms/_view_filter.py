@@ -33,17 +33,17 @@ class PropertyReference(FilterDataDefinition, ABC):
 ## Leaf filters that follows the standard pattern
 
 
-class EqualsData(PropertyReference):
+class EqualsFilterData(PropertyReference):
     filter_type: Literal["equals"] = Field("equals", exclude=True)
     value: JsonValue | PropertyReference
 
 
-class InData(PropertyReference):
+class InFilterData(PropertyReference):
     filter_type: Literal["in"] = Field("in", exclude=True)
     values: list[JsonValue] | PropertyReference
 
 
-class RangeData(PropertyReference):
+class RangeFilterData(PropertyReference):
     filter_type: Literal["range"] = Field("range", exclude=True)
     gt: str | int | float | PropertyReference | None = None
     gte: str | int | float | PropertyReference | None = None
@@ -51,36 +51,36 @@ class RangeData(PropertyReference):
     lte: str | int | float | PropertyReference | None = None
 
 
-class PrefixData(PropertyReference):
+class PrefixFilterData(PropertyReference):
     filter_type: Literal["prefix"] = Field("prefix", exclude=True)
     value: str | Parameter
 
 
-class ExistsData(PropertyReference):
+class ExistsFilterData(PropertyReference):
     filter_type: Literal["exists"] = Field("exists", exclude=True)
 
 
-class ContainsAnyData(PropertyReference):
+class ContainsAnyFilterData(PropertyReference):
     filter_type: Literal["containsAny"] = Field("containsAny", exclude=True)
     values: list[JsonValue] | PropertyReference
 
 
-class ContainsAllData(PropertyReference):
+class ContainsAllFilterData(PropertyReference):
     filter_type: Literal["containsAll"] = Field("containsAll", exclude=True)
     values: list[JsonValue] | PropertyReference
 
 
-class MatchAllData(FilterDataDefinition):
+class MatchAllFilterData(FilterDataDefinition):
     filter_type: Literal["matchAll"] = Field("matchAll", exclude=True)
 
 
-class NestedData(PropertyReference):
+class NestedFilterData(PropertyReference):
     filter_type: Literal["nested"] = Field("nested", exclude=True)
     scope: list[str] = Field(..., min_length=1, max_length=3)
     filter: "Filter"
 
 
-class OverlapsData(PropertyReference):
+class OverlapsFilterData(PropertyReference):
     filter_type: Literal["overlaps"] = Field("overlaps", exclude=True)
     start_property: list[str] = Field(..., min_length=1, max_length=3)
     end_property: list[str] = Field(..., min_length=1, max_length=3)
@@ -118,7 +118,7 @@ class HasDataFilter(ListFilterDataDefinition):
         return output
 
 
-class InstanceReferencesData(ListFilterDataDefinition):
+class InstanceReferencesFilterData(ListFilterDataDefinition):
     filter_type: Literal["instanceReferences"] = Field("instanceReferences", exclude=True)
     data: list[NodeReference]
 
@@ -166,18 +166,18 @@ class NotFilter(FilterDataDefinition):
 
 
 FilterData = Annotated[
-    EqualsData
-    | PrefixData
-    | InData
-    | RangeData
-    | ExistsData
-    | ContainsAnyData
-    | ContainsAllData
-    | MatchAllData
-    | NestedData
-    | OverlapsData
+    EqualsFilterData
+    | PrefixFilterData
+    | InFilterData
+    | RangeFilterData
+    | ExistsFilterData
+    | ContainsAnyFilterData
+    | ContainsAllFilterData
+    | MatchAllFilterData
+    | NestedFilterData
+    | OverlapsFilterData
     | HasDataFilter
-    | InstanceReferencesData
+    | InstanceReferencesFilterData
     | AndFilter
     | OrFilter
     | NotFilter,
