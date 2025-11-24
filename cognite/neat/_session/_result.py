@@ -1,4 +1,5 @@
 import json
+import uuid
 from typing import Any, get_args
 
 from pydantic import BaseModel, Field
@@ -203,6 +204,9 @@ class Result:
 
     def _build_template_vars(self, stats: DeploymentStatistics) -> dict[str, Any]:
         """Build template variables from statistics."""
+        # Generate unique ID for this render to avoid conflicts in Jupyter
+        unique_id = uuid.uuid4().hex[:8]
+
         # Convert Pydantic models to dicts for JSON serialization
         serialized_changes = [change.model_dump() for change in self._serialized_changes]
 
@@ -216,6 +220,7 @@ class Result:
             "deleted": stats.by_change_type.delete,
             "skipped": stats.by_change_type.skip,
             "unchanged": stats.by_change_type.unchanged,
+            "unique_id": unique_id,
         }
 
     def _repr_html_(self) -> str:
