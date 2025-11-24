@@ -193,11 +193,11 @@ FilterTypes: TypeAlias = Literal[
     "matchAll",
     "nested",
     "overlaps",
+    "hasData",
+    "instanceReferences",
     "and",
     "or",
     "not",
-    "hasData",
-    "instanceReferences",
 ]
 
 
