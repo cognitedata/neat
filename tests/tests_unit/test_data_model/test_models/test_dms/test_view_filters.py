@@ -7,6 +7,7 @@ from pydantic import ValidationError
 from cognite.neat._data_model.models.dms import FilterAdapter
 from cognite.neat._data_model.models.dms._view_filter import AVAILABLE_FILTERS, FilterDataDefinition
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.validation import humanize_validation_error
 
 
@@ -148,9 +149,8 @@ class TestViewFilters:
             pytest.param(
                 {"unknownFilterType": {"property": ["node", "space"], "value": "my_space"}},
                 (
-                    "Unknown filter type: 'unknownFilterType'. Available filter types: and, "
-                    "containsAll, containsAny, equals, exists, hasData, in, instanceReferences, "
-                    "matchAll, nested, not, or, overlaps, prefix and range."
+                    f"Unknown filter type: 'unknownFilterType'. "
+                    f"Available filter types: {humanize_collection(AVAILABLE_FILTERS)}."
                 ),
                 id="unknown_filter_type",
             ),
