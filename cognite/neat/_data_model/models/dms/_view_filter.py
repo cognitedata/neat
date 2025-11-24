@@ -273,7 +273,7 @@ def _move_filter_key(value: Any) -> Any:
         # Leaf list filters, hasData and instanceReferences
         return {key: {"filterType": key, "data": data}}
     else:
-        # Let the regular validation handle the error
+        # Let the regular validation handle it (possible not an issue)
         return value
 
 
