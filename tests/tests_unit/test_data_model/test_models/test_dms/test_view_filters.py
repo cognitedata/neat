@@ -5,6 +5,8 @@ import pytest
 from pydantic import ValidationError
 
 from cognite.neat._data_model.models.dms import FilterAdapter
+from cognite.neat._data_model.models.dms._view_filter import AVAILABLE_FILTERS, FilterDataDefinition
+from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.validation import humanize_validation_error
 
 
@@ -164,3 +166,9 @@ class TestViewFilters:
             assert error_msg == expected_error_msg
         else:
             raise AssertionError("ValidationError was expected but not raised.")
+
+    def test_filter_data_for_all_filter_types(self) -> None:
+        filter_data_types = {
+            subclass.model_fields["filter_type"].default for subclass in get_concrete_subclasses(FilterDataDefinition)
+        }
+        assert filter_data_types == AVAILABLE_FILTERS
