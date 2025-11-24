@@ -28,7 +28,7 @@ from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.validation import ValidationContext, humanize_validation_error
 
-from .data_classes import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
+from .data_classes import CREATOR_KEY, CREATOR_MARKER, DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
 from .source import TableSource
 
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
@@ -750,10 +750,10 @@ class DMSTableReader:
         """DataModelRequest does not have a 'creator' field, this is a special addition that the Neat tables
         format supports (and recommends using). To keep it, Neat adds it to the suffix of the description field.
         """
-        if "creator" not in data and "Creator" not in data:
+        if CREATOR_KEY not in data and CREATOR_KEY.title() not in data:
             return None
-        creator = data.pop("creator", data.pop("Creator", ""))
-        suffix = f"Creator: {', '.join(item.strip() for item in creator.split(','))}"
+        creator = data.pop(CREATOR_KEY, data.pop(CREATOR_KEY.title(), ""))
+        suffix = f"{CREATOR_MARKER}{', '.join(item.strip() for item in creator.split(','))}"
         description = data.get("description", "")
         if len(description) + len(suffix) > DATA_MODEL_DESCRIPTION_MAX_LENGTH:
             description = description[: DATA_MODEL_DESCRIPTION_MAX_LENGTH - len(suffix) - 4] + "..."
