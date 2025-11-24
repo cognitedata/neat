@@ -1,12 +1,14 @@
 from abc import ABC
 from typing import Annotated, Any, Literal, TypeAlias
 
-from pydantic import BeforeValidator, Field, JsonValue, TypeAdapter, model_serializer, model_validator
+from pydantic import BeforeValidator, Field, JsonValue, TypeAdapter, model_serializer
 from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.useful_types import BaseModelObject
 
 from ._references import ContainerReference, NodeReference, ViewReference
+
+# Base classes and helpers
 
 
 class Parameter(BaseModelObject):
@@ -25,18 +27,21 @@ class PropertyReference(FilterDataDefinition, ABC):
     property: list[str] = Field(..., min_length=2, max_length=3)
 
 
+## Leaf filters that follows the standard pattern
+
+
 class EqualsData(PropertyReference):
     filter_type: Literal["equals"] = Field("equals", exclude=True)
     value: JsonValue | PropertyReference
 
 
 class InData(PropertyReference):
-    filter_type: Literal["in"] = "in"
+    filter_type: Literal["in"] = Field("in", exclude=True)
     values: list[JsonValue] | PropertyReference
 
 
 class RangeData(PropertyReference):
-    filter_type: Literal["range"] = "range"
+    filter_type: Literal["range"] = Field("range", exclude=True)
     gt: str | int | float | PropertyReference | None = None
     gte: str | int | float | PropertyReference | None = None
     lt: str | int | float | PropertyReference | None = None
@@ -44,36 +49,36 @@ class RangeData(PropertyReference):
 
 
 class PrefixData(PropertyReference):
-    filter_type: Literal["prefix"] = "prefix"
+    filter_type: Literal["prefix"] = Field("prefix", exclude=True)
     value: str | Parameter
 
 
 class ExistsData(PropertyReference):
-    filter_type: Literal["exists"] = "exists"
+    filter_type: Literal["exists"] = Field("exists", exclude=True)
 
 
 class ContainsAnyData(PropertyReference):
-    filter_type: Literal["containsAny"] = "containsAny"
+    filter_type: Literal["containsAny"] = Field("containsAny", exclude=True)
     values: list[JsonValue] | PropertyReference
 
 
 class ContainsAllData(PropertyReference):
-    filter_type: Literal["containsAll"] = "containsAll"
+    filter_type: Literal["containsAll"] = Field("containsAll", exclude=True)
     values: list[JsonValue] | PropertyReference
 
 
 class MatchAllData(FilterDataDefinition):
-    filter_type: Literal["matchAll"] = "matchAll"
+    filter_type: Literal["matchAll"] = Field("matchAll", exclude=True)
 
 
 class NestedData(PropertyReference):
-    filter_type: Literal["nested"] = "nested"
+    filter_type: Literal["nested"] = Field("nested", exclude=True)
     scope: list[str] = Field(..., min_length=1, max_length=3)
     filter: "Filter"
 
 
 class OverlapsData(PropertyReference):
-    filter_type: Literal["overlaps"] = "overlaps"
+    filter_type: Literal["overlaps"] = Field("overlaps", exclude=True)
     start_property: list[str] = Field(..., min_length=1, max_length=3)
     end_property: list[str] = Field(..., min_length=1, max_length=3)
     gt: str | int | float | PropertyReference | None = None
@@ -82,107 +87,71 @@ class OverlapsData(PropertyReference):
     lte: str | int | float | PropertyReference | None = None
 
 
-class AndFilter(BaseModelObject):
-    and_: "list[Filter]" = Field(alias="and")
+class ListFilterDataDefinition(FilterDataDefinition, ABC):
+    """Base class for filters that operate on lists of values."""
+
+    data: list[Any]
 
 
-class OrFilter(BaseModelObject):
-    or_: "list[Filter]" = Field(alias="or")
+## Leaf filters with custom serialization logic due to creativity in the API design
 
 
-class NotFilter(BaseModelObject):
-    not_: "Filter" = Field(alias="not")
+class HasDataFilter(ListFilterDataDefinition):
+    filter_type: Literal["hasData"] = Field("hasData", exclude=True)
+    data: list[ViewReference | ContainerReference]
+
+    # MyPy complains about thet signature of the method here, even though its compatible with the pydantic source code.
+    # And tests are passing fine.
+    @model_serializer(mode="plain")  # type: ignore[type-var]
+    def serialize_model(self, info: FieldSerializationInfo) -> list[dict[str, Any]]:
+        return [item.model_dump(**vars(info)) for item in self.data]
 
 
-class EqualsFilter(BaseModelObject):
-    equals: EqualsData
+class InstanceReferencesData(ListFilterDataDefinition):
+    filter_type: Literal["instanceReferences"] = Field("instanceReferences", exclude=True)
+    data: list[NodeReference]
+
+    # MyPy complains about thet signature of the method here, even though its compatible with the pydantic source code.
+    # And tests are passing fine.
+    @model_serializer(mode="plain")  # type: ignore[type-var]
+    def serialize_model(self, info: FieldSerializationInfo) -> list[dict[str, Any]]:
+        return [item.model_dump(**vars(info)) for item in self.data]
 
 
-class PrefixFilter(BaseModelObject):
-    prefix: PrefixData
+## Logical filters combining other filters
 
 
-class InFilter(BaseModelObject):
-    in_: InData = Field(alias="in")
+class AndFilter(ListFilterDataDefinition):
+    filter_type: Literal["and"] = Field("and", exclude=True)
+    data: "list[Filter]"
+
+    # MyPy complains about thet signature of the method here, even though its compatible with the pydantic source code.
+    # And tests are passing fine.
+    @model_serializer(mode="plain")  # type: ignore[type-var]
+    def serialize_model(self, info: FieldSerializationInfo) -> list[dict[str, Any]]:
+        return [FilterAdapter.dump_python(item, **vars(info)) for item in self.data]
 
 
-class RangeFilter(BaseModelObject):
-    range: RangeData
+class OrFilter(ListFilterDataDefinition):
+    filter_type: Literal["or"] = Field("or", exclude=True)
+    data: "list[Filter]"
+
+    # MyPy complains about thet signature of the method here, even though its compatible with the pydantic source code.
+    # And tests are passing fine.
+    @model_serializer(mode="plain")  # type: ignore[type-var]
+    def serialize_model(self, info: FieldSerializationInfo) -> list[dict[str, Any]]:
+        return [FilterAdapter.dump_python(item, **vars(info)) for item in self.data]
 
 
-class ExistsFilter(BaseModelObject):
-    exists: ExistsData
+class NotFilter(FilterDataDefinition):
+    filter_type: Literal["not"] = Field("not", exclude=True)
+    data: "Filter"
 
-
-class ContainsAnyFilter(BaseModelObject):
-    containsAny: ContainsAnyData
-
-
-class ContainsAllFilter(BaseModelObject):
-    containsAll: ContainsAllData
-
-
-class MatchAllFilter(BaseModelObject):
-    matchAll: MatchAllData
-
-
-class NestedFilter(BaseModelObject):
-    nested: NestedData
-
-
-class OverlapsFilter(BaseModelObject):
-    overlaps: OverlapsData
-
-
-class HasDataFilter(BaseModelObject):
-    references: list[ViewReference | ContainerReference]
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_model(cls, data: Any) -> dict[str, Any]:
-        if isinstance(data, list):
-            return {"references": data}
-        elif isinstance(data, dict) and "hasData" in data:
-            return {"references": data["hasData"]}
-        return data
-
-    # MyPy says that the model_serializer decorator does not take
-    # 'Callable[[HasDataFilter, FieldSerializationInfo]], dict[str, Any]]' type: ignore[ERA001]
-    # However, checking the pydantic source code, it is clear that it does
-    # (Callable[[Any, FieldSerializationInfo]], Any]) is the expected type.)
-    # In addition, the tests confirm that this works as intended.
+    # MyPy complains about thet signature of the method here, even though its compatible with the pydantic source code.
+    # And tests are passing fine.
     @model_serializer(mode="plain")  # type: ignore[type-var]
     def serialize_model(self, info: FieldSerializationInfo) -> dict[str, Any]:
-        references: list[dict[str, Any]] = []
-        for ref in self.references:
-            dumped = ref.model_dump(**vars(info))
-            if isinstance(ref, ViewReference):
-                dumped["type"] = "view"
-            elif isinstance(ref, ContainerReference):
-                dumped["type"] = "container"
-            references.append(dumped)
-        return {"hasData": references}
-
-
-class InstanceReferencesFilter(BaseModelObject):
-    references: list[NodeReference]
-
-    @model_validator(mode="before")
-    def validate_model(cls, data: Any) -> dict[str, Any]:
-        if isinstance(data, list):
-            return {"references": data}
-        elif isinstance(data, dict) and "instanceReferences" in data:
-            return {"references": data["instanceReferences"]}
-        return data
-
-    # MyPy says that the model_serializer decorator does not take
-    # 'Callable[[InstanceReferencesFilter,FieldSerializationInfo]], dict[str, Any]]' type: ignore[ERA001]
-    # However, checking the pydantic source code, it is clear that it does
-    # (Callable[[Any, FieldSerializationInfo]], Any]) is the expected type.)
-    # In addition, the tests confirm that this works as intended.
-    @model_serializer(mode="plain")  # type: ignore[type-var]
-    def serialize_model(self, info: FieldSerializationInfo) -> dict[str, Any]:
-        return {"instanceReferences": [ref.model_dump(**vars(info)) for ref in self.references]}
+        return FilterAdapter.dump_python(self.data, **vars(info))
 
 
 FilterData = Annotated[
@@ -195,7 +164,12 @@ FilterData = Annotated[
     | ContainsAllData
     | MatchAllData
     | NestedData
-    | OverlapsData,
+    | OverlapsData
+    | HasDataFilter
+    | InstanceReferencesData
+    | AndFilter
+    | OrFilter
+    | NotFilter,
     Field(discriminator="filter_type"),
 ]
 
@@ -220,12 +194,43 @@ FilterTypes: TypeAlias = Literal[
 
 
 def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
+    """The issus is that the API have the filter type on the outside, e.g.,
+    {
+        "equals": {
+            "property": [...],
+            "value": ...
+        }
+    }
+    but our models have the filter type on the inside, e.g.,
+
+    {
+        "property": [...],
+        "value": ...,
+        "filter_type": "equals"
+    }
+    This function moves the filter type from the outside to the inside.
+    """
     if len(data) != 1:
         raise ValueError("Filter data must have exactly one key.")
+    if "filterType" in data:
+        # Already in the correct format
+        return data
     key, data = next(iter(data.items()))
-    output = data.copy()
-    output["filter_type"] = key
-    return {key: output}
+    if isinstance(data, dict) and key == "not":
+        output = data.copy()
+        output = _move_filter_key(output)
+        output["filterType"] = key
+        return {key: output}
+    elif isinstance(data, dict):
+        output = data.copy()
+        output["filterType"] = key
+        return {key: output}
+    elif isinstance(data, list) and key in {"and", "or"}:
+        return {key: {"filterType": key, "data": [_move_filter_key(item) for item in data]}}
+    elif isinstance(data, list):
+        return {key: {"filterType": key, "data": data}}
+    else:
+        raise ValueError("Filter data must be a dict or a list.")
 
 
 Filter = Annotated[dict[FilterTypes, FilterData], BeforeValidator(_move_filter_key)]

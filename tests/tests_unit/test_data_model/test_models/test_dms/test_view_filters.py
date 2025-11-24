@@ -127,7 +127,7 @@ class TestViewFilters:
         loaded = FilterAdapter.validate_python(raw_data)
         assert isinstance(loaded, dict)
 
-        dumped = FilterAdapter.dump_python(loaded)
+        dumped = FilterAdapter.dump_python(loaded, by_alias=True, exclude_unset=True)
         assert dumped == raw_data
 
     @pytest.mark.parametrize(
