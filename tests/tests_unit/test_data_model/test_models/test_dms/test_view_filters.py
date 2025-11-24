@@ -141,8 +141,8 @@ class TestViewFilters:
                 id="missing_value_in_equals_filter",
             ),
             pytest.param(
-                {"in": {"property": ["node", "space"], "values": "not-a-list"}},
-                "Input must be a list. Got 'not-a-list' of type str.",
+                {"in": {"property": "node:property", "values": ["val1", "val2"]}},
+                ("In in.in.property input should be a valid list. Got 'node:property' of type str."),
                 id="invalid_values_type_in_in_filter",
             ),
             pytest.param(
