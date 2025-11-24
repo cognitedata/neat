@@ -738,8 +738,7 @@ class DMSTableReader:
             **{meta.key: meta.value for meta in tables.metadata},
             "views": [self._create_view_ref(view.view) for view in tables.views if view.view in valid_view_entities],
         }
-        description = self._create_description_field(data)
-        if description is not None:
+        if description := self._create_description_field(data):
             data["description"] = description
         model = self._validate_obj(DataModelRequest, data, (self.Sheets.metadata,), field_name="value")
         if model is None:
@@ -754,11 +753,14 @@ class DMSTableReader:
         if "creator" not in data and "Creator" not in data:
             return None
         creator = data.pop("creator", data.pop("Creator", ""))
-        suffix = f" Creator: {', '.join(item.strip() for item in creator.split(','))}"
+        suffix = f"Creator: {', '.join(item.strip() for item in creator.split(','))}"
         description = data.get("description", "")
         if len(description) + len(suffix) > DATA_MODEL_DESCRIPTION_MAX_LENGTH:
             description = description[: DATA_MODEL_DESCRIPTION_MAX_LENGTH - len(suffix) - 4] + "..."
-        description += suffix
+        if description:
+            description = f"{description} {suffix}"
+        else:
+            description = suffix
         return description
 
     def _parse_entity(self, entity: str, loc: tuple[str | int, ...]) -> ParsedEntity | None:
