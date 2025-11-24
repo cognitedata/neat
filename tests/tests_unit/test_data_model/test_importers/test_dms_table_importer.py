@@ -22,6 +22,7 @@ from cognite.neat._data_model.models.dms import (
     DirectNodeRelation,
     EnumProperty,
     EnumValue,
+    FilterAdapter,
     Float32Property,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
@@ -265,7 +266,9 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                             containerPropertyIdentifier="name",
                         ),
                     },
-                    filter=HasDataFilter.load("hasData(sp_container:DataContainer)").as_dms_filter().dump(),
+                    filter=FilterAdapter.validate_python(
+                        HasDataFilter.load("hasData(sp_container:DataContainer)").as_dms_filter().dump()
+                    ),
                 ),
                 ViewRequest(
                     space="cdf_cdm",
@@ -289,7 +292,9 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                             containerPropertyIdentifier="name",
                         ),
                     },
-                    filter=NodeTypeFilter.load("nodeType(subject:person)").as_dms_filter().dump(),
+                    filter=FilterAdapter.validate_python(
+                        NodeTypeFilter.load("nodeType(subject:person)").as_dms_filter().dump()
+                    ),
                 ),
                 ViewRequest(
                     space="cdf_cdm",
@@ -328,7 +333,9 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                             containerPropertyIdentifier="category",
                         ),
                     },
-                    filter=RawFilter.load(RAW_FILTER_CELL_EXAMPLE).as_dms_filter().dump(),
+                    filter=FilterAdapter.validate_python(
+                        RawFilter.load(RAW_FILTER_CELL_EXAMPLE).as_dms_filter().dump()
+                    ),
                 ),
                 ViewRequest(
                     space="cdf_cdm",
@@ -1024,6 +1031,7 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
                 " 'CogniteDescribable' has an invalid type 'requiresssss'. "
                 "Only 'requires' constraints are supported at the container level."
             ),
+            "In table 'Properties' row 1 the View 'CogniteDescribable' was not found in the 'Views' table.",
         },
         id="Missing required metadata fields",
     )
@@ -1633,7 +1641,7 @@ class TestSpreadsheetRead:
         assert read.adjusted_row_number(row) == expected
 
 
-def valid_dms_yaml_formats() -> Iterable[tuple]:
+def valid_dms_yaml_formats_roundtrip() -> Iterable[tuple]:
     yield pytest.param(
         """Metadata:
 - Key: space
@@ -1661,13 +1669,66 @@ Containers:
 - Container: CogniteDescribable
   Used For: node
 """,
+        None,
         id="Minimal example",
+    )
+    yield pytest.param(
+        """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+Properties:
+- View: cdf_cdm:CogniteDescribable(version=v1)
+  View Property: name
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: cdf_cdm:CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Constraint: uniqueness:nameUnique(order=1)
+  Connection: null
+Views:
+- View: CogniteDescribable
+Containers:
+- Container: CogniteDescribable
+  Used For: node""",
+        """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+Properties:
+- View: CogniteDescribable
+  View Property: name
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Constraint: uniqueness:nameUnique
+  Connection: null
+Views:
+- View: CogniteDescribable
+Containers:
+- Container: CogniteDescribable
+  Used For: node
+""",
+        id="Specifying default space",
     )
 
 
 class TestYAMLTableFormat:
-    @pytest.mark.parametrize("yaml_str", list(valid_dms_yaml_formats()))
-    def test_roundtrip(self, yaml_str: str) -> None:
+    @pytest.mark.parametrize("yaml_str,expected_str", list(valid_dms_yaml_formats_roundtrip()))
+    def test_roundtrip(self, yaml_str: str, expected_str: str | None) -> None:
         yaml_file = MagicMock(spec=Path)
         yaml_file.read_text.return_value = yaml_str
         data_model = DMSTableImporter.from_yaml(yaml_file).to_data_model()
@@ -1678,7 +1739,7 @@ class TestYAMLTableFormat:
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
-        assert written_yaml == yaml_str
+        assert written_yaml == (expected_str or yaml_str)
 
 
 def valid_dms_excel_formats() -> Iterable[tuple]:

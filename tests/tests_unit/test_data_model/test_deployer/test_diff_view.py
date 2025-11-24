@@ -14,6 +14,7 @@ from cognite.neat._data_model.deployer.data_classes import (
 )
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
+    EqualsFilterData,
     MultiEdgeProperty,
     NodeReference,
     SingleReverseDirectRelationPropertyRequest,
@@ -32,7 +33,7 @@ class TestViewDiffer:
         version="1",
         name="Test View",
         description="This is a test view.",
-        filter={"equals": {"property": ["node", "type"], "value": "TestNode"}},
+        filter={"equals": EqualsFilterData(property=["node", "type"], value="TestNode")},
         implements=[ViewReference(space="core", external_id="base_view", version="1")],
         properties={
             TO_MODIFY_ID: ViewCorePropertyRequest(
@@ -52,7 +53,7 @@ class TestViewDiffer:
         version="1",
         name="Updated Test View",
         description="This is an updated view.",
-        filter={"equals": {"property": ["node", "status"], "value": "Active"}},
+        filter={"equals": EqualsFilterData(property=["node", "status"], value="Active")},
         implements=[
             ViewReference(space="core", external_id="base_view", version="1"),
             ViewReference(space="core", external_id="extra_view", version="2"),
