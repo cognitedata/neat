@@ -1643,7 +1643,7 @@ def valid_dms_yaml_formats() -> Iterable[tuple]:
 - Key: version
   Value: v1
 - Key: creator
-  Value: test_user
+  Value: test_user, other_user
 Properties:
 - View: CogniteDescribable
   View Property: name
