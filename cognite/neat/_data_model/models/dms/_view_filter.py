@@ -206,7 +206,7 @@ FilterTypes: TypeAlias = Literal[
 AVAILABLE_FILTERS: frozenset[str] = frozenset(get_args(FilterTypes))
 
 
-def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
+def _move_filter_key(value: Any) -> Any:
     """The DMS API filters have an unusual structure.
 
     It has the filter type as the key of the outer dict, and then the actual filter data as the value, e.g.,
@@ -246,12 +246,14 @@ def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
         }
     }
     """
-    if len(data) != 1:
+    if not isinstance(value, dict):
+        return value
+    if len(value) != 1:
         raise ValueError("Filter data must have exactly one key.")
-    if "filterType" in data:
+    if "filterType" in value:
         # Already in the correct format
-        return data
-    key, data = next(iter(data.items()))
+        return value
+    key, data = next(iter(value.items()))
     if key not in AVAILABLE_FILTERS:
         raise ValueError(
             f"Unknown filter type: {key!r}. Available filter types: {humanize_collection(AVAILABLE_FILTERS)}."
@@ -271,7 +273,8 @@ def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
         # Leaf list filters, hasData and instanceReferences
         return {key: {"filterType": key, "data": data}}
     else:
-        raise ValueError("Filter data must be a dict or a list.")
+        # Let the regular validation handle the error
+        return value
 
 
 Filter = Annotated[dict[FilterTypes, FilterData], BeforeValidator(_move_filter_key)]
