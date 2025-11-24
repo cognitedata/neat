@@ -1,12 +1,13 @@
 let currentFilter = 'all';
 let currentSearch = '';
-let isDarkMode = localStorage.getItem('neat-issues-theme') === 'dark';
+const storageKey = 'neat-issues-theme-' + uniqueId;
+let isDarkMode = localStorage.getItem(storageKey) === 'dark';
 let expandedGroups = new Set();
 
-const container = document.getElementById('issuesContainer');
-const themeToggle = document.getElementById('themeToggle');
-const themeIcon = document.getElementById('themeIcon');
-const themeText = document.getElementById('themeText');
+const container = document.getElementById('issuesContainer-' + uniqueId);
+const themeToggle = document.getElementById('themeToggle-' + uniqueId);
+const themeIcon = document.getElementById('themeIcon-' + uniqueId);
+const themeText = document.getElementById('themeText-' + uniqueId);
 
 // Initialize theme
 function updateTheme() {
@@ -26,7 +27,7 @@ updateTheme();
 // Theme toggle
 themeToggle.addEventListener('click', function() {
     isDarkMode = !isDarkMode;
-    localStorage.setItem('neat-issues-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem(storageKey, isDarkMode ? 'dark' : 'light');
     updateTheme();
 });
 
@@ -46,7 +47,7 @@ function groupIssues(issuesList) {
 }
 
 function renderIssues() {
-    const listContainer = document.getElementById('issuesList');
+    const listContainer = document.getElementById('issuesList-' + uniqueId);
     const filtered = issues.filter(issue => {
         const matchesFilter = currentFilter === 'all' || issue.type === currentFilter;
         const matchesSearch = !currentSearch ||
@@ -93,7 +94,7 @@ function renderIssues() {
             // Grouped issues
             html.push(`
                 <div class="issue-group ${isExpanded ? 'expanded' : ''}">
-                    <div class="issue-group-header" onclick="toggleGroup('${key}')">
+                    <div class="issue-group-header" onclick="toggleGroup_${uniqueId}('${key}')">
                         <div class="issue-group-info">
                             <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
                             <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
@@ -123,7 +124,7 @@ function renderIssues() {
     listContainer.innerHTML = html.join('');
 }
 
-window.toggleGroup = function(key) {
+window['toggleGroup_' + uniqueId] = function(key) {
     if (expandedGroups.has(key)) {
         expandedGroups.delete(key);
     } else {
@@ -133,9 +134,9 @@ window.toggleGroup = function(key) {
 };
 
 // Stat item filters
-document.querySelectorAll('.stat-item').forEach(item => {
+document.querySelectorAll('#issuesContainer-' + uniqueId + ' .stat-item').forEach(item => {
     item.addEventListener('click', function() {
-        document.querySelectorAll('.stat-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('#issuesContainer-' + uniqueId + ' .stat-item').forEach(i => i.classList.remove('active'));
         this.classList.add('active');
         currentFilter = this.dataset.filter;
         renderIssues();
@@ -143,13 +144,13 @@ document.querySelectorAll('.stat-item').forEach(item => {
 });
 
 // Search
-document.getElementById('searchInput').addEventListener('input', function(e) {
+document.getElementById('searchInput-' + uniqueId).addEventListener('input', function(e) {
     currentSearch = e.target.value;
     renderIssues();
 });
 
 // Export function
-window.exportIssues = function() {
+window['exportIssues_' + uniqueId] = function() {
     const csv = [
         ['Type', 'Code', 'Message', 'Fix'],
         ...issues.map(i => [i.type, i.code || '', i.message, i.fix || ''])
