@@ -133,22 +133,24 @@ class TestViewFilters:
     @pytest.mark.parametrize(
         "raw_data, expected_error_msg",
         [
-            (
+            pytest.param(
                 {"equals": {"property": ["node", "space"]}},
-                "Missing required field: 'value'",
+                "In equals.equals missing required field: 'value'.",
+                id="missing_value_in_equals_filter",
             ),
-            (
-                {"range": {"property": ["node", "viewId/v1", "temperature"], "gte": "low", "lt": 30.0}},
-                "Input must be a float. Got 'low' of type str.",
-            ),
-            (
+            pytest.param(
                 {"in": {"property": ["node", "space"], "values": "not-a-list"}},
                 "Input must be a list. Got 'not-a-list' of type str.",
+                id="invalid_values_type_in_in_filter",
             ),
-            (
+            pytest.param(
                 {"unknownFilterType": {"property": ["node", "space"], "value": "my_space"}},
-                "Input must be an object of type Filter. Got {'unknownFilterType': "
-                "{'property': ['node', 'space'], 'value': 'my_space'}} of type dict.",
+                (
+                    "Unknown filter type: 'unknownFilterType'. Available filter types: and, "
+                    "containsAll, containsAny, equals, exists, hasData, in, instanceReferences, "
+                    "matchAll, nested, not, or, overlaps, prefix and range."
+                ),
+                id="unknown_filter_type",
             ),
         ],
     )

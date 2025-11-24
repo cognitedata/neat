@@ -1,9 +1,10 @@
 from abc import ABC
-from typing import Annotated, Any, Literal, TypeAlias
+from typing import Annotated, Any, Literal, TypeAlias, get_args
 
 from pydantic import BeforeValidator, Field, JsonValue, TypeAdapter, model_serializer
 from pydantic_core.core_schema import FieldSerializationInfo
 
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import BaseModelObject
 
 from ._references import ContainerReference, NodeReference, ViewReference
@@ -200,6 +201,8 @@ FilterTypes: TypeAlias = Literal[
     "not",
 ]
 
+AVAILABLE_FILTERS: frozenset[str] = frozenset(get_args(FilterTypes))
+
 
 def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
     """The issus is that the API have the filter type on the outside, e.g.,
@@ -224,6 +227,10 @@ def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
         # Already in the correct format
         return data
     key, data = next(iter(data.items()))
+    if key not in AVAILABLE_FILTERS:
+        raise ValueError(
+            f"Unknown filter type: {key!r}. Available filter types: {humanize_collection(AVAILABLE_FILTERS)}."
+        )
     if isinstance(data, dict) and key == "not":
         output = _move_filter_key(data.copy())
         return {key: {"filterType": key, "data": output}}
