@@ -3,17 +3,17 @@
 {{SPECIFIC_CSS}}
 </style>
 
-<div class="issues-container deployment-container" id="deploymentContainer">
+<div class="issues-container deployment-container" id="deploymentContainer-{{unique_id}}">
     <div class="issues-header deployment-header">
-        <button class="theme-toggle" id="themeToggle">
-            <span id="themeIcon">🌙</span>
-            <span id="themeText">Dark</span>
+        <button class="theme-toggle" id="themeToggle-{{unique_id}}">
+            <span id="themeIcon-{{unique_id}}">🌙</span>
+            <span id="themeText-{{unique_id}}">Dark</span>
         </button>
         <h2 class="deployment-title issues-title">
             <span>Deployment Result</span>
-            <span class="status-badge status-{{status}}" id="statusBadge">
-                <span id="statusIcon"></span>
-                <span id="statusText"></span>
+            <span class="status-badge status-{{status}}" id="statusBadge-{{unique_id}}">
+                <span id="statusIcon-{{unique_id}}"></span>
+                <span id="statusText-{{unique_id}}"></span>
             </span>
         </h2>
         <div class="deployment-stats issues-stats">
@@ -35,7 +35,7 @@
             <div class="stat-item" data-filter="unchanged">
                 <span class="stat-number">{{unchanged}}</span> Unchanged
             </div>
-            <button class="export-btn" onclick="exportDeployment()">Export Report</button>
+            <button class="export-btn" onclick="exportDeployment_{{unique_id}}()">Export Report</button>
         </div>
     </div>
 
@@ -58,17 +58,18 @@
         </div>
 
         <div class="control-group">
-            <input type="text" class="search-input" placeholder="🔍 Search resource IDs, changes..." id="searchInput">
+            <input type="text" class="search-input" placeholder="🔍 Search resource IDs, changes..." id="searchInput-{{unique_id}}">
         </div>
     </div>
 
-    <div class="deployment-list issues-list" id="deploymentList"></div>
+    <div class="deployment-list issues-list" id="deploymentList-{{unique_id}}"></div>
 </div>
 
 <script>
 (function() {
     const changes = {{CHANGES_JSON}};
     const stats = {{STATS_JSON}};
+    const uniqueId = '{{unique_id}}';
     {{SCRIPTS}}
 })();
 </script>
