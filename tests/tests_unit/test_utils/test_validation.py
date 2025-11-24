@@ -48,7 +48,8 @@ class TestHumanizeValidationError:
                 ),
                 (
                     "In table 'Properties' row 277 column 'Value Type' -> enum"
-                    " definition is missing the collection reference."
+                    " definition should include a reference to a collection in the 'Enum' sheet"
+                    " (e.g., collection='MyEnumCollection')."
                 ),
                 id="Missing enum collection reference in table",
             ),
@@ -71,7 +72,7 @@ class TestHumanizeValidationError:
                 ),
                 (
                     "In table 'Properties' row 277 column 'Value Type' -> enum"
-                    " collection is not defined in 'Enum' sheet."
+                    " collection is not defined in the 'Enum' sheet."
                 ),
                 id="Missing enum collection",
             ),

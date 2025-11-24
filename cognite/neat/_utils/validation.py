@@ -142,8 +142,11 @@ def _enum_message(type_: str, loc: tuple[int | str, ...], context: ValidationCon
     if loc[-1] != "values":
         raise RuntimeError("This is a neat bug, report to the team.")
     if type_ == "missing":
-        return f"In {context.humanize_location(loc[:-1])} definition is missing the collection reference"
+        return (
+            f"In {context.humanize_location(loc[:-1])} definition should include "
+            "a reference to a collection in the 'Enum' sheet (e.g., collection='MyEnumCollection')."
+        )
     elif type_ == "too_short":
-        return f"In {context.humanize_location(loc[:-1])} collection is not defined in 'Enum' sheet"
+        return f"In {context.humanize_location(loc[:-1])} collection is not defined in the 'Enum' sheet"
     else:
         raise RuntimeError("This is a neat bug, report to the team.")
