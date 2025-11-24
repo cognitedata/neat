@@ -13,6 +13,7 @@ from cognite.neat._data_model.validation.dms import (
     DataModelMissingName,
     DmsDataModelValidation,
     ExternalContainerDoesNotExist,
+    ExternalContainerPropertyDoesNotExist,
     ImplementedViewNotExisting,
     ReverseConnectionSourceViewMissing,
     ViewMissingDescription,
@@ -157,6 +158,7 @@ class TestValidators:
             ViewMissingDescription.code,
             ViewMissingName.code,
             ExternalContainerDoesNotExist.code,
+            ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
         }
 
@@ -239,15 +241,11 @@ class TestValidators:
         assert len(by_code[ViewMissingDescription.code]) == 3
         assert len(by_code[ViewMissingName.code]) == 3
 
-        assert len(by_code[ExternalContainerDoesNotExist.code]) == 2
+        assert len(by_code[ExternalContainerDoesNotExist.code]) == 1
+        assert "nospace:UnexistingContainer" in by_code[ExternalContainerDoesNotExist.code][0].message
 
-        expected_missing_items = {"nospace:UnexistingContainer", "unexistingProperty"}
-        found_missing_items = set()
-        for issue in by_code[ExternalContainerDoesNotExist.code]:
-            for expected_item in expected_missing_items:
-                if expected_item in issue.message:
-                    found_missing_items.add(expected_item)
-        assert found_missing_items == expected_missing_items
+        assert len(by_code[ExternalContainerPropertyDoesNotExist.code]) == 1
+        assert "unexistingProperty" in by_code[ExternalContainerPropertyDoesNotExist.code][0].message
 
         assert len(by_code[RequiredContainerDoesNotExist.code]) == 2
 
@@ -287,6 +285,7 @@ class TestValidators:
             ViewMissingName.code,
             ImplementedViewNotExisting.code,
             ExternalContainerDoesNotExist.code,
+            ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
         }
 
@@ -367,13 +366,11 @@ class TestValidators:
         assert len(by_code[ImplementedViewNotExisting.code]) == 1
         assert "my_space:DomainDescribable(version=v1)" in by_code[ImplementedViewNotExisting.code][0].message
 
-        expected_missing_items = {"nospace:UnexistingContainer", "unexistingProperty"}
-        found_missing_items = set()
-        for issue in by_code[ExternalContainerDoesNotExist.code]:
-            for expected_item in expected_missing_items:
-                if expected_item in issue.message:
-                    found_missing_items.add(expected_item)
-        assert found_missing_items == expected_missing_items
+        assert len(by_code[ExternalContainerDoesNotExist.code]) == 1
+        assert "nospace:UnexistingContainer" in by_code[ExternalContainerDoesNotExist.code][0].message
+
+        assert len(by_code[ExternalContainerPropertyDoesNotExist.code]) == 1
+        assert "unexistingProperty" in by_code[ExternalContainerPropertyDoesNotExist.code][0].message
 
         expected_missing_items = {"idonotexist:AndWillNeverExist", "my_space:SomethingThatDoesNotExist"}
         found_missing_items = set()

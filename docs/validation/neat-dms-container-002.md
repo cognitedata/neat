@@ -1,14 +1,17 @@
-Validates that any container required by another container exists in the data model.
+Validates that any container property referenced by a view property, when the
+referenced container does not belong to the data model's space, exists in CDF.
 
 ## What it does
-For each container in the data model, this validator checks that any container it
-requires (via requires constraints) exists either in the data model or in CDF.
+For each view property that maps to a container in a different space than the data model,
+this validator checks that the referenced container property exists in that external container in CDF.
+This validator only runs if the external container exists in CDF.
 
 ## Why is this bad?
-If a container requires another container that does not exist in the data model or in CDF,
-the data model cannot be deployed. The affected container will not function, and
-the deployment of the entire data model will fail.
+If a view property references a container property that does not exist in CDF,
+the data model cannot be deployed. The affected view property will not function, and the
+deployment of the entire data model will fail.
 
 ## Example
-Container `windy_space:WindTurbineContainer` has a constraint requiring `windy_space:LocationContainer`.
-If `windy_space:LocationContainer` does not exist in the data model or in CDF, deployment will fail.
+View `my_space:WindTurbine` has a property `location` that maps to container property
+`gpsCoordinates` in `other_space:WindTurbineContainer`. If `gpsCoordinates` does not exist
+in that container in CDF, deployment will fail.
