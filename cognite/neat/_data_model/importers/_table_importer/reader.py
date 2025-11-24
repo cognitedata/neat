@@ -23,13 +23,14 @@ from cognite.neat._data_model.models.dms import (
     ViewRequestProperty,
     ViewRequestPropertyAdapter,
 )
+from cognite.neat._data_model.models.dms._constants import DATA_MODEL_DESCRIPTION_MAX_LENGTH
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.validation import ValidationContext, humanize_validation_error
 
-from .data_classes import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
+from .data_classes import CREATOR_KEY, CREATOR_MARKER, DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
 from .source import TableSource
 
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
@@ -891,15 +892,44 @@ class DMSTableReader:
         return views_requests, set(rows_by_seen.keys())
 
     def read_data_model(self, tables: TableDMS, valid_view_entities: set[ParsedEntity]) -> DataModelRequest:
-        data = {
+        data: dict[str, Any] = {
             **{meta.key: meta.value for meta in tables.metadata},
             "views": [self._create_view_ref(view.view) for view in tables.views if view.view in valid_view_entities],
         }
+        if description := self._create_description_field(data):
+            data["description"] = description
         model = self._validate_obj(DataModelRequest, data, (self.Sheets.metadata,), field_name="value")
         if model is None:
             # This is the last step, so we can raise the error here.
             raise DataModelImportException(self.errors) from None
         return model
+
+    def _create_description_field(self, data: dict[str, Any]) -> str | None:
+        """DataModelRequest does not have a 'creator' field, this is a special addition that the Neat tables
+        format supports (and recommends using). To keep it, Neat adds it to the suffix of the description field.
+        """
+        if CREATOR_KEY not in data and CREATOR_KEY.title() not in data:
+            return None
+        creator_val = data.pop(CREATOR_KEY, data.pop(CREATOR_KEY.title(), None))
+
+        if not creator_val:
+            return None
+
+        creator = str(creator_val)
+        # We do a split/join to clean up any spaces around commas. Ensuring that we have a consistent
+        # canonical format.
+        cleaned_creator = ", ".join(item.strip() for item in creator.split(","))
+        if not cleaned_creator:
+            return None
+        suffix = f"{CREATOR_MARKER}{cleaned_creator}"
+        description = data.get("description", "")
+        if len(description) + len(suffix) > DATA_MODEL_DESCRIPTION_MAX_LENGTH:
+            description = description[: DATA_MODEL_DESCRIPTION_MAX_LENGTH - len(suffix) - 4] + "..."
+        if description:
+            description = f"{description} {suffix}"
+        else:
+            description = suffix
+        return description
 
     def _parse_entity(self, entity: str, loc: tuple[str | int, ...]) -> ParsedEntity | None:
         try:

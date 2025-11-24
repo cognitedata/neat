@@ -1650,6 +1650,8 @@ def valid_dms_yaml_formats_roundtrip() -> Iterable[tuple]:
   Value: CogniteDataModel
 - Key: version
   Value: v1
+- Key: creator
+  Value: test_user, other_user
 Properties:
 - View: CogniteDescribable
   View Property: name

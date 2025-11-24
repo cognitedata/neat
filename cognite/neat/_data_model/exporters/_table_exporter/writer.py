@@ -5,6 +5,8 @@ from typing import Any, Literal
 
 from cognite.neat._data_model._constants import DEFAULT_MAX_LIST_SIZE, DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS
 from cognite.neat._data_model.importers._table_importer.data_classes import (
+    CREATOR_KEY,
+    CREATOR_MARKER,
     DMSContainer,
     DMSEnum,
     DMSNode,
@@ -78,14 +80,34 @@ class DMSTableWriter:
         )
 
     ### Metadata Sheet ###
-    @staticmethod
-    def write_metadata(data_model: DataModelRequest) -> list[MetadataValue]:
-        return [
+    @classmethod
+    def write_metadata(cls, data_model: DataModelRequest) -> list[MetadataValue]:
+        metadata = [
             MetadataValue(key=key, value=value)
             for key, value in data_model.model_dump(
-                mode="json", by_alias=True, exclude_none=True, exclude={"views"}
+                mode="json", by_alias=True, exclude_none=True, exclude={"views", "description"}
             ).items()
         ]
+        if data_model.description:
+            description, creator = cls._serialize_description(data_model.description)
+            if description:
+                metadata.append(MetadataValue(key="description", value=description))
+            if creator:
+                metadata.append(MetadataValue(key=CREATOR_KEY, value=creator))
+        return metadata
+
+    @staticmethod
+    def _serialize_description(description: str | None) -> tuple[str | None, str | None]:
+        """DataModelRequest does not have a 'creator' field, this is a special addition that the Neat tables
+        format supports (and recommends using). If the data model was created using Neat, the suffix of the
+        description will be Creator: <creator>. This function extracts that information."""
+        if description is None:
+            return None, None
+        if CREATOR_MARKER not in description:
+            return description, None
+
+        description, creator = description.rsplit(CREATOR_MARKER, 1)
+        return description.rstrip(), creator.strip()
 
     ### Container Properties Sheet ###
 
