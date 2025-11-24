@@ -753,6 +753,8 @@ class DMSTableReader:
         if CREATOR_KEY not in data and CREATOR_KEY.title() not in data:
             return None
         creator = data.pop(CREATOR_KEY, data.pop(CREATOR_KEY.title(), ""))
+        # We do a split/join to clean up any spaces around commas. Ensuring that we have a consistent
+        # canonical format.
         suffix = f"{CREATOR_MARKER}{', '.join(item.strip() for item in creator.split(','))}"
         description = data.get("description", "")
         if len(description) + len(suffix) > DATA_MODEL_DESCRIPTION_MAX_LENGTH:
