@@ -19,6 +19,8 @@ class Parameter(BaseModelObject):
 class FilterDataDefinition(BaseModelObject, ABC):
     """Base class for filter data models."""
 
+    # This is an internal field used for discriminating between filter types. It is not part of the actual
+    # data sent to or received from the API. See the _move_filter_key function for more details.
     filter_type: str = Field(..., exclude=True)
 
 
@@ -205,21 +207,44 @@ AVAILABLE_FILTERS: frozenset[str] = frozenset(get_args(FilterTypes))
 
 
 def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
-    """The issus is that the API have the filter type on the outside, e.g.,
+    """The DMS API filters have an unusual structure.
+
+    It has the filter type as the key of the outer dict, and then the actual filter data as the value, e.g.,
     {
         "equals": {
             "property": [...],
             "value": ...
         }
     }
-    but our models have the filter type on the inside, e.g.,
+    We could have modeled it that way with Pydantic, and had an union of pydantic models of all possible filter types.
+    However, validating union types in Pydantic without a discriminator leads to poor error messages. If the filter
+    data does not comply with any of the union types, Pydantic will give one error message per union type. For exampl,
+    if the user writes
+    {
+        "equals": {
+            "property": "my_property"  # Should be a list,
+            "value": 'my_value'
+            }
+    }
+    Pydantic will give 15 error messages, one for each filter type in the union, saying that the data does not
+    comply with that filter type. This is not very user-friendly.
+
+    Instead, we introduce an internal field "filter_type" inside the filter data models, and use that as a
+    discriminator. This will enable the validation to be two steps. First, we validate the outer key and
+    that it is a known filter type. Then, we move that key inside the filter data as the "filter_type" field, and
+    validate the filter data against the correct model based on that discriminator.
+
+
+    This function transforms the data from the outer-key format to the inner-key format. For example, it transforms
+    the equals filter form above into
 
     {
-        "property": [...],
-        "value": ...,
-        "filter_type": "equals"
+        "equals": {
+            "property": [...],
+            "value": ...,
+            "filterType": "equals"
+        }
     }
-    This function moves the filter type from the outside to the inside.
     """
     if len(data) != 1:
         raise ValueError("Filter data must have exactly one key.")
@@ -232,6 +257,7 @@ def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
             f"Unknown filter type: {key!r}. Available filter types: {humanize_collection(AVAILABLE_FILTERS)}."
         )
     if isinstance(data, dict) and key == "not":
+        # Not is a recursive filter, so we need to move the filter key inside its data as well
         output = _move_filter_key(data.copy())
         return {key: {"filterType": key, "data": output}}
     elif isinstance(data, dict):
@@ -239,8 +265,10 @@ def _move_filter_key(data: dict[str, Any]) -> dict[str, Any]:
         output["filterType"] = key
         return {key: output}
     elif isinstance(data, list) and key in {"and", "or"}:
+        # And and Or are recursive filters, so we need to move the filter key inside each of their data items as well
         return {key: {"filterType": key, "data": [_move_filter_key(item) for item in data]}}
     elif isinstance(data, list):
+        # Leaf list filters, hasData and instanceReferences
         return {key: {"filterType": key, "data": data}}
     else:
         raise ValueError("Filter data must be a dict or a list.")
