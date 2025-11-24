@@ -22,6 +22,7 @@ from cognite.neat._data_model.models.dms import (
     DirectNodeRelation,
     EnumProperty,
     EnumValue,
+    FilterAdapter,
     Float32Property,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
@@ -265,7 +266,9 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                             containerPropertyIdentifier="name",
                         ),
                     },
-                    filter=HasDataFilter.load("hasData(sp_container:DataContainer)").as_dms_filter().dump(),
+                    filter=FilterAdapter.validate_python(
+                        HasDataFilter.load("hasData(sp_container:DataContainer)").as_dms_filter().dump()
+                    ),
                 ),
                 ViewRequest(
                     space="cdf_cdm",
@@ -289,7 +292,9 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                             containerPropertyIdentifier="name",
                         ),
                     },
-                    filter=NodeTypeFilter.load("nodeType(subject:person)").as_dms_filter().dump(),
+                    filter=FilterAdapter.validate_python(
+                        NodeTypeFilter.load("nodeType(subject:person)").as_dms_filter().dump()
+                    ),
                 ),
                 ViewRequest(
                     space="cdf_cdm",
@@ -328,7 +333,9 @@ def valid_legacy_dms_table_format() -> Iterable[tuple]:
                             containerPropertyIdentifier="category",
                         ),
                     },
-                    filter=RawFilter.load(RAW_FILTER_CELL_EXAMPLE).as_dms_filter().dump(),
+                    filter=FilterAdapter.validate_python(
+                        RawFilter.load(RAW_FILTER_CELL_EXAMPLE).as_dms_filter().dump()
+                    ),
                 ),
                 ViewRequest(
                     space="cdf_cdm",

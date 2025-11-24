@@ -2,7 +2,7 @@ import re
 from abc import ABC
 from typing import Any, Literal, TypeVar
 
-from pydantic import Field, JsonValue, field_serializer, field_validator, model_validator
+from pydantic import Field, field_serializer, field_validator, model_validator
 from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._utils.text import humanize_collection
@@ -18,6 +18,7 @@ from ._constants import (
     SPACE_FORMAT_PATTERN,
 )
 from ._references import ContainerReference, NodeReference, ViewReference
+from ._view_filter import Filter
 from ._view_property import (
     EdgeProperty,
     ViewCorePropertyResponse,
@@ -56,9 +57,9 @@ class View(Resource, APIResource[ViewReference], ABC):
         description="Description of the view.",
         max_length=1024,
     )
-    filter: dict[str, JsonValue] | None = Field(
+    filter: Filter | None = Field(
         default=None,
-        description="A filter Domain Specific Language (DSL) used to create advanced filter queries.",
+        description="A filter Domain Specific Language (DSL) used to select which instances the view should include.",
     )
     implements: list[ViewReference] | None = Field(
         default=None,
