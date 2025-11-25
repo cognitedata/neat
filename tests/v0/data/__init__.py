@@ -51,6 +51,7 @@ class SchemaData:
         info_with_cdm_ref_xlsx = _conceptual / "info_with_cdm_ref.xlsx"
         broken_concepts_xlsx = _conceptual / "broken_concepts.xlsx"
         ontology_with_regex_warnings = _conceptual / "ontology.ttl"
+        subproperty_domain_ttl = _conceptual / "subproperty_domain.ttl"
 
     class NonNeatFormats:
         class DTDL:
