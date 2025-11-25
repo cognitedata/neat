@@ -24,6 +24,7 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-001"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -81,6 +82,7 @@ class ImplementedViewNotExisting(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-002"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []

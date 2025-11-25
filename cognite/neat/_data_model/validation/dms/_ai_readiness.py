@@ -23,6 +23,7 @@ class DataModelMissingName(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-001"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -61,6 +62,7 @@ class DataModelMissingDescription(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-002"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -95,6 +97,7 @@ class ViewMissingName(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-003"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -145,6 +148,7 @@ class ViewMissingDescription(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-004"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []

@@ -56,6 +56,7 @@ class DataModelValidator(ABC):
     """Assessors for fundamental data model principles."""
 
     code: ClassVar[str]
+    issue_type: ClassVar[type[ConsistencyError] | type[Recommendation]]
 
     def __init__(
         self,

@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from itertools import chain
 
 from cognite.neat._client import NeatClient
@@ -49,12 +50,12 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     def __init__(
         self,
         client: NeatClient | None = None,
-        codes: list[str] | None = None,
         modus_operandi: ModusOperandi = "additive",
+        can_run_validator: Callable[[str, type | None], bool] | None = None,
     ) -> None:
         super().__init__()
         self._client = client
-        self._codes = codes or ["all"]
+        self._can_run_validator = can_run_validator or (lambda code, issue_type=None: True)  # type: ignore
         self._modus_operandi = modus_operandi
         self._has_run = False
 
@@ -145,7 +146,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Run validators
         for validator in validators:
-            if "all" in self._codes or validator.code in self._codes:
+            if self._can_run_validator(validator.code, validator.issue_type):
                 self._issues.extend(validator.run())
 
         self._has_run = True

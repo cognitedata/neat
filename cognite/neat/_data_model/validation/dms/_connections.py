@@ -31,6 +31,7 @@ class ConnectionValueTypeUnexisting(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-001"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         undefined_value_types = []
@@ -80,6 +81,7 @@ class ConnectionValueTypeUndefined(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-002"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         missing_value_types = []
@@ -149,6 +151,7 @@ class ReverseConnectionSourceViewMissing(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-001"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -193,6 +196,7 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-002"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -240,6 +244,7 @@ class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-003"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -290,6 +295,7 @@ class ReverseConnectionContainerMissing(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-004"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -347,6 +353,7 @@ class ReverseConnectionContainerPropertyMissing(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-005"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -407,6 +414,7 @@ class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-006"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -469,6 +477,7 @@ class ReverseConnectionTargetMissing(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-007"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -525,6 +534,7 @@ class ReverseConnectionPointsToAncestor(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-008"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -584,6 +594,7 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-009"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []

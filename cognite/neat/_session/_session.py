@@ -4,10 +4,10 @@ from cognite.client import ClientConfig, CogniteClient
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
+from cognite.neat._config import GovernanceProfile, NeatConfig
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
 from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
-from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._issues import Issues
 from ._opt import Opt
@@ -16,21 +16,31 @@ from ._result import Result
 
 
 class NeatSession:
-    """A session is an interface for neat operations. It works as
-    a manager for handling user interactions and orchestrating
-    the state machine for data model and instance operations.
-    """
+    """A session is an interface for neat operations."""
 
-    def __init__(self, client: CogniteClient | ClientConfig, mode: ModusOperandi = "additive") -> None:
+    def __init__(
+        self,
+        client: CogniteClient | ClientConfig,
+        governance_profile: GovernanceProfile | None = None,
+    ) -> None:
+        # Load configuration
+        self._config = NeatConfig.load()
+
+        # Override governance profile if specified
+        if governance_profile:
+            self._config.governance_profile = governance_profile
+            self._config._apply_governance_profile(governance_profile)
+
+        # Use configuration for physical data model
         self._store = NeatStore()
         self._client = NeatClient(client)
-        self.physical_data_model = PhysicalDataModel(self._store, self._client, mode)
+        self.physical_data_model = PhysicalDataModel(self._store, self._client, self._config)
         self.issues = Issues(self._store)
         self.result = Result(self._store)
         self.opt = Opt(self._store)
 
         if self.opt._collector.can_collect:
-            self.opt._collector.collect("initSession", {"mode": mode})
+            self.opt._collector.collect("initSession", {"mode": self._config.physical.modeling.mode})
 
         self._welcome_message()
 
@@ -50,6 +60,11 @@ class NeatSession:
                 message += f" (Organization: '{organization}')"
 
         print(message)
+        print(f"Governance Profile: {self._config.governance_profile}")
+        print(
+            f"Physical - Validation: {self._config.physical.validation.profile} |"
+            f" Mode: {self._config.physical.modeling.mode}"
+        )
 
     @property
     def version(self) -> str:
