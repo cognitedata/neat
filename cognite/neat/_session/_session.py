@@ -38,7 +38,6 @@ class NeatSession:
 
         # Override governance profile if specified
         if governance_profile:
-            self._config.governance_profile = governance_profile
             self._config._apply_governance_profile(governance_profile)
 
         # Use configuration for physical data model

@@ -225,18 +225,22 @@ class NeatConfig(BaseModel):
 
         # Fallback to hardcoded defaults
         if profile == "legacy-additive":
+            self.governance_profile = "legacy-additive"
             self.physical.validation.profile = "legacy"
             self.physical.modeling.mode = "additive"
             self.physical.validation._apply_profile("legacy")
         elif profile == "legacy-rebuild":
+            self.governance_profile = "legacy-rebuild"
             self.physical.validation.profile = "legacy"
             self.physical.modeling.mode = "rebuild"
             self.physical.validation._apply_profile("legacy")
         elif profile == "deep-additive":
+            self.governance_profile = "deep-additive"
             self.physical.validation.profile = "deep"
             self.physical.modeling.mode = "additive"
             self.physical.validation._apply_profile("deep")
         elif profile == "deep-rebuild":
+            self.governance_profile = "deep-rebuild"
             self.physical.validation.profile = "deep"
             self.physical.modeling.mode = "rebuild"
             self.physical.validation._apply_profile("deep")
