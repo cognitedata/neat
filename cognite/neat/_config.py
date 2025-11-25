@@ -258,7 +258,8 @@ class NeatConfig(BaseModel):
                 data = tomli.load(f)
                 if "tool" in data and "neat" in data["tool"]:
                     return cls(**data["tool"]["neat"])
-                return cls(**data)
+                if "tool" not in data:
+                    return cls(**data)
 
         # Try to find configuration files in current directory
         cwd = Path.cwd()
