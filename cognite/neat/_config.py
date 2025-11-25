@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -36,21 +36,23 @@ class PhysicalValidationConfig(BaseModel):
 
     model_config = {"populate_by_name": True}
 
+    @staticmethod
+    def _add_model_syntax_error(issue_types: list[IssueType]) -> list[IssueType]:
+        """Ensures ModelSyntaxError is the first element of the list."""
+        if "ModelSyntaxError" not in issue_types:
+            issue_types.insert(0, "ModelSyntaxError")
+        return issue_types
+
     @field_validator("issue_types", mode="after")
     @classmethod
     def ensure_syntax_error_included(cls, v: list[IssueType]) -> list[IssueType]:
         """Ensure ModelSyntaxError is always included in issue types."""
-        if "ModelSyntaxError" not in v:
-            v.insert(0, "ModelSyntaxError")
-        return v
+        return cls._add_model_syntax_error(v)
 
     @property
     def effective_issue_types(self) -> list[IssueType]:
         """Get issue types with ModelSyntaxError always included."""
-        types = list(self.issue_types)
-        if "ModelSyntaxError" not in types:
-            types.insert(0, "ModelSyntaxError")
-        return types
+        return self._add_model_syntax_error(list(self.issue_types))
 
     def model_post_init(self, __context: Any) -> None:
         """Apply profile settings if not using custom profile."""
@@ -61,10 +63,7 @@ class PhysicalValidationConfig(BaseModel):
         """Apply predefined validation profile settings."""
         if profile in self.profiles:
             profile_config = self.profiles[profile]
-            self.issue_types = profile_config.issue_types
-            # Ensure ModelSyntaxError is always included
-            if "ModelSyntaxError" not in self.issue_types:
-                self.issue_types.insert(0, "ModelSyntaxError")
+            self.issue_types = self._add_model_syntax_error(profile_config.issue_types)
             self.include = profile_config.include
             self.exclude = profile_config.exclude
             return
@@ -219,7 +218,7 @@ class NeatConfig(BaseModel):
             self.physical.validation.profile = gov_config.physical.validation_profile
             self.physical.modeling.mode = gov_config.physical.modeling_mode
             self.physical.validation._apply_profile(gov_config.physical.validation_profile)
-            return
+            return None
 
         # Fallback to hardcoded defaults
         PROFILE_SETTINGS = {
@@ -229,11 +228,10 @@ class NeatConfig(BaseModel):
             "deep-rebuild": {"validation": "deep", "modeling": "rebuild"},
         }
         if profile in PROFILE_SETTINGS:
-            settings = PROFILE_SETTINGS[profile]
             self.governance_profile = profile
-            self.physical.validation.profile = settings["validation"]
-            self.physical.modeling.mode = settings["modeling"]
-            self.physical.validation._apply_profile(settings["validation"])
+            self.physical.validation.profile = cast(ValidationProfile, PROFILE_SETTINGS[profile]["validation"])
+            self.physical.modeling.mode = cast(ModusOperandi, PROFILE_SETTINGS[profile]["modeling"])
+            self.physical.validation._apply_profile(cast(ValidationProfile, PROFILE_SETTINGS[profile]["validation"]))
 
     @classmethod
     def load(cls, config_path: Path | None = None) -> "NeatConfig":
