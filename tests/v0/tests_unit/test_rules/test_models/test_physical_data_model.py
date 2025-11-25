@@ -1755,6 +1755,67 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
         id="Child uses parent edge",
     )
 
+    yield pytest.param(
+        UnverifiedPhysicalDataModel(
+            metadata=UnverifiedPhysicalMetadata(
+                space="my_space",
+                external_id="my_data_model",
+                creator="Anders",
+                version="v42",
+            ),
+            properties=[
+                # Multiple outwards edges (explicit types) between the same view pair (Batch -> Batch)
+                UnverifiedPhysicalProperty(
+                    view="Batch",
+                    view_property="hasChildBatch",
+                    value_type="Batch",
+                    connection="edge(type=my_space:batch_parent_to_child)",
+                ),
+                UnverifiedPhysicalProperty(
+                    view="Batch",
+                    view_property="childOfBatch",
+                    value_type="Batch",
+                    connection="edge(type=my_space:batch_child_to_parent)",
+                ),
+                UnverifiedPhysicalProperty(
+                    view="Batch",
+                    view_property="sequence",
+                    value_type="Batch",
+                    connection="edge(type=my_space:batch_sequence)",
+                ),
+                # Inwards edge explicitly selecting one of the candidates
+                UnverifiedPhysicalProperty(
+                    view="Batch",
+                    view_property="parentOfBatch",
+                    value_type="Batch",
+                    connection="edge(direction=inwards,type=my_space:batch_parent_to_child)",
+                ),
+            ],
+            views=[
+                UnverifiedPhysicalView(view="Batch"),
+            ],
+        ),
+        {
+            (
+                ViewEntity(space="my_space", externalId="Batch", version="v42"),
+                "hasChildBatch",
+            ): dm.DirectRelationReference(space="my_space", external_id="batch_parent_to_child"),
+            (
+                ViewEntity(space="my_space", externalId="Batch", version="v42"),
+                "childOfBatch",
+            ): dm.DirectRelationReference(space="my_space", external_id="batch_child_to_parent"),
+            (
+                ViewEntity(space="my_space", externalId="Batch", version="v42"),
+                "sequence",
+            ): dm.DirectRelationReference(space="my_space", external_id="batch_sequence"),
+            (
+                ViewEntity(space="my_space", externalId="Batch", version="v42"),
+                "parentOfBatch",
+            ): dm.DirectRelationReference(space="my_space", external_id="batch_parent_to_child"),
+        },
+        id="Inwards edge with explicit type among multiple candidates",
+    )
+
 
 class TestDMSExporter:
     def test_svein_harald_as_schema(self, svein_harald_dms_rules: PhysicalDataModel) -> None:
