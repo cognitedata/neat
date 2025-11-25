@@ -3,6 +3,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.useful_types import ModusOperandi
 
 # Type aliases
@@ -99,9 +100,6 @@ class PhysicalValidationConfig(BaseModel):
         """
         if not self.enabled:
             return False
-
-        # Import issue types
-        from cognite.neat._issues import ModelSyntaxError
 
         # ModelSyntaxError is ALWAYS checked
         if issue_type is ModelSyntaxError:
