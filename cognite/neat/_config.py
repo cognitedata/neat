@@ -222,26 +222,18 @@ class NeatConfig(BaseModel):
             return
 
         # Fallback to hardcoded defaults
-        if profile == "legacy-additive":
-            self.governance_profile = "legacy-additive"
-            self.physical.validation.profile = "legacy"
-            self.physical.modeling.mode = "additive"
-            self.physical.validation._apply_profile("legacy")
-        elif profile == "legacy-rebuild":
-            self.governance_profile = "legacy-rebuild"
-            self.physical.validation.profile = "legacy"
-            self.physical.modeling.mode = "rebuild"
-            self.physical.validation._apply_profile("legacy")
-        elif profile == "deep-additive":
-            self.governance_profile = "deep-additive"
-            self.physical.validation.profile = "deep"
-            self.physical.modeling.mode = "additive"
-            self.physical.validation._apply_profile("deep")
-        elif profile == "deep-rebuild":
-            self.governance_profile = "deep-rebuild"
-            self.physical.validation.profile = "deep"
-            self.physical.modeling.mode = "rebuild"
-            self.physical.validation._apply_profile("deep")
+        PROFILE_SETTINGS = {
+            "legacy-additive": {"validation": "legacy", "modeling": "additive"},
+            "legacy-rebuild": {"validation": "legacy", "modeling": "rebuild"},
+            "deep-additive": {"validation": "deep", "modeling": "additive"},
+            "deep-rebuild": {"validation": "deep", "modeling": "rebuild"},
+        }
+        if profile in PROFILE_SETTINGS:
+            settings = PROFILE_SETTINGS[profile]
+            self.governance_profile = profile
+            self.physical.validation.profile = settings["validation"]
+            self.physical.modeling.mode = settings["modeling"]
+            self.physical.validation._apply_profile(settings["validation"])
 
     @classmethod
     def load(cls, config_path: Path | None = None) -> "NeatConfig":
