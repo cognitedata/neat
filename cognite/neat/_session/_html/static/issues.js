@@ -1,6 +1,7 @@
 let currentFilter = 'all';
 let currentSearch = '';
 let isDarkMode = localStorage.getItem('neat-issues-theme') === 'dark';
+let expandedGroups = new Set();
 
 const container = document.getElementById('issuesContainer');
 const themeToggle = document.getElementById('themeToggle');
@@ -29,6 +30,21 @@ themeToggle.addEventListener('click', function() {
     updateTheme();
 });
 
+function groupIssues(issuesList) {
+    const grouped = new Map();
+
+    issuesList.forEach(issue => {
+        const key = issue.code ? `${issue.type}:${issue.code}` : `${issue.type}:${issue.id}`;
+
+        if (!grouped.has(key)) {
+            grouped.set(key, []);
+        }
+        grouped.get(key).push(issue);
+    });
+
+    return grouped;
+}
+
 function renderIssues() {
     const listContainer = document.getElementById('issuesList');
     const filtered = issues.filter(issue => {
@@ -45,22 +61,76 @@ function renderIssues() {
         return;
     }
 
-    listContainer.innerHTML = filtered.map(issue => `
-        <div class="issue-item">
-            <div class="issue-header">
-                <span class="issue-badge badge-${issue.type}">${issue.type}</span>
-                ${issue.code ? `<span class="issue-code">${issue.code}</span>` : ''}
-            </div>
-            <div class="issue-message">${issue.message}</div>
-            ${issue.fix ? `
-                <div class="issue-fix">
-                    <div class="issue-fix-label">💡 Suggested Fix</div>
-                    <div class="issue-fix-content">${issue.fix}</div>
+    const grouped = groupIssues(filtered);
+    const html = [];
+
+    grouped.forEach((groupIssues, key) => {
+        const firstIssue = groupIssues[0];
+        const count = groupIssues.length;
+        const isExpanded = expandedGroups.has(key);
+        const codeLink = firstIssue.code
+            ? `<span class="issue-code-link" onclick="event.stopPropagation(); window.open('https://cognite-neat.readthedocs-hosted.com/en/latest/validation/${firstIssue.code.toLowerCase()}.html', '_blank')">${firstIssue.code}</span>`
+            : '';
+
+        if (count === 1) {
+            // Single issue - render normally
+            html.push(`
+                <div class="issue-item">
+                    <div class="issue-header">
+                        <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                        ${codeLink}
+                    </div>
+                    <div class="issue-message">${firstIssue.message}</div>
+                    ${firstIssue.fix ? `
+                        <div class="issue-fix">
+                            <div class="issue-fix-label">💡 Suggested Fix</div>
+                            <div class="issue-fix-content">${firstIssue.fix}</div>
+                        </div>
+                    ` : ''}
                 </div>
-            ` : ''}
-        </div>
-    `).join('');
+            `);
+        } else {
+            // Grouped issues
+            html.push(`
+                <div class="issue-group ${isExpanded ? 'expanded' : ''}">
+                    <div class="issue-group-header" onclick="toggleGroup('${key}')">
+                        <div class="issue-group-info">
+                            <span class="expand-icon">${isExpanded ? '▼' : '▶'}</span>
+                            <span class="issue-badge badge-${firstIssue.type}">${firstIssue.type}</span>
+                            ${codeLink}
+                            <span class="issue-count">${count} issues</span>
+                        </div>
+                    </div>
+                    <div class="issue-group-items">
+                        ${groupIssues.map((issue, idx) => `
+                            <div class="issue-item grouped">
+                                <div class="issue-number">#${idx + 1}</div>
+                                <div class="issue-message">${issue.message}</div>
+                            </div>
+                        `).join('')}
+                        ${firstIssue.fix ? `
+                            <div class="issue-fix grouped">
+                                <div class="issue-fix-label">💡 Suggested Fix</div>
+                                <div class="issue-fix-content">${firstIssue.fix}</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `);
+        }
+    });
+
+    listContainer.innerHTML = html.join('');
 }
+
+window.toggleGroup = function(key) {
+    if (expandedGroups.has(key)) {
+        expandedGroups.delete(key);
+    } else {
+        expandedGroups.add(key);
+    }
+    renderIssues();
+};
 
 // Stat item filters
 document.querySelectorAll('.stat-item').forEach(item => {

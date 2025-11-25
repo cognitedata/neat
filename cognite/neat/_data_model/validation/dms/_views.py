@@ -4,7 +4,7 @@ from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyR
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError
 
-_BASE_CODE = "NEAT-DMS-VIEW"
+BASE_CODE = "NEAT-DMS-VIEW"
 
 
 class ViewToContainerMappingNotPossible(DataModelValidator):
@@ -23,7 +23,7 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
     If WindTurbineContainer and/or property gpsCoordinates does not exist, the data model cannot be deployed to CDF.
     """
 
-    code = f"{_BASE_CODE}-001"
+    code = f"{BASE_CODE}-001"
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []

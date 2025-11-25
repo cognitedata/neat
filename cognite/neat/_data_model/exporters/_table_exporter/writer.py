@@ -3,6 +3,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from cognite.neat._data_model._constants import DEFAULT_MAX_LIST_SIZE, DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS
 from cognite.neat._data_model.importers._table_importer.data_classes import (
     DMSContainer,
     DMSEnum,
@@ -177,7 +178,12 @@ class DMSTableWriter:
     @staticmethod
     def _write_container_property_max_count(dtype: DataType) -> int | None:
         if isinstance(dtype, ListablePropertyTypeDefinition) and dtype.list:
-            return dtype.max_list_size
+            if dtype.max_list_size is not None:
+                return dtype.max_list_size
+            elif isinstance(dtype, DirectNodeRelation):
+                return DEFAULT_MAX_LIST_SIZE_DIRECT_RELATIONS
+            else:
+                return DEFAULT_MAX_LIST_SIZE
         return 1
 
     @staticmethod

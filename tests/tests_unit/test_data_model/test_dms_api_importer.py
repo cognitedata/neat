@@ -1,7 +1,11 @@
+import json
+from pathlib import Path
 from typing import Any
+from unittest.mock import MagicMock
 
 import pytest
 import respx
+import yaml
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.importers import DMSAPIImporter
@@ -201,3 +205,39 @@ class TestDMSAPIImporter:
         assert "Spaces" in error_message
         assert "not found in CDF" in error_message
         assert len(respx_mock.calls) == 4
+
+    def test_read_from_single_yaml_file(self, example_dms_schema_request: dict[str, Any]) -> None:
+        """Test reading data model schema from a single YAML file."""
+        yaml_file = MagicMock(spec=Path)
+        yaml_file.read_text.return_value = yaml.safe_dump(example_dms_schema_request)
+        yaml_file.suffix = ".yaml"
+
+        importer = DMSAPIImporter.from_yaml(yaml_file)
+        schema = importer.to_data_model()
+        assert schema.model_dump(by_alias=True, exclude_unset=True) == example_dms_schema_request
+
+    def test_read_from_single_json_file(self, example_dms_schema_request: dict[str, Any]) -> None:
+        """Test reading data model schema from a single JSON file."""
+        json_file = MagicMock(spec=Path)
+        json_file.read_text.return_value = json.dumps(example_dms_schema_request)
+        json_file.suffix = ".json"
+
+        importer = DMSAPIImporter.from_yaml(json_file)
+        schema = importer.to_data_model()
+        assert schema.model_dump(by_alias=True, exclude_unset=True) == example_dms_schema_request
+
+    def test_read_multi_yaml_directory(self, example_dms_schema_request: dict[str, Any]) -> None:
+        """Test reading data model schema from multiple YAML files in a directory."""
+        yaml_files: list[MagicMock] = []
+        for key, data in example_dms_schema_request.items():
+            yaml_file = MagicMock(spec=Path)
+            yaml_file.read_text.return_value = yaml.safe_dump(data)
+            yaml_file.suffix = ".yaml"
+            yaml_file.stem = f"my.{key.removesuffix('s')}"
+            yaml_files.append(yaml_file)
+        yaml_dir = MagicMock(spec=Path)
+        yaml_dir.rglob.return_value = yaml_files
+
+        importer = DMSAPIImporter.from_yaml(yaml_dir)
+        schema = importer.to_data_model()
+        assert schema.model_dump(by_alias=True, exclude_unset=True) == example_dms_schema_request

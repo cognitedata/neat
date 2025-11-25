@@ -7,11 +7,11 @@ import pytest
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms import (
-    BidirectionalConnectionMisconfigured,
-    ConnectionValueTypeExist,
-    ConnectionValueTypeNotNone,
+    ConnectionValueTypeUndefined,
+    ConnectionValueTypeUnexisting,
     DmsDataModelValidation,
-    VersionSpaceInconsistency,
+    ReverseConnectionSourceViewMissing,
+    ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
@@ -136,17 +136,17 @@ class TestValidators:
 
         assert len(on_success.issues) == 11
         assert set(by_code.keys()) == {
-            ConnectionValueTypeExist.code,
-            ConnectionValueTypeNotNone.code,
-            VersionSpaceInconsistency.code,
-            BidirectionalConnectionMisconfigured.code,
+            ConnectionValueTypeUnexisting.code,
+            ConnectionValueTypeUndefined.code,
+            ViewSpaceVersionInconsistentWithDataModel.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
+            ReverseConnectionSourceViewMissing.code,
         }
 
-        assert len(by_code[ConnectionValueTypeExist.code]) == 3
+        assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
 
-        undefined_connection_messages = [issue.message for issue in by_code[ConnectionValueTypeExist.code]]
+        undefined_connection_messages = [issue.message for issue in by_code[ConnectionValueTypeUnexisting.code]]
         expected_connections = {
             "my_space:UnexistingDirectConnectionLocal(version=v1)",
             "my_space:UnexistingSourceForReverseConnection(version=v1)",
@@ -162,8 +162,10 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[VersionSpaceInconsistency.code]) == 2
-        version_space_inconsistency_messages = [issue.message for issue in by_code[VersionSpaceInconsistency.code]]
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 2
+        version_space_inconsistency_messages = [
+            issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
+        ]
         expected_inconsistent_views = {
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
@@ -178,11 +180,11 @@ class TestValidators:
 
         assert found_inconsistent_views == expected_inconsistent_views
 
-        assert len(by_code[ConnectionValueTypeNotNone.code]) == 1
-        assert "directToNowhere" in by_code[ConnectionValueTypeNotNone.code][0].message
+        assert len(by_code[ConnectionValueTypeUndefined.code]) == 1
+        assert "directToNowhere" in by_code[ConnectionValueTypeUndefined.code][0].message
 
-        assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 1
-        assert "reverseDirectPropertyMissingOtherEnd" in by_code[BidirectionalConnectionMisconfigured.code][0].message
+        assert len(by_code[ReverseConnectionSourceViewMissing.code]) == 1
+        assert "reverseDirectPropertyMissingOtherEnd" in by_code[ReverseConnectionSourceViewMissing.code][0].message
 
         assert len(by_code[ViewToContainerMappingNotPossible.code]) == 2
         referenced_containers_messages = [issue.message for issue in by_code[ViewToContainerMappingNotPossible.code]]
@@ -232,17 +234,17 @@ class TestValidators:
 
         assert len(on_success.issues) == 15
         assert set(by_code.keys()) == {
-            ConnectionValueTypeExist.code,
-            ConnectionValueTypeNotNone.code,
-            VersionSpaceInconsistency.code,
-            BidirectionalConnectionMisconfigured.code,
+            ConnectionValueTypeUnexisting.code,
+            ConnectionValueTypeUndefined.code,
+            ViewSpaceVersionInconsistentWithDataModel.code,
+            ReverseConnectionSourceViewMissing.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
         }
 
-        assert len(by_code[ConnectionValueTypeExist.code]) == 5
+        assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
 
-        undefined_connection_messages = [issue.message for issue in by_code[ConnectionValueTypeExist.code]]
+        undefined_connection_messages = [issue.message for issue in by_code[ConnectionValueTypeUnexisting.code]]
         expected_connections = {
             "my_space:UnexistingDirectConnectionLocal(version=v1)",
             "my_space:UnexistingSourceForReverseConnection(version=v1)",
@@ -259,8 +261,10 @@ class TestValidators:
 
         assert found_connections == expected_connections
 
-        assert len(by_code[VersionSpaceInconsistency.code]) == 2
-        version_space_inconsistency_messages = [issue.message for issue in by_code[VersionSpaceInconsistency.code]]
+        assert len(by_code[ViewSpaceVersionInconsistentWithDataModel.code]) == 2
+        version_space_inconsistency_messages = [
+            issue.message for issue in by_code[ViewSpaceVersionInconsistentWithDataModel.code]
+        ]
         expected_inconsistent_views = {
             "another_space:MissingProperties(version=v2)",
             "my_space:MissingProperties(version=v2)",
@@ -275,14 +279,14 @@ class TestValidators:
 
         assert found_inconsistent_views == expected_inconsistent_views
 
-        assert len(by_code[BidirectionalConnectionMisconfigured.code]) == 2
+        assert len(by_code[ReverseConnectionSourceViewMissing.code]) == 2
         expected_affected_reverse_properties = {"reverseDirectPropertyMissingOtherEnd", "reverseDirectPropertyRemote"}
 
-        assert len(by_code[ConnectionValueTypeNotNone.code]) == 1
-        assert "directToNowhere" in by_code[ConnectionValueTypeNotNone.code][0].message
+        assert len(by_code[ConnectionValueTypeUndefined.code]) == 1
+        assert "directToNowhere" in by_code[ConnectionValueTypeUndefined.code][0].message
 
         found_affected_reverse_properties = set()
-        for message in by_code[BidirectionalConnectionMisconfigured.code]:
+        for message in by_code[ReverseConnectionSourceViewMissing.code]:
             for expected_property in expected_affected_reverse_properties:
                 if expected_property in message.message:
                     found_affected_reverse_properties.add(expected_property)

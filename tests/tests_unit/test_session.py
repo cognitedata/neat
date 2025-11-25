@@ -71,7 +71,7 @@ def physical_written_session(physical_state_session: NeatSession) -> NeatSession
 
 @pytest.mark.usefixtures("empty_cdf")
 class TestNeatSession:
-    def test_error_reading(self, new_session: NeatSession) -> None:
+    def test_error_reading_writing(self, new_session: NeatSession) -> None:
         session = new_session
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -82,6 +82,13 @@ class TestNeatSession:
         assert len(session._store.physical_data_model) == 0
         assert len(session._store.provenance) == 0
         assert isinstance(session._store.state, states.EmptyState)
+
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            session.physical_data_model.write.yaml("./invalid_path.yaml")
+
+        printed_statements = output.getvalue()
+        assert "⚠️ Cannot write data model, there is no data model in the session" in str(printed_statements)
 
     def test_read_data_model(self, valid_dms_yaml_format: str, new_session: NeatSession) -> None:
         session = new_session
@@ -133,7 +140,7 @@ class TestNeatSession:
             session.physical_data_model.read.yaml(read_yaml)
 
         printed_statements = output.getvalue()
-        assert "Cannot run DMSTableImporter in state PhysicalState" in str(printed_statements)
+        assert "⚠️ Cannot read data model, there is already a data model in the session" in str(printed_statements)
         assert len(session._store.physical_data_model) == 1
 
         # no change took place
@@ -156,10 +163,10 @@ class TestNeatSession:
         assert isinstance(session._store.provenance[-1].source_state, states.PhysicalState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
 
-    def test_read_dms_from_cdf(self, example_dms_schema: dict[str, Any], new_session: NeatSession) -> None:
+    def test_read_dms_from_cdf(self, example_dms_schema_response: dict[str, Any], new_session: NeatSession) -> None:
         session = new_session
         mock_importer = MagicMock(spec=DMSAPIImporter)
-        mock_importer.to_data_model.return_value = RequestSchema.model_validate(example_dms_schema)
+        mock_importer.to_data_model.return_value = RequestSchema.model_validate(example_dms_schema_response)
         mock_importer.to_data_model.__name__ = DMSImporter.to_data_model.__name__
 
         provenance_before = len(session._store.provenance)

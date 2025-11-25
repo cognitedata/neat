@@ -102,3 +102,110 @@
     font-size: 13px;
     line-height: 1.5;
 }
+
+.issue-group {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.issue-group-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+    transition: background-color 0.2s;
+}
+
+.issue-group-header:hover {
+    background: var(--bg-secondary);
+}
+
+.issue-group-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.expand-icon {
+    font-size: 12px;
+    transition: transform 0.2s;
+    width: 16px;
+}
+
+.issue-count {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.issue-group-preview {
+    padding: 8px 16px 8px 48px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.issue-group-items {
+    display: none;
+    padding: 8px 0;
+}
+
+.issue-group.expanded .issue-group-items {
+    display: block;
+}
+
+.issue-group.expanded .expand-icon {
+    transform: rotate(0deg);
+}
+
+.issue-item.grouped {
+    margin: 4px 16px 4px 48px;
+    padding: 12px;
+    border-left: 3px solid var(--border-color);
+}
+
+.issue-number {
+    display: inline-block;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+}
+
+.issue-fix.grouped {
+    margin: 12px 16px 8px 48px;
+}
+
+.issue-code-link {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    color: #2563eb;
+    background: var(--bg-secondary);
+    padding: 3px 8px;
+    border-radius: 3px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.issue-code-link:hover {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.dark-mode .issue-code-link {
+    color: #60a5fa;
+}
+
+.dark-mode .issue-code-link:hover {
+    background: #1e3a8a;
+    color: #93c5fd;
+}

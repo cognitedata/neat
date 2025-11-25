@@ -1,5 +1,17 @@
-from ._connections import BidirectionalConnectionMisconfigured, ConnectionValueTypeExist, ConnectionValueTypeNotNone
-from ._consistency import VersionSpaceInconsistency
+from ._connections import (
+    ConnectionValueTypeUndefined,
+    ConnectionValueTypeUnexisting,
+    ReverseConnectionContainerMissing,
+    ReverseConnectionContainerPropertyMissing,
+    ReverseConnectionContainerPropertyWrongType,
+    ReverseConnectionPointsToAncestor,
+    ReverseConnectionSourcePropertyMissing,
+    ReverseConnectionSourcePropertyWrongType,
+    ReverseConnectionSourceViewMissing,
+    ReverseConnectionTargetMismatch,
+    ReverseConnectionTargetMissing,
+)
+from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -12,17 +24,25 @@ from ._orchestrator import DmsDataModelValidation
 from ._views import ViewToContainerMappingNotPossible
 
 __all__ = [
-    "BidirectionalConnectionMisconfigured",
-    "ConnectionValueTypeExist",
-    "ConnectionValueTypeNotNone",
+    "ConnectionValueTypeUndefined",
+    "ConnectionValueTypeUnexisting",
     "ContainerPropertyCountIsOutOfLimits",
     "ContainerPropertyListSizeIsOutOfLimits",
     "ContainerPropertyListSizeIsOutOfLimits",
     "DataModelViewCountIsOutOfLimits",
     "DmsDataModelValidation",
-    "VersionSpaceInconsistency",
+    "ReverseConnectionContainerMissing",
+    "ReverseConnectionContainerPropertyMissing",
+    "ReverseConnectionContainerPropertyWrongType",
+    "ReverseConnectionPointsToAncestor",
+    "ReverseConnectionSourcePropertyMissing",
+    "ReverseConnectionSourcePropertyWrongType",
+    "ReverseConnectionSourceViewMissing",
+    "ReverseConnectionTargetMismatch",
+    "ReverseConnectionTargetMissing",
     "ViewContainerCountIsOutOfLimits",
     "ViewImplementsCountIsOutOfLimits",
     "ViewPropertyCountIsOutOfLimits",
+    "ViewSpaceVersionInconsistentWithDataModel",
     "ViewToContainerMappingNotPossible",
 ]
