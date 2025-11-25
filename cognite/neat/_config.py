@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 from typing import Any, Literal, cast
 
@@ -5,6 +6,12 @@ from pydantic import BaseModel, Field, field_validator
 
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.useful_types import ModusOperandi
+
+if sys.version_info >= (3, 11):
+    import tomllib as tomli  # Python 3.11+
+else:
+    import tomli  # type: ignore
+
 
 # Type aliases
 ValidationProfile = Literal["legacy", "deep", "custom"]
@@ -241,30 +248,30 @@ class NeatConfig(BaseModel):
     @classmethod
     def load(cls, config_path: Path | None = None) -> "NeatConfig":
         """Load configuration from file or use defaults."""
-        try:
-            import tomllib as tomli  # Python 3.11+
-        except ImportError:
-            import tomli  # type: ignore
 
-        if config_path and config_path.exists():
-            with config_path.open("rb") as f:
+        paths_to_check: list[Path] = []
+        if config_path:
+            paths_to_check.append(config_path)
+        else:
+            cwd = Path.cwd()
+            paths_to_check.extend([cwd / "neat.toml", cwd / "pyproject.toml"])
+
+        for path in paths_to_check:
+            if not path.exists():
+                continue
+
+            with path.open("rb") as f:
                 data = tomli.load(f)
-                if "tool" in data and "neat" in data["tool"]:
-                    return cls(**data["tool"]["neat"])
-                if "tool" not in data:
-                    return cls(**data)
 
-        # Try to find configuration files in current directory
-        cwd = Path.cwd()
-        for filename in ["neat.toml", "pyproject.toml"]:
-            config_file = cwd / filename
-            if config_file.exists():
-                with config_file.open("rb") as f:
-                    data = tomli.load(f)
-                    if "tool" in data and "neat" in data["tool"]:
-                        return cls(**data["tool"]["neat"])
+            if "tool" in data and "neat" in data["tool"]:
+                return cls(**data["tool"]["neat"])
 
-        # Return default configuration
+            if "tool" not in data and data:
+                return cls(**data)
+
+            if config_path:
+                break
+
         return cls()
 
     def __str__(self) -> str:
