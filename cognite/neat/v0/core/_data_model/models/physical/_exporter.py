@@ -255,7 +255,7 @@ class _DMSExporter:
                     else:
                         raise NeatValueError(
                             f"Cannot infer edge type for {view_id}.{prop_id}, multiple candidates: "
-                            f" {edge_type_candidates}."
+                            f"{edge_type_candidates}. "
                             "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
                         )
                 view_property_id = (prop.view, prop.view_property)

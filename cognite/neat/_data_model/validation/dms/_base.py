@@ -293,8 +293,8 @@ class DataModelValidator(ABC):
 
         return merged_containers
 
-
-class GroupedDataModelValidator(DataModelValidator):
-    """Used to run grouped data model validators together."""
-
-    ...
+    def _is_ancestor_of_target(self, potential_ancestor: ViewReference, target_view_ref: ViewReference) -> bool:
+        """Check if a view is an ancestor of the target view."""
+        return potential_ancestor in self.local_resources.ancestors_by_view_reference.get(
+            target_view_ref, set()
+        ) or potential_ancestor in self.cdf_resources.ancestors_by_view_reference.get(target_view_ref, set())

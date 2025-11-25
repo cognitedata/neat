@@ -27,7 +27,7 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
             identifier = f"{cls.__name__}.{func.__name__}"
             try:
                 res = func(self, *args, **kwargs)
-                if not self._store.provenance:
+                if not self._store.provenance or "DataModel" not in identifier:
                     print(f"{display_name} ✅")
                     if _COLLECTOR.can_collect:
                         _COLLECTOR.collect("action", {"action": identifier, "success": True})
@@ -38,12 +38,16 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
                 total_issues = issues_count + errors_count
 
                 newline = "\n"  # python 3.10 compatibility
+
+                data_model_not_read = not change.successful and "ReadPhysicalDataModel" in identifier
+
                 print(
                     f"{display_name} "
                     f"{'✅' if change.successful else '❌'}"
                     f"{f' | Issues: {total_issues} (of which {errors_count} critical)' if total_issues > 0 else ''}"
-                    f"{newline + 'For details on issues run neat.issues' if change.issues or change.errors else ''}"
-                    f"{newline + 'For details on result run neat.result' if change.result else ''}"
+                    f"{newline + '⚠️ Data model not read into session' if data_model_not_read else ''}"
+                    f"{newline + '📋 For details on issues run neat.issues' if change.issues or change.errors else ''}"
+                    f"{newline + '📊 For details on result run neat.result' if change.result else ''}"
                 )
                 if _COLLECTOR.can_collect:
                     event = change.as_mixpanel_event()
