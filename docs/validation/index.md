@@ -1,8 +1,19 @@
-**Neat supports 19 validation rules** for data modeling. These rules are learned
+**Neat supports 27 validation rules** for data modeling. These rules are learned
  from best practice, knowledge of the Cognite Data Fusion data modeling service, and practical experience from
  helping customers build and maintain their data models.
 
 
+
+### Ai_Readiness (NEAT-DMS-AI-READINESS)
+
+Validators for checking if data model is AI-ready.
+
+| code | name | message |
+|------|------|---------|
+| NEAT-DMS-AI-READINESS-001 | [DataModelMissingName](neat-dms-ai-readiness-001.md) | Validates that data model has a human-readable name. |
+| NEAT-DMS-AI-READINESS-002 | [DataModelMissingDescription](neat-dms-ai-readiness-002.md) | Validates that data model has a human-readable description. |
+| NEAT-DMS-AI-READINESS-003 | [ViewMissingName](neat-dms-ai-readiness-003.md) | Validates that a View has a human-readable name. |
+| NEAT-DMS-AI-READINESS-004 | [ViewMissingDescription](neat-dms-ai-readiness-004.md) | Validates that a View has a human-readable description. |
 
 ### Connections (NEAT-DMS-CONNECTIONS)
 
@@ -30,6 +41,16 @@ Validators checking for consistency issues in data model.
 |------|------|---------|
 | NEAT-DMS-CONSISTENCY-001 | [ViewSpaceVersionInconsistentWithDataModel](neat-dms-consistency-001.md) | Validates that views have consistent space and version with the data model. |
 
+### Containers (NEAT-DMS-CONTAINER)
+
+Validators for checking containers in the data model.
+
+| code | name | message |
+|------|------|---------|
+| NEAT-DMS-CONTAINER-001 | [ExternalContainerDoesNotExist](neat-dms-container-001.md) | Validates that any container referenced by a view property, when the |
+| NEAT-DMS-CONTAINER-002 | [ExternalContainerPropertyDoesNotExist](neat-dms-container-002.md) | Validates that any container property referenced by a view property, when the |
+| NEAT-DMS-CONTAINER-003 | [RequiredContainerDoesNotExist](neat-dms-container-003.md) | Validates that any container required by another container exists in the data model. |
+
 ### Limits (NEAT-DMS-LIMITS)
 
 Validators for checking if defined data model is within CDF DMS schema limits.
@@ -50,3 +71,4 @@ Validators for checking containers in the data model.
 | code | name | message |
 |------|------|---------|
 | NEAT-DMS-VIEW-001 | [ViewToContainerMappingNotPossible](neat-dms-view-001.md) | Validates that container and container property referenced by view property exist. |
+| NEAT-DMS-VIEW-002 | [ImplementedViewNotExisting](neat-dms-view-002.md) | Validates that implemented (inherited) view exists. |

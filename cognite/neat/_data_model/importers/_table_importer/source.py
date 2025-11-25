@@ -68,7 +68,7 @@ class TableSource:
             location_parts.append(f"row {row_no}")
         if column is not None:
             location_parts.append(f"column {column!r}")
-        if len(path) > 4:
+        if len(path) >= 4:
             location_parts.append("-> " + ".".join(str(p) for p in path[3:]))
 
         return " ".join(location_parts)

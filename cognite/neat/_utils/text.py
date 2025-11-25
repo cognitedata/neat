@@ -2,6 +2,9 @@ import re
 from collections.abc import Collection
 from typing import Any
 
+NEWLINE = "\n"
+TAB = "\t"
+
 
 def humanize_collection(collection: Collection[Any], /, *, sort: bool = True, bind_word: str = "and") -> str:
     """Convert a collection of items to a human-readable string.

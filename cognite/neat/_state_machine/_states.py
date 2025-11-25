@@ -21,7 +21,6 @@ class ForbiddenState(State):
 
     def __init__(self, previous_state: State):
         self.previous_state = previous_state
-        print(f"Forbidden action attempted. Returning to previous state: {previous_state}")
 
     def transition(self, event: Any) -> State:
         # only "undo" to trigger going back to previous state

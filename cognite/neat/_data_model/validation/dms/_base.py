@@ -32,12 +32,14 @@ class LocalResources:
     """Local data model resources."""
 
     data_model_reference: DataModelReference
+    data_model_views: set[ViewReference]
+    data_model_description: str | None
+    data_model_name: str | None
     views_by_reference: ViewsByReference
     ancestors_by_view_reference: AncestorsByReference
     reverse_to_direct_mapping: ReverseToDirectMapping
     containers_by_reference: ContainersByReference
     connection_end_node_types: ConnectionEndNodeTypes
-    data_model_views: set[ViewReference]
 
 
 @dataclass
@@ -273,23 +275,25 @@ class DataModelValidator(ABC):
             return self.local_resources.containers_by_reference
 
         merged_containers: dict[ContainerReference, ContainerRequest] = {}
-        # Merge local views, combining properties if view exists in both
-        for view_ref in self.container_references:
-            cdf_container = self.cdf_resources.containers_by_reference.get(view_ref)
-            local_container = self.local_resources.containers_by_reference.get(view_ref)
+        # Merge local containers, combining properties if container exists in both
+        for container_ref in self.container_references:
+            cdf_container = self.cdf_resources.containers_by_reference.get(container_ref)
+            local_container = self.local_resources.containers_by_reference.get(container_ref)
 
             if not cdf_container and not local_container:
-                raise RuntimeError(f"Container {view_ref!s} not found in either local or CDF resources. This is a bug!")
+                raise RuntimeError(
+                    f"Container {container_ref!s} not found in either local or CDF resources. This is a bug!"
+                )
 
-            merged_containers[view_ref] = cast(ContainerRequest, (cdf_container or local_container)).model_copy(
+            merged_containers[container_ref] = cast(ContainerRequest, (cdf_container or local_container)).model_copy(
                 deep=True
             )
 
             if local_container and local_container.properties:
-                if not merged_containers[view_ref].properties:
-                    merged_containers[view_ref].properties = local_container.properties
+                if not merged_containers[container_ref].properties:
+                    merged_containers[container_ref].properties = local_container.properties
                 else:
-                    merged_containers[view_ref].properties.update(local_container.properties)
+                    merged_containers[container_ref].properties.update(local_container.properties)
 
         return merged_containers
 

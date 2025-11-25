@@ -14,6 +14,7 @@ from cognite.neat._data_model.validation.dms._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
+from cognite.neat._utils.text import NEWLINE as NL
 
 
 def generate_implements_list(interface_count: int) -> str:
@@ -110,6 +111,10 @@ def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, dict[str, set]]:
   Value: TestModel
 - Key: version
   Value: v1
+- Key: name
+  Value: SomeName
+- Key: description
+  Value: SomeDescription
 Properties:
 # View with 301 properties (exceeds 300 limit)
 {generate_properties_section("ViewWithTooManyProperties", "Container", 301)}
@@ -166,20 +171,42 @@ Properties:
   Container Property: category
 Views:
 - View: ViewWithTooManyProperties
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooManyContainers
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithLargeContainer
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooManyDirectRelations
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooHighMinCount
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooManyInt32WithBtree
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooManyInt64WithBtree
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooManyTextInList
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooManyEnumValues
+  Name: SomeName
+  Description: SomeDescription
 # View implementing 11 views (exceeds 10 limit)
 - View: ViewWithTooManyImplements
+  Name: SomeName
+  Description: SomeDescription
   Implements: {generate_implements_list(11)}
-{chr(10).join([f"- View: Interface{i}" for i in range(1, 12)])}
+{chr(10).join([f"- View: Interface{i}{NL}  Name: N{i}{NL}  Description: D{i}" for i in range(1, 12)])}
 - View: TargetView
-{chr(10).join([f"- View: DataModelView{i}" for i in range(101)])}
+  Name: SomeName
+  Description: SomeDescription
+{chr(10).join([f"- View: DataModelView{i}{NL}  Name: N{i}{NL}  Description: D{i}" for i in range(101)])}
 Containers:
 {generate_containers(container_names)}
 Enum:

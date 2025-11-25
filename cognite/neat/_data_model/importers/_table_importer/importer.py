@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Mapping
 from pathlib import Path
 from typing import ClassVar, cast
@@ -15,7 +16,7 @@ from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
-from cognite.neat._utils.validation import as_json_path, humanize_validation_error
+from cognite.neat._utils.validation import ValidationContext, as_json_path, humanize_validation_error
 
 from .data_classes import MetadataValue, TableDMS
 from .reader import DMSTableReader
@@ -92,20 +93,24 @@ class DMSTableImporter(DMSImporter):
 
     def _create_error_messages(self, error: ValidationError) -> list[ModelSyntaxError]:
         errors: list[ModelSyntaxError] = []
-        seen: set[str] = set()
-        for message in humanize_validation_error(
-            error,
+        context = ValidationContext(
             humanize_location=self._location,
             field_name="column",
             missing_required_descriptor="missing",
-        ):
+        )
+        seen: set[str] = set()
+
+        for error_details in error.errors(include_input=True, include_url=False):
+            message = humanize_validation_error(error_details, context)
             # Replace messages about missing required columns with missing required sheets.
             message = self.REQUIRED_SHEET_MESSAGES.get(message, message)
             if message in seen:
                 # We treat all rows as the same, so we get duplicated errors for each row.
                 continue
+
             seen.add(message)
             errors.append(ModelSyntaxError(message=message))
+
         return errors
 
     def _location(self, loc: tuple[str | int, ...]) -> str:
@@ -162,6 +167,11 @@ class DMSTableImporter(DMSImporter):
         # Metadata sheet is just a key-value pair of the first two columns.
         # For other sheets, we need to find the column header row first.
         columns: list[str] = [] if sheet.title != cls.MetadataSheet else required_columns
+        # Ignore warnings about Data Validation extension not being supported in read-only mode.
+        warnings.filterwarnings("ignore", category=UserWarning, message="Data Validation extension is not supported*")
+        # The .iter_rows with values_only=True raises the warning `UserWarning: Data Validation extension is
+        # not supported and will be removed`
+        # which confuses the user and we do not depend on data validation here, so we suppress it.
         for row_no, row in enumerate(sheet.iter_rows(values_only=True)):
             if columns:
                 # We have found the column header row, read the data rows.

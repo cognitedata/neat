@@ -1,4 +1,5 @@
 import json
+import uuid
 from collections import defaultdict
 from typing import Any
 
@@ -65,12 +66,16 @@ class Issues:
             return "<b>No issues found.</b>"
         stats = self._stats
 
+        # Generate unique ID for this render to avoid conflicts in Jupyter
+        unique_id = uuid.uuid4().hex[:8]
+
         template_vars = {
             "JSON": json.dumps(self._serialized_issues),
             "total": stats["total"],
             "syntax_errors": stats["by_type"].get("ModelSyntaxError", 0),
             "consistency_errors": stats["by_type"].get("ConsistencyError", 0),
             "recommendations": stats["by_type"].get("Recommendation", 0),
+            "unique_id": unique_id,
         }
 
         return render("issues", template_vars)

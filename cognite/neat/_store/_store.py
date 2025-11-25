@@ -10,7 +10,8 @@ from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import IssueList
-from cognite.neat._state_machine._states import EmptyState, State
+from cognite.neat._state_machine._states import EmptyState, PhysicalState, State
+from cognite.neat._utils.text import NEWLINE
 
 from ._provenance import Change, Provenance
 
@@ -61,6 +62,17 @@ class NeatStore:
     def _can_agent_do_activity(self, agent: Agents) -> None:
         """Validate if activity can be performed in the current state and considering provenance"""
         if not self.state.can_transition(agent):
+            if isinstance(agent, DMSImporter) and isinstance(self.state, PhysicalState):
+                raise RuntimeError(
+                    "⚠️ Cannot read data model, there is already a data model in the session!"
+                    f"{NEWLINE}Start a new session to read a new data model."
+                )
+
+            if isinstance(agent, DMSExporter) and isinstance(self.state, EmptyState):
+                raise RuntimeError(
+                    "⚠️ Cannot write data model, there is no data model in the session!"
+                    f"{NEWLINE}Read a data model first!"
+                )
             raise RuntimeError(f"Cannot run {type(agent).__name__} in state {self.state}")
 
         # need implementation of checking if required predecessor activities have been done
