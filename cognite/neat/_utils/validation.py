@@ -93,6 +93,8 @@ def humanize_validation_error(
         )
     elif type_ == "union_tag_invalid":
         msg = error["msg"].replace(", 'direct'", "").replace("found using 'type' ", "").replace("tag", "value")
+    elif type_ == "string_pattern_mismatch":
+        msg = f"string '{error['input']}' does not match the required pattern: '{error['ctx']['pattern']}'."
 
     elif type_.endswith("_type"):
         msg = f"{error['msg']}. Got {error['input']!r} of type {type(error['input']).__name__}."
