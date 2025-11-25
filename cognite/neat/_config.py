@@ -11,6 +11,13 @@ ValidationProfile = Literal["legacy", "deep", "custom"]
 GovernanceProfile = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild", "custom"]
 IssueType = Literal["ModelSyntaxError", "ConsistencyError", "Recommendation"]
 
+DEFAULT_PROFILES = {
+    "legacy-additive": {"validation": "legacy", "modeling": "additive"},
+    "legacy-rebuild": {"validation": "legacy", "modeling": "rebuild"},
+    "deep-additive": {"validation": "deep", "modeling": "additive"},
+    "deep-rebuild": {"validation": "deep", "modeling": "rebuild"},
+}
+
 
 class ValidationProfileConfig(BaseModel):
     """Configuration for a validation profile."""
@@ -213,25 +220,23 @@ class NeatConfig(BaseModel):
 
     def _apply_governance_profile(self, profile: GovernanceProfile) -> None:
         """Apply governance profile to physical configuration."""
+
+        # Predefined profiles from TOML
         if profile in self.governance_profiles:
             gov_config = self.governance_profiles[profile]
+            self.governance_profile = profile
             self.physical.validation.profile = gov_config.physical.validation_profile
             self.physical.modeling.mode = gov_config.physical.modeling_mode
             self.physical.validation._apply_profile(gov_config.physical.validation_profile)
-            return None
 
-        # Fallback to hardcoded defaults
-        PROFILE_SETTINGS = {
-            "legacy-additive": {"validation": "legacy", "modeling": "additive"},
-            "legacy-rebuild": {"validation": "legacy", "modeling": "rebuild"},
-            "deep-additive": {"validation": "deep", "modeling": "additive"},
-            "deep-rebuild": {"validation": "deep", "modeling": "rebuild"},
-        }
-        if profile in PROFILE_SETTINGS:
+        # Fallback to hardcoded defaults if not in TOML
+        elif profile in DEFAULT_PROFILES:
             self.governance_profile = profile
-            self.physical.validation.profile = cast(ValidationProfile, PROFILE_SETTINGS[profile]["validation"])
-            self.physical.modeling.mode = cast(ModusOperandi, PROFILE_SETTINGS[profile]["modeling"])
-            self.physical.validation._apply_profile(cast(ValidationProfile, PROFILE_SETTINGS[profile]["validation"]))
+            self.physical.validation.profile = cast(ValidationProfile, DEFAULT_PROFILES[profile]["validation"])
+            self.physical.modeling.mode = cast(ModusOperandi, DEFAULT_PROFILES[profile]["modeling"])
+            self.physical.validation._apply_profile(cast(ValidationProfile, DEFAULT_PROFILES[profile]["validation"]))
+
+        return None
 
     @classmethod
     def load(cls, config_path: Path | None = None) -> "NeatConfig":
