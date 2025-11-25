@@ -14,6 +14,29 @@ class TestHumanizeValidationError:
             pytest.param(
                 ErrorDetails(
                     **{
+                        "type": "string_pattern_mismatch",
+                        "loc": ("externalId",),
+                        "msg": "String should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
+                        "input": "Missing Properties",
+                        "ctx": {"pattern": "^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Views",),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Views' view 'Missing Properties' does not match the required pattern: "
+                    "^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$."
+                ),
+                id="View external id string pattern mismatch",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    **{
                         "type": "string_type",
                         "loc": ("externalId",),
                         "msg": "Input should be a valid string",
