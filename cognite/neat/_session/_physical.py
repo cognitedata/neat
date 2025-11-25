@@ -236,5 +236,7 @@ class WritePhysicalDataModel:
         options = DeploymentOptions(
             dry_run=dry_run, auto_rollback=rollback, drop_data=drop_data, modus_operandi=self._mode
         )
-        on_success = SchemaDeployer(self._client, options)
+        last_change = self._store.provenance.last_change
+        has_errors = bool(last_change is not None and last_change.errors)
+        on_success = SchemaDeployer(self._client, has_errors, options)
         return self._store.write_physical(writer, on_success)

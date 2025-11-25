@@ -43,7 +43,7 @@ def model(example_dms_schema_response: dict[str, Any]) -> RequestSchema:
 def schema_snapshot(
     neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
 ) -> SchemaSnapshot:
-    deployer = SchemaDeployer(client=neat_client)
+    deployer = SchemaDeployer(client=neat_client, has_errors=False)
     return deployer.fetch_cdf_state(model)
 
 
@@ -60,7 +60,7 @@ class TestSchemaDeployer:
     def test_create_deployment_plan(
         self, neat_client: NeatClient, model: RequestSchema, schema_snapshot: SchemaSnapshot
     ) -> None:
-        deployer = SchemaDeployer(neat_client)
+        deployer = SchemaDeployer(neat_client, has_errors=False)
         plan = deployer.create_deployment_plan(schema_snapshot, model)
         # Basic assertions to ensure plan is created
         assert len(plan) == 4  # spaces, containers, views, datamodels
@@ -76,7 +76,7 @@ class TestSchemaDeployer:
         assert len(model.containers) > 0, "Model must have at least one container for this test"
         new_container = model.containers[0].model_copy(update={"space": "different_space"}, deep=True)
         modified_model = model.model_copy(update={"containers": [new_container] + model.containers[1:]}, deep=True)
-        deployer = SchemaDeployer(neat_client)
+        deployer = SchemaDeployer(neat_client, has_errors=False)
         plan = deployer.create_deployment_plan(schema_snapshot, modified_model)
         assert len(plan) == 4  # spaces, containers, views, datamodels
         for resource_plan in plan:
@@ -119,7 +119,7 @@ class TestSchemaDeployer:
             for container in model.containers
         ]
 
-        deployer = SchemaDeployer(neat_client)
+        deployer = SchemaDeployer(neat_client, has_errors=False)
         plan = deployer.create_deployment_plan(schema_snapshot, model)
 
         container_plan = next(rp for rp in plan if rp.endpoint == "containers")
@@ -146,7 +146,7 @@ class TestSchemaDeployer:
     def test_deploy_dry_run(
         self, neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
     ) -> None:
-        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=True))
+        deployer = SchemaDeployer(neat_client, has_errors=False, options=DeploymentOptions(dry_run=True))
         deployer.run(model)
         result = deployer.result
         assert result.is_dry_run
@@ -155,7 +155,7 @@ class TestSchemaDeployer:
         assert result.responses is None
 
     def test_apply_plan(self, neat_client: NeatClient, model: RequestSchema, respx_mock: respx.MockRouter) -> None:
-        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
+        deployer = SchemaDeployer(neat_client, has_errors=False, options=DeploymentOptions(dry_run=False))
         plan: list[ResourceDeploymentPlan] = [
             ResourceDeploymentPlan(
                 endpoint="spaces",
@@ -266,7 +266,7 @@ class TestSchemaDeployer:
         respx_mock.post(config.create_api_url("/models/containers/constraints/delete")).respond(status_code=200)
         respx_mock.post(config.create_api_url("/models/containers/indexes/delete")).respond(status_code=200)
 
-        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
+        deployer = SchemaDeployer(neat_client, has_errors=False, options=DeploymentOptions(dry_run=False))
         with patch("time.sleep"):  # In order to speed up tests
             result = deployer.apply_changes(plan)
 

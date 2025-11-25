@@ -75,9 +75,10 @@ class SchemaDeployer(OnSuccessResultProducer):
     INDEX_DELETE_BATCH_SIZE = 10
     CONSTRAINT_DELETE_BATCH_SIZE = 10
 
-    def __init__(self, client: NeatClient, options: DeploymentOptions | None = None) -> None:
+    def __init__(self, client: NeatClient, has_errors: bool, options: DeploymentOptions | None = None) -> None:
         super().__init__()
         self.client: NeatClient = client
+        self.has_errors: bool = has_errors
         self.options: DeploymentOptions = options or DeploymentOptions()
 
     def run(self, data_model: RequestSchema) -> None:
@@ -273,7 +274,7 @@ class SchemaDeployer(OnSuccessResultProducer):
             [change.severity for resource_plan in plan for change in resource_plan.resources],
             default=SeverityType.SAFE,
         )
-        return max_severity_in_plan.value <= self.options.max_severity.value
+        return max_severity_in_plan.value <= self.options.max_severity.value and not self.has_errors
 
     def apply_changes(self, plan: Sequence[ResourceDeploymentPlan]) -> AppliedChanges:
         """Applies the given deployment plan to CDF by making the necessary API calls.
