@@ -4,12 +4,13 @@ let currentFilters = {
     severity: 'all',
 };
 let currentSearch = '';
-let isDarkMode = localStorage.getItem('neat-deployment-theme') === 'dark';
+const storageKey = 'neat-deployment-theme-' + uniqueId;
+let isDarkMode = localStorage.getItem(storageKey) === 'dark';
 
-const container = document.getElementById('deploymentContainer');
-const themeToggle = document.getElementById('themeToggle');
-const themeIcon = document.getElementById('themeIcon');
-const themeText = document.getElementById('themeText');
+const container = document.getElementById('deploymentContainer-' + uniqueId);
+const themeToggle = document.getElementById('themeToggle-' + uniqueId);
+const themeIcon = document.getElementById('themeIcon-' + uniqueId);
+const themeText = document.getElementById('themeText-' + uniqueId);
 
 // Status configuration
 const STATUS_CONFIG = {
@@ -21,9 +22,9 @@ const STATUS_CONFIG = {
 
 // Initialize status badge
 function initializeStatus() {
-    const statusBadge = document.getElementById('statusBadge');
-    const statusIcon = document.getElementById('statusIcon');
-    const statusText = document.getElementById('statusText');
+    const statusBadge = document.getElementById('statusBadge-' + uniqueId);
+    const statusIcon = document.getElementById('statusIcon-' + uniqueId);
+    const statusText = document.getElementById('statusText-' + uniqueId);
 
     const statusConfig = STATUS_CONFIG[stats.status] || STATUS_CONFIG.pending;
     statusIcon.textContent = statusConfig.icon;
@@ -47,12 +48,12 @@ initializeStatus();
 
 themeToggle.addEventListener('click', function() {
     isDarkMode = !isDarkMode;
-    localStorage.setItem('neat-deployment-theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem(storageKey, isDarkMode ? 'dark' : 'light');
     updateTheme();
 });
 
 function renderChanges() {
-    const listContainer = document.getElementById('deploymentList');
+    const listContainer = document.getElementById('deploymentList-' + uniqueId);
     const filtered = changes.filter(change => {
         const matchesChangeType = currentFilters.changeType === 'all' ||
                                  change.change_type === currentFilters.changeType;
@@ -97,9 +98,9 @@ function renderChanges() {
 }
 
 // Change type filters (stat items)
-document.querySelectorAll('.stat-item').forEach(item => {
+document.querySelectorAll('#deploymentContainer-' + uniqueId + ' .stat-item').forEach(item => {
     item.addEventListener('click', function() {
-        document.querySelectorAll('.stat-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('#deploymentContainer-' + uniqueId + ' .stat-item').forEach(i => i.classList.remove('active'));
         this.classList.add('active');
         currentFilters.changeType = this.dataset.filter;
         renderChanges();
@@ -107,10 +108,10 @@ document.querySelectorAll('.stat-item').forEach(item => {
 });
 
 // Other filters
-document.querySelectorAll('.filter-btn').forEach(btn => {
+document.querySelectorAll('#deploymentContainer-' + uniqueId + ' .filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const filterType = this.dataset.filterType;
-        document.querySelectorAll(`[data-filter-type="${filterType}"]`).forEach(b =>
+        document.querySelectorAll('#deploymentContainer-' + uniqueId + ` [data-filter-type="${filterType}"]`).forEach(b =>
             b.classList.remove('active')
         );
         this.classList.add('active');
@@ -120,13 +121,13 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 // Search
-document.getElementById('searchInput').addEventListener('input', function(e) {
+document.getElementById('searchInput-' + uniqueId).addEventListener('input', function(e) {
     currentSearch = e.target.value;
     renderChanges();
 });
 
 // Export function
-window.exportDeployment = function() {
+window['exportDeployment_' + uniqueId] = function() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const report = {
         status: stats.status,

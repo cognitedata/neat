@@ -82,6 +82,21 @@ def validation_test_cdf_client(
         json={
             "items": [
                 dict(
+                    space="my_space",
+                    externalId="DomainDescribable",
+                    version="v1",
+                    name="My View",
+                    description="An example view",
+                    properties={},
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    writable=True,
+                    queryable=True,
+                    usedFor="node",
+                    isGlobal=False,
+                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+                ),
+                dict(
                     space="not_my_space",
                     externalId="ExistingEdgeConnection",
                     version="v1",
@@ -160,6 +175,23 @@ def validation_test_cdf_client(
                     usedFor="node",
                     properties={
                         "unused": {
+                            "type": {"type": "text"},
+                            "nullable": False,
+                            "immutable": False,
+                        }
+                    },
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    isGlobal=False,
+                ),
+                dict(
+                    space="cdf_cdm",
+                    externalId="CogniteDescribable",
+                    name="ExistingContainer",
+                    description="ExistingContainer",
+                    usedFor="node",
+                    properties={
+                        "name": {
                             "type": {"type": "text"},
                             "nullable": False,
                             "immutable": False,

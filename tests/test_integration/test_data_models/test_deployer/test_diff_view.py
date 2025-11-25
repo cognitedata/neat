@@ -15,6 +15,7 @@ from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
     DirectNodeRelation,
+    EqualsFilterData,
     Int32Property,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
@@ -253,7 +254,7 @@ def current_view(
         version="v1",
         name="Initial name",
         description="Initial description",
-        filter={"equals": {"property": ["node", "space"], "value": neat_test_space.space}},
+        filter={"equals": EqualsFilterData(property=["node", "space"], value=neat_test_space.space)},
         implements=[
             ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1"),
             ViewReference(space="cdf_cdm", external_id="CogniteSchedulable", version="v1"),

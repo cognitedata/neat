@@ -4,6 +4,7 @@ CONTAINER_AND_VIEW_PROPERTIES_IDENTIFIER_PATTERN = r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0
 INSTANCE_ID_PATTERN = r"^[^\x00]{1,256}$"
 ENUM_VALUE_IDENTIFIER_PATTERN = r"^[_A-Za-z][_0-9A-Za-z]{0,127}$"
 DM_VERSION_PATTERN = r"^[a-zA-Z0-9]([.a-zA-Z0-9_-]{0,41}[a-zA-Z0-9])?$"
+DATA_MODEL_DESCRIPTION_MAX_LENGTH = 1024
 FORBIDDEN_ENUM_VALUES = frozenset({"true", "false", "null"})
 FORBIDDEN_SPACES = frozenset(["space", "cdf", "dms", "pg3", "shared", "system", "node", "edge"])
 FORBIDDEN_CONTAINER_AND_VIEW_EXTERNAL_IDS = frozenset(

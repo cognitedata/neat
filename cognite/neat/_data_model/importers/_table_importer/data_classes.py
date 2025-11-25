@@ -1,3 +1,4 @@
+import json
 from collections.abc import Mapping
 from typing import Annotated, Literal, cast, get_args
 
@@ -17,6 +18,15 @@ from traitlets import Any
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
 from cognite.neat._utils.useful_types import CellValueType
+from cognite.neat.v0.core._data_model.models.entities import (
+    HasDataFilter,
+    NodeTypeFilter,
+    RawFilter,
+)
+
+# This marker is used to identify creator in the description field.
+CREATOR_MARKER = "Creator: "
+CREATOR_KEY = "creator"
 
 
 def parse_entity_str(v: str) -> ParsedEntity:
@@ -143,6 +153,22 @@ class DMSView(TableObj):
     implements: EntityList | None = None
     filter: str | None = None
 
+    @field_validator("filter", mode="after")
+    def _legacy_filter(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+
+        value_lower = value.lower()
+
+        if value_lower.startswith("hasdata("):
+            return json.dumps(HasDataFilter.load(value).as_dms_filter().dump())
+        elif value_lower.startswith("nodetype("):
+            return json.dumps(NodeTypeFilter.load(value).as_dms_filter().dump())
+        elif value_lower.startswith("rawfilter("):
+            return json.dumps(RawFilter.load(value).as_dms_filter().dump())
+
+        return value
+
 
 class DMSContainer(TableObj):
     container: Entity
@@ -158,16 +184,15 @@ class DMSContainer(TableObj):
             return self
 
         for constraint in self.constraint:
-            # Skip if already in correct format
-            if constraint.prefix in ["requires", "uniqueness"]:
+            # Skip if already in correct format or being wrong but not legacy
+            if constraint.prefix == "requires" or constraint.properties:
                 continue
 
-            # Handle missing prefix - default to "requires"
+            # This part handles legacy constraints
             if not constraint.prefix:
                 constraint.prefix = "requires"
                 constraint.properties = {"require": constraint.suffix}
 
-            # Handle legacy format with space:external_id in prefix/suffix
             else:
                 container_space = constraint.prefix
                 container_external_id = constraint.suffix
@@ -260,6 +285,7 @@ DMS_API_MAPPING: Mapping[str, Mapping[str, str]] = {
         "space": "View",
         "externalId": "View",
         "property": "ViewProperty",
+        "type": "Value Type",
         **{
             cast(str, field_.alias): cast(str, field_.validation_alias)
             for field_id, field_ in DMSProperty.model_fields.items()

@@ -167,8 +167,8 @@ class TestDataTypeAdapter:
     def test_parse_enum(self, data: dict[str, Any], expected_errors: set[str]) -> None:
         with pytest.raises(ValidationError) as excinfo:
             DataTypeAdapter.validate_python(data)
-        errors = set(humanize_validation_error(excinfo.value))
-        assert errors == expected_errors
+
+        assert {humanize_validation_error(error) for error in excinfo.value.errors()} == expected_errors
 
 
 class TestConstraint:
@@ -319,7 +319,12 @@ def invalid_container_definition_test_cases() -> Iterator:
             "externalId": "MyContainer",
             "properties": {"validProp": {"type": {"type": "text"}}},
         },
-        {"In field 'space', string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'."},
+        {
+            (
+                "In field 'space', string '123invalid' does not match the required pattern: "
+                "'^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'."
+            )
+        },
         id="Space invalid pattern - starts with number",
     )
 
@@ -350,7 +355,12 @@ def invalid_container_definition_test_cases() -> Iterator:
             "externalId": "123invalid",  # Must start with letter
             "properties": {"validProp": {"type": {"type": "text"}}},
         },
-        {"In field 'externalId', string should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'."},
+        {
+            (
+                "In field 'externalId', string '123invalid' does not match"
+                " the required pattern: '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'."
+            )
+        },
         id="External_id invalid pattern",
     )
 
@@ -470,5 +480,5 @@ class TestContainerRequest:
     def test_invalid_container_definition(self, data: dict[str, Any], expected_errors: set[str]) -> None:
         with pytest.raises(ValidationError) as excinfo:
             ContainerRequest.model_validate(data)
-        errors = set(humanize_validation_error(excinfo.value))
-        assert errors == expected_errors
+
+        assert {humanize_validation_error(error) for error in excinfo.value.errors()} == expected_errors

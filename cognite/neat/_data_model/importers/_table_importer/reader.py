@@ -9,6 +9,7 @@ from cognite.neat._data_model.models.dms import (
     Constraint,
     ConstraintAdapter,
     ContainerPropertyDefinition,
+    ContainerReference,
     ContainerRequest,
     DataModelRequest,
     Index,
@@ -17,17 +18,19 @@ from cognite.neat._data_model.models.dms import (
     RequestSchema,
     SpaceRequest,
     UniquenessConstraintDefinition,
+    ViewReference,
     ViewRequest,
     ViewRequestProperty,
     ViewRequestPropertyAdapter,
 )
+from cognite.neat._data_model.models.dms._constants import DATA_MODEL_DESCRIPTION_MAX_LENGTH
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entity
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import ModelSyntaxError
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat._utils.validation import humanize_validation_error
+from cognite.neat._utils.validation import ValidationContext, humanize_validation_error
 
-from .data_classes import DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
+from .data_classes import CREATOR_KEY, CREATOR_MARKER, DMSContainer, DMSEnum, DMSNode, DMSProperty, DMSView, TableDMS
 from .source import TableSource
 
 T_BaseModel = TypeVar("T_BaseModel", bound=BaseModel)
@@ -169,7 +172,9 @@ class DMSTableReader:
         space_request = self.read_space(self.default_space)
         node_types = self.read_nodes(tables.nodes)
         enum_collections = self.read_enum_collections(tables.enum)
-        read = self.read_properties(tables.properties, enum_collections)
+        container_ref_by_entity = self.read_entity_by_container_ref(tables.containers)
+        view_ref_by_entity = self.read_entity_by_view_ref(tables.views)
+        read = self.read_properties(tables.properties, enum_collections, container_ref_by_entity, view_ref_by_entity)
         processed = self.process_properties(read)
         containers = self.read_containers(tables.containers, processed)
         views, valid_view_entities = self.read_views(tables.views, processed.view)
@@ -207,18 +212,50 @@ class DMSTableReader:
             }
         return enum_collections
 
+    def read_entity_by_container_ref(self, containers: list[DMSContainer]) -> dict[ContainerReference, ParsedEntity]:
+        entity_by_container_ref: dict[ContainerReference, ParsedEntity] = {}
+        for container in containers:
+            data = self._create_container_ref(container.container)
+            try:
+                container_ref = ContainerReference.model_validate(data)
+            except ValidationError:
+                # Error will be reported when reading the containers
+                continue
+            entity_by_container_ref[container_ref] = container.container
+        return entity_by_container_ref
+
+    def read_entity_by_view_ref(self, views: list[DMSView]) -> dict[ViewReference, ParsedEntity]:
+        entity_by_view_ref: dict[ViewReference, ParsedEntity] = {}
+        for view in views:
+            data = self._create_view_ref(view.view)
+            try:
+                view_ref = ViewReference.model_validate(data)
+            except ValidationError:
+                # Error will be reported when reading the views
+                continue
+            entity_by_view_ref[view_ref] = view.view
+        return entity_by_view_ref
+
     def read_properties(
-        self, properties: list[DMSProperty], enum_collections: dict[str, dict[str, Any]]
+        self,
+        properties: list[DMSProperty],
+        enum_collections: dict[str, dict[str, Any]],
+        container_ref_by_entity: dict[ContainerReference, ParsedEntity],
+        view_ref_by_entity: dict[ViewReference, ParsedEntity],
     ) -> ReadProperties:
         read = ReadProperties()
+        view_entities = set(view_ref_by_entity.values())
+        container_entities = set(container_ref_by_entity.values())
         for row_no, prop in enumerate(properties):
-            self._process_view_property(prop, read, row_no)
+            self._process_view_property(prop, read, row_no, view_ref_by_entity, view_entities)
             if prop.container is None or prop.container_property is None:
                 # This is when the property is an edge or reverse direct relation property.
                 continue
-            self._process_container_property(prop, read, enum_collections, row_no)
-            self._process_index(prop, read, row_no)
-            self._process_constraint(prop, read, row_no)
+            self._process_container_property(
+                prop, read, enum_collections, row_no, container_ref_by_entity, container_entities
+            )
+            self._process_index(prop, read, row_no, container_ref_by_entity, container_entities)
+            self._process_constraint(prop, read, row_no, container_ref_by_entity, container_entities)
         return read
 
     def process_properties(self, read: ReadProperties) -> ProcessedProperties:
@@ -370,31 +407,91 @@ class DMSTableReader:
             constraints[container_entity][constraint_id] = constraint
         return constraints
 
-    def _process_view_property(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
+    def _process_view_property(
+        self,
+        prop: DMSProperty,
+        read: ReadProperties,
+        row_no: int,
+        view_ref_by_entity: dict[ViewReference, ParsedEntity],
+        view_entities: set[ParsedEntity],
+    ) -> None:
         loc = (self.Sheets.properties, row_no)
         data = self.read_view_property(prop, loc)
         view_prop = self._validate_adapter(ViewRequestPropertyAdapter, data, loc)
-        if view_prop is not None:
-            read.view[(prop.view, prop.view_property)].append(
-                # MyPy has a very strange complaint here. It complains that given type is not expected type,
-                # even though they are exactly the same.
-                ReadViewProperty(prop.container_property, row_no, view_prop)  # type: ignore[arg-type]
+        if view_prop is None:
+            return None
+        if prop.view in view_entities:
+            read.view[(prop.view, prop.view_property)].append(ReadViewProperty(prop.view_property, row_no, view_prop))
+            return None
+        # The view entity was not found in the views table. This could either be because the view is missing,
+        # or because either the view entity in the Properties table and the View table are specified with/without
+        # default space/version inconsistently.
+        try:
+            view_ref = ViewReference.model_validate(self._create_view_ref(prop.view))
+        except ValidationError:
+            # Error will be reported when reading the views
+            return None
+        if view_ref in view_ref_by_entity:
+            view_ref_entity = view_ref_by_entity[view_ref]
+            read.view[(view_ref_entity, prop.view_property)].append(
+                ReadViewProperty(prop.view_property, row_no, view_prop)
+            )
+        else:
+            self.errors.append(
+                ModelSyntaxError(
+                    message=(
+                        f"In {self.source.location(loc)} the View '{prop.view!s}' "
+                        f"was not found in the {self.Sheets.views!r} table."
+                    )
+                )
             )
         return None
 
     def _process_container_property(
-        self, prop: DMSProperty, read: ReadProperties, enum_collections: dict[str, dict[str, Any]], row_no: int
+        self,
+        prop: DMSProperty,
+        read: ReadProperties,
+        enum_collections: dict[str, dict[str, Any]],
+        row_no: int,
+        container_ref_by_entity: dict[ContainerReference, ParsedEntity],
+        container_entities: set[ParsedEntity],
     ) -> None:
         loc = (self.Sheets.properties, row_no)
         data = self.read_container_property(prop, enum_collections, loc=loc)
         container_prop = self._validate_obj(ContainerPropertyDefinition, data, loc)
-        if container_prop is not None and prop.container and prop.container_property:
+        if container_prop is None:
+            return None
+        if not (prop.container and prop.container_property):
+            return None
+        if prop.container in container_entities:
             read.container[(prop.container, prop.container_property)].append(
                 ReadContainerProperty(prop.container_property, row_no, container_prop)
             )
+            return None
+        # The container entity was not found in the containers table. This could either be because the container
+        # is missing, or because either the container entity in the Properties table and the Container table are
+        # specified with/without default space/version inconsistently.
+        try:
+            container_ref = ContainerReference.model_validate(self._create_container_ref(prop.container))
+        except ValidationError:
+            # Error will be reported when reading the containers
+            return None
+        if container_ref in container_ref_by_entity:
+            container_ref_entity = container_ref_by_entity[container_ref]
+            read.container[(container_ref_entity, prop.container_property)].append(
+                ReadContainerProperty(prop.container_property, row_no, container_prop)
+            )
+        # Container can be in CDF, this will be reported by a validator later.
         return None
 
-    def _process_index(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
+    def _process_index(
+        self,
+        prop: DMSProperty,
+        read: ReadProperties,
+        row_no: int,
+        container_ref_by_entity: dict[ContainerReference, ParsedEntity],
+        container_entities: set[ParsedEntity],
+    ) -> None:
         if prop.index is None or prop.container_property is None or prop.container is None:
             return
 
@@ -405,11 +502,41 @@ class DMSTableReader:
             if created is None:
                 continue
             order = self._read_order(index.properties, loc)
-            read.indices[(prop.container, index.suffix)].append(
-                ReadIndex(
-                    prop_id=prop.container_property, order=order, row_no=row_no, index_id=index.suffix, index=created
+
+            if prop.container in container_entities:
+                read.indices[(prop.container, index.suffix)].append(
+                    ReadIndex(
+                        prop_id=prop.container_property,
+                        order=order,
+                        row_no=row_no,
+                        index_id=index.suffix,
+                        index=created,
+                    )
                 )
-            )
+                continue
+            # The container entity was not found in the containers table. This could either be because the
+            # container is missing, or because either the container entity in the Properties table and the
+            # Container table are specified with/without default space/version inconsistently.
+
+            try:
+                container_ref = ContainerReference.model_validate(self._create_container_ref(prop.container))
+            except ValidationError:
+                # Error will be reported when reading the containers
+                continue
+            if container_ref in container_ref_by_entity:
+                container_ref_entity = container_ref_by_entity[container_ref]
+                read.indices[(container_ref_entity, index.suffix)].append(
+                    ReadIndex(
+                        prop_id=prop.container_property,
+                        order=order,
+                        row_no=row_no,
+                        index_id=index.suffix,
+                        index=created,
+                    )
+                )
+            else:
+                # Error is reported when reading the property.
+                ...
 
     def _read_order(self, properties: dict[str, Any], loc: tuple[str | int, ...]) -> int | None:
         if "order" not in properties:
@@ -433,7 +560,14 @@ class DMSTableReader:
             **index.properties,
         }
 
-    def _process_constraint(self, prop: DMSProperty, read: ReadProperties, row_no: int) -> None:
+    def _process_constraint(
+        self,
+        prop: DMSProperty,
+        read: ReadProperties,
+        row_no: int,
+        container_ref_by_entity: dict[ContainerReference, ParsedEntity],
+        container_entities: set[ParsedEntity],
+    ) -> None:
         if prop.constraint is None or prop.container_property is None or prop.container is None:
             return
         loc = (self.Sheets.properties, row_no, self.PropertyColumns.constraint)
@@ -443,15 +577,40 @@ class DMSTableReader:
             if created is None:
                 continue
             order = self._read_order(constraint.properties, loc)
-            read.constraints[(prop.container, constraint.suffix)].append(
-                ReadConstraint(
-                    prop_id=prop.container_property,
-                    order=order,
-                    constraint_id=constraint.suffix,
-                    row_no=row_no,
-                    constraint=created,
+
+            if prop.container in container_entities:
+                read.constraints[(prop.container, constraint.suffix)].append(
+                    ReadConstraint(
+                        prop_id=prop.container_property,
+                        order=order,
+                        constraint_id=constraint.suffix,
+                        row_no=row_no,
+                        constraint=created,
+                    )
                 )
-            )
+                continue
+            # The container entity was not found in the containers table. This could either be because the
+            # container is missing, or because either the container entity in the Properties table and the
+            # Container table are specified with/without default space/version inconsistently.
+            try:
+                container_ref = ContainerReference.model_validate(self._create_container_ref(prop.container))
+            except ValidationError:
+                # Error will be reported when reading the containers
+                continue
+            if container_ref in container_ref_by_entity:
+                container_ref_entity = container_ref_by_entity[container_ref]
+                read.constraints[(container_ref_entity, constraint.suffix)].append(
+                    ReadConstraint(
+                        prop_id=prop.container_property,
+                        order=order,
+                        constraint_id=constraint.suffix,
+                        row_no=row_no,
+                        constraint=created,
+                    )
+                )
+            else:
+                # Error is reported when reading the property.
+                ...
 
     @staticmethod
     def read_property_constraint(constraint: ParsedEntity, prop_id: str) -> dict[str, Any]:
@@ -733,15 +892,44 @@ class DMSTableReader:
         return views_requests, set(rows_by_seen.keys())
 
     def read_data_model(self, tables: TableDMS, valid_view_entities: set[ParsedEntity]) -> DataModelRequest:
-        data = {
+        data: dict[str, Any] = {
             **{meta.key: meta.value for meta in tables.metadata},
             "views": [self._create_view_ref(view.view) for view in tables.views if view.view in valid_view_entities],
         }
+        if description := self._create_description_field(data):
+            data["description"] = description
         model = self._validate_obj(DataModelRequest, data, (self.Sheets.metadata,), field_name="value")
         if model is None:
             # This is the last step, so we can raise the error here.
             raise DataModelImportException(self.errors) from None
         return model
+
+    def _create_description_field(self, data: dict[str, Any]) -> str | None:
+        """DataModelRequest does not have a 'creator' field, this is a special addition that the Neat tables
+        format supports (and recommends using). To keep it, Neat adds it to the suffix of the description field.
+        """
+        if CREATOR_KEY not in data and CREATOR_KEY.title() not in data:
+            return None
+        creator_val = data.pop(CREATOR_KEY, data.pop(CREATOR_KEY.title(), None))
+
+        if not creator_val:
+            return None
+
+        creator = str(creator_val)
+        # We do a split/join to clean up any spaces around commas. Ensuring that we have a consistent
+        # canonical format.
+        cleaned_creator = ", ".join(item.strip() for item in creator.split(","))
+        if not cleaned_creator:
+            return None
+        suffix = f"{CREATOR_MARKER}{cleaned_creator}"
+        description = data.get("description", "")
+        if len(description) + len(suffix) > DATA_MODEL_DESCRIPTION_MAX_LENGTH:
+            description = description[: DATA_MODEL_DESCRIPTION_MAX_LENGTH - len(suffix) - 4] + "..."
+        if description:
+            description = f"{description} {suffix}"
+        else:
+            description = suffix
+        return description
 
     def _parse_entity(self, entity: str, loc: tuple[str | int, ...]) -> ParsedEntity | None:
         try:
@@ -855,16 +1043,21 @@ class DMSTableReader:
         parent_loc: tuple[str | int, ...],
         field_name: Literal["field", "column", "value"] = "column",
     ) -> None:
-        seen: set[str] = set()
-        for message in humanize_validation_error(
-            error,
+        context = ValidationContext(
             parent_loc=parent_loc,
             humanize_location=self.source.location,
             field_name=field_name,
-            field_renaming=self.source.field_mapping(parent_loc[0]),
             missing_required_descriptor="empty" if field_name == "column" else "missing",
-        ):
+        )
+
+        if field_renaming := self.source.field_mapping(parent_loc[0]):
+            context.field_renaming = field_renaming
+
+        seen: set[str] = set()
+        for error_details in error.errors(include_input=True, include_url=False):
+            message = humanize_validation_error(error_details, context)
             if message in seen:
                 continue
+
             seen.add(message)
             self.errors.append(ModelSyntaxError(message=message))

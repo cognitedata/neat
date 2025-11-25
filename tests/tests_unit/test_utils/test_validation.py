@@ -1,83 +1,225 @@
-from typing import Any
+from typing import cast
 
 import pytest
-from pydantic import BaseModel, Field, ValidationError
+from pydantic_core import ErrorDetails
 
-from cognite.neat._utils.validation import as_json_path, humanize_validation_error
-
-
-class Person(BaseModel):
-    name: str
-    age: int = Field(..., gt=0)
+from cognite.neat._data_model.importers._table_importer.source import TableSource
+from cognite.neat._utils.validation import ValidationContext, as_json_path, humanize_validation_error
 
 
 class TestHumanizeValidationError:
     @pytest.mark.parametrize(
-        "data,args,expected_errors",
+        "error,context,expected_errors",
         [
             pytest.param(
-                {"name": "Alice"},
-                {
-                    "parent_loc": ("People", 1),
-                    "humanize_location": lambda loc: f"row {loc[1] + 1} at table {loc[0]!r}",
-                    "field_name": "column",
-                    "field_renaming": {"age": "Age"},
-                    "missing_required_descriptor": "empty",
-                },
-                {"In row 2 at table 'People' the column 'Age' cannot be empty."},
+                ErrorDetails(
+                    **{
+                        "type": "string_pattern_mismatch",
+                        "loc": ("externalId",),
+                        "msg": "String should match pattern '^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'",
+                        "input": "Missing Properties",
+                        "ctx": {"pattern": "^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$"},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Views",),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Views' string 'Missing Properties' does not match the required pattern: "
+                    "'^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'."
+                ),
+                id="View external id string pattern mismatch",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    **{
+                        "type": "string_type",
+                        "loc": ("externalId",),
+                        "msg": "Input should be a valid string",
+                        "input": None,
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Metadata",),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="value",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="missing",
+                ),
+                ("In table 'Metadata' 'externalId' input should be a valid string. Got None of type NoneType."),
+                id="Missing externalId value in table",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    **{
+                        "type": "missing",
+                        "loc": ("type", "enum", "values"),
+                        "msg": "Field required",
+                        "input": {"maxListSize": None, "list": False, "type": "enum"},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Properties", 276),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Properties' row 277 column 'Value Type' -> enum"
+                    " definition should include a reference to a collection in the 'Enum' sheet"
+                    " (e.g., collection='MyEnumCollection')."
+                ),
+                id="Missing enum collection reference in table",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    **{
+                        "type": "too_short",
+                        "loc": ("type", "enum", "values"),
+                        "msg": "Dictionary should have at least 1 item after validation, not 0",
+                        "input": {},
+                        "ctx": {"field_type": "Dictionary", "min_length": 1, "actual_length": 0},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Properties", 276),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Properties' row 277 column 'Value Type' -> enum"
+                    " collection is not defined in the 'Enum' sheet."
+                ),
+                id="Missing enum collection",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    **{
+                        "type": "union_tag_invalid",
+                        "loc": ("type",),
+                        "msg": (
+                            "Input tag 'primitive' found using 'type' does not match any of the expected tags:"
+                            " 'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', "
+                            "'json', 'timeseries', 'file', 'sequence', 'enum', 'direct'"
+                        ),
+                        "input": {"maxListSize": None, "list": False, "type": "primitive"},
+                    }
+                ),
+                ValidationContext(
+                    parent_loc=("Properties", 276),
+                    humanize_location=TableSource(source="dm.xlsx").location,
+                    field_name="column",
+                    field_renaming={"type": "Value Type"},
+                    missing_required_descriptor="empty",
+                ),
+                (
+                    "In table 'Properties' row 277 column 'Value Type' input value 'primitive' "
+                    "does not match any of the expected values: "
+                    "'text', 'float32', 'float64', 'boolean', 'int32', 'int64', 'timestamp', 'date', 'json', "
+                    "'timeseries', 'file', 'sequence', 'enum'."
+                ),
+                id="Not existing tag",
+            ),
+            pytest.param(
+                ErrorDetails(
+                    type="missing",
+                    loc=("age",),
+                    msg="Field required",
+                    input={"name": "Alice"},
+                    url="https://errors.pydantic.dev/2.11/v/missing",
+                ),
+                ValidationContext(
+                    parent_loc=("People", 1),
+                    humanize_location=lambda loc: f"row {cast(int, loc[1]) + 1} at table {loc[0]!r}",
+                    field_name="column",
+                    field_renaming={"age": "Age"},
+                    missing_required_descriptor="empty",
+                ),
+                "In row 2 at table 'People' the column 'Age' cannot be empty.",
                 id="Missing required in table",
             ),
             pytest.param(
-                {"name": "Bob", "age": "twenty"},
-                {},
-                {"In field 'age', input should be a valid integer, unable to parse string as an integer."},
+                ErrorDetails(
+                    type="int_parsing",
+                    loc=("age",),
+                    msg="Input should be a valid integer, unable to parse string as an integer",
+                    input="twenty",
+                    url="https://errors.pydantic.dev/2.11/v/int_parsing",
+                ),
+                ValidationContext(),
+                "In field 'age', input should be a valid integer, unable to parse string as an integer.",
                 id="Type error with default formatting",
             ),
             pytest.param(
-                {"name": 123, "age": 40},
-                {"field_name": "value"},
-                {
-                    "In value 'name', input should be a valid string. Got 123 of type int. Hint: "
-                    "Use double quotes to force string."
-                },
+                ErrorDetails(
+                    type="string_type",
+                    loc=("name",),
+                    msg="Input should be a valid string",
+                    input=123,
+                    url="https://errors.pydantic.dev/2.11/v/string_type",
+                ),
+                ValidationContext(field_name="value"),
+                ("In value 'name', input should be a valid string. Got 123 of type int."),
                 id="String type error with custom field_name",
             ),
             pytest.param(
-                {"name": "Dave", "age": -5},
-                {
-                    "parent_loc": ("Employees", 0),
-                    "humanize_location": lambda loc: f"employee {loc[1]} in {loc[0]}",
-                },
-                {"In employee 0 in Employees input should be greater than 0."},
+                ErrorDetails(
+                    type="greater_than",
+                    loc=("age",),
+                    msg="Input should be greater than 0",
+                    input=-5,
+                    ctx={"gt": 0},
+                    url="https://errors.pydantic.dev/2.11/v/greater_than",
+                ),
+                ValidationContext(
+                    parent_loc=("Employees", 0),
+                    humanize_location=lambda loc: f"employee {loc[1]} in {loc[0]}",
+                ),
+                "In employee 0 in Employees input should be greater than 0.",
                 id="Custom location formatting",
             ),
             pytest.param(
-                {"name": "Eve"},
-                {"field_renaming": {"name": "Full Name", "age": "Years Old"}},
-                {"Missing required field: 'age'."},
+                ErrorDetails(
+                    type="missing",
+                    loc=("age",),
+                    msg="Field required",
+                    input={"name": "Eve"},
+                    url="https://errors.pydantic.dev/2.11/v/missing",
+                ),
+                ValidationContext(field_renaming={"name": "Full Name", "age": "Years Old"}),
+                "Missing required field: 'age'.",
                 id="Field renaming for error message",
             ),
             pytest.param(
-                {"name": "Frank", "age": "fifty"},
-                {
-                    "parent_loc": ("Data", 2),
-                    "humanize_location": lambda loc: f"at position {loc[1]} in {loc[0]}",
-                    "field_name": "column",
-                    "field_renaming": {"age": "Years"},
-                },
-                {"In at position 2 in Data input should be a valid integer, unable to parse string as an integer."},
+                ErrorDetails(
+                    type="int_parsing",
+                    loc=("age",),
+                    msg="Input should be a valid integer, unable to parse string as an integer",
+                    input="fifty",
+                    url="https://errors.pydantic.dev/2.11/v/int_parsing",
+                ),
+                ValidationContext(
+                    parent_loc=("Data", 2),
+                    humanize_location=lambda loc: f"at position {loc[1]} in {loc[0]}",
+                    field_name="column",
+                    field_renaming={"age": "Years"},
+                ),
+                "In at position 2 in Data input should be a valid integer, unable to parse string as an integer.",
                 id="Combined custom parameters",
             ),
         ],
     )
     def test_humanize_validation_error(
-        self, data: dict[str, Any], args: dict[str, Any], expected_errors: set[str]
+        self, error: ErrorDetails, context: ValidationContext, expected_errors: str
     ) -> None:
-        with pytest.raises(ValidationError) as exc_info:
-            Person.model_validate(data)
-
-        errors = humanize_validation_error(exc_info.value, **args)
-        assert set(errors) == expected_errors
+        assert humanize_validation_error(error, context) == expected_errors
 
 
 class TestAsJsonPath:

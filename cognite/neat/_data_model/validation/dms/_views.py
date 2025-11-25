@@ -63,3 +63,39 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
                     )
 
         return errors
+
+
+class ImplementedViewNotExisting(DataModelValidator):
+    """Validates that implemented (inherited) view exists.
+
+    ## What it does
+    Validates that all views which are implemented (inherited) in the data model actually exist either locally
+    or in CDF.
+
+    ## Why is this bad?
+    If a view being implemented (inherited) does not exist, the data model cannot be deployed to CDF.
+
+    ## Example
+    If view WindTurbine implements (inherits) view Asset, but Asset view does not exist in the data model
+    or in CDF, the data model cannot be deployed to CDF.
+    """
+
+    code = f"{BASE_CODE}-002"
+
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
+
+        for view_ref, view in self.local_resources.views_by_reference.items():
+            if view.implements is None:
+                continue
+            for implement in view.implements:
+                if implement not in self.merged_views:
+                    errors.append(
+                        ConsistencyError(
+                            message=f"View {view_ref!s} implements {implement!s} which is not defined.",
+                            fix="Define the missing view or remove it from the implemented views list",
+                            code=self.code,
+                        )
+                    )
+
+        return errors

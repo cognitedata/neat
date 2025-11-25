@@ -22,6 +22,7 @@ from cognite.neat._data_model.models.dms import (
     DirectNodeRelation,
     EnumProperty,
     EnumValue,
+    FilterAdapter,
     Float32Property,
     MultiEdgeProperty,
     MultiReverseDirectRelationPropertyRequest,
@@ -38,8 +39,420 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
+from cognite.neat.v0.core._data_model.models.entities._wrapped import HasDataFilter, NodeTypeFilter, RawFilter
 
 SOURCE = "pytest.xlsx"
+
+
+RAW_FILTER_EXAMPLE = """{"and": [
+    {
+      "in": {
+        "property": ["yggdrasil_domain_model", "EntityTypeGroup", "entityType"],
+        "values": ["CFIHOS_00000003"]
+      }
+    }
+  ]}"""
+
+RAW_FILTER_CELL_EXAMPLE = f"""rawFilter({RAW_FILTER_EXAMPLE})"""
+
+
+def valid_legacy_dms_table_format() -> Iterable[tuple]:
+    yield pytest.param(
+        {
+            "Metadata": [
+                {
+                    "Key": "space",
+                    "Value": "cdf_cdm",
+                },
+                {
+                    "Key": "externalId",
+                    "Value": "CogniteCore",
+                },
+                {
+                    "Key": "version",
+                    "Value": "v1",
+                },
+                {
+                    "Key": "name",
+                    "Value": "Cognite Core Data Model",
+                },
+                {
+                    "Key": "description",
+                    "Value": "The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
+                },
+            ],
+            "Properties": [
+                {
+                    "View": "CogniteDescribable",
+                    "View Property": "name",
+                    "Connection": None,
+                    "Value Type": "text(maxTextSize=400)",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Container": "CogniteDescribable",
+                    "Container Property": "name",
+                    "Index": "btree:name(cursorable=False)",
+                    "Constraint": "uniqueness:uniqueName(bySpace=True)",
+                },
+                {
+                    "View": "CogniteAsset",
+                    "View Property": "files",
+                    "Connection": "reverse(property=assets)",
+                    "Value Type": "CogniteFile",
+                    "Min Count": 0,
+                    "Max Count": None,
+                },
+                {
+                    "View": "CogniteAsset",
+                    "View Property": "name",
+                    "Connection": None,
+                    "Value Type": "text(maxTextSize=400)",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Container": "CogniteDescribable",
+                    "Container Property": "name",
+                    "Index": "btree:name(cursorable=False)",
+                    "Constraint": "uniqueness:uniqueName(bySpace=True)",
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "assets",
+                    "Connection": "direct",
+                    "Value Type": "CogniteAsset",
+                    "Min Count": 0,
+                    "Max Count": 1200,
+                    "Immutable": False,
+                    "Container": "CogniteFile",
+                    "Container Property": "assets",
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "equipments",
+                    "Connection": "direct",
+                    "Value Type": "#N/A",
+                    "Min Count": 0,
+                    "Max Count": 1200,
+                    "Immutable": False,
+                    "Container": "CogniteFile",
+                    "Container Property": "equipments",
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "assetAnnotations",
+                    "Connection": "edge(edgeSource=FileAnnotation,type=diagramAnnotation)",
+                    "Value Type": "CogniteAsset",
+                    "Min Count": 0,
+                    "Max Count": None,
+                },
+                {
+                    "View": "CogniteFile",
+                    "View Property": "category",
+                    "Connection": None,
+                    "Value Type": "enum(collection=CogniteFile.category,unknownValue=other)",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": False,
+                    "Container": "CogniteFile",
+                    "Container Property": "category",
+                    "Container Property Name": "category_405",
+                },
+                {
+                    "View": "FileAnnotation",
+                    "View Property": "confidence",
+                    "Connection": None,
+                    "Value Type": "float32",
+                    "Min Count": 0,
+                    "Max Count": 1,
+                    "Immutable": True,
+                    "Container": "FileAnnotation",
+                    "Container Property": "confidence",
+                },
+            ],
+            "Views": [
+                {
+                    "View": "CogniteDescribable",
+                    "Name": "Cognite Describable",
+                    "Description": "The describable core concept is used as a standard way of "
+                    "holding the bare minimum of information about the instance",
+                    "Filter": "hasData(sp_container:DataContainer)",
+                },
+                {
+                    "View": "CogniteAsset",
+                    "Name": "Cognite Asset",
+                    "Implements": "CogniteDescribable",
+                    "Filter": "nodeType(subject:person)",
+                },
+                {
+                    "View": "CogniteFile",
+                    "Name": "Cognite File",
+                    "Implements": "CogniteDescribable",
+                    "Filter": RAW_FILTER_CELL_EXAMPLE,
+                },
+                {
+                    "View": "FileAnnotation",
+                    "Name": "File Annotation",
+                    "Implements": "CogniteDescribable",
+                },
+            ],
+            "Containers": [
+                {
+                    "Container": "CogniteDescribable",
+                    "Used For": "all",
+                },
+                {
+                    "Container": "CogniteFile",
+                    "Constraint": "requires:describablePresent(require=CogniteDescribable)",
+                    "Used For": "node",
+                },
+                {
+                    "Container": "FileAnnotation",
+                    "Constraint": "requires:describablePresent(require=CogniteDescribable)",
+                    "Used For": "edge",
+                },
+            ],
+            "Enum": [
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "blueprint",
+                    "Name": "Blueprint",
+                    "Description": "A technical drawing",
+                },
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "document",
+                },
+                {
+                    "Collection": "CogniteFile.category",
+                    "Value": "other",
+                },
+            ],
+            "Nodes": [
+                {
+                    "Node": "diagramAnnotation",
+                }
+            ],
+        },
+        RequestSchema(
+            dataModel=DataModelRequest(
+                space="cdf_cdm",
+                externalId="CogniteCore",
+                version="v1",
+                name="Cognite Core Data Model",
+                description="The Cognite Core Data Model (CDM) is a standardized data model for industrial data.",
+                views=[
+                    ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1"),
+                    ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
+                    ViewReference(space="cdf_cdm", external_id="CogniteFile", version="v1"),
+                    ViewReference(space="cdf_cdm", external_id="FileAnnotation", version="v1"),
+                ],
+            ),
+            spaces=[SpaceRequest(space="cdf_cdm")],
+            views=[
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteDescribable",
+                    version="v1",
+                    name="Cognite Describable",
+                    description="The describable core concept is used as a standard way of holding the bare minimum "
+                    "of information about the instance",
+                    implements=None,
+                    properties={
+                        "name": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable"),
+                            containerPropertyIdentifier="name",
+                        ),
+                    },
+                    filter=FilterAdapter.validate_python(
+                        HasDataFilter.load("hasData(sp_container:DataContainer)").as_dms_filter().dump()
+                    ),
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteAsset",
+                    version="v1",
+                    name="Cognite Asset",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")],
+                    properties={
+                        "files": MultiReverseDirectRelationPropertyRequest(
+                            name=None,
+                            description=None,
+                            source=ViewReference(space="cdf_cdm", external_id="CogniteFile", version="v1"),
+                            through=ViewDirectReference(
+                                source=ViewReference(space="cdf_cdm", external_id="CogniteFile", version="v1"),
+                                identifier="assets",
+                            ),
+                        ),
+                        "name": ViewCorePropertyRequest(
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable"),
+                            containerPropertyIdentifier="name",
+                        ),
+                    },
+                    filter=FilterAdapter.validate_python(
+                        NodeTypeFilter.load("nodeType(subject:person)").as_dms_filter().dump()
+                    ),
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteFile",
+                    version="v1",
+                    name="Cognite File",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")],
+                    properties={
+                        "assets": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
+                            containerPropertyIdentifier="assets",
+                            source=ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
+                        ),
+                        "equipments": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
+                            containerPropertyIdentifier="equipments",
+                            source=None,
+                        ),
+                        "assetAnnotations": MultiEdgeProperty(
+                            name=None,
+                            description=None,
+                            source=ViewReference(space="cdf_cdm", external_id="CogniteAsset", version="v1"),
+                            edgeSource=ViewReference(space="cdf_cdm", external_id="FileAnnotation", version="v1"),
+                            direction="outwards",
+                            type=NodeReference(space="cdf_cdm", external_id="diagramAnnotation"),
+                        ),
+                        "category": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", external_id="CogniteFile"),
+                            containerPropertyIdentifier="category",
+                        ),
+                    },
+                    filter=FilterAdapter.validate_python(
+                        RawFilter.load(RAW_FILTER_CELL_EXAMPLE).as_dms_filter().dump()
+                    ),
+                ),
+                ViewRequest(
+                    space="cdf_cdm",
+                    externalId="FileAnnotation",
+                    version="v1",
+                    name="File Annotation",
+                    description=None,
+                    implements=[ViewReference(space="cdf_cdm", external_id="CogniteDescribable", version="v1")],
+                    properties={
+                        "confidence": ViewCorePropertyRequest(
+                            name=None,
+                            description=None,
+                            container=ContainerReference(space="cdf_cdm", external_id="FileAnnotation"),
+                            containerPropertyIdentifier="confidence",
+                        ),
+                    },
+                ),
+            ],
+            containers=[
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteDescribable",
+                    usedFor="all",
+                    properties={
+                        "name": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=TextProperty(list=False, maxTextSize=400),
+                        )
+                    },
+                    indexes={
+                        "name": BtreeIndex(properties=["name"], cursorable=False),
+                    },
+                    constraints={
+                        "uniqueName": UniquenessConstraintDefinition(
+                            constraint_type="uniqueness",
+                            properties=["name"],
+                            bySpace=True,
+                        )
+                    },
+                ),
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="CogniteFile",
+                    usedFor="node",
+                    properties={
+                        "assets": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=DirectNodeRelation(maxListSize=1200, list=True),
+                        ),
+                        "equipments": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=DirectNodeRelation(maxListSize=1200, list=True),
+                        ),
+                        "category": ContainerPropertyDefinition(
+                            immutable=False,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name="category_405",
+                            type=EnumProperty(
+                                unknownValue="other",
+                                values={
+                                    "blueprint": EnumValue(name="Blueprint", description="A technical drawing"),
+                                    "document": EnumValue(),
+                                    "other": EnumValue(),
+                                },
+                            ),
+                        ),
+                    },
+                    constraints={
+                        "describablePresent": RequiresConstraintDefinition(
+                            require=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
+                        )
+                    },
+                ),
+                ContainerRequest(
+                    space="cdf_cdm",
+                    externalId="FileAnnotation",
+                    usedFor="edge",
+                    properties={
+                        "confidence": ContainerPropertyDefinition(
+                            immutable=True,
+                            nullable=True,
+                            autoIncrement=None,
+                            defaultValue=None,
+                            description=None,
+                            name=None,
+                            type=Float32Property(list=False),
+                        )
+                    },
+                    constraints={
+                        "describablePresent": RequiresConstraintDefinition(
+                            require=ContainerReference(space="cdf_cdm", external_id="CogniteDescribable")
+                        )
+                    },
+                ),
+            ],
+            nodeTypes=[NodeReference(space="cdf_cdm", external_id="diagramAnnotation")],
+        ),
+        id="Legacy Filters",
+    )
 
 
 def valid_dms_table_formats() -> Iterable[tuple]:
@@ -602,7 +1015,7 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
                     "Container": "CogniteDescribable",
                     "Name": None,
                     "Description": None,
-                    "Constraint": None,
+                    "Constraint": "requiresssss:describablePresent(require=CogniteDescribable)",
                     "Used For": "Instances",
                 }
             ],
@@ -613,6 +1026,12 @@ def invalid_dms_table_formats() -> Iterable[tuple]:
             "a valid boolean. Got 'invalid' of type str.",
             "In table 'Views' row 1 the column 'View' cannot be empty.",
             "In table 'Containers' row 1 column 'Used For' input should be 'node', 'edge' or 'all'. Got 'Instances'.",
+            (
+                "In table 'Containers' row 1 column 'Constraint' the constraint 'describablePresent' on container"
+                " 'CogniteDescribable' has an invalid type 'requiresssss'. "
+                "Only 'requires' constraints are supported at the container level."
+            ),
+            "In table 'Properties' row 1 the View 'CogniteDescribable' was not found in the 'Views' table.",
         },
         id="Missing required metadata fields",
     )
@@ -1069,6 +1488,14 @@ class TestDMSTableImporter:
         assert result["Properties"][0]["Max Count"] is None  # infinity represented as None
         assert result["Properties"][1]["Max Count"] == 100
 
+    @pytest.mark.parametrize("data,expected", list(valid_legacy_dms_table_format()))
+    def test_legacy_filter_parsing(
+        self, data: dict[str, list[dict[str, CellValueType]]], expected: RequestSchema
+    ) -> None:
+        importer = DMSTableImporter(data)
+        result = importer.to_data_model()
+        assert result.model_dump() == expected.model_dump()
+
 
 class TestDMSTableExporter:
     @pytest.mark.parametrize("expected,schema", list(valid_dms_table_formats()))
@@ -1106,7 +1533,10 @@ class TestTableSource:
             pytest.param((0, 5), {}, "row 6", id="row_only"),
             pytest.param((0, "not_int", "field"), {}, "column 'field'", id="column_only"),
             pytest.param(
-                ("MyTable", 1, "field", "extra"), {}, "table 'MyTable' row 2 column 'field'", id="path_length_exactly_4"
+                ("MyTable", 1, "field", "extra"),
+                {},
+                "table 'MyTable' row 2 column 'field' -> extra",
+                id="path_length_exactly_4",
             ),
             pytest.param(
                 ("MyTable", 1, "field", "a", "b", "c"),
@@ -1211,7 +1641,7 @@ class TestSpreadsheetRead:
         assert read.adjusted_row_number(row) == expected
 
 
-def valid_dms_yaml_formats() -> Iterable[tuple]:
+def valid_dms_yaml_formats_roundtrip() -> Iterable[tuple]:
     yield pytest.param(
         """Metadata:
 - Key: space
@@ -1220,6 +1650,8 @@ def valid_dms_yaml_formats() -> Iterable[tuple]:
   Value: CogniteDataModel
 - Key: version
   Value: v1
+- Key: creator
+  Value: test_user, other_user
 Properties:
 - View: CogniteDescribable
   View Property: name
@@ -1237,13 +1669,66 @@ Containers:
 - Container: CogniteDescribable
   Used For: node
 """,
+        None,
         id="Minimal example",
+    )
+    yield pytest.param(
+        """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+Properties:
+- View: cdf_cdm:CogniteDescribable(version=v1)
+  View Property: name
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: cdf_cdm:CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Constraint: uniqueness:nameUnique(order=1)
+  Connection: null
+Views:
+- View: CogniteDescribable
+Containers:
+- Container: CogniteDescribable
+  Used For: node""",
+        """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+Properties:
+- View: CogniteDescribable
+  View Property: name
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: CogniteDescribable
+  Container Property: name
+  Index: btree:name(cursorable=True)
+  Constraint: uniqueness:nameUnique
+  Connection: null
+Views:
+- View: CogniteDescribable
+Containers:
+- Container: CogniteDescribable
+  Used For: node
+""",
+        id="Specifying default space",
     )
 
 
 class TestYAMLTableFormat:
-    @pytest.mark.parametrize("yaml_str", list(valid_dms_yaml_formats()))
-    def test_roundtrip(self, yaml_str: str) -> None:
+    @pytest.mark.parametrize("yaml_str,expected_str", list(valid_dms_yaml_formats_roundtrip()))
+    def test_roundtrip(self, yaml_str: str, expected_str: str | None) -> None:
         yaml_file = MagicMock(spec=Path)
         yaml_file.read_text.return_value = yaml_str
         data_model = DMSTableImporter.from_yaml(yaml_file).to_data_model()
@@ -1254,7 +1739,7 @@ class TestYAMLTableFormat:
 
         result_file.write_text.assert_called_once()
         written_yaml = result_file.write_text.call_args[0][0]
-        assert written_yaml == yaml_str
+        assert written_yaml == (expected_str or yaml_str)
 
 
 def valid_dms_excel_formats() -> Iterable[tuple]:

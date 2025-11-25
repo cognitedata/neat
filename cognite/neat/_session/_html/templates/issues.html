@@ -3,11 +3,11 @@
 {{SPECIFIC_CSS}}
 </style>
 
-<div class="issues-container" id="issuesContainer">
+<div class="issues-container" id="issuesContainer-{{unique_id}}">
     <div class="issues-header">
-        <button class="theme-toggle" id="themeToggle">
-            <span id="themeIcon">🌙</span>
-            <span id="themeText">Dark</span>
+        <button class="theme-toggle" id="themeToggle-{{unique_id}}">
+            <span id="themeIcon-{{unique_id}}">🌙</span>
+            <span id="themeText-{{unique_id}}">Dark</span>
         </button>
         <h2 class="issues-title">Session Issues</h2>
         <div class="issues-stats">
@@ -23,22 +23,23 @@
             <div class="stat-item" data-filter="Recommendation">
                 <span class="stat-number">{{recommendations}}</span> Recommendations
             </div>
-            <button class="export-btn" onclick="exportIssues()">Export CSV</button>
+            <button class="export-btn" onclick="exportIssues_{{unique_id}}()">Export CSV</button>
         </div>
     </div>
 
     <div class="issues-controls">
         <div class="control-group">
-            <input type="text" class="search-input" placeholder="🔍 Search messages, codes, fixes..." id="searchInput">
+            <input type="text" class="search-input" placeholder="🔍 Search messages, codes, fixes..." id="searchInput-{{unique_id}}">
         </div>
     </div>
 
-    <div class="issues-list" id="issuesList"></div>
+    <div class="issues-list" id="issuesList-{{unique_id}}"></div>
 </div>
 
 <script>
 (function() {
     const issues = {{JSON}};
+    const uniqueId = '{{unique_id}}';
     {{SCRIPTS}}
 })();
 </script>
