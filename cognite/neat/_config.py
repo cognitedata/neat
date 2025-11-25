@@ -80,7 +80,7 @@ class PhysicalValidationConfig(BaseModel):
             self.issue_types = self._add_model_syntax_error(profile_config.issue_types)
             self.include = profile_config.include
             self.exclude = profile_config.exclude
-            return
+            return None
 
         # Fallback to hardcoded defaults if not in TOML
         if profile == "legacy":
