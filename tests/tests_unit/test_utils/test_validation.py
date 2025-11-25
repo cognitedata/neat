@@ -29,8 +29,8 @@ class TestHumanizeValidationError:
                     missing_required_descriptor="empty",
                 ),
                 (
-                    "In table 'Views' view 'Missing Properties' does not match the required pattern: "
-                    "^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$."
+                    "In table 'Views' string 'Missing Properties' does not match the required pattern: "
+                    "'^[a-zA-Z]([a-zA-Z0-9_]{0,253}[a-zA-Z0-9])?$'."
                 ),
                 id="View external id string pattern mismatch",
             ),

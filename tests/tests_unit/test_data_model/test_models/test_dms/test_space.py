@@ -21,7 +21,10 @@ def invalid_space_definition_test_cases() -> Iterator[tuple]:
         {"space": "forbidden#space", "name": "Valid Name", "description": "Way too long description" * 100},
         {
             "In field 'description', string should have at most 1024 characters.",
-            "In field 'space', string should match pattern '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'.",
+            (
+                "In field 'space', string 'forbidden#space' does not match the required pattern:"
+                " '^[a-zA-Z][a-zA-Z0-9_-]{0,41}[a-zA-Z0-9]?$'."
+            ),
         },
         id="Forbidden space and description above 1024 characters",
     )
