@@ -1,10 +1,11 @@
 import json
+from typing import Literal
 
 from cognite.client import ClientConfig, CogniteClient
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
-from cognite.neat._config import GovernanceProfile, NeatConfig
+from cognite.neat._config import NeatConfig
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
 from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
@@ -21,8 +22,17 @@ class NeatSession:
     def __init__(
         self,
         client: CogniteClient | ClientConfig,
-        governance_profile: GovernanceProfile | None = None,
+        governance_profile: Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None = None,
     ) -> None:
+        """Initialize a Neat session.
+
+        Args:
+            client (CogniteClient | ClientConfig): The Cognite client or client configuration to use for the session.
+            governance_profile (Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None):
+                The governance profile to use for the session.
+                If None, the default profile "legacy-additive" is used.
+        """
+
         # Load configuration
         self._config = NeatConfig.load()
 
