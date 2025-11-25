@@ -1055,7 +1055,6 @@ class DMSTableReader:
 
         seen: set[str] = set()
         for error_details in error.errors(include_input=True, include_url=False):
-            print(error_details)
             message = humanize_validation_error(error_details, context)
             if message in seen:
                 continue
