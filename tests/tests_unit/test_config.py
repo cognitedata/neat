@@ -2,10 +2,9 @@ from pathlib import Path
 from unittest.mock import MagicMock, mock_open
 
 from cognite.neat._config import (
+    ModelingConfig,
     NeatConfig,
-    PhysicalConfig,
-    PhysicalModelingConfig,
-    PhysicalValidationConfig,
+    ValidationConfig,
 )
 
 
@@ -17,24 +16,25 @@ class TestNeatConfig:
         config = NeatConfig()
 
         assert config.profile == "legacy-additive"
-        assert config.physical.modeling.mode == "additive"
-        assert config.physical.validation.enabled is True
-        assert "ModelSyntaxError" in config.physical.validation.issue_types
-        assert "ConsistencyError" in config.physical.validation.issue_types
-        assert "Recommendation" not in config.physical.validation.issue_types
+        assert config.modeling.mode == "additive"
+        assert config.validation.exclude == [
+            "NEAT-DMS-AI-READINESS-*",
+            "NEAT-DMS-CONNECTIONS-002",
+            "NEAT-DMS-CONNECTIONS-REVERSE-007",
+            "NEAT-DMS-CONNECTIONS-REVERSE-008",
+            "NEAT-DMS-CONSISTENCY-001",
+        ]
 
     def test_custom_governance_profile(self) -> None:
         """Test custom governance profile doesn't apply defaults."""
         config = NeatConfig(
             profile="custom",
-            physical=PhysicalConfig(
-                validation=PhysicalValidationConfig(issue_types=["ModelSyntaxError"]),
-                modeling=PhysicalModelingConfig(mode="rebuild"),
-            ),
+            validation=ValidationConfig(exclude=["NEAT-DMS-CUSTOM-*"]),
+            modeling=ModelingConfig(mode="rebuild"),
         )
 
         assert config.profile == "custom"
-        assert config.physical.modeling.mode == "rebuild"
+        assert config.modeling.mode == "rebuild"
 
     def test_load_from_pyproject_toml_tool_section(self) -> None:
         """Test loading from pyproject.toml [tool.neat] section."""
@@ -42,11 +42,10 @@ class TestNeatConfig:
 [tool.neat]
 profile = "deep-rebuild"
 
-[tool.neat.physical.validation]
-enabled = true
-profile = "deep"
+[tool.neat.validation]
+exclude = []
 
-[tool.neat.physical.modeling]
+[tool.neat.modeling]
 mode = "rebuild"
 """
 
@@ -57,17 +56,17 @@ mode = "rebuild"
 
         config = NeatConfig.load(mock_path)
         assert config.profile == "deep-rebuild"
-        assert config.physical.modeling.mode == "rebuild"
-        assert "Recommendation" in config.physical.validation.issue_types
+        assert config.modeling.mode == "rebuild"
+        assert config.validation.exclude == []
 
     def test_profile_update_post_validation(self) -> None:
         config = NeatConfig(profile="legacy-additive")
 
-        assert config.physical.modeling.mode == "additive"
-        assert "Recommendation" not in config.physical.validation.issue_types
+        assert config.modeling.mode == "additive"
+        assert len(config.validation.exclude) > 0
 
         # Change to deep profile
         config._apply_profile("deep-rebuild")
 
-        assert config.physical.modeling.mode == "rebuild"
-        assert "Recommendation" in config.physical.validation.issue_types
+        assert config.modeling.mode == "rebuild"
+        assert config.validation.exclude == []

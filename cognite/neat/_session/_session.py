@@ -49,7 +49,7 @@ class NeatSession:
         self.opt = Opt(self._store)
 
         if self.opt._collector.can_collect:
-            self.opt._collector.collect("initSession", {"mode": self._config.physical.modeling.mode})
+            self.opt._collector.collect("initSession", {"mode": self._config.modeling.mode})
 
         self._welcome_message()
 

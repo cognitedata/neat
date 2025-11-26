@@ -51,11 +51,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self,
         client: NeatClient | None = None,
         modus_operandi: ModusOperandi = "additive",
-        can_run_validator: Callable[[str, type | None], bool] | None = None,
+        can_run_validator: Callable[[str, type], bool] | None = None,
     ) -> None:
         super().__init__()
         self._client = client
-        self._can_run_validator = can_run_validator or (lambda code, issue_type=None: True)  # type: ignore
+        self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
         self._modus_operandi = modus_operandi
         self._has_run = False
 

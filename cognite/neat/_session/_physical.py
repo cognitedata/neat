@@ -96,8 +96,8 @@ class ReadPhysicalDataModel:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
         on_success = DmsDataModelValidation(
             self._client,
-            modus_operandi=self._config.physical.modeling.mode,
-            can_run_validator=self._config.physical.validation.can_run_validator,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
         )
 
         return self._store.read_physical(reader, on_success)
@@ -123,8 +123,8 @@ class ReadPhysicalDataModel:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
         on_success = DmsDataModelValidation(
             self._client,
-            modus_operandi=self._config.physical.modeling.mode,
-            can_run_validator=self._config.physical.validation.can_run_validator,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
         )
 
         return self._store.read_physical(reader, on_success)
@@ -136,8 +136,8 @@ class ReadPhysicalDataModel:
         reader = DMSTableImporter.from_excel(path)
         on_success = DmsDataModelValidation(
             self._client,
-            modus_operandi=self._config.physical.modeling.mode,
-            can_run_validator=self._config.physical.validation.can_run_validator,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
         )
 
         return self._store.read_physical(reader, on_success)
@@ -156,8 +156,8 @@ class ReadPhysicalDataModel:
         )
         on_success = DmsDataModelValidation(
             self._client,
-            modus_operandi=self._config.physical.modeling.mode,
-            can_run_validator=self._config.physical.validation.can_run_validator,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
         )
 
         return self._store.read_physical(reader, on_success)
@@ -255,7 +255,7 @@ class WritePhysicalDataModel:
             dry_run=dry_run,
             auto_rollback=rollback,
             drop_data=drop_data,
-            modus_operandi=self._config.physical.modeling.mode,
+            modus_operandi=self._config.modeling.mode,
         )
         on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)

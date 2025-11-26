@@ -302,8 +302,8 @@ def test_validation_deep(
     config = NeatConfig()
     config._apply_profile(governance_profile)
 
-    mode = config.physical.modeling.mode
-    can_run_validator = config.physical.validation.can_run_validator
+    mode = config.modeling.mode
+    can_run_validator = config.validation.can_run_validator
 
     # Run on success validators
     on_success = DmsDataModelValidation(
