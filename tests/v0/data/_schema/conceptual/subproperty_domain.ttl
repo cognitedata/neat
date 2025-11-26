@@ -1,14 +1,14 @@
-@prefix def-ops: <http://example.com/def-ops#> .
+@prefix test1: <http://example.com/test1#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 
-def-ops:Order a owl:Class .
-def-ops:MaterialLocationChangeProcess a owl:Class .
+test1:Order a owl:Class .
+test1:Delivery a owl:Class .
 
-def-ops:fulfilledBy a owl:ObjectProperty ;
-    rdfs:domain def-ops:Order .
+test1:fulfilledBy a owl:ObjectProperty ;
+    rdfs:domain test1:Order .
 
-def-ops:fulfilledByDelivery a owl:ObjectProperty ;
-    rdfs:range def-ops:MaterialLocationChangeProcess ;
-    rdfs:subPropertyOf def-ops:fulfilledBy .
+test1:fulfilledByDelivery a owl:ObjectProperty ;
+    rdfs:range test1:Delivery ;
+    rdfs:subPropertyOf test1:fulfilledBy .
