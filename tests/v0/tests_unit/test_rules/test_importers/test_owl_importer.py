@@ -84,3 +84,13 @@ def test_owl_enitity_quoting():
     assert actual_concepts[ConceptEntity(prefix="neat_space", suffix="Sensor")].implements == [
         ConceptEntity(prefix="cdf_cdm", suffix="CogniteAsset", version="v1")
     ]
+
+
+def test_subproperty_inherits_domain():
+    input = importers.OWLImporter.from_file(filepath=SchemaData.Conceptual.subproperty_domain_ttl).to_data_model()
+    props = input.unverified_data_model.properties
+    inherited = [p for p in props if "fulfilledByDelivery" in p.property_]
+    # Ensure the test TTL produced the expected property
+    assert len(inherited) == 1
+    # The property should inherit the domain from its parent property (Order)
+    assert "Order" in str(inherited[0].concept)

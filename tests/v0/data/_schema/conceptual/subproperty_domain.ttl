@@ -1,0 +1,14 @@
+@prefix test1: <http://example.com/test1#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+test1:Order a owl:Class .
+test1:Delivery a owl:Class .
+
+test1:fulfilledBy a owl:ObjectProperty ;
+    rdfs:domain test1:Order .
+
+test1:fulfilledByDelivery a owl:ObjectProperty ;
+    rdfs:range test1:Delivery ;
+    rdfs:subPropertyOf test1:fulfilledBy .
