@@ -69,15 +69,13 @@ class ValidationConfig(BaseModel, populate_by_name=True):
             True if validator should run, False otherwise
         """
 
-        excluded = not self._matches_pattern(code, self.exclude)
+        excluded = self._matches_pattern(code, self.exclude)
 
         if issue_type in [ModelSyntaxError, ConsistencyError] and excluded:
-            print(f"Warning: Exclusion of critical issue type '{issue_type.__name__}' for code '{code}' ignored.")
-            return True
-        elif issue_type in [ModelSyntaxError, ConsistencyError] and not excluded:
+            print(f"Validator {code} was excluded however it is a critical validator and will still run.")
             return True
         else:
-            return excluded
+            return not excluded
 
     def _matches_pattern(self, code: str, patterns: list[str]) -> bool:
         """Check if code matches any pattern (supports wildcards)."""
