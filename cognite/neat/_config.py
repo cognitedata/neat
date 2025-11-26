@@ -143,7 +143,7 @@ class NeatConfig(BaseModel, populate_by_name=True):
     @field_validator("profiles", mode="before")
     @classmethod
     def _check_if_internal_profiles_are_redifned(cls, value: Any) -> Any | None:
-        """Validates and converts the max_count field if it uses the legacy 'inf' value."""
+        """Checks that no internal profiles are redefined in the configuration."""
 
         if redefined := set(INTERNAL_PROFILES.keys()).intersection(value.keys()):
             raise ValueError(f"Internal profiles redefined in external TOML file: {redefined}")
@@ -181,7 +181,7 @@ class NeatConfig(BaseModel, populate_by_name=True):
 
     @classmethod
     def load(cls, file_path: Path) -> "NeatConfig":
-        """Load configuration from file or use defaults.
+        """Load configuration from file.
 
         Args:
             file_path: Path to configuration file.

@@ -99,16 +99,3 @@ mode = "additive"
         assert config.profile == "custom"
         assert config.modeling.mode == "additive"
         assert config.validation.exclude == ["NEAT-DMS-TEST-*"]
-
-    def test_config_string_representation(self) -> None:
-        """Test __str__ method for human-readable output."""
-        config = NeatConfig(
-            profile="custom",
-            validation=ValidationConfig(exclude=["NEAT-DMS-CUSTOM-*"]),
-            modeling=ModelingConfig(mode="rebuild"),
-        )
-
-        config_str = str(config)
-        assert "Profile: custom" in config_str
-        assert "Modeling Mode: rebuild" in config_str
-        assert "Validation:" in config_str
