@@ -61,7 +61,19 @@ class NeatStore:
 
     def _can_agent_do_activity(self, agent: Agents) -> None:
         """Validate if activity can be performed in the current state and considering provenance"""
-        if not self.state.can_transition(agent):
+        if self.state.can_transition(agent):
+            if (
+                isinstance(agent, DMSExporter)
+                and self.provenance.last_change
+                and (error_count := self.provenance.last_change.error_count) > 0
+            ):
+                raise RuntimeError(
+                    f"⚠️ Cannot write data model, the model has {error_count} errors!"
+                    f"{NEWLINE}Resolve issues before exporting the data model."
+                    f"{NEWLINE}You can inspect issues using neat.issues"
+                )
+        else:
+            # specific error messages for common mistakes
             if isinstance(agent, DMSImporter) and isinstance(self.state, PhysicalState):
                 raise RuntimeError(
                     "⚠️ Cannot read data model, there is already a data model in the session!"
@@ -72,16 +84,6 @@ class NeatStore:
                 raise RuntimeError(
                     "⚠️ Cannot write data model, there is no data model in the session!"
                     f"{NEWLINE}Read a data model first!"
-                )
-            elif (
-                isinstance(agent, DMSExporter)
-                and self.provenance.last_change
-                and (error_count := self.provenance.last_change.error_count) > 0
-            ):
-                raise RuntimeError(
-                    f"⚠️ Cannot write data model, the model has {error_count} errors!"
-                    f"{NEWLINE}Resolve issues before exporting the data model."
-                    f"{NEWLINE}You can inspect issues using neat.issues"
                 )
             raise RuntimeError(f"Cannot run {type(agent).__name__} in state {self.state}")
 
