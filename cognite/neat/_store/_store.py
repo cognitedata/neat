@@ -73,6 +73,16 @@ class NeatStore:
                     "⚠️ Cannot write data model, there is no data model in the session!"
                     f"{NEWLINE}Read a data model first!"
                 )
+            elif (
+                isinstance(agent, DMSExporter)
+                and self.provenance.last_change
+                and (error_count := self.provenance.last_change.error_count) > 0
+            ):
+                raise RuntimeError(
+                    f"⚠️ Cannot write data model, the model has {error_count} errors!"
+                    f"{NEWLINE}Resolve issues before exporting the data model."
+                    f"{NEWLINE}You can inspect issues using neat.issues"
+                )
             raise RuntimeError(f"Cannot run {type(agent).__name__} in state {self.state}")
 
         # need implementation of checking if required predecessor activities have been done
