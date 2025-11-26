@@ -34,11 +34,7 @@ class NeatSession:
                 and apply only validations that were part of the legacy Neat version."""
 
         # Load configuration
-        self._config = NeatConfig.load()
-
-        # Override governance profile if specified
-        if config:
-            self._config._apply_profile(config)
+        self._config = NeatConfig(profile=config or "legacy-additive")
 
         # Use configuration for physical data model
         self._store = NeatStore()

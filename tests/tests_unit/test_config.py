@@ -40,13 +40,19 @@ class TestNeatConfig:
         """Test loading from pyproject.toml [tool.neat] section."""
         toml_content = """
 [tool.neat]
-profile = "deep-rebuild"
+profile = "custom"
 
 [tool.neat.validation]
 exclude = []
 
 [tool.neat.modeling]
 mode = "rebuild"
+
+[tool.neat.profiles.my-custom-profile.modeling]
+mode = "additive"
+
+[tool.neat.profiles.my-custom-profile.validation]
+exclude = ["NEAT-DMS-AI-READINESS-*", "NEAT-DMS-CONNECTIONS-REVERSE-008"]
 """
 
         mock_path = MagicMock(spec=Path)
@@ -55,7 +61,7 @@ mode = "rebuild"
         mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
 
         config = NeatConfig.load(mock_path)
-        assert config.profile == "deep-rebuild"
+        assert config.profile == "custom"
         assert config.modeling.mode == "rebuild"
         assert config.validation.exclude == []
 
@@ -70,3 +76,39 @@ mode = "rebuild"
 
         assert config.modeling.mode == "rebuild"
         assert config.validation.exclude == []
+
+    def test_load_from_root_neat_section(self) -> None:
+        """Test loading from root [neat] section in neat.toml."""
+        toml_content = """
+[neat]
+profile = "custom"
+
+[neat.validation]
+exclude = ["NEAT-DMS-TEST-*"]
+
+[neat.modeling]
+mode = "additive"
+"""
+
+        mock_path = MagicMock(spec=Path)
+        mock_path.exists.return_value = True
+        mock_path.open = mock_open(read_data=toml_content.encode())
+        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
+
+        config = NeatConfig.load(mock_path)
+        assert config.profile == "custom"
+        assert config.modeling.mode == "additive"
+        assert config.validation.exclude == ["NEAT-DMS-TEST-*"]
+
+    def test_config_string_representation(self) -> None:
+        """Test __str__ method for human-readable output."""
+        config = NeatConfig(
+            profile="custom",
+            validation=ValidationConfig(exclude=["NEAT-DMS-CUSTOM-*"]),
+            modeling=ModelingConfig(mode="rebuild"),
+        )
+
+        config_str = str(config)
+        assert "Profile: custom" in config_str
+        assert "Modeling Mode: rebuild" in config_str
+        assert "Validation:" in config_str

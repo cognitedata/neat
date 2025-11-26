@@ -1,8 +1,8 @@
 import sys
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
 from cognite.neat._utils.useful_types import ModusOperandi
@@ -11,45 +11,6 @@ if sys.version_info >= (3, 11):
     import tomllib as tomli  # Python 3.11+
 else:
     import tomli  # type: ignore
-
-
-# Type aliases
-ConfigProfile = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild", "custom"]
-
-INTERNAL_PROFILES = {
-    "legacy-additive": {
-        "modeling": "additive",
-        "validation": {
-            "exclude": [
-                "NEAT-DMS-AI-READINESS-*",
-                "NEAT-DMS-CONNECTIONS-002",
-                "NEAT-DMS-CONNECTIONS-REVERSE-007",
-                "NEAT-DMS-CONNECTIONS-REVERSE-008",
-                "NEAT-DMS-CONSISTENCY-001",
-            ]
-        },
-    },
-    "legacy-rebuild": {
-        "modeling": "rebuild",
-        "validation": {
-            "exclude": [
-                "NEAT-DMS-AI-READINESS-*",
-                "NEAT-DMS-CONNECTIONS-002",
-                "NEAT-DMS-CONNECTIONS-REVERSE-007",
-                "NEAT-DMS-CONNECTIONS-REVERSE-008",
-                "NEAT-DMS-CONSISTENCY-001",
-            ]
-        },
-    },
-    "deep-additive": {
-        "modeling": "additive",
-        "validation": {"exclude": []},
-    },
-    "deep-rebuild": {
-        "modeling": "rebuild",
-        "validation": {"exclude": []},
-    },
-}
 
 
 class ValidationConfig(BaseModel, populate_by_name=True):
@@ -135,20 +96,78 @@ class ProfileConfig(BaseModel, populate_by_name=True):
     modeling: ProfileModelingConfig = Field(default_factory=ProfileModelingConfig)
 
 
+INTERNAL_PROFILES = {
+    "legacy-additive": ProfileConfig(
+        modeling=ProfileModelingConfig(mode="additive"),
+        validation=ProfileValidationConfig(
+            exclude=[
+                "NEAT-DMS-AI-READINESS-*",
+                "NEAT-DMS-CONNECTIONS-002",
+                "NEAT-DMS-CONNECTIONS-REVERSE-007",
+                "NEAT-DMS-CONNECTIONS-REVERSE-008",
+                "NEAT-DMS-CONSISTENCY-001",
+            ]
+        ),
+    ),
+    "legacy-rebuild": ProfileConfig(
+        modeling=ProfileModelingConfig(mode="rebuild"),
+        validation=ProfileValidationConfig(
+            exclude=[
+                "NEAT-DMS-AI-READINESS-*",
+                "NEAT-DMS-CONNECTIONS-002",
+                "NEAT-DMS-CONNECTIONS-REVERSE-007",
+                "NEAT-DMS-CONNECTIONS-REVERSE-008",
+                "NEAT-DMS-CONSISTENCY-001",
+            ]
+        ),
+    ),
+    "deep-additive": ProfileConfig(
+        modeling=ProfileModelingConfig(mode="additive"),
+        validation=ProfileValidationConfig(exclude=[]),
+    ),
+    "deep-rebuild": ProfileConfig(
+        modeling=ProfileModelingConfig(mode="rebuild"),
+        validation=ProfileValidationConfig(exclude=[]),
+    ),
+}
+
+
 class NeatConfig(BaseModel, populate_by_name=True):
     """Main NEAT configuration."""
 
-    profile: ConfigProfile = Field(default="legacy-additive")
+    profile: str = Field(default="legacy-additive")
     validation: ValidationConfig = Field(default_factory=ValidationConfig)
     modeling: ModelingConfig = Field(default_factory=ModelingConfig)
     profiles: dict[str, ProfileConfig] = Field(default_factory=dict)
 
-    def model_post_init(self, __context: Any) -> None:
-        """Apply profile after initialization."""
-        if self.profile != "custom":
-            self._apply_profile(self.profile)
+    @field_validator("profiles", mode="before")
+    @classmethod
+    def _check_if_internal_profiles_are_redifned(cls, value: Any) -> Any | None:
+        """Validates and converts the max_count field if it uses the legacy 'inf' value."""
 
-    def _apply_profile(self, profile: ConfigProfile) -> None:
+        if redefined := set(INTERNAL_PROFILES.keys()).intersection(value.keys()):
+            raise ValueError(f"Internal profiles redefined in external TOML file: {redefined}")
+
+        return value
+
+    def model_post_init(self, __context: Any) -> None:
+        """Add profile to profiles dictionary."""
+
+        # add internal profiles
+        for profile, config in INTERNAL_PROFILES.items():
+            self.profiles[profile] = config
+
+        # Add current profile if not internal
+        if self.profile not in INTERNAL_PROFILES:
+            self.profiles[self.profile] = ProfileConfig(
+                validation=ProfileValidationConfig(exclude=self.validation.exclude.copy()),
+                modeling=ProfileModelingConfig(mode=self.modeling.mode),
+            )
+
+        # Need to apply profile after all profiles are loaded
+        self._apply_profile(self.profile)
+
+    def _apply_profile(self, profile: str) -> None:
         """Apply governance profile configuration."""
         # Check if profile is defined in TOML
         if profile in self.profiles:
@@ -158,56 +177,39 @@ class NeatConfig(BaseModel, populate_by_name=True):
             self.validation.exclude = config.validation.exclude
             return None
 
-        # Fallback to internal defaults
-        if profile in INTERNAL_PROFILES:
-            profile_data = INTERNAL_PROFILES[profile]
-            self.profile = profile
-            self.modeling.mode = cast(ModusOperandi, profile_data["modeling"])
-            validation_data = cast(dict[str, Any], profile_data["validation"])
-            self.validation.exclude = cast(list[str], validation_data["exclude"])
-            return None
-
         raise ValueError(f"Unknown profile: {profile}")
 
     @classmethod
-    def load(cls, config_path: Path | None = None) -> "NeatConfig":
+    def load(cls, file_path: Path) -> "NeatConfig":
         """Load configuration from file or use defaults.
 
         Args:
-            config_path: Optional path to configuration file.
-                        If None, searches for neat.toml or pyproject.toml in current directory.
+            file_path: Path to configuration file.
 
         Returns:
             NeatConfig instance with loaded or default configuration.
         """
-        paths_to_check: list[Path] = []
-        if config_path:
-            paths_to_check.append(config_path)
+
+        with file_path.open("rb") as f:
+            toml = tomli.load(f)
+
+        if "tool" in toml and "neat" in toml["tool"]:
+            data = toml["tool"]["neat"]
+        elif "neat" in toml:
+            data = toml["neat"]
         else:
-            cwd = Path.cwd()
-            paths_to_check.extend([cwd / "neat.toml", cwd / "pyproject.toml"])
+            raise ValueError("No [tool.neat] or [neat] section found in the configuration file.")
 
-        for path in paths_to_check:
-            if not path.exists():
-                continue
+        if (profile := data.get("profile")) and profile in INTERNAL_PROFILES:
+            raise ValueError(f"Internal profile '{profile}' cannot be used in external configuration file.")
 
-            with path.open("rb") as f:
-                data = tomli.load(f)
+        if (profiles := data.get("profiles")) and any(p in INTERNAL_PROFILES for p in profiles.keys()):
+            raise ValueError(
+                "Internal profiles cannot be redefined in external configuration file: "
+                f"{set(INTERNAL_PROFILES.keys()).intersection(profiles.keys())}"
+            )
 
-            # Check for [tool.neat] section
-            if "tool" in data and "neat" in data["tool"]:
-                return cls(**data["tool"]["neat"])
-
-            # Check for root [neat] section (if not in pyproject.toml)
-            if "tool" not in data and "neat" in data:
-                return cls(**data["neat"])
-
-            # If we were looking for a specific file, don't continue searching
-            if config_path:
-                break
-
-        # Return default configuration
-        return cls()
+        return cls(**data)
 
     def __str__(self) -> str:
         """Human-readable configuration summary."""
