@@ -99,3 +99,46 @@ mode = "additive"
         assert config.profile == "custom"
         assert config.modeling.mode == "additive"
         assert config.validation.exclude == ["NEAT-DMS-TEST-*"]
+
+    def test_load_with_internal_profile_raises_error(self) -> None:
+        """Test that using an internal profile name in TOML raises ValueError."""
+        toml_content = """
+[neat]
+profile = "legacy-additive"
+
+[neat.validation]
+exclude = []
+"""
+
+        mock_path = MagicMock(spec=Path)
+        mock_path.exists.return_value = True
+        mock_path.open = mock_open(read_data=toml_content.encode())
+        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
+
+        import pytest
+
+        with pytest.raises(ValueError, match="Internal profile 'legacy-additive' cannot be used"):
+            NeatConfig.load(mock_path)
+
+    def test_load_with_redefined_internal_profile_raises_error(self) -> None:
+        """Test that redefining an internal profile in TOML raises ValueError."""
+        toml_content = """
+[neat]
+profile = "custom"
+
+[neat.profiles.deep-rebuild.modeling]
+mode = "additive"
+
+[neat.profiles.deep-rebuild.validation]
+exclude = ["NEAT-DMS-CUSTOM-*"]
+"""
+
+        mock_path = MagicMock(spec=Path)
+        mock_path.exists.return_value = True
+        mock_path.open = mock_open(read_data=toml_content.encode())
+        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
+
+        import pytest
+
+        with pytest.raises(ValueError, match="Internal profiles cannot be redefined"):
+            NeatConfig.load(mock_path)
