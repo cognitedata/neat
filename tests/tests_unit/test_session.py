@@ -63,6 +63,20 @@ def physical_state_session(new_session: NeatSession, valid_dms_yaml_format: str)
 
 
 @pytest.fixture()
+def physical_state_with_consistency_error(
+    new_session: NeatSession, consistency_error_dms_yaml_format: str, empty_cdf: respx.MockRouter
+) -> NeatSession:
+    read_yaml = MagicMock(spec=Path)
+    read_yaml.read_text.return_value = consistency_error_dms_yaml_format
+    new_session.physical_data_model.read.yaml(read_yaml)
+    last_change = new_session._store.provenance.last_change
+    assert last_change is not None
+    assert last_change.error_count > 0, "The last change should have consistency errors"
+    assert isinstance(new_session._store.state, states.PhysicalState)
+    return new_session
+
+
+@pytest.fixture()
 def physical_written_session(physical_state_session: NeatSession) -> NeatSession:
     write_yaml = MagicMock(spec=Path)
     physical_state_session.physical_data_model.write.yaml(write_yaml)
@@ -183,6 +197,23 @@ class TestNeatSession:
         assert isinstance(session._store.provenance[-1].source_state, states.EmptyState)
         assert isinstance(session._store.provenance[-1].target_state, states.PhysicalState)
 
+    def test_write_data_model_with_consistency_errors(self, physical_state_with_consistency_error: NeatSession) -> None:
+        session = physical_state_with_consistency_error
+
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            session.physical_data_model.write.cdf(dry_run=True)
+
+        printed_statements = output.getvalue()
+        assert "⚠️ Cannot write data model, the model has" in str(printed_statements)
+        assert "Resolve issues before exporting the data model." in str(printed_statements)
+
+        # no change took place
+        assert len(session._store.provenance) == 1, "We should only have the read change from before"
+
+        # we remain in physical state even though we hit Forbidden state, auto-recovery
+        assert isinstance(session._store.state, states.PhysicalState)
+
 
 @pytest.mark.serial
 class TestCollector:
@@ -229,10 +260,10 @@ class TestRender:
     They do not check the actual content, just that something is rendered without error.
     """
 
-    def test_render_issues(self, new_session: NeatSession, invalid_dms_yaml_format: str) -> None:
+    def test_render_issues(self, new_session: NeatSession, model_syntax_error_dms_yaml_format: str) -> None:
         session = new_session
         read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = invalid_dms_yaml_format
+        read_yaml.read_text.return_value = model_syntax_error_dms_yaml_format
         session.physical_data_model.read.yaml(read_yaml)
 
         html_repr = session.issues._repr_html_()

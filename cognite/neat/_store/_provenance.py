@@ -1,10 +1,11 @@
+import itertools
 from collections import UserList
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
-from cognite.neat._issues import IssueList
+from cognite.neat._issues import ConsistencyError, IssueList, ModelSyntaxError
 from cognite.neat._state_machine import State
 
 
@@ -34,6 +35,15 @@ class Change:
     def successful(self) -> bool:
         """Check if change was successful"""
         return not self.errors
+
+    @property
+    def error_count(self) -> int:
+        """Get number of errors"""
+        return sum(
+            1
+            for issue in itertools.chain(self.issues or [], self.errors or [])
+            if isinstance(issue, ModelSyntaxError | ConsistencyError)
+        )
 
     def as_mixpanel_event(self) -> dict[str, Any]:
         """Convert change to mixpanel event format"""
