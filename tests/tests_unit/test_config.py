@@ -142,3 +142,23 @@ exclude = ["NEAT-DMS-CUSTOM-*"]
 
         with pytest.raises(ValueError, match="Internal profiles cannot be redefined"):
             NeatConfig.load(mock_path)
+
+    def test_load_without_neat_section_raises_error(self) -> None:
+        """Test that loading TOML without [neat] or [tool.neat] section raises ValueError."""
+        toml_content = """
+[other]
+some_key = "some_value"
+
+[other.config]
+mode = "test"
+"""
+
+        mock_path = MagicMock(spec=Path)
+        mock_path.exists.return_value = True
+        mock_path.open = mock_open(read_data=toml_content.encode())
+        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
+
+        import pytest
+
+        with pytest.raises(ValueError, match="No \\[tool.neat\\] or \\[neat\\] section found"):
+            NeatConfig.load(mock_path)
