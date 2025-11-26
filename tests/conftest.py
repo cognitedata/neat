@@ -36,7 +36,7 @@ Containers:
 
 
 @pytest.fixture(scope="session")
-def invalid_dms_yaml_format() -> str:
+def model_syntax_error_dms_yaml_format() -> str:
     return """Metadata:
 - Key: space
   Value: cdf_cdm
@@ -60,4 +60,29 @@ Views:
 Containers:
 - Container: CogniteDescribable
   Used For: node
+"""
+
+
+@pytest.fixture(scope="session")
+def consistency_error_dms_yaml_format() -> str:
+    return """Metadata:
+- Key: space
+  Value: cdf_cdm
+- Key: externalId
+  Value: CogniteDataModel
+- Key: version
+  Value: v1
+Properties:
+- View: CogniteSourceable
+  View Property: name
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Immutable: false
+  Container: MyNonExistingContainer
+  Container Property: sourceSystem
+  Index: null
+  Connection: null
+Views:
+- View: CogniteSourceable
 """
