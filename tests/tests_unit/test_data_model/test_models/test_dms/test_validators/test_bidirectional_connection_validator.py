@@ -300,7 +300,7 @@ def test_validation_deep(
     )
 
     config = NeatConfig()
-    config._apply_governance_profile(governance_profile)
+    config._apply_profile(governance_profile)
 
     mode = config.physical.modeling.mode
     can_run_validator = config.physical.validation.can_run_validator

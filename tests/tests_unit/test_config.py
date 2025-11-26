@@ -16,61 +16,31 @@ class TestNeatConfig:
         """Test default NeatConfig initialization."""
         config = NeatConfig()
 
-        assert config.governance_profile == "legacy-additive"
+        assert config.profile == "legacy-additive"
         assert config.physical.modeling.mode == "additive"
-        assert config.physical.validation.profile == "legacy"
         assert config.physical.validation.enabled is True
         assert "ModelSyntaxError" in config.physical.validation.issue_types
         assert "ConsistencyError" in config.physical.validation.issue_types
         assert "Recommendation" not in config.physical.validation.issue_types
 
-    def test_legacy_rebuild_profile(self) -> None:
-        """Test legacy-rebuild governance profile application."""
-        config = NeatConfig(governance_profile="legacy-rebuild")
-
-        assert config.physical.modeling.mode == "rebuild"
-        assert config.physical.validation.profile == "legacy"
-        assert "ModelSyntaxError" in config.physical.validation.issue_types
-        assert "ConsistencyError" in config.physical.validation.issue_types
-
-    def test_deep_additive_profile(self) -> None:
-        """Test deep-additive governance profile application."""
-        config = NeatConfig(governance_profile="deep-additive")
-
-        assert config.physical.modeling.mode == "additive"
-        assert config.physical.validation.profile == "deep"
-        assert "ModelSyntaxError" in config.physical.validation.issue_types
-        assert "ConsistencyError" in config.physical.validation.issue_types
-        assert "Recommendation" in config.physical.validation.issue_types
-
-    def test_deep_rebuild_profile(self) -> None:
-        """Test deep-rebuild governance profile application."""
-        config = NeatConfig(governance_profile="deep-rebuild")
-
-        assert config.physical.modeling.mode == "rebuild"
-        assert config.physical.validation.profile == "deep"
-        assert "ModelSyntaxError" in config.physical.validation.issue_types
-        assert "ConsistencyError" in config.physical.validation.issue_types
-        assert "Recommendation" in config.physical.validation.issue_types
-
     def test_custom_governance_profile(self) -> None:
         """Test custom governance profile doesn't apply defaults."""
         config = NeatConfig(
-            governance_profile="custom",
+            profile="custom",
             physical=PhysicalConfig(
-                validation=PhysicalValidationConfig(profile="custom", issue_types=["ModelSyntaxError"]),
+                validation=PhysicalValidationConfig(issue_types=["ModelSyntaxError"]),
                 modeling=PhysicalModelingConfig(mode="rebuild"),
             ),
         )
 
-        assert config.governance_profile == "custom"
+        assert config.profile == "custom"
         assert config.physical.modeling.mode == "rebuild"
 
     def test_load_from_pyproject_toml_tool_section(self) -> None:
         """Test loading from pyproject.toml [tool.neat] section."""
         toml_content = """
 [tool.neat]
-governance-profile = "deep-rebuild"
+profile = "deep-rebuild"
 
 [tool.neat.physical.validation]
 enabled = true
@@ -86,16 +56,18 @@ mode = "rebuild"
         mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
 
         config = NeatConfig.load(mock_path)
-        assert config.governance_profile == "deep-rebuild"
+        assert config.profile == "deep-rebuild"
         assert config.physical.modeling.mode == "rebuild"
+        assert "Recommendation" in config.physical.validation.issue_types
 
-    def test_apply_governance_profile_updates_validation(self) -> None:
-        """Test that applying governance profile updates validation config."""
-        config = NeatConfig(governance_profile="legacy-additive")
+    def test_profile_update_post_validation(self) -> None:
+        config = NeatConfig(profile="legacy-additive")
+
+        assert config.physical.modeling.mode == "additive"
+        assert "Recommendation" not in config.physical.validation.issue_types
 
         # Change to deep profile
-        config._apply_governance_profile("deep-rebuild")
+        config._apply_profile("deep-rebuild")
 
-        assert config.physical.validation.profile == "deep"
         assert config.physical.modeling.mode == "rebuild"
         assert "Recommendation" in config.physical.validation.issue_types

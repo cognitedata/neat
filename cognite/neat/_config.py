@@ -14,11 +14,10 @@ else:
 
 
 # Type aliases
-ValidationProfile = Literal["legacy", "deep", "custom"]
-GovernanceProfile = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild", "custom"]
+ConfigProfile = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild", "custom"]
 IssueType = Literal["ModelSyntaxError", "ConsistencyError", "Recommendation"]
 
-DEFAULT_PROFILES = {
+INTERNAL_PROFILES = {
     "legacy-additive": {"validation": "legacy", "modeling": "additive"},
     "legacy-rebuild": {"validation": "legacy", "modeling": "rebuild"},
     "deep-additive": {"validation": "deep", "modeling": "additive"},
@@ -26,29 +25,13 @@ DEFAULT_PROFILES = {
 }
 
 
-class ValidationProfileConfig(BaseModel):
-    """Configuration for a validation profile."""
-
-    issue_types: list[IssueType] = Field(default_factory=list, alias="issue-types")
-    include: list[str] = Field(default_factory=list)
-    exclude: list[str] = Field(default_factory=list)
-
-    model_config = {"populate_by_name": True}
-
-
-class PhysicalValidationConfig(BaseModel):
+class PhysicalValidationConfig(BaseModel, populate_by_name=True):
     """Validation configuration for physical data models."""
 
     enabled: bool = True
-    profile: ValidationProfile = "legacy"
     issue_types: list[IssueType] = Field(default=["ConsistencyError", "Recommendation"], alias="issue-types")
     include: list[str] = Field(default_factory=list)
     exclude: list[str] = Field(default_factory=list)
-
-    # Predefined profiles (loaded from TOML)
-    profiles: dict[str, ValidationProfileConfig] = Field(default_factory=dict)
-
-    model_config = {"populate_by_name": True}
 
     @staticmethod
     def _add_model_syntax_error(issue_types: list[IssueType]) -> list[IssueType]:
@@ -68,33 +51,13 @@ class PhysicalValidationConfig(BaseModel):
         """Get issue types with ModelSyntaxError always included."""
         return self._add_model_syntax_error(list(self.issue_types))
 
-    def model_post_init(self, __context: Any) -> None:
-        """Apply profile settings if not using custom profile."""
-        if self.profile != "custom":
-            self._apply_profile(self.profile)
-
-    def _apply_profile(self, profile: ValidationProfile) -> None:
-        """Apply predefined validation profile settings."""
-        if profile in self.profiles:
-            profile_config = self.profiles[profile]
-            self.issue_types = self._add_model_syntax_error(profile_config.issue_types)
-            self.include = profile_config.include
-            self.exclude = profile_config.exclude
-            return None
-
-        # Fallback to hardcoded defaults if not in TOML
-        if profile == "legacy":
-            self._apply_legacy_profile()
-        elif profile == "deep":
-            self._apply_deep_profile()
-
-    def _apply_legacy_profile(self) -> None:
+    def apply_legacy_profile(self) -> None:
         """Apply legacy profile (backward compatible with original NEAT)."""
         self.issue_types = ["ModelSyntaxError", "ConsistencyError"]
         self.include = ["NEAT-DMS-*"]
         self.exclude = []
 
-    def _apply_deep_profile(self) -> None:
+    def apply_deep_profile(self) -> None:
         """Apply deep profile (all validators enabled)."""
         self.issue_types = ["ModelSyntaxError", "ConsistencyError", "Recommendation"]
         self.include = ["NEAT-DMS-*"]
@@ -162,88 +125,106 @@ class PhysicalValidationConfig(BaseModel):
 
     def __str__(self) -> str:
         """Human-readable configuration summary."""
-        lines = [
-            f"Validation Profile: {self.profile}",
-            f"Enabled: {self.enabled}",
-            f"Issue Types: {', '.join(self.effective_issue_types)}",
-        ]
+        if not self.enabled:
+            lines = ["Validation is disabled."]
+        else:
+            lines = [
+                f"Issue Types: {', '.join(self.effective_issue_types)}",
+            ]
 
-        if self.include:
-            lines.append(f"Included Rules: {', '.join(self.include)}")
+            if self.include:
+                lines.append(f"Included Rules: {', '.join(self.include)}")
 
-        if self.exclude:
-            lines.append(f"Excluded Rules: {', '.join(self.exclude)}")
+            if self.exclude:
+                lines.append(f"Excluded Rules: {', '.join(self.exclude)}")
 
         return "\n".join(lines)
 
 
-class PhysicalModelingConfig(BaseModel):
+class PhysicalModelingConfig(BaseModel, populate_by_name=True):
     """Modeling configuration for physical data models."""
 
     mode: ModusOperandi = "additive"
 
-    model_config = {"populate_by_name": True}
 
-
-class PhysicalConfig(BaseModel):
+class PhysicalConfig(BaseModel, populate_by_name=True):
     """Configuration for physical data model operations."""
 
     validation: PhysicalValidationConfig = Field(default_factory=PhysicalValidationConfig)
     modeling: PhysicalModelingConfig = Field(default_factory=PhysicalModelingConfig)
 
-    model_config = {"populate_by_name": True}
+
+class ProfilePhysicalValidationConfig(BaseModel, populate_by_name=True):
+    """Physical validation configuration within a profile."""
+
+    enabled: bool = True
+    issue_types: list[IssueType] = Field(default_factory=list, alias="issue-types")
+    include: list[str] = Field(default_factory=list)
+    exclude: list[str] = Field(default_factory=list)
 
 
-class GovernanceProfilePhysicalConfig(BaseModel):
+class ProfilePhysicalModelingConfig(BaseModel, populate_by_name=True):
+    """Physical modeling configuration within a profile."""
+
+    mode: ModusOperandi = "additive"
+
+
+class ProfilePhysicalConfig(BaseModel, populate_by_name=True):
     """Physical configuration within a governance profile."""
 
-    validation_profile: ValidationProfile = Field(alias="validation-profile")
-    modeling_mode: ModusOperandi = Field(alias="modeling-mode")
-
-    model_config = {"populate_by_name": True}
+    validation: ProfilePhysicalValidationConfig = Field(default_factory=ProfilePhysicalValidationConfig)
+    modeling: ProfilePhysicalModelingConfig = Field(default_factory=ProfilePhysicalModelingConfig)
 
 
-class GovernanceProfileConfig(BaseModel):
+class ProfileConfig(BaseModel, populate_by_name=True):
     """Configuration for a governance profile."""
 
-    physical: GovernanceProfilePhysicalConfig
-
-    model_config = {"populate_by_name": True}
+    physical: ProfilePhysicalConfig = Field(default_factory=ProfilePhysicalConfig)
 
 
-class NeatConfig(BaseModel):
+class NeatConfig(BaseModel, populate_by_name=True):
     """Main NEAT configuration."""
 
-    governance_profile: GovernanceProfile = Field(default="legacy-additive", alias="governance-profile")
+    profile: ConfigProfile = Field(default="legacy-additive")
     physical: PhysicalConfig = Field(default_factory=PhysicalConfig)
-    governance_profiles: dict[str, GovernanceProfileConfig] = Field(default_factory=dict, alias="governance-profiles")
-
-    model_config = {"populate_by_name": True}
+    profiles: dict[str, ProfileConfig] = Field(default_factory=dict)
 
     def model_post_init(self, __context: Any) -> None:
         """Apply governance profile if not custom."""
-        if self.governance_profile != "custom":
-            self._apply_governance_profile(self.governance_profile)
+        if self.profile != "custom":
+            self._apply_profile(self.profile)
 
-    def _apply_governance_profile(self, profile: GovernanceProfile) -> None:
+    def _apply_profile(self, profile: ConfigProfile) -> None:
         """Apply governance profile to physical configuration."""
 
         # Predefined profiles from TOML
-        if profile in self.governance_profiles:
-            gov_config = self.governance_profiles[profile]
-            self.governance_profile = profile
-            self.physical.validation.profile = gov_config.physical.validation_profile
-            self.physical.modeling.mode = gov_config.physical.modeling_mode
-            self.physical.validation._apply_profile(gov_config.physical.validation_profile)
+        if profile in self.profiles:
+            config = self.profiles[profile]
+            self.profile = profile
 
-        # Fallback to hardcoded defaults if not in TOML
-        elif profile in DEFAULT_PROFILES:
-            self.governance_profile = profile
-            self.physical.validation.profile = cast(ValidationProfile, DEFAULT_PROFILES[profile]["validation"])
-            self.physical.modeling.mode = cast(ModusOperandi, DEFAULT_PROFILES[profile]["modeling"])
-            self.physical.validation._apply_profile(cast(ValidationProfile, DEFAULT_PROFILES[profile]["validation"]))
+            # Apply modeling mode
+            self.physical.modeling.mode = config.physical.modeling.mode
 
-        return None
+            # Apply validation settings
+            self.physical.validation.enabled = config.physical.validation.enabled
+            self.physical.validation.issue_types = PhysicalValidationConfig._add_model_syntax_error(
+                config.physical.validation.issue_types
+            )
+            self.physical.validation.include = config.physical.validation.include
+            self.physical.validation.exclude = config.physical.validation.exclude
+            return None
+
+        # Fallback to internal defaults
+        if profile in INTERNAL_PROFILES:
+            self.profile = profile
+            self.physical.modeling.mode = cast(ModusOperandi, INTERNAL_PROFILES[profile]["modeling"])
+
+            # Apply validation based on internal profile type
+            validation_type = INTERNAL_PROFILES[profile]["validation"]
+            if validation_type == "legacy":
+                self.physical.validation.apply_legacy_profile()
+            elif validation_type == "deep":
+                self.physical.validation.apply_deep_profile()
 
     @classmethod
     def load(cls, config_path: Path | None = None) -> "NeatConfig":
@@ -277,7 +258,7 @@ class NeatConfig(BaseModel):
     def __str__(self) -> str:
         """Human-readable configuration summary."""
         lines = [
-            f"Governance Profile: {self.governance_profile}",
+            f"Config Profile: {self.profile}",
             "",
             "Physical Data Model:",
             f"  Modeling Mode: {self.physical.modeling.mode}",

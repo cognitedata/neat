@@ -22,23 +22,23 @@ class NeatSession:
     def __init__(
         self,
         client: CogniteClient | ClientConfig,
-        governance_profile: Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None = None,
+        config: Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None = None,
     ) -> None:
         """Initialize a Neat session.
 
         Args:
             client (CogniteClient | ClientConfig): The Cognite client or client configuration to use for the session.
-            governance_profile (Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None):
-                The governance profile to use for the session.
-                If None, the default profile "legacy-additive" is used.
-        """
+            config (Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None):
+                The configuration profile to use for the session.
+                If None, the default profile "legacy-additive" is used. Meaning that Neat will perform additive modeling
+                and apply only validations that were part of the legacy Neat version."""
 
         # Load configuration
         self._config = NeatConfig.load()
 
         # Override governance profile if specified
-        if governance_profile:
-            self._config._apply_governance_profile(governance_profile)
+        if config:
+            self._config._apply_profile(config)
 
         # Use configuration for physical data model
         self._store = NeatStore()
@@ -69,11 +69,7 @@ class NeatSession:
                 message += f" (Organization: '{organization}')"
 
         print(message)
-        print(f"Governance Profile: {self._config.governance_profile}")
-        print(
-            f"Physical - Validation: {self._config.physical.validation.profile} |"
-            f" Mode: {self._config.physical.modeling.mode}"
-        )
+        print(self._config)
 
     @property
     def version(self) -> str:
