@@ -74,18 +74,15 @@ def consistency_error_dms_yaml_format() -> str:
   Value: v1
 Properties:
 - View: CogniteSourceable
-  View Property: sourceSystem
-  Value Type: CogniteSourceSystem # Invalid reference to non-existing type
+  View Property: name
+  Value Type: text
   Min Count: 0
   Max Count: 1
   Immutable: false
-  Container: CogniteSourceable
+  Container: MyNonExistingContainer
   Container Property: sourceSystem
   Index: null
   Connection: null
 Views:
 - View: CogniteSourceable
-Containers:
-- Container: CogniteSourceable
-  Used For: node
 """
