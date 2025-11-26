@@ -229,10 +229,10 @@ class TestRender:
     They do not check the actual content, just that something is rendered without error.
     """
 
-    def test_render_issues(self, new_session: NeatSession, invalid_dms_yaml_format: str) -> None:
+    def test_render_issues(self, new_session: NeatSession, model_syntax_error_dms_yaml_format: str) -> None:
         session = new_session
         read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = invalid_dms_yaml_format
+        read_yaml.read_text.return_value = model_syntax_error_dms_yaml_format
         session.physical_data_model.read.yaml(read_yaml)
 
         html_repr = session.issues._repr_html_()
