@@ -17,7 +17,7 @@ Validators for checking if data model is AI-ready.
 | NEAT-DMS-AI-READINESS-005 | [ViewPropertyMissingName](neat-dms-ai-readiness-005.md) | Validates that a view property has a human-readable name. |
 | NEAT-DMS-AI-READINESS-006 | [ViewPropertyMissingDescription](neat-dms-ai-readiness-006.md) | Validates that a View property has a human-readable description. |
 | NEAT-DMS-AI-READINESS-007 | [EnumerationMissingName](neat-dms-ai-readiness-007.md) | Validates that an enumeration has a human-readable name. |
-| NEAT-DMS-AI-READINESS-008 | [EnumerationMissingDescription](neat-dms-ai-readiness-008.md) | Validates that an enumeration has a human-readable description. |
+| NEAT-DMS-AI-READINESS-008 | [EnumerationMissingDescription](neat-dms-ai-readiness-008.md) | Validates that an enumeration value has a human-readable description. |
 
 ### Connections (NEAT-DMS-CONNECTIONS)
 
