@@ -38,6 +38,7 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-DATA-MODEL-001"
+    issue_type = ConsistencyError
 
     def __init__(
         self,
@@ -82,6 +83,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-VIEW-001"
+    issue_type = ConsistencyError
 
     def __init__(
         self,
@@ -145,6 +147,7 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-VIEW-002"
+    issue_type = ConsistencyError
 
     def __init__(
         self,
@@ -204,6 +207,7 @@ class ViewImplementsCountIsOutOfLimits(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-VIEW-003"
+    issue_type = ConsistencyError
 
     def __init__(
         self,
@@ -258,6 +262,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-CONTAINER-001"
+    issue_type = ConsistencyError
 
     def __init__(
         self,
@@ -326,6 +331,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-CONTAINER-002"
+    issue_type = ConsistencyError
 
     def __init__(
         self,

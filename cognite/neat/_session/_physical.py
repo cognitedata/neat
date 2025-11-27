@@ -1,6 +1,7 @@
 from typing import Any, Literal
 
 from cognite.neat._client import NeatClient
+from cognite.neat._config import NeatConfig
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
 from cognite.neat._data_model.exporters import (
     DMSAPIExporter,
@@ -19,7 +20,6 @@ from cognite.neat._exceptions import UserInputError
 from cognite.neat._state_machine import PhysicalState
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils._reader import NeatReader
-from cognite.neat._utils.useful_types import ModusOperandi
 
 from ._wrappers import session_wrapper
 
@@ -27,11 +27,12 @@ from ._wrappers import session_wrapper
 class PhysicalDataModel:
     """Read from a data source into NeatSession graph store."""
 
-    def __init__(self, store: NeatStore, client: NeatClient, mode: ModusOperandi) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient, config: NeatConfig) -> None:
         self._store = store
         self._client = client
-        self.read = ReadPhysicalDataModel(self._store, self._client)
-        self.write = WritePhysicalDataModel(self._store, self._client, mode)
+        self._config = config
+        self.read = ReadPhysicalDataModel(self._store, self._client, self._config)
+        self.write = WritePhysicalDataModel(self._store, self._client, self._config)
 
     def _repr_html_(self) -> str:
         if not isinstance(self._store.state, PhysicalState):
@@ -69,9 +70,10 @@ class PhysicalDataModel:
 class ReadPhysicalDataModel:
     """Read physical data model from various sources into NeatSession graph store."""
 
-    def __init__(self, store: NeatStore, client: NeatClient) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient, config: NeatConfig) -> None:
         self._store = store
         self._client = client
+        self._config = config
 
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Read physical data model from YAML file(s)
@@ -92,7 +94,11 @@ class ReadPhysicalDataModel:
             reader = DMSAPIImporter.from_yaml(path)
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
-        on_success = DmsDataModelValidation(self._client)
+        on_success = DmsDataModelValidation(
+            self._client,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
+        )
 
         return self._store.read_physical(reader, on_success)
 
@@ -115,7 +121,11 @@ class ReadPhysicalDataModel:
             reader = DMSAPIImporter.from_json(path)
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
-        on_success = DmsDataModelValidation(self._client)
+        on_success = DmsDataModelValidation(
+            self._client,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
+        )
 
         return self._store.read_physical(reader, on_success)
 
@@ -124,7 +134,11 @@ class ReadPhysicalDataModel:
 
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
-        on_success = DmsDataModelValidation(self._client)
+        on_success = DmsDataModelValidation(
+            self._client,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
+        )
 
         return self._store.read_physical(reader, on_success)
 
@@ -140,7 +154,11 @@ class ReadPhysicalDataModel:
         reader = DMSAPIImporter.from_cdf(
             DataModelReference(space=space, external_id=external_id, version=version), self._client
         )
-        on_success = DmsDataModelValidation(self._client)
+        on_success = DmsDataModelValidation(
+            self._client,
+            modus_operandi=self._config.modeling.mode,
+            can_run_validator=self._config.validation.can_run_validator,
+        )
 
         return self._store.read_physical(reader, on_success)
 
@@ -149,10 +167,10 @@ class ReadPhysicalDataModel:
 class WritePhysicalDataModel:
     """Write physical data model to various sources from NeatSession graph store."""
 
-    def __init__(self, store: NeatStore, client: NeatClient, mode: ModusOperandi) -> None:
+    def __init__(self, store: NeatStore, client: NeatClient, config: NeatConfig) -> None:
         self._store = store
         self._client = client
-        self._mode = mode
+        self._config = config
 
     def yaml(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
         """Write physical data model to YAML file
@@ -215,7 +233,7 @@ class WritePhysicalDataModel:
         """Write physical data model with views, containers, and spaces that are in the same space as the data model
         to CDF.
 
-        This method depends on the session mode set when creating the NeatSession.
+        This method depends on the session governance profile for data modeling set when creating the NeatSession.
             - In 'additive' mode, only new or updates to data models/views/containers will be applied.
                 You cannot remove views from data models, properties from views or containers, or
                 indexes or constraints from containers.
@@ -234,7 +252,10 @@ class WritePhysicalDataModel:
         """
         writer = DMSAPIExporter()
         options = DeploymentOptions(
-            dry_run=dry_run, auto_rollback=rollback, drop_data=drop_data, modus_operandi=self._mode
+            dry_run=dry_run,
+            auto_rollback=rollback,
+            drop_data=drop_data,
+            modus_operandi=self._config.modeling.mode,
         )
         on_success = SchemaDeployer(self._client, options)
         return self._store.write_physical(writer, on_success)

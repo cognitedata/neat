@@ -1,9 +1,11 @@
 from pathlib import Path
+from typing import Literal
 from unittest.mock import MagicMock
 
 import pytest
 
 from cognite.neat._client.client import NeatClient
+from cognite.neat._config import internal_profiles
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
@@ -19,10 +21,11 @@ from cognite.neat._data_model.validation.dms import (
     ReverseConnectionTargetMismatch,
     ReverseConnectionTargetMissing,
 )
+from cognite.neat._data_model.validation.dms._base import DataModelValidator
 
 
 @pytest.fixture(scope="session")
-def valid_dms_yaml_with_consistency_errors() -> tuple[str, dict[str, set]]:
+def valid_dms_yaml_with_consistency_errors() -> tuple[str, dict[type[DataModelValidator], set]]:
     yaml_content = """Metadata:
 - Key: space
   Value: my_space
@@ -246,26 +249,29 @@ Containers:
 """
 
     expected_problematic_reversals = {
-        ReverseConnectionSourceViewMissing.code: {"reverseUnknownToTargetViewConnection"},
-        ReverseConnectionSourcePropertyMissing.code: {
+        ReverseConnectionSourceViewMissing: {"reverseUnknownToTargetViewConnection"},
+        ReverseConnectionSourcePropertyMissing: {
             "reverseToDirectThatDoesNotExist",
             "reverseToViewWithoutProperties",
             "reverseThroughContainerDirectReferenceFailing",
         },
-        ReverseConnectionSourcePropertyWrongType.code: {"reverseToEdgeConnection"},
-        ReverseConnectionContainerMissing.code: {"reverseToDirectConnectionWithoutContainer"},
-        ReverseConnectionContainerPropertyMissing.code: {"reverseToDirectWhichDoesHaveStorage"},
-        ReverseConnectionContainerPropertyWrongType.code: {"reverseToAttribute"},
-        ReverseConnectionTargetMissing.code: {"reverseToAttribute", "reverseToDirectWithoutTyping"},
-        ReverseConnectionPointsToAncestor.code: {"innerReflection"},
-        ReverseConnectionTargetMismatch.code: {"reverseSourceToTargetViewConnection"},
+        ReverseConnectionSourcePropertyWrongType: {"reverseToEdgeConnection"},
+        ReverseConnectionContainerMissing: {"reverseToDirectConnectionWithoutContainer"},
+        ReverseConnectionContainerPropertyMissing: {"reverseToDirectWhichDoesHaveStorage"},
+        ReverseConnectionContainerPropertyWrongType: {"reverseToAttribute"},
+        ReverseConnectionTargetMissing: {"reverseToAttribute", "reverseToDirectWithoutTyping"},
+        ReverseConnectionPointsToAncestor: {"innerReflection"},
+        ReverseConnectionTargetMismatch: {"reverseSourceToTargetViewConnection"},
     }
 
     return yaml_content, expected_problematic_reversals
 
 
-def test_validation(
-    validation_test_cdf_client: NeatClient, valid_dms_yaml_with_consistency_errors: tuple[str, dict[str, set]]
+@pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
+def test_validation_deep(
+    profile: Literal["deep-additive", "legacy-additive"],
+    validation_test_cdf_client: NeatClient,
+    valid_dms_yaml_with_consistency_errors: tuple[str, dict[type[DataModelValidator], set]],
 ) -> None:
     yaml_content, expected_problematic_reversals = valid_dms_yaml_with_consistency_errors
 
@@ -293,21 +299,32 @@ def test_validation(
         )
     )
 
-    # Run on success validators
-    on_success = DmsDataModelValidation(validation_test_cdf_client)
-    on_success.run(data_model)
+    config = internal_profiles()[profile]
 
+    mode = config.modeling.mode
+    can_run_validator = config.validation.can_run_validator
+
+    # Run on success validators
+    on_success = DmsDataModelValidation(
+        validation_test_cdf_client, modus_operandi=mode, can_run_validator=can_run_validator
+    )
+    on_success.run(data_model)
     by_code = on_success.issues.by_code()
 
-    assert set(expected_problematic_reversals.keys()) - set(by_code.keys()) == set()
+    subset_problematic = {
+        class_: expected_problematic_reversals[class_]
+        for class_ in expected_problematic_reversals.keys()
+        if can_run_validator(class_.code, class_.issue_type)
+    }
+    assert set(class_.code for class_ in subset_problematic.keys()) - set(by_code.keys()) == set()
 
     # here we check that all expected problematic reversals are found
     found_problematic_reversals = set()
     actual_problematic_reversal = set()
-    for code, ill_reverse_connections in expected_problematic_reversals.items():
+    for class_, ill_reverse_connections in subset_problematic.items():
         for ill_reverse in ill_reverse_connections:
             actual_problematic_reversal.add(ill_reverse)
-            for issue in by_code[code]:
+            for issue in by_code[class_.code]:
                 if ill_reverse in issue.message:
                     found_problematic_reversals.add(ill_reverse)
                     break

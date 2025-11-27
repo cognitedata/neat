@@ -31,6 +31,7 @@ class ExternalContainerDoesNotExist(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-001"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -81,6 +82,7 @@ class ExternalContainerPropertyDoesNotExist(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-002"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
@@ -137,6 +139,7 @@ class RequiredContainerDoesNotExist(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-003"
+    issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []

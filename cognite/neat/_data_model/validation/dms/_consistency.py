@@ -23,6 +23,7 @@ class ViewSpaceVersionInconsistentWithDataModel(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-001"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
