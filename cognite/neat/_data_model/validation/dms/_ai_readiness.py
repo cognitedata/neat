@@ -169,3 +169,88 @@ class ViewMissingDescription(DataModelValidator):
                 )
 
         return recommendations
+
+
+class ViewPropertyMissingName(DataModelValidator):
+    """Validates that a view property has a human-readable name.
+
+    ## What it does
+    Validates that each view property in the data model has a human-readable name.
+
+    ## Why is this bad?
+    A missing name makes it harder for users (humans or machines) to understand the purpose of the view property.
+    This is important as view property's ids are often based on technical identifiers, abbreviations, etc.
+    Providing a clear name improves usability, maintainability, searchability, and AI-readiness.
+
+    ## Example
+    A view WindTurbine has a property pc which has no name. Users may find it difficult to understand what this view
+    property represents, unless they look up the id in documentation or other resources. Adding name "power curve"
+    would increase clarity and usability.
+    """
+
+    code = f"{BASE_CODE}-005"
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        for view_ref in self.local_resources.data_model_views:
+            if properties := self.local_resources.properties_by_view.get(view_ref):
+                for prop_ref, definition in properties.items():
+                    if not definition.name:
+                        recommendations.append(
+                            Recommendation(
+                                message=f"View {view_ref!s} property {prop_ref!s} is missing a human-readable name.",
+                                fix="Add a clear and concise name to the view property.",
+                                code=self.code,
+                            )
+                        )
+
+        return recommendations
+
+
+class ViewPropertyMissingDescription(DataModelValidator):
+    """Validates that a View property has a human-readable description.
+
+    ## What it does
+    Validates that each view property in the data model has a human-readable description.
+
+    ## Why is this bad?
+    A missing description makes it harder for users (humans or machines) to understand in what context the view property
+    should be used. The description can provide important information about the view property's purpose,
+    scope, and usage.
+
+
+    ## Example
+    A view WindTurbine has a property status with no description. Users may find it difficult to understand what this
+    property represents, unless extra context is provided. Even if we know that status is related to wind turbine
+    operations, a description is necessary as it can have different meanings in various contexts:
+
+    Option 1 — Operational status
+    Current operational state of the wind turbine (e.g., running, stopped, maintenance, fault).
+
+    Option 2 — Connection status
+    Grid connection status indicating whether the turbine is connected to the electrical grid.
+
+    Option 3 — Availability status
+    Availability state for production indicating whether the turbine is available for power generation.
+
+    """
+
+    code = f"{BASE_CODE}-006"
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        for view_ref in self.local_resources.data_model_views:
+            if properties := self.local_resources.properties_by_view.get(view_ref):
+                for prop_ref, definition in properties.items():
+                    if not definition.description:
+                        recommendations.append(
+                            Recommendation(
+                                message=f"View {view_ref!s} property {prop_ref!s} is missing a description.",
+                                fix="Add a clear and concise description to the view property.",
+                                code=self.code,
+                            )
+                        )
+
+        return recommendations

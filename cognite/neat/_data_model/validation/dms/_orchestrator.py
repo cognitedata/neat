@@ -20,7 +20,14 @@ from cognite.neat._data_model.validation.dms._limits import (
 )
 from cognite.neat._utils.useful_types import ModusOperandi
 
-from ._ai_readiness import DataModelMissingDescription, DataModelMissingName, ViewMissingDescription, ViewMissingName
+from ._ai_readiness import (
+    DataModelMissingDescription,
+    DataModelMissingName,
+    ViewMissingDescription,
+    ViewMissingName,
+    ViewPropertyMissingDescription,
+    ViewPropertyMissingName,
+)
 from ._base import CDFResources, DataModelValidator, LocalResources
 from ._connections import (
     ConnectionValueTypeUndefined,
@@ -75,6 +82,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             data_model_name=data_model.data_model.name,
             data_model_reference=data_model.data_model.as_reference(),
             views_by_reference=local_views_by_reference,
+            properties_by_view=analysis.properties_by_view,
             ancestors_by_view_reference=local_ancestors_by_view_reference,
             reverse_to_direct_mapping=local_reverse_to_direct_mapping,
             containers_by_reference=local_containers_by_reference,
@@ -142,6 +150,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             DataModelMissingDescription(local_resources, cdf_resources, self._modus_operandi),
             ViewMissingName(local_resources, cdf_resources, self._modus_operandi),
             ViewMissingDescription(local_resources, cdf_resources, self._modus_operandi),
+            ViewPropertyMissingName(local_resources, cdf_resources, self._modus_operandi),
+            ViewPropertyMissingDescription(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators

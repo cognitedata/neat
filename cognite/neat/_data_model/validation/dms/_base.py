@@ -13,6 +13,7 @@ from cognite.neat._data_model.models.dms._references import (
     ViewDirectReference,
     ViewReference,
 )
+from cognite.neat._data_model.models.dms._view_property import ViewRequestProperty
 from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._issues import ConsistencyError, Recommendation
 from cognite.neat._utils.useful_types import ModusOperandi
@@ -36,6 +37,7 @@ class LocalResources:
     data_model_description: str | None
     data_model_name: str | None
     views_by_reference: ViewsByReference
+    properties_by_view: dict[ViewReference, dict[str, ViewRequestProperty]]
     ancestors_by_view_reference: AncestorsByReference
     reverse_to_direct_mapping: ReverseToDirectMapping
     containers_by_reference: ContainersByReference
