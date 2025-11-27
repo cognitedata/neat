@@ -1,8 +1,7 @@
 import sys
 from pathlib import Path
-from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
 from cognite.neat._utils.useful_types import ModusOperandi
@@ -30,15 +29,16 @@ class ValidationConfig(BaseModel, populate_by_name=True):
             True if validator should run, False otherwise
         """
 
-        excluded = self._matches_pattern(code, self.exclude)
+        is_excluded = self._is_excluded(code, self.exclude)
 
-        if issue_type in [ModelSyntaxError, ConsistencyError] and excluded:
+        if issue_type in [ModelSyntaxError, ConsistencyError] and is_excluded:
             print(f"Validator {code} was excluded however it is a critical validator and will still run.")
             return True
         else:
-            return not excluded
+            return not is_excluded
 
-    def _matches_pattern(self, code: str, patterns: list[str]) -> bool:
+    @classmethod
+    def _is_excluded(cls, code: str, patterns: list[str]) -> bool:
         """Check if code matches any pattern (supports wildcards)."""
         for pattern in patterns:
             if "*" in pattern:
@@ -77,119 +77,81 @@ class ModelingConfig(BaseModel, populate_by_name=True):
     mode: ModusOperandi = "additive"
 
 
-class ProfileValidationConfig(BaseModel, populate_by_name=True):
-    """Validation configuration within a profile."""
-
-    exclude: list[str] = Field(default_factory=list)
-
-
-class ProfileModelingConfig(BaseModel, populate_by_name=True):
-    """Modeling configuration within a profile."""
-
-    mode: ModusOperandi = "additive"
-
-
-class ProfileConfig(BaseModel, populate_by_name=True):
+class NeatConfig(BaseModel, populate_by_name=True):
     """Configuration for a custom profile."""
 
-    validation: ProfileValidationConfig = Field(default_factory=ProfileValidationConfig)
-    modeling: ProfileModelingConfig = Field(default_factory=ProfileModelingConfig)
+    profile: str
+    validation: ValidationConfig
+    modeling: ModelingConfig
+
+    def __str__(self) -> str:
+        """Human-readable configuration summary."""
+        lines = [
+            f"Profile: {self.profile}",
+            f"Modeling Mode: {self.modeling.mode}",
+            f"Validation: {self.validation}",
+        ]
+        return "\n".join(lines)
 
 
-INTERNAL_PROFILES = {
-    "legacy-additive": ProfileConfig(
-        modeling=ProfileModelingConfig(mode="additive"),
-        validation=ProfileValidationConfig(
-            exclude=[
-                "NEAT-DMS-AI-READINESS-*",
-                "NEAT-DMS-CONNECTIONS-002",
-                "NEAT-DMS-CONNECTIONS-REVERSE-007",
-                "NEAT-DMS-CONNECTIONS-REVERSE-008",
-                "NEAT-DMS-CONSISTENCY-001",
-            ]
+def internal_profiles() -> dict[str, NeatConfig]:
+    """Get internal NeatConfig profile by name."""
+    return {
+        "legacy-additive": NeatConfig(
+            profile="legacy-additive",
+            modeling=ModelingConfig(mode="additive"),
+            validation=ValidationConfig(
+                exclude=[
+                    "NEAT-DMS-AI-READINESS-*",
+                    "NEAT-DMS-CONNECTIONS-002",
+                    "NEAT-DMS-CONNECTIONS-REVERSE-007",
+                    "NEAT-DMS-CONNECTIONS-REVERSE-008",
+                    "NEAT-DMS-CONSISTENCY-001",
+                ]
+            ),
         ),
-    ),
-    "legacy-rebuild": ProfileConfig(
-        modeling=ProfileModelingConfig(mode="rebuild"),
-        validation=ProfileValidationConfig(
-            exclude=[
-                "NEAT-DMS-AI-READINESS-*",
-                "NEAT-DMS-CONNECTIONS-002",
-                "NEAT-DMS-CONNECTIONS-REVERSE-007",
-                "NEAT-DMS-CONNECTIONS-REVERSE-008",
-                "NEAT-DMS-CONSISTENCY-001",
-            ]
+        "legacy-rebuild": NeatConfig(
+            profile="legacy-rebuild",
+            modeling=ModelingConfig(mode="rebuild"),
+            validation=ValidationConfig(
+                exclude=[
+                    "NEAT-DMS-AI-READINESS-*",
+                    "NEAT-DMS-CONNECTIONS-002",
+                    "NEAT-DMS-CONNECTIONS-REVERSE-007",
+                    "NEAT-DMS-CONNECTIONS-REVERSE-008",
+                    "NEAT-DMS-CONSISTENCY-001",
+                ]
+            ),
         ),
-    ),
-    "deep-additive": ProfileConfig(
-        modeling=ProfileModelingConfig(mode="additive"),
-        validation=ProfileValidationConfig(exclude=[]),
-    ),
-    "deep-rebuild": ProfileConfig(
-        modeling=ProfileModelingConfig(mode="rebuild"),
-        validation=ProfileValidationConfig(exclude=[]),
-    ),
-}
+        "deep-additive": NeatConfig(
+            profile="deep-additive",
+            modeling=ModelingConfig(mode="additive"),
+            validation=ValidationConfig(exclude=[]),
+        ),
+        "deep-rebuild": NeatConfig(
+            profile="deep-rebuild",
+            modeling=ModelingConfig(mode="rebuild"),
+            validation=ValidationConfig(exclude=[]),
+        ),
+    }
 
 
-class NeatConfig(BaseModel, populate_by_name=True):
-    """Main NEAT configuration."""
+def get_neat_config(config_file_name: str, profile: str) -> NeatConfig:
+    """Get NeatConfig from file or internal profiles.
 
-    profile: str = Field(default="legacy-additive")
-    validation: ValidationConfig = Field(default_factory=ValidationConfig)
-    modeling: ModelingConfig = Field(default_factory=ModelingConfig)
-    profiles: dict[str, ProfileConfig] = Field(default_factory=dict)
+    Args:
+        config_file_name: Path to configuration file.
+        profile: Profile name to use.
+    Returns:
+        NeatConfig instance.
+    """
 
-    @field_validator("profiles", mode="before")
-    @classmethod
-    def _check_if_internal_profiles_are_redifned(cls, value: Any) -> Any | None:
-        """Checks that no internal profiles are redefined in the configuration."""
+    if not config_file_name.endswith(".toml"):
+        raise ValueError("config_file_name must end with '.toml'")
 
-        if redefined := set(INTERNAL_PROFILES.keys()).intersection(value.keys()):
-            raise ValueError(f"Internal profiles redefined in external TOML file: {redefined}")
+    file_path = Path.cwd() / config_file_name
 
-        return value
-
-    def model_post_init(self, __context: Any) -> None:
-        """Add profile to profiles dictionary."""
-
-        # add internal profiles
-        for profile, config in INTERNAL_PROFILES.items():
-            self.profiles[profile] = config
-
-        # Add current profile if not internal
-        if self.profile not in INTERNAL_PROFILES:
-            self.profiles[self.profile] = ProfileConfig(
-                validation=ProfileValidationConfig(exclude=self.validation.exclude.copy()),
-                modeling=ProfileModelingConfig(mode=self.modeling.mode),
-            )
-
-        # Need to apply profile after all profiles are loaded
-        self._apply_profile(self.profile)
-
-    def _apply_profile(self, profile: str) -> None:
-        """Apply governance profile configuration."""
-        # Check if profile is defined in TOML
-        if profile in self.profiles:
-            config = self.profiles[profile]
-            self.profile = profile
-            self.modeling.mode = config.modeling.mode
-            self.validation.exclude = config.validation.exclude
-            return None
-
-        raise ValueError(f"Unknown profile: {profile}")
-
-    @classmethod
-    def load(cls, file_path: Path) -> "NeatConfig":
-        """Load configuration from file.
-
-        Args:
-            file_path: Path to configuration file.
-
-        Returns:
-            NeatConfig instance with loaded or default configuration.
-        """
-
+    if file_path.exists():
         with file_path.open("rb") as f:
             toml = tomli.load(f)
 
@@ -200,22 +162,24 @@ class NeatConfig(BaseModel, populate_by_name=True):
         else:
             raise ValueError("No [tool.neat] or [neat] section found in the configuration file.")
 
-        if (profile := data.get("profile")) and profile in INTERNAL_PROFILES:
-            raise ValueError(f"Internal profile '{profile}' cannot be used in external configuration file.")
+        toml_profile = data.get("profile")
+        toml_profiles = data.get("profiles")
+        hardcoded_profiles = internal_profiles()
 
-        if (profiles := data.get("profiles")) and any(p in INTERNAL_PROFILES for p in profiles.keys()):
+        if toml_profile and toml_profile in hardcoded_profiles:
+            raise ValueError(f"Internal profile '{toml_profile}' cannot be used in external configuration file.")
+
+        if toml_profiles and any(p in hardcoded_profiles for p in toml_profiles.keys()):
             raise ValueError(
                 "Internal profiles cannot be redefined in external configuration file: "
-                f"{set(INTERNAL_PROFILES.keys()).intersection(profiles.keys())}"
+                f"{set(hardcoded_profiles.keys()).intersection(toml_profiles.keys())}"
             )
 
-        return cls(**data)
-
-    def __str__(self) -> str:
-        """Human-readable configuration summary."""
-        lines = [
-            f"Profile: {self.profile}",
-            f"Modeling Mode: {self.modeling.mode}",
-            f"Validation: {self.validation}",
-        ]
-        return "\n".join(lines)
+        if toml_profile and profile == toml_profile:
+            return NeatConfig(**data)
+        elif (built_in_profiles := data.get("profiles")) and profile in built_in_profiles:
+            return NeatConfig(profile=profile, **data["profiles"][profile])
+        else:
+            raise ValueError(f"Profile '{profile}' not found in configuration file.")
+    else:
+        raise FileNotFoundError(f"Configuration file '{file_path}' not found.")

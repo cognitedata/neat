@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from cognite.neat._client.client import NeatClient
-from cognite.neat._config import NeatConfig
+from cognite.neat._config import internal_profiles
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
@@ -267,9 +267,9 @@ Containers:
     return yaml_content, expected_problematic_reversals
 
 
-@pytest.mark.parametrize("governance_profile", ["deep-additive", "legacy-additive"])
+@pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
 def test_validation_deep(
-    governance_profile: Literal["deep-additive", "legacy-additive"],
+    profile: Literal["deep-additive", "legacy-additive"],
     validation_test_cdf_client: NeatClient,
     valid_dms_yaml_with_consistency_errors: tuple[str, dict[type[DataModelValidator], set]],
 ) -> None:
@@ -299,8 +299,7 @@ def test_validation_deep(
         )
     )
 
-    config = NeatConfig()
-    config._apply_profile(governance_profile)
+    config = internal_profiles()[profile]
 
     mode = config.modeling.mode
     can_run_validator = config.validation.can_run_validator

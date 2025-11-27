@@ -5,7 +5,7 @@ from cognite.client import ClientConfig, CogniteClient
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
-from cognite.neat._config import NeatConfig
+from cognite.neat._config import internal_profiles
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
 from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
@@ -34,7 +34,10 @@ class NeatSession:
                 and apply only validations that were part of the legacy Neat version."""
 
         # Load configuration
-        self._config = NeatConfig(profile=config or "legacy-additive")
+        if config and config not in internal_profiles():
+            raise ValueError(f"Profile '{config}' not found among internal profiles.")
+
+        self._config = internal_profiles()[config or "legacy-additive"]
 
         # Use configuration for physical data model
         self._store = NeatStore()

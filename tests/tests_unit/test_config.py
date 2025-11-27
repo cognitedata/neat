@@ -1,128 +1,108 @@
 from pathlib import Path
-from unittest.mock import MagicMock, mock_open
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
+from pyparsing import Iterator
 
 from cognite.neat._config import (
     ModelingConfig,
     NeatConfig,
     ValidationConfig,
+    get_neat_config,
 )
 
 
-class TestNeatConfig:
-    """Test suite for NeatConfig - governance profiles and configuration loading."""
+def load_good_cases() -> Iterator:
+    """Parameterized test cases for valid configurations."""
 
-    def test_default_initialization(self) -> None:
-        """Test default NeatConfig initialization."""
-        config = NeatConfig()
+    yield pytest.param(
+        """[tool.neat]
+profile = "my-legacy"
 
-        assert config.profile == "legacy-additive"
-        assert config.modeling.mode == "additive"
-        assert config.validation.exclude == [
-            "NEAT-DMS-AI-READINESS-*",
-            "NEAT-DMS-CONNECTIONS-002",
-            "NEAT-DMS-CONNECTIONS-REVERSE-007",
-            "NEAT-DMS-CONNECTIONS-REVERSE-008",
-            "NEAT-DMS-CONSISTENCY-001",
-        ]
 
-    def test_custom_governance_profile(self) -> None:
-        """Test custom governance profile doesn't apply defaults."""
-        config = NeatConfig(
-            profile="custom",
-            validation=ValidationConfig(exclude=["NEAT-DMS-CUSTOM-*"]),
-            modeling=ModelingConfig(mode="rebuild"),
-        )
-
-        assert config.profile == "custom"
-        assert config.modeling.mode == "rebuild"
-
-    def test_load_from_pyproject_toml_tool_section(self) -> None:
-        """Test loading from pyproject.toml [tool.neat] section."""
-        toml_content = """
-[tool.neat]
-profile = "custom"
+[tool.neat.modeling]
+mode = "additive"
 
 [tool.neat.validation]
 exclude = []
 
+""",
+        "my-legacy",
+        NeatConfig(
+            profile="my-legacy",
+            modeling=ModelingConfig(mode="additive"),
+            validation=ValidationConfig(exclude=[]),
+        ),
+        id="tool_my_legacy_valid",
+    )
+
+    yield pytest.param(
+        """[neat]
+profile = "my-legacy"
+
+
+[neat.modeling]
+mode = "additive"
+
+[neat.validation]
+exclude = []
+
+""",
+        "my-legacy",
+        NeatConfig(
+            profile="my-legacy",
+            modeling=ModelingConfig(mode="additive"),
+            validation=ValidationConfig(exclude=[]),
+        ),
+        id="neat_my_legacy_valid",
+    )
+
+    yield pytest.param(
+        """[tool.neat]
+profile = "my-legacy"
+
+
 [tool.neat.modeling]
-mode = "rebuild"
+mode = "additive"
+
+[tool.neat.validation]
+exclude = []
 
 [tool.neat.profiles.my-custom-profile.modeling]
 mode = "additive"
 
 [tool.neat.profiles.my-custom-profile.validation]
 exclude = ["NEAT-DMS-AI-READINESS-*", "NEAT-DMS-CONNECTIONS-REVERSE-008"]
-"""
 
-        mock_path = MagicMock(spec=Path)
-        mock_path.exists.return_value = True
-        mock_path.open = mock_open(read_data=toml_content.encode())
-        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
+""",
+        "my-custom-profile",
+        NeatConfig(
+            profile="my-custom-profile",
+            modeling=ModelingConfig(mode="additive"),
+            validation=ValidationConfig(exclude=["NEAT-DMS-AI-READINESS-*", "NEAT-DMS-CONNECTIONS-REVERSE-008"]),
+        ),
+        id="custom_profile_valid",
+    )
 
-        config = NeatConfig.load(mock_path)
-        assert config.profile == "custom"
-        assert config.modeling.mode == "rebuild"
-        assert config.validation.exclude == []
 
-    def test_profile_update_post_validation(self) -> None:
-        config = NeatConfig(profile="legacy-additive")
+def load_raises_error_cases() -> Iterator:
+    """Parameterized test cases for invalid configurations."""
 
-        assert config.modeling.mode == "additive"
-        assert len(config.validation.exclude) > 0
-
-        # Change to deep profile
-        config._apply_profile("deep-rebuild")
-
-        assert config.modeling.mode == "rebuild"
-        assert config.validation.exclude == []
-
-    def test_load_from_root_neat_section(self) -> None:
-        """Test loading from root [neat] section in neat.toml."""
-        toml_content = """
-[neat]
-profile = "custom"
-
-[neat.validation]
-exclude = ["NEAT-DMS-TEST-*"]
-
-[neat.modeling]
-mode = "additive"
-"""
-
-        mock_path = MagicMock(spec=Path)
-        mock_path.exists.return_value = True
-        mock_path.open = mock_open(read_data=toml_content.encode())
-        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
-
-        config = NeatConfig.load(mock_path)
-        assert config.profile == "custom"
-        assert config.modeling.mode == "additive"
-        assert config.validation.exclude == ["NEAT-DMS-TEST-*"]
-
-    def test_load_with_internal_profile_raises_error(self) -> None:
-        """Test that using an internal profile name in TOML raises ValueError."""
-        toml_content = """
+    yield pytest.param(
+        """
 [neat]
 profile = "legacy-additive"
 
 [neat.validation]
 exclude = []
-"""
+""",
+        "legacy-additive",
+        "Internal profile 'legacy-additive' cannot be used",
+        id="internal_profile_used",
+    )
 
-        mock_path = MagicMock(spec=Path)
-        mock_path.exists.return_value = True
-        mock_path.open = mock_open(read_data=toml_content.encode())
-        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
-
-        import pytest
-
-        with pytest.raises(ValueError, match="Internal profile 'legacy-additive' cannot be used"):
-            NeatConfig.load(mock_path)
-
-    def test_load_with_redefined_internal_profile_raises_error(self) -> None:
-        """Test that redefining an internal profile in TOML raises ValueError."""
-        toml_content = """
+    yield pytest.param(
+        """
 [neat]
 profile = "custom"
 
@@ -131,34 +111,99 @@ mode = "additive"
 
 [neat.profiles.deep-rebuild.validation]
 exclude = ["NEAT-DMS-CUSTOM-*"]
-"""
+""",
+        "custom",
+        "Internal profiles cannot be redefined",
+        id="internal_profile_redefined",
+    )
 
-        mock_path = MagicMock(spec=Path)
-        mock_path.exists.return_value = True
-        mock_path.open = mock_open(read_data=toml_content.encode())
-        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
-
-        import pytest
-
-        with pytest.raises(ValueError, match="Internal profiles cannot be redefined"):
-            NeatConfig.load(mock_path)
-
-    def test_load_without_neat_section_raises_error(self) -> None:
-        """Test that loading TOML without [neat] or [tool.neat] section raises ValueError."""
-        toml_content = """
+    yield pytest.param(
+        """
 [other]
 some_key = "some_value"
 
 [other.config]
 mode = "test"
-"""
+""",
+        "whatever",
+        "No \\[tool.neat\\] or \\[neat\\] section found",
+        id="missing_neat_section",
+    )
 
+
+def patterns() -> Iterator:
+    yield pytest.param(
+        "NEAT-DMS-AI-READINESS-001",
+        ["NEAT-DMS-AI-READINESS-001"],
+        True,
+        id="exact_match",
+    )
+    yield pytest.param(
+        "NEAT-DMS-AI-READINESS-001",
+        ["NEAT-DMS-AI-READINESS-*"],
+        True,
+        id="group_match",
+    )
+
+    yield pytest.param(
+        "NEAT-DMS-AI-READINESS-001",
+        ["NEAT-DMS-*"],
+        True,
+        id="entire_object_validation_exclude",
+    )
+
+    yield pytest.param(
+        "NEAT-DMS-AI-READINESS-001",
+        ["NEAT-DMS-CONNECTIONS-002"],
+        False,
+        id="passing_match",
+    )
+
+
+class TestNeatConfig:
+    @pytest.mark.parametrize(
+        "toml_content,profile,error_match",
+        list(load_raises_error_cases()),
+    )
+    def test_load_raises_error(self, toml_content: str, profile: str, error_match: str) -> None:
+        """Test that invalid TOML configurations raise ValueError."""
         mock_path = MagicMock(spec=Path)
         mock_path.exists.return_value = True
         mock_path.open = mock_open(read_data=toml_content.encode())
         mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
 
-        import pytest
+        with patch("cognite.neat._config.Path") as mock_path_class:
+            # Mock Path.cwd() to return a mock that creates mock_path when divided
+            mock_cwd = MagicMock()
+            mock_cwd.__truediv__ = MagicMock(return_value=mock_path)
+            mock_path_class.cwd.return_value = mock_cwd
 
-        with pytest.raises(ValueError, match="No \\[tool.neat\\] or \\[neat\\] section found"):
-            NeatConfig.load(mock_path)
+            with pytest.raises(ValueError, match=error_match):
+                _ = get_neat_config("neat_config.toml", profile)
+
+    @pytest.mark.parametrize(
+        "toml_content,profile,expected_config",
+        list(load_good_cases()),
+    )
+    def test_load_valid_config(self, toml_content: str, profile: str, expected_config: NeatConfig) -> None:
+        """Test that valid TOML configurations are loaded correctly."""
+        mock_path = MagicMock(spec=Path)
+        mock_path.exists.return_value = True
+        mock_path.open = mock_open(read_data=toml_content.encode())
+        mock_path.open.return_value.__enter__.return_value.read.return_value = toml_content.encode()
+
+        with patch("cognite.neat._config.Path") as mock_path_class:
+            # Mock Path.cwd() to return a mock that creates mock_path when divided
+            mock_cwd = MagicMock()
+            mock_cwd.__truediv__ = MagicMock(return_value=mock_path)
+            mock_path_class.cwd.return_value = mock_cwd
+
+            config = get_neat_config("neat_config.toml", profile)
+            assert config == expected_config
+
+    @pytest.mark.parametrize(
+        "code,patterns,expected",
+        list(patterns()),
+    )
+    def test_code_exlucded(self, code: str, patterns: list[str], expected: bool) -> None:
+        assert ValidationConfig._is_excluded(code, patterns) == expected
