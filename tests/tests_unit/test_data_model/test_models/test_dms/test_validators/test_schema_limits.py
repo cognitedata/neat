@@ -26,6 +26,8 @@ def generate_properties_section(view_name: str, container_base: str, count: int)
         [
             f"""- View: {view_name}
   View Property: prop{i}
+  Name: prop{i}
+  Description: Description for prop{i}
   Value Type: text
   Min Count: 0
   Max Count: 1
@@ -42,6 +44,8 @@ def generate_container_references(view_name: str, container_count: int) -> str:
         [
             f"""- View: {view_name}
   View Property: prop_container_{i}
+  Name: prop_container_{i}
+  Description: Description for prop_container_{i}
   Value Type: text
   Min Count: 0
   Max Count: 1
@@ -58,6 +62,8 @@ def generate_large_container_props(view_name: str, container_name: str, count: i
         [
             f"""- View: {view_name}
   View Property: container_prop{i}
+  Name: container_prop{i}
+  Description: Description for container_prop{i}
   Value Type: text
   Min Count: 0
   Max Count: 1
@@ -125,6 +131,8 @@ Properties:
 # Direct relation list exceeding 2000 limit
 - View: ViewWithTooManyDirectRelations
   View Property: directRelations
+  Name: directRelations
+  Description: Description for directRelations
   Connection: direct
   Value Type: my_space:TargetView(version=v1)
   Min Count: 0
@@ -134,6 +142,8 @@ Properties:
 # Int32 list with btree exceeding 600 limit
 - View: ViewWithTooManyInt32WithBtree
   View Property: int32List
+  Name: int32List
+  Description: Description for int32List
   Value Type: int32
   Min Count: 0
   Max Count: 601
@@ -144,6 +154,8 @@ Properties:
 # Int64 list with btree exceeding 300 limit
 - View: ViewWithTooManyInt64WithBtree
   View Property: int64List
+  Name: int64List
+  Description: Description for int64List
   Value Type: int64
   Min Count: 0
   Max Count: 301
@@ -154,6 +166,8 @@ Properties:
 # Text list exceeding 2000 default limit
 - View: ViewWithTooManyTextInList
   View Property: textList
+  Name: textList
+  Description: Description for textList
   Value Type: text
   Min Count: 0
   Max Count: 2001
@@ -163,6 +177,8 @@ Properties:
 # Enum with 33 values (exceeds 32 limit)
 - View: ViewWithTooManyEnumValues
   View Property: category
+  Name: category
+  Description: Description for category
   Value Type: enum(collection=SomeEnums,unknownValue=other)
   Min Count: 0
   Max Count: 1

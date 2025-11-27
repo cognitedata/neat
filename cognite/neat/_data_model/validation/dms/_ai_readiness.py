@@ -190,17 +190,12 @@ class ViewPropertyMissingName(DataModelValidator):
         recommendations: list[Recommendation] = []
 
         for view_ref in self.local_resources.data_model_views:
-            view = self.local_resources.views_by_reference.get(view_ref)
-
-            if view is None:
-                raise RuntimeError(f"View {view_ref!s} not found in local resources. This is a bug.")
-
-            if view.properties:
-                for ref, definition in view.properties.items():
+            if properties := self.local_resources.properties_by_view.get(view_ref):
+                for prop_ref, definition in properties.items():
                     if not definition.name:
                         recommendations.append(
                             Recommendation(
-                                message=f"View {view_ref!s} property {ref!s} is missing a human-readable name.",
+                                message=f"View {view_ref!s} property {prop_ref!s} is missing a human-readable name.",
                                 fix="Add a clear and concise name to the view property.",
                                 code=self.code,
                             )
@@ -243,17 +238,12 @@ class ViewPropertyMissingDescription(DataModelValidator):
         recommendations: list[Recommendation] = []
 
         for view_ref in self.local_resources.data_model_views:
-            view = self.local_resources.views_by_reference.get(view_ref)
-
-            if view is None:
-                raise RuntimeError(f"View {view_ref!s} not found in local resources. This is a bug.")
-
-            if view.properties:
-                for ref, definition in view.properties.items():
+            if properties := self.local_resources.properties_by_view.get(view_ref):
+                for prop_ref, definition in properties.items():
                     if not definition.description:
                         recommendations.append(
                             Recommendation(
-                                message=f"View {view_ref!s} property {ref!s} is missing a description.",
+                                message=f"View {view_ref!s} property {prop_ref!s} is missing a description.",
                                 fix="Add a clear and concise description to the view property.",
                                 code=self.code,
                             )

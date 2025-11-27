@@ -81,6 +81,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             data_model_name=data_model.data_model.name,
             data_model_reference=data_model.data_model.as_reference(),
             views_by_reference=local_views_by_reference,
+            properties_by_view=analysis.properties_by_view,
             ancestors_by_view_reference=local_ancestors_by_view_reference,
             reverse_to_direct_mapping=local_reverse_to_direct_mapping,
             containers_by_reference=local_containers_by_reference,
