@@ -90,7 +90,8 @@ def generate_enum_values(collection_name: str, count: int) -> str:
         [
             f"""- Collection: {collection_name}
   Value: value{i}
-  Name: Value {i}"""
+  Name: Value {i}
+  Description: Description for value {i}"""
             for i in range(1, count + 1)
         ]
     )
@@ -282,7 +283,7 @@ def test_validation(
 
     by_code = on_success.issues.by_code()
 
-    assert by_code.keys() == expected_problems.keys(), (
+    assert set(by_code.keys()) == set(expected_problems.keys()), (
         f"Mismatch in issue codes. Expected {expected_problems.keys()}, found {by_code.keys()}"
     )
 
