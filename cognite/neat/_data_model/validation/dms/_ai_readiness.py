@@ -189,6 +189,7 @@ class ViewPropertyMissingName(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-005"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
@@ -237,6 +238,7 @@ class ViewPropertyMissingDescription(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-006"
+    issue_type = Recommendation
 
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
