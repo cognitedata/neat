@@ -1,4 +1,11 @@
-from ._ai_readiness import DataModelMissingDescription, DataModelMissingName, ViewMissingDescription, ViewMissingName
+from ._ai_readiness import (
+    DataModelMissingDescription,
+    DataModelMissingName,
+    ViewMissingDescription,
+    ViewMissingName,
+    ViewPropertyMissingDescription,
+    ViewPropertyMissingName,
+)
 from ._connections import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
@@ -57,6 +64,8 @@ __all__ = [
     "ViewMissingDescription",
     "ViewMissingName",
     "ViewPropertyCountIsOutOfLimits",
+    "ViewPropertyMissingDescription",
+    "ViewPropertyMissingName",
     "ViewSpaceVersionInconsistentWithDataModel",
     "ViewToContainerMappingNotPossible",
 ]

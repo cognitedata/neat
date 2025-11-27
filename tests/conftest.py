@@ -17,6 +17,8 @@ def valid_dms_yaml_format() -> str:
 Properties:
 - View: CogniteDescribable
   View Property: name
+  Name: Name Property
+  Description: The name of the describable entity
   Value Type: text
   Min Count: 0
   Max Count: 1
@@ -47,6 +49,8 @@ def model_syntax_error_dms_yaml_format() -> str:
 Properties:
 - View: CogniteDescribable
   View Property: name
+  Name: Name Property
+  Description: The name of the describable entity
   Value Type: text
   Min Count: 0
   Max Count: 1
@@ -75,6 +79,8 @@ def consistency_error_dms_yaml_format() -> str:
 Properties:
 - View: CogniteSourceable
   View Property: name
+  Name: Name Property
+  Description: The name of the sourceable entity
   Value Type: text
   Min Count: 0
   Max Count: 1

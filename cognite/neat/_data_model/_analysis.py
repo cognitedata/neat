@@ -14,6 +14,7 @@ from cognite.neat._data_model.models.dms._view_property import (
     EdgeProperty,
     ReverseDirectRelationProperty,
     ViewCorePropertyRequest,
+    ViewRequestProperty,
 )
 from cognite.neat._data_model.models.dms._views import ViewRequest
 
@@ -81,6 +82,15 @@ class DataModelAnalysis:
                             view.properties.update(ancestor_view.properties)
 
         return view_by_reference
+
+    @property
+    def properties_by_view(self) -> dict[ViewReference, dict[str, ViewRequestProperty]]:
+        """Get a mapping of view references to their corresponding properties."""
+        view_by_reference = self.view_by_reference(include_inherited_properties=False)
+        return {
+            view_ref: {prop_name: prop for prop_name, prop in view.properties.items()}
+            for view_ref, view in view_by_reference.items()
+        }
 
     @staticmethod
     def ancestors_by_view(views: list[ViewRequest]) -> dict[ViewReference, set[ViewReference]]:

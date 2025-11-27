@@ -18,6 +18,8 @@ from cognite.neat._data_model.validation.dms import (
     ReverseConnectionSourceViewMissing,
     ViewMissingDescription,
     ViewMissingName,
+    ViewPropertyMissingDescription,
+    ViewPropertyMissingName,
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
@@ -145,7 +147,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 23
+        assert len(on_success.issues) == 43
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -153,13 +155,15 @@ class TestValidators:
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
             ReverseConnectionSourceViewMissing.code,
+            ExternalContainerDoesNotExist.code,
+            ExternalContainerPropertyDoesNotExist.code,
+            RequiredContainerDoesNotExist.code,
             DataModelMissingName.code,
             DataModelMissingDescription.code,
             ViewMissingDescription.code,
             ViewMissingName.code,
-            ExternalContainerDoesNotExist.code,
-            ExternalContainerPropertyDoesNotExist.code,
-            RequiredContainerDoesNotExist.code,
+            ViewPropertyMissingDescription.code,
+            ViewPropertyMissingName.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -240,6 +244,8 @@ class TestValidators:
         assert len(by_code[DataModelMissingDescription.code]) == 1
         assert len(by_code[ViewMissingDescription.code]) == 3
         assert len(by_code[ViewMissingName.code]) == 3
+        assert len(by_code[ViewPropertyMissingDescription.code]) == 10
+        assert len(by_code[ViewPropertyMissingName.code]) == 10
 
         assert len(by_code[ExternalContainerDoesNotExist.code]) == 1
         assert "nospace:UnexistingContainer" in by_code[ExternalContainerDoesNotExist.code][0].message
@@ -271,7 +277,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 28
+        assert len(on_success.issues) == 48
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -279,14 +285,16 @@ class TestValidators:
             ReverseConnectionSourceViewMissing.code,
             ViewToContainerMappingNotPossible.code,
             ViewPropertyCountIsOutOfLimits.code,
-            DataModelMissingName.code,
-            DataModelMissingDescription.code,
-            ViewMissingDescription.code,
-            ViewMissingName.code,
             ImplementedViewNotExisting.code,
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
+            DataModelMissingName.code,
+            DataModelMissingDescription.code,
+            ViewMissingDescription.code,
+            ViewMissingName.code,
+            ViewPropertyMissingDescription.code,
+            ViewPropertyMissingName.code,
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5
@@ -358,11 +366,6 @@ class TestValidators:
         assert found_missing_containers == expected_missing_containers
         assert found_missing_container_properties == expected_missing_container_properties
 
-        assert len(by_code[DataModelMissingName.code]) == 1
-        assert len(by_code[DataModelMissingDescription.code]) == 1
-        assert len(by_code[ViewMissingDescription.code]) == 3
-        assert len(by_code[ViewMissingName.code]) == 3
-
         assert len(by_code[ImplementedViewNotExisting.code]) == 1
         assert "my_space:DomainDescribable(version=v1)" in by_code[ImplementedViewNotExisting.code][0].message
 
@@ -379,3 +382,11 @@ class TestValidators:
                 if expected_item in issue.message:
                     found_missing_items.add(expected_item)
         assert found_missing_items == expected_missing_items
+
+        # AI Readiness
+        assert len(by_code[DataModelMissingName.code]) == 1
+        assert len(by_code[DataModelMissingDescription.code]) == 1
+        assert len(by_code[ViewMissingDescription.code]) == 3
+        assert len(by_code[ViewMissingName.code]) == 3
+        assert len(by_code[ViewPropertyMissingDescription.code]) == 10
+        assert len(by_code[ViewPropertyMissingName.code]) == 10
