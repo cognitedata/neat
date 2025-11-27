@@ -1760,7 +1760,7 @@ def edge_types_by_view_property_id_test_cases() -> Iterable[ParameterSet]:
             metadata=UnverifiedPhysicalMetadata(
                 space="my_space",
                 external_id="my_data_model",
-                creator="Anders",
+                creator="Marie",
                 version="v42",
             ),
             properties=[
