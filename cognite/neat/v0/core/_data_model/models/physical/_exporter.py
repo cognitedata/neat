@@ -243,17 +243,21 @@ class _DMSExporter:
             connection = cast(EdgeEntity, prop.connection)
 
             if connection.direction == "inwards" and isinstance(prop.value_type, ViewEntity):
-                edge_type_candidates = outwards_type_by_view_value_type.get((prop.view, prop.value_type), [])
-                if len(edge_type_candidates) == 0:
-                    # Warning in validation, should not have an inwards connection without an outwards connection
-                    edge_type = cls._default_edge_type_from_view_id(prop.view.as_id(), prop_id)
-                elif len(edge_type_candidates) == 1:
-                    edge_type = edge_type_candidates[0]
+                if connection.edge_type is not None:
+                    edge_type = connection.edge_type.as_reference()
                 else:
-                    raise NeatValueError(
-                        f"Cannot infer edge type for {view_id}.{prop_id}, multiple candidates: {edge_type_candidates}."
-                        "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
-                    )
+                    edge_type_candidates = outwards_type_by_view_value_type.get((prop.view, prop.value_type), [])
+                    if len(edge_type_candidates) == 0:
+                        # Warning in validation, should not have an inwards connection without an outwards connection
+                        edge_type = cls._default_edge_type_from_view_id(prop.view.as_id(), prop_id)
+                    elif len(edge_type_candidates) == 1:
+                        edge_type = edge_type_candidates[0]
+                    else:
+                        raise NeatValueError(
+                            f"Cannot infer edge type for {view_id}.{prop_id}, multiple candidates: "
+                            f"{edge_type_candidates}. "
+                            "Please specify edge type explicitly, i.e., edge(type=<YOUR_TYPE>)."
+                        )
                 view_property_id = (prop.view, prop.view_property)
                 edge_types_by_view_property_id[view_property_id] = edge_type
 
