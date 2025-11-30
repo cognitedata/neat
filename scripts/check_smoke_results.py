@@ -110,7 +110,23 @@ def _load_pytest_report(pytest_report: Path, context: Context) -> PytestReportMo
 
 
 def _check_results(report: PytestReportModel, context: Context) -> list[SlackMessage]:
-    raise NotImplementedError()
+    messages: list[SlackMessage] = []
+    for test in report.tests or []:
+        if test.outcome == "passed":
+            continue
+
+        if test.call is None or test.call.crash is None:
+            messages.append(SlackMessage(
+                topic="Smoke Test Execution",
+                message=f"Test {test.nodeid!r} failed without a crash message. Please investigate and fix the issue. Go to {context.github_repo_url} to investigate."
+            ))
+            continue
+        messages.append(SlackMessage(
+            # Todo Support Cognite Core Model checks as well.
+            topic="DMS Service",
+            message=test.call.crash.message.removeprefix("AssertionError: ").strip()
+        ))
+    return messages
 
 def _alive_message(now: datetime) -> SlackMessage | None:
     """Create an "alive" message if the current time is Monday in the morning UTC."""
