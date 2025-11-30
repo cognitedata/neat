@@ -1,17 +1,25 @@
 import sys
 from pathlib import Path
 import os
-from datetime import date
+from datetime import datetime, timezone
+from dataclasses import dataclass, field
+
 SLACK_WEBHOOK_URL_NAME = "SLACK_WEBHOOK_URL"
+GITHUB_REPO_URL_NAME = "GITHUB_REPO_URL"
+
+@dataclass
+class Context:
+    slack_webhook_url: str
+    github_repo_url: str
+    now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-def check_smoke_tests_results(pytest_report: Path, slack_webhook_url: str, today: date) -> None:
+def check_smoke_tests_results(pytest_report: Path, context: Context) -> None:
     """Check the smoke tests results from a pytest report file.
 
     Args:
         pytest_report (Path): Path to the pytest report file.
-        slack_webhook_url (str): Slack webhook URL to send notifications.
-        today (date): Today's date - this is used to determine whether to send an alive notification.
+        context (Context): Context object that contains information about the test run.
     """
     raise NotImplementedError()
 
@@ -24,5 +32,11 @@ if __name__ == '__main__':
     if SLACK_WEBHOOK_URL_NAME not in os.environ:
         print(f"Environment variable {SLACK_WEBHOOK_URL_NAME} is not set.")
         sys.exit(1)
+    if GITHUB_REPO_URL_NAME not in os.environ:
+        print(f"Environment variable {GITHUB_REPO_URL_NAME} is not set.")
+        sys.exit(1)
 
-    check_smoke_tests_results(Path(sys.argv[1]), os.environ[SLACK_WEBHOOK_URL_NAME], date.today())
+    check_smoke_tests_results(Path(sys.argv[1]), Context(
+        slack_webhook_url=os.environ[SLACK_WEBHOOK_URL_NAME],
+        github_repo_url=os.environ[GITHUB_REPO_URL_NAME],
+    ))

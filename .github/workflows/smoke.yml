@@ -41,5 +41,6 @@ jobs:
         if: success()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GITHUB_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: uv run python scripts/check_smoke_results.py smoke-report.json
         continue-on-error: true
