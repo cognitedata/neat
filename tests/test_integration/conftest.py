@@ -61,7 +61,7 @@ def neat_test_space(neat_client: NeatClient) -> SpaceResponse:
 def test_assert_neat_client(neat_client: NeatClient) -> None:
     assert isinstance(neat_client, NeatClient)
     config = neat_client.config
-    url = f"https://{config.cdf_cluster}.cognitedata.com/api/v1/token/inspect"
+    url = f"{config.base_url}/api/v1/token/inspect"
     responses = neat_client.http_client.request(ParametersRequest(endpoint_url=url, method="GET"))
     assert len(responses) == 1
     response = responses[0]
