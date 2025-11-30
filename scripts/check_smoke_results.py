@@ -1,3 +1,4 @@
+"""Check smoke test results from a pytest report and notify via Slack."""
 import sys
 from pathlib import Path
 import os
