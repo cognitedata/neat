@@ -236,13 +236,13 @@ class TestViewDiffer:
                     ),
                     ChangedField(
                         field_path=f"{VIEW_PROPERTY_ID}.edgeSource",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value=ViewReference(space="edge_space", external_id="edge_view", version="1"),
                         new_value=ViewReference(space="edge_space", external_id="updated_edge_view", version="2"),
                     ),
                     ChangedField(
                         field_path=f"{VIEW_PROPERTY_ID}.direction",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="outwards",
                         new_value="inwards",
                     ),

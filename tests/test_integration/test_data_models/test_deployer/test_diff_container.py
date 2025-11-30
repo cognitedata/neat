@@ -171,10 +171,6 @@ class TestContainerPropertyDiffer:
             current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.immutable"
         )
 
-    @pytest.mark.skip(
-        reason="API returns 200 and does the change. This can lead to properties with null in a"
-        " non-nullable field. What should we do?"
-    )
     def test_diff_property_nullable(self, current_container: ContainerRequest, neat_client: NeatClient) -> None:
         new_text_property = current_container.properties[TEXT_PROPERTY_ID].model_copy(
             deep=True, update={"nullable": False}
@@ -184,7 +180,11 @@ class TestContainerPropertyDiffer:
         )
 
         assert_change(
-            current_container, new_container, neat_client, field_path=f"properties.{TEXT_PROPERTY_ID}.nullable"
+            current_container,
+            new_container,
+            neat_client,
+            field_path=f"properties.{TEXT_PROPERTY_ID}.nullable",
+            neat_override_breaking_changes=True,
         )
 
     @pytest.mark.skip(reason="API returns 500; Internal server error. What should we do?")
@@ -259,10 +259,6 @@ class TestContainerPropertyDiffer:
             field_path=f"properties.{LISTABLE_INT_PROPERTY_ID}.type.maxListSize",
         )
 
-    @pytest.mark.skip(
-        reason="API returns 200 and does the change. However, decreasing a list size can lead to "
-        "data loss or an invalid state (more relations than the limit). What should we do?"
-    )
     def test_diff_listable_property_list_size_decrease(
         self, current_container: ContainerRequest, neat_client: NeatClient
     ) -> None:
@@ -283,6 +279,7 @@ class TestContainerPropertyDiffer:
             new_container,
             neat_client,
             field_path=f"properties.{LISTABLE_INT_PROPERTY_ID}.type.maxListSize",
+            neat_override_breaking_changes=True,
         )
 
     @pytest.mark.skip(reason="API returns 200,but does not do the change. What should we do?")
@@ -619,16 +616,41 @@ def assert_change(
     neat_client: NeatClient,
     field_path: str,
     in_error_message: str | None = None,
+    neat_override_breaking_changes: bool = False,
 ) -> None:
+    """Asserts that the change between current_container and new_container is detected on the given field_path.
+
+    If the change is breaking, it asserts that applying the new_container raises an error containing in_error_message.
+    If the change is allowed, it asserts that applying the new_container succeeds.
+
+    Args:
+        current_container (ContainerRequest): The current container state.
+        new_container (ContainerRequest): The new container state with the change.
+        neat_client (NeatClient): The NEAT client to use for applying changes.
+        field_path (str): The expected field path where the change occurs.
+        in_error_message (str | None): The substring expected in the error message for breaking changes
+            (defaults to the last part of the field_path).
+        neat_override_breaking_changes (bool): If True, all changes are treated as allowed, even if the severity is
+            breaking. This is used for changes that we in the Neat team have decided to consider BREAKING, even
+            though they are not technically breaking from a CDF API perspective.
+    """
     diffs = ContainerDiffer().diff(current_container, new_container)
     assert len(diffs) == 1
     diff = diffs[0]
+    # Drill down to the actual field change
     while isinstance(diff, FieldChanges):
         assert len(diff.changes) == 1
         diff = diff.changes[0]
 
+    if neat_override_breaking_changes:
+        assert diff.severity == SeverityType.BREAKING, (
+            "Expected diff to be BREAKING when neat_override_breaking_changes is True"
+        )
+
+    # Ensure that the diff is on the expected field path
     assert field_path == diff.field_path, f"Expected diff on field path {field_path}, got {diff.field_path}"
-    if diff.severity == SeverityType.BREAKING:
+
+    if diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes:
         if in_error_message is None:
             in_error_message = field_path.rsplit(".", maxsplit=1)[-1]
         assert_breaking_change(new_container, neat_client, in_error_message)

@@ -323,7 +323,7 @@ class DataTypeDiffer(ItemDiffer[PropertyTypeDefinition]):
         if current.collation != new.collation:
             changes.append(
                 ChangedField(
-                    item_severity=SeverityType.WARNING,
+                    item_severity=SeverityType.BREAKING,
                     field_path=self._get_path("collation"),
                     current_value=current.collation,
                     new_value=new.collation,
