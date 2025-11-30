@@ -23,7 +23,7 @@ repos:
   - hooks:
     - id: mypy
       name: mypy
-      entry: dmypy run -- cognite/neat/ tests/
+      entry: dmypy run -- cognite/neat/ tests/ tests_smoke/
       files: ^.*.(py|pyi)$
       language: system
       pass_filenames: false
