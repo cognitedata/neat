@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import Literal, TypeAlias
 import httpx
 from pydantic import BaseModel, JsonValue
+from rich import print
 # Environment variable names
 SLACK_WEBHOOK_URL_NAME = "SLACK_WEBHOOK_URL"
 GITHUB_REPO_URL_NAME = "GITHUB_REPO_URL"
@@ -31,12 +32,14 @@ def check_smoke_tests_results(pytest_report: Path, context: Context) -> None:
     """
     report = _load_pytest_report(pytest_report, context)
     if report is None:
+        print("[red]Failed to load pytest report. Exiting.[/red]")
         return None
 
     messages = _check_results(report, context)
-
+    print(f"[blue]Found {len(messages)} issues in smoke tests.[/blue]")
     if not messages:
         if alive_message := _alive_message(context.now):
+            print("[green]No issues found. Sending alive message.[/green]")
             _notify_slack([alive_message], context)
         return None
 
