@@ -32,3 +32,11 @@ class TestCheckSmokeResults:
         assert len(call_slack.calls) == 1
         request = call_slack.calls[0].request
         assert "Smoke tests failed to execute" in request.content.decode()
+
+    def test_invalid_file_format(self, call_slack: respx.MockRouter, context: Context) -> None:
+        """Test that the function handles an invalid file format."""
+        ...
+
+    def test_valid_format_expected_requests(self, call_slack: respx.MockRouter, context: Context) -> None:
+        """Test that the function sends expected requests for a valid report file."""
+        ...
