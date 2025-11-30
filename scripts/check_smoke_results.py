@@ -118,7 +118,7 @@ def _load_pytest_report(pytest_report: Path, context: Context) -> PytestReportMo
 def _check_results(report: PytestReportModel, context: Context) -> list[SlackMessage]:
     messages: list[SlackMessage] = []
     for test in report.tests or []:
-        if test.outcome == "passed":
+        if test.outcome == "passed" or test.outcome == "skipped":
             continue
 
         if test.call is None or test.call.crash is None:
@@ -157,7 +157,7 @@ def _notify_slack(messages: list[SlackMessage], context: Context) -> None:
 
 
 if __name__ == '__main__':
-    if len(sys.argv) >= 2:
+    if len(sys.argv) < 2:
         print(f"Usage: python {Path(__file__).name} <results_file>")
         sys.exit(1)
     send_messages = True
