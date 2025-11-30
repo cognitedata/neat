@@ -622,13 +622,28 @@ def assert_change(
     all_supporting_containers: dict[ContainerReference, ContainerRequest] | None = None,
     in_error_message: str | None = None,
 ) -> None:
+    """Assert that changing from current_view to new_view results in a diff on field_path, and that applying the change
+    either succeeds or fails with a breaking change, depending on the diff severity.
+
+    Args:
+        current_view (ViewRequest): The current view before changes.
+        new_view (ViewRequest): The desired view after changes.
+        neat_client (NeatClient): The NEAT client to use for applying changes.
+        field_path (str): The expected field path where the change occurs.
+        all_supporting_containers (dict[ContainerReference, ContainerRequest] | None):
+            Optional dict of all supporting containers for accurate diffing.
+        in_error_message (str | None): Optional substring to look for in the error message if the change is breaking.
+
+    """
     diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(current_view, new_view)
     assert len(diffs) == 1
     diff = diffs[0]
+    # Drill down to the actual field change
     while isinstance(diff, FieldChanges):
         assert len(diff.changes) == 1
         diff = diff.changes[0]
 
+    # Ensure that the diff is on the expected field path
     assert field_path == diff.field_path, f"Expected diff on field path {field_path}, got {diff.field_path}"
     if diff.severity == SeverityType.BREAKING:
         if in_error_message is None:
