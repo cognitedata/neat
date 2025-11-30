@@ -531,7 +531,13 @@ class TestViewEdgePropertyDiffer:
             update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.edgeSource")
+        assert_change(
+            current_view,
+            new_view,
+            neat_client,
+            field_path=f"properties.{EDGE_PROPERTY_ID}.edgeSource",
+            neat_override_breaking_changes=True,
+        )
 
     def test_diff_direction(self, current_view: ViewRequest, neat_client: NeatClient) -> None:
         edge_property = cast(SingleEdgeProperty, current_view.properties[EDGE_PROPERTY_ID])
@@ -540,7 +546,13 @@ class TestViewEdgePropertyDiffer:
             update={"properties": {**current_view.properties, EDGE_PROPERTY_ID: new_edge_property}}
         )
 
-        assert_change(current_view, new_view, neat_client, field_path=f"properties.{EDGE_PROPERTY_ID}.direction")
+        assert_change(
+            current_view,
+            new_view,
+            neat_client,
+            field_path=f"properties.{EDGE_PROPERTY_ID}.direction",
+            neat_override_breaking_changes=True,
+        )
 
 
 class TestViewReverseDirectRelationPropertyDiffer:
@@ -635,7 +647,8 @@ def assert_change(
             Optional dict of all supporting containers for accurate diffing.
         in_error_message (str | None): Optional substring to look for in the error message if the change is breaking.
         neat_override_breaking_changes (bool): If True, all changes are treated as allowed, even if the severity is
-            breaking.
+            breaking. This is used for changes that we in the Neat team have decided to consider BREAKING, even
+            though they are not technically breaking from a CDF API perspective.
 
     """
     diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(current_view, new_view)
