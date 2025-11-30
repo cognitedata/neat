@@ -18,6 +18,7 @@ class Context:
     slack_webhook_url: str
     github_repo_url: str
     now: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    send_messages: bool = True
 
 
 class SlackMessage(BaseModel):
@@ -145,18 +146,23 @@ def _alive_message(now: datetime) -> SlackMessage | None:
 
 def _notify_slack(messages: list[SlackMessage], context: Context) -> None:
     for message in messages:
-        try:
-            response = httpx.post(context.slack_webhook_url, content=message.model_dump_json())
-            response.raise_for_status()
-        except httpx.HTTPError as e:
-            print(f"[red]Failed to send message to Slack: {e}[/red]")
-
+        if context.send_messages:
+            try:
+                response = httpx.post(context.slack_webhook_url, content=message.model_dump_json())
+                response.raise_for_status()
+            except httpx.HTTPError as e:
+                print(f"[red]Failed to send message to Slack: {e}[/red]")
+        else:
+            print(f"[yellow]Dry run: would send message to Slack:[/yellow] {message.model_dump_json()}")
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) >= 2:
         print(f"Usage: python {Path(__file__).name} <results_file>")
         sys.exit(1)
+    send_messages = True
+    if len(sys.argv) >= 3 and sys.argv[2].lower() == "--dry-run":
+        send_messages = False
 
     if SLACK_WEBHOOK_URL_NAME not in os.environ:
         print(f"Environment variable {SLACK_WEBHOOK_URL_NAME} is not set.")
@@ -168,4 +174,5 @@ if __name__ == '__main__':
     check_smoke_tests_results(Path(sys.argv[1]), Context(
         slack_webhook_url=os.environ[SLACK_WEBHOOK_URL_NAME],
         github_repo_url=os.environ[GITHUB_REPO_URL_NAME],
+        send_messages=send_messages
     ))
