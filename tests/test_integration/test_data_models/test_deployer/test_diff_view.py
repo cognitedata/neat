@@ -621,6 +621,7 @@ def assert_change(
     field_path: str,
     all_supporting_containers: dict[ContainerReference, ContainerRequest] | None = None,
     in_error_message: str | None = None,
+    neat_override_breaking_changes: bool = False,
 ) -> None:
     """Assert that changing from current_view to new_view results in a diff on field_path, and that applying the change
     either succeeds or fails with a breaking change, depending on the diff severity.
@@ -633,6 +634,8 @@ def assert_change(
         all_supporting_containers (dict[ContainerReference, ContainerRequest] | None):
             Optional dict of all supporting containers for accurate diffing.
         in_error_message (str | None): Optional substring to look for in the error message if the change is breaking.
+        neat_override_breaking_changes (bool): If True, all changes are treated as allowed, even if the severity is
+            breaking.
 
     """
     diffs = ViewDiffer(all_supporting_containers or {}, all_supporting_containers or {}).diff(current_view, new_view)
@@ -643,9 +646,12 @@ def assert_change(
         assert len(diff.changes) == 1
         diff = diff.changes[0]
 
+    if neat_override_breaking_changes:
+        assert diff.severity == SeverityType.BREAKING, "Expected diff to be breaking when overriding breaking changes."
+
     # Ensure that the diff is on the expected field path
     assert field_path == diff.field_path, f"Expected diff on field path {field_path}, got {diff.field_path}"
-    if diff.severity == SeverityType.BREAKING:
+    if diff.severity == SeverityType.BREAKING and not neat_override_breaking_changes:
         if in_error_message is None:
             in_error_message = field_path.rsplit(".", maxsplit=1)[-1]
         assert_breaking_change(new_view, neat_client, in_error_message)
