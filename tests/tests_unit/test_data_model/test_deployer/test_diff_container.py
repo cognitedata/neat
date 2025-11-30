@@ -499,7 +499,7 @@ class TestContainerDiffer:
                     ),
                     ChangedField(
                         field_path="collation",
-                        item_severity=SeverityType.WARNING,
+                        item_severity=SeverityType.BREAKING,
                         current_value="usc_basic",
                         new_value="en",
                     ),
