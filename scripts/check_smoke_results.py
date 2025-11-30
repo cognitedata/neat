@@ -7,6 +7,7 @@ from typing import Literal, TypeAlias
 import httpx
 from pydantic import BaseModel, JsonValue
 from rich import print
+
 # Environment variable names
 SLACK_WEBHOOK_URL_NAME = "SLACK_WEBHOOK_URL"
 GITHUB_REPO_URL_NAME = "GITHUB_REPO_URL"

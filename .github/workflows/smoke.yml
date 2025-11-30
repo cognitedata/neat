@@ -37,7 +37,7 @@ jobs:
           IDP_TENANT_ID: ${{ vars.IDP_TENANT_ID }}
         run: export PYTHONPATH=$PYTHONPATH:$(pwd); uv run pytest tests_smoke --json-report --json-report-file=smoke-report.json --tb=short
 
-      - name: Upload smoke test results
+      - name: Check smoke test results and send Slack notification
         if: success()
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
