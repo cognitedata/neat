@@ -145,12 +145,17 @@ def _alive_message(now: datetime) -> SlackMessage | None:
 
 def _notify_slack(messages: list[SlackMessage], context: Context) -> None:
     for message in messages:
-        httpx.post(context.slack_webhook_url, content=message.model_dump_json())
+        try:
+            response = httpx.post(context.slack_webhook_url, content=message.model_dump_json())
+            response.raise_for_status()
+        except httpx.HTTPError as e:
+            print(f"[red]Failed to send message to Slack: {e}[/red]")
+
 
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: python upload_smoke_results.py <results_file>")
+        print(f"Usage: python {Path(__file__).name} <results_file>")
         sys.exit(1)
 
     if SLACK_WEBHOOK_URL_NAME not in os.environ:
