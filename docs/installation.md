@@ -1,23 +1,10 @@
 # Installation
 
-`neat` is distributed as a Python package. It is organized into two modules:
-
-- core: holds definition of objects (conceptual and physical data model, and instances), and ETL operations on these objects, accompanied with helper operations such as the objects' analysis and provenance.
-- session: is a notebook (user) interface for the core.
-
-`neat` is used primarily in a notebook environment such as, for example,
-Jupyter Notebooks. Another notebook environment is the CDF notebooks.
+NEAT is distributed as a Python package. It is used primarily in a notebook environment such as, for example, Jupyter Notebooks. Another notebook environment is the CDF notebooks. Though, you will be soon able to plug NEAT to [CDF Toolkit](https://docs.cognite.com/cdf/deploy/cdf_toolkit), which will then leverage neat for CDF data modeling.
 
 ## CDF Notebooks Environment
 
-CDF Notebooks are a part of the Cognite Data Fusion (CDF) platform. These notebooks are a great way to get started with
-`neat`, even if you have **no coding experience**.
-
-!!! note "Limitations"
-
-    CDF Notebooks are running in your browser. This have some limitations compared to running `neat` locally. The
-    main difference is that locally neat can use a more powerful graph storage [oxigraph](https://github.com/oxigraph/oxigraph) . This means that if you are working
-    with large amounts of instances, you might want to consider running `neat` locally.
+CDF Notebooks are a part of the Cognite Data Fusion (CDF) platform. These notebooks are a great way to get started with NEAT, even if you have **no coding experience**.
 
 1. Go to [Cognite Data Fusion](https://fusion.cogniteapp.com/)
 2. Login to your account
