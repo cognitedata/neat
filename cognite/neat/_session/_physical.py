@@ -68,7 +68,7 @@ class PhysicalDataModel:
 
 @session_wrapper
 class ReadPhysicalDataModel:
-    """Read physical data model from various sources into NeatSession graph store."""
+    """Read physical data model from various sources into NeatSession store."""
 
     def __init__(self, store: NeatStore, client: NeatClient, config: NeatConfig) -> None:
         self._store = store
@@ -130,7 +130,12 @@ class ReadPhysicalDataModel:
         return self._store.read_physical(reader, on_success)
 
     def excel(self, io: Any) -> None:
-        """Read physical data model from Excel file"""
+        """Read physical data model from Excel file
+
+        Args:
+            io (Any): The file path or buffer to read from.
+
+        """
 
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
@@ -165,7 +170,7 @@ class ReadPhysicalDataModel:
 
 @session_wrapper
 class WritePhysicalDataModel:
-    """Write physical data model to various sources from NeatSession graph store."""
+    """Write physical data model to various sources from NeatSession store."""
 
     def __init__(self, store: NeatStore, client: NeatClient, config: NeatConfig) -> None:
         self._store = store

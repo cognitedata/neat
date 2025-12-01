@@ -13,6 +13,7 @@ theme:
 
 nav:
   - Home: index.md
+  - Installation: installation.md
   - Validations:
       - Ai_Readiness (NEAT-DMS-AI-READINESS): validation/index.html#ai_readiness-neat-dms-ai-readiness
       - Connections (NEAT-DMS-CONNECTIONS): validation/index.html#connections-neat-dms-connections
@@ -20,50 +21,47 @@ nav:
       - Containers (NEAT-DMS-CONTAINER): validation/index.html#containers-neat-dms-container
       - Limits (NEAT-DMS-LIMITS): validation/index.html#limits-neat-dms-limits
       - Views (NEAT-DMS-VIEW): validation/index.html#views-neat-dms-view
-  - Data Modeling Principles: data-modeling-principles.md
-  - Getting Started:
-      - Why NEAT?: gettingstarted/why-neat.md
-      - Installation: gettingstarted/installation.md
-  - Tutorials:
-      - Introduction:
-          - Introduction: tutorials/introduction/introduction.ipynb
-      - Data Modeling:
-        - My First Data Model: tutorials/data-modeling/cold_start.ipynb
-        - From Conceptual to Physical Data Modeling: tutorials/data-modeling/from-conceptual-to-physical-via-CDM.ipynb
-  - Data Model in Spreadsheet:
-      - Overview: excel_data_modeling/data_model.md
-      - Conceptual Data Model:
-          - Overview: excel_data_modeling/conceptual/overview.md
-          - Reference: excel_data_modeling/conceptual/reference.md
-      - Physical Data Model:
-          - Overview: excel_data_modeling/physical/overview.md
-          - Reference: excel_data_modeling/physical/reference.md
-          - Properties: excel_data_modeling/physical/properties.md
-          - Views: excel_data_modeling/physical/views.md
-          - Enum: excel_data_modeling/physical/enum.md
-      - Units: excel_data_modeling/units.md
+  - Data Modeling:
+      - Principles: data-modeling-principles.md
+      - Data Modeling in Excel:
+        - Overview: excel_data_modeling/data_model.md
+        - Physical Data Model:
+            - Overview: excel_data_modeling/physical/overview.md
+            - Reference: excel_data_modeling/physical/reference.md
+            - Properties: excel_data_modeling/physical/properties.md
+            - Views: excel_data_modeling/physical/views.md
+            - Enum: excel_data_modeling/physical/enum.md
+            - Units: excel_data_modeling/physical/units.md
   - NeatSession:
-      - Session: reference/NeatSession/base.md
-      - Read: reference/NeatSession/read.md
-      - Template: reference/NeatSession/template.md
-      - Prepare: reference/NeatSession/prepare.md
-      - Fix: reference/NeatSession/fix.md
-      - Mapping: reference/NeatSession/mapping.md
-      - Set: reference/NeatSession/set.md
-      - Subset: reference/NeatSession/subset.md
-      - To: reference/NeatSession/to.md
-      - Inspect: reference/NeatSession/inspect.md
-      - Show: reference/NeatSession/show.md
-      - Drop: reference/NeatSession/drop.md
-  - Contributor Docs:
-      - Overview: reference/overview.md
-      - Issues:
-          - Base: reference/issues/base.md
-          - Errors: reference/issues/errors.md
-          - Warnings:
-            -  Main: reference/issues/warnings.md
-            -  UserModeling: reference/issues/user_model_warnings.md
-  - Changelog: https://github.com/cognitedata/neat/releases
+      - Session: reference/NeatSession/session.md
+      - Physical Data Model: reference/NeatSession/physical.md
+  - About:
+    - History: history.md
+    - Authors: authors.md
+    - Roadmap: roadmap.md
+    - Changelog: https://github.com/cognitedata/neat/releases
+
+
+  - Legacy Docs (v0.x):
+    - Tutorials:
+        - Introduction:
+            - Introduction: tutorials/legacy/introduction/introduction.ipynb
+        - Data Modeling:
+          - My First Data Model: tutorials/legacy/data-modeling/cold_start.ipynb
+          - From Conceptual to Physical Data Modeling: tutorials/legacy/data-modeling/from-conceptual-to-physical-via-CDM.ipynb
+    - NeatSession:
+        - Session: reference/legacy/NeatSession/base.md
+        - Read: reference/legacy/NeatSession/read.md
+        - Template: reference/legacy/NeatSession/template.md
+        - Prepare: reference/legacy/NeatSession/prepare.md
+        - Fix: reference/legacy/NeatSession/fix.md
+        - Mapping: reference/legacy/NeatSession/mapping.md
+        - Set: reference/legacy/NeatSession/set.md
+        - Subset: reference/legacy/NeatSession/subset.md
+        - To: reference/legacy/NeatSession/to.md
+        - Inspect: reference/legacy/NeatSession/inspect.md
+        - Show: reference/legacy/NeatSession/show.md
+        - Drop: reference/legacy/NeatSession/drop.md
 
 markdown_extensions:
   - pymdownx.superfences

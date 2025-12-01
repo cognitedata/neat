@@ -27,7 +27,7 @@ The `container.properties.type.type` field specifies the type of the property.
 There are two `Value Type` that supports extra parameters
 
 * `float32` and `float64` - These are used to specify floating-point numbers. The `unit` parameter is
-   used to specify the unit of the number. See [Units](../units.md) for available units. See example above.
+   used to specify the unit of the number. See [Units](units.md) for available units. See example above.
 * `enum` - This is used to specify an enumeration. You need to set `collection` to the name of the enumeration and,
    optionally, `unknownValue` to the value that should be used when the value is unknown. See example below. When
    enumerations are used, there is expected to be a corresponding `enum` sheet in the physical data model file with the
@@ -47,7 +47,7 @@ follows:
 |-------------|---------------|------------|----------------|--------------------|----------------------------------|
 | WindTurbine | name          | text       | GeneratingUnit | name               | btree:nameIndex(cursorable=True) |
 
-Note that you can specify whether the index is cursorable or not, see 
+Note that you can specify whether the index is cursorable or not, see
 [here](https://docs.cognite.com/cdf/dm/dm_guides/dm_performance_considerations/#pagination-cursorable-indexes).
 
 You can also specify indices that uses multiple data properties. You can do this by specifying the same `Index` name
@@ -61,12 +61,41 @@ should be used. See the example below:
 
 There are two available index types, `btree` which should be used for non-list properties and `inverted` which should
 be used for list properties. If you do not specify the index type, it will default to `btree` for non-list properties
-and `inverted` for list properties. 
+and `inverted` for list properties.
 
 | View        | View Property | Value Type | Container      | Container Property | Index              |
 |-------------|---------------|------------|----------------|--------------------|--------------------|
 | WindTurbine | tags          | text       | GeneratingUnit | name               | inverted:tagsIndex |
 
+### Constraint
+Use constraints to restrict the values that can be stored by a property, or in a container. Constraints ensure that the data has integrity, and reflects the real world.
+
+CDF supports the two constrain types:
+
+- `uniqueness`: Ensures that the values of a property or a set of properties are unique within the container. Set a uniqueness constraint to bySpace, indicating that the uniqueness will apply per space.
+- `requires`: Points to another container, and requires that the instance has data in that other container used to populate this container.
+
+When setting any of these constraints in `NEAT`, similar to the indexes, the following short-form syntax is used:
+
+```
+<constraint_type>:<constraint_id>(<param1>=<value1>,<param2>=<value2>, ...)
+```
+
+In Properties sheet you are able to set `uniqueness` constraint on a property. See the example below:
+| View        | View Property | Value Type | Container      | Container Property | Constraint                          |
+|-------------|---------------|------------|----------------|--------------------|-------------------------------------|
+| WindTurbine | serialNumber  | text       | GeneratingUnit | serialNumber       | uniqueness:serialNoUnq(bySpace=True)|
+
+`bySpace` parameter indicates that the uniqueness will apply per space, and it is the only supported parameter for `uniqueness` constraint.
+
+In Containers sheet you are able to set `requires` constraints on a container. See the example below:
+
+| Container      | Name           | Description                     | Constraint                                 |
+|----------------|----------------|---------------------------------|--------------------------------------------|
+| GeneratingUnit | GeneratingUnit | Container for generating units.  | requires:power(container=PowerPlant)      |
+
+For the `requires` constraint, the `container` parameter is used to specify the container that is required to have data in
+order to populate this container.
 
 
 ## Connection Property
@@ -130,5 +159,3 @@ connected to a MetMast.
 Connecting this example to the previous example, we see that the reverse here will be an edge that is pointing the
 opposite direction of the `WindTurbine`.`metmasts` edge. The reverse enable use to easily reuse the same edge
 for both directions.
-
-## Index 
