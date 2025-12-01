@@ -23,6 +23,12 @@ which require you to be a technical wizard or modeling expert, NEAT provides you
 We offer various interfaces on how you can develop your data model, where majority of our users prefer
 a combination of Jupyter Notebooks, leveraging NEAT features through so called [NeatSession](...),  with [a Spreadsheet data model template](...).
 
+
+Only Data modeling? There was more before!?
+True, NEAT v0.x (legacy) offered a complete knowledge graph
+tooling. Do not worry though, all the legacy features are still available and will be gradually
+ported to NEAT v1.x according to the [roadmap](roadmap.md).
+
 > NEAT is a funny acronym derived from k**N**owl**Ed**ge gr**A**ph **T**ransformer produced using [ACRONIMIFY](https://acronymify.com/NEAT/?q=knowledge+graph+transformer).
 
 

@@ -10,9 +10,7 @@ Therefore, use the filters with caution. A filter is set by writing raw JSON str
 
 | View              | Implements          | Filter                                                                                                                        |
 |-------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| Cognite360ImageStation | CogniteDescribable | {"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d", "externalId": "Cognite3DGroup"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DGroup", "groupType"], "value": "Station360"}}]}
-|
-
+| Cognite360ImageStation | CogniteDescribable | {"and": [{"hasData": [{"type": "container", "space": "cdf_cdm_3d", "externalId": "Cognite3DGroup"}]}, {"equals": {"property": ["cdf_cdm_3d", "Cognite3DGroup", "groupType"], "value": "Station360"}}]}|
 
 
 BEWARE to properly form the JSON string, as it is easy to make mistakes. The JSON string must be a valid JSON object!

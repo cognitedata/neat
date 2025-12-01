@@ -82,6 +82,7 @@ When setting any of these constraints in `NEAT`, similar to the indexes, the fol
 ```
 
 In Properties sheet you are able to set `uniqueness` constraint on a property. See the example below:
+
 | View        | View Property | Value Type | Container      | Container Property | Constraint                          |
 |-------------|---------------|------------|----------------|--------------------|-------------------------------------|
 | WindTurbine | serialNumber  | text       | GeneratingUnit | serialNumber       | uniqueness:serialNoUnq(bySpace=True)|
@@ -89,6 +90,7 @@ In Properties sheet you are able to set `uniqueness` constraint on a property. S
 `bySpace` parameter indicates that the uniqueness will apply per space, and it is the only supported parameter for `uniqueness` constraint.
 
 In Containers sheet you are able to set `requires` constraints on a container. See the example below:
+
 
 | Container      | Name           | Description                     | Constraint                                 |
 |----------------|----------------|---------------------------------|--------------------------------------------|

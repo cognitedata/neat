@@ -3,6 +3,7 @@
 This document is a reference for the physical data model.
 
 The physical data model has the following sheets:
+
 - Metadata: Contains information about the data model.
 - Properties: Contains the properties of the data model.
 - Views: Contains the views of the data model.
@@ -21,7 +22,7 @@ Contains information about the data model.
 | version | Version of the data model | Yes |
 | name | Human readable name of the data model | No |
 | description | Short description of the data model | No |
-| creator | List of creators (comma separated) to the data model. | Yes |
+| creator | List of creators (comma separated) to the data model. | No |
 
 ## Properties Sheet
 
