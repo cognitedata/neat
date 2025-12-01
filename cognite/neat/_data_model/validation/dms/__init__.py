@@ -1,6 +1,8 @@
 from ._ai_readiness import (
     DataModelMissingDescription,
     DataModelMissingName,
+    EnumerationMissingDescription,
+    EnumerationMissingName,
     ViewMissingDescription,
     ViewMissingName,
     ViewPropertyMissingDescription,
@@ -46,6 +48,8 @@ __all__ = [
     "DataModelMissingName",
     "DataModelViewCountIsOutOfLimits",
     "DmsDataModelValidation",
+    "EnumerationMissingDescription",
+    "EnumerationMissingName",
     "ExternalContainerDoesNotExist",
     "ExternalContainerPropertyDoesNotExist",
     "ImplementedViewNotExisting",

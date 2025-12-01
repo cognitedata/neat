@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model.models.dms import SpaceRequest, SpaceResponse
-from cognite.neat._utils.http_client import ParametersRequest, ResponseMessage
 from tests.config import ROOT
 
 
@@ -56,14 +55,3 @@ def neat_test_space(neat_client: NeatClient) -> SpaceResponse:
     assert len(space_response_list) == 1
     space_response = space_response_list[0]
     return space_response
-
-
-def test_assert_neat_client(neat_client: NeatClient) -> None:
-    assert isinstance(neat_client, NeatClient)
-    config = neat_client.config
-    url = f"{config.base_url}/api/v1/token/inspect"
-    responses = neat_client.http_client.request(ParametersRequest(endpoint_url=url, method="GET"))
-    assert len(responses) == 1
-    response = responses[0]
-    assert isinstance(response, ResponseMessage)
-    assert response.code == 200

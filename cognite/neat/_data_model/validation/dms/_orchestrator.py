@@ -23,6 +23,8 @@ from cognite.neat._utils.useful_types import ModusOperandi
 from ._ai_readiness import (
     DataModelMissingDescription,
     DataModelMissingName,
+    EnumerationMissingDescription,
+    EnumerationMissingName,
     ViewMissingDescription,
     ViewMissingName,
     ViewPropertyMissingDescription,
@@ -152,6 +154,8 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ViewMissingDescription(local_resources, cdf_resources, self._modus_operandi),
             ViewPropertyMissingName(local_resources, cdf_resources, self._modus_operandi),
             ViewPropertyMissingDescription(local_resources, cdf_resources, self._modus_operandi),
+            EnumerationMissingName(local_resources, cdf_resources, self._modus_operandi),
+            EnumerationMissingDescription(local_resources, cdf_resources, self._modus_operandi),
         ]
 
         # Run validators

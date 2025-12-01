@@ -1,5 +1,6 @@
 """Validators for checking if data model is AI-ready."""
 
+from cognite.neat._data_model.models.dms._data_types import EnumProperty
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import Recommendation
 
@@ -251,6 +252,111 @@ class ViewPropertyMissingDescription(DataModelValidator):
                             Recommendation(
                                 message=f"View {view_ref!s} property {prop_ref!s} is missing a description.",
                                 fix="Add a clear and concise description to the view property.",
+                                code=self.code,
+                            )
+                        )
+
+        return recommendations
+
+
+class EnumerationMissingName(DataModelValidator):
+    """Validates that an enumeration has a human-readable name.
+
+    ## What it does
+    Validates that each enumeration value in the data model has a human-readable name.
+
+    ## Why is this bad?
+    A missing name makes it harder for users (humans or machines) to understand the purpose of the enumeration value.
+    This is important as enumeration values are often technical codes or abbreviations, and a clear name improves
+    usability, maintainability, searchability, and AI-readiness.
+
+    ## Example
+    An enumeration value with id "NOM" in a wind turbine operational mode property has no name. Users may find it
+    difficult to understand what this value represents. Adding name "Normal Operation" would increase clarity
+    and usability.
+    """
+
+    code = f"{BASE_CODE}-007"
+    issue_type = Recommendation
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        for container_ref, container in self.local_resources.containers_by_reference.items():
+            if container_ref.space != self.local_resources.data_model_reference.space:
+                continue
+
+            for prop_ref, definition in container.properties.items():
+                if not isinstance(definition.type, EnumProperty):
+                    continue
+
+                for value, enum_def in definition.type.values.items():
+                    if not enum_def.name:
+                        recommendations.append(
+                            Recommendation(
+                                message=(
+                                    f"Enumeration value {value!r} in property {prop_ref!s} of container "
+                                    f"{container_ref!s} is missing a human-readable name."
+                                ),
+                                fix="Add a clear and concise name to the enumeration value.",
+                                code=self.code,
+                            )
+                        )
+
+        return recommendations
+
+
+class EnumerationMissingDescription(DataModelValidator):
+    """Validates that an enumeration value has a human-readable description.
+
+    ## What it does
+    Validates that each enumeration value in the data model has a human-readable description.
+
+    ## Why is this bad?
+    A missing description makes it harder for users (humans or machines) to understand the meaning and context
+    of the enumeration value. The description can provide important information about when and how the value
+    should be used, especially when enumeration values are technical codes or abbreviations.
+
+    ## Example
+    An enumeration value "NOM" in a wind turbine operational mode property has no description. Users may find it
+    difficult to understand what this value represents without additional context. Even with a name like
+    "Normal Operation", the description is valuable as it can clarify specifics:
+
+    Option 1 — Basic definition
+    The turbine is operating normally and generating power according to its power curve.
+
+    Option 2 — Detailed operational context
+    The turbine is in normal operation mode, actively generating power with all systems functioning within
+    specified parameters and connected to the grid.
+
+    Option 3 — Contrasting with other modes
+    Standard operating mode where the turbine follows the power curve and responds to grid commands,
+    as opposed to maintenance mode or fault conditions.
+    """
+
+    code = f"{BASE_CODE}-008"
+    issue_type = Recommendation
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        for container_ref, container in self.local_resources.containers_by_reference.items():
+            if container_ref.space != self.local_resources.data_model_reference.space:
+                continue
+
+            for prop_ref, definition in container.properties.items():
+                if not isinstance(definition.type, EnumProperty):
+                    continue
+
+                for value, enum_def in definition.type.values.items():
+                    if not enum_def.description:
+                        recommendations.append(
+                            Recommendation(
+                                message=(
+                                    f"Enumeration value {value!r} in property {prop_ref!s} of container "
+                                    f"{container_ref!s} is missing a human-readable description."
+                                ),
+                                fix="Add a clear and concise description to the enumeration value.",
                                 code=self.code,
                             )
                         )
