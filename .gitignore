@@ -180,3 +180,6 @@ real_cases/
 docs/**/*.aml
 docs/**/*.xml
 tmp/
+
+# Smoke tests report
+smoke-report.json
