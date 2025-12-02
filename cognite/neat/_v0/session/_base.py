@@ -23,6 +23,7 @@ from cognite.neat._v0.core._issues.errors import RegexViolationError
 from cognite.neat._v0.core._issues.errors._general import NeatImportError
 from cognite.neat._v0.core._store._data_model import DataModelEntity
 from cognite.neat._v0.core._utils.auxiliary import local_import
+from cognite.neat._v0.engine import load_neat_engine
 
 from ._collector import _COLLECTOR, Collector
 from ._diff import DiffAPI
@@ -40,7 +41,6 @@ from ._state import SessionState
 from ._subset import SubsetAPI
 from ._template import TemplateAPI
 from ._to import ToAPI
-from .engine import load_neat_engine
 from .exceptions import session_class_wrapper
 
 

@@ -39,11 +39,11 @@ from cognite.neat._v0.core._issues import IssueList
 from cognite.neat._v0.core._issues.errors import NeatValueError
 from cognite.neat._v0.core._issues.warnings import MissingCogniteClientWarning
 from cognite.neat._v0.core._utils.reader import NeatReader
+from cognite.neat._v0.engine import import_engine
 from cognite.neat._v0.session._experimental import ExperimentalFlags
 
 from ._state import SessionState
 from ._wizard import NeatObjectType, RDFFileType, XMLFileType, object_wizard, rdf_dm_wizard, xml_format_wizard
-from .engine import import_engine
 from .exceptions import NeatSessionError, session_class_wrapper
 
 
