@@ -1,9 +1,12 @@
 import sys
 from pathlib import Path
+from typing import Any, Literal, TypeAlias
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
+from cognite.neat._exceptions import UserInputError
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import ModusOperandi
 
 if sys.version_info >= (3, 11):
@@ -11,8 +14,14 @@ if sys.version_info >= (3, 11):
 else:
     import tomli  # type: ignore
 
+PredefinedProfile: TypeAlias = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"]
 
-class ValidationConfig(BaseModel, populate_by_name=True):
+
+class ConfigModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+
+
+class ValidationConfig(ConfigModel):
     """Validation configuration."""
 
     exclude: list[str] = Field(default_factory=list)
@@ -71,18 +80,45 @@ class ValidationConfig(BaseModel, populate_by_name=True):
         return f"Excluded Rules: {', '.join(self.exclude)}"
 
 
-class ModelingConfig(BaseModel, populate_by_name=True):
+class ModelingConfig(ConfigModel):
     """Modeling configuration."""
 
     mode: ModusOperandi = "additive"
 
 
-class NeatConfig(BaseModel, populate_by_name=True):
+class AlphaFlagConfig(ConfigModel):
+    """Alpha feature flags configuration."""
+
+    fix_validation_issues: bool = Field(
+        default=False,
+        description="If enabled, Neat will attempt to automatically fix certain validation issues in the data model.",
+    )
+
+    def __setattr__(self, key: str, value: Any) -> None:
+        """Set attribute value or raise AttributeError."""
+        if key in self.model_fields:
+            super().__setattr__(key, value)
+        else:
+            available_flags = humanize_collection(type(self).model_fields.keys())
+            raise UserInputError(f"Alpha flag '{key}' not found. Available flags: {available_flags}.")
+
+    def _repr_html_(self) -> str:
+        """HTML representation for Jupyter notebooks."""
+        lines = ["<b>Alpha Feature Flags:</b>"]
+        for field_name, field in type(self).model_fields.items():
+            value = getattr(self, field_name)
+            display = "Enabled" if value else "Disabled"
+            lines.append(f"<li><b>{field_name}</b>: {display} - {field.description}</li>")
+        return "<ul>" + "\n".join(lines) + "</ul>"
+
+
+class NeatConfig(ConfigModel):
     """Configuration for a custom profile."""
 
     profile: str
     validation: ValidationConfig
     modeling: ModelingConfig
+    alpha: AlphaFlagConfig = Field(default_factory=AlphaFlagConfig)
 
     def __str__(self) -> str:
         """Human-readable configuration summary."""
@@ -93,8 +129,19 @@ class NeatConfig(BaseModel, populate_by_name=True):
         ]
         return "\n".join(lines)
 
+    @classmethod
+    def create_predefined(cls, profile: PredefinedProfile = "legacy-additive") -> "NeatConfig":
+        """Create NeatConfig from internal profiles."""
+        available_profiles = internal_profiles()
+        if profile not in available_profiles:
+            raise UserInputError(
+                f"Profile {profile!r} not found. Available predefined profiles: "
+                f"{humanize_collection(available_profiles.keys())}."
+            )
+        return available_profiles[profile]
 
-def internal_profiles() -> dict[str, NeatConfig]:
+
+def internal_profiles() -> dict[PredefinedProfile, NeatConfig]:
     """Get internal NeatConfig profile by name."""
     return {
         "legacy-additive": NeatConfig(
@@ -136,7 +183,7 @@ def internal_profiles() -> dict[str, NeatConfig]:
     }
 
 
-def get_neat_config(config_file_name: str, profile: str) -> NeatConfig:
+def get_neat_config_from_file(config_file_name: str, profile: str) -> NeatConfig:
     """Get NeatConfig from file or internal profiles.
 
     Args:

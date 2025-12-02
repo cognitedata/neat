@@ -1,11 +1,10 @@
 import json
-from typing import Literal
 
 from cognite.client import ClientConfig, CogniteClient
 
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
-from cognite.neat._config import internal_profiles
+from cognite.neat._config import NeatConfig, PredefinedProfile
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
 from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
@@ -20,24 +19,18 @@ class NeatSession:
     """A session is an interface for neat operations."""
 
     def __init__(
-        self,
-        client: CogniteClient | ClientConfig,
-        config: Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None = None,
+        self, client: CogniteClient | ClientConfig, config: PredefinedProfile | NeatConfig = "legacy-additive"
     ) -> None:
         """Initialize a Neat session.
 
         Args:
             client (CogniteClient | ClientConfig): The Cognite client or client configuration to use for the session.
-            config (Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | None):
+            config (Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | NeatConfig):
                 The configuration profile to use for the session.
-                If None, the default profile "legacy-additive" is used. Meaning that Neat will perform additive modeling
-                and apply only validations that were part of the legacy Neat version."""
-
-        # Load configuration
-        if config and config not in internal_profiles():
-            raise ValueError(f"Profile '{config}' not found among internal profiles.")
-
-        self._config = internal_profiles()[config or "legacy-additive"]
+                Defaults to "legacy-additive". This means Neat will perform additive modeling
+                and apply only validations that were part of the legacy Neat version.
+        """
+        self._config = NeatConfig.create_predefined(config) if isinstance(config, str) else config
 
         # Use configuration for physical data model
         self._store = NeatStore()
