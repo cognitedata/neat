@@ -260,6 +260,12 @@ def example_dms_view_response() -> dict[str, Any]:
         externalId="MyView",
         version="v1",
         name="My View",
+        filter={
+            "and": [
+                {"hasData": [{"space": "my_space", "externalId": "MyView", "type": "container"}]},
+                {"exists": {"property": ["node", "externalId"]}},
+            ]
+        },
         description="An example view",
         properties={
             "name": {
