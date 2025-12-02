@@ -23,6 +23,7 @@ from cognite.neat._data_model.models.dms import (
     DataType,
     DirectNodeRelation,
     EnumProperty,
+    FilterAdapter,
     ListablePropertyTypeDefinition,
     NodeReference,
     RequestSchema,
@@ -298,7 +299,9 @@ class DMSTableWriter:
                 implements=[self._create_view_entity(parent) for parent in view.implements]
                 if view.implements
                 else None,
-                filter=json.dumps(view.filter) if view.filter else None,
+                filter=FilterAdapter.dump_json(view.filter, by_alias=True, indent=0).decode(encoding="utf-8")
+                if view.filter
+                else None,
             )
             for view in views
         ]
