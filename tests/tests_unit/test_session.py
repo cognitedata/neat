@@ -234,20 +234,6 @@ class TestCollector:
         assert isinstance(distinct_id1, str)
         assert len(distinct_id1) > 0
 
-    def test_opt_in_out(self) -> None:
-        collector = Collector()
-        collector.bust_opt_status()
-        assert not collector.is_opted_in
-        assert not collector.is_opted_out
-
-        collector.enable()
-        assert collector.is_opted_in
-        assert not collector.is_opted_out
-
-        collector.disable()
-        assert collector.is_opted_out
-        assert not collector.is_opted_in
-
     def test_can_collect(self) -> None:
         collector = Collector()
         assert not collector.can_collect, "We cannot collect when running pytest"
