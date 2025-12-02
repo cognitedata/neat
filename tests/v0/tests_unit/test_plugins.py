@@ -43,7 +43,7 @@ def neat_plugin_entry_points():
             EntryPoint(
                 name="excel",
                 group="cognite.neat._v0.plugins.data_model.importers",
-                value="tests._v0.tests_unit.test_plugins:ExcelDataModelImporterPlugin",
+                value="tests.v0.tests_unit.test_plugins:ExcelDataModelImporterPlugin",
             )
         ]
     )
@@ -67,12 +67,12 @@ def duplicated_neat_plugin():
             EntryPoint(
                 name="excel",
                 group="cognite.neat._v0.plugins.data_model.importers",
-                value="tests._v0.tests_unit.test_plugins:ExcelDataModelImporterPlugin",
+                value="tests.v0.tests_unit.test_plugins:ExcelDataModelImporterPlugin",
             ),
             EntryPoint(
                 name="excel",
                 group="cognite.neat._v0.plugins.data_model.importers",
-                value="tests._v0.test_plugins:ExcelDataModelImporterPlugin",
+                value="tests.v0.test_plugins:ExcelDataModelImporterPlugin",
             ),
         ]
     )
@@ -87,7 +87,7 @@ def non_loadable_neat_plugin():
             EntryPoint(
                 name="excel",
                 group="cognite.neat._v0.plugins.data_model.importers",
-                value="tests._v0.test_plugins:ExcelDataModelImporterPlugin",
+                value="tests.v0.test_plugins:ExcelDataModelImporterPlugin",
             )
         ]
     )
