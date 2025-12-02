@@ -128,7 +128,7 @@ show_missing = true
 omit = [
     # This contains the legacy code. We want to exclude it from coverage reports
     # such that we can increase the coverage threshold for the new code.
-    "cognite/neat/v0/*",
+    "cognite/neat/_v0/*",
     # The Storage is for running in pyodide and cannot be tested in the normal test suite.
     # We alro exclude the calling of mixpanel in testing.
     "cognite/neat/_session/_usage_analytics/*",
