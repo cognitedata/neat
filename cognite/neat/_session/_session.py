@@ -5,12 +5,12 @@ from cognite.client import ClientConfig, CogniteClient
 from cognite.neat import _version
 from cognite.neat._client import NeatClient
 from cognite.neat._config import NeatConfig, PredefinedProfile
+from cognite.neat._session._usage_analytics._collector import Collector
 from cognite.neat._state_machine import EmptyState, PhysicalState
 from cognite.neat._store import NeatStore
 from cognite.neat._utils.http_client import ParametersRequest, SuccessResponse
 
 from ._issues import Issues
-from ._opt import Opt
 from ._physical import PhysicalDataModel
 from ._result import Result
 
@@ -38,10 +38,10 @@ class NeatSession:
         self.physical_data_model = PhysicalDataModel(self._store, self._client, self._config)
         self.issues = Issues(self._store)
         self.result = Result(self._store)
-        self.opt = Opt(self._store)
 
-        if self.opt._collector.can_collect:
-            self.opt._collector.collect("initSession", {"mode": self._config.modeling.mode})
+        collector = Collector()
+        if collector.can_collect:
+            collector.collect("initSession", {"mode": self._config.modeling.mode})
 
         self._welcome_message()
 
