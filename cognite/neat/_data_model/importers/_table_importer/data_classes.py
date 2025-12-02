@@ -18,7 +18,7 @@ from traitlets import Any
 from cognite.neat._data_model.models.entities import ParsedEntity, parse_entities, parse_entity
 from cognite.neat._utils.text import title_case
 from cognite.neat._utils.useful_types import CellValueType
-from cognite.neat.v0.core._data_model.models.entities import (
+from cognite.neat.legacy.core._data_model.models.entities import (
     HasDataFilter,
     NodeTypeFilter,
     RawFilter,

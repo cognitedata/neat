@@ -7,13 +7,13 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling import NodeApply
 from cognite.client.data_classes.data_modeling.data_types import Enum, EnumValue, UnitReference
 
-from cognite.neat.v0.core._client.data_classes.data_modeling import (
+from cognite.neat.legacy.core._client.data_classes.data_modeling import (
     ContainerApplyDict,
     NodeApplyDict,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.v0.core._data_model.models.physical import (
+from cognite.neat.legacy.core._data_model.models.physical import (
     DMSSchema,
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
@@ -234,9 +234,9 @@ INPUT_RULES = UnverifiedPhysicalDataModel(
 if __name__ == "__main__":
     from pathlib import Path
 
-    from cognite.neat.v0.core._data_model.exporters import ExcelExporter
-    from cognite.neat.v0.core._data_model.importers import DMSImporter
-    from cognite.neat.v0.core._data_model.transformers import ImporterPipeline
+    from cognite.neat.legacy.core._data_model.exporters import ExcelExporter
+    from cognite.neat.legacy.core._data_model.importers import DMSImporter
+    from cognite.neat.legacy.core._data_model.transformers import ImporterPipeline
 
     ROOT = Path(__file__).resolve().parent.parent.parent / "playground"
 

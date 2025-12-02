@@ -9,8 +9,8 @@ from cognite.client.data_classes.aggregations import AggregatedNumberedValue
 from cognite.client.data_classes.data_modeling.instances import Instance, Properties
 from requests import Response
 
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._instances.extractors import DMSExtractor
+from cognite.neat.legacy.core._client.testing import monkeypatch_neat_client
+from cognite.neat.legacy.core._instances.extractors import DMSExtractor
 from tests.v0.data import GraphData
 
 

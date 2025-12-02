@@ -1,8 +1,8 @@
 from rdflib import RDF, Literal, Namespace, URIRef
 from rdflib.namespace import XSD
 
-from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat.legacy.core._constants import DEFAULT_NAMESPACE
+from cognite.neat.legacy.core._store import NeatInstanceStore
 
 
 class TestListInstanceObjectIds:

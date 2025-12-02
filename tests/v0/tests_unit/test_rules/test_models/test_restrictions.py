@@ -3,15 +3,15 @@ from pydantic import ValidationError
 from rdflib import XSD
 from rdflib import Literal as RDFLiteral
 
-from cognite.neat.v0.core._data_model.models.data_types import DataType
-from cognite.neat.v0.core._data_model.models.entities._restrictions import (
+from cognite.neat.legacy.core._data_model.models.data_types import DataType
+from cognite.neat.legacy.core._data_model.models.entities._restrictions import (
     ConceptPropertyCardinalityConstraint,
     ConceptPropertyValueConstraint,
     NamedIndividualEntity,
     parse_restriction,
 )
-from cognite.neat.v0.core._data_model.models.entities._single_value import ConceptEntity
-from cognite.neat.v0.core._issues.errors._general import NeatValueError
+from cognite.neat.legacy.core._data_model.models.entities._single_value import ConceptEntity
+from cognite.neat.legacy.core._issues.errors._general import NeatValueError
 
 
 class TestConceptPropertyValueConstraint:

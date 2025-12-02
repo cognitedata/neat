@@ -8,23 +8,23 @@ from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 from pydantic import ValidationError
 
-from cognite.neat.v0.core._client.data_classes.data_modeling import (
+from cognite.neat.legacy.core._client.data_classes.data_modeling import (
     ContainerApplyDict,
     NodeApplyDict,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.v0.core._data_model._shared import ImportedDataModel
-from cognite.neat.v0.core._data_model.importers import DMSImporter
-from cognite.neat.v0.core._data_model.importers._spreadsheet2data_model import ExcelImporter
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
-from cognite.neat.v0.core._data_model.models.data_types import String
-from cognite.neat.v0.core._data_model.models.entities._single_value import (
+from cognite.neat.legacy.core._data_model._shared import ImportedDataModel
+from cognite.neat.legacy.core._data_model.importers import DMSImporter
+from cognite.neat.legacy.core._data_model.importers._spreadsheet2data_model import ExcelImporter
+from cognite.neat.legacy.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat.legacy.core._data_model.models.data_types import String
+from cognite.neat.legacy.core._data_model.models.entities._single_value import (
     ContainerEntity,
     UnknownEntity,
     ViewEntity,
 )
-from cognite.neat.v0.core._data_model.models.physical import (
+from cognite.neat.legacy.core._data_model.models.physical import (
     DMSSchema,
     PhysicalMetadata,
     PhysicalProperty,
@@ -36,18 +36,18 @@ from cognite.neat.v0.core._data_model.models.physical import (
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.v0.core._data_model.models.physical._exporter import _DMSExporter
-from cognite.neat.v0.core._data_model.transformers import (
+from cognite.neat.legacy.core._data_model.models.physical._exporter import _DMSExporter
+from cognite.neat.legacy.core._data_model.transformers import (
     ConceptualToPhysical,
     MapOneToOne,
     PhysicalToConceptual,
     VerifyPhysicalDataModel,
 )
-from cognite.neat.v0.core._data_model.transformers._verification import VerifyAnyDataModel
-from cognite.neat.v0.core._issues import MultiValueError, NeatError, catch_issues
-from cognite.neat.v0.core._issues.errors import PropertyDefinitionDuplicatedError, PropertyValueError
-from cognite.neat.v0.core._issues.errors._resources import ResourceDuplicatedError
-from cognite.neat.v0.core._issues.warnings.user_modeling import (
+from cognite.neat.legacy.core._data_model.transformers._verification import VerifyAnyDataModel
+from cognite.neat.legacy.core._issues import MultiValueError, NeatError, catch_issues
+from cognite.neat.legacy.core._issues.errors import PropertyDefinitionDuplicatedError, PropertyValueError
+from cognite.neat.legacy.core._issues.errors._resources import ResourceDuplicatedError
+from cognite.neat.legacy.core._issues.warnings.user_modeling import (
     ViewsAndDataModelNotInSameSpaceWarning,
 )
 from tests.v0.data import GraphData, SchemaData

@@ -1,8 +1,8 @@
 import yaml
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._data_model.catalog import classic_model
-from cognite.neat.v0.core._instances.extractors import AssetsExtractor
+from cognite.neat.legacy.core._data_model.catalog import classic_model
+from cognite.neat.legacy.core._instances.extractors import AssetsExtractor
 from tests.v0.data import InstanceData
 
 

@@ -7,16 +7,16 @@ from typing import Any
 import pytest
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._data_model.importers._spreadsheet2data_model import ExcelImporter
-from cognite.neat.v0.core._data_model.models.conceptual._verified import (
+from cognite.neat.legacy.core._data_model.importers._spreadsheet2data_model import ExcelImporter
+from cognite.neat.legacy.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
 )
-from cognite.neat.v0.plugins import DataModelImporterPlugin, _manager
-from cognite.neat.v0.plugins._issues import (
+from cognite.neat.legacy.plugins import DataModelImporterPlugin, _manager
+from cognite.neat.legacy.plugins._issues import (
     PluginDuplicateError,
     PluginLoadingError,
 )
-from cognite.neat.v0.plugins._manager import PluginManager
+from cognite.neat.legacy.plugins._manager import PluginManager
 from tests.v0.data import SchemaData
 
 

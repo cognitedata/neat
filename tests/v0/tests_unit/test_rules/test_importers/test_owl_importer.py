@@ -1,11 +1,11 @@
-from cognite.neat.v0.core._data_model import importers
-from cognite.neat.v0.core._data_model._constants import EntityTypes
-from cognite.neat.v0.core._data_model.analysis import DataModelAnalysis
-from cognite.neat.v0.core._data_model.models.entities import ConceptEntity
-from cognite.neat.v0.core._data_model.transformers._verification import VerifyAnyDataModel
-from cognite.neat.v0.core._issues import catch_issues
-from cognite.neat.v0.core._issues.warnings._models import DanglingPropertyWarning, UndefinedConceptWarning
-from cognite.neat.v0.core._issues.warnings._resources import ResourceRegexViolationWarning
+from cognite.neat.legacy.core._data_model import importers
+from cognite.neat.legacy.core._data_model._constants import EntityTypes
+from cognite.neat.legacy.core._data_model.analysis import DataModelAnalysis
+from cognite.neat.legacy.core._data_model.models.entities import ConceptEntity
+from cognite.neat.legacy.core._data_model.transformers._verification import VerifyAnyDataModel
+from cognite.neat.legacy.core._issues import catch_issues
+from cognite.neat.legacy.core._issues.warnings._models import DanglingPropertyWarning, UndefinedConceptWarning
+from cognite.neat.legacy.core._issues.warnings._resources import ResourceRegexViolationWarning
 from tests.v0.data import SchemaData
 
 

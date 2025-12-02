@@ -3,14 +3,14 @@ from pathlib import Path
 import pytest
 import yaml
 
-from cognite.neat.v0.core._client import NeatClient
-from cognite.neat.v0.core._data_model.importers import DictImporter
-from cognite.neat.v0.core._data_model.models import PhysicalDataModel
-from cognite.neat.v0.core._data_model.transformers import (
+from cognite.neat.legacy.core._client import NeatClient
+from cognite.neat.legacy.core._data_model.importers import DictImporter
+from cognite.neat.legacy.core._data_model.models import PhysicalDataModel
+from cognite.neat.legacy.core._data_model.transformers import (
     ConceptualToPhysical,
     VerifyConceptualDataModel,
 )
-from cognite.neat.v0.core._issues import catch_issues
+from cognite.neat.legacy.core._issues import catch_issues
 from tests.v0.data import SchemaData
 
 

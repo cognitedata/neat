@@ -4,7 +4,7 @@ import pytest
 from cognite.client import CogniteClient
 from dotenv import load_dotenv
 
-from cognite.neat.v0.core._client import NeatClient
+from cognite.neat.legacy.core._client import NeatClient
 from tests.v0.config import ROOT
 
 

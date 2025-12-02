@@ -32,13 +32,13 @@ from cognite.client.data_classes.data_modeling import DataModelId
 
 from rich.panel import Panel
 
-from cognite.neat.v0.core._data_model.models import PhysicalDataModel
-from cognite.neat.v0.core._data_model.importers import DMSImporter
-from cognite.neat.v0.core._data_model.exporters import DMSExporter
+from cognite.neat.legacy.core._data_model.models import PhysicalDataModel
+from cognite.neat.legacy.core._data_model.importers import DMSImporter
+from cognite.neat.legacy.core._data_model.exporters import DMSExporter
 from pathlib import Path
 from rich import print
 
-from cognite.neat.v0.core._data_model.transformers import PhysicalToConceptual
+from cognite.neat.legacy.core._data_model.transformers import PhysicalToConceptual
 
 TMP_FOLDER = Path(__file__).parent / 'tmp'
 TMP_FOLDER.mkdir(exist_ok=True)

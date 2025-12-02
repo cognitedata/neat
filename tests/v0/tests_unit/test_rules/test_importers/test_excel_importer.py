@@ -3,15 +3,15 @@ from pathlib import Path
 import pytest
 from cognite.client.data_classes.data_modeling import ContainerId, ViewId
 
-from cognite.neat.v0.core._data_model.importers import ExcelImporter
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
-from cognite.neat.v0.core._data_model.models.entities._single_value import UnknownEntity
-from cognite.neat.v0.core._data_model.transformers import (
+from cognite.neat.legacy.core._data_model.importers import ExcelImporter
+from cognite.neat.legacy.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat.legacy.core._data_model.models.entities._single_value import UnknownEntity
+from cognite.neat.legacy.core._data_model.transformers import (
     VerifyAnyDataModel,
     VerifyPhysicalDataModel,
 )
-from cognite.neat.v0.core._issues import IssueList, catch_issues
-from cognite.neat.v0.core._issues.errors import (
+from cognite.neat.legacy.core._issues import IssueList, catch_issues
+from cognite.neat.legacy.core._issues.errors import (
     CDFMissingClientError,
     FileNotFoundNeatError,
     MetadataValueError,
@@ -19,13 +19,13 @@ from cognite.neat.v0.core._issues.errors import (
     PropertyDefinitionDuplicatedError,
     PropertyValueError,
 )
-from cognite.neat.v0.core._issues.warnings import (
+from cognite.neat.legacy.core._issues.warnings import (
     DeprecatedWarning,
     NotSupportedHasDataFilterLimitWarning,
     NotSupportedViewContainerLimitWarning,
     PropertyDefinitionWarning,
 )
-from cognite.neat.v0.core._issues.warnings._models import DanglingPropertyWarning, ViewWithoutPropertiesWarning
+from cognite.neat.legacy.core._issues.warnings._models import DanglingPropertyWarning, ViewWithoutPropertiesWarning
 from tests.v0.config import DOC_RULES
 from tests.v0.data import SchemaData
 

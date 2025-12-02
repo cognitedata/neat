@@ -3,39 +3,39 @@ from typing import Any
 
 import pytest
 
-from cognite.neat.v0.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
-from cognite.neat.v0.core._data_model._shared import ImportedDataModel
-from cognite.neat.v0.core._data_model.models import PhysicalDataModel, data_types
-from cognite.neat.v0.core._data_model.models.conceptual import (
+from cognite.neat.legacy.core._constants import DMS_CONTAINER_PROPERTY_SIZE_LIMIT
+from cognite.neat.legacy.core._data_model._shared import ImportedDataModel
+from cognite.neat.legacy.core._data_model.models import PhysicalDataModel, data_types
+from cognite.neat.legacy.core._data_model.models.conceptual import (
     Concept,
     ConceptualDataModel,
     ConceptualProperty,
     ConceptualValidation,
     UnverifiedConceptualDataModel,
 )
-from cognite.neat.v0.core._data_model.models.conceptual._unverified import (
+from cognite.neat.legacy.core._data_model.models.conceptual._unverified import (
     UnverifiedConcept,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.v0.core._data_model.models.data_types import DataType, String
-from cognite.neat.v0.core._data_model.models.entities import (
+from cognite.neat.legacy.core._data_model.models.data_types import DataType, String
+from cognite.neat.legacy.core._data_model.models.entities import (
     ConceptEntity,
     MultiValueTypeInfo,
 )
-from cognite.neat.v0.core._data_model.models.entities._single_value import UnknownEntity
-from cognite.neat.v0.core._data_model.transformers._converters import (
+from cognite.neat.legacy.core._data_model.models.entities._single_value import UnknownEntity
+from cognite.neat.legacy.core._data_model.transformers._converters import (
     ConceptualToPhysical,
     ToCompliantEntities,
     _ConceptualDataModelConverter,
 )
-from cognite.neat.v0.core._data_model.transformers._verification import VerifyAnyDataModel
-from cognite.neat.v0.core._issues import NeatError
-from cognite.neat.v0.core._issues._base import MultiValueError
-from cognite.neat.v0.core._issues._contextmanagers import catch_issues
-from cognite.neat.v0.core._issues.errors import ResourceNotDefinedError
-from cognite.neat.v0.core._issues.errors._resources import ResourceDuplicatedError
-from cognite.neat.v0.core._issues.warnings._models import (
+from cognite.neat.legacy.core._data_model.transformers._verification import VerifyAnyDataModel
+from cognite.neat.legacy.core._issues import NeatError
+from cognite.neat.legacy.core._issues._base import MultiValueError
+from cognite.neat.legacy.core._issues._contextmanagers import catch_issues
+from cognite.neat.legacy.core._issues.errors import ResourceNotDefinedError
+from cognite.neat.legacy.core._issues.errors._resources import ResourceDuplicatedError
+from cognite.neat.legacy.core._issues.warnings._models import (
     ConceptOnlyDataModelWarning,
     ConversionToPhysicalModelImpossibleWarning,
     DanglingPropertyWarning,

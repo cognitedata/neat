@@ -7,8 +7,8 @@ from cognite.client.data_classes import Source
 from cognite.client.data_classes.data_modeling.instances import Instance
 from requests import Response
 
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._instances.extractors import DMSGraphExtractor
+from cognite.neat.legacy.core._client.testing import monkeypatch_neat_client
+from cognite.neat.legacy.core._instances.extractors import DMSGraphExtractor
 from tests.v0.data import GraphData
 from tests.v0.utils import as_read_containers, as_read_instance, as_read_space
 

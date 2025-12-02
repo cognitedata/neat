@@ -8,8 +8,8 @@ from _pytest.mark import ParameterSet
 from pydantic import BaseModel
 from rdflib import URIRef
 
-from cognite.neat.v0.core._data_model.models import SheetList
-from cognite.neat.v0.core._data_model.models._base_unverified import UnverifiedDataModel
+from cognite.neat.legacy.core._data_model.models import SheetList
+from cognite.neat.legacy.core._data_model.models._base_unverified import UnverifiedDataModel
 from tests.v0.utils import DataClassCreator, get_all_subclasses
 
 

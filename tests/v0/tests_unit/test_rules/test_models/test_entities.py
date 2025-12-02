@@ -3,8 +3,8 @@ from urllib.parse import quote
 import pytest
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat.v0.core._data_model._constants import ENTITY_PATTERN, PATTERNS
-from cognite.neat.v0.core._data_model.models.entities import (
+from cognite.neat.legacy.core._data_model._constants import ENTITY_PATTERN, PATTERNS
+from cognite.neat.legacy.core._data_model.models.entities import (
     AssetEntity,
     ConceptEntity,
     ConceptualEntity,
@@ -21,8 +21,8 @@ from cognite.neat.v0.core._data_model.models.entities import (
     UnknownEntity,
     ViewEntity,
 )
-from cognite.neat.v0.core._data_model.models.entities._single_value import ContainerEntity
-from cognite.neat.v0.core._issues.errors import NeatValueError
+from cognite.neat.legacy.core._data_model.models.entities._single_value import ContainerEntity
+from cognite.neat.legacy.core._issues.errors import NeatValueError
 
 DEFAULT_SPACE = "sp_my_space"
 DEFAULT_VERSION = "vDefault"

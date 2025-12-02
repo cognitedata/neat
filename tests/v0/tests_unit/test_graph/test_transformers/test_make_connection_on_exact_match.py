@@ -4,9 +4,9 @@ import io
 from cognite.client.data_classes import Asset, FileMetadata
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat.v0.core._instances.extractors._classic_cdf._assets import AssetsExtractor
-from cognite.neat.v0.core._instances.extractors._classic_cdf._files import FilesExtractor
+from cognite.neat.legacy.core._constants import CLASSIC_CDF_NAMESPACE
+from cognite.neat.legacy.core._instances.extractors._classic_cdf._assets import AssetsExtractor
+from cognite.neat.legacy.core._instances.extractors._classic_cdf._files import FilesExtractor
 
 
 def test_exact_match() -> None:

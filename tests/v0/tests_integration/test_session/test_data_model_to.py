@@ -7,9 +7,9 @@ from cognite.client import data_modeling as dm
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._client import NeatClient
-from cognite.neat.v0.core._data_model import importers
-from cognite.neat.v0.core._issues.errors._general import NeatValueError
+from cognite.neat.legacy.core._client import NeatClient
+from cognite.neat.legacy.core._data_model import importers
+from cognite.neat.legacy.core._issues.errors._general import NeatValueError
 from tests.v0.data import GraphData, SchemaData
 
 

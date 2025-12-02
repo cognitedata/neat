@@ -4,7 +4,7 @@ from pydantic import Field, ValidationInfo, field_validator
 
 from cognite.neat._data_model.models.entities._constants import PREFIX_PATTERN, SUFFIX_PATTERN, VERSION_PATTERN
 from cognite.neat._utils.text import humanize_collection
-from cognite.neat.v0.core._data_model.models.entities._single_value import ConceptEntity
+from cognite.neat.legacy.core._data_model.models.entities._single_value import ConceptEntity
 
 from ._base import ResourceMetadata
 from ._concept import Concept

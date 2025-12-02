@@ -2,12 +2,12 @@ import pytest
 import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat.v0.core._data_model import catalog, exporters, importers, transformers
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
-from cognite.neat.v0.core._data_model.transformers import VerifiedDataModelTransformer
-from cognite.neat.v0.core._issues.errors import NeatValueError
-from cognite.neat.v0.core._store import NeatDataModelStore
-from cognite.neat.v0.core._store.exceptions import InvalidActivityInput
+from cognite.neat.legacy.core._data_model import catalog, exporters, importers, transformers
+from cognite.neat.legacy.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat.legacy.core._data_model.transformers import VerifiedDataModelTransformer
+from cognite.neat.legacy.core._issues.errors import NeatValueError
+from cognite.neat.legacy.core._store import NeatDataModelStore
+from cognite.neat.legacy.core._store.exceptions import InvalidActivityInput
 
 
 class FailingTransformer(VerifiedDataModelTransformer[PhysicalDataModel, PhysicalDataModel]):

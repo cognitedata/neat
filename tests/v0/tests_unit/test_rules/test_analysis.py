@@ -1,6 +1,6 @@
-from cognite.neat.v0.core._data_model.analysis import DataModelAnalysis
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel
-from cognite.neat.v0.core._data_model.models.conceptual import (
+from cognite.neat.legacy.core._data_model.analysis import DataModelAnalysis
+from cognite.neat.legacy.core._data_model.models import ConceptualDataModel
+from cognite.neat.legacy.core._data_model.models.conceptual import (
     UnverifiedConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,

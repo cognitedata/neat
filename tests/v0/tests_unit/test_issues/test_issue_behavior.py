@@ -3,14 +3,14 @@ import warnings
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat.v0.core._issues import IssueList, catch_issues, catch_warnings
-from cognite.neat.v0.core._issues.errors import (
+from cognite.neat.legacy.core._issues import IssueList, catch_issues, catch_warnings
+from cognite.neat.legacy.core._issues.errors import (
     NeatValueError,
     PropertyValueError,
     ResourceCreationError,
     ResourceNotDefinedError,
 )
-from cognite.neat.v0.core._issues.warnings import NeatValueWarning
+from cognite.neat.legacy.core._issues.warnings import NeatValueWarning
 
 
 class TestIssues:
