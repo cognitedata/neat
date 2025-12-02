@@ -27,8 +27,9 @@ class NeatSession:
             client (CogniteClient | ClientConfig): The Cognite client or client configuration to use for the session.
             config (Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"] | NeatConfig):
                 The configuration profile to use for the session.
-                If None, the default profile "legacy-additive" is used. Meaning that Neat will perform additive modeling
-                and apply only validations that were part of the legacy Neat version."""
+                Defaults to "legacy-additive". This means Neat will perform additive modeling
+                and apply only validations that were part of the legacy Neat version.
+        """
         self._config = NeatConfig.create_predefined(config) if isinstance(config, str) else config
 
         # Use configuration for physical data model

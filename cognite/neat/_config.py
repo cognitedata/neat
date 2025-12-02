@@ -133,7 +133,7 @@ class NeatConfig(ConfigModel):
     def create_predefined(cls, profile: PredefinedProfile = "legacy-additive") -> "NeatConfig":
         """Create NeatConfig from internal profiles."""
         available_profiles = internal_profiles()
-        if profile not in internal_profiles():
+        if profile not in available_profiles:
             raise UserInputError(
                 f"Profile {profile!r} not found. Available predefined profiles: "
                 f"{humanize_collection(available_profiles.keys())}."
