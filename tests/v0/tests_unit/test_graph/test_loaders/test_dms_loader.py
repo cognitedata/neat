@@ -3,7 +3,6 @@ from cognite.client.data_classes import Asset, FileMetadata
 from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal
 
-from cognite.neat import NeatSession
 from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
 from cognite.neat._v0.core._constants import (
     CLASSIC_CDF_NAMESPACE,
@@ -36,6 +35,7 @@ from cognite.neat._v0.core._issues import IssueList, NeatIssue
 from cognite.neat._v0.core._issues.warnings import PropertyDirectRelationLimitWarning
 from cognite.neat._v0.core._shared import Triple
 from cognite.neat._v0.core._store import NeatInstanceStore
+from cognite.neat.legacy import NeatSession
 from tests.v0.data import InstanceData
 
 

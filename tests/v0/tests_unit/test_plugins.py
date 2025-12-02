@@ -6,7 +6,6 @@ from typing import Any
 
 import pytest
 
-from cognite.neat import NeatSession
 from cognite.neat._v0.core._data_model.importers._spreadsheet2data_model import ExcelImporter
 from cognite.neat._v0.core._data_model.models.conceptual._verified import (
     ConceptualDataModel,
@@ -17,6 +16,7 @@ from cognite.neat._v0.plugins._issues import (
     PluginLoadingError,
 )
 from cognite.neat._v0.plugins._manager import PluginManager
+from cognite.neat.legacy import NeatSession
 from tests.v0.data import SchemaData
 
 

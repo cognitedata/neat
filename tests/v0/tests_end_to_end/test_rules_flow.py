@@ -7,7 +7,7 @@ import requests
 import yaml
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
+from cognite.neat.legacy import NeatSession
 from tests.v0.config import DOC_RULES
 from tests.v0.data import SchemaData
 

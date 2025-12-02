@@ -3,7 +3,7 @@ from pathlib import Path
 from cognite.client import CogniteClient
 from openpyxl import Workbook, load_workbook
 
-from cognite.neat import NeatSession
+from cognite.neat.legacy import NeatSession
 
 
 class TestCreateAPI:

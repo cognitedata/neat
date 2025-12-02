@@ -1,7 +1,7 @@
 import contextlib
 import io
 
-from cognite.neat import NeatSession
+from cognite.neat.legacy import NeatSession
 
 
 def test_plugin_error_handling():

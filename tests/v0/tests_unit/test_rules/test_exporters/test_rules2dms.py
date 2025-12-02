@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 from cognite.client import data_modeling as dm
 
-from cognite.neat import NeatSession
 from cognite.neat._v0.core._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._v0.core._client.data_classes.schema import DMSSchema
 from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
@@ -19,6 +18,7 @@ from cognite.neat._v0.core._data_model.transformers import (
     VerifyAnyDataModel,
 )
 from cognite.neat._v0.core._issues import catch_issues
+from cognite.neat.legacy import NeatSession
 from tests.v0.data import SchemaData
 
 

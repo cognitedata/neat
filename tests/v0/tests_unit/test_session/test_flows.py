@@ -2,10 +2,10 @@ from collections.abc import Sequence
 
 from cognite.client import data_modeling as dm
 
-from cognite.neat import NeatSession
 from cognite.neat._v0.core._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
 from cognite.neat._v0.core._client.data_classes.schema import DMSSchema
 from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
+from cognite.neat.legacy import NeatSession
 from tests.v0.utils import as_read_containers, as_read_space
 
 
