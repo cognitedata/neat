@@ -8,7 +8,7 @@ from cognite.neat._config import (
     ModelingConfig,
     NeatConfig,
     ValidationConfig,
-    get_neat_config,
+    get_neat_config_from_file,
 )
 
 
@@ -179,7 +179,7 @@ class TestNeatConfig:
             mock_path_class.cwd.return_value = mock_cwd
 
             with pytest.raises(ValueError, match=error_match):
-                _ = get_neat_config("neat_config.toml", profile)
+                _ = get_neat_config_from_file("neat_config.toml", profile)
 
     @pytest.mark.parametrize(
         "toml_content,profile,expected_config",
@@ -198,7 +198,7 @@ class TestNeatConfig:
             mock_cwd.__truediv__ = MagicMock(return_value=mock_path)
             mock_path_class.cwd.return_value = mock_cwd
 
-            config = get_neat_config("neat_config.toml", profile)
+            config = get_neat_config_from_file("neat_config.toml", profile)
             assert config == expected_config
 
     @pytest.mark.parametrize(

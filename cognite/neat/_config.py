@@ -1,9 +1,12 @@
 import sys
 from pathlib import Path
+from typing import Literal, TypeAlias
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
+from cognite.neat._exceptions import UserInputError
 from cognite.neat._issues import ConsistencyError, ModelSyntaxError
+from cognite.neat._utils.text import humanize_collection
 from cognite.neat._utils.useful_types import ModusOperandi
 
 if sys.version_info >= (3, 11):
@@ -11,8 +14,14 @@ if sys.version_info >= (3, 11):
 else:
     import tomli  # type: ignore
 
+PredefinedProfile: TypeAlias = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"]
 
-class ValidationConfig(BaseModel, populate_by_name=True):
+
+class ConfiModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+
+
+class ValidationConfig(ConfiModel):
     """Validation configuration."""
 
     exclude: list[str] = Field(default_factory=list)
@@ -71,13 +80,13 @@ class ValidationConfig(BaseModel, populate_by_name=True):
         return f"Excluded Rules: {', '.join(self.exclude)}"
 
 
-class ModelingConfig(BaseModel, populate_by_name=True):
+class ModelingConfig(ConfiModel):
     """Modeling configuration."""
 
     mode: ModusOperandi = "additive"
 
 
-class NeatConfig(BaseModel, populate_by_name=True):
+class NeatConfig(ConfiModel):
     """Configuration for a custom profile."""
 
     profile: str
@@ -93,8 +102,19 @@ class NeatConfig(BaseModel, populate_by_name=True):
         ]
         return "\n".join(lines)
 
+    @classmethod
+    def create_predefined(cls, profile: PredefinedProfile = "legacy-additive") -> "NeatConfig":
+        """Create NeatConfig from internal profiles."""
+        available_profiles = internal_profiles()
+        if profile not in internal_profiles():
+            raise UserInputError(
+                f"Profile {profile!r} not found. Available predefined profiles: "
+                f"{humanize_collection(available_profiles.keys())}."
+            )
+        return available_profiles[profile]
 
-def internal_profiles() -> dict[str, NeatConfig]:
+
+def internal_profiles() -> dict[PredefinedProfile, NeatConfig]:
     """Get internal NeatConfig profile by name."""
     return {
         "legacy-additive": NeatConfig(
@@ -136,7 +156,7 @@ def internal_profiles() -> dict[str, NeatConfig]:
     }
 
 
-def get_neat_config(config_file_name: str, profile: str) -> NeatConfig:
+def get_neat_config_from_file(config_file_name: str, profile: str) -> NeatConfig:
     """Get NeatConfig from file or internal profiles.
 
     Args:
