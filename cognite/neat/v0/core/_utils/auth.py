@@ -229,7 +229,7 @@ class EnvironmentVariables:
 
     def get_token(self) -> Token:
         if not self.CDF_TOKEN:
-            raise KeyError("TOKEN must be set in the environment", "TOKEN")
+            raise KeyError("CDF_TOKEN must be set in the environment", "CDF_TOKEN")
         return Token(self.CDF_TOKEN)
 
     def get_client(self) -> CogniteClient:
