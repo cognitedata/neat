@@ -163,7 +163,7 @@ class EnvironmentVariables:
             IDP_SCOPES=os.environ.get("IDP_SCOPES"),
             IDP_AUTHORITY_URL=os.environ.get("IDP_AUTHORITY_URL"),
             CDF_MAX_WORKERS=int(os.environ["CDF_MAX_WORKERS"]) if "CDF_MAX_WORKERS" in os.environ else None,
-            CDF_CLIENT_TIMEOUT=int(os.environ["CDF_TIMEOUT"]) if "CDF_TIMEOUT" in os.environ else None,
+            CDF_CLIENT_TIMEOUT=int(os.environ["CDF_CLIENT_TIMEOUT"]) if "CDF_CLIENT_TIMEOUT" in os.environ else None,
             CDF_REDIRECT_PORT=int(os.environ.get("CDF_REDIRECT_PORT", 53_000)),
         )
 
