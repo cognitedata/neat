@@ -299,7 +299,7 @@ class DMSTableWriter:
                 implements=[self._create_view_entity(parent) for parent in view.implements]
                 if view.implements
                 else None,
-                filter=FilterAdapter.dump_json(view.filter, by_alias=True, indent=0).decode(encoding="utf-8")
+                filter=FilterAdapter.dump_json(view.filter, by_alias=True).decode(encoding="utf-8")
                 if view.filter
                 else None,
             )
