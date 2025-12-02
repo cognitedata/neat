@@ -93,7 +93,7 @@ class EnvironmentVariables:
     LOGIN_FLOW: _LOGIN_FLOW = "infer"
     IDP_CLIENT_ID: str | None = None
     IDP_CLIENT_SECRET: str | None = None
-    TOKEN: str | None = None
+    CDF_TOKEN: str | None = None
 
     IDP_TENANT_ID: str | None = None
     IDP_TOKEN_URL: str | None = None
@@ -103,7 +103,7 @@ class EnvironmentVariables:
     IDP_SCOPES: str | None = None
     IDP_AUTHORITY_URL: str | None = None
     CDF_MAX_WORKERS: int | None = None
-    CDF_TIMEOUT: int | None = None
+    CDF_CLIENT_TIMEOUT: int | None = None
     CDF_REDIRECT_PORT: int = 53_000
 
     def __post_init__(self) -> None:
@@ -155,7 +155,7 @@ class EnvironmentVariables:
             LOGIN_FLOW=os.environ.get("LOGIN_FLOW", "infer"),  # type: ignore[arg-type]
             IDP_CLIENT_ID=os.environ.get("IDP_CLIENT_ID"),
             IDP_CLIENT_SECRET=os.environ.get("IDP_CLIENT_SECRET"),
-            TOKEN=os.environ.get("TOKEN"),
+            CDF_TOKEN=os.environ.get("CDF_TOKEN"),
             CDF_URL=os.environ.get("CDF_URL"),
             IDP_TOKEN_URL=os.environ.get("IDP_TOKEN_URL"),
             IDP_TENANT_ID=os.environ.get("IDP_TENANT_ID"),
@@ -163,7 +163,7 @@ class EnvironmentVariables:
             IDP_SCOPES=os.environ.get("IDP_SCOPES"),
             IDP_AUTHORITY_URL=os.environ.get("IDP_AUTHORITY_URL"),
             CDF_MAX_WORKERS=int(os.environ["CDF_MAX_WORKERS"]) if "CDF_MAX_WORKERS" in os.environ else None,
-            CDF_TIMEOUT=int(os.environ["CDF_TIMEOUT"]) if "CDF_TIMEOUT" in os.environ else None,
+            CDF_CLIENT_TIMEOUT=int(os.environ["CDF_CLIENT_TIMEOUT"]) if "CDF_CLIENT_TIMEOUT" in os.environ else None,
             CDF_REDIRECT_PORT=int(os.environ.get("CDF_REDIRECT_PORT", 53_000)),
         )
 
@@ -179,7 +179,7 @@ class EnvironmentVariables:
             IDP_CLIENT_ID="neat",
             IDP_CLIENT_SECRET="secret",
             IDP_SCOPES="project:read,project:write",
-            CDF_TIMEOUT=60,
+            CDF_CLIENT_TIMEOUT=60,
             CDF_MAX_WORKERS=3,
         )
 
@@ -228,9 +228,9 @@ class EnvironmentVariables:
         )
 
     def get_token(self) -> Token:
-        if not self.TOKEN:
-            raise KeyError("TOKEN must be set in the environment", "TOKEN")
-        return Token(self.TOKEN)
+        if not self.CDF_TOKEN:
+            raise KeyError("CDF_TOKEN must be set in the environment", "CDF_TOKEN")
+        return Token(self.CDF_TOKEN)
 
     def get_client(self) -> CogniteClient:
         config = ClientConfig(
@@ -239,7 +239,7 @@ class EnvironmentVariables:
             credentials=self.get_credentials(),
             base_url=self.cdf_url,
             max_workers=self.CDF_MAX_WORKERS,
-            timeout=self.CDF_TIMEOUT,
+            timeout=self.CDF_CLIENT_TIMEOUT,
         )
         return CogniteClient(config)
 
@@ -298,7 +298,7 @@ def _prompt_user() -> EnvironmentVariables:
     variables.LOGIN_FLOW = login_flow  # type: ignore[assignment]
     if login_flow == "token":
         token = Prompt.ask("Enter token")
-        variables.TOKEN = token
+        variables.CDF_TOKEN = token
         return variables
 
     variables.IDP_CLIENT_ID = Prompt.ask("Enter IDP Client ID")
