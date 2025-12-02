@@ -5,10 +5,6 @@ from rdflib import RDF, Namespace
 from rdflib.term import Literal
 
 from cognite.neat._v0.core._constants import DEFAULT_SPACE_URI
-from cognite.neat._v0.core._data_model import importers
-from cognite.neat._v0.core._data_model.importers._spreadsheet2data_model import (
-    ExcelImporter,
-)
 from cognite.neat._v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 from cognite.neat._v0.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
@@ -17,7 +13,6 @@ from cognite.neat._v0.core._data_model.models.physical import (
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat._v0.core._data_model.transformers import VerifyConceptualDataModel
 
 INSTANCE_SPACE = "sp_cars"
 MODEL_SPACE = "sp_example_car"
@@ -71,6 +66,8 @@ CONTAINERS = dm.ContainerApplyList(
 @lru_cache(maxsize=1)
 def get_care_rules() -> ConceptualDataModel:
     # To avoid circular import
+    from cognite.neat._v0.core._data_model import importers
+    from cognite.neat._v0.core._data_model.transformers import VerifyConceptualDataModel
     from tests.v0.data import SchemaData
 
     read_rules = importers.ExcelImporter(SchemaData.Conceptual.info_arch_car_rules_xlsx).to_data_model()
@@ -275,6 +272,9 @@ INSTANCES = [
 @lru_cache(maxsize=1)
 def get_car_dms_rules() -> PhysicalDataModel:
     # Local import to avoid circular import
+    from cognite.neat._v0.core._data_model.importers._spreadsheet2data_model import (
+        ExcelImporter,
+    )
     from tests.v0.data import SchemaData
 
     return (

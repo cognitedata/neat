@@ -17,19 +17,6 @@ from cognite.client.data_classes import (
 
 from cognite.neat._v0.core._client.data_classes.neat_sequence import NeatSequence
 from cognite.neat._v0.core._constants import CLASSIC_CDF_NAMESPACE
-from cognite.neat._v0.core._instances.extractors import (
-    AssetsExtractor,
-    DataSetExtractor,
-    EventsExtractor,
-    FilesExtractor,
-    LabelsExtractor,
-    RelationshipsExtractor,
-    SequencesExtractor,
-    TimeSeriesExtractor,
-)
-from cognite.neat._v0.core._instances.extractors._classic_cdf._base import (
-    ClassicCDFBaseExtractor,
-)
 
 # This is a knowledge graph built on top of the classic CDF resources. It is used to test the CDFClassicGraphImporter.
 
@@ -354,7 +341,18 @@ data_sheet = FileMetadata(
 FILES = [data_sheet]
 
 
-def create_extractors() -> list[ClassicCDFBaseExtractor]:
+def create_extractors() -> list:
+    from cognite.neat._v0.core._instances.extractors import (
+        AssetsExtractor,
+        DataSetExtractor,
+        EventsExtractor,
+        FilesExtractor,
+        LabelsExtractor,
+        RelationshipsExtractor,
+        SequencesExtractor,
+        TimeSeriesExtractor,
+    )
+
     args = dict(namespace=CLASSIC_CDF_NAMESPACE, unpack_metadata=False, as_write=True)
     return [
         DataSetExtractor(DATASETS, **args),
