@@ -61,11 +61,11 @@ class Collector:
 
     @property
     def is_opted_out(self) -> bool:
-        return self._opt_status == "opted-out"
+        return False
 
     @property
     def is_opted_in(self) -> bool:
-        return self._opt_status == "opted-in"
+        return True
 
     def enable(self) -> None:
         self._storage.write(self._opt_status_key, "opted-in")
