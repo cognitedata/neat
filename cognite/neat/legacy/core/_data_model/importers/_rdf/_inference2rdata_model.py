@@ -4,7 +4,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from cognite.client import data_modeling as dm
 from rdflib import RDF, RDFS, Graph, Namespace, URIRef
@@ -24,13 +24,16 @@ from cognite.neat.legacy.core._data_model.models.data_types import AnyURI
 from cognite.neat.legacy.core._data_model.models.entities._single_value import UnknownEntity
 from cognite.neat.legacy.core._issues import IssueList
 from cognite.neat.legacy.core._issues.warnings import PropertyValueTypeUndefinedWarning
-from cognite.neat.legacy.core._store import NeatInstanceStore
-from cognite.neat.legacy.core._store._provenance import INSTANCES_ENTITY
 from cognite.neat.legacy.core._utils.collection_ import iterate_progress_bar
 from cognite.neat.legacy.core._utils.rdf_ import remove_namespace_from_uri, uri_to_short_form
 from cognite.neat.legacy.core._utils.text import NamingStandardization
 
 from ._base import DEFAULT_NON_EXISTING_NODE_TYPE, BaseRDFImporter
+
+if TYPE_CHECKING:
+    from cognite.neat.legacy.core._store._instance import NeatInstanceStore
+    from cognite.neat.legacy.core._store._provenance import INSTANCES_ENTITY
+
 
 DEFAULT_INFERENCE_DATA_MODEL_ID = ("neat_space", "InferredDataModel", "inferred")
 
@@ -83,7 +86,7 @@ class InferenceImporter(BaseRDFImporter):
     @classmethod
     def from_graph_store(
         cls,
-        store: NeatInstanceStore,
+        store: "NeatInstanceStore",
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_INFERENCE_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,

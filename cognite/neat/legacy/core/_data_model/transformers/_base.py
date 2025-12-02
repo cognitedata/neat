@@ -2,7 +2,7 @@ import inspect
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from types import UnionType
-from typing import Generic, TypeVar, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Generic, TypeVar, Union, get_args, get_origin
 
 from cognite.neat.legacy.core._constants import DEFAULT_NAMESPACE
 from cognite.neat.legacy.core._data_model._shared import (
@@ -14,7 +14,9 @@ from cognite.neat.legacy.core._data_model.models import (
     UnverifiedConceptualDataModel,
     UnverifiedPhysicalDataModel,
 )
-from cognite.neat.legacy.core._store._provenance import Agent as ProvenanceAgent
+
+if TYPE_CHECKING:
+    from cognite.neat.legacy.core._store._provenance import Agent as ProvenanceAgent
 
 T_DataModelIn = TypeVar("T_DataModelIn", bound=DataModel)
 T_DataModelOut = TypeVar("T_DataModelOut", bound=DataModel)
@@ -31,8 +33,10 @@ class DataModelTransformer(ABC, Generic[T_DataModelIn, T_DataModelOut]):
         raise NotImplementedError()
 
     @property
-    def agent(self) -> ProvenanceAgent:
+    def agent(self) -> "ProvenanceAgent":
         """Provenance agent for the importer."""
+        from cognite.neat.legacy.core._store._provenance import Agent as ProvenanceAgent
+
         return ProvenanceAgent(id_=DEFAULT_NAMESPACE[f"agent/{type(self).__name__}"])
 
     @property

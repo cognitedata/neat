@@ -22,7 +22,7 @@ from cognite.neat.legacy.core._data_model.transformers import (
     VerifiedDataModelTransformer,
     VerifyAnyDataModel,
 )
-from cognite.neat.legacy.core._instances.extractors import (
+from cognite.neat.legacy.core._instances.extractors._dms_graph import (
     DMSGraphExtractor,
     KnowledgeGraphExtractor,
 )

@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cognite.client import data_modeling as dm
 from rdflib import Graph, Namespace, URIRef
@@ -18,8 +18,10 @@ from cognite.neat.legacy.core._data_model.models.entities import UnknownEntity
 from cognite.neat.legacy.core._issues import IssueList, MultiValueError
 from cognite.neat.legacy.core._issues.errors import FileReadError
 from cognite.neat.legacy.core._issues.errors._general import NeatValueError
-from cognite.neat.legacy.core._store import NeatInstanceStore
 from cognite.neat.legacy.core._utils.rdf_ import get_namespace
+
+if TYPE_CHECKING:
+    from cognite.neat.legacy.core._store import NeatInstanceStore
 
 DEFAULT_NON_EXISTING_NODE_TYPE = AnyURI()
 
@@ -68,7 +70,7 @@ class BaseRDFImporter(BaseImporter[UnverifiedConceptualDataModel]):
     @classmethod
     def from_graph_store(
         cls,
-        store: NeatInstanceStore,
+        store: "NeatInstanceStore",
         data_model_id: (dm.DataModelId | tuple[str, str, str]) = DEFAULT_RDF_DATA_MODEL_ID,
         max_number_of_instance: int = -1,
         non_existing_node_type: UnknownEntity | AnyURI = DEFAULT_NON_EXISTING_NODE_TYPE,

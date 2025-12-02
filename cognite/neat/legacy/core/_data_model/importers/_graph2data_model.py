@@ -5,7 +5,7 @@ from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from cognite.client.data_classes.data_modeling import DataModelId, DataModelIdentifier
 from rdflib import RDF, RDFS, Namespace, URIRef
@@ -25,11 +25,13 @@ from cognite.neat.legacy.core._data_model.models.conceptual import (
 from cognite.neat.legacy.core._data_model.models.entities import UnknownEntity
 from cognite.neat.legacy.core._issues.errors import NeatValueError
 from cognite.neat.legacy.core._issues.warnings import NeatValueWarning
-from cognite.neat.legacy.core._store import NeatInstanceStore
 from cognite.neat.legacy.core._utils.collection_ import iterate_progress_bar
 from cognite.neat.legacy.core._utils.rdf_ import split_uri
 
 from ._base import BaseImporter
+
+if TYPE_CHECKING:
+    from cognite.neat.legacy.core._store._instance import NeatInstanceStore
 
 
 # Internal helper class
@@ -85,7 +87,7 @@ class GraphImporter(BaseImporter[UnverifiedConceptualDataModel]):
 
     def __init__(
         self,
-        store: NeatInstanceStore,
+        store: "NeatInstanceStore",
         data_model_id: DataModelIdentifier = ("neat_space", "NeatInferredDataModel", "v1"),
     ) -> None:
         self.store = store
