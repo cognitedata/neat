@@ -12,14 +12,14 @@ from cognite.client.data_classes.data_modeling import ContainerId, DataModelId, 
 from cognite.client.data_classes.data_modeling.instances import Instance, Properties
 from rdflib import Namespace
 
-from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.v0.core._data_model._shared import (
+from cognite.neat._v0.core._constants import DEFAULT_NAMESPACE
+from cognite.neat._v0.core._data_model._shared import (
     ConceptualDataModel,
     PhysicalDataModel,
     VerifiedDataModel,
 )
-from cognite.neat.v0.core._data_model.models.data_types import DataType, String
-from cognite.neat.v0.core._data_model.models.entities import ConceptEntity
+from cognite.neat._v0.core._data_model.models.data_types import DataType, String
+from cognite.neat._v0.core._data_model.models.entities import ConceptEntity
 
 
 class DataClassCreator:

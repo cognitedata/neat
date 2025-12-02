@@ -14,7 +14,7 @@ coverage:
     changes: false
 
 ignore:
-  - "cognite/neat/v0/**/*"
+  - "cognite/neat/_v0/**/*"
   - "cognite/neat/_session/_usage_analytics/**/*"
 
 comment:

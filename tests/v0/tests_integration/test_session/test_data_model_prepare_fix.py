@@ -5,8 +5,8 @@ from cognite.client import CogniteClient
 from pytest_regressions.data_regression import DataRegressionFixture
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._data_model.catalog import classic_model
-from cognite.neat.v0.core._data_model.models.entities._single_value import ViewEntity
+from cognite.neat._v0.core._data_model.catalog import classic_model
+from cognite.neat._v0.core._data_model.models.entities._single_value import ViewEntity
 from tests.v0.data import SchemaData
 
 

@@ -4,18 +4,18 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal, Namespace
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.v0.core._data_model.analysis import DataModelAnalysis
-from cognite.neat.v0.core._data_model.importers import InferenceImporter
-from cognite.neat.v0.core._data_model.models.data_types import DataType, Integer, Json, Long
-from cognite.neat.v0.core._data_model.models.entities import MultiValueTypeInfo
-from cognite.neat.v0.core._data_model.models.entities._single_value import UnknownEntity
-from cognite.neat.v0.core._data_model.transformers import VerifyAnyDataModel
-from cognite.neat.v0.core._instances.examples import nordic44_knowledge_graph
-from cognite.neat.v0.core._instances.extractors import AssetsExtractor, RdfFileExtractor
-from cognite.neat.v0.core._instances.loaders import DMSLoader, InstanceSpaceLoader
-from cognite.neat.v0.core._issues import catch_issues
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._constants import DEFAULT_NAMESPACE
+from cognite.neat._v0.core._data_model.analysis import DataModelAnalysis
+from cognite.neat._v0.core._data_model.importers import InferenceImporter
+from cognite.neat._v0.core._data_model.models.data_types import DataType, Integer, Json, Long
+from cognite.neat._v0.core._data_model.models.entities import MultiValueTypeInfo
+from cognite.neat._v0.core._data_model.models.entities._single_value import UnknownEntity
+from cognite.neat._v0.core._data_model.transformers import VerifyAnyDataModel
+from cognite.neat._v0.core._instances.examples import nordic44_knowledge_graph
+from cognite.neat._v0.core._instances.extractors import AssetsExtractor, RdfFileExtractor
+from cognite.neat._v0.core._instances.loaders import DMSLoader, InstanceSpaceLoader
+from cognite.neat._v0.core._issues import catch_issues
+from cognite.neat._v0.core._store import NeatInstanceStore
 from tests.v0.data import GraphData, InstanceData
 
 

@@ -7,18 +7,18 @@ import pytest
 from cognite.client import data_modeling as dm
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
-from cognite.neat.v0.core._client.data_classes.schema import DMSSchema
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._data_model import importers
-from cognite.neat.v0.core._data_model.exporters import DMSExporter
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel
-from cognite.neat.v0.core._data_model.models.physical import PhysicalDataModel
-from cognite.neat.v0.core._data_model.transformers import (
+from cognite.neat._v0.core._client.data_classes.data_modeling import ContainerApplyDict, SpaceApplyDict, ViewApplyDict
+from cognite.neat._v0.core._client.data_classes.schema import DMSSchema
+from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
+from cognite.neat._v0.core._data_model import importers
+from cognite.neat._v0.core._data_model.exporters import DMSExporter
+from cognite.neat._v0.core._data_model.models import ConceptualDataModel
+from cognite.neat._v0.core._data_model.models.physical import PhysicalDataModel
+from cognite.neat._v0.core._data_model.transformers import (
     ConceptualToPhysical,
     VerifyAnyDataModel,
 )
-from cognite.neat.v0.core._issues import catch_issues
+from cognite.neat._v0.core._issues import catch_issues
 from tests.v0.data import SchemaData
 
 

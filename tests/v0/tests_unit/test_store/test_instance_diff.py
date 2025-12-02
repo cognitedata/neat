@@ -1,9 +1,9 @@
 import pytest
 from rdflib import RDF, Literal, Namespace, URIRef
 
-from cognite.neat.v0.core._constants import NAMED_GRAPH_NAMESPACE
-from cognite.neat.v0.core._issues.errors import NeatValueError
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._constants import NAMED_GRAPH_NAMESPACE
+from cognite.neat._v0.core._issues.errors import NeatValueError
+from cognite.neat._v0.core._store import NeatInstanceStore
 
 
 def test_diff_instances() -> None:

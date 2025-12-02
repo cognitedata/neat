@@ -2,8 +2,8 @@ import urllib.parse
 
 from rdflib import RDF, Namespace
 
-from cognite.neat.v0.core._instances.transformers import ConnectionToLiteral
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._instances.transformers import ConnectionToLiteral
+from cognite.neat._v0.core._store import NeatInstanceStore
 
 
 class TestConnectionToLiteral:

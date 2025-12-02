@@ -4,38 +4,38 @@ from cognite.client.data_classes.data_modeling import InstanceApply
 from rdflib import RDF, Literal
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._constants import (
+from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
+from cognite.neat._v0.core._constants import (
     CLASSIC_CDF_NAMESPACE,
     DEFAULT_NAMESPACE,
     DMS_DIRECT_RELATION_LIST_DEFAULT_LIMIT,
 )
-from cognite.neat.v0.core._data_model.importers import SubclassInferenceImporter
-from cognite.neat.v0.core._data_model.models.entities._single_value import (
+from cognite.neat._v0.core._data_model.importers import SubclassInferenceImporter
+from cognite.neat._v0.core._data_model.models.entities._single_value import (
     ConceptEntity,
     ContainerEntity,
     ViewEntity,
 )
-from cognite.neat.v0.core._data_model.models.physical import (
+from cognite.neat._v0.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.v0.core._data_model.transformers import (
+from cognite.neat._v0.core._data_model.transformers import (
     ConceptualToPhysical,
     PhysicalToConceptual,
 )
-from cognite.neat.v0.core._instances.extractors import (
+from cognite.neat._v0.core._instances.extractors import (
     AssetsExtractor,
     FilesExtractor,
 )
-from cognite.neat.v0.core._instances.loaders import DMSLoader, InstanceSpaceLoader
-from cognite.neat.v0.core._issues import IssueList, NeatIssue
-from cognite.neat.v0.core._issues.warnings import PropertyDirectRelationLimitWarning
-from cognite.neat.v0.core._shared import Triple
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._instances.loaders import DMSLoader, InstanceSpaceLoader
+from cognite.neat._v0.core._issues import IssueList, NeatIssue
+from cognite.neat._v0.core._issues.warnings import PropertyDirectRelationLimitWarning
+from cognite.neat._v0.core._shared import Triple
+from cognite.neat._v0.core._store import NeatInstanceStore
 from tests.v0.data import InstanceData
 
 

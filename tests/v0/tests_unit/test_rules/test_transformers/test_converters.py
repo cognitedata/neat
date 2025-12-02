@@ -4,38 +4,38 @@ from collections.abc import Sequence
 import pytest
 from cognite.client.data_classes.data_modeling import ViewId, ViewIdentifier, ViewList
 
-from cognite.neat.v0.core._client.data_classes.schema import DMSSchema
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._data_model._shared import ImportedDataModel
-from cognite.neat.v0.core._data_model.models import (
+from cognite.neat._v0.core._client.data_classes.schema import DMSSchema
+from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
+from cognite.neat._v0.core._data_model._shared import ImportedDataModel
+from cognite.neat._v0.core._data_model.models import (
     ConceptualDataModel,
     UnverifiedPhysicalDataModel,
 )
-from cognite.neat.v0.core._data_model.models.conceptual import (
+from cognite.neat._v0.core._data_model.models.conceptual import (
     UnverifiedConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.v0.core._data_model.models.entities._single_value import (
+from cognite.neat._v0.core._data_model.models.entities._single_value import (
     ConceptEntity,
     ViewEntity,
 )
-from cognite.neat.v0.core._data_model.models.physical import (
+from cognite.neat._v0.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.v0.core._data_model.models.physical._verified import PhysicalDataModel
-from cognite.neat.v0.core._data_model.transformers import (
+from cognite.neat._v0.core._data_model.models.physical._verified import PhysicalDataModel
+from cognite.neat._v0.core._data_model.transformers import (
     AddCogniteProperties,
     StandardizeNaming,
     SubsetConceptualDataModel,
     SubsetPhysicalDataModel,
     ToDMSCompliantEntities,
 )
-from cognite.neat.v0.core._issues.errors._general import NeatValueError
+from cognite.neat._v0.core._issues.errors._general import NeatValueError
 
 
 class TestStandardizeNaming:

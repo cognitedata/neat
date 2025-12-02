@@ -4,20 +4,20 @@ from cognite.client import data_modeling as dm
 from rdflib import RDF, Namespace
 from rdflib.term import Literal
 
-from cognite.neat.v0.core._constants import DEFAULT_SPACE_URI
-from cognite.neat.v0.core._data_model import importers
-from cognite.neat.v0.core._data_model.importers._spreadsheet2data_model import (
+from cognite.neat._v0.core._constants import DEFAULT_SPACE_URI
+from cognite.neat._v0.core._data_model import importers
+from cognite.neat._v0.core._data_model.importers._spreadsheet2data_model import (
     ExcelImporter,
 )
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
-from cognite.neat.v0.core._data_model.models.physical import (
+from cognite.neat._v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat._v0.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,
     UnverifiedPhysicalProperty,
     UnverifiedPhysicalView,
 )
-from cognite.neat.v0.core._data_model.transformers import VerifyConceptualDataModel
+from cognite.neat._v0.core._data_model.transformers import VerifyConceptualDataModel
 
 INSTANCE_SPACE = "sp_cars"
 MODEL_SPACE = "sp_example_car"

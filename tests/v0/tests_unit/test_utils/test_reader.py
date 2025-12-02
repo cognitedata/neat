@@ -1,6 +1,6 @@
 import pytest
 
-from cognite.neat.v0.core._utils.reader import (
+from cognite.neat._v0.core._utils.reader import (
     GitHubReader,
     HttpFileReader,
     NeatReader,

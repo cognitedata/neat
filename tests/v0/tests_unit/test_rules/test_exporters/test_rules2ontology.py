@@ -2,9 +2,9 @@ from pathlib import Path
 
 from rdflib import DCTERMS, OWL, RDF, RDFS, BNode, Graph, Literal, Namespace
 
-from cognite.neat.v0.core._data_model.exporters._data_model2semantic_model import OWLExporter, SHACLExporter
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel
-from cognite.neat.v0.core._data_model.models.entities._single_value import ConceptEntity
+from cognite.neat._v0.core._data_model.exporters._data_model2semantic_model import OWLExporter, SHACLExporter
+from cognite.neat._v0.core._data_model.models import ConceptualDataModel
+from cognite.neat._v0.core._data_model.models.entities._single_value import ConceptEntity
 
 SHACL = Namespace("http://www.w3.org/ns/shacl#")
 

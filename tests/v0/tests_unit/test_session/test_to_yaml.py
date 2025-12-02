@@ -1,9 +1,9 @@
 from pathlib import Path
 
 from cognite.neat import NeatSession
-from cognite.neat.v0.core._data_model._shared import ImportedDataModel
-from cognite.neat.v0.core._data_model.importers import BaseImporter
-from cognite.neat.v0.core._data_model.models import UnverifiedPhysicalDataModel
+from cognite.neat._v0.core._data_model._shared import ImportedDataModel
+from cognite.neat._v0.core._data_model.importers import BaseImporter
+from cognite.neat._v0.core._data_model.models import UnverifiedPhysicalDataModel
 from tests.v0.data import SchemaData
 
 

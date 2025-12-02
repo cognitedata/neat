@@ -3,17 +3,17 @@ from collections.abc import Iterable
 import pytest
 from rdflib import RDF, RDFS, Literal, Namespace
 
-from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.v0.core._data_model.importers import GraphImporter
-from cognite.neat.v0.core._data_model.models.conceptual import (
+from cognite.neat._v0.core._constants import DEFAULT_NAMESPACE
+from cognite.neat._v0.core._data_model.importers import GraphImporter
+from cognite.neat._v0.core._data_model.models.conceptual import (
     UnverifiedConcept,
     UnverifiedConceptualDataModel,
     UnverifiedConceptualMetadata,
     UnverifiedConceptualProperty,
 )
-from cognite.neat.v0.core._issues.warnings import NeatValueWarning
-from cognite.neat.v0.core._shared import Triple
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._issues.warnings import NeatValueWarning
+from cognite.neat._v0.core._shared import Triple
+from cognite.neat._v0.core._store import NeatInstanceStore
 from tests.v0.data import GraphData
 
 
