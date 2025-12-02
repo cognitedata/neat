@@ -1,4 +1,4 @@
-::: cognite.neat.v0.session._fix.FixAPI
+::: cognite.neat.legacy.session._fix.FixAPI
 
 
-::: cognite.neat.v0.session._fix.DataModelFixAPI
+::: cognite.neat.legacy.session._fix.DataModelFixAPI

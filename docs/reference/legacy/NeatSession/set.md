@@ -1,1 +1,1 @@
-::: cognite.neat.v0.session._set.SetAPI
+::: cognite.neat.legacy.session._set.SetAPI

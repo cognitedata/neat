@@ -1,1 +1,1 @@
-::: cognite.neat.v0.session._inspect.InspectAPI
+::: cognite.neat.legacy.session._inspect.InspectAPI
