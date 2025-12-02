@@ -1,7 +1,7 @@
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.containers import BTreeIndex
 
-from cognite.neat.v0.core._client._api.data_modeling_loaders import (
+from cognite.neat._v0.core._client._api.data_modeling_loaders import (
     ContainerLoader,
     DataModelLoader,
     ViewLoader,

@@ -1,7 +1,7 @@
 import pytest
 
-from cognite.neat.v0.core._data_model.models.entities import ContainerConstraintEntity, ContainerEntity
-from cognite.neat.v0.core._data_model.models.physical._unverified import _parse_constraints
+from cognite.neat._v0.core._data_model.models.entities import ContainerConstraintEntity, ContainerEntity
+from cognite.neat._v0.core._data_model.models.physical._unverified import _parse_constraints
 
 
 class TestParseConstraints:

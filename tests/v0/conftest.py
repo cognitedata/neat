@@ -3,14 +3,14 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from cognite.neat.v0.core._client.data_classes.schema import DMSSchema
-from cognite.neat.v0.core._data_model.importers import ExcelImporter
-from cognite.neat.v0.core._data_model.models import (
+from cognite.neat._v0.core._client.data_classes.schema import DMSSchema
+from cognite.neat._v0.core._data_model.importers import ExcelImporter
+from cognite.neat._v0.core._data_model.models import (
     ConceptualDataModel,
     PhysicalDataModel,
 )
-from cognite.neat.v0.core._data_model.models.physical import UnverifiedPhysicalDataModel
-from cognite.neat.v0.core._utils.spreadsheet import read_individual_sheet
+from cognite.neat._v0.core._data_model.models.physical import UnverifiedPhysicalDataModel
+from cognite.neat._v0.core._utils.spreadsheet import read_individual_sheet
 from tests.v0.config import DOC_RULES
 from tests.v0.data import SchemaData
 

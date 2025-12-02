@@ -10,8 +10,8 @@ from typing import Any, Literal, Union, get_args, get_origin
 
 from cognite.client.data_classes.data_modeling import DataModelId
 
-from cognite.neat import NeatSession
-from cognite.neat.v0.core._utils.auxiliary import get_parameters_by_method
+from cognite.neat._v0.core._utils.auxiliary import get_parameters_by_method
+from cognite.neat.legacy import NeatSession
 
 
 def test_method_parameters_is_primary_types() -> None:

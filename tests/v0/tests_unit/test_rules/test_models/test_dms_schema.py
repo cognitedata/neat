@@ -6,21 +6,21 @@ import pytest
 from _pytest.mark import ParameterSet
 from cognite.client import data_modeling as dm
 
-from cognite.neat.v0.core._client.data_classes.data_modeling import (
+from cognite.neat._v0.core._client.data_classes.data_modeling import (
     ContainerApplyDict,
     SpaceApplyDict,
     ViewApplyDict,
 )
-from cognite.neat.v0.core._data_model.models import DMSSchema
-from cognite.neat.v0.core._data_model.models.physical import PhysicalValidation
-from cognite.neat.v0.core._issues import NeatError, NeatIssue, NeatWarning
-from cognite.neat.v0.core._issues.errors import (
+from cognite.neat._v0.core._data_model.models import DMSSchema
+from cognite.neat._v0.core._data_model.models.physical import PhysicalValidation
+from cognite.neat._v0.core._issues import NeatError, NeatIssue, NeatWarning
+from cognite.neat._v0.core._issues.errors import (
     PropertyNotFoundError,
     ResourceDuplicatedError,
     ResourceNotFoundError,
 )
-from cognite.neat.v0.core._issues.warnings import FileTypeUnexpectedWarning
-from cognite.neat.v0.core._issues.warnings.user_modeling import (
+from cognite.neat._v0.core._issues.warnings import FileTypeUnexpectedWarning
+from cognite.neat._v0.core._issues.warnings.user_modeling import (
     DirectRelationMissingSourceWarning,
 )
 

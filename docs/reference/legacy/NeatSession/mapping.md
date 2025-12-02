@@ -1,1 +1,1 @@
-::: cognite.neat.v0.session._mapping.DataModelMappingAPI
+::: cognite.neat._v0.session._mapping.DataModelMappingAPI

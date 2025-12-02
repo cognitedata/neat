@@ -4,12 +4,12 @@ from cognite.client import data_modeling as dm
 from cognite.client.data_classes.data_modeling.data_types import ListablePropertyType
 from rdflib import RDF
 
-from cognite.neat import NeatSession
-from cognite.neat.v0.core._client import NeatClient
-from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE
-from cognite.neat.v0.core._data_model.importers import InferenceImporter
-from cognite.neat.v0.core._instances.loaders import DMSLoader
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._client import NeatClient
+from cognite.neat._v0.core._constants import DEFAULT_NAMESPACE
+from cognite.neat._v0.core._data_model.importers import InferenceImporter
+from cognite.neat._v0.core._instances.loaders import DMSLoader
+from cognite.neat._v0.core._store import NeatInstanceStore
+from cognite.neat.legacy import NeatSession
 from tests.v0.data import GraphData
 
 

@@ -1,12 +1,12 @@
 from cognite.client.data_classes import FileMetadataList, TimeSeriesList
 from cognite.client.data_classes.data_modeling import NodeId
 
-from cognite.neat import NeatSession
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._constants import CLASSIC_CDF_NAMESPACE, NAMED_GRAPH_NAMESPACE
-from cognite.neat.v0.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
-from cognite.neat.v0.core._issues import NeatIssue
-from cognite.neat.v0.core._issues.warnings import NeatValueWarning
+from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
+from cognite.neat._v0.core._constants import CLASSIC_CDF_NAMESPACE, NAMED_GRAPH_NAMESPACE
+from cognite.neat._v0.core._instances.extractors._classic_cdf._base import InstanceIdPrefix
+from cognite.neat._v0.core._issues import NeatIssue
+from cognite.neat._v0.core._issues.warnings import NeatValueWarning
+from cognite.neat.legacy import NeatSession
 from tests.v0.data import InstanceData
 
 

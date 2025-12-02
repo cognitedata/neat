@@ -5,8 +5,8 @@ import yaml
 from cognite.client import CogniteClient
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
-from cognite.neat.v0.core._data_model.catalog import hello_world_pump
+from cognite.neat._v0.core._data_model.catalog import hello_world_pump
+from cognite.neat.legacy import NeatSession
 from tests.v0.data import SchemaData
 
 

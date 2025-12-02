@@ -1,8 +1,8 @@
 from cognite.client.data_classes import Row
 from rdflib import RDF, XSD, Literal
 
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._instances.extractors import RAWExtractor
+from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
+from cognite.neat._v0.core._instances.extractors import RAWExtractor
 
 
 class TestRAWExtractor:

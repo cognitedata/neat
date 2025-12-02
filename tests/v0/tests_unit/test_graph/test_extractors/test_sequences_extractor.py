@@ -5,10 +5,10 @@ from cognite.client.exceptions import CogniteAPIError
 from cognite.client.testing import monkeypatch_cognite_client
 from rdflib import Graph
 
-from cognite.neat.v0.core._instances.extractors import SequencesExtractor
-from cognite.neat.v0.core._issues import catch_warnings
-from cognite.neat.v0.core._issues.warnings import CDFAuthWarning
-from cognite.neat.v0.core._utils.rdf_ import Triple, remove_namespace_from_uri
+from cognite.neat._v0.core._instances.extractors import SequencesExtractor
+from cognite.neat._v0.core._issues import catch_warnings
+from cognite.neat._v0.core._issues.warnings import CDFAuthWarning
+from cognite.neat._v0.core._utils.rdf_ import Triple, remove_namespace_from_uri
 from tests.v0.data import InstanceData
 
 

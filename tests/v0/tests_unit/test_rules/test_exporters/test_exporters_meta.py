@@ -2,8 +2,8 @@ from abc import ABC
 
 import pytest
 
-from cognite.neat.v0.core._data_model.exporters import BaseExporter, CDFExporter
-from cognite.neat.v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
+from cognite.neat._v0.core._data_model.exporters import BaseExporter, CDFExporter
+from cognite.neat._v0.core._data_model.models import ConceptualDataModel, PhysicalDataModel
 
 EXPORTER_CLS = [subclass for subclass in BaseExporter.__subclasses__() if subclass is not CDFExporter] + list(
     CDFExporter.__subclasses__()

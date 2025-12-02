@@ -128,7 +128,7 @@ show_missing = true
 omit = [
     # This contains the legacy code. We want to exclude it from coverage reports
     # such that we can increase the coverage threshold for the new code.
-    "cognite/neat/v0/*",
+    "cognite/neat/_v0/*",
     # The Storage is for running in pyodide and cannot be tested in the normal test suite.
     # We alro exclude the calling of mixpanel in testing.
     "cognite/neat/_session/_usage_analytics/*",
@@ -148,9 +148,9 @@ plugins = ["pydantic.mypy"]
 # finding all subclasses of an abstract class gives you concrete implementations.
 # Thus, we disable the type-abstract error.
 disable_error_code = ["type-abstract"]
-# The v0 module is legacy code that is not fully typed. We are not planning
+# The _v0 module is legacy code that is not fully typed. We are not planning
 # to update it, so we exclude it from mypy checks. Once v1 is released with all features
-# from v0, we will remove this folder.
+# from _v0, we will remove this folder.
 exclude = ["tests/v0"]
 
 [tool.pydantic-mypy]

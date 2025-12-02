@@ -6,10 +6,10 @@ import yaml
 from cognite.client import data_modeling as dm
 from pytest_regressions.data_regression import DataRegressionFixture
 
-from cognite.neat import NeatSession
-from cognite.neat.v0.core._client import NeatClient
-from cognite.neat.v0.core._data_model import importers
-from cognite.neat.v0.core._issues.errors._general import NeatValueError
+from cognite.neat._v0.core._client import NeatClient
+from cognite.neat._v0.core._data_model import importers
+from cognite.neat._v0.core._issues.errors._general import NeatValueError
+from cognite.neat.legacy import NeatSession
 from tests.v0.data import GraphData, SchemaData
 
 
@@ -66,7 +66,7 @@ class TestDataModelToCDF:
         assert len(result_by_name["data_models"].deleted) == 1
         assert len(result_by_name["data_models"].created) == 1
 
-    @pytest.mark.skip("This is flaky and we do not maintain v0 any more")
+    @pytest.mark.skip("This is flaky and we do not maintain _v0 any more")
     def test_to_cdf_recreate_drop_data(self, neat_client: NeatClient) -> None:
         car_model = create_new_car_model(
             neat_client, "test_to_cdf_recreate_drop_data", "test_to_cdf_recreate_drop_data_data"
@@ -91,7 +91,7 @@ class TestDataModelToCDF:
         assert len(result_by_name["data_models"].created) == 1
 
 
-@pytest.mark.skip("This test is flaky and we do not maintain v0 any more")
+@pytest.mark.skip("This test is flaky and we do not maintain _v0 any more")
 class TestRulesStoreProvenanceSyncing:
     def test_detached_provenance(self, tmp_path: Path) -> None:
         neat = NeatSession()

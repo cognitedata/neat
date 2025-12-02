@@ -12,7 +12,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import Asset, Event, FileMetadata, Sequence, TimeSeries
 from cognite.client.data_classes.data_modeling import Node, ViewId
 
-from cognite.neat.v0.core._data_model._constants import get_reserved_words
+from cognite.neat._v0.core._data_model._constants import get_reserved_words
 
 from deepdiff import DeepDiff
 

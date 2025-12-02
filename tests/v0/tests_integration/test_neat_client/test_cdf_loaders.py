@@ -3,9 +3,9 @@ from cognite.client import CogniteClient
 from cognite.client import data_modeling as dm
 from cognite.client.exceptions import CogniteAPIError
 
-from cognite.neat.v0.core._client import NeatClient
-from cognite.neat.v0.core._client._api.data_modeling_loaders import MultiCogniteAPIError
-from cognite.neat.v0.core._client.data_classes.schema import DMSSchema
+from cognite.neat._v0.core._client import NeatClient
+from cognite.neat._v0.core._client._api.data_modeling_loaders import MultiCogniteAPIError
+from cognite.neat._v0.core._client.data_classes.schema import DMSSchema
 from tests.v0.data import SchemaData
 
 

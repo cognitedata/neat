@@ -6,13 +6,13 @@ from cognite.client.data_classes import AssetWriteList
 from cognite.client.data_classes.data_modeling import SpaceApply
 from rdflib import RDF, Literal, Namespace
 
-from cognite.neat.v0.core._client.testing import monkeypatch_neat_client
-from cognite.neat.v0.core._constants import DEFAULT_NAMESPACE, DEFAULT_SPACE_URI
-from cognite.neat.v0.core._instances.extractors import AssetsExtractor, BaseExtractor
-from cognite.neat.v0.core._instances.loaders import InstanceSpaceLoader
-from cognite.neat.v0.core._shared import Triple
-from cognite.neat.v0.core._store import NeatInstanceStore
-from cognite.neat.v0.core._utils.upload import UploadResult
+from cognite.neat._v0.core._client.testing import monkeypatch_neat_client
+from cognite.neat._v0.core._constants import DEFAULT_NAMESPACE, DEFAULT_SPACE_URI
+from cognite.neat._v0.core._instances.extractors import AssetsExtractor, BaseExtractor
+from cognite.neat._v0.core._instances.loaders import InstanceSpaceLoader
+from cognite.neat._v0.core._shared import Triple
+from cognite.neat._v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._utils.upload import UploadResult
 from tests.v0.data import InstanceData
 
 

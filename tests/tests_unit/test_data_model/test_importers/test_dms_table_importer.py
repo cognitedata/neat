@@ -39,7 +39,7 @@ from cognite.neat._data_model.models.dms import (
 )
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._utils.useful_types import CellValueType, DataModelTableType
-from cognite.neat.v0.core._data_model.models.entities._wrapped import HasDataFilter, NodeTypeFilter, RawFilter
+from cognite.neat._v0.core._data_model.models.entities._wrapped import HasDataFilter, NodeTypeFilter, RawFilter
 
 SOURCE = "pytest.xlsx"
 

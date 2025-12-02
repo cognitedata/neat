@@ -4,20 +4,20 @@ import pytest
 from cognite.client import data_modeling as dm
 from cognite.client.data_classes import Row
 
-from cognite.neat.v0.core._client import NeatClient
-from cognite.neat.v0.core._data_model.exporters import DMSExporter
-from cognite.neat.v0.core._data_model.importers import ExcelImporter
-from cognite.neat.v0.core._data_model.models import (
+from cognite.neat._v0.core._client import NeatClient
+from cognite.neat._v0.core._data_model.exporters import DMSExporter
+from cognite.neat._v0.core._data_model.importers import ExcelImporter
+from cognite.neat._v0.core._data_model.models import (
     ConceptualDataModel,
     PhysicalDataModel,
     SheetList,
 )
-from cognite.neat.v0.core._data_model.models.conceptual import (
+from cognite.neat._v0.core._data_model.models.conceptual import (
     Concept,
     ConceptualMetadata,
     ConceptualProperty,
 )
-from cognite.neat.v0.core._data_model.models.physical import (
+from cognite.neat._v0.core._data_model.models.physical import (
     UnverifiedPhysicalContainer,
     UnverifiedPhysicalDataModel,
     UnverifiedPhysicalMetadata,

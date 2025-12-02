@@ -4,10 +4,10 @@ import pytest
 from _pytest.mark import ParameterSet
 from rdflib import RDF
 
-from cognite.neat.v0.core._constants import get_default_prefixes_and_namespaces
-from cognite.neat.v0.core._instances.transformers import PruneDeadEndEdges
-from cognite.neat.v0.core._shared import Triple
-from cognite.neat.v0.core._store import NeatInstanceStore
+from cognite.neat._v0.core._constants import get_default_prefixes_and_namespaces
+from cognite.neat._v0.core._instances.transformers import PruneDeadEndEdges
+from cognite.neat._v0.core._shared import Triple
+from cognite.neat._v0.core._store import NeatInstanceStore
 
 
 def generate_test_parameters_unknown_types() -> Iterable[ParameterSet]:
