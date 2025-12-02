@@ -86,12 +86,19 @@ class ModelingConfig(ConfiModel):
     mode: ModusOperandi = "additive"
 
 
+class AlphaFlagConfig(ConfiModel):
+    """Alpha feature flags configuration."""
+
+    ...
+
+
 class NeatConfig(ConfiModel):
     """Configuration for a custom profile."""
 
     profile: str
     validation: ValidationConfig
     modeling: ModelingConfig
+    alpha: AlphaFlagConfig = Field(default_factory=AlphaFlagConfig)
 
     def __str__(self) -> str:
         """Human-readable configuration summary."""
