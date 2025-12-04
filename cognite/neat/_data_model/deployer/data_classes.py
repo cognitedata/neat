@@ -496,7 +496,7 @@ class AppliedChanges(BaseDeployObject):
 
 
 class DeploymentResult(BaseDeployObject):
-    status: Literal["success", "failure", "partial", "pending"]
+    status: Literal["success", "failure", "partial", "pending", "recovered", "recovery_failed"]
     plan: list[ResourceDeploymentPlan]
     snapshot: SchemaSnapshot
     responses: AppliedChanges | None = None
