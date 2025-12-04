@@ -157,6 +157,37 @@ def validation_test_cdf_client(
                     isGlobal=False,
                     mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
                 ),
+                dict(
+                    space="prodigy",
+                    externalId="OutOfSpace",
+                    version="1992",
+                    name="Out Of Space",
+                    description="I'll take your brain to another dimension",
+                    properties={
+                        "directPropertyRemote": {
+                            "container": {"space": "my_space", "externalId": "DirectConnectionRemoteContainer"},
+                            "containerPropertyIdentifier": "directRemote",
+                            "type": {
+                                "type": "direct",
+                                "source": {
+                                    "space": "my_space",
+                                    "external_id": "MyDescribable",
+                                    "version": "v1",
+                                    "type": "view",
+                                },
+                            },
+                            "connectionType": "primary_property",
+                            "constraintState": {"nullability": "current"},
+                        }
+                    },
+                    createdTime=0,
+                    lastUpdatedTime=1,
+                    writable=True,
+                    queryable=True,
+                    usedFor="node",
+                    isGlobal=False,
+                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+                ),
             ],
             "nextCursor": None,
         },

@@ -224,26 +224,40 @@ class DataModelValidator(ABC):
             RuntimeError: If a referenced view is not found in either local or CDF resources.
         """
 
-        if self.modus_operandi != "additive":
-            return self.local_resources.views_by_reference
-
         merged_views: dict[ViewReference, ViewRequest] = {}
+
         # Merge local views, combining properties if view exists in both
+        # if rebuild mode , self.view_references returns only local views ref
         for view_ref in self.views_references:
             cdf_view = self.cdf_resources.views_by_reference.get(view_ref)
             local_view = self.local_resources.views_by_reference.get(view_ref)
 
-            if not cdf_view and not local_view:
+            if self.modus_operandi == "additive" and not cdf_view and not local_view:
                 raise RuntimeError(f"View {view_ref!s} not found in either local or CDF resources. This is a bug!")
+            elif self.modus_operandi == "rebuild" and not local_view:
+                raise RuntimeError(f"View {view_ref!s} not found in local resources. This is a bug!")
 
-            # this will later update of local properties and implements
             merged_views[view_ref] = cast(ViewRequest, (cdf_view or local_view)).model_copy(deep=True)
 
+            # in additive mode, we start off with CDF view as base , which we will update with local
+            if (
+                self.modus_operandi == "additive"
+                or cast(ViewRequest, local_view).space != self.local_resources.data_model_reference.space
+            ):
+                merged_views[view_ref] = cast(ViewRequest, (cdf_view or local_view)).model_copy(deep=True)
+
+            # rebuild mode
+            else:
+                merged_views[view_ref] = cast(ViewRequest, local_view).model_copy(deep=True)
+
+            # this will later update of local properties and implements
             if local_view and local_view.properties:
                 if not merged_views[view_ref].properties:
                     merged_views[view_ref].properties = local_view.properties
                 else:
                     merged_views[view_ref].properties.update(local_view.properties)
+
+            # Special handling for properties which originates from implements
 
             if local_view and local_view.implements:
                 if not merged_views[view_ref].implements:
@@ -252,6 +266,27 @@ class DataModelValidator(ABC):
                     for impl in local_view.implements:
                         if impl not in cast(list[ViewReference], merged_views[view_ref].implements):
                             cast(list[ViewReference], merged_views[view_ref].implements).append(impl)
+
+                # this handles an edge case where view is defined locally, implements another view, which is not
+                # present locally, but only in CDF, this could be typically the case when we define a view which
+                # implements a Core Data Model view, while not defining any of its own properties (not uncommon)
+                # locally in for example Excel sheets
+                for implement in local_view.implements:
+                    if cdf_implement_view := self.cdf_resources.views_by_reference.get(implement):
+                        # in rebuild mode, we skip CDF views from the same space as rebuild mode is supposed to
+                        # rebuild everything from local resources only, but we still need to merge in properties
+                        # from CDF implements from other spaces
+                        if (
+                            self.modus_operandi == "rebuild"
+                            and cdf_implement_view.space == self.local_resources.data_model_reference.space
+                        ):
+                            continue
+
+                        for prop_name, prop in cdf_implement_view.properties.items():
+                            if merged_views[view_ref].properties and prop_name not in merged_views[view_ref].properties:
+                                merged_views[view_ref].properties[prop_name] = prop
+                            elif not merged_views[view_ref].properties:
+                                merged_views[view_ref].properties = {prop_name: prop}
 
         return merged_views
 
@@ -274,29 +309,43 @@ class DataModelValidator(ABC):
             RuntimeError: If a referenced container is not found in either local or CDF resources.
         """
 
-        if self.modus_operandi != "additive":
-            return self.local_resources.containers_by_reference
-
         merged_containers: dict[ContainerReference, ContainerRequest] = {}
         # Merge local containers, combining properties if container exists in both
         for container_ref in self.container_references:
             cdf_container = self.cdf_resources.containers_by_reference.get(container_ref)
             local_container = self.local_resources.containers_by_reference.get(container_ref)
 
-            if not cdf_container and not local_container:
+            if self.modus_operandi == "additive" and not cdf_container and not local_container:
                 raise RuntimeError(
                     f"Container {container_ref!s} not found in either local or CDF resources. This is a bug!"
                 )
+            elif self.modus_operandi == "rebuild" and not local_container:
+                raise RuntimeError(f"Container {container_ref!s} not found in local resources. This is a bug!")
 
-            merged_containers[container_ref] = cast(ContainerRequest, (cdf_container or local_container)).model_copy(
-                deep=True
-            )
+            # in additive mode, we start off with CDF container as base , which we will update with local
+            if self.modus_operandi == "additive":
+                merged_containers[container_ref] = cast(
+                    ContainerRequest, (cdf_container or local_container)
+                ).model_copy(deep=True)
+
+            else:  # rebuild mode
+                merged_containers[container_ref] = cast(ContainerRequest, local_container).model_copy(deep=True)
 
             if local_container and local_container.properties:
                 if not merged_containers[container_ref].properties:
                     merged_containers[container_ref].properties = local_container.properties
                 else:
                     merged_containers[container_ref].properties.update(local_container.properties)
+
+            # this is the case when we are referencing containers which properties only exists in CDF
+            # and we run rebuild mode, and containers are not in the same space as local data model
+            if (
+                self.modus_operandi == "rebuild"
+                and container_ref.space != self.local_resources.data_model_reference.space
+                and cdf_container
+                and cdf_container.properties
+            ):
+                merged_containers[container_ref].properties = cdf_container.properties
 
         return merged_containers
 
