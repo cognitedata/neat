@@ -117,7 +117,11 @@ class SchemaDeployer(OnSuccessResultProducer):
         if not changes.is_success and self.options.auto_rollback:
             recovery = self.apply_changes(changes.as_recovery_plan())
             return DeploymentResult(
-                status="success", plan=list(plan), snapshot=snapshot, responses=changes, recovery=recovery
+                status="recovered" if recovery.is_success else "recovery_failed",
+                plan=list(plan),
+                snapshot=snapshot,
+                responses=changes,
+                recovery=recovery,
             )
         return DeploymentResult(
             status="success" if changes.is_success else "partial", plan=list(plan), snapshot=snapshot, responses=changes
