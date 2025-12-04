@@ -234,7 +234,7 @@ class WritePhysicalDataModel:
 
         return self._store.write_physical(writer, file_path=file_path)
 
-    def cdf(self, dry_run: bool = True, rollback: bool = True, drop_data: bool = False) -> None:
+    def cdf(self, dry_run: bool = True, rollback: bool = False, drop_data: bool = False) -> None:
         """Write physical data model with views, containers, and spaces that are in the same space as the data model
         to CDF.
 
