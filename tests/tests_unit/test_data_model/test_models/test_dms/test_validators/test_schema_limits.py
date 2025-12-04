@@ -187,6 +187,10 @@ Properties:
   Container: my_space:EnumContainer
   Container Property: category
 Views:
+- View: PropertiesOutOfSpace
+  Implements: prodigy:OutOfSpace(version=1992)
+  Name: SomeName
+  Description: SomeDescription
 - View: ViewWithTooManyProperties
   Name: SomeName
   Description: SomeDescription
@@ -232,7 +236,7 @@ Enum:
 """
 
     expected_problems = {
-        DataModelViewCountIsOutOfLimits.code: {"The data model references 123 views"},
+        DataModelViewCountIsOutOfLimits.code: {"The data model references 124 views"},
         ViewPropertyCountIsOutOfLimits.code: {
             "View my_space:ViewWithTooManyProperties(version=v1) has 301 properties",
             "View my_space:ViewWithTooHighMinCount(version=v1) does not have any properties defined",
