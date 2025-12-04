@@ -14,7 +14,14 @@ if sys.version_info >= (3, 11):
 else:
     import tomli  # type: ignore
 
+# Public profiles
 PredefinedProfile: TypeAlias = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"]
+
+# Private profiles only
+_PrivateProfiles: TypeAlias = Literal["no-validation-additive", "no-validation-rebuild"]
+
+# All profiles (union of public and private)
+_AllProfiles: TypeAlias = PredefinedProfile | _PrivateProfiles
 
 
 class ConfigModel(BaseModel):
@@ -25,6 +32,7 @@ class ValidationConfig(ConfigModel):
     """Validation configuration."""
 
     exclude: list[str] = Field(default_factory=list)
+    override: bool = Field(False, description="If enabled, all validators are skipped.")
 
     def can_run_validator(self, code: str, issue_type: type) -> bool:
         """
@@ -40,7 +48,7 @@ class ValidationConfig(ConfigModel):
 
         is_excluded = self._is_excluded(code, self.exclude)
 
-        if issue_type in [ModelSyntaxError, ConsistencyError] and is_excluded:
+        if issue_type in [ModelSyntaxError, ConsistencyError] and is_excluded and not self.override:
             print(f"Validator {code} was excluded however it is a critical validator and will still run.")
             return True
         else:
@@ -141,7 +149,7 @@ class NeatConfig(ConfigModel):
         return available_profiles[profile]
 
 
-def internal_profiles() -> dict[PredefinedProfile, NeatConfig]:
+def internal_profiles() -> dict[_AllProfiles, NeatConfig]:
     """Get internal NeatConfig profile by name."""
     return {
         "legacy-additive": NeatConfig(
@@ -179,6 +187,16 @@ def internal_profiles() -> dict[PredefinedProfile, NeatConfig]:
             profile="deep-rebuild",
             modeling=ModelingConfig(mode="rebuild"),
             validation=ValidationConfig(exclude=[]),
+        ),
+        "no-validation-rebuild": NeatConfig(
+            profile="no-validation-rebuild",
+            modeling=ModelingConfig(mode="rebuild"),
+            validation=ValidationConfig(exclude=["*"], override=True),
+        ),
+        "no-validation-additive": NeatConfig(
+            profile="no-validation-additive",
+            modeling=ModelingConfig(mode="additive"),
+            validation=ValidationConfig(exclude=["*"], override=True),
         ),
     }
 
