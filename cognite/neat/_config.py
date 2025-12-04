@@ -14,15 +14,14 @@ if sys.version_info >= (3, 11):
 else:
     import tomli  # type: ignore
 
+# Public profiles
 PredefinedProfile: TypeAlias = Literal["legacy-additive", "legacy-rebuild", "deep-additive", "deep-rebuild"]
-_PredefinedProfile: TypeAlias = Literal[
-    "legacy-additive",
-    "legacy-rebuild",
-    "deep-additive",
-    "deep-rebuild",
-    "no-validation-additive",
-    "no-validation-rebuild",
-]
+
+# Private profiles only
+_PrivateProfiles: TypeAlias = Literal["no-validation-additive", "no-validation-rebuild"]
+
+# All profiles (union of public and private)
+_AllProfiles: TypeAlias = PredefinedProfile | _PrivateProfiles
 
 
 class ConfigModel(BaseModel):
@@ -150,7 +149,7 @@ class NeatConfig(ConfigModel):
         return available_profiles[profile]
 
 
-def internal_profiles() -> dict[_PredefinedProfile, NeatConfig]:
+def internal_profiles() -> dict[_AllProfiles, NeatConfig]:
     """Get internal NeatConfig profile by name."""
     return {
         "legacy-additive": NeatConfig(
