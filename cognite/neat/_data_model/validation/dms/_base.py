@@ -323,7 +323,10 @@ class DataModelValidator(ABC):
                 raise RuntimeError(f"Container {container_ref!s} not found in local resources. This is a bug!")
 
             # in additive mode, we start off with CDF container as base , which we will update with local
-            if self.modus_operandi == "additive":
+            if (
+                self.modus_operandi == "additive"
+                or cast(ContainerRequest, local_container).space != self.local_resources.data_model_reference.space
+            ):
                 merged_containers[container_ref] = cast(
                     ContainerRequest, (cdf_container or local_container)
                 ).model_copy(deep=True)
@@ -336,16 +339,6 @@ class DataModelValidator(ABC):
                     merged_containers[container_ref].properties = local_container.properties
                 else:
                     merged_containers[container_ref].properties.update(local_container.properties)
-
-            # this is the case when we are referencing containers which properties only exists in CDF
-            # and we run rebuild mode, and containers are not in the same space as local data model
-            if (
-                self.modus_operandi == "rebuild"
-                and container_ref.space != self.local_resources.data_model_reference.space
-                and cdf_container
-                and cdf_container.properties
-            ):
-                merged_containers[container_ref].properties = cdf_container.properties
 
         return merged_containers
 
