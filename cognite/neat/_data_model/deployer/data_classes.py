@@ -379,7 +379,7 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         return type(self)(forced_plans)
 
 
-class ChangeResults(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource], ABC):
+class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource], ABC):
     endpoint: DataModelEndpoint
     change: ResourceChange[T_ResourceId, T_DataModelResource]
 
@@ -391,12 +391,12 @@ class ChangeResults(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]
 
     @property
     @abstractmethod
-    def result(self) -> Literal["success", "failure"]:
-        """The result type of the change."""
+    def is_success(self) -> bool:
+        """Whether the change was successful."""
         ...
 
 
-class HTTPChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
+class HTTPChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
     http_message: (
         SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
     )
@@ -414,14 +414,11 @@ class HTTPChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
             return "Unknown result"
 
     @property
-    def result(self) -> Literal["success", "failure"]:
-        if isinstance(self.http_message, SuccessResponse):
-            return "success"
-        else:
-            return "failure"
+    def is_success(self) -> bool:
+        return isinstance(self.http_message, SuccessResponse)
 
 
-class NoOpChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
+class NoOpChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
     """A change result representing a no-op, e.g., when a change was skipped or unchanged."""
 
     reason: str
@@ -431,8 +428,8 @@ class NoOpChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
         return self.reason
 
     @property
-    def result(self) -> Literal["success", "failure"]:
-        return "success"
+    def is_success(self) -> bool:
+        return True
 
 
 class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
