@@ -41,6 +41,7 @@ from .data_classes import (
     FieldChange,
     FieldChanges,
     HTTPChangeResult,
+    NoOpChangeResult,
     RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
@@ -302,8 +303,18 @@ class SchemaDeployer(OnSuccessResultProducer):
             applied_changes.created.extend(creations)
             applied_changes.updated.extend(updated)
 
-            applied_changes.unchanged.extend(resource.unchanged)
-            applied_changes.skipped.extend(resource.skip)
+            applied_changes.unchanged.extend(
+                [
+                    NoOpChangeResult(endpoint=resource.endpoint, change=change, reason="No changes detected.")
+                    for change in resource.unchanged
+                ]
+            )
+            applied_changes.skipped.extend(
+                [
+                    NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=change.message or "Unknown")
+                    for change in resource.skip
+                ]
+            )
         return applied_changes
 
     def _delete_items(self, resource: ResourceDeploymentPlan) -> list[HTTPChangeResult]:

@@ -389,6 +389,12 @@ class ChangeResults(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]
         """Human-readable message about the change result."""
         ...
 
+    @property
+    @abstractmethod
+    def result(self) -> Literal["success", "failure"]:
+        """The result type of the change."""
+        ...
+
 
 class HTTPChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
     http_message: (
@@ -406,6 +412,27 @@ class HTTPChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
             return f"Request Failed: {self.http_message.message}"
         else:
             return "Unknown result"
+
+    @property
+    def result(self) -> Literal["success", "failure"]:
+        if isinstance(self.http_message, SuccessResponse):
+            return "success"
+        else:
+            return "failure"
+
+
+class NoOpChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
+    """A change result representing a no-op, e.g., when a change was skipped or unchanged."""
+
+    reason: str
+
+    @property
+    def message(self) -> str:
+        return self.reason
+
+    @property
+    def result(self) -> Literal["success", "failure"]:
+        return "success"
 
 
 class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
@@ -425,8 +452,8 @@ class AppliedChanges(BaseDeployObject):
     created: list[HTTPChangeResult] = Field(default_factory=list)
     updated: list[HTTPChangeResult] = Field(default_factory=list)
     deletions: list[HTTPChangeResult] = Field(default_factory=list)
-    unchanged: list[ResourceChange] = Field(default_factory=list)
-    skipped: list[ResourceChange] = Field(default_factory=list)
+    unchanged: list[NoOpChangeResult] = Field(default_factory=list)
+    skipped: list[NoOpChangeResult] = Field(default_factory=list)
     changed_fields: list[ChangedFieldResult] = Field(default_factory=list)
 
     @property
