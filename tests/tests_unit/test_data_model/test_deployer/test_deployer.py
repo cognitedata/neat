@@ -320,3 +320,41 @@ class TestSchemaDeployer:
 
         # All requests should be successful
         assert result.is_success
+
+    def test_apply_plan_abort_on_container_failure(
+        self, neat_client: NeatClient, model: RequestSchema, respx_mock: respx.MockRouter
+    ) -> None:
+        deployer = SchemaDeployer(neat_client, options=DeploymentOptions(dry_run=False))
+        plan: list[ResourceDeploymentPlan] = [
+            ResourceDeploymentPlan(
+                endpoint="containers",
+                resources=[
+                    ResourceChange(resource_id=container.as_reference(), new_value=container)
+                    for container in model.containers
+                ],
+            ),
+            ResourceDeploymentPlan(
+                endpoint="views",
+                resources=[ResourceChange(resource_id=view.as_reference(), new_value=view) for view in model.views],
+            ),
+        ]
+        # Container creation will fail,should result in aborting the view creation
+        respx_mock.post(neat_client.config.create_api_url("/models/containers")).respond(
+            status_code=500,
+            json={
+                "error": {
+                    "code": "InternalError",
+                    "message": "Simulated server error",
+                }
+            },
+        )
+
+        with patch("time.sleep"):  # In order to speed up tests
+            result = deployer.apply_changes(plan)
+
+        assert not result.is_success
+        assert len(result.created) == 1
+        assert len(result.updated) == 0
+        assert len(result.deletions) == 0
+        assert len(result.unchanged) == 0
+        assert len(result.skipped) == 1
