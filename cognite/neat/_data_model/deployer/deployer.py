@@ -293,29 +293,21 @@ class SchemaDeployer(OnSuccessResultProducer):
         # If any HTTP request fails, the skip_message will be set and subsequent operations will be skipped
         skip_message: str | None = None
         for resource in reversed(plan):
-            if skip_message is not None:
+            if skip_message is None:
+                deletions = self._delete_items(resource)
+                applied_changes.deletions.extend(deletions)
+                if any(not deletion.is_success for deletion in deletions):
+                    skip_message = f"Skipping due to {resource.endpoint} deletions failing."
+            else:
                 applied_changes.skipped.extend(
                     [
                         NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=skip_message)
                         for change in resource.to_delete
                     ]
                 )
-            else:
-                deletions = self._delete_items(resource)
-                applied_changes.deletions.extend(deletions)
-                if any(not deletion.is_success for deletion in deletions):
-                    skip_message = f"Skipping due to {resource.endpoint} deletions failing."
 
         for resource in plan:
-            if skip_message is not None:
-                applied_changes.skipped.extend(
-                    [
-                        NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=skip_message)
-                        for change in resource.to_upsert
-                    ]
-                )
-                continue
-            else:
+            if skip_message is None:
                 if isinstance(resource, ContainerDeploymentPlan):
                     applied_changes.changed_fields.extend(self._remove_container_constraints(resource))
                     applied_changes.changed_fields.extend(self._remove_container_indexes(resource))
@@ -325,6 +317,13 @@ class SchemaDeployer(OnSuccessResultProducer):
                 applied_changes.updated.extend(updated)
                 if any(not change.is_success for change in creations + updated):
                     skip_message = f"Skipping due to {resource.endpoint} upsert failing."
+            else:
+                applied_changes.skipped.extend(
+                    [
+                        NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=skip_message)
+                        for change in resource.to_upsert
+                    ]
+                )
 
             applied_changes.unchanged.extend(
                 [
