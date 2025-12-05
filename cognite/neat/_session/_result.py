@@ -1,11 +1,13 @@
 import json
 import uuid
-from typing import Any, get_args
+from typing import Any, cast, get_args
 
 from pydantic import BaseModel, Field
 
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
+    AppliedChanges,
+    ChangeResult,
     ChangedField,
     DataModelEndpoint,
     DeploymentResult,
@@ -13,9 +15,11 @@ from cognite.neat._data_model.deployer.data_classes import (
     FieldChanges,
     RemovedField,
     ResourceChange,
+    resource_id_to_endpoint,
 )
 from cognite.neat._session._html._render import render
 from cognite.neat._store import NeatStore
+from cognite.neat._utils.http_client._data_classes import SuccessResponseItems
 
 
 class EndpointStatistics(BaseModel):
@@ -27,6 +31,7 @@ class EndpointStatistics(BaseModel):
     delete: int = 0
     skip: int = 0
     unchanged: int = 0
+    failed: int = 0
 
 
 class ChangeTypeStatistics(BaseModel):
@@ -37,6 +42,7 @@ class ChangeTypeStatistics(BaseModel):
     delete: int = 0
     skip: int = 0
     unchanged: int = 0
+    failed: int = 0
 
 
 class SeverityStatistics(BaseModel):
@@ -75,6 +81,7 @@ class SerializedResourceChange(BaseModel):
     change_type: str
     severity: str
     resource_id: str
+    message: str | None = None
     changes: list[SerializedFieldChange] = Field(default_factory=list)
 
 
@@ -130,14 +137,71 @@ class Result:
 
         stats = self._initialize_stats(self._result)
 
-        for plan in self._result.plan:
-            for resource in plan.resources:
-                self._update_statistics(
-                    stats=stats,
-                    endpoint=plan.endpoint,
-                    change_type=resource.change_type,
-                    severity=resource.severity.name,
-                )
+        if not self._result.responses:
+            # This is a dry run mode so we look at the plan
+            for plan in self._result.plan:
+                for resource in plan.resources:
+                    self._update_statistics(
+                        stats=stats,
+                        endpoint=plan.endpoint,
+                        change_type=resource.change_type,
+                        severity=resource.severity.name,
+                    )
+        else:
+            # This is not a dry run mode so we look at the responses, which is of type AppliedChanges
+
+            # create
+            for response in cast(AppliedChanges, self._result.responses).created:
+                    self._update_statistics(
+                        stats=stats,
+                        endpoint=response.endpoint,
+                        change_type="create" if isinstance(response.message, SuccessResponseItems) else "failed",
+                        severity=response.change.severity.name,
+                    )
+            # update
+            for response in cast(AppliedChanges, self._result.responses).updated:
+                    self._update_statistics(
+                        stats=stats,
+                        endpoint=response.endpoint,
+                        change_type="update" if isinstance(response.message, SuccessResponseItems) else "failed",
+                        severity=response.change.severity.name,
+                    )
+
+            # update of fields
+            for response in cast(AppliedChanges, self._result.responses).changed_fields:
+                    self._update_statistics(
+                        stats=stats,
+                        endpoint="container",
+                        change_type="update" if isinstance(response.message, SuccessResponseItems) else "failed",
+                        severity=response.change.severity.name,
+                    )
+
+            # delete
+            for response in cast(AppliedChanges, self._result.responses).deletions:
+                    self._update_statistics(
+                        stats=stats,
+                        endpoint=response.endpoint,
+                        change_type="delete" if isinstance(response.message, SuccessResponseItems) else "failed",
+                        severity=response.change.severity.name,
+                    )
+
+            # unchanged
+            for response in cast(AppliedChanges, self._result.responses).unchanged:
+                    self._update_statistics(
+                        stats=stats,
+                        endpoint=resource_id_to_endpoint(response.resource_id),
+                        change_type="unchanged",
+                        severity=response.severity.name,
+                    )
+
+            # skipped
+            for response in cast(AppliedChanges, self._result.responses).skipped:
+                    self._update_statistics(
+                        stats=stats,
+                        endpoint=resource_id_to_endpoint(response.resource_id),
+                        change_type="skip",
+                        severity=response.severity.name,
+                    )
 
         return stats
 
@@ -183,6 +247,11 @@ class Result:
             changes=changes,
         )
 
+
+    def _serialize_change_result(self, resource: ChangeResult)-> SerializedResourceChange:
+
+         ...
+
     @property
     def _serialized_changes(self) -> list[SerializedResourceChange]:
         """Convert deployment changes to JSON-serializable format."""
@@ -191,14 +260,26 @@ class Result:
 
         all_changes: list[SerializedResourceChange] = []
 
-        for plan in self._result.plan:
-            for resource in plan.resources:
-                change_data = self._serialize_resource_change(
-                    resource=resource,
-                    endpoint=plan.endpoint,
-                    change_id=len(all_changes),
-                )
-                all_changes.append(change_data)
+        # DRY RUN MODE
+        if not self._result.responses:
+            # iterate over each endpoint plan
+            for endpoint_plan in self._result.plan:
+                # then per resource in the endpoint
+                for resource in endpoint_plan.resources:
+
+                    # then serialize individual resource change
+                    change_data = self._serialize_resource_change(
+                        resource=resource,
+                        endpoint=endpoint_plan.endpoint,
+                        change_id=len(all_changes),
+                    )
+                    all_changes.append(change_data)
+
+        else:
+             applied_changes = cast(AppliedChanges, self._result.responses)
+
+             for response in applied_changes.created:
+
 
         return all_changes
 
