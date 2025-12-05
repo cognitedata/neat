@@ -379,15 +379,17 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         return type(self)(forced_plans)
 
 
-class ChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
+class HTTPChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
     endpoint: DataModelEndpoint
     change: ResourceChange[T_ResourceId, T_DataModelResource]
-    message: SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
+    http_message: (
+        SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
+    )
 
 
 class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
     field_change: FieldChange
-    message: SuccessResponseItems[T_Reference] | FailedResponseItems[T_Reference] | FailedRequestItems[T_Reference]
+    http_message: SuccessResponseItems[T_Reference] | FailedResponseItems[T_Reference] | FailedRequestItems[T_Reference]
 
 
 class AppliedChanges(BaseDeployObject):
@@ -399,9 +401,9 @@ class AppliedChanges(BaseDeployObject):
     This is needed as these changes are done with a separate API call per change.
     """
 
-    created: list[ChangeResult] = Field(default_factory=list)
-    updated: list[ChangeResult] = Field(default_factory=list)
-    deletions: list[ChangeResult] = Field(default_factory=list)
+    created: list[HTTPChangeResult] = Field(default_factory=list)
+    updated: list[HTTPChangeResult] = Field(default_factory=list)
+    deletions: list[HTTPChangeResult] = Field(default_factory=list)
     unchanged: list[ResourceChange] = Field(default_factory=list)
     skipped: list[ResourceChange] = Field(default_factory=list)
     changed_fields: list[ChangedFieldResult] = Field(default_factory=list)
@@ -410,7 +412,7 @@ class AppliedChanges(BaseDeployObject):
     def is_success(self) -> bool:
         return all(
             # MyPy fails to understand that ChangeFieldResult.message has the same structure as ChangeResult.message
-            isinstance(change.message, SuccessResponse)  # type: ignore[attr-defined]
+            isinstance(change.http_message, SuccessResponse)  # type: ignore[attr-defined]
             for change in itertools.chain(self.created, self.updated, self.deletions, self.changed_fields)
         )
 
@@ -418,7 +420,7 @@ class AppliedChanges(BaseDeployObject):
         """Generate a recovery plan based on the applied changes."""
         recovery_plan: dict[DataModelEndpoint, ResourceDeploymentPlan] = {}
         for change_result in itertools.chain(self.created, self.updated, self.deletions):
-            if not isinstance(change_result.message, SuccessResponse):
+            if not isinstance(change_result.http_message, SuccessResponse):
                 continue  # Skip failed changes.
             change = change_result.change
             if change.change_type == "create":
@@ -520,10 +522,10 @@ class DeploymentResult(BaseDeployObject):
         if self.responses:
             counts: dict[str, int] = defaultdict(int)
             for change in itertools.chain(self.responses.created, self.responses.updated, self.responses.deletions):
-                suffix = type(change.message).__name__.removesuffix("[TypeVar]").removesuffix("[~T_ResourceId]")
+                suffix = type(change.http_message).__name__.removesuffix("[TypeVar]").removesuffix("[~T_ResourceId]")
                 # For example: containers.created.successResponseItems
                 prefix = f"{change.endpoint}.{change.change.change_type}.{suffix}"
-                counts[prefix] += len(change.message.ids)
+                counts[prefix] += len(change.http_message.ids)
 
             output.update(counts)
         return output
