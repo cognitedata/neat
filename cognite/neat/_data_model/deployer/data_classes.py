@@ -426,7 +426,18 @@ class MultiHTTPChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
 
     @property
     def message(self) -> str:
-        raise NotImplementedError()
+        error_messages: list[str] = []
+        for msg in self.http_messages:
+            if isinstance(msg, SuccessResponse):
+                continue
+            elif isinstance(msg, FailedResponseItems):
+                error = msg.error
+                error_messages.append(f"Failed: {error.code} | {error.message}")
+            elif isinstance(msg, FailedRequestItems):
+                error_messages.append(f"Request Failed: {msg.message}")
+        if not error_messages:
+            return "Success"
+        return "; ".join(error_messages)
 
     @property
     def result(self) -> Literal["success", "failure"]:
