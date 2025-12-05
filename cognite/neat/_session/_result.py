@@ -14,6 +14,8 @@ from cognite.neat._data_model.deployer.data_classes import (
     FieldChange,
     FieldChanges,
     HTTPChangeResult,
+    MultiHTTPChangeResult,
+    NoOpChangeResult,
     RemovedField,
     ResourceChange,
     resource_id_to_endpoint,
@@ -156,24 +158,15 @@ class Result:
                 self._update_statistics(
                     stats=stats,
                     endpoint=response.endpoint,
-                    change_type="create" if response.is_success else "failed",
+                    change_type=response.change.change_type if response.is_success else "failed",
                     severity=response.change.severity.name,
                 )
         # update
-        for response in applied_changes.updated:
+        for response in applied_changes.merged_updated:
                 self._update_statistics(
                     stats=stats,
                     endpoint=response.endpoint,
-                    change_type="update" if response.is_success else "failed",
-                    severity=response.change.severity.name,
-                )
-
-        # update of fields | this will be changed!
-        for response in applied_changes.changed_fields:
-                self._update_statistics(
-                    stats=stats,
-                    endpoint="container",
-                    change_type="update" if response.is_success else "failed",
+                    change_type=response.change.change_type if response.is_success else "failed",
                     severity=response.change.severity.name,
                 )
 
@@ -182,7 +175,7 @@ class Result:
                 self._update_statistics(
                     stats=stats,
                     endpoint=response.endpoint,
-                    change_type="delete" if response.is_success else "failed",
+                    change_type=response.change.change_type if response.is_success else "failed",
                     severity=response.change.severity.name,
                 )
 
@@ -190,18 +183,18 @@ class Result:
         for response in applied_changes.unchanged:
                 self._update_statistics(
                     stats=stats,
-                    endpoint=resource_id_to_endpoint(response.resource_id),
-                    change_type="unchanged" if response.is_success else "failed",
-                    severity=response.severity.name,
+                    endpoint=response.endpoint,
+                    change_type=response.change.change_type if response.is_success else "failed",
+                    severity=response.change.severity.name,
                 )
 
         # skipped
         for response in applied_changes.skipped:
                 self._update_statistics(
                     stats=stats,
-                    endpoint=resource_id_to_endpoint(response.resource_id),
-                    change_type="skip" if response.is_success else "failed",
-                    severity=response.severity.name,
+                    endpoint=response.endpoint,
+                    change_type=response.change.change_type if response.is_success else "failed",
+                    severity=response.change.severity.name,
                 )
 
     @property
@@ -272,20 +265,31 @@ class Result:
             for resource in endpoint_plan.resources:
 
                 # then serialize individual resource change
-                change_data = self._serialize_resource_change(
+                serialized_resource_change = self._serialize_resource_change(
                     resource=resource,
                     endpoint=endpoint_plan.endpoint,
                     change_id=len(all_changes),
                 )
-                all_changes.append(change_data)
+                all_changes.append(serialized_resource_change)
 
         return all_changes
 
 
-    @staticmethod
-    def _serialize_http_change_result(resource: HTTPChangeResult)-> SerializedResourceChange:
+    def _serialize_apply_change_result(self, change_id: int, response: ChangeResult)-> SerializedResourceChange:
 
-         ...
+
+        serialized_resource_change = self._serialize_resource_change(
+            resource=response.change,
+            endpoint=response.endpoint,
+            change_id=change_id,
+        )
+
+        serialized_resource_change.message = response.message
+        if not response.is_success:
+            serialized_resource_change.change_type = "failed"
+
+        return serialized_resource_change
+
 
     def _serialize_deployment_changes(self) -> list[SerializedResourceChange]:
         """Serialize changes from actual deployment."""
@@ -295,24 +299,20 @@ class Result:
         applied_changes = cast(AppliedChanges, self._result.responses)
 
         for response in applied_changes.created:
-            change_data = self._serialize_http_change_result(response)
-            all_changes.append(change_data)
+            all_changes.append(self._serialize_apply_change_result(len(all_changes), response))
 
-        for response in applied_changes.updated:
-            change_data = self._serialize_http_change_result(response)
-            all_changes.append(change_data)
+        for response in applied_changes.merged_updated:
+            all_changes.append(self._serialize_apply_change_result(len(all_changes), response))
 
         for response in applied_changes.deletions:
-            change_data = self._serialize_http_change_result(response)
-            all_changes.append(change_data)
+            all_changes.append(self._serialize_apply_change_result(len(all_changes), response))
 
         for response in applied_changes.unchanged:
-            change_data = self._serialize_http_change_result(response)
-            all_changes.append(change_data)
+            all_changes.append(self._serialize_apply_change_result(len(all_changes), response))
 
         for response in applied_changes.skipped:
-            change_data = self._serialize_http_change_result(response)
-            all_changes.append(change_data)
+            all_changes.append(self._serialize_apply_change_result(len(all_changes), response))
+        return all_changes
 
     @property
     def _serialized_changes(self) -> list[SerializedResourceChange]:
@@ -323,33 +323,6 @@ class Result:
 
         return self._serialize_dry_run_changes() if self._result.is_dry_run else self._serialize_deployment_changes()
 
-        if :
-
-        else:
-
-
-        # DRY RUN MODE
-        if not self._result.responses:
-            # iterate over each endpoint plan
-            for endpoint_plan in self._result.plan:
-                # then per resource in the endpoint
-                for resource in endpoint_plan.resources:
-
-                    # then serialize individual resource change
-                    change_data = self._serialize_resource_change(
-                        resource=resource,
-                        endpoint=endpoint_plan.endpoint,
-                        change_id=len(all_changes),
-                    )
-                    all_changes.append(change_data)
-
-        else:
-             applied_changes = cast(AppliedChanges, self._result.responses)
-
-             for response in applied_changes.created:
-
-
-        return all_changes
 
     def _build_template_vars(self, stats: DeploymentStatistics) -> dict[str, Any]:
         """Build template variables from statistics."""
