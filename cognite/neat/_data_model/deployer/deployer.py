@@ -409,7 +409,9 @@ class SchemaDeployer(OnSuccessResultProducer):
                 for id in response.ids:
                     if id not in change_by_id:
                         continue
-                    results.append(ChangedFieldResult(field_change=change_by_id[id], http_message=response))
+                    results.append(
+                        ChangedFieldResult(resource_id=id, field_change=change_by_id[id], http_message=response)
+                    )
             else:
                 # This should never happen as we do a ItemsRequest should always return ItemMessage responses
                 raise RuntimeError("Bug in Neat. Got an unexpected response type.")

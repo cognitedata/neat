@@ -432,7 +432,8 @@ class NoOpChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
         return True
 
 
-class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
+class ChangedFieldResult(BaseDeployObject, Generic[T_ResourceId, T_Reference]):
+    resource_id: T_ResourceId
     field_change: FieldChange
     http_message: SuccessResponseItems[T_Reference] | FailedResponseItems[T_Reference] | FailedRequestItems[T_Reference]
 
