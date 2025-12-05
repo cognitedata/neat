@@ -35,12 +35,13 @@ from .data_classes import (
     AddedField,
     AppliedChanges,
     ChangedFieldResult,
-    ChangeResult,
     ContainerDeploymentPlan,
     DataModelEndpoint,
     DeploymentResult,
     FieldChange,
     FieldChanges,
+    HTTPChangeResult,
+    NoOpChangeResult,
     RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
@@ -302,11 +303,21 @@ class SchemaDeployer(OnSuccessResultProducer):
             applied_changes.created.extend(creations)
             applied_changes.updated.extend(updated)
 
-            applied_changes.unchanged.extend(resource.unchanged)
-            applied_changes.skipped.extend(resource.skip)
+            applied_changes.unchanged.extend(
+                [
+                    NoOpChangeResult(endpoint=resource.endpoint, change=change, reason="No changes detected.")
+                    for change in resource.unchanged
+                ]
+            )
+            applied_changes.skipped.extend(
+                [
+                    NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=change.message or "Unknown")
+                    for change in resource.skip
+                ]
+            )
         return applied_changes
 
-    def _delete_items(self, resource: ResourceDeploymentPlan) -> list[ChangeResult]:
+    def _delete_items(self, resource: ResourceDeploymentPlan) -> list[HTTPChangeResult]:
         to_delete_by_id = {change.resource_id: change for change in resource.to_delete}
         if not to_delete_by_id:
             return []
@@ -319,7 +330,7 @@ class SchemaDeployer(OnSuccessResultProducer):
         )
         return self._process_resource_responses(responses, to_delete_by_id, resource.endpoint)
 
-    def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[ChangeResult], list[ChangeResult]]:
+    def _upsert_items(self, resource: ResourceDeploymentPlan) -> tuple[list[HTTPChangeResult], list[HTTPChangeResult]]:
         to_upsert = [
             resource_change.new_value for resource_change in resource.to_upsert if resource_change.new_value is not None
         ]
@@ -375,14 +386,14 @@ class SchemaDeployer(OnSuccessResultProducer):
     @classmethod
     def _process_resource_responses(
         cls, responses: APIResponse, change_by_id: dict[T_ResourceId, ResourceChange], endpoint: DataModelEndpoint
-    ) -> list[ChangeResult]:
-        results: list[ChangeResult] = []
+    ) -> list[HTTPChangeResult]:
+        results: list[HTTPChangeResult] = []
         for response in responses:
             if isinstance(response, SuccessResponseItems | FailedResponseItems | FailedRequestItems):
                 for id in response.ids:
                     if id not in change_by_id:
                         continue
-                    results.append(ChangeResult(change=change_by_id[id], message=response, endpoint=endpoint))
+                    results.append(HTTPChangeResult(change=change_by_id[id], http_message=response, endpoint=endpoint))
             else:
                 # This should never happen as we do a ItemsRequest should always return ItemMessage responses
                 raise ValueError("Bug in Neat. Got an unexpected response type.")
@@ -398,7 +409,7 @@ class SchemaDeployer(OnSuccessResultProducer):
                 for id in response.ids:
                     if id not in change_by_id:
                         continue
-                    results.append(ChangedFieldResult(field_change=change_by_id[id], message=response))
+                    results.append(ChangedFieldResult(field_change=change_by_id[id], http_message=response))
             else:
                 # This should never happen as we do a ItemsRequest should always return ItemMessage responses
                 raise RuntimeError("Bug in Neat. Got an unexpected response type.")

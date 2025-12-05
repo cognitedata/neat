@@ -7,9 +7,9 @@ from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     AppliedChanges,
-    ChangeResult,
     ContainerDeploymentPlan,
     DeploymentResult,
+    HTTPChangeResult,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
@@ -260,14 +260,14 @@ class TestAppliedChanges:
 
         applied_changes = AppliedChanges(
             created=[
-                ChangeResult(
+                HTTPChangeResult(
                     endpoint="containers",
                     change=ResourceChange(resource_id=container1.as_reference(), new_value=container1),
-                    message=SuccessResponseItems(code=200, body="", ids=[container1.as_reference()]),
+                    http_message=SuccessResponseItems(code=200, body="", ids=[container1.as_reference()]),
                 )
             ],
             updated=[
-                ChangeResult(
+                HTTPChangeResult(
                     endpoint="containers",
                     change=ResourceChange(
                         resource_id=container2.as_reference(),
@@ -275,16 +275,16 @@ class TestAppliedChanges:
                         new_value=container2_update,
                         changes=ContainerDiffer().diff(container2, container2_update),
                     ),
-                    message=SuccessResponseItems(code=200, body="", ids=[container2.as_reference()]),
+                    http_message=SuccessResponseItems(code=200, body="", ids=[container2.as_reference()]),
                 )
             ],
             deletions=[
-                ChangeResult(
+                HTTPChangeResult(
                     endpoint="containers",
                     change=ResourceChange(
                         resource_id=container3.as_reference(), new_value=None, current_value=container3
                     ),
-                    message=SuccessResponseItems(code=200, body="", ids=[container3.as_reference()]),
+                    http_message=SuccessResponseItems(code=200, body="", ids=[container3.as_reference()]),
                 )
             ],
         )
@@ -323,10 +323,10 @@ class TestDeploymentResult:
             responses=AppliedChanges(
                 created=[],
                 updated=[
-                    ChangeResult(
+                    HTTPChangeResult(
                         endpoint=resource_plan.endpoint,
                         change=resource_change,
-                        message=SuccessResponseItems(code=200, body="", ids=[resource_change.resource_id]),
+                        http_message=SuccessResponseItems(code=200, body="", ids=[resource_change.resource_id]),
                     )
                     for resource_plan in plan.data
                     for resource_change in resource_plan.resources

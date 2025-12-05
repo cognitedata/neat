@@ -280,7 +280,7 @@ class TestSchemaDeployer:
             None,
         )
         assert removed_index is not None
-        assert removed_index.message.ids == [
+        assert removed_index.http_message.ids == [
             ContainerIndexReference(space="space1", external_id="container1", identifier="index1")
         ]
         removed_constriant = next(
@@ -293,7 +293,7 @@ class TestSchemaDeployer:
             None,
         )
         assert removed_constriant is not None
-        assert removed_constriant.message.ids == [
+        assert removed_constriant.http_message.ids == [
             ContainerConstraintReference(space="space1", external_id="container1", identifier="constraint1")
         ]
 
