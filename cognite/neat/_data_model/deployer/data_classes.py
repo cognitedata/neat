@@ -2,6 +2,7 @@ import itertools
 import sys
 from abc import ABC, abstractmethod
 from collections import UserList, defaultdict
+from collections.abc import Hashable, Sequence
 from datetime import datetime
 from enum import Enum
 from typing import Any, Generic, Literal, TypeAlias, cast
@@ -431,6 +432,31 @@ class HTTPChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
         return isinstance(self.http_message, SuccessResponse)
 
 
+class MultiHTTPChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
+    http_messages: list[
+        SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
+    ]
+
+    @property
+    def message(self) -> str:
+        error_messages: list[str] = []
+        for msg in self.http_messages:
+            if isinstance(msg, SuccessResponse):
+                continue
+            elif isinstance(msg, FailedResponseItems):
+                error = msg.error
+                error_messages.append(f"Failed: {error.code} | {error.message}")
+            elif isinstance(msg, FailedRequestItems):
+                error_messages.append(f"Request Failed: {msg.message}")
+        if not error_messages:
+            return "Success"
+        return "; ".join(error_messages)
+
+    @property
+    def is_success(self) -> bool:
+        return all(isinstance(msg, SuccessResponse) for msg in self.http_messages)
+
+
 class NoOpChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
     """A change result representing a no-op, e.g., when a change was skipped or unchanged."""
 
@@ -445,7 +471,8 @@ class NoOpChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
         return True
 
 
-class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
+class ChangedFieldResult(BaseDeployObject, Generic[T_ResourceId, T_Reference]):
+    resource_id: T_ResourceId
     field_change: FieldChange
     http_message: SuccessResponseItems[T_Reference] | FailedResponseItems[T_Reference] | FailedRequestItems[T_Reference]
 
@@ -473,6 +500,35 @@ class AppliedChanges(BaseDeployObject):
             isinstance(change.http_message, SuccessResponse)  # type: ignore[attr-defined]
             for change in itertools.chain(self.created, self.updated, self.deletions, self.changed_fields)
         )
+
+    @property
+    def merged_updated(self) -> Sequence[ChangeResult]:
+        """Merges the changed field into the updated changes."""
+        if not self.changed_fields:
+            return self.updated
+        changed_fields_by_id: dict[Hashable, list[ChangedFieldResult]] = defaultdict(list)
+        for changed_field in self.changed_fields:
+            changed_fields_by_id[changed_field.resource_id].append(changed_field)
+        merged_changes: list[ChangeResult] = []
+        for update in self.updated:
+            if update.change.resource_id not in changed_fields_by_id:
+                merged_changes.append(update)
+                continue
+
+            field_changes = changed_fields_by_id[update.change.resource_id]
+            merged_change = update.change.model_copy(
+                update={"changes": update.change.changes + [fc.field_change for fc in field_changes]}
+            )
+
+            # MyPy wants an annotation were we want this to be generic.
+            merged_result = MultiHTTPChangeResult(  # type: ignore[var-annotated]
+                endpoint=update.endpoint,
+                change=merged_change,
+                http_messages=[update.http_message] + [fc.http_message for fc in field_changes],
+            )
+            merged_changes.append(merged_result)
+
+        return merged_changes
 
     def as_recovery_plan(self) -> list[ResourceDeploymentPlan]:
         """Generate a recovery plan based on the applied changes."""
