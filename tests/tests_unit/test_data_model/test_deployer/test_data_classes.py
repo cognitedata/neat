@@ -7,9 +7,12 @@ from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     AppliedChanges,
+    ChangedFieldResult,
     ContainerDeploymentPlan,
     DeploymentResult,
     HTTPChangeResult,
+    MultiHTTPChangeResult,
+    RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
@@ -19,6 +22,7 @@ from cognite.neat._data_model.deployer.data_classes import (
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
 from cognite.neat._data_model.models.dms import (
     BtreeIndex,
+    ContainerIndexReference,
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
@@ -28,7 +32,7 @@ from cognite.neat._data_model.models.dms import (
     ViewCorePropertyRequest,
     ViewRequest,
 )
-from cognite.neat._utils.http_client import SuccessResponseItems
+from cognite.neat._utils.http_client import ErrorDetails, FailedResponseItems, SuccessResponseItems
 
 
 class TestSeverityType:
@@ -303,6 +307,68 @@ class TestAppliedChanges:
         assert len(resource_plan.to_delete) == 1
         assert resource_plan.to_delete[0].resource_id == container1.as_reference()
         assert resource_plan.to_delete[0].current_value == container1
+
+    def test_merged_updated(self) -> None:
+        container = ContainerRequest(
+            space="space1",
+            externalId="container1",
+            name="container1",
+            properties={"prop1": ContainerPropertyDefinition(type=TextProperty())},
+        )
+        container_update1 = container.model_copy(
+            update={
+                "properties": {
+                    "prop1": ContainerPropertyDefinition(type=TextProperty()),
+                    "prop1_update1": ContainerPropertyDefinition(type=TextProperty()),
+                }
+            }
+        )
+
+        applied_changes1 = AppliedChanges(
+            updated=[
+                HTTPChangeResult(
+                    endpoint="containers",
+                    change=ResourceChange(
+                        resource_id=container.as_reference(),
+                        current_value=container,
+                        new_value=container_update1,
+                        changes=ContainerDiffer().diff(container, container_update1),
+                    ),
+                    http_message=SuccessResponseItems(code=200, body="", ids=[container.as_reference()]),
+                )
+            ],
+            changed_fields=[
+                ChangedFieldResult(
+                    resource_id=container.as_reference(),
+                    field_change=RemovedField(
+                        field_path="indexes.indexToRemove",
+                        item_severity=SeverityType.WARNING,
+                        current_value=BtreeIndex(properties=["prop1"]),
+                    ),
+                    http_message=FailedResponseItems(
+                        code=500,
+                        body="",
+                        error=ErrorDetails(
+                            code=500,
+                            message="Index removal failed",
+                        ),
+                        ids=[
+                            ContainerIndexReference(
+                                space=container.space, external_id=container.external_id, identifier="indexToRemove"
+                            )
+                        ],
+                    ),
+                )
+            ],
+        )
+
+        merged_changes = applied_changes1.merged_updated
+
+        assert len(merged_changes) == 1
+        change = merged_changes[0]
+        assert isinstance(change, MultiHTTPChangeResult)
+        assert change.is_success is False
+        assert change.message == "Failed: 500 | Index removal failed"
 
 
 class TestDeploymentResult:
