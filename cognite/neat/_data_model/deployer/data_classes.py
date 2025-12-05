@@ -440,11 +440,8 @@ class MultiHTTPChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
         return "; ".join(error_messages)
 
     @property
-    def result(self) -> Literal["success", "failure"]:
-        if all(isinstance(msg, SuccessResponse) for msg in self.http_messages):
-            return "success"
-        else:
-            return "failure"
+    def is_success(self) -> bool:
+        return all(isinstance(msg, SuccessResponse) for msg in self.http_messages)
 
 
 class NoOpChangeResult(ChangeResult[T_ResourceId, T_DataModelResource]):
@@ -506,14 +503,14 @@ class AppliedChanges(BaseDeployObject):
                 continue
 
             field_changes = changed_fields_by_id[update.change.resource_id]
-            merged_change = update.model_copy(
+            merged_change = update.change.model_copy(
                 update={"changes": update.change.changes + [fc.field_change for fc in field_changes]}
             )
 
             # MyPy wants an annotation were we want this to be generic.
             merged_result = MultiHTTPChangeResult(  # type: ignore[var-annotated]
                 endpoint=update.endpoint,
-                change=merged_change,  # type: ignore[arg-type]
+                change=merged_change,
                 http_messages=[update.http_message] + [fc.http_message for fc in field_changes],
             )
             merged_changes.append(merged_result)
