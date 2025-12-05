@@ -338,17 +338,16 @@ class TestSchemaDeployer:
                 resources=[ResourceChange(resource_id=view.as_reference(), new_value=view) for view in model.views],
             ),
         ]
-        # Mock the responses for creation/update (same endpoint in data modeling API)
-        for resource_plan in plan:
-            respx_mock.post(neat_client.config.create_api_url(f"/models/{resource_plan.endpoint}")).respond(
-                status_code=500,
-                json={
-                    "error": {
-                        "code": "InternalError",
-                        "message": "Simulated server error",
-                    }
-                },
-            )
+        # Container creation will fail,should result in aborting the view creation
+        respx_mock.post(neat_client.config.create_api_url("/models/containers")).respond(
+            status_code=500,
+            json={
+                "error": {
+                    "code": "InternalError",
+                    "message": "Simulated server error",
+                }
+            },
+        )
 
         with patch("time.sleep"):  # In order to speed up tests
             result = deployer.apply_changes(plan)
