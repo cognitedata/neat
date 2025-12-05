@@ -290,7 +290,7 @@ class SchemaDeployer(OnSuccessResultProducer):
             AppliedChanges: The result of applying the changes.
         """
         applied_changes = AppliedChanges()
-        # Set if deployment fails
+        # If any HTTP request fails, the skip_message will be set and subsequent operations will be skipped
         skip_message: str | None = None
         for resource in reversed(plan):
             if skip_message is not None:
