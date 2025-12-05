@@ -379,12 +379,33 @@ class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
         return type(self)(forced_plans)
 
 
-class HTTPChangeResult(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource]):
+class ChangeResults(BaseDeployObject, Generic[T_ResourceId, T_DataModelResource], ABC):
     endpoint: DataModelEndpoint
     change: ResourceChange[T_ResourceId, T_DataModelResource]
+
+    @property
+    @abstractmethod
+    def message(self) -> str:
+        """Human-readable message about the change result."""
+        ...
+
+
+class HTTPChangeResult(ChangeResults[T_ResourceId, T_DataModelResource]):
     http_message: (
         SuccessResponseItems[T_ResourceId] | FailedResponseItems[T_ResourceId] | FailedRequestItems[T_ResourceId]
     )
+
+    @property
+    def message(self) -> str:
+        if isinstance(self.http_message, SuccessResponse):
+            return "Success"
+        elif isinstance(self.http_message, FailedResponseItems):
+            error = self.http_message.error
+            return f"Failed: {error.code} | {error.message}"
+        elif isinstance(self.http_message, FailedRequestItems):
+            return f"Request Failed: {self.http_message.message}"
+        else:
+            return "Unknown result"
 
 
 class ChangedFieldResult(BaseDeployObject, Generic[T_Reference]):
