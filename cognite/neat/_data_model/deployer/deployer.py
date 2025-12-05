@@ -290,18 +290,41 @@ class SchemaDeployer(OnSuccessResultProducer):
             AppliedChanges: The result of applying the changes.
         """
         applied_changes = AppliedChanges()
+        # Set if deployment fails
+        skip_message: str | None = None
         for resource in reversed(plan):
-            deletions = self._delete_items(resource)
-            applied_changes.deletions.extend(deletions)
+            if skip_message is not None:
+                applied_changes.skipped.extend(
+                    [
+                        NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=skip_message)
+                        for change in resource.to_delete
+                    ]
+                )
+            else:
+                deletions = self._delete_items(resource)
+                applied_changes.deletions.extend(deletions)
+                if any(not deletion.is_success for deletion in deletions):
+                    skip_message = f"Skipping due to {resource.endpoint} deletions failing."
 
         for resource in plan:
-            if isinstance(resource, ContainerDeploymentPlan):
-                applied_changes.changed_fields.extend(self._remove_container_constraints(resource))
-                applied_changes.changed_fields.extend(self._remove_container_indexes(resource))
+            if skip_message is not None:
+                applied_changes.skipped.extend(
+                    [
+                        NoOpChangeResult(endpoint=resource.endpoint, change=change, reason=skip_message)
+                        for change in resource.to_upsert
+                    ]
+                )
+                continue
+            else:
+                if isinstance(resource, ContainerDeploymentPlan):
+                    applied_changes.changed_fields.extend(self._remove_container_constraints(resource))
+                    applied_changes.changed_fields.extend(self._remove_container_indexes(resource))
 
-            creations, updated = self._upsert_items(resource)
-            applied_changes.created.extend(creations)
-            applied_changes.updated.extend(updated)
+                creations, updated = self._upsert_items(resource)
+                applied_changes.created.extend(creations)
+                applied_changes.updated.extend(updated)
+                if any(not change.is_success for change in creations + updated):
+                    skip_message = f"Skipping due to {resource.endpoint} upsert failing."
 
             applied_changes.unchanged.extend(
                 [
