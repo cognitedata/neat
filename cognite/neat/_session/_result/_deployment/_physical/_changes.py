@@ -171,30 +171,18 @@ class SerializedChanges(BaseModel):
 
     def _add_from_deployment(self, result: DeploymentResult) -> None:
         """Add changes from actual deployment.
-
         Args:
             result: The deployment result from actual deployment.
         """
         applied_changes = cast(AppliedChanges, result.responses)
-
-        # Process created resources
-        for response in applied_changes.created:
-            self.changes.append(SerializedResourceChange.from_change_result(len(self.changes), response))
-
-        # Process updated resources
-        for response in applied_changes.merged_updated:
-            self.changes.append(SerializedResourceChange.from_change_result(len(self.changes), response))
-
-        # Process deleted resources
-        for response in applied_changes.deletions:
-            self.changes.append(SerializedResourceChange.from_change_result(len(self.changes), response))
-
-        # Process unchanged resources
-        for response in applied_changes.unchanged:
-            self.changes.append(SerializedResourceChange.from_change_result(len(self.changes), response))
-
-        # Process skipped resources
-        for response in applied_changes.skipped:
+        all_responses = [
+            *applied_changes.created,
+            *applied_changes.merged_updated,
+            *applied_changes.deletions,
+            *applied_changes.unchanged,
+            *applied_changes.skipped,
+        ]
+        for response in all_responses:
             self.changes.append(SerializedResourceChange.from_change_result(len(self.changes), response))
 
     def model_dump_json_flat(self, **kwargs: Any) -> str:
