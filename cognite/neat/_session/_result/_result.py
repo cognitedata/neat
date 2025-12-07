@@ -28,4 +28,4 @@ class Result:
             serialized_result = serialize_deployment_result(self._result)
             return render("deployment", serialized_result)
         else:
-            return f"<p>Unable to serialize deployment result of type {type(self._result)}</p>"
+            raise NotImplementedError(f"HTML rendering for the result type {type(self._result)} is not implemented.")
