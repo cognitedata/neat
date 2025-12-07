@@ -134,40 +134,15 @@ class DeploymentStatistics(BaseModel):
         """
         applied_changes = cast(AppliedChanges, result.responses)
 
-        # Process created resources
-        for response in applied_changes.created:
-            self._update_single_stat(
-                endpoint=response.endpoint,
-                change_type=response.change.change_type if response.is_success else "failed",
-                severity=response.change.severity.name,
-            )
+        all_responses = [
+            *applied_changes.created,
+            *applied_changes.merged_updated,
+            *applied_changes.deletions,
+            *applied_changes.unchanged,
+            *applied_changes.skipped,
+        ]
 
-        # Process updated resources
-        for response in applied_changes.merged_updated:
-            self._update_single_stat(
-                endpoint=response.endpoint,
-                change_type=response.change.change_type if response.is_success else "failed",
-                severity=response.change.severity.name,
-            )
-
-        # Process deleted resources
-        for response in applied_changes.deletions:
-            self._update_single_stat(
-                endpoint=response.endpoint,
-                change_type=response.change.change_type if response.is_success else "failed",
-                severity=response.change.severity.name,
-            )
-
-        # Process unchanged resources
-        for response in applied_changes.unchanged:
-            self._update_single_stat(
-                endpoint=response.endpoint,
-                change_type=response.change.change_type if response.is_success else "failed",
-                severity=response.change.severity.name,
-            )
-
-        # Process skipped resources
-        for response in applied_changes.skipped:
+        for response in all_responses:
             self._update_single_stat(
                 endpoint=response.endpoint,
                 change_type=response.change.change_type if response.is_success else "failed",
