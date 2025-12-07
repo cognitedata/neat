@@ -48,19 +48,6 @@ JsonPath: TypeAlias = str  # e.g., 'properties.temperature', 'constraints.unique
 DataModelEndpoint: TypeAlias = Literal["spaces", "containers", "views", "datamodels", "instances"]
 
 
-def resource_id_to_endpoint(resource_id: T_ResourceId) -> DataModelEndpoint:
-    """Get the endpoint string for a given resource id."""
-    if isinstance(resource_id, SpaceReference):
-        return "spaces"
-    elif isinstance(resource_id, ContainerReference):
-        return "containers"
-    elif isinstance(resource_id, ViewReference):
-        return "views"
-    elif isinstance(resource_id, DataModelReference):
-        return "datamodels"
-    else:
-        raise ValueError(f"Unknown resource id type: {type(resource_id)}")
-
 class SeverityType(Enum):
     SAFE = 1
     WARNING = 2
