@@ -83,7 +83,7 @@ class DeploymentStatistics(BaseModel):
         """Total number of changes in the deployment."""
         return sum(endpoint_stats.total for endpoint_stats in self.by_endpoint.values())
 
-    def model_dump(self, **kwargs) -> dict[str, Any]:
+    def model_dump(self, **kwargs: Any) -> dict[str, Any]:
         """Include computed properties in serialization."""
         data = super().model_dump(**kwargs)
         data["total_changes"] = self.total_changes
