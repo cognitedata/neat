@@ -17,7 +17,9 @@ const STATUS_CONFIG = {
     success: { icon: '✅', text: 'Success' },
     failure: { icon: '❌', text: 'Failure' },
     partial: { icon: '⚠️', text: 'Partial Success' },
-    pending: { icon: '⏳', text: 'Pending (Dry Run)' }
+    pending: { icon: '⏳', text: 'Pending (Dry Run)' },
+    recovered: { icon: '🔄', text: 'Recovered' },
+    recovery_failed: { icon: '💔', text: 'Recovery Failed' }
 };
 
 // Initialize status badge
@@ -76,7 +78,7 @@ function renderChanges() {
     }
 
     listContainer.innerHTML = filtered.map(change => `
-        <div class="change-item">
+        <div class="change-item ${change.change_type === 'failed' ? 'failed-change' : ''}">
             <div class="change-header">
                 <span class="endpoint-badge endpoint-${change.endpoint}">${change.endpoint}</span>
                 <span class="change-type-badge change-${change.change_type}">${change.change_type}</span>
@@ -93,6 +95,21 @@ function renderChanges() {
                     `).join('')}
                 </div>
             ` : ''}
+            ${change.message ? (
+                change.change_type === 'failed' ? `
+                    <div class="error-message-box">
+                        <div class="error-message-header">
+                            <span class="error-icon">❌</span>
+                            <span class="error-title">Deployment Failed</span>
+                        </div>
+                        <div class="error-message-content">${change.message}</div>
+                    </div>
+                ` : `
+                    <div class="info-message-box info-message-${change.change_type}">
+                        <div class="info-message-content">${change.message}</div>
+                    </div>
+                `
+            ) : ''}
         </div>
     `).join('');
 }
