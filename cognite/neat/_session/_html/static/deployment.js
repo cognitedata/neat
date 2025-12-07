@@ -45,6 +45,24 @@ function updateTheme() {
     }
 }
 
+function renderChangeMessage(change) {
+    if (!change.message) return '';
+    if (change.change_type === 'failed') {
+        return `
+            <div class="error-message-box">
+                <div class="error-message-header">
+                    <span class="error-icon">❌</span>
+                    <span class="error-title">Deployment Failed</span>
+                </div>
+                <div class="error-message-content">${change.message}</div>
+            </div>`;
+    }
+    return `
+        <div class="info-message-box info-message-${change.change_type}">
+            <div class="info-message-content">${change.message}</div>
+        </div>`;
+}
+
 updateTheme();
 initializeStatus();
 
@@ -85,6 +103,7 @@ function renderChanges() {
                 <span class="severity-badge severity-${change.severity}">${change.severity}</span>
             </div>
             <div class="resource-id">${change.resource_id}</div>
+            
             ${change.changes.length > 0 ? `
                 <div class="field-changes">
                     ${change.changes.map(fc => `
@@ -95,21 +114,9 @@ function renderChanges() {
                     `).join('')}
                 </div>
             ` : ''}
-            ${change.message ? (
-                change.change_type === 'failed' ? `
-                    <div class="error-message-box">
-                        <div class="error-message-header">
-                            <span class="error-icon">❌</span>
-                            <span class="error-title">Deployment Failed</span>
-                        </div>
-                        <div class="error-message-content">${change.message}</div>
-                    </div>
-                ` : `
-                    <div class="info-message-box info-message-${change.change_type}">
-                        <div class="info-message-content">${change.message}</div>
-                    </div>
-                `
-            ) : ''}
+
+            ${renderChangeMessage(change)}
+
         </div>
     `).join('');
 }

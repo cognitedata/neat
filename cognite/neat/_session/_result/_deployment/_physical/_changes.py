@@ -1,4 +1,4 @@
-import json
+import itertools
 from typing import Any, cast
 
 from pydantic import BaseModel, Field
@@ -175,20 +175,22 @@ class SerializedChanges(BaseModel):
             result: The deployment result from actual deployment.
         """
         applied_changes = cast(AppliedChanges, result.responses)
-        all_responses = [
-            *applied_changes.created,
-            *applied_changes.merged_updated,
-            *applied_changes.deletions,
-            *applied_changes.unchanged,
-            *applied_changes.skipped,
-        ]
-        for response in all_responses:
+        for response in itertools.chain(
+            applied_changes.created,
+            applied_changes.merged_updated,
+            applied_changes.deletions,
+            applied_changes.unchanged,
+            applied_changes.skipped,
+        ):
             self.changes.append(SerializedResourceChange.from_change_result(len(self.changes), response))
 
     def model_dump_json_flat(self, **kwargs: Any) -> str:
         """Dump changes as JSON array without the wrapper key.
-
         Returns:
             JSON string of the changes array.
         """
-        return json.dumps([change.model_dump(**kwargs) for change in self.changes])
+        if not self.changes:
+            return "[]"
+
+        iterator = (change.model_dump_json(**kwargs) for change in self.changes)
+        return f"[{','.join(iterator)}]"

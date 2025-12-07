@@ -1,3 +1,4 @@
+import itertools
 from typing import Any, cast, get_args
 
 from pydantic import BaseModel, Field
@@ -134,15 +135,13 @@ class DeploymentStatistics(BaseModel):
         """
         applied_changes = cast(AppliedChanges, result.responses)
 
-        all_responses = [
-            *applied_changes.created,
-            *applied_changes.merged_updated,
-            *applied_changes.deletions,
-            *applied_changes.unchanged,
-            *applied_changes.skipped,
-        ]
-
-        for response in all_responses:
+        for response in itertools.chain(
+            applied_changes.created,
+            applied_changes.merged_updated,
+            applied_changes.deletions,
+            applied_changes.unchanged,
+            applied_changes.skipped,
+        ):
             self._update_single_stat(
                 endpoint=response.endpoint,
                 change_type=response.change.change_type if response.is_success else "failed",
