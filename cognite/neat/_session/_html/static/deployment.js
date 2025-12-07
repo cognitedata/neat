@@ -28,7 +28,7 @@ function initializeStatus() {
     const statusIcon = document.getElementById('statusIcon-' + uniqueId);
     const statusText = document.getElementById('statusText-' + uniqueId);
 
-    const statusConfig = STATUS_CONFIG[stats.status] || STATUS_CONFIG.pending;
+    const statusConfig = STATUS_CONFIG[deploymentStatus] || STATUS_CONFIG.pending;
     statusIcon.textContent = statusConfig.icon;
     statusText.textContent = statusConfig.text;
 }
@@ -147,8 +147,8 @@ document.getElementById('searchInput-' + uniqueId).addEventListener('input', fun
 window['exportDeployment_' + uniqueId] = function() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const report = {
-        status: stats.status,
-        is_dry_run: stats.is_dry_run,
+        status: deploymentStatus,
+        is_dry_run: is_dry_run === 'True',
         timestamp: timestamp,
         statistics: stats,
         changes: changes,
