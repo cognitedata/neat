@@ -19,7 +19,9 @@ def update_cognite_core_locally() -> None:
     assert len(models) == 1
     cognite_core = models[0]
     COGNITE_CORE_MODEL_YAML.write_text(
-        yaml.safe_dump(cognite_core.model_dump(mode="json", by_alias=True, exclude_unset=True), sort_keys=False),
+        yaml.safe_dump(
+            cognite_core.as_request().model_dump(mode="json", by_alias=True, exclude_unset=True), sort_keys=False
+        ),
         encoding=ENCODING,
     )
     print(f"Written Cognite Core data model to {COGNITE_CORE_MODEL_YAML.as_posix()!r}")
@@ -27,7 +29,9 @@ def update_cognite_core_locally() -> None:
     assert cognite_core.views is not None
     views = client.views.retrieve(cognite_core.views)
     COGNITE_CORE_VIEW_YAML.write_text(
-        yaml.safe_dump([view.model_dump(mode="json", by_alias=True, exclude_unset=True) for view in views]),
+        yaml.safe_dump(
+            [view.as_request().model_dump(mode="json", by_alias=True, exclude_unset=True) for view in views]
+        ),
         encoding=ENCODING,
     )
     print(f"Written Cognite Core views to {COGNITE_CORE_VIEW_YAML.as_posix()!r}")
@@ -36,7 +40,10 @@ def update_cognite_core_locally() -> None:
     containers_list = client.containers.retrieve(sorted(containers, key=str))  # Sort for consistent output
     COGNITE_CORE_CONTAINER_YAML.write_text(
         yaml.safe_dump(
-            [container.model_dump(mode="json", by_alias=True, exclude_unset=True) for container in containers_list]
+            [
+                container.as_request().model_dump(mode="json", by_alias=True, exclude_unset=True)
+                for container in containers_list
+            ]
         ),
         encoding=ENCODING,
     )
