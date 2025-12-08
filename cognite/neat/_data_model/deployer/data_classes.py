@@ -86,6 +86,12 @@ class PrimitiveField(FieldChange, ABC):
     def severity(self) -> SeverityType:
         return self.item_severity
 
+    @property
+    @abstractmethod
+    def description(self) -> str:
+        """Human-readable description of the change."""
+        ...
+
 
 class AddedField(PrimitiveField):
     new_value: BaseModelObject | str | int | float | bool | None
