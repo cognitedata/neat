@@ -40,22 +40,13 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-DATA-MODEL-001"
     issue_type = ConsistencyError
 
-    def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        limits: SchemaLimits,
-        modus_operandi: ModusOperandi = "additive",
-    ) -> None:
-        super().__init__(local_resources, cdf_resources, modus_operandi)
-        self.limits = limits
 
     def run(self) -> list[ConsistencyError]:
-        if len(self.data_model_view_references) > self.limits.data_models.views:
+        if len(self.validation_resources.local.data_model.views) > self.limits.data_models.views:
             return [
                 ConsistencyError(
                     message=(
-                        f"The data model references {len(self.data_model_view_references)} views, "
+                        f"The data model references {len(self.validation_resources.local.data_model.views)} views, "
                         "which exceeds the limit of "
                         f"{self.limits.data_models.views} views per data model."
                     ),
@@ -66,7 +57,6 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
 
 
 ### View level limits
-
 
 class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     """Validates that a view does not exceed the maximum number of properties.
@@ -85,30 +75,17 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-001"
     issue_type = ConsistencyError
 
-    def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        limits: SchemaLimits,
-        modus_operandi: ModusOperandi = "additive",
-    ) -> None:
-        super().__init__(local_resources, cdf_resources, modus_operandi)
-        self.limits = limits
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-        merged_views = self.merged_views
 
-        for view_ref in self.local_resources.views_by_reference.keys():
-            view = merged_views.get(view_ref)
-            if not view:
-                raise RuntimeError(f"View {view_ref!s} not found in merged views. This is a bug!")
+        for view_ref, properties in self.validation_resources.properties_by_view.items():
 
-            if view.properties and len(view.properties) > self.limits.views.properties:
+            if properties and len(properties) > self.limits.views.properties:
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"View {view.as_reference()!s} has {len(view.properties)} properties,"
+                            f"View {view_ref!s} has {len(properties)} properties,"
                             " which exceeds the limit of "
                             f"{self.limits.views.properties} properties per view."
                         ),
@@ -116,7 +93,7 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
                     )
                 )
 
-            elif not view.properties:
+            elif not properties:
                 errors.append(
                     ConsistencyError(
                         message=(
@@ -149,31 +126,19 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-002"
     issue_type = ConsistencyError
 
-    def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        limits: SchemaLimits,
-        modus_operandi: ModusOperandi = "additive",
-    ) -> None:
-        super().__init__(local_resources, cdf_resources, modus_operandi)
-        self.limits = limits
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
         merged_views = self.merged_views
 
         # Single loop over all views
-        for view_ref in self.local_resources.views_by_reference.keys():
-            view = merged_views.get(view_ref)
-            if not view:
-                raise RuntimeError(f"View {view_ref!s} not found in merged views. This is a bug!")
+        for view_ref, properties in self.validation_resources.properties_by_view.items():
 
-            if view.properties:
+            if properties:
                 count = len(
                     {
                         prop.container
-                        for prop in view.properties.values()
+                        for prop in properties.values()
                         if (isinstance(prop, ViewCorePropertyRequest) and prop.container)
                     }
                 )
@@ -209,31 +174,18 @@ class ViewImplementsCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-003"
     issue_type = ConsistencyError
 
-    def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        limits: SchemaLimits,
-        modus_operandi: ModusOperandi = "additive",
-    ) -> None:
-        super().__init__(local_resources, cdf_resources, modus_operandi)
-        self.limits = limits
 
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-        merged_views = self.merged_views
 
         # Single loop over all views
-        for view_ref in self.local_resources.views_by_reference.keys():
-            view = merged_views.get(view_ref)
-            if not view:
-                raise RuntimeError(f"View {view_ref!s} not found in merged views. This is a bug!")
+        for view_ref, ancestors in self.validation_resources.ancestors_by_view.items():
 
-            if view.implements and len(view.implements) > self.limits.views.implements:
+            if ancestors and len(ancestors) > self.limits.views.implements:
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"View {view_ref!s} implements {len(view.implements)} views,"
+                            f"View {view_ref!s} implements {len(ancestors)} views,"
                             " which exceeds the limit of"
                             f" {self.limits.views.implements} implemented views per view."
                         ),
@@ -264,22 +216,10 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-CONTAINER-001"
     issue_type = ConsistencyError
 
-    def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        limits: SchemaLimits,
-        modus_operandi: ModusOperandi = "additive",
-    ) -> None:
-        super().__init__(local_resources, cdf_resources, modus_operandi)
-        self.limits = limits
-
     def run(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
-        merged_containers = self.merged_containers
 
         # Single loop over all containers
-        for container_ref in self.local_resources.containers_by_reference.keys():
+        for container_ref, container in self.local_resources.containers_by_reference.keys():
             container = merged_containers.get(container_ref)
             if not container:
                 raise RuntimeError(f"Container {container_ref!s} not found in merged containers. This is a bug!")

@@ -249,6 +249,25 @@ class ValidationResources:
         return properties_mapping
 
     @cached_property
+    def referenced_containers(self) -> set[ContainerReference]:
+        """Get a set of all container references used by the views in the local data model."""
+
+        referenced_containers: set[ContainerReference] = set()
+
+        for view_ref in self.local.data_model.views:
+            view = self.select_view(view_ref)
+            if not view:
+                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
+
+            if not view.properties:
+                continue
+            for property_ in view.properties.values():
+                if isinstance(property_, ViewCorePropertyRequest):
+                    referenced_containers.add(property_.container)
+
+        return referenced_containers
+
+    @cached_property
     def reverse_to_direct_mapping(
         self,
     ) -> dict[tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]]:
