@@ -108,8 +108,10 @@ class ViewsAPI(NeatAPI):
         Returns:
             List of ViewResponse objects.
         """
-        if limit > 1000:
-            raise ValueError("Pagination is not (yet) supported for listing views. The maximum limit is 1000.")
+        if limit < 0:
+            raise ValueError("Limit must be non-negative.")
+        elif limit == 0:
+            return []
         parameters: dict[str, PrimitiveType] = {
             "allVersions": all_versions,
             "includeInheritedProperties": include_inherited_properties,

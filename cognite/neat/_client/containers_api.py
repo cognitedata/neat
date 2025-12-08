@@ -106,6 +106,10 @@ class ContainersAPI(NeatAPI):
         Returns:
             List of ContainerResponse objects.
         """
+        if limit < 0:
+            raise ValueError("Limit must be non-negative.")
+        elif limit == 0:
+            return []
         parameters: dict[str, PrimitiveType] = {"includeGlobal": include_global}
         if space is not None:
             parameters["space"] = space
