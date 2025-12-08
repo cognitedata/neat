@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, cast, get_args
+from typing import Any, Literal, cast, get_args
 
 from pydantic import BaseModel, Field
 
@@ -25,7 +25,7 @@ class EndpointStatistics(BaseModel):
         """Total number of changes for this endpoint."""
         return self.create + self.update + self.delete + self.skip + self.unchanged + self.failed
 
-    def increment(self, change_type: str) -> None:
+    def increment(self, change_type: Literal["create", "update", "delete", "unchanged", "skip", "failed"]) -> None:
         """Increment the count for a specific change type.
 
         Args:
@@ -33,6 +33,8 @@ class EndpointStatistics(BaseModel):
         """
         if hasattr(self, change_type):
             setattr(self, change_type, getattr(self, change_type) + 1)
+        else:
+            raise RuntimeError(f"Unknown change type: {change_type}. This is a bug in NEAT.")
 
 
 class ChangeTypeStatistics(BaseModel):
@@ -45,7 +47,7 @@ class ChangeTypeStatistics(BaseModel):
     unchanged: int = 0
     failed: int = 0
 
-    def increment(self, change_type: str) -> None:
+    def increment(self, change_type: Literal["create", "update", "delete", "unchanged", "skip", "failed"]) -> None:
         """Increment the count for a specific change type.
 
         Args:
@@ -53,6 +55,8 @@ class ChangeTypeStatistics(BaseModel):
         """
         if hasattr(self, change_type):
             setattr(self, change_type, getattr(self, change_type) + 1)
+        else:
+            raise RuntimeError(f"Unknown change type: {change_type}. This is a bug in NEAT.")
 
 
 class SeverityStatistics(BaseModel):
@@ -62,7 +66,7 @@ class SeverityStatistics(BaseModel):
     WARNING: int = 0
     BREAKING: int = 0
 
-    def increment(self, severity: str) -> None:
+    def increment(self, severity: Literal["SAFE", "WARNING", "BREAKING"]) -> None:
         """Increment the count for a specific severity level.
 
         Args:
@@ -70,6 +74,8 @@ class SeverityStatistics(BaseModel):
         """
         if hasattr(self, severity):
             setattr(self, severity, getattr(self, severity) + 1)
+        else:
+            raise RuntimeError(f"Unknown severity level: {severity}. This is a bug in NEAT.")
 
 
 class DeploymentStatistics(BaseModel):
@@ -124,7 +130,7 @@ class DeploymentStatistics(BaseModel):
                 self._update_single_stat(
                     endpoint=plan.endpoint,
                     change_type=resource.change_type,
-                    severity=resource.severity.name,
+                    severity=cast(Literal["SAFE", "WARNING", "BREAKING"], resource.severity.name),
                 )
 
     def _update_from_deployment(self, result: DeploymentResult) -> None:
@@ -145,10 +151,15 @@ class DeploymentStatistics(BaseModel):
             self._update_single_stat(
                 endpoint=response.endpoint,
                 change_type=response.change.change_type if response.is_success else "failed",
-                severity=response.change.severity.name,
+                severity=cast(Literal["SAFE", "WARNING", "BREAKING"], response.change.severity.name),
             )
 
-    def _update_single_stat(self, endpoint: str, change_type: str, severity: str) -> None:
+    def _update_single_stat(
+        self,
+        endpoint: str,
+        change_type: Literal["create", "update", "delete", "unchanged", "skip", "failed"],
+        severity: Literal["SAFE", "WARNING", "BREAKING"],
+    ) -> None:
         """Update all statistics for a single change.
 
         Args:
@@ -162,6 +173,8 @@ class DeploymentStatistics(BaseModel):
         # Update by endpoint statistics
         if endpoint in self.by_endpoint:
             self.by_endpoint[endpoint].increment(change_type)
+        else:
+            raise RuntimeError(f"Unknown endpoint: {endpoint}. This is a bug in NEAT.")
 
         # Update severity statistics
         self.by_severity.increment(severity)

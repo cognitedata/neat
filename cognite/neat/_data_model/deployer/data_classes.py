@@ -607,7 +607,7 @@ class DeploymentResult(BaseDeployObject):
 
     @property
     def is_dry_run(self) -> bool:
-        return self.status == "pending"
+        return self.responses is None
 
     @property
     def is_success(self) -> bool:

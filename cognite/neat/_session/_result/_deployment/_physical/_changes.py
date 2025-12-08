@@ -1,5 +1,5 @@
 import itertools
-from typing import Any, cast
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -144,10 +144,10 @@ class SerializedChanges(BaseModel):
         """
         serialized = cls()
 
-        if result.is_dry_run:
+        if not result.responses:
             serialized._add_from_dry_run(result)
         else:
-            serialized._add_from_deployment(result)
+            serialized._add_from_applied_changes(result.responses)
 
         return serialized
 
@@ -169,12 +169,11 @@ class SerializedChanges(BaseModel):
                 )
                 self.changes.append(serialized_resource_change)
 
-    def _add_from_deployment(self, result: DeploymentResult) -> None:
+    def _add_from_applied_changes(self, applied_changes: AppliedChanges) -> None:
         """Add changes from actual deployment.
         Args:
             result: The deployment result from actual deployment.
         """
-        applied_changes = cast(AppliedChanges, result.responses)
         for response in itertools.chain(
             applied_changes.created,
             applied_changes.merged_updated,
