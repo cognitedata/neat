@@ -12,6 +12,7 @@ from .data_classes import PagedResponse
 
 class ContainersAPI(NeatAPI):
     ENDPOINT = "/models/containers"
+    LIST_REQUEST_LIMIT = 1000
 
     def apply(self, items: Sequence[ContainerRequest]) -> list[ContainerResponse]:
         """Apply (create or update) containers in CDF.
@@ -93,33 +94,45 @@ class ContainersAPI(NeatAPI):
         self,
         space: str | None = None,
         include_global: bool = False,
-        limit: int = 10,
+        limit: int | None = 10,
     ) -> list[ContainerResponse]:
         """List containers in CDF Project.
 
         Args:
             space: If specified, only containers in this space are returned.
             include_global: If True, include global containers.
-            limit: Maximum number of containers to return. Max is 1000.
+            limit: Maximum number of containers to return. If None, return all containers.
 
         Returns:
             List of ContainerResponse objects.
         """
-        if limit > 1000:
-            raise ValueError("Pagination is not (yet) supported for listing containers. The maximum limit is 1000.")
-        parameters: dict[str, PrimitiveType] = {
-            "includeGlobal": include_global,
-            "limit": limit,
-        }
+        if limit is not None and limit < 0:
+            raise ValueError("Limit must be non-negative.")
+        elif limit is not None and limit == 0:
+            return []
+        parameters: dict[str, PrimitiveType] = {"includeGlobal": include_global}
         if space is not None:
             parameters["space"] = space
-        result = self._http_client.request_with_retries(
-            ParametersRequest(
-                endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                method="GET",
-                parameters=parameters,
+        cursor: str | None = None
+        container_responses: list[ContainerResponse] = []
+        while True:
+            if cursor is not None:
+                parameters["cursor"] = cursor
+            if limit is None:
+                parameters["limit"] = self.LIST_REQUEST_LIMIT
+            else:
+                parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(container_responses))
+            result = self._http_client.request_with_retries(
+                ParametersRequest(
+                    endpoint_url=self._config.create_api_url(self.ENDPOINT),
+                    method="GET",
+                    parameters=parameters,
+                )
             )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
-        return result.items
+            result.raise_for_status()
+            result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
+            container_responses.extend(result.items)
+            cursor = result.next_cursor
+            if cursor is None or (limit is not None and len(container_responses) >= limit):
+                break
+        return container_responses

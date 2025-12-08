@@ -2,6 +2,7 @@ import gzip
 import json
 from typing import Any
 
+import httpx
 import respx
 
 from cognite.neat._client import NeatClient
@@ -16,12 +17,17 @@ class TestViewsAPI:
         config = client.config
         respx_mock.get(
             config.create_api_url("/models/views"),
-        ).respond(
-            status_code=200,
-            json={
-                "items": [example_dms_view_response],
-                "nextCursor": None,
-            },
+        ).mock(
+            side_effect=[
+                httpx.Response(
+                    status_code=200,
+                    json={"items": [example_dms_view_response], "nextCursor": "next-cursor-value"},
+                ),
+                httpx.Response(
+                    status_code=200,
+                    json={"items": [], "nextCursor": None},
+                ),
+            ]
         )
         views = client.views.list(
             space="my_space", limit=10, all_versions=True, include_inherited_properties=True, include_global=False
@@ -30,12 +36,24 @@ class TestViewsAPI:
         assert views[0].space == "my_space"
         assert views[0].external_id == "MyView"
         assert views[0].version == "v1"
-        assert len(respx_mock.calls) == 1
+        assert len(respx_mock.calls) == 2
         call = respx_mock.calls[0]
-        assert (
-            str(call.request.url.params)
-            == "allVersions=true&includeInheritedProperties=true&includeGlobal=false&limit=10&space=my_space"
-        )
+        assert dict(call.request.url.params) == {
+            "space": "my_space",
+            "limit": "10",
+            "allVersions": "true",
+            "includeInheritedProperties": "true",
+            "includeGlobal": "false",
+        }
+        call = respx_mock.calls[1]
+        assert dict(call.request.url.params) == {
+            "space": "my_space",
+            "limit": "9",
+            "allVersions": "true",
+            "includeInheritedProperties": "true",
+            "includeGlobal": "false",
+            "cursor": "next-cursor-value",
+        }
 
     def test_list_without_space(
         self, neat_client: NeatClient, respx_mock: respx.MockRouter, example_dms_view_response: dict[str, Any]
