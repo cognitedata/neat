@@ -13,6 +13,7 @@ from .data_classes import PagedResponse
 
 class ViewsAPI(NeatAPI):
     ENDPOINT = "/models/views"
+    LIST_REQUEST_LIMIT = 1000
 
     def apply(self, items: Sequence[ViewRequest]) -> list[ViewResponse]:
         """Create or update views in CDF Project.
@@ -113,17 +114,26 @@ class ViewsAPI(NeatAPI):
             "allVersions": all_versions,
             "includeInheritedProperties": include_inherited_properties,
             "includeGlobal": include_global,
-            "limit": limit,
         }
         if space is not None:
             parameters["space"] = space
-        result = self._http_client.request_with_retries(
-            ParametersRequest(
-                endpoint_url=self._config.create_api_url(self.ENDPOINT),
-                method="GET",
-                parameters=parameters,
+        cursor: str | None = None
+        view_responses: list[ViewResponse] = []
+        while True:
+            if cursor is not None:
+                parameters["cursor"] = cursor
+            parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(view_responses))
+            result = self._http_client.request_with_retries(
+                ParametersRequest(
+                    endpoint_url=self._config.create_api_url(self.ENDPOINT),
+                    method="GET",
+                    parameters=parameters,
+                )
             )
-        )
-        result.raise_for_status()
-        result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
-        return result.items
+            result.raise_for_status()
+            result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
+            view_responses.extend(result.items)
+            cursor = result.next_cursor
+            if cursor is None or len(view_responses) >= limit:
+                break
+        return view_responses
