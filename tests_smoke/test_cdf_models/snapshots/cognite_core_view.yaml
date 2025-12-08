@@ -57,7 +57,7 @@
         space: cdf_cdm
         type: container
       containerPropertyIdentifier: source
-      description: Direct relation to a source system
+      description: This is a test to check that the smoke tests picks up changes.
       name: null
       source:
         externalId: CogniteSourceSystem
