@@ -30,7 +30,7 @@ from ._ai_readiness import (
     ViewPropertyMissingDescription,
     ViewPropertyMissingName,
 )
-from ._base import CDFResources, LocalResources, ValidationResources
+from ._base import CDFResources, DataModelValidator, LocalResources, ValidationResources
 from ._connections import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
@@ -58,17 +58,19 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
     def __init__(
         self,
-        client: NeatClient | None = None,
+        cdf_resources: CDFResources,
+        limits: SchemaLimits | None = None,
         modus_operandi: ModusOperandi = "additive",
         can_run_validator: Callable[[str, type], bool] | None = None,
     ) -> None:
         super().__init__()
-        self._client = client
+        self._cdf_resources = cdf_resources
+        self._limits = limits or SchemaLimits()
         self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
         self._modus_operandi = modus_operandi
         self._has_run = False
 
-    def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources, SchemaLimits]:
+    def _gather_validation_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources, SchemaLimits]:
         """Gather local and CDF resources needed for validation."""
 
 
@@ -76,25 +78,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
                                views = {view.as_reference(): view for view in data_model.data_model.views},
                                containers = {container.as_reference(): container for container in data_model.data_model.containers})
 
-
-        cdf_views_by_reference = self._cdf_view_by_reference(
-            list(analysis.referenced_views(include_connection_end_node_types=True)),
-            include_inherited_properties=True,
-        )
-        cdf_ancestors_by_view_reference = analysis.ancestors_by_view(list(cdf_views_by_reference.values()))
-        cdf_containers_by_reference = self._cdf_container_by_reference(
-            list(self._referenced_containers(local_views_by_reference, cdf_views_by_reference))
-        )
-        cdf_data_model_views = self._cdf_data_model_views(data_model.data_model.as_reference())
-
-        cdf_resources = CDFResources(
-            views_by_reference=cdf_views_by_reference,
-            ancestors_by_view_reference=cdf_ancestors_by_view_reference,
-            containers_by_reference=cdf_containers_by_reference,
-            data_model_views=cdf_data_model_views,
-        )
-
-        return local_resources, cdf_resources, self._cdf_limits()
+        return ValidationResources(modus_operandi=self._modus_operandi, local=local, cdf=self._cdf_resources, limits=self._limits)
 
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
