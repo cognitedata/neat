@@ -30,7 +30,7 @@ from ._ai_readiness import (
     ViewPropertyMissingDescription,
     ViewPropertyMissingName,
 )
-from ._base import CDFResources, DataModelValidator, LocalResources
+from ._base import CDFResources, LocalResources, ValidationResources
 from ._connections import (
     ConnectionValueTypeUndefined,
     ConnectionValueTypeUnexisting,
@@ -71,26 +71,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
     def _gather_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources, SchemaLimits]:
         """Gather local and CDF resources needed for validation."""
 
-        analysis = DataModelAnalysis(data_model)
 
-        local_views_by_reference = analysis.view_by_reference(include_inherited_properties=True)
-        local_ancestors_by_view_reference = analysis.ancestors_by_view(list(local_views_by_reference.values()))
-        local_reverse_to_direct_mapping = analysis.reverse_to_direct_mapping
-        local_containers_by_reference = analysis.container_by_reference
-        local_data_model_views = set(data_model.data_model.views) if data_model.data_model.views else set()
+        local = LocalResources(data_model=data_model.data_model,
+                               views = {view.as_reference(): view for view in data_model.data_model.views},
+                               containers = {container.as_reference(): container for container in data_model.data_model.containers})
 
-        local_resources = LocalResources(
-            data_model_description=data_model.data_model.description,
-            data_model_name=data_model.data_model.name,
-            data_model_reference=data_model.data_model.as_reference(),
-            views_by_reference=local_views_by_reference,
-            properties_by_view=analysis.properties_by_view,
-            ancestors_by_view_reference=local_ancestors_by_view_reference,
-            reverse_to_direct_mapping=local_reverse_to_direct_mapping,
-            containers_by_reference=local_containers_by_reference,
-            connection_end_node_types=analysis.connection_end_node_types,
-            data_model_views=local_data_model_views,
-        )
 
         cdf_views_by_reference = self._cdf_view_by_reference(
             list(analysis.referenced_views(include_connection_end_node_types=True)),

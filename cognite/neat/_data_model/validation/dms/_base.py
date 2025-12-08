@@ -1,19 +1,29 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import chain
-from typing import ClassVar, TypeAlias, cast
+from typing import ClassVar, TypeAlias
 
 from pyparsing import cached_property
 
 from cognite.neat._data_model.models.dms._container import ContainerRequest
+from cognite.neat._data_model.models.dms._data_model import DataModelRequest
+from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import (
     ContainerDirectReference,
     ContainerReference,
     DataModelReference,
+    SpaceReference,
     ViewDirectReference,
     ViewReference,
 )
-from cognite.neat._data_model.models.dms._view_property import ViewRequestProperty
+from cognite.neat._data_model.models.dms._space import SpaceRequest
+from cognite.neat._data_model.models.dms._view_property import (
+    EdgeProperty,
+    ReverseDirectRelationProperty,
+    ViewCorePropertyRequest,
+    ViewRequestProperty,
+)
 from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._issues import ConsistencyError, Recommendation
 from cognite.neat._utils.useful_types import ModusOperandi
@@ -29,80 +39,108 @@ ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReferenc
 
 
 @dataclass
-class LocalResources:
+class CDFResources:
     """Local data model resources."""
 
-    data_model_reference: DataModelReference
-    data_model_views: set[ViewReference]
-    data_model_description: str | None
-    data_model_name: str | None
-    views_by_reference: ViewsByReference
-    properties_by_view: dict[ViewReference, dict[str, ViewRequestProperty]]
-    ancestors_by_view_reference: AncestorsByReference
-    reverse_to_direct_mapping: ReverseToDirectMapping
-    containers_by_reference: ContainersByReference
-    connection_end_node_types: ConnectionEndNodeTypes
+    data_models: dict[DataModelReference, DataModelRequest]
+    views: dict[ViewReference, ViewRequest]
+    containers: dict[ContainerReference, ContainerRequest]
+    spaces: dict[SpaceReference, SpaceRequest]
 
 
 @dataclass
-class CDFResources:
-    """CDF resources."""
+class LocalResources:
+    """Local data model resources."""
 
-    views_by_reference: ViewsByReference
-    ancestors_by_view_reference: AncestorsByReference
-    containers_by_reference: ContainersByReference
-    data_model_views: set[ViewReference]
+    data_model: DataModelRequest
+    views: dict[ViewReference, ViewRequest]
+    containers: dict[ContainerReference, ContainerRequest]
 
 
-class DataModelValidator(ABC):
-    """Assessors for fundamental data model principles."""
-
-    code: ClassVar[str]
-    issue_type: ClassVar[type[ConsistencyError] | type[Recommendation]]
-
+class ValidationResources:
     def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        modus_operandi: ModusOperandi = "additive",
+        self, modus_operandi: ModusOperandi, local: LocalResources, cdf: CDFResources, limits: SchemaLimits
     ) -> None:
-        self.local_resources = local_resources
-        self.cdf_resources = cdf_resources
-        self.modus_operandi = modus_operandi
+        self.local = local
+        self.cdf = cdf
+        self.limits = limits
+        self._modus_operandi = modus_operandi
 
-    @abstractmethod
-    def run(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:
-        """Execute the success handler on the data model."""
-        # do something with data model
-        ...
+        # Update local resources based on modus operandi
+        self._update_local_resources()
 
-    def _select_view_with_property(self, view_ref: ViewReference, property_: str) -> ViewRequest | None:
-        """Select the appropriate view (local or CDF) that contains desired property.
+    def _update_local_resources(self) -> None:
+        """Updates local resource definition with CDF resources for validation based on modus operandi.
 
-        Prioritizes views that contain the property  (first local than CDF),
-        then falls back to any available view (even without the property).
-
-        Args:
-            view_ref: Reference to the view.
-            property_: Property name to look for.
-
-        Returns:
-            The selected ViewRequest if found, else None.
-
-        !! note "Behavior based on modus operandi"
-            - In "additive" modus operandi, local and CDF view will be considered irrirespective of their space.
-            - In "rebuild" modus operandi, local views will be considered irrispective of their space, while CDF views
-              will only be considered if they belong to the different space than the local data model space
-              (as they are considered external resources that is managed under other data model/schema space).
-
+        In "rebuild" mode, local resources are considered complete and no updates are made.
+        In "additive" mode:
+            - Local data model is updated to include views from CDF data model.
+            - Local views are updated to include properties and implements from CDF views.
+            - Local containers are updated to include properties from CDF containers.
         """
 
-        local_view = self.local_resources.views_by_reference.get(view_ref)
+        # Local schema is complete, so local schema resources are not undergoing any changes
+        if self._modus_operandi == "rebuild":
+            return None
+
+        # Local schema is partial, meaning we are adding to existing schema in CDF
+        elif self._modus_operandi == "additive":
+            self._update_local_data_model()
+            self._update_local_views()
+            self._update_local_containers()
+        else:
+            raise RuntimeError(f"Unknown modus operandi: {self._modus_operandi}. This is a bug!")
+
+    def _update_local_data_model(self) -> None:
+        if cdf := self.cdf.data_models.get(self.local.data_model.as_reference()):
+            for view in cdf.views:
+                if view not in self.local.data_model.views:
+                    self.local.data_model.views.append(view)
+
+    def _update_local_views(self) -> None:
+        # update local views with additional properties and implements from CDF views
+
+        for view_ref, view in self.local.views.items():
+            if cdf_view := self.cdf.views.get(view_ref):
+                # update properties
+                for prop_name, prop in cdf_view.properties.items():
+                    if prop_name not in view.properties:
+                        view.properties[prop_name] = prop
+
+                # update implements
+                if cdf_view.implements:
+                    if not view.implements:
+                        view.implements = cdf_view.implements
+                    else:
+                        for impl in cdf_view.implements:
+                            if impl not in view.implements:
+                                view.implements.append(impl)
+
+        # as we have updated view references in local data model, we need to ensure that any new views
+        # from CDF are also added to local views for validation
+        for view_ref in self.local.data_model.views:
+            if view_ref not in self.local.views:
+                if cdf_view := self.cdf.views.get(view_ref):
+                    self.local.views[view_ref] = cdf_view
+
+    def _update_local_containers(self) -> None:
+        # update local containers definitions with additional properties from CDF containers
+        for container_ref, container in self.local.containers.items():
+            if cdf_container := self.cdf.containers.get(container_ref):
+                for prop_name, prop in cdf_container.properties.items():
+                    if prop_name not in container.properties:
+                        container.properties[prop_name] = prop
+
+    def select_view(self, view_ref: ViewReference, property_: str | None = None) -> ViewRequest | None:
+        local_view = self.local.views.get(view_ref)
         cdf_view = (
-            self.cdf_resources.views_by_reference.get(view_ref)
-            if view_ref.space != self.local_resources.data_model_reference.space or self.modus_operandi == "additive"
+            self.cdf.views.get(view_ref)
+            if view_ref.space != self.local.data_model.space or self._modus_operandi == "additive"
             else None
         )
+
+        if property_ is None:
+            return local_view or cdf_view
 
         # Try views with the property first, then any available view
         candidates = chain(
@@ -112,37 +150,18 @@ class DataModelValidator(ABC):
 
         return next(candidates, None)
 
-    def _select_container_with_property(
-        self, container_ref: ContainerReference, property_: str
+    def select_container(
+        self, container_ref: ContainerReference, property_: str | None = None
     ) -> ContainerRequest | None:
-        """Select the appropriate container (local or CDF) that contains the desired property.
-
-        Prioritizes containers that contain the property (first local than CDF),
-        then falls back to any available container.
-
-        Args:
-            container_ref: Reference to the container.
-            property_: Property name to look for.
-
-        Returns:
-            The selected ContainerRequest if found, else None.
-
-        !! note "Behavior based on modus operandi"
-            - In "additive" modus operandi, local and CDF containers will be considered irrirespective of their space.
-            - In "rebuild" modus operandi, local containers will be considered irrispective of their space, while CDF
-              containers will only be considered if they belong to the different space than the local data model space
-              (as they are considered external resources that is managed under other data model/schema space).
-
-        """
-        local_container = self.local_resources.containers_by_reference.get(container_ref)
-        cdf_container = self.cdf_resources.containers_by_reference.get(container_ref)
-
+        local_container = self.local.containers.get(container_ref)
         cdf_container = (
-            self.cdf_resources.containers_by_reference.get(container_ref)
-            if container_ref.space != self.local_resources.data_model_reference.space
-            or self.modus_operandi == "additive"
+            self.cdf.containers.get(container_ref)
+            if container_ref.space != self.local.data_model.space or self._modus_operandi == "additive"
             else None
         )
+
+        if property_ is None:
+            return local_container or cdf_container
 
         # Try containers with the property first, then any available container
         candidates = chain(
@@ -153,197 +172,169 @@ class DataModelValidator(ABC):
         return next(candidates, None)
 
     @cached_property
-    def data_model_view_references(self) -> set[ViewReference]:
-        """Get all data model view references to validate based on deployment mode.
-
-        In "rebuild" mode, returns only local data model view references.
-        In "additive" mode, returns union of local and CDF data model view references.
+    def ancestors_by_view(self) -> dict[ViewReference, list[ViewReference]]:
+        """
+        Create a mapping of each view to its list of ancestors.
 
         Returns:
-            Set of ViewReference objects representing all data model views to validate.
+            Dictionary mapping each ViewReference to its list of ancestor ViewReferences
         """
-        return (
-            self.local_resources.data_model_views.union(self.cdf_resources.data_model_views)
-            if self.modus_operandi == "additive"
-            else self.local_resources.data_model_views
-        )
+        ancestors_mapping: dict[ViewReference, list[ViewReference]] = {}
+        for view in self.local.data_model.views.keys():
+            ancestors_mapping[view] = self.view_ancestors(view)
+        return ancestors_mapping
+
+    def view_ancestors(
+        self, offspring: ViewReference, ancestors: list[ViewReference] | None = None
+    ) -> list[ViewReference]:
+        """
+        Recursively find all ancestors of a given view by traversing the implements hierarchy.
+        Handles branching to explore all possible ancestor paths.
+
+        Args:
+            offspring: The view to find ancestors for
+            ancestors: Accumulated list of ancestors (used internally for recursion)
+
+        Returns:
+            List of all ancestor ViewReferences
+        """
+        if ancestors is None:
+            ancestors = []
+
+        # Determine which view definition to use based on space and modus operandi
+
+        view_definition = self.select_view(offspring)
+
+        # Base case: no view definition or no implements
+        if not view_definition or not view_definition.implements:
+            return ancestors
+
+        # Explore all parent branches
+        for parent in view_definition.implements:
+            if parent not in ancestors:
+                ancestors.append(parent)
+                # Recursively explore this branch
+                self.view_ancestors(parent, ancestors)
+
+        return ancestors
+
+    def is_ancestor(self, offspring: ViewReference, ancestor: ViewReference) -> bool:
+        return ancestor in self.ancestors_by_view.get(offspring, set())
 
     @cached_property
-    def views_references(self) -> set[ViewReference]:
-        """Get all view references to validate based on deployment mode.
+    def properties_by_view(self) -> dict[ViewReference, dict[str, ViewRequestProperty]]:
+        """Get a mapping of view references to their corresponding properties, both directly defined and inherited
+        from ancestor views through implements."""
 
-        In "rebuild" mode, returns only local view references.
-        In "additive" mode, returns union of local and CDF view references.
+        properties_mapping: dict[ViewReference, dict[str, ViewRequestProperty]] = {}
+        for view_ref in self.local.data_model.views:
+            view = self.select_view(view_ref)
+            if not view:
+                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
 
-        Returns:
-            Set of ViewReference objects representing all views to validate.
-        """
+            combined_properties: dict[str, ViewRequestProperty] = {}
+            ancestors = self.ancestors_by_view.get(view_ref, [])
+            # Start with properties from ancestor views
+            for ancestor_ref in reversed(ancestors):
+                ancestor_view = self.select_view(ancestor_ref)
+                if ancestor_view:
+                    combined_properties.update(ancestor_view.properties)
 
-        return (
-            set(self.local_resources.views_by_reference.keys()).union(set(self.cdf_resources.views_by_reference.keys()))
-            if self.modus_operandi == "additive"
-            else set(self.local_resources.views_by_reference.keys())
-        )
+            # Finally, add properties from the current view, overriding any inherited ones
+            if view.properties:
+                combined_properties.update(view.properties)
 
-    @cached_property
-    def container_references(self) -> set[ContainerReference]:
-        """Get all container references to validate based on deployment mode.
+            properties_mapping[view_ref] = combined_properties
 
-        In "rebuild" mode, returns only local container references.
-        In "additive" mode, returns union of local and CDF container references.
-
-        Returns:
-            Set of ContainerReference objects representing all containers to validate.
-        """
-
-        return (
-            set(self.local_resources.containers_by_reference.keys()).union(
-                set(self.cdf_resources.containers_by_reference.keys())
-            )
-            if self.modus_operandi == "additive"
-            else set(self.local_resources.containers_by_reference.keys())
-        )
+        return properties_mapping
 
     @cached_property
-    def merged_views(self) -> dict[ViewReference, ViewRequest]:
-        """Get views with merged properties and implements for accurate limit checking.
+    def reverse_to_direct_mapping(
+        self,
+    ) -> dict[tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]]:
+        """Get a mapping of reverse direct relations to their corresponding source view and 'through' property."""
 
-        In "rebuild" mode, returns only local views.
-        In "additive" mode, merges local and CDF views by:
-        - Combining properties from both versions (local overrides CDF)
-        - Combining implements lists (union, no duplicates)
-        - Using CDF view as base if it exists, otherwise local view
+        bidirectional_connections = {}
 
-        This ensures limit validation accounts for the actual deployed state
-        in additive deployments.
+        for view_ref in self.local.data_model.views:
+            view = self.select_view(view_ref)
+            if not view:
+                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
 
-        Returns:
-            Dictionary mapping ViewReference to merged ViewRequest objects.
+            if not view.properties:
+                continue
+            for prop_ref, property_ in view.properties.items():
+                # reverse direct relation
+                if isinstance(property_, ReverseDirectRelationProperty):
+                    bidirectional_connections[(view_ref, prop_ref)] = (
+                        property_.source,
+                        property_.through,
+                    )
 
-        Raises:
-            RuntimeError: If a referenced view is not found in either local or CDF resources.
-        """
+        return bidirectional_connections
 
-        merged_views: dict[ViewReference, ViewRequest] = {}
+    @property
+    def connection_end_node_types(self) -> dict[tuple[ViewReference, str], ViewReference | None]:
+        """Get a mapping of view references to their corresponding ViewRequest objects."""
 
-        # Merge local views, combining properties if view exists in both
-        # if rebuild mode , self.view_references returns only local views ref
-        for view_ref in self.views_references:
-            cdf_view = self.cdf_resources.views_by_reference.get(view_ref)
-            local_view = self.local_resources.views_by_reference.get(view_ref)
+        connection_end_node_types: dict[tuple[ViewReference, str], ViewReference | None] = {}
 
-            if self.modus_operandi == "additive" and not cdf_view and not local_view:
-                raise RuntimeError(f"View {view_ref!s} not found in either local or CDF resources. This is a bug!")
-            elif self.modus_operandi == "rebuild" and not local_view:
-                raise RuntimeError(f"View {view_ref!s} not found in local resources. This is a bug!")
+        for view_ref in self.local.data_model.views:
+            view = self.select_view(view_ref)
+            if not view:
+                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
 
-            merged_views[view_ref] = cast(ViewRequest, (cdf_view or local_view)).model_copy(deep=True)
+            if not view.properties:
+                continue
 
-            # in additive mode, we start off with CDF view as base , which we will update with local
-            if (
-                self.modus_operandi == "additive"
-                or cast(ViewRequest, local_view).space != self.local_resources.data_model_reference.space
-            ):
-                merged_views[view_ref] = cast(ViewRequest, (cdf_view or local_view)).model_copy(deep=True)
+            for prop_ref, property_ in view.properties.items():
+                # direct relation
+                if isinstance(property_, ViewCorePropertyRequest):
+                    # explicit set of end node type via 'source' which is View reference
+                    if property_.source:
+                        connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
-            # rebuild mode
-            else:
-                merged_views[view_ref] = cast(ViewRequest, local_view).model_copy(deep=True)
+                    # implicit end node type via container property, without actual knowledge of end node type
+                    elif (
+                        (
+                            container := self.select_container(
+                                (property_.container, property_.container_property_identifier)
+                            )
+                        )
+                        and (property_.container_property_identifier in container.properties)
+                        and (
+                            isinstance(
+                                container.properties[property_.container_property_identifier].type, DirectNodeRelation
+                            )
+                        )
+                    ):
+                        connection_end_node_types[(view_ref, prop_ref)] = None
 
-            # this will later update of local properties and implements
-            if local_view and local_view.properties:
-                if not merged_views[view_ref].properties:
-                    merged_views[view_ref].properties = local_view.properties
-                else:
-                    merged_views[view_ref].properties.update(local_view.properties)
+                # reverse direct relation
+                elif isinstance(property_, ReverseDirectRelationProperty) and property_.source:
+                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
-            # Special handling for properties which originates from implements
+                # edge property
+                elif isinstance(property_, EdgeProperty) and property_.source:
+                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
-            if local_view and local_view.implements:
-                if not merged_views[view_ref].implements:
-                    merged_views[view_ref].implements = local_view.implements
-                else:  # mypy is complaining here about possible None which is not possible due to the check above
-                    for impl in local_view.implements:
-                        if impl not in cast(list[ViewReference], merged_views[view_ref].implements):
-                            cast(list[ViewReference], merged_views[view_ref].implements).append(impl)
+        return connection_end_node_types
 
-                # this handles an edge case where view is defined locally, implements another view, which is not
-                # present locally, but only in CDF, this could be typically the case when we define a view which
-                # implements a Core Data Model view, while not defining any of its own properties (not uncommon)
-                # locally in for example Excel sheets
-                for implement in local_view.implements:
-                    if cdf_implement_view := self.cdf_resources.views_by_reference.get(implement):
-                        # in rebuild mode, we skip CDF views from the same space as rebuild mode is supposed to
-                        # rebuild everything from local resources only, but we still need to merge in properties
-                        # from CDF implements from other spaces
-                        if (
-                            self.modus_operandi == "rebuild"
-                            and cdf_implement_view.space == self.local_resources.data_model_reference.space
-                        ):
-                            continue
 
-                        for prop_name, prop in cdf_implement_view.properties.items():
-                            if merged_views[view_ref].properties and prop_name not in merged_views[view_ref].properties:
-                                merged_views[view_ref].properties[prop_name] = prop
-                            elif not merged_views[view_ref].properties:
-                                merged_views[view_ref].properties = {prop_name: prop}
+class DataModelValidator(ABC):
+    """Assessors for fundamental data model principles."""
 
-        return merged_views
+    code: ClassVar[str]
+    issue_type: ClassVar[type[ConsistencyError] | type[Recommendation]]
 
-    @cached_property
-    def merged_containers(self) -> dict[ContainerReference, ContainerRequest]:
-        """Get containers with merged properties for accurate limit checking.
+    def __init__(
+        self,
+        validation_resources: ValidationResources,
+    ) -> None:
+        self.validation_resources = validation_resources
 
-        In "rebuild" mode, returns only local containers.
-        In "additive" mode, merges local and CDF containers by:
-        - Combining properties from both versions (local overrides CDF)
-        - Using CDF container as base if it exists, otherwise local container
-
-        This ensures limit validation accounts for the actual deployed state
-        in additive deployments.
-
-        Returns:
-            Dictionary mapping ContainerReference to merged ContainerRequest objects.
-
-        Raises:
-            RuntimeError: If a referenced container is not found in either local or CDF resources.
-        """
-
-        merged_containers: dict[ContainerReference, ContainerRequest] = {}
-        # Merge local containers, combining properties if container exists in both
-        for container_ref in self.container_references:
-            cdf_container = self.cdf_resources.containers_by_reference.get(container_ref)
-            local_container = self.local_resources.containers_by_reference.get(container_ref)
-
-            if self.modus_operandi == "additive" and not cdf_container and not local_container:
-                raise RuntimeError(
-                    f"Container {container_ref!s} not found in either local or CDF resources. This is a bug!"
-                )
-            elif self.modus_operandi == "rebuild" and not local_container:
-                raise RuntimeError(f"Container {container_ref!s} not found in local resources. This is a bug!")
-
-            # in additive mode, we start off with CDF container as base , which we will update with local
-            if (
-                self.modus_operandi == "additive"
-                or cast(ContainerRequest, local_container).space != self.local_resources.data_model_reference.space
-            ):
-                merged_containers[container_ref] = cast(
-                    ContainerRequest, (cdf_container or local_container)
-                ).model_copy(deep=True)
-
-            else:  # rebuild mode
-                merged_containers[container_ref] = cast(ContainerRequest, local_container).model_copy(deep=True)
-
-            if local_container and local_container.properties:
-                if not merged_containers[container_ref].properties:
-                    merged_containers[container_ref].properties = local_container.properties
-                else:
-                    merged_containers[container_ref].properties.update(local_container.properties)
-
-        return merged_containers
-
-    def _is_ancestor_of_target(self, potential_ancestor: ViewReference, target_view_ref: ViewReference) -> bool:
-        """Check if a view is an ancestor of the target view."""
-        return potential_ancestor in self.local_resources.ancestors_by_view_reference.get(
-            target_view_ref, set()
-        ) or potential_ancestor in self.cdf_resources.ancestors_by_view_reference.get(target_view_ref, set())
+    @abstractmethod
+    def run(self) -> list[ConsistencyError] | list[Recommendation] | list[ConsistencyError | Recommendation]:
+        """Execute the success handler on the data model."""
+        # do something with data model
+        ...

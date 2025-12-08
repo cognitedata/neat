@@ -24,6 +24,8 @@ class NeatStore:
         self.provenance = Provenance()
         self.state: State = EmptyState()
 
+        # CDF resources
+
     def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
         """Read object from the store"""
         self._can_agent_do_activity(reader)
