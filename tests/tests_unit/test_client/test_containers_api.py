@@ -2,6 +2,7 @@ import gzip
 import json
 from typing import Any
 
+import httpx
 import respx
 
 from cognite.neat._client import NeatClient
@@ -14,22 +15,45 @@ class TestContainersAPI:
     ) -> None:
         client = neat_client
         config = client.config
+        cursor = "next-cursor-value"
         respx_mock.get(
             config.create_api_url("/models/containers"),
-        ).respond(
-            status_code=200,
-            json={
-                "items": [example_dms_container_response],
-                "nextCursor": None,
-            },
+        ).mock(
+            side_effect=[
+                httpx.Response(
+                    status_code=200,
+                    json={
+                        "items": [example_dms_container_response],
+                        "nextCursor": cursor,
+                    },
+                ),
+                httpx.Response(
+                    status_code=200,
+                    json={
+                        "items": [],
+                        "nextCursor": None,
+                    },
+                ),
+            ]
         )
         containers = client.containers.list(space="my_space", limit=50, include_global=True)
         assert len(containers) == 1
         assert containers[0].space == "my_space"
         assert containers[0].external_id == "MyContainer"
-        assert len(respx_mock.calls) == 1
+        assert len(respx_mock.calls) == 2
         call = respx_mock.calls[0]
-        assert str(call.request.url.params) == "includeGlobal=true&limit=50&space=my_space"
+        assert dict(call.request.url.params) == {
+            "includeGlobal": "true",
+            "limit": "50",
+            "space": "my_space",
+        }
+        call = respx_mock.calls[1]
+        assert dict(call.request.url.params) == {
+            "includeGlobal": "true",
+            "limit": "49",
+            "space": "my_space",
+            "cursor": cursor,
+        }
 
     def test_list_without_space(
         self, neat_client: NeatClient, respx_mock: respx.MockRouter, example_dms_container_response: dict[str, Any]
