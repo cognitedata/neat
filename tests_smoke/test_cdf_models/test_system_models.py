@@ -9,9 +9,7 @@ from cognite.neat._data_model.deployer.data_classes import FieldChange, FieldCha
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
-    ContainerResponse,
     DataModelRequest,
-    DataModelResponse,
     ViewReference,
     ViewRequest,
     ViewResponse,
@@ -59,50 +57,46 @@ def current_cognite_core_containers(
     return {container.as_reference(): container.as_request() for container in containers}
 
 
-def local_views() -> list[ViewResponse]:
+def local_views() -> list[ViewRequest]:
     return [
-        ViewResponse.model_validate(item)
-        for item in yaml.safe_load(COGNITE_CORE_VIEW_YAML.read_text(encoding=ENCODING))
+        ViewRequest.model_validate(item) for item in yaml.safe_load(COGNITE_CORE_VIEW_YAML.read_text(encoding=ENCODING))
     ]
 
 
-def local_containers() -> list[ContainerResponse]:
+def local_containers() -> list[ContainerRequest]:
     return [
-        ContainerResponse.model_validate(item)
+        ContainerRequest.model_validate(item)
         for item in yaml.safe_load(COGNITE_CORE_CONTAINER_YAML.read_text(encoding=ENCODING))
     ]
 
 
 @pytest.fixture()
 def local_container_map() -> dict[ContainerReference, ContainerRequest]:
-    containers = local_containers()
-    return {container.as_reference(): container.as_request() for container in containers}
+    return {container.as_reference(): container for container in local_containers()}
 
 
 class TestCogniteCoreModel:
     def test_model_is_unchanged(self, current_cognite_core_model: DataModelRequest) -> None:
-        local_model = DataModelResponse.model_validate(
+        local_model = DataModelRequest.model_validate(
             yaml.safe_load(COGNITE_CORE_MODEL_YAML.read_text(encoding=ENCODING))
         )
-        local_request = local_model.as_request()
 
-        changes = DataModelDiffer().diff(local_request, current_cognite_core_model)
+        changes = DataModelDiffer().diff(local_model, current_cognite_core_model)
         if changes:
             raise AssertionError(f"Cognite Core data model has changed:\n {humanize_changes(changes)}")
 
     @pytest.mark.parametrize("local_view", [pytest.param(view, id=str(view.as_reference())) for view in local_views()])
     def test_views_are_unchanged(
         self,
-        local_view: ViewResponse,
+        local_view: ViewRequest,
         local_container_map: dict[ContainerReference, ContainerRequest],
         current_cognite_core_view_requests: dict[ViewReference, ViewRequest],
         current_cognite_core_containers: dict[ContainerReference, ContainerRequest],
     ) -> None:
         current_view = current_cognite_core_view_requests.get(local_view.as_reference())
         assert current_view is not None, f"View {local_view.as_reference()} not found in current Cognite Core model"
-        local_request = local_view.as_request()
 
-        changes = ViewDiffer(local_container_map, current_cognite_core_containers).diff(local_request, current_view)
+        changes = ViewDiffer(local_container_map, current_cognite_core_containers).diff(local_view, current_view)
         if changes:
             raise AssertionError(f"View {local_view.as_reference()!s} has changed:\n {humanize_changes(changes)}")
 
@@ -112,15 +106,14 @@ class TestCogniteCoreModel:
     )
     def test_containers_are_unchanged(
         self,
-        local_container: ContainerResponse,
+        local_container: ContainerRequest,
         current_cognite_core_containers: dict[ContainerReference, ContainerRequest],
     ) -> None:
         current_container = current_cognite_core_containers.get(local_container.as_reference())
         assert current_container is not None, (
             f"Container {local_container.as_reference()} not found in current Cognite Core model"
         )
-        local_request = local_container.as_request()
-        changes = ContainerDiffer().diff(local_request, current_container)
+        changes = ContainerDiffer().diff(local_container, current_container)
         if changes:
             raise AssertionError(
                 f"Container {local_container.as_reference()!s} has changed:\n {humanize_changes(changes)}"
