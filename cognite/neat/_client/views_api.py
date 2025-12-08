@@ -94,7 +94,7 @@ class ViewsAPI(NeatAPI):
         all_versions: bool = False,
         include_inherited_properties: bool = True,
         include_global: bool = False,
-        limit: int = 10,
+        limit: int | None = 10,
     ) -> list[ViewResponse]:
         """List views in CDF Project.
 
@@ -103,14 +103,14 @@ class ViewsAPI(NeatAPI):
             all_versions: If True, return all versions. If False, only return the latest version.
             include_inherited_properties: If True, include properties inherited from parent views.
             include_global: If True, include global views.
-            limit: Maximum number of views to return. Max is 1000.
+            limit: Maximum number of views to return. If None, return all views.
 
         Returns:
             List of ViewResponse objects.
         """
-        if limit < 0:
+        if limit is not None and limit < 0:
             raise ValueError("Limit must be non-negative.")
-        elif limit == 0:
+        elif limit is not None and limit == 0:
             return []
         parameters: dict[str, PrimitiveType] = {
             "allVersions": all_versions,
@@ -124,7 +124,10 @@ class ViewsAPI(NeatAPI):
         while True:
             if cursor is not None:
                 parameters["cursor"] = cursor
-            parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(view_responses))
+            if limit is None:
+                parameters["limit"] = self.LIST_REQUEST_LIMIT
+            else:
+                parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(view_responses))
             result = self._http_client.request_with_retries(
                 ParametersRequest(
                     endpoint_url=self._config.create_api_url(self.ENDPOINT),
@@ -136,6 +139,6 @@ class ViewsAPI(NeatAPI):
             result = PagedResponse[ViewResponse].model_validate_json(result.success_response.body)
             view_responses.extend(result.items)
             cursor = result.next_cursor
-            if cursor is None or len(view_responses) >= limit:
+            if cursor is None or (limit is not None and len(view_responses) >= limit):
                 break
         return view_responses

@@ -94,21 +94,21 @@ class ContainersAPI(NeatAPI):
         self,
         space: str | None = None,
         include_global: bool = False,
-        limit: int = 10,
+        limit: int | None = 10,
     ) -> list[ContainerResponse]:
         """List containers in CDF Project.
 
         Args:
             space: If specified, only containers in this space are returned.
             include_global: If True, include global containers.
-            limit: Maximum number of containers to return. Max is 1000.
+            limit: Maximum number of containers to return. If None, return all containers.
 
         Returns:
             List of ContainerResponse objects.
         """
-        if limit < 0:
+        if limit is not None and limit < 0:
             raise ValueError("Limit must be non-negative.")
-        elif limit == 0:
+        elif limit is not None and limit == 0:
             return []
         parameters: dict[str, PrimitiveType] = {"includeGlobal": include_global}
         if space is not None:
@@ -118,7 +118,10 @@ class ContainersAPI(NeatAPI):
         while True:
             if cursor is not None:
                 parameters["cursor"] = cursor
-            parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(container_responses))
+            if limit is None:
+                parameters["limit"] = self.LIST_REQUEST_LIMIT
+            else:
+                parameters["limit"] = min(self.LIST_REQUEST_LIMIT, limit - len(container_responses))
             result = self._http_client.request_with_retries(
                 ParametersRequest(
                     endpoint_url=self._config.create_api_url(self.ENDPOINT),
@@ -130,6 +133,6 @@ class ContainersAPI(NeatAPI):
             result = PagedResponse[ContainerResponse].model_validate_json(result.success_response.body)
             container_responses.extend(result.items)
             cursor = result.next_cursor
-            if cursor is None or len(container_responses) >= limit:
+            if cursor is None or (limit is not None and len(container_responses) >= limit):
                 break
         return container_responses
