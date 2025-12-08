@@ -20,6 +20,9 @@
             <div class="stat-item active" data-filter="all">
                 <span class="stat-number">{{total_changes}}</span> Total Changes
             </div>
+            <div class="stat-item" data-filter="failed">
+                <span class="stat-number">{{failed}}</span> Failed
+            </div>
             <div class="stat-item" data-filter="create">
                 <span class="stat-number">{{created}}</span> Created
             </div>
@@ -29,11 +32,11 @@
             <div class="stat-item" data-filter="delete">
                 <span class="stat-number">{{deleted}}</span> Deleted
             </div>
-            <div class="stat-item" data-filter="skip">
-                <span class="stat-number">{{skipped}}</span> Skipped
-            </div>
             <div class="stat-item" data-filter="unchanged">
                 <span class="stat-number">{{unchanged}}</span> Unchanged
+            </div>
+            <div class="stat-item" data-filter="skip">
+                <span class="stat-number">{{skipped}}</span> Skipped
             </div>
             <button class="export-btn" onclick="exportDeployment_{{unique_id}}()">Export Report</button>
         </div>
@@ -70,6 +73,8 @@
     const changes = {{CHANGES_JSON}};
     const stats = {{STATS_JSON}};
     const uniqueId = '{{unique_id}}';
+    const is_dry_run = '{{is_dry_run}}';
+    const deploymentStatus = '{{status}}';
     {{SCRIPTS}}
 })();
 </script>

@@ -132,6 +132,16 @@
     color: #9ca3af;
 }
 
+.change-failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.dark-mode .change-failed {
+    background: #7f1d1d;
+    color: #fca5a5;
+}
+
 .severity-badge {
     padding: 4px 10px;
     border-radius: 4px;
@@ -286,6 +296,16 @@
     color: white;
 }
 
+.status-recovered {
+    background: #10b981;
+    color: white;
+}
+
+.status-recovery_failed {
+    background: #dc2626;
+    color: white;
+}
+
 .dark-mode .status-success {
     background: #059669;
 }
@@ -300,4 +320,157 @@
 
 .dark-mode .status-pending {
     background: #2563eb;
+}
+
+.dark-mode .status-recovered {
+    background: #059669;
+}
+
+.dark-mode .status-recovery_failed {
+    background: #b91c1c;
+}
+
+
+/* Error message handling */
+
+.error-message-box {
+    background: #fee2e2;
+    border: 2px solid #dc2626;
+    border-left: 6px solid #dc2626;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 12px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.dark-mode .error-message-box {
+    background: #7f1d1d;
+    border-color: #ef4444;
+}
+
+.error-message-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.error-icon {
+    font-size: 24px;
+}
+
+.error-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #991b1b;
+}
+
+.dark-mode .error-title {
+    color: #fca5a5;
+}
+
+.error-message-content {
+    color: #7f1d1d;
+    font-size: 13px;
+    line-height: 1.6;
+    padding-left: 34px;
+    font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.dark-mode .error-message-content {
+    color: #fca5a5;
+}
+
+.change-item.failed-change {
+    border-left: 4px solid #dc2626;
+    background: rgba(254, 226, 226, 0.1);
+}
+
+.dark-mode .change-item.failed-change {
+    border-left-color: #ef4444;
+    background: rgba(127, 29, 29, 0.2);
+}
+
+.info-message-box {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.info-message-content {
+    color: inherit;
+}
+
+.info-message-create {
+    background: #d1fae5;
+    border-left: 4px solid #065f46;
+    color: #065f46;
+}
+
+.info-message-update {
+    background: #dbeafe;
+    border-left: 4px solid #1e40af;
+    color: #1e40af;
+}
+
+.info-message-delete {
+    background: #fee2e2;
+    border-left: 4px solid #991b1b;
+    color: #991b1b;
+}
+
+.info-message-skip {
+    background: #fef3c7;
+    border-left: 4px solid #92400e;
+    color: #92400e;
+}
+
+.info-message-unchanged {
+    background: #f3f4f6;
+    border-left: 4px solid #4b5563;
+    color: #4b5563;
+}
+
+.dark-mode .info-message-create {
+    background: #064e3b;
+    border-left-color: #6ee7b7;
+    color: #6ee7b7;
+}
+
+.dark-mode .info-message-update {
+    background: #1e3a8a;
+    border-left-color: #93c5fd;
+    color: #93c5fd;
+}
+
+.dark-mode .info-message-delete {
+    background: #7f1d1d;
+    border-left-color: #fca5a5;
+    color: #fca5a5;
+}
+
+.dark-mode .info-message-skip {
+    background: #78350f;
+    border-left-color: #fde68a;
+    color: #fde68a;
+}
+
+.dark-mode .info-message-unchanged {
+    background: #374151;
+    border-left-color: #9ca3af;
+    color: #9ca3af;
+}
+
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }

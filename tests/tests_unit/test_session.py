@@ -256,9 +256,18 @@ class TestRender:
 
         assert isinstance(html_repr, str)
 
-    def test_render_results(self, physical_state_session: NeatSession) -> None:
+    @pytest.mark.parametrize(
+        "dry_run,rollback",
+        [
+            (True, True),
+            (True, False),
+            (False, True),
+            (False, False),
+        ],
+    )
+    def test_render_results(self, physical_state_session: NeatSession, dry_run: bool, rollback: bool) -> None:
         session = physical_state_session
-        session.physical_data_model.write.cdf(dry_run=True)
+        session.physical_data_model.write.cdf(dry_run=dry_run, rollback=rollback)
 
         html_repr = session.result._repr_html_()
 

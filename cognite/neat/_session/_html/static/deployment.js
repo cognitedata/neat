@@ -17,7 +17,9 @@ const STATUS_CONFIG = {
     success: { icon: '✅', text: 'Success' },
     failure: { icon: '❌', text: 'Failure' },
     partial: { icon: '⚠️', text: 'Partial Success' },
-    pending: { icon: '⏳', text: 'Pending (Dry Run)' }
+    pending: { icon: '⏳', text: 'Pending (Dry Run)' },
+    recovered: { icon: '🔄', text: 'Recovered' },
+    recovery_failed: { icon: '💔', text: 'Recovery Failed' }
 };
 
 // Initialize status badge
@@ -26,7 +28,7 @@ function initializeStatus() {
     const statusIcon = document.getElementById('statusIcon-' + uniqueId);
     const statusText = document.getElementById('statusText-' + uniqueId);
 
-    const statusConfig = STATUS_CONFIG[stats.status] || STATUS_CONFIG.pending;
+    const statusConfig = STATUS_CONFIG[deploymentStatus] || STATUS_CONFIG.pending;
     statusIcon.textContent = statusConfig.icon;
     statusText.textContent = statusConfig.text;
 }
@@ -41,6 +43,31 @@ function updateTheme() {
         themeIcon.textContent = '🌙';
         themeText.textContent = 'Dark';
     }
+}
+
+function renderChangeMessage(change) {
+    if (!change.message) return '';
+
+    // Using textContent to set the message prevents XSS vulnerabilities
+    // by automatically escaping HTML characters.
+    const messageHolder = document.createElement('div');
+    messageHolder.textContent = change.message;
+    const escapedMessage = messageHolder.innerHTML;
+
+    if (change.change_type === 'failed') {
+        return `
+            <div class="error-message-box">
+                <div class="error-message-header">
+                    <span class="error-icon">❌</span>
+                    <span class="error-title">Deployment Failed</span>
+                </div>
+                <div class="error-message-content">${escapedMessage}</div>
+            </div>`;
+    }
+    return `
+        <div class="info-message-box info-message-${change.change_type}">
+            <div class="info-message-content">${escapedMessage}</div>
+        </div>`;
 }
 
 updateTheme();
@@ -76,13 +103,14 @@ function renderChanges() {
     }
 
     listContainer.innerHTML = filtered.map(change => `
-        <div class="change-item">
+        <div class="change-item ${change.change_type === 'failed' ? 'failed-change' : ''}">
             <div class="change-header">
                 <span class="endpoint-badge endpoint-${change.endpoint}">${change.endpoint}</span>
                 <span class="change-type-badge change-${change.change_type}">${change.change_type}</span>
                 <span class="severity-badge severity-${change.severity}">${change.severity}</span>
             </div>
             <div class="resource-id">${change.resource_id}</div>
+
             ${change.changes.length > 0 ? `
                 <div class="field-changes">
                     ${change.changes.map(fc => `
@@ -93,6 +121,9 @@ function renderChanges() {
                     `).join('')}
                 </div>
             ` : ''}
+
+            ${renderChangeMessage(change)}
+
         </div>
     `).join('');
 }
@@ -130,8 +161,8 @@ document.getElementById('searchInput-' + uniqueId).addEventListener('input', fun
 window['exportDeployment_' + uniqueId] = function() {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const report = {
-        status: stats.status,
-        is_dry_run: stats.is_dry_run,
+        status: deploymentStatus,
+        is_dry_run: is_dry_run === 'True',
         timestamp: timestamp,
         statistics: stats,
         changes: changes,
