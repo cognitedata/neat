@@ -23,7 +23,7 @@ from cognite.neat._data_model.validation.dms import (
     ViewSpaceVersionInconsistentWithDataModel,
     ViewToContainerMappingNotPossible,
 )
-from cognite.neat._data_model.validation.dms._containers import RequiredContainerDoesNotExist
+from cognite.neat._data_model.validation.dms._containers import MissingRequiresConstraint, RequiredContainerDoesNotExist
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
 
@@ -147,7 +147,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 43
+        assert len(on_success.issues) == 47
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -158,6 +158,7 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
+            MissingRequiresConstraint.code,
             DataModelMissingName.code,
             DataModelMissingDescription.code,
             ViewMissingDescription.code,
@@ -277,7 +278,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 48
+        assert len(on_success.issues) == 52
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -289,6 +290,7 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
+            MissingRequiresConstraint.code,
             DataModelMissingName.code,
             DataModelMissingDescription.code,
             ViewMissingDescription.code,

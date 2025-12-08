@@ -48,6 +48,7 @@ from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._containers import (
     ExternalContainerDoesNotExist,
     ExternalContainerPropertyDoesNotExist,
+    MissingRequiresConstraint,
     RequiredContainerDoesNotExist,
 )
 from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
@@ -133,6 +134,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ExternalContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
             ExternalContainerPropertyDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
             RequiredContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
+            MissingRequiresConstraint(local_resources, cdf_resources, self._modus_operandi),
             # Consistency
             ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
             # Connections

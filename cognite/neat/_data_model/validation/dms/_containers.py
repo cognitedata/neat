@@ -3,9 +3,10 @@
 from pyparsing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
-from cognite.neat._issues import ConsistencyError
+from cognite.neat._issues import ConsistencyError, Recommendation
 
 BASE_CODE = "NEAT-DMS-CONTAINER"
 
@@ -172,3 +173,137 @@ class RequiredContainerDoesNotExist(DataModelValidator):
                     )
 
         return errors
+
+
+class MissingRequiresConstraint(DataModelValidator):
+    """
+    Validates that containers used together in views have appropriate requires constraints.
+
+    ## What it does
+    For views that map to multiple containers, this validator checks that the containers
+    have appropriate "requires" constraints on each other. If container A only ever appears
+    together with container B (never without B), then A should have a requires constraint on B.
+
+    The requires constraint is transitive: if A requires B and B requires C, then A
+    transitively requires C. In this case, A does not need a direct constraint on C.
+
+    ## Why is this bad?
+    If containers are used together in views but don't have requires constraints, it may
+    indicate a modeling issue. When containers are always used together, the requires
+    constraint makes this relationship explicit and enforces data consistency at the
+    container level.
+
+    ## Example
+    View `my_space:WindTurbine` maps to both `my_space:TurbineContainer` and
+    `my_space:LocationContainer`. If `TurbineContainer` is never used without
+    `LocationContainer` in any view, then `TurbineContainer` should have a requires
+    constraint on `LocationContainer`.
+    """
+
+    code = f"{BASE_CODE}-004"
+    issue_type = Recommendation
+
+    def run(self) -> list[Recommendation]:
+        recommendations: list[Recommendation] = []
+
+        # Build container -> views mapping (which views use each container)
+        container_to_views: dict[ContainerReference, set[str]] = {}
+
+        for view_ref, view in self.merged_views.items():
+            if not view.properties:
+                continue
+            for property_ in view.properties.values():
+                if isinstance(property_, ViewCorePropertyRequest):
+                    container_ref = property_.container
+                    if container_ref not in container_to_views:
+                        container_to_views[container_ref] = set()
+                    container_to_views[container_ref].add(str(view_ref))
+
+        # Build view -> containers mapping
+        view_to_containers: dict[str, set[ContainerReference]] = {}
+        for view_ref, view in self.merged_views.items():
+            if not view.properties:
+                continue
+            containers: set[ContainerReference] = set()
+            for property_ in view.properties.values():
+                if isinstance(property_, ViewCorePropertyRequest):
+                    containers.add(property_.container)
+            if containers:
+                view_to_containers[str(view_ref)] = containers
+
+        def get_direct_required_containers(container_ref: ContainerReference) -> set[ContainerReference]:
+            """Get all containers that a container directly requires."""
+            container = self.merged_containers.get(container_ref)
+            if not container or not container.constraints:
+                return set()
+
+            required: set[ContainerReference] = set()
+            for constraint in cast(dict[str, Constraint], container.constraints).values():
+                if isinstance(constraint, RequiresConstraintDefinition):
+                    required.add(constraint.require)
+            return required
+
+        def get_transitively_required(
+            container_ref: ContainerReference, visited: set[ContainerReference] | None = None
+        ) -> set[ContainerReference]:
+            """Get all containers that a container requires (transitively)."""
+            if visited is None:
+                visited = set()
+            if container_ref in visited:
+                return set()
+            visited.add(container_ref)
+
+            direct_required = get_direct_required_containers(container_ref)
+            all_required = direct_required.copy()
+            for req in direct_required:
+                all_required.update(get_transitively_required(req, visited))
+            return all_required
+
+        # For each local container, check if it should require other containers
+        for container_a, views_with_a in container_to_views.items():
+            # Only check local containers
+            if container_a.space != self.local_resources.data_model_reference.space:
+                continue
+            if container_a not in self.local_resources.containers_by_reference:
+                continue
+
+            # Find all containers that appear with A in any view
+            containers_with_a: set[ContainerReference] = set()
+            for view_str in views_with_a:
+                containers_with_a.update(view_to_containers.get(view_str, set()))
+            containers_with_a.discard(container_a)
+
+            # Get what A already transitively requires
+            transitively_required = get_transitively_required(container_a)
+
+            for container_b in containers_with_a:
+                # Skip if A already transitively requires B
+                if container_b in transitively_required:
+                    continue
+
+                views_with_b = container_to_views.get(container_b, set())
+
+                # Check if A ever appears without B
+                # If views_with_a is a subset of views_with_b, then A never appears without B
+                a_always_with_b = views_with_a <= views_with_b
+
+                if a_always_with_b:
+                    # A should require B, but check if B is transitively covered by something A already requires
+                    direct_required = get_direct_required_containers(container_a)
+                    b_transitively_covered = any(
+                        container_b in get_transitively_required(direct_req) for direct_req in direct_required
+                    )
+
+                    if not b_transitively_covered:
+                        recommendations.append(
+                            Recommendation(
+                                message=(
+                                    f"Container '{container_a!s}' is always used together with container "
+                                    f"'{container_b!s}' but does not have a requires constraint on it."
+                                ),
+                                fix=f"Add a requires constraint from '{container_a!s}' to '{container_b!s}'",
+                                code=self.code,
+                            )
+                        )
+
+        return recommendations

@@ -25,6 +25,7 @@ from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._containers import (
     ExternalContainerDoesNotExist,
     ExternalContainerPropertyDoesNotExist,
+    MissingRequiresConstraint,
     RequiredContainerDoesNotExist,
 )
 from ._limits import (
@@ -53,6 +54,7 @@ __all__ = [
     "ExternalContainerDoesNotExist",
     "ExternalContainerPropertyDoesNotExist",
     "ImplementedViewNotExisting",
+    "MissingRequiresConstraint",
     "RequiredContainerDoesNotExist",
     "ReverseConnectionContainerMissing",
     "ReverseConnectionContainerPropertyMissing",
