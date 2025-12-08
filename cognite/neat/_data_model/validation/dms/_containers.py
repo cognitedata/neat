@@ -188,16 +188,20 @@ class MissingRequiresConstraint(DataModelValidator):
     transitively requires C. In this case, A does not need a direct constraint on C.
 
     ## Why is this bad?
-    If containers are used together in views but don't have requires constraints, it may
-    indicate a modeling issue. When containers are always used together, the requires
-    constraint makes this relationship explicit and enforces data consistency at the
-    container level.
+    When fetching data for a view without any filters specified, the API defaults to applying
+    a `hasData` filter on all mapped containers. With proper requires constraints in place,
+    the `hasData` check can be reduced to be only the container containing data specific to this view.
+    For example, if a view maps to `CogniteAsset` container, and `CogniteAsset` requires `CogniteVisualizable`,
+    `CogniteDescribable`, and `CogniteSourceable`, then `hasData` only needs to check `CogniteAsset` container presence.
+
+    Without requires constraints, multiple `hasData` filters are generated which trigger
+    many database joins. This becomes expensive and slow, especially for views that map
+    to several containers.
 
     ## Example
-    View `my_space:WindTurbine` maps to both `my_space:TurbineContainer` and
-    `my_space:LocationContainer`. If `TurbineContainer` is never used without
-    `LocationContainer` in any view, then `TurbineContainer` should have a requires
-    constraint on `LocationContainer`.
+    View `my_space:CogniteAsset` maps to containers `CogniteAsset`, `CogniteVisualizable`,
+    `CogniteDescribable`, and `CogniteSourceable`. The `CogniteAsset` container should have requires
+    constraints on all other containers. This allows queries to use a `hasData` filter with only the `CogniteAsset` container.
     """
 
     code = f"{BASE_CODE}-004"
@@ -276,6 +280,9 @@ class MissingRequiresConstraint(DataModelValidator):
             # Get what A already transitively requires
             transitively_required = get_transitively_required(container_a)
 
+            # Collect all containers that A should require but doesn't yet
+            missing_requirements: set[ContainerReference] = set()
+
             for container_b in containers_with_a:
                 # Skip if A already transitively requires B
                 if container_b in transitively_required:
@@ -288,22 +295,32 @@ class MissingRequiresConstraint(DataModelValidator):
                 a_always_with_b = views_with_a <= views_with_b
 
                 if a_always_with_b:
-                    # A should require B, but check if B is transitively covered by something A already requires
-                    direct_required = get_direct_required_containers(container_a)
-                    b_transitively_covered = any(
-                        container_b in get_transitively_required(direct_req) for direct_req in direct_required
-                    )
+                    missing_requirements.add(container_b)
 
-                    if not b_transitively_covered:
-                        recommendations.append(
-                            Recommendation(
-                                message=(
-                                    f"Container '{container_a!s}' is always used together with container "
-                                    f"'{container_b!s}' but does not have a requires constraint on it."
-                                ),
-                                fix=f"Add a requires constraint from '{container_a!s}' to '{container_b!s}'",
-                                code=self.code,
-                            )
-                        )
+            # Find the minimal set of constraints needed
+            # Remove any container B if another container C in the set transitively requires B
+            # (because adding A -> C would transitively cover B)
+            minimal_requirements: set[ContainerReference] = set()
+            for container_b in missing_requirements:
+                # Check if B is transitively required by any other container in missing_requirements
+                covered_by_other = False
+                for container_c in missing_requirements:
+                    if container_c != container_b and container_b in get_transitively_required(container_c):
+                        covered_by_other = True
+                        break
+                if not covered_by_other:
+                    minimal_requirements.add(container_b)
+
+            for container_b in minimal_requirements:
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"Container '{container_a!s}' is always used together with container "
+                            f"'{container_b!s}' but does not have a requires constraint on it."
+                        ),
+                        fix="Add a requires constraint between the containers",
+                        code=self.code,
+                    )
+                )
 
         return recommendations
