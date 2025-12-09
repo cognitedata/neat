@@ -4,7 +4,19 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
-from cognite.neat._data_model.validation.dms._connections import ConnectionValueTypeUndefined, ConnectionValueTypeUnexisting, ReverseConnectionContainerMissing, ReverseConnectionContainerPropertyMissing, ReverseConnectionContainerPropertyWrongType, ReverseConnectionPointsToAncestor, ReverseConnectionSourcePropertyMissing, ReverseConnectionSourcePropertyWrongType, ReverseConnectionSourceViewMissing, ReverseConnectionTargetMismatch, ReverseConnectionTargetMissing
+from cognite.neat._data_model.validation.dms._connections import (
+    ConnectionValueTypeUndefined,
+    ConnectionValueTypeUnexisting,
+    ReverseConnectionContainerMissing,
+    ReverseConnectionContainerPropertyMissing,
+    ReverseConnectionContainerPropertyWrongType,
+    ReverseConnectionPointsToAncestor,
+    ReverseConnectionSourcePropertyMissing,
+    ReverseConnectionSourcePropertyWrongType,
+    ReverseConnectionSourceViewMissing,
+    ReverseConnectionTargetMismatch,
+    ReverseConnectionTargetMissing,
+)
 from cognite.neat._data_model.validation.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -14,8 +26,6 @@ from cognite.neat._data_model.validation.dms._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from cognite.neat._utils.useful_types import ModusOperandi
-from ._base import CDFResources, DataModelValidator, LocalResources, ValidationResources
-
 
 from ._ai_readiness import (
     DataModelMissingDescription,
@@ -27,14 +37,14 @@ from ._ai_readiness import (
     ViewPropertyMissingDescription,
     ViewPropertyMissingName,
 )
-
-# from ._consistency import ViewSpaceVersionInconsistentWithDataModel
-# from ._containers import (
-#     ExternalContainerDoesNotExist,
-#     ExternalContainerPropertyDoesNotExist,
-#     RequiredContainerDoesNotExist,
-# )
-# from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
+from ._base import CDFResources, DataModelValidator, LocalResources, ValidationResources
+from ._consistency import ViewSpaceVersionInconsistentWithDataModel
+from ._containers import (
+    ExternalContainerDoesNotExist,
+    ExternalContainerPropertyDoesNotExist,
+    RequiredContainerDoesNotExist,
+)
+from ._views import ImplementedViewNotExisting, ViewToContainerMappingNotPossible
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -53,9 +63,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._has_run = False
 
     # move this to _storage
-    def _gather_validation_resources(
-        self, data_model: RequestSchema
-    ) -> tuple[LocalResources, CDFResources, SchemaLimits]:
+    def _gather_validation_resources(self, data_model: RequestSchema) -> ValidationResources:
         """Gather local and CDF resources needed for validation."""
 
         local = LocalResources(
@@ -112,14 +120,14 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ContainerPropertyCountIsOutOfLimits(validation_resources),
             ContainerPropertyListSizeIsOutOfLimits(validation_resources),
             # Views
-            # ViewToContainerMappingNotPossible(validation_resources),
-            # ImplementedViewNotExisting(local_resources, cdf_resources, self._modus_operandi),
-            # # Containers
-            # ExternalContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
-            # ExternalContainerPropertyDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
-            # RequiredContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
-            # # Consistency
-            # ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
+            ViewToContainerMappingNotPossible(validation_resources),
+            ImplementedViewNotExisting(validation_resources),
+            # Containers
+            ExternalContainerDoesNotExist(validation_resources),
+            ExternalContainerPropertyDoesNotExist(validation_resources),
+            RequiredContainerDoesNotExist(validation_resources),
+            # Consistency
+            ViewSpaceVersionInconsistentWithDataModel(validation_resources),
             # Connections
             ConnectionValueTypeUnexisting(validation_resources),
             ConnectionValueTypeUndefined(validation_resources),

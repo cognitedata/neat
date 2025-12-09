@@ -29,7 +29,21 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for view_ref, view in self.local_resources.views_by_reference.items():
+        if not self.validation_resources.local.data_model.views:
+            return errors
+
+        for view_ref in self.validation_resources.local.data_model.views:
+            view = self.validation_resources.select_view(view_ref)
+
+            if not view:
+                raise RuntimeError(
+                    f"ViewToContainerMappingNotPossible.run: View {view_ref!s} "
+                    "not found in local resources. This is a bug in NEAT."
+                )
+
+            if view.properties is None:
+                continue
+
             for property_ref, property_ in view.properties.items():
                 if not isinstance(property_, ViewCorePropertyRequest):
                     continue
@@ -37,7 +51,7 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
                 container_ref = property_.container
                 container_property = property_.container_property_identifier
 
-                container = self._select_container_with_property(container_ref, container_property)
+                container = self.validation_resources.select_container(container_ref, container_property)
 
                 if not container:
                     errors.append(
@@ -87,11 +101,22 @@ class ImplementedViewNotExisting(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for view_ref, view in self.local_resources.views_by_reference.items():
+        if not self.validation_resources.local.data_model.views:
+            return errors
+
+        for view_ref in self.validation_resources.local.data_model.views:
+            view = self.validation_resources.select_view(view_ref)
+
+            if not view:
+                raise RuntimeError(
+                    f"ImplementedViewNotExisting.run: View {view_ref!s} "
+                    "not found in local resources. This is a bug in NEAT."
+                )
+
             if view.implements is None:
                 continue
             for implement in view.implements:
-                if implement not in self.merged_views:
+                if self.validation_resources.select_view(implement) is None:
                     errors.append(
                         ConsistencyError(
                             message=f"View {view_ref!s} implements {implement!s} which is not defined.",
