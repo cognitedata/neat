@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cognite.neat._client.client import NeatClient
 from cognite.neat._config import internal_profiles
 from cognite.neat._data_model._analysis import CDFSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
@@ -308,8 +307,10 @@ def test_validation_deep(
 
     # Run on success validators
     on_success = DmsDataModelValidation(
-                cdf_snapshot=cdf_snapshot_for_validation,
-                limits=SchemaLimits(), modus_operandi=mode, can_run_validator=can_run_validator
+        cdf_snapshot=cdf_snapshot_for_validation,
+        limits=SchemaLimits(),
+        modus_operandi=mode,
+        can_run_validator=can_run_validator,
     )
     on_success.run(data_model)
     by_code = on_success.issues.by_code()

@@ -1,8 +1,11 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from cognite.neat._client.client import NeatClient
+import pytest
+
+from cognite.neat._data_model._analysis import CDFSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -107,7 +110,7 @@ container_names = [f"Container{i}" for i in range(1, 12)] + [
 ]
 
 
-# @pytest.fixture(scope="session")
+@pytest.fixture(scope="session")
 def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, dict[str, set]]:
     yaml = f"""Metadata:
 - Key: space
@@ -270,7 +273,7 @@ Enum:
 
 
 def test_validation(
-    validation_test_cdf_client: NeatClient, dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]]
+    dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]], cdf_snapshot_for_validation: CDFSnapshot
 ) -> None:
     yaml_content, expected_problems = dms_yaml_hitting_all_the_data_model_limits
 
@@ -280,7 +283,10 @@ def test_validation(
     data_model = importer.to_data_model()
 
     # Run on success validators
-    on_success = DmsDataModelValidation(validation_test_cdf_client)
+    on_success = DmsDataModelValidation(
+        cdf_snapshot=cdf_snapshot_for_validation,
+        limits=SchemaLimits(),
+    )
     on_success.run(data_model)
 
     by_code = on_success.issues.by_code()
