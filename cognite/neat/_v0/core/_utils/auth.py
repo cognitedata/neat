@@ -276,7 +276,13 @@ def _from_dotenv(evn_file: Path) -> EnvironmentVariables:
         key, value = line.split("=", 1)
         if key in valid_variables:
             if key in int_variables:
-                value = int(value)
+                try:
+                    value = int(value)
+                except ValueError as e:
+                    raise ValueError(
+                        f"Failed to parse {evn_file.as_posix()!r} file. "
+                        f"Variable '{key}' must be an integer, but got '{value}'."
+                    ) from e
             variables[key] = value
     return EnvironmentVariables(**variables)  # type: ignore[arg-type]
 
