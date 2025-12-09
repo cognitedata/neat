@@ -267,12 +267,16 @@ def _from_dotenv(evn_file: Path) -> EnvironmentVariables:
         raise FileNotFoundError(f"{evn_file} does not exist.")
     content = evn_file.read_text()
     valid_variables = {f.name for f in fields(EnvironmentVariables)}
-    variables: dict[str, str] = {}
+    int_variables = {"CDF_MAX_WORKERS", "CDF_CLIENT_TIMEOUT", "CDF_REDIRECT_PORT"}
+    variables: dict[str, str | int] = {}
+    value: str | int
     for line in content.splitlines():
         if line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
         if key in valid_variables:
+            if key in int_variables:
+                value = int(value)
             variables[key] = value
     return EnvironmentVariables(**variables)  # type: ignore[arg-type]
 
