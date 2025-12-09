@@ -204,7 +204,9 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            if not source_view.properties or through.identifier not in source_view.properties:
+            expanded_properties = self.validation_resources.properties_by_view.get(source_view_ref, {})
+            # we need expanded properties here
+            if not expanded_properties or through.identifier not in expanded_properties:
                 errors.append(
                     ConsistencyError(
                         message=(
@@ -587,10 +589,10 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-009"
-    issue_type = ConsistencyError
+    issue_type = Recommendation
 
-    def run(self) -> list[ConsistencyError]:
-        errors: list[ConsistencyError] = []
+    def run(self) -> list[Recommendation]:
+        recommendation: list[Recommendation] = []
 
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
@@ -615,8 +617,8 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
                 continue  # Handled by ReverseConnectionTargetAncestor
 
             if actual_target_view != target_view_ref:
-                errors.append(
-                    ConsistencyError(
+                recommendation.append(
+                    Recommendation(
                         message=(
                             f"The reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
                             f"expects its corresponding direct connection in view {source_view_ref!s} "
@@ -628,4 +630,4 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
                     )
                 )
 
-        return errors
+        return recommendation
