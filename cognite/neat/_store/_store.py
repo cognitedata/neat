@@ -25,7 +25,7 @@ Agents = DMSExporter | DMSTableImporter | DMSImporter
 
 
 class NeatStore:
-    def __init__(self, config: NeatConfig, client: NeatClient | None = None) -> None:
+    def __init__(self, config: NeatConfig, client: NeatClient) -> None:
         self.physical_data_model = DataModelList()
         self.provenance = Provenance()
         self.state: State = EmptyState()
@@ -33,8 +33,8 @@ class NeatStore:
         self._config = config
 
         # Caching CDF Schema limits and snapshot
-        self.limits = SchemaLimits.from_api_response(client.statistics.project()) if self._client else SchemaLimits()
-        self.cdf_snapshot = CDFSnapshot.from_cdf(self._client) if self._client else CDFSnapshot()
+        self.limits = SchemaLimits.from_api_response(self._client.statistics.project())
+        self.cdf_snapshot = CDFSnapshot.from_cdf(self._client)
 
     def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
         """Read object from the store"""

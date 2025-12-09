@@ -116,7 +116,7 @@ def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, dict[str, set]]:
 - Key: space
   Value: my_space
 - Key: externalId
-  Value: TestModel
+  Value: TestLimitsDataModel
 - Key: version
   Value: v1
 - Key: name

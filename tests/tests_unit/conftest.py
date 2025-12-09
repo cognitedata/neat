@@ -269,7 +269,7 @@ def validation_test_cdf_client(
 @pytest.fixture
 def cdf_snapshot_for_validation() -> CDFSnapshot:
     views = [
-        ViewResponse(**pars)
+        ViewResponse.model_validate(pars)
         for pars in [
             dict(
                 space="my_space",
@@ -337,6 +337,8 @@ def cdf_snapshot_for_validation() -> CDFSnapshot:
                         },
                         "connectionType": "primary_property",
                         "constraintState": {"nullability": "current"},
+                        "name": "directPropertyRemote",
+                        "description": "A direct property for testing reverse connections",
                     }
                 },
                 createdTime=0,
@@ -368,6 +370,8 @@ def cdf_snapshot_for_validation() -> CDFSnapshot:
                         },
                         "connectionType": "primary_property",
                         "constraintState": {"nullability": "current"},
+                        "name": "directPropertyRemote",
+                        "description": "A direct property for testing reverse connections",
                     }
                 },
                 createdTime=0,
@@ -382,7 +386,7 @@ def cdf_snapshot_for_validation() -> CDFSnapshot:
     ]
 
     containers = [
-        ContainerResponse(**pars)
+        ContainerResponse.model_validate(pars)
         for pars in [
             dict(
                 space="nospace",
@@ -442,9 +446,14 @@ def cdf_snapshot_for_validation() -> CDFSnapshot:
         views={view.as_reference(): view.as_request() for view in views},
         containers={container.as_reference(): container.as_request() for container in containers},
         data_models={
-            DataModelReference(space="cdf_cdm", externalId="CogniteCore", version="v1"): DataModelRequest(
-                space="cdf_cdm", externalId="CogniteCore", version="v1", views=[view.as_reference() for view in views]
-            )
+            DataModelReference(space="my_space", external_id="TestModel", version="v1"): DataModelRequest(
+                space="my_space",
+                externalId="TestModel",
+                version="v1",
+                views=[view.as_reference() for view in views],
+                name="Test Model",
+                description="A test data model",
+            )  # type: ignore
         },
     )
 
