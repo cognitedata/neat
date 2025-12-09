@@ -34,7 +34,7 @@ class NeatSession:
 
         # Use configuration for physical data model
         self._client = NeatClient(client)
-        self._store = NeatStore(config = self._config, client = self._client)
+        self._store = NeatStore(config=self._config, client=self._client)
         self.physical_data_model = PhysicalDataModel(self._store, self._client, self._config)
         self.issues = Issues(self._store)
         self.result = Result(self._store)
