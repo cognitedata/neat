@@ -4,6 +4,7 @@ from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
+from cognite.neat._data_model.validation.dms._connections import ConnectionValueTypeUndefined, ConnectionValueTypeUnexisting, ReverseConnectionContainerMissing, ReverseConnectionContainerPropertyMissing, ReverseConnectionContainerPropertyWrongType, ReverseConnectionPointsToAncestor, ReverseConnectionSourcePropertyMissing, ReverseConnectionSourcePropertyWrongType, ReverseConnectionSourceViewMissing, ReverseConnectionTargetMismatch, ReverseConnectionTargetMissing
 from cognite.neat._data_model.validation.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -13,8 +14,8 @@ from cognite.neat._data_model.validation.dms._limits import (
     ViewPropertyCountIsOutOfLimits,
 )
 from cognite.neat._utils.useful_types import ModusOperandi
-
 from ._base import CDFResources, DataModelValidator, LocalResources, ValidationResources
+
 
 from ._ai_readiness import (
     DataModelMissingDescription,
@@ -27,19 +28,6 @@ from ._ai_readiness import (
     ViewPropertyMissingName,
 )
 
-# from ._connections import (
-#     ConnectionValueTypeUndefined,
-#     ConnectionValueTypeUnexisting,
-#     ReverseConnectionContainerMissing,
-#     ReverseConnectionContainerPropertyMissing,
-#     ReverseConnectionContainerPropertyWrongType,
-#     ReverseConnectionPointsToAncestor,
-#     ReverseConnectionSourcePropertyMissing,
-#     ReverseConnectionSourcePropertyWrongType,
-#     ReverseConnectionSourceViewMissing,
-#     ReverseConnectionTargetMismatch,
-#     ReverseConnectionTargetMissing,
-# )
 # from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 # from ._containers import (
 #     ExternalContainerDoesNotExist,
@@ -64,6 +52,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._modus_operandi = modus_operandi
         self._has_run = False
 
+    # move this to _storage
     def _gather_validation_resources(
         self, data_model: RequestSchema
     ) -> tuple[LocalResources, CDFResources, SchemaLimits]:
@@ -75,7 +64,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             containers={container.as_reference(): container for container in data_model.containers},
         )
 
-        print("Fetching CDF resources for validation...")
+        print("Fetching of DMS schema resources...")
 
         cdf = CDFResources(
             data_models={
@@ -122,32 +111,27 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             ViewContainerCountIsOutOfLimits(validation_resources),
             ContainerPropertyCountIsOutOfLimits(validation_resources),
             ContainerPropertyListSizeIsOutOfLimits(validation_resources),
-
             # Views
             # ViewToContainerMappingNotPossible(validation_resources),
             # ImplementedViewNotExisting(local_resources, cdf_resources, self._modus_operandi),
-
             # # Containers
             # ExternalContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
             # ExternalContainerPropertyDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
             # RequiredContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
-
             # # Consistency
             # ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
-
-            # # Connections
-            # ConnectionValueTypeUnexisting(local_resources, cdf_resources, self._modus_operandi),
-            # ConnectionValueTypeUndefined(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionContainerMissing(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionContainerPropertyMissing(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionContainerPropertyWrongType(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionSourceViewMissing(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionSourcePropertyMissing(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionSourcePropertyWrongType(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionPointsToAncestor(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionTargetMismatch(local_resources, cdf_resources, self._modus_operandi),
-            # ReverseConnectionTargetMissing(local_resources, cdf_resources, self._modus_operandi),
-
+            # Connections
+            ConnectionValueTypeUnexisting(validation_resources),
+            ConnectionValueTypeUndefined(validation_resources),
+            ReverseConnectionContainerMissing(validation_resources),
+            ReverseConnectionContainerPropertyMissing(validation_resources),
+            ReverseConnectionContainerPropertyWrongType(validation_resources),
+            ReverseConnectionSourceViewMissing(validation_resources),
+            ReverseConnectionSourcePropertyMissing(validation_resources),
+            ReverseConnectionSourcePropertyWrongType(validation_resources),
+            ReverseConnectionPointsToAncestor(validation_resources),
+            ReverseConnectionTargetMismatch(validation_resources),
+            ReverseConnectionTargetMissing(validation_resources),
             # AI Readiness
             DataModelMissingName(validation_resources),
             DataModelMissingDescription(validation_resources),

@@ -260,7 +260,6 @@ class ViewPropertyMissingDescription(DataModelValidator):
             if not view.properties:
                 continue
 
-
             for prop_ref, definition in view.properties.items():
                 if not definition.description:
                     recommendations.append(
@@ -298,7 +297,6 @@ class EnumerationMissingName(DataModelValidator):
         recommendations: list[Recommendation] = []
 
         for container_ref, container in self.validation_resources.local.containers.items():
-
             for prop_ref, definition in container.properties.items():
                 if not isinstance(definition.type, EnumProperty):
                     continue
@@ -354,7 +352,6 @@ class EnumerationMissingDescription(DataModelValidator):
         recommendations: list[Recommendation] = []
 
         for container_ref, container in self.validation_resources.local.containers.items():
-
             for prop_ref, definition in container.properties.items():
                 if not isinstance(definition.type, EnumProperty):
                     continue

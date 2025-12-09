@@ -1,8 +1,6 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
-import pytest
-
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms._limits import (

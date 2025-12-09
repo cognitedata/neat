@@ -5,17 +5,13 @@ from typing import Literal
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import EnumProperty, ListablePropertyTypeDefinition
 from cognite.neat._data_model.models.dms._indexes import BtreeIndex, InvertedIndex
-from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._view_property import (
     ViewCorePropertyRequest,
 )
 from cognite.neat._data_model.validation.dms._base import (
-    CDFResources,
     DataModelValidator,
-    LocalResources,
 )
 from cognite.neat._issues import ConsistencyError
-from cognite.neat._utils.useful_types import ModusOperandi
 
 BASE_CODE = "NEAT-DMS-LIMITS"
 
