@@ -5,6 +5,7 @@ import pytest
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
+from cognite.neat._data_model.validation.dms._containers import MissingRequiresConstraint
 from cognite.neat._data_model.validation.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -287,11 +288,20 @@ def test_validation(
 
     by_code = on_success.issues.by_code()
 
-    assert set(by_code.keys()) == set(expected_problems.keys()), (
-        f"Mismatch in issue codes. Expected {expected_problems.keys()}, found {by_code.keys()}"
+    # Filter to only the codes we're testing (schema limits), ignoring other validators like MissingRequiresConstraint
+    relevant_codes = {
+        code for code in by_code.keys() if code in expected_problems or code not in [MissingRequiresConstraint.code]
+    }
+    # Remove MissingRequiresConstraint from the codes to check (this test is about schema limits)
+    relevant_codes.discard(MissingRequiresConstraint.code)
+
+    assert relevant_codes == set(expected_problems.keys()), (
+        f"Mismatch in issue codes. Expected {expected_problems.keys()}, found {relevant_codes}"
     )
 
     for code, issues in by_code.items():
+        if code not in expected_problems:
+            continue  # Skip codes we're not testing
         assert len(issues) == len(expected_problems[code]), (
             f"Number of issues for {code} expected {len(expected_problems[code])}, found {len(issues)}"
         )

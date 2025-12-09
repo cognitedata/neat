@@ -1,8 +1,6 @@
 """Validators for checking containers in the data model."""
 
-from pyparsing import cast
-
-from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
+from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
@@ -40,7 +38,7 @@ def _get_direct_required_containers(
         return set()
 
     required: set[ContainerReference] = set()
-    for constraint in cast(dict[str, Constraint], container.constraints).values():
+    for constraint in container.constraints.values():
         if isinstance(constraint, RequiresConstraintDefinition):
             required.add(constraint.require)
     return required
@@ -253,7 +251,7 @@ class RequiredContainerDoesNotExist(DataModelValidator):
             if not container.constraints:
                 continue
 
-            for external_id, constraint in cast(dict[str, Constraint], container.constraints).items():
+            for external_id, constraint in container.constraints.items():
                 if not isinstance(constraint, RequiresConstraintDefinition):
                     continue
 
@@ -334,8 +332,11 @@ class MissingRequiresConstraint(DataModelValidator):
             # Get what A already transitively requires
             transitively_required = _get_transitively_required_containers(container_a, self.merged_containers)
 
-            # Collect all containers that A should require but doesn't yet
-            missing_requirements: set[ContainerReference] = set()
+            # Collect containers that A should require:
+            # - always_required: A always appears with B (strongest case)
+            # - optional_required: A appears with B in multi-container views, but alone in single-container views
+            always_required: set[ContainerReference] = set()
+            optional_required: set[ContainerReference] = set()
 
             for container_b in containers_with_a:
                 # Skip if A already transitively requires B
@@ -349,23 +350,63 @@ class MissingRequiresConstraint(DataModelValidator):
                 a_always_with_b = views_with_a <= views_with_b
 
                 if a_always_with_b:
-                    missing_requirements.add(container_b)
+                    always_required.add(container_b)
+                else:
+                    # Check if A only appears without B in single-container views
+                    views_without_b = views_with_a - views_with_b
+                    all_single_container = all(
+                        len(view_to_containers.get(view_str, set())) == 1 for view_str in views_without_b
+                    )
+                    if all_single_container and views_without_b:
+                        optional_required.add(container_b)
 
-            # Find the minimal set of constraints needed
-            # Remove any container B if another container C in the set transitively requires B
-            # (because adding A -> C would transitively cover B)
-            minimal_requirements: set[ContainerReference] = set()
-            for container_b in missing_requirements:
-                # Check if B is transitively required by any other container in missing_requirements
+            # Find containers that could provide better coverage:
+            # containers that A appears with (but not always), that transitively cover items in always_required
+            better_coverage: set[ContainerReference] = set()
+            for container_c in containers_with_a:
+                if container_c in transitively_required:
+                    continue
+                if container_c in always_required:
+                    continue
+                # Check if C transitively covers any container in always_required
+                c_covers = _get_transitively_required_containers(container_c, self.merged_containers)
+                if c_covers & always_required:
+                    better_coverage.add(container_c)
+
+            # Find the minimal set of constraints needed for always_required
+            # Remove any container B if another container C in always_required transitively requires B
+            minimal_always: set[ContainerReference] = set()
+            for container_b in always_required:
+                # Check if B is transitively covered by another container in always_required
+                covered_by_other_in_set = any(
+                    container_b in _get_transitively_required_containers(container_c, self.merged_containers)
+                    for container_c in always_required
+                    if container_c != container_b
+                )
+                if not covered_by_other_in_set:
+                    minimal_always.add(container_b)
+
+            # Find the minimal set for optional_required (also considering always_required)
+            minimal_optional: set[ContainerReference] = set()
+            for container_b in optional_required:
+                # Skip if already covered by always_required
+                if container_b in always_required:
+                    continue
+                covered_by_always = any(
+                    container_b in _get_transitively_required_containers(container_c, self.merged_containers)
+                    for container_c in always_required
+                )
+                if covered_by_always:
+                    continue
                 covered_by_other = any(
                     container_b in _get_transitively_required_containers(container_c, self.merged_containers)
-                    for container_c in missing_requirements
+                    for container_c in optional_required
                     if container_c != container_b
                 )
                 if not covered_by_other:
-                    minimal_requirements.add(container_b)
+                    minimal_optional.add(container_b)
 
-            for container_b in minimal_requirements:
+            for container_b in minimal_always:
                 recommendations.append(
                     Recommendation(
                         message=(
@@ -373,6 +414,39 @@ class MissingRequiresConstraint(DataModelValidator):
                             f"'{container_b!s}' but does not have a requires constraint on it."
                         ),
                         fix="Add a requires constraint between the containers",
+                        code=self.code,
+                    )
+                )
+
+            # Recommend better coverage containers (containers that would transitively cover always_required)
+            for container_c in better_coverage:
+                views_with_c = container_to_views.get(container_c, set())
+                views_without_c = views_with_a - views_with_c
+                c_covers = _get_transitively_required_containers(container_c, self.merged_containers) & always_required
+                covered_str = ", ".join(f"'{c!s}'" for c in c_covers)
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"Container '{container_a!s}' appears with container '{container_c!s}' in some views. "
+                            f"Adding a requires constraint on '{container_c!s}' would transitively cover {covered_str} "
+                            f"and provide better query performance. However, this would complicate ingestion for views "
+                            f"where '{container_a!s}' appears without '{container_c!s}'."
+                        ),
+                        fix="Consider adding a requires constraint for better query performance in shared views",
+                        code=self.code,
+                    )
+                )
+
+            for container_b in minimal_optional:
+                recommendations.append(
+                    Recommendation(
+                        message=(
+                            f"Container '{container_a!s}' is used together with container '{container_b!s}' "
+                            f"in multi-container views, but also appears alone in single-container views. "
+                            f"Adding a requires constraint would improve query performance for the multi-container views, "
+                            f"but may complicate ingestion through the single-container views."
+                        ),
+                        fix="Consider adding a requires constraint if query performance is more important than ingestion flexibility",
                         code=self.code,
                     )
                 )
@@ -415,7 +489,7 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
             if not container.constraints:
                 continue
 
-            for constraint_id, constraint in cast(dict[str, Constraint], container.constraints).items():
+            for constraint in container.constraints.values():
                 if not isinstance(constraint, RequiresConstraintDefinition):
                     continue
 
