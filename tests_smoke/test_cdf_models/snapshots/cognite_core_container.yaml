@@ -1,0 +1,2167 @@
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    schedulablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSchedulable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+  description: Represent an activity
+  externalId: CogniteActivity
+  indexes: {}
+  name: null
+  properties:
+    assets:
+      autoIncrement: false
+      defaultValue: null
+      description: List of assets this activity relates to/has been contextualized
+        to
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: 1200
+        type: direct
+    equipment:
+      autoIncrement: false
+      defaultValue: null
+      description: The list of equipment this activity relates to
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: null
+        type: direct
+    timeSeries:
+      autoIncrement: false
+      defaultValue: null
+      description: The list of time series this activity relates to
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: null
+        type: direct
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+  description: Annotation represents contextualization results or links
+  externalId: CogniteAnnotation
+  indexes: {}
+  name: null
+  properties:
+    confidence:
+      autoIncrement: false
+      defaultValue: null
+      description: The confidence that the annotation is a good match
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    status:
+      autoIncrement: false
+      defaultValue: null
+      description: The status of the annotation
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        type: enum
+        unknownValue: null
+        values:
+          Approved:
+            description: null
+            name: Approved
+          Rejected:
+            description: null
+            name: Rejected
+          Suggested:
+            description: null
+            name: Suggested
+  space: cdf_cdm
+  usedFor: edge
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+    visualizablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteVisualizable
+        space: cdf_cdm
+        type: container
+  description: The asset is the bare bone representation of assets in our asset centric
+    world
+  externalId: CogniteAsset
+  indexes:
+    parent:
+      bySpace: false
+      cursorable: false
+      indexType: btree
+      properties:
+      - assetHierarchy_parent
+    path:
+      bySpace: false
+      cursorable: false
+      indexType: btree
+      properties:
+      - assetHierarchy_path
+    root:
+      bySpace: false
+      cursorable: false
+      indexType: btree
+      properties:
+      - assetHierarchy_root
+  name: null
+  properties:
+    assetClass:
+      autoIncrement: false
+      defaultValue: null
+      description: Class of asset, direct relation to AssetClass
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteAssetClass
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    assetHierarchy_parent:
+      autoIncrement: false
+      defaultValue: null
+      description: Direct relation to closest (for ease of navigation)
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: false
+        maxListSize: null
+        type: direct
+    assetHierarchy_path:
+      autoIncrement: false
+      defaultValue: null
+      description: Automatically populated list of ancestors to enable subtree filtering
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: 100
+        type: direct
+    assetHierarchy_path_last_updated_time:
+      autoIncrement: false
+      defaultValue: null
+      description: Last time the path was updated for this asset
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+    assetHierarchy_root:
+      autoIncrement: false
+      defaultValue: null
+      description: Direct relation to the root of the asset hierarchy (primarily an
+        optimization/convenience)
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: false
+        maxListSize: null
+        type: direct
+    type:
+      autoIncrement: false
+      defaultValue: null
+      description: Type of asset, direct relation to AssetType
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteAssetType
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    uniqueCodeConstraint:
+      bySpace: true
+      constraintType: uniqueness
+      properties:
+      - code
+      - standard
+  description: This identifies the class of an asset
+  externalId: CogniteAssetClass
+  indexes: {}
+  name: null
+  properties:
+    code:
+      autoIncrement: false
+      defaultValue: null
+      description: A unique identifier for the class of asset
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    standard:
+      autoIncrement: false
+      defaultValue: null
+      description: Textual string for which standard the code is from
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+  description: This identifies the type of an asset
+  externalId: CogniteAssetType
+  indexes:
+    code:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - code
+    standard:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - standard
+      - code
+  name: null
+  properties:
+    assetClass:
+      autoIncrement: false
+      defaultValue: null
+      description: Class of this type, direct relation to CogniteAssetClass
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteAssetClass
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    code:
+      autoIncrement: false
+      defaultValue: null
+      description: Identifier for the type of asset
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    standard:
+      autoIncrement: false
+      defaultValue: null
+      description: Textual string for which standard the code is from
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: node
+- constraints: {}
+  description: The describable core concept is used as a standard way of holding the
+    bare minimum of information about the instance.
+  externalId: CogniteDescribable
+  indexes:
+    name:
+      bySpace: false
+      cursorable: false
+      indexType: btree
+      properties:
+      - name
+  name: null
+  properties:
+    aliases:
+      autoIncrement: false
+      defaultValue: null
+      description: Alternative names (aliases)
+      immutable: false
+      name: Aliases
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: true
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    description:
+      autoIncrement: false
+      defaultValue: null
+      description: Holds a description of the instance
+      immutable: false
+      name: Description
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    name:
+      autoIncrement: false
+      defaultValue: null
+      description: Holds a name of the instance where that is applicable
+      immutable: false
+      name: Name
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    tags:
+      autoIncrement: false
+      defaultValue: null
+      description: Instance tags (limited to 1000 tags)
+      immutable: false
+      name: Tags
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: true
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: all
+- constraints:
+    annotationPresent:
+      constraintType: requires
+      require:
+        externalId: CogniteAnnotation
+        space: cdf_cdm
+        type: container
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+  description: null
+  externalId: CogniteDiagramAnnotation
+  indexes: {}
+  name: null
+  properties:
+    endNodePageNumber:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The number of the page on which this annotation is located in
+        the endNode File if an endNode is present. The first page has number 1
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: int64
+    endNodeText:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The text extracted from within the bounding box on the endNode.
+        Only applicable if an endNode is defined
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    endNodeXMax:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Maximum abscissa of the bounding box (right
+        edge). Must be strictly more than endNodeXMin. Only applicable if an endNode
+        is defined
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    endNodeXMin:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Minimum abscissa of the bounding box (left
+        edge). Must be strictly less than endNodeXMax. Only applicable if an endNode
+        is defined
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    endNodeYMax:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Maximum ordinate of the bounding box (top
+        edge). Must be strictly more than endNodeYMin. Only applicable if an endNode
+        is defined
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    endNodeYMin:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Minimum ordinate of the bounding box (bottom
+        edge). Must be strictly less than endNodeYMax. Only applicable if an endNode
+        is defined
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    startNodePageNumber:
+      autoIncrement: false
+      defaultValue: null
+      description: 'The number of the page on which this annotation is located in
+        `startNode` File. The first page has number 1
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: int64
+    startNodeText:
+      autoIncrement: false
+      defaultValue: null
+      description: The text extracted from within the bounding box on the startNode
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    startNodeXMax:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Maximum abscissa of the bounding box (right
+        edge). Must be strictly more than startNodeXMin
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    startNodeXMin:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Minimum abscissa of the bounding box (left
+        edge). Must be strictly less than startNodeXMax
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    startNodeYMax:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Maximum ordinate of the bounding box (top
+        edge). Must be strictly more than startNodeYMin
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    startNodeYMin:
+      autoIncrement: false
+      defaultValue: null
+      description: 'Value between [0,1]. Minimum ordinate of the bounding box (bottom
+        edge). Must be strictly less than startNodeYMax
+
+        '
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+  space: cdf_cdm
+  usedFor: edge
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+  description: Represent a physical piece of equipment
+  externalId: CogniteEquipment
+  indexes:
+    asset:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - asset
+    manufacturer:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - manufacturer
+    serialNumber:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - serialNumber
+  name: null
+  properties:
+    asset:
+      autoIncrement: false
+      defaultValue: null
+      description: The asset this equipment is associated with
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: false
+        maxListSize: null
+        type: direct
+    equipmentType:
+      autoIncrement: false
+      defaultValue: null
+      description: Type of this equipment, direct relation to EquipmentType
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteEquipmentType
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    files:
+      autoIncrement: false
+      defaultValue: null
+      description: List of files this equipment relates to
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: null
+        type: direct
+    manufacturer:
+      autoIncrement: false
+      defaultValue: null
+      description: Manufacturer of the equipment
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    model3D:
+      autoIncrement: false
+      defaultValue: null
+      description: Direct relation to a 3D model representing this equipment (such
+        as a manufacturer model)
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: false
+        maxListSize: null
+        type: direct
+    serialNumber:
+      autoIncrement: false
+      defaultValue: null
+      description: Serial number of the equipment
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    uniqueCodeConstraint:
+      bySpace: true
+      constraintType: uniqueness
+      properties:
+      - code
+      - standard
+  description: This identifies the type of an equipment
+  externalId: CogniteEquipmentType
+  indexes: {}
+  name: null
+  properties:
+    code:
+      autoIncrement: false
+      defaultValue: null
+      description: A unique identifier for the type of equipment
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    equipmentClass:
+      autoIncrement: false
+      defaultValue: null
+      description: Class of equipment
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    standard:
+      autoIncrement: false
+      defaultValue: null
+      description: Standard identifier this equipment is sourced from, such as ISO14224
+        or similar
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    standardReference:
+      autoIncrement: false
+      defaultValue: null
+      description: Reference to the source of the equipment specification
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+  description: This concept models the underlying file from the Files resource type
+  externalId: CogniteFile
+  indexes: {}
+  name: null
+  properties:
+    assets:
+      autoIncrement: false
+      defaultValue: null
+      description: List of assets this file relates to
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: 1200
+        type: direct
+    category:
+      autoIncrement: false
+      defaultValue: null
+      description: Direct relation to an instance of FileCategory representing the
+        detected categorization/class of the file
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: false
+        maxListSize: null
+        type: direct
+    directory:
+      autoIncrement: false
+      defaultValue: null
+      description: Contains the path elements from the source (for when the source
+        system has a file system hierarchy or similar)
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    isUploaded:
+      autoIncrement: false
+      defaultValue: false
+      description: Whether the file content has been uploaded to Cognite Data Fusion
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: boolean
+    mimeType:
+      autoIncrement: false
+      defaultValue: null
+      description: MIME type of the file
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    uploadedTime:
+      autoIncrement: false
+      defaultValue: null
+      description: When the file was uploaded to CDF
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    uniqueCodeConstraint:
+      bySpace: true
+      constraintType: uniqueness
+      properties:
+      - code
+      - standard
+  description: Specifies the category for a file (as a result of categorization/classification))
+  externalId: CogniteFileCategory
+  indexes: {}
+  name: null
+  properties:
+    code:
+      autoIncrement: false
+      defaultValue: null
+      description: Class name for the type of file
+      immutable: false
+      name: null
+      nullable: false
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    standard:
+      autoIncrement: false
+      defaultValue: null
+      description: Standard identifier this category is sourced from, such as NORSOK
+        or similar
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    standardReference:
+      autoIncrement: false
+      defaultValue: null
+      description: Reference to the source of the category standard
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: node
+- constraints: {}
+  description: CogniteSchedulable represents the metadata about when an activity (or
+    similar) starts and ends
+  externalId: CogniteSchedulable
+  indexes:
+    endTime:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - endTime
+    scheduledEndTime:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - scheduledEndTime
+    scheduledStartTime:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - scheduledStartTime
+    startTime:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - startTime
+  name: null
+  properties:
+    endTime:
+      autoIncrement: false
+      defaultValue: null
+      description: The actual end time of an activity (or similar that extends this)
+      immutable: false
+      name: End time
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+    scheduledEndTime:
+      autoIncrement: false
+      defaultValue: null
+      description: The planned end time of an activity (or similar that extends this)
+      immutable: false
+      name: Scheduled end time
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+    scheduledStartTime:
+      autoIncrement: false
+      defaultValue: null
+      description: The planned start time of an activity (or similar that extends
+        this)
+      immutable: false
+      name: Scheduled start time
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+    startTime:
+      autoIncrement: false
+      defaultValue: null
+      description: The actual start time of an activity (or similar that extends this)
+      immutable: false
+      name: Start time
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+  space: cdf_cdm
+  usedFor: node
+- constraints: {}
+  description: The CogniteSourceSystem core concept is used to standardize the way
+    source system is stored.
+  externalId: CogniteSourceSystem
+  indexes: {}
+  name: null
+  properties:
+    manufacturer:
+      autoIncrement: false
+      defaultValue: null
+      description: Manufacturer of the source system
+      immutable: false
+      name: Manufacturer
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    version:
+      autoIncrement: false
+      defaultValue: null
+      description: Version identifier for the source system
+      immutable: false
+      name: Version
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: node
+- constraints: {}
+  description: The CogniteSourceable core concept is used to standardize the way source
+    information is stored.
+  externalId: CogniteSourceable
+  indexes:
+    source:
+      bySpace: false
+      cursorable: false
+      indexType: btree
+      properties:
+      - source
+    sourceCreatedTime:
+      bySpace: false
+      cursorable: false
+      indexType: btree
+      properties:
+      - sourceCreatedTime
+    sourceId:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - sourceId
+    sourceUpdatedTime:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - sourceUpdatedTime
+  name: null
+  properties:
+    source:
+      autoIncrement: false
+      defaultValue: null
+      description: Direct relation to source system instance
+      immutable: false
+      name: Source
+      nullable: true
+      type:
+        container:
+          externalId: CogniteSourceSystem
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    sourceContext:
+      autoIncrement: false
+      defaultValue: null
+      description: Context of the source id. For systems where the sourceId is globally
+        unique, the sourceContext is expected to not be set.
+      immutable: false
+      name: Source context
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    sourceCreatedTime:
+      autoIncrement: false
+      defaultValue: null
+      description: When the instance was created in source system (if available)
+      immutable: false
+      name: Source created
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+    sourceCreatedUser:
+      autoIncrement: false
+      defaultValue: null
+      description: User identifier from the source system on who created the source
+        data. This identifier is not guaranteed to match user identifiers in CDF
+      immutable: false
+      name: Source created by
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    sourceId:
+      autoIncrement: false
+      defaultValue: null
+      description: Identifier in the source system
+      immutable: false
+      name: Source ID
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    sourceUpdatedTime:
+      autoIncrement: false
+      defaultValue: null
+      description: When the instance was last updated in the source system (if available)
+      immutable: false
+      name: Source last updated
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+    sourceUpdatedUser:
+      autoIncrement: false
+      defaultValue: null
+      description: User identifier from the source system on who last updated the
+        source data. This identifier is not guaranteed to match user identifiers in
+        CDF
+      immutable: false
+      name: Source last updated by
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: all
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+    sourceablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteSourceable
+        space: cdf_cdm
+        type: container
+  description: null
+  externalId: CogniteTimeSeries
+  indexes:
+    stateSet:
+      bySpace: false
+      cursorable: true
+      indexType: btree
+      properties:
+      - stateSet
+  name: null
+  properties:
+    assets:
+      autoIncrement: false
+      defaultValue: null
+      description: List of assets this time series is related to/contextualized to
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: 1200
+        type: direct
+    equipment:
+      autoIncrement: false
+      defaultValue: null
+      description: List of equipment that related to this time series.
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container: null
+        list: true
+        maxListSize: null
+        type: direct
+    isStep:
+      autoIncrement: false
+      defaultValue: false
+      description: null
+      immutable: false
+      name: null
+      nullable: false
+      type:
+        list: false
+        maxListSize: null
+        type: boolean
+    sourceUnit:
+      autoIncrement: false
+      defaultValue: null
+      description: Unit as specified in the source system
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    stateSet:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteStateSet
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    type:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: true
+      name: null
+      nullable: false
+      type:
+        type: enum
+        unknownValue: null
+        values:
+          numeric:
+            description: Time series with double floating point data points.
+            name: numeric
+          state:
+            description: Time series with state data points.
+            name: state
+          string:
+            description: Time series with string data points.
+            name: string
+    unit:
+      autoIncrement: false
+      defaultValue: null
+      description: Unit of the time series
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteUnit
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        externalId: CogniteDescribable
+        space: cdf_cdm
+        type: container
+  description: Represents a single unit of measurement
+  externalId: CogniteUnit
+  indexes: {}
+  name: null
+  properties:
+    quantity:
+      autoIncrement: false
+      defaultValue: null
+      description: Specifies the physical quantity the unit measures
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    source:
+      autoIncrement: false
+      defaultValue: null
+      description: Source of the unit definition
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    sourceReference:
+      autoIncrement: false
+      defaultValue: null
+      description: Reference to the source of the unit definition
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    symbol:
+      autoIncrement: false
+      defaultValue: null
+      description: The symbol for the unit of measurement
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+  space: cdf_cdm
+  usedFor: node
+- constraints:
+    uniqueObject3D:
+      bySpace: false
+      constraintType: uniqueness
+      properties:
+      - object3D
+  description: CogniteVisualizable defines the standard way to reference a related
+    3D resource
+  externalId: CogniteVisualizable
+  indexes: {}
+  name: null
+  properties:
+    object3D:
+      autoIncrement: false
+      defaultValue: null
+      description: Direct relation to an Object3D instance representing the 3D resource
+      immutable: false
+      name: 3D object
+      nullable: true
+      type:
+        container: null
+        list: false
+        maxListSize: null
+        type: direct
+  space: cdf_cdm
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: Cognite360Image
+  indexes: {}
+  name: null
+  properties:
+    collection360:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DRevision
+          space: cdf_cdm_3d
+        list: false
+        maxListSize: null
+        type: direct
+    group3d:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DGroup
+          space: cdf_cdm_3d
+        list: false
+        maxListSize: null
+        type: direct
+    takenAt:
+      autoIncrement: false
+      defaultValue: null
+      description: The timestamp the 6 photos were taken.
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: timestamp
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: Cognite360ImageAnnotation
+  indexes: {}
+  name: null
+  properties:
+    formatVersion:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    polygon:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: true
+        maxListSize: null
+        type: float64
+        unit: null
+  space: cdf_cdm_3d
+  usedFor: edge
+- constraints: {}
+  description: null
+  externalId: Cognite3DGroup
+  indexes: {}
+  name: null
+  properties:
+    groupType:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        type: enum
+        unknownValue: null
+        values:
+          Station360:
+            description: null
+            name: Station360
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: Cognite3DModel
+  indexes: {}
+  name: null
+  properties:
+    thumbnail:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    type:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        type: enum
+        unknownValue: null
+        values:
+          CAD:
+            description: null
+            name: CAD
+          Image360:
+            description: null
+            name: Image360
+          PointCloud:
+            description: null
+            name: PointCloud
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: Cognite3DObject
+  indexes: {}
+  name: null
+  properties:
+    xMax:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    xMin:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    yMax:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    yMin:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    zMax:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    zMin:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: Cognite3DRevision
+  indexes: {}
+  name: null
+  properties:
+    model3D:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DModel
+          space: cdf_cdm_3d
+        list: false
+        maxListSize: null
+        type: direct
+    published:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: boolean
+    sourceFile:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    status:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        type: enum
+        unknownValue: null
+        values:
+          Done:
+            description: null
+            name: Done
+          Failed:
+            description: null
+            name: Failed
+          Processing:
+            description: null
+            name: Processing
+          Queued:
+            description: null
+            name: Queued
+    type:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        type: enum
+        unknownValue: null
+        values:
+          CAD:
+            description: null
+            name: CAD
+          Image360:
+            description: null
+            name: Image360
+          PointCloud:
+            description: null
+            name: PointCloud
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: Cognite3DTransformation
+  indexes: {}
+  name: null
+  properties:
+    eulerRotationX:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    eulerRotationY:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    eulerRotationZ:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    scaleX:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    scaleY:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    scaleZ:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    translationX:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    translationY:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+    translationZ:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: float64
+        unit: null
+  space: cdf_cdm_3d
+  usedFor: all
+- constraints: {}
+  description: null
+  externalId: CogniteCADNode
+  indexes: {}
+  name: null
+  properties:
+    cadNodeReference:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    model3D:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DModel
+          space: cdf_cdm_3d
+        list: false
+        maxListSize: null
+        type: direct
+    object3D:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DObject
+          space: cdf_cdm_3d
+        list: false
+        maxListSize: null
+        type: direct
+    revisions:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DRevision
+          space: cdf_cdm_3d
+        list: true
+        maxListSize: null
+        type: direct
+    subTreeSizes:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: true
+        maxListSize: null
+        type: int64
+    treeIndexes:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: true
+        maxListSize: null
+        type: int64
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: CogniteCADRevision
+  indexes: {}
+  name: null
+  properties:
+    revisionId:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: int64
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: CogniteCubeMap
+  indexes: {}
+  name: null
+  properties:
+    back:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    bottom:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    front:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    left:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    right:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+    top:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: CogniteFile
+          space: cdf_cdm
+        list: false
+        maxListSize: null
+        type: direct
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: CognitePointCloudRevision
+  indexes: {}
+  name: null
+  properties:
+    revisionId:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: false
+        maxListSize: null
+        type: int64
+  space: cdf_cdm_3d
+  usedFor: node
+- constraints: {}
+  description: null
+  externalId: CognitePointCloudVolume
+  indexes: {}
+  name: null
+  properties:
+    formatVersion:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: false
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    model3D:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DModel
+          space: cdf_cdm_3d
+        list: false
+        maxListSize: null
+        type: direct
+    object3D:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DObject
+          space: cdf_cdm_3d
+        list: false
+        maxListSize: null
+        type: direct
+    revisions:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        container:
+          externalId: Cognite3DRevision
+          space: cdf_cdm_3d
+        list: true
+        maxListSize: null
+        type: direct
+    volume:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        list: true
+        maxListSize: null
+        type: float64
+        unit: null
+    volumeReferences:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        collation: ucs_basic
+        list: true
+        maxListSize: null
+        maxTextSize: null
+        type: text
+    volumeType:
+      autoIncrement: false
+      defaultValue: null
+      description: null
+      immutable: false
+      name: null
+      nullable: true
+      type:
+        type: enum
+        unknownValue: null
+        values:
+          Box:
+            description: null
+            name: Box
+          Cylinder:
+            description: null
+            name: Cylinder
+  space: cdf_cdm_3d
+  usedFor: node
