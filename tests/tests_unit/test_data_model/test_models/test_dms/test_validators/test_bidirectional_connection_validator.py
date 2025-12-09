@@ -6,7 +6,9 @@ import pytest
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._config import internal_profiles
+from cognite.neat._data_model._analysis import CDFSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import SingleReverseDirectRelationPropertyRequest
 from cognite.neat._data_model.validation.dms import (
@@ -270,8 +272,8 @@ Containers:
 @pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
 def test_validation_deep(
     profile: Literal["deep-additive", "legacy-additive"],
-    validation_test_cdf_client: NeatClient,
     valid_dms_yaml_with_consistency_errors: tuple[str, dict[type[DataModelValidator], set]],
+    cdf_snapshot_for_validation: CDFSnapshot,
 ) -> None:
     yaml_content, expected_problematic_reversals = valid_dms_yaml_with_consistency_errors
 
@@ -306,7 +308,8 @@ def test_validation_deep(
 
     # Run on success validators
     on_success = DmsDataModelValidation(
-        validation_test_cdf_client, modus_operandi=mode, can_run_validator=can_run_validator
+                cdf_snapshot=cdf_snapshot_for_validation,
+                limits=SchemaLimits(), modus_operandi=mode, can_run_validator=can_run_validator
     )
     on_success.run(data_model)
     by_code = on_success.issues.by_code()

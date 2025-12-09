@@ -6,12 +6,15 @@ from cognite.client import ClientConfig
 from cognite.client.credentials import Token
 
 from cognite.neat._client import NeatClient, NeatClientConfig
+from cognite.neat._data_model._analysis import CDFSnapshot
 from cognite.neat._data_model.models.dms import (
     ContainerResponse,
     DataModelResponse,
     SpaceResponse,
     ViewResponse,
 )
+from cognite.neat._data_model.models.dms._data_model import DataModelRequest
+from cognite.neat._data_model.models.dms._references import DataModelReference
 
 BASE_URL = "http://neat.cognitedata.com"
 
@@ -261,6 +264,189 @@ def validation_test_cdf_client(
     )
 
     return client
+
+
+@pytest.fixture
+def cdf_snapshot_for_validation() -> CDFSnapshot:
+    views = [
+        ViewResponse(**pars)
+        for pars in [
+            dict(
+                space="my_space",
+                externalId="DomainDescribable",
+                version="v1",
+                name="My View",
+                description="An example view",
+                properties={},
+                createdTime=0,
+                lastUpdatedTime=1,
+                writable=True,
+                queryable=True,
+                usedFor="node",
+                isGlobal=False,
+                mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+            ),
+            dict(
+                space="not_my_space",
+                externalId="ExistingEdgeConnection",
+                version="v1",
+                name="My View",
+                description="An example view",
+                properties={},
+                createdTime=0,
+                lastUpdatedTime=1,
+                writable=True,
+                queryable=True,
+                usedFor="node",
+                isGlobal=False,
+                mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+            ),
+            dict(
+                space="my_space",
+                externalId="ExistingDirectConnectionRemote",
+                version="v1",
+                name="My View",
+                description="An example view",
+                properties={},
+                createdTime=0,
+                lastUpdatedTime=1,
+                writable=True,
+                queryable=True,
+                usedFor="node",
+                isGlobal=False,
+                mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+            ),
+            dict(
+                space="my_space",
+                externalId="SourceForReverseConnectionExistRemote",
+                version="v1",
+                name="SourceForReverseConnectionExistRemote",
+                description="SourceForReverseConnectionExistRemote",
+                properties={
+                    "directPropertyRemote": {
+                        "container": {"space": "my_space", "externalId": "DirectConnectionRemoteContainer"},
+                        "containerPropertyIdentifier": "directRemote",
+                        "type": {
+                            "type": "direct",
+                            "source": {
+                                "space": "my_space",
+                                "external_id": "MyDescribable",
+                                "version": "v1",
+                                "type": "view",
+                            },
+                        },
+                        "connectionType": "primary_property",
+                        "constraintState": {"nullability": "current"},
+                    }
+                },
+                createdTime=0,
+                lastUpdatedTime=1,
+                writable=True,
+                queryable=True,
+                usedFor="node",
+                isGlobal=False,
+                mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+            ),
+            dict(
+                space="prodigy",
+                externalId="OutOfSpace",
+                version="1992",
+                name="Out Of Space",
+                description="I'll take your brain to another dimension",
+                properties={
+                    "directPropertyRemote": {
+                        "container": {"space": "my_space", "externalId": "DirectConnectionRemoteContainer"},
+                        "containerPropertyIdentifier": "directRemote",
+                        "type": {
+                            "type": "direct",
+                            "source": {
+                                "space": "my_space",
+                                "external_id": "MyDescribable",
+                                "version": "v1",
+                                "type": "view",
+                            },
+                        },
+                        "connectionType": "primary_property",
+                        "constraintState": {"nullability": "current"},
+                    }
+                },
+                createdTime=0,
+                lastUpdatedTime=1,
+                writable=True,
+                queryable=True,
+                usedFor="node",
+                isGlobal=False,
+                mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
+            ),
+        ]
+    ]
+
+    containers = [
+        ContainerResponse(**pars)
+        for pars in [
+            dict(
+                space="nospace",
+                externalId="ExistingContainer",
+                name="ExistingContainer",
+                description="ExistingContainer",
+                usedFor="node",
+                properties={
+                    "unused": {
+                        "type": {"type": "text"},
+                        "nullable": False,
+                        "immutable": False,
+                    }
+                },
+                createdTime=0,
+                lastUpdatedTime=1,
+                isGlobal=False,
+            ),
+            dict(
+                space="cdf_cdm",
+                externalId="CogniteDescribable",
+                name="ExistingContainer",
+                description="ExistingContainer",
+                usedFor="node",
+                properties={
+                    "name": {
+                        "type": {"type": "text"},
+                        "nullable": False,
+                        "immutable": False,
+                    }
+                },
+                createdTime=0,
+                lastUpdatedTime=1,
+                isGlobal=False,
+            ),
+            dict(
+                space="my_space",
+                externalId="DirectConnectionRemoteContainer",
+                name="DirectConnectionRemoteContainer",
+                description="DirectConnectionRemoteContainer",
+                usedFor="node",
+                properties={
+                    "directRemote": {
+                        "type": {"type": "direct"},
+                        "nullable": False,
+                        "immutable": False,
+                    }
+                },
+                createdTime=0,
+                lastUpdatedTime=1,
+                isGlobal=False,
+            ),
+        ]
+    ]
+
+    return CDFSnapshot(
+        views={view.as_reference(): view.as_request() for view in views},
+        containers={container.as_reference(): container.as_request() for container in containers},
+        data_models={
+            DataModelReference(space="cdf_cdm", externalId="CogniteCore", version="v1"): DataModelRequest(
+                space="cdf_cdm", externalId="CogniteCore", version="v1", views=[view.as_reference() for view in views]
+            )
+        },
+    )
 
 
 @pytest.fixture
