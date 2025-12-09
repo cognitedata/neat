@@ -39,6 +39,15 @@ def view_filter_raw_data() -> Iterable[tuple]:
         id="not_filter",
     )
     yield pytest.param(
+        {
+            "and": [
+                {"hasData": [{"type": "container", "space": "my_space", "externalId": "MyContainer"}]},
+                {"not": {"in": {"property": ["my_space", "MyView/v1", "category"], "values": ["val1", "val2"]}}},
+            ]
+        },
+        id="and_with_nested_not_filter",
+    )
+    yield pytest.param(
         {"prefix": {"property": ["node", "viewId/v1", "name"], "value": "test"}},
         id="prefix_filter",
     )
