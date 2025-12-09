@@ -254,6 +254,9 @@ def _move_filter_key(value: Any) -> Any:
         # Already in the correct format
         return value
     key, data = next(iter(value.items()))
+    # Check if inner data already has filterType (already processed by a previous recursive call)
+    if isinstance(data, dict) and "filterType" in data:
+        return value
     if key not in AVAILABLE_FILTERS:
         raise ValueError(
             f"Unknown filter type: {key!r}. Available filter types: {humanize_collection(AVAILABLE_FILTERS)}."
