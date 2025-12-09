@@ -1,12 +1,13 @@
 from collections.abc import Callable
 
+from cognite.neat._data_model._analysis import CDFSnapshot, LocalSnapshot, ValidationResources
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
 from cognite.neat._utils.useful_types import ModusOperandi
 
-from ._base import CDFSnapshot, DataModelValidator, LocalSnapshot, ValidationResources
+from ._base import DataModelValidator
 
 
 class DmsDataModelValidation(OnSuccessIssuesChecker):
@@ -33,7 +34,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
-            cls(validation_resources) for cls in get_concrete_subclasses(DataModelValidator)
+            validator(validation_resources) for validator in get_concrete_subclasses(DataModelValidator)
         ]
 
         # Run validators

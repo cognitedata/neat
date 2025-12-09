@@ -204,9 +204,9 @@ class ReverseConnectionSourcePropertyMissing(DataModelValidator):
             if not source_view:
                 continue  # Handled by ReverseConnectionSourceViewMissing
 
-            expanded_properties = self.validation_resources.properties_by_view.get(source_view_ref, {})
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
             # we need expanded properties here
-            if not expanded_properties or through.identifier not in expanded_properties:
+            if not properties or through.identifier not in properties:
                 errors.append(
                     ConsistencyError(
                         message=(
@@ -251,12 +251,15 @@ class ReverseConnectionSourcePropertyWrongType(DataModelValidator):
             through = _normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
-            if not source_view or not source_view.properties:
-                continue  # Handled by other validators
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-            source_property = source_view.properties.get(through.identifier)
-            if not source_property:
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
+            # we need expanded properties here
+            if not properties or through.identifier not in properties:
                 continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            source_property = properties[through.identifier]
 
             if not isinstance(source_property, ViewCorePropertyRequest):
                 errors.append(
@@ -302,12 +305,18 @@ class ReverseConnectionContainerMissing(DataModelValidator):
             through = _normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
-            if not source_view or not source_view.properties:
-                continue  # Handled by other validators
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-            source_property = source_view.properties.get(through.identifier)
-            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by other validators
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
+            # we need expanded properties here
+            if not properties or through.identifier not in properties:
+                continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            source_property = properties[through.identifier]
+
+            if not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by ReverseConnectionSourcePropertyWrongType
 
             container_ref = source_property.container
             container_property_id = source_property.container_property_identifier
@@ -360,12 +369,18 @@ class ReverseConnectionContainerPropertyMissing(DataModelValidator):
             through = _normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
-            if not source_view or not source_view.properties:
-                continue  # Handled by other validators
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-            source_property = source_view.properties.get(through.identifier)
-            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by other validators
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
+            # we need expanded properties here
+            if not properties or through.identifier not in properties:
+                continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            source_property = properties[through.identifier]
+
+            if not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by ReverseConnectionSourcePropertyWrongType
 
             container_ref = source_property.container
             container_property_id = source_property.container_property_identifier
@@ -421,12 +436,18 @@ class ReverseConnectionContainerPropertyWrongType(DataModelValidator):
             through = _normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
-            if not source_view or not source_view.properties:
-                continue  # Handled by other validators
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-            source_property = source_view.properties.get(through.identifier)
-            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by other validators
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
+            # we need expanded properties here
+            if not properties or through.identifier not in properties:
+                continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            source_property = properties[through.identifier]
+
+            if not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by ReverseConnectionSourcePropertyWrongType
 
             container_ref = source_property.container
             container_property_id = source_property.container_property_identifier
@@ -484,12 +505,18 @@ class ReverseConnectionTargetMissing(DataModelValidator):
             through = _normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
-            if not source_view or not source_view.properties:
-                continue  # Handled by other validators
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-            source_property = source_view.properties.get(through.identifier)
-            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
-                continue  # Handled by other validators
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
+            # we need expanded properties here
+            if not properties or through.identifier not in properties:
+                continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            source_property = properties[through.identifier]
+
+            if not isinstance(source_property, ViewCorePropertyRequest):
+                continue  # Handled by ReverseConnectionSourcePropertyWrongType
 
             actual_target_view = source_property.source
 
@@ -541,11 +568,17 @@ class ReverseConnectionPointsToAncestor(DataModelValidator):
             through = _normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
-            if not source_view or not source_view.properties:
-                continue  # Handled by other validators
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-            source_property = source_view.properties.get(through.identifier)
-            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
+            # we need expanded properties here
+            if not properties or through.identifier not in properties:
+                continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            source_property = properties[through.identifier]
+
+            if not isinstance(source_property, ViewCorePropertyRequest):
                 continue  # Handled by other validators
 
             actual_target_view = source_property.source
@@ -553,7 +586,7 @@ class ReverseConnectionPointsToAncestor(DataModelValidator):
             if not actual_target_view:
                 continue  # Handled by ReverseConnectionTargetMissing
 
-            if self.validation_resources.is_ancestor(actual_target_view, target_view_ref):
+            if self.validation_resources.is_ancestor(target_view_ref, actual_target_view):
                 recommendations.append(
                     Recommendation(
                         message=(
@@ -589,10 +622,10 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
     """
 
     code = f"{BASE_CODE}-REVERSE-009"
-    issue_type = Recommendation
+    issue_type = ConsistencyError
 
-    def run(self) -> list[Recommendation]:
-        recommendation: list[Recommendation] = []
+    def run(self) -> list[ConsistencyError]:
+        errors: list[ConsistencyError] = []
 
         for (target_view_ref, reverse_prop_name), (
             source_view_ref,
@@ -601,11 +634,17 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
             through = _normalize_through_reference(source_view_ref, through)
             source_view = self.validation_resources.select_view(source_view_ref, through.identifier)
 
-            if not source_view or not source_view.properties:
-                continue  # Handled by other validators
+            if not source_view:
+                continue  # Handled by ReverseConnectionSourceViewMissing
 
-            source_property = source_view.properties.get(through.identifier)
-            if not source_property or not isinstance(source_property, ViewCorePropertyRequest):
+            properties = self.validation_resources.properties_by_view.get(source_view_ref)
+            # we need expanded properties here
+            if not properties or through.identifier not in properties:
+                continue  # Handled by ReverseConnectionSourcePropertyMissing
+
+            source_property = properties[through.identifier]
+
+            if not isinstance(source_property, ViewCorePropertyRequest):
                 continue  # Handled by other validators
 
             actual_target_view = source_property.source
@@ -613,12 +652,12 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
             if not actual_target_view:
                 continue  # Handled by ReverseConnectionTargetMissing
 
-            if self.validation_resources.is_ancestor(actual_target_view, target_view_ref):
+            if self.validation_resources.is_ancestor(target_view_ref, actual_target_view):
                 continue  # Handled by ReverseConnectionTargetAncestor
 
             if actual_target_view != target_view_ref:
-                recommendation.append(
-                    Recommendation(
+                errors.append(
+                    ConsistencyError(
                         message=(
                             f"The reverse connection '{reverse_prop_name}' in view {target_view_ref!s} "
                             f"expects its corresponding direct connection in view {source_view_ref!s} "
@@ -630,4 +669,4 @@ class ReverseConnectionTargetMismatch(DataModelValidator):
                     )
                 )
 
-        return recommendation
+        return errors
