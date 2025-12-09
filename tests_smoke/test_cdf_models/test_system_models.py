@@ -24,34 +24,34 @@ from tests_smoke.test_cdf_models.constants import (
 
 
 @pytest.fixture(scope="session")
-def current_cognite_core_model(neat_client: NeatClient) -> DataModelRequest:
+def cdf_cognite_core_model(neat_client: NeatClient) -> DataModelRequest:
     model = neat_client.data_models.retrieve([COGNITE_CORE_ID])
     assert len(model) == 1, "Expected to retrieve exactly one CogniteCore data model"
     return model[0].as_request()
 
 
 @pytest.fixture(scope="session")
-def current_cognite_core_views(
-    neat_client: NeatClient, current_cognite_core_model: DataModelRequest
+def cdf_cognite_core_views(
+    neat_client: NeatClient, cdf_cognite_core_model: DataModelRequest
 ) -> dict[ViewReference, ViewResponse]:
-    assert current_cognite_core_model.views, "CogniteCore model has no views"
-    views = neat_client.views.retrieve(current_cognite_core_model.views, include_inherited_properties=True)
+    assert cdf_cognite_core_model.views, "CogniteCore model has no views"
+    views = neat_client.views.retrieve(cdf_cognite_core_model.views, include_inherited_properties=True)
     return {view.as_reference(): view for view in views}
 
 
 @pytest.fixture(scope="session")
-def current_cognite_core_view_requests(
-    current_cognite_core_views: dict[ViewReference, ViewResponse],
+def cdf_cognite_core_view_requests(
+    cdf_cognite_core_views: dict[ViewReference, ViewResponse],
 ) -> dict[ViewReference, ViewRequest]:
-    return {view_id: view.as_request() for view_id, view in current_cognite_core_views.items()}
+    return {view_id: view.as_request() for view_id, view in cdf_cognite_core_views.items()}
 
 
 @pytest.fixture(scope="session")
-def current_cognite_core_containers(
-    neat_client: NeatClient, current_cognite_core_views: dict[ViewReference, ViewResponse]
+def cdf_cognite_core_containers(
+    neat_client: NeatClient, cdf_cognite_core_views: dict[ViewReference, ViewResponse]
 ) -> dict[ContainerReference, ContainerRequest]:
     container_refs = {
-        container_ref for view in current_cognite_core_views.values() for container_ref in view.mapped_containers
+        container_ref for view in cdf_cognite_core_views.values() for container_ref in view.mapped_containers
     }
     containers = neat_client.containers.retrieve(list(container_refs))
     return {container.as_reference(): container.as_request() for container in containers}
@@ -76,12 +76,12 @@ def local_container_map() -> dict[ContainerReference, ContainerRequest]:
 
 
 class TestCogniteCoreModel:
-    def test_model_is_unchanged(self, current_cognite_core_model: DataModelRequest) -> None:
+    def test_model_is_unchanged(self, cdf_cognite_core_model: DataModelRequest) -> None:
         local_model = DataModelRequest.model_validate(
             yaml.safe_load(COGNITE_CORE_MODEL_YAML.read_text(encoding=ENCODING))
         )
 
-        changes = DataModelDiffer().diff(local_model, current_cognite_core_model)
+        changes = DataModelDiffer().diff(local_model, cdf_cognite_core_model)
         if changes:
             raise AssertionError(f"Cognite Core data model has changed:\n {humanize_changes(changes)}")
 
@@ -90,13 +90,13 @@ class TestCogniteCoreModel:
         self,
         local_view: ViewRequest,
         local_container_map: dict[ContainerReference, ContainerRequest],
-        current_cognite_core_view_requests: dict[ViewReference, ViewRequest],
-        current_cognite_core_containers: dict[ContainerReference, ContainerRequest],
+        cdf_cognite_core_view_requests: dict[ViewReference, ViewRequest],
+        cdf_cognite_core_containers: dict[ContainerReference, ContainerRequest],
     ) -> None:
-        current_view = current_cognite_core_view_requests.get(local_view.as_reference())
+        current_view = cdf_cognite_core_view_requests.get(local_view.as_reference())
         assert current_view is not None, f"View {local_view.as_reference()} not found in current Cognite Core model"
 
-        changes = ViewDiffer(local_container_map, current_cognite_core_containers).diff(local_view, current_view)
+        changes = ViewDiffer(local_container_map, cdf_cognite_core_containers).diff(local_view, current_view)
         if changes:
             raise AssertionError(f"View {local_view.as_reference()!s} has changed:\n {humanize_changes(changes)}")
 
@@ -107,9 +107,9 @@ class TestCogniteCoreModel:
     def test_containers_are_unchanged(
         self,
         local_container: ContainerRequest,
-        current_cognite_core_containers: dict[ContainerReference, ContainerRequest],
+        cdf_cognite_core_containers: dict[ContainerReference, ContainerRequest],
     ) -> None:
-        current_container = current_cognite_core_containers.get(local_container.as_reference())
+        current_container = cdf_cognite_core_containers.get(local_container.as_reference())
         assert current_container is not None, (
             f"Container {local_container.as_reference()} not found in current Cognite Core model"
         )
