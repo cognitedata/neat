@@ -29,7 +29,7 @@ class DataModelMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        if not self.local_resources.data_model_name:
+        if not self.validation_resources.local.data_model.name:
             recommendations.append(
                 Recommendation(
                     message="Data model is missing a human-readable name.",
@@ -68,7 +68,7 @@ class DataModelMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        if not self.local_resources.data_model_description:
+        if not self.validation_resources.local.data_model.description:
             recommendations.append(
                 Recommendation(
                     message="Data model is missing a description.",
@@ -103,11 +103,11 @@ class ViewMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.local_resources.data_model_views:
-            view = self.local_resources.views_by_reference.get(view_ref)
+        for view_ref in self.validation_resources.local.data_model.views or []:
+            view = self.validation_resources.select_view(view_ref)
 
             if view is None:
-                raise RuntimeError(f"View {view_ref!s} not found in local resources. This is a bug.")
+                raise RuntimeError(f"ViewMissingName.run: View {view_ref!s} not found. This is a bug.")
 
             if not view.name:
                 recommendations.append(
@@ -154,11 +154,11 @@ class ViewMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.local_resources.data_model_views:
-            view = self.local_resources.views_by_reference.get(view_ref)
+        for view_ref in self.validation_resources.local.data_model.views or []:
+            view = self.validation_resources.select_view(view_ref)
 
             if view is None:
-                raise RuntimeError(f"View {view_ref!s} not found in local resources. This is a bug.")
+                raise RuntimeError(f"ViewMissingDescription.run: View {view_ref!s} not found. This is a bug.")
 
             if not view.description:
                 recommendations.append(
@@ -195,17 +195,24 @@ class ViewPropertyMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.local_resources.data_model_views:
-            if properties := self.local_resources.properties_by_view.get(view_ref):
-                for prop_ref, definition in properties.items():
-                    if not definition.name:
-                        recommendations.append(
-                            Recommendation(
-                                message=f"View {view_ref!s} property {prop_ref!s} is missing a human-readable name.",
-                                fix="Add a clear and concise name to the view property.",
-                                code=self.code,
-                            )
+        for view_ref in self.validation_resources.local.data_model.views or []:
+            view = self.validation_resources.select_view(view_ref)
+
+            if view is None:
+                raise RuntimeError(f"ViewMissingName.run: View {view_ref!s} not found. This is a bug.")
+
+            if not view.properties:
+                continue
+
+            for prop_ref, definition in view.properties.items():
+                if not definition.name:
+                    recommendations.append(
+                        Recommendation(
+                            message=f"View {view_ref!s} property {prop_ref!s} is missing a human-readable name.",
+                            fix="Add a clear and concise name to the view property.",
+                            code=self.code,
                         )
+                    )
 
         return recommendations
 
@@ -244,17 +251,25 @@ class ViewPropertyMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.local_resources.data_model_views:
-            if properties := self.local_resources.properties_by_view.get(view_ref):
-                for prop_ref, definition in properties.items():
-                    if not definition.description:
-                        recommendations.append(
-                            Recommendation(
-                                message=f"View {view_ref!s} property {prop_ref!s} is missing a description.",
-                                fix="Add a clear and concise description to the view property.",
-                                code=self.code,
-                            )
+        for view_ref in self.validation_resources.local.data_model.views or []:
+            view = self.validation_resources.select_view(view_ref)
+
+            if view is None:
+                raise RuntimeError(f"ViewMissingName.run: View {view_ref!s} not found. This is a bug.")
+
+            if not view.properties:
+                continue
+
+
+            for prop_ref, definition in view.properties.items():
+                if not definition.description:
+                    recommendations.append(
+                        Recommendation(
+                            message=f"View {view_ref!s} property {prop_ref!s} is missing a description.",
+                            fix="Add a clear and concise description to the view property.",
+                            code=self.code,
                         )
+                    )
 
         return recommendations
 
@@ -282,9 +297,7 @@ class EnumerationMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for container_ref, container in self.local_resources.containers_by_reference.items():
-            if container_ref.space != self.local_resources.data_model_reference.space:
-                continue
+        for container_ref, container in self.validation_resources.local.containers.items():
 
             for prop_ref, definition in container.properties.items():
                 if not isinstance(definition.type, EnumProperty):
@@ -340,9 +353,7 @@ class EnumerationMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for container_ref, container in self.local_resources.containers_by_reference.items():
-            if container_ref.space != self.local_resources.data_model_reference.space:
-                continue
+        for container_ref, container in self.validation_resources.local.containers.items():
 
             for prop_ref, definition in container.properties.items():
                 if not isinstance(definition.type, EnumProperty):

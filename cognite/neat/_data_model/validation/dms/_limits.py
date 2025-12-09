@@ -40,15 +40,14 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-DATA-MODEL-001"
     issue_type = ConsistencyError
 
-
     def run(self) -> list[ConsistencyError]:
-        if len(self.validation_resources.local.data_model.views) > self.limits.data_models.views:
+        if len(self.validation_resources.local.data_model.views) > self.validation_resources.limits.data_models.views:
             return [
                 ConsistencyError(
                     message=(
                         f"The data model references {len(self.validation_resources.local.data_model.views)} views, "
                         "which exceeds the limit of "
-                        f"{self.limits.data_models.views} views per data model."
+                        f"{self.validation_resources.limits.data_models.views} views per data model."
                     ),
                     code=self.code,
                 )
@@ -57,6 +56,7 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
 
 
 ### View level limits
+
 
 class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     """Validates that a view does not exceed the maximum number of properties.
@@ -75,19 +75,17 @@ class ViewPropertyCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-001"
     issue_type = ConsistencyError
 
-
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         for view_ref, properties in self.validation_resources.properties_by_view.items():
-
-            if properties and len(properties) > self.limits.views.properties:
+            if properties and len(properties) > self.validation_resources.limits.views.properties:
                 errors.append(
                     ConsistencyError(
                         message=(
                             f"View {view_ref!s} has {len(properties)} properties,"
                             " which exceeds the limit of "
-                            f"{self.limits.views.properties} properties per view."
+                            f"{self.validation_resources.limits.views.properties} properties per view."
                         ),
                         code=self.code,
                     )
@@ -126,14 +124,11 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-002"
     issue_type = ConsistencyError
 
-
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-        merged_views = self.merged_views
 
         # Single loop over all views
         for view_ref, properties in self.validation_resources.properties_by_view.items():
-
             if properties:
                 count = len(
                     {
@@ -142,13 +137,13 @@ class ViewContainerCountIsOutOfLimits(DataModelValidator):
                         if (isinstance(prop, ViewCorePropertyRequest) and prop.container)
                     }
                 )
-                if count > self.limits.views.containers:
+                if count > self.validation_resources.limits.views.containers:
                     errors.append(
                         ConsistencyError(
                             message=(
                                 f"View {view_ref!s} references "
                                 f"{count} containers, which exceeds the limit of "
-                                f"{self.limits.views.containers} containers per view."
+                                f"{self.validation_resources.limits.views.containers} containers per view."
                             ),
                             code=self.code,
                         )
@@ -174,20 +169,18 @@ class ViewImplementsCountIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-VIEW-003"
     issue_type = ConsistencyError
 
-
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
         # Single loop over all views
         for view_ref, ancestors in self.validation_resources.ancestors_by_view.items():
-
-            if ancestors and len(ancestors) > self.limits.views.implements:
+            if ancestors and len(ancestors) > self.validation_resources.limits.views.implements:
                 errors.append(
                     ConsistencyError(
                         message=(
                             f"View {view_ref!s} implements {len(ancestors)} views,"
                             " which exceeds the limit of"
-                            f" {self.limits.views.implements} implemented views per view."
+                            f" {self.validation_resources.limits.views.implements} implemented views per view."
                         ),
                         code=self.code,
                     )
@@ -217,20 +210,19 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
     issue_type = ConsistencyError
 
     def run(self) -> list[ConsistencyError]:
-
+        errors: list[ConsistencyError] = []
         # Single loop over all containers
-        for container_ref, container in self.local_resources.containers_by_reference.keys():
-            container = merged_containers.get(container_ref)
-            if not container:
-                raise RuntimeError(f"Container {container_ref!s} not found in merged containers. This is a bug!")
-
-            if container.properties and len(container.properties) > self.limits.containers.properties():
+        for container_ref, container in self.validation_resources.local.containers.items():
+            if (
+                container.properties
+                and len(container.properties) > self.validation_resources.limits.containers.properties()
+            ):
                 errors.append(
                     ConsistencyError(
                         message=(
-                            f"Container {container.as_reference()!s} has {len(container.properties)} properties, "
+                            f"Container {container_ref!s} has {len(container.properties)} properties, "
                             "which exceeds the limit of "
-                            f"{self.limits.containers.properties()} properties per container."
+                            f"{self.validation_resources.limits.containers.properties()} properties per container."
                         ),
                         fix="Define at least one property for container",
                         code=self.code,
@@ -239,7 +231,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
             elif not container.properties:
                 errors.append(
                     ConsistencyError(
-                        message=(f"Container {container.as_reference()!s} does not have any properties defined."),
+                        message=(f"Container {container_ref!s} does not have any properties defined."),
                         fix="Define at least one property for container",
                         code=self.code,
                     )
@@ -273,26 +265,11 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
     code = f"{BASE_CODE}-CONTAINER-002"
     issue_type = ConsistencyError
 
-    def __init__(
-        self,
-        local_resources: LocalResources,
-        cdf_resources: CDFResources,
-        limits: SchemaLimits,
-        modus_operandi: ModusOperandi = "additive",
-    ) -> None:
-        super().__init__(local_resources, cdf_resources, modus_operandi)
-        self.limits = limits
-
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
-        merged_containers = self.merged_containers
 
         # Single loop over all containers
-        for container_ref in self.local_resources.containers_by_reference.keys():
-            container = merged_containers.get(container_ref)
-            if not container:
-                raise RuntimeError(f"Container {container_ref!s} not found in merged containers. This is a bug!")
-
+        for container_ref, container in self.validation_resources.local.containers.items():
             properties_by_index_type = self.container_property_by_index_type(container)
 
             for property_id, property_ in container.properties.items():
@@ -307,13 +284,13 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
                     continue
 
                 has_btree_index = property_id in properties_by_index_type[BtreeIndex.model_fields["index_type"].default]
-                limit = self.limits.containers.properties.listable(type_, has_btree_index)
+                limit = self.validation_resources.limits.containers.properties.listable(type_, has_btree_index)
 
                 if type_.max_list_size > limit:
                     errors.append(
                         ConsistencyError(
                             message=(
-                                f"Container {container.as_reference()!s} has property {property_id} with list size "
+                                f"Container {container_ref!s} has property {property_id} with list size "
                                 f"{type_.max_list_size}, which exceeds the limit of {limit} "
                                 f"for data type {type_.__class__.__name__}."
                             ),

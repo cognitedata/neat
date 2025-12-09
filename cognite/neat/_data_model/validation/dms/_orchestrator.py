@@ -1,16 +1,9 @@
 from collections.abc import Callable
-from itertools import chain
 
 from cognite.neat._client import NeatClient
-from cognite.neat._data_model._analysis import DataModelAnalysis
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
-from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.models.dms._references import ContainerReference, DataModelReference, ViewReference
 from cognite.neat._data_model.models.dms._schema import RequestSchema
-from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.models.dms._views import ViewRequest
-
 from cognite.neat._data_model.validation.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -21,17 +14,19 @@ from cognite.neat._data_model.validation.dms._limits import (
 )
 from cognite.neat._utils.useful_types import ModusOperandi
 
-# from ._ai_readiness import (
-#     DataModelMissingDescription,
-#     DataModelMissingName,
-#     EnumerationMissingDescription,
-#     EnumerationMissingName,
-#     ViewMissingDescription,
-#     ViewMissingName,
-#     ViewPropertyMissingDescription,
-#     ViewPropertyMissingName,
-# )
-# from ._base import CDFResources, DataModelValidator, LocalResources, ValidationResources
+from ._base import CDFResources, DataModelValidator, LocalResources, ValidationResources
+
+from ._ai_readiness import (
+    DataModelMissingDescription,
+    DataModelMissingName,
+    EnumerationMissingDescription,
+    EnumerationMissingName,
+    ViewMissingDescription,
+    ViewMissingName,
+    ViewPropertyMissingDescription,
+    ViewPropertyMissingName,
+)
+
 # from ._connections import (
 #     ConnectionValueTypeUndefined,
 #     ConnectionValueTypeUnexisting,
@@ -69,50 +64,77 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._modus_operandi = modus_operandi
         self._has_run = False
 
-    def _gather_validation_resources(self, data_model: RequestSchema) -> tuple[LocalResources, CDFResources, SchemaLimits]:
+    def _gather_validation_resources(
+        self, data_model: RequestSchema
+    ) -> tuple[LocalResources, CDFResources, SchemaLimits]:
         """Gather local and CDF resources needed for validation."""
 
-
-        local = LocalResources(data_model=data_model.data_model,
-                               views = {view.as_reference(): view for view in data_model.data_model.views},
-                               containers = {container.as_reference(): container for container in data_model.data_model.containers})
-
-
-        cdf = CDFResources(data_model={response.as_reference():response.as_request() for response in self._client.data_models.retrieve([data_model.data_model.as_reference()])},
-                           views={response.as_reference():response.as_request() for response in self._client.views.list(all_versions=True, include_global=True, include_inherited_properties=False, limit = None)},
-                           containers={response.as_reference():response.as_request() for response in self._client.containers.list(include_global=True,limit = None)},
-                           spaces={response.as_reference():response.as_request() for response in self._client.spaces.list(include_global=True, limit=999)}
+        local = LocalResources(
+            data_model=data_model.data_model,
+            views={view.as_reference(): view for view in data_model.views},
+            containers={container.as_reference(): container for container in data_model.containers},
         )
 
-        return ValidationResources(modus_operandi=self._modus_operandi,
-                                   local=local,
-                                   cdf=cdf,
-                                   limits=SchemaLimits.from_api_response(self._client.statistics.project()))
+        print("Fetching CDF resources for validation...")
+
+        cdf = CDFResources(
+            data_models={
+                response.as_reference(): response.as_request()
+                for response in self._client.data_models.retrieve([data_model.data_model.as_reference()])
+            },
+            views={
+                response.as_reference(): response.as_request()
+                for response in self._client.views.list(
+                    all_versions=True, include_global=True, include_inherited_properties=False, limit=None
+                )
+            },
+            containers={
+                response.as_reference(): response.as_request()
+                for response in self._client.containers.list(include_global=True, limit=None)
+            },
+            spaces={
+                response.as_reference(): response.as_request()
+                for response in self._client.spaces.list(include_global=True, limit=999)
+            },
+        )
+
+        print("Fetching completed...")
+
+        return ValidationResources(
+            modus_operandi=self._modus_operandi,
+            local=local,
+            cdf=cdf,
+            limits=SchemaLimits.from_api_response(self._client.statistics.project()),
+        )
 
     def run(self, data_model: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
 
         # Helper wrangled data model components
-        local_resources, cdf_resources, cdf_limits = self._gather_resources(data_model)
+        validation_resources = self._gather_validation_resources(data_model)
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
             # Limits
-            DataModelViewCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
-            ViewPropertyCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
-            ViewImplementsCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
-            ViewContainerCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
-            ContainerPropertyCountIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
-            ContainerPropertyListSizeIsOutOfLimits(local_resources, cdf_resources, cdf_limits, self._modus_operandi),
+            DataModelViewCountIsOutOfLimits(validation_resources),
+            ViewPropertyCountIsOutOfLimits(validation_resources),
+            ViewImplementsCountIsOutOfLimits(validation_resources),
+            ViewContainerCountIsOutOfLimits(validation_resources),
+            ContainerPropertyCountIsOutOfLimits(validation_resources),
+            ContainerPropertyListSizeIsOutOfLimits(validation_resources),
+
             # Views
-            # ViewToContainerMappingNotPossible(local_resources, cdf_resources, self._modus_operandi),
+            # ViewToContainerMappingNotPossible(validation_resources),
             # ImplementedViewNotExisting(local_resources, cdf_resources, self._modus_operandi),
+
             # # Containers
             # ExternalContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
             # ExternalContainerPropertyDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
             # RequiredContainerDoesNotExist(local_resources, cdf_resources, self._modus_operandi),
+
             # # Consistency
             # ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
+
             # # Connections
             # ConnectionValueTypeUnexisting(local_resources, cdf_resources, self._modus_operandi),
             # ConnectionValueTypeUndefined(local_resources, cdf_resources, self._modus_operandi),
@@ -125,15 +147,16 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             # ReverseConnectionPointsToAncestor(local_resources, cdf_resources, self._modus_operandi),
             # ReverseConnectionTargetMismatch(local_resources, cdf_resources, self._modus_operandi),
             # ReverseConnectionTargetMissing(local_resources, cdf_resources, self._modus_operandi),
-            # # AI Readiness
-            # DataModelMissingName(local_resources, cdf_resources, self._modus_operandi),
-            # DataModelMissingDescription(local_resources, cdf_resources, self._modus_operandi),
-            # ViewMissingName(local_resources, cdf_resources, self._modus_operandi),
-            # ViewMissingDescription(local_resources, cdf_resources, self._modus_operandi),
-            # ViewPropertyMissingName(local_resources, cdf_resources, self._modus_operandi),
-            # ViewPropertyMissingDescription(local_resources, cdf_resources, self._modus_operandi),
-            # EnumerationMissingName(local_resources, cdf_resources, self._modus_operandi),
-            # EnumerationMissingDescription(local_resources, cdf_resources, self._modus_operandi),
+
+            # AI Readiness
+            DataModelMissingName(validation_resources),
+            DataModelMissingDescription(validation_resources),
+            ViewMissingName(validation_resources),
+            ViewMissingDescription(validation_resources),
+            ViewPropertyMissingName(validation_resources),
+            ViewPropertyMissingDescription(validation_resources),
+            EnumerationMissingName(validation_resources),
+            EnumerationMissingDescription(validation_resources),
         ]
 
         # Run validators

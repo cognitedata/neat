@@ -79,7 +79,8 @@ class ValidationResources:
             - Local containers are updated to include properties from CDF containers.
         """
 
-        # Local schema is complete, so local schema resources are not undergoing any changes
+        # Local schema is complete, it does not require any updates
+        # as changes will replace existing schema in CDF
         if self._modus_operandi == "rebuild":
             return None
 
@@ -89,11 +90,16 @@ class ValidationResources:
             self._update_local_views()
             self._update_local_containers()
         else:
-            raise RuntimeError(f"Unknown modus operandi: {self._modus_operandi}. This is a bug!")
+            raise RuntimeError(f"_update_local_resources: Unknown modus: {self._modus_operandi}. This is a bug!")
 
     def _update_local_data_model(self) -> None:
         if cdf := self.cdf.data_models.get(self.local.data_model.as_reference()):
+            if not cdf.views:
+                return None
+
             for view in cdf.views:
+                if not self.local.data_model.views:
+                    self.local.data_model.views = []
                 if view not in self.local.data_model.views:
                     self.local.data_model.views.append(view)
 
@@ -118,6 +124,9 @@ class ValidationResources:
 
         # as we have updated view references in local data model, we need to ensure that any new views
         # from CDF are also added to local views for validation
+        if not self.local.data_model.views:
+            return None
+
         for view_ref in self.local.data_model.views:
             if view_ref not in self.local.views:
                 if cdf_view := self.cdf.views.get(view_ref):
@@ -131,8 +140,27 @@ class ValidationResources:
                     if prop_name not in container.properties:
                         container.properties[prop_name] = prop
 
+        for view in self.local.views.values():
+            if not view.properties:
+                continue
+
+            for property_ in view.properties.values():
+                if not isinstance(property_, ViewCorePropertyRequest):
+                    continue
+
+                container_ref = property_.container
+                # already updated in previous loop
+                if container_ref in self.local.containers:
+                    continue
+
+                if cdf_container := self.cdf.containers.get(container_ref):
+                    self.local.containers[container_ref] = cdf_container
+
     def select_view(self, view_ref: ViewReference, property_: str | None = None) -> ViewRequest | None:
         local_view = self.local.views.get(view_ref)
+
+        # We are pulling from CDF only if the view is not in the same space as the local data model
+        # or if we are in additive modus operandi, so view can complement local view definition
         cdf_view = (
             self.cdf.views.get(view_ref)
             if view_ref.space != self.local.data_model.space or self._modus_operandi == "additive"
@@ -180,7 +208,11 @@ class ValidationResources:
             Dictionary mapping each ViewReference to its list of ancestor ViewReferences
         """
         ancestors_mapping: dict[ViewReference, list[ViewReference]] = {}
-        for view in self.local.data_model.views.keys():
+
+        if not self.local.data_model.views:
+            return ancestors_mapping
+
+        for view in self.local.data_model.views:
             ancestors_mapping[view] = self.view_ancestors(view)
         return ancestors_mapping
 
@@ -227,10 +259,15 @@ class ValidationResources:
         from ancestor views through implements."""
 
         properties_mapping: dict[ViewReference, dict[str, ViewRequestProperty]] = {}
+
+        if not self.local.data_model.views:
+            return properties_mapping
+
         for view_ref in self.local.data_model.views:
             view = self.select_view(view_ref)
+            # This should never happen, if it happens, it's a bug
             if not view:
-                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
+                raise RuntimeError(f"properties_by_view: View {view_ref!s} not found. This is a bug!")
 
             combined_properties: dict[str, ViewRequestProperty] = {}
             ancestors = self.ancestors_by_view.get(view_ref, [])
@@ -254,10 +291,14 @@ class ValidationResources:
 
         referenced_containers: set[ContainerReference] = set()
 
+        if not self.local.data_model.views:
+            return referenced_containers
+
         for view_ref in self.local.data_model.views:
             view = self.select_view(view_ref)
+            # This should never happen, if it happens, it's a bug
             if not view:
-                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
+                raise RuntimeError(f"referenced_containers: View {view_ref!s} not found. This is a bug!")
 
             if not view.properties:
                 continue
@@ -273,12 +314,19 @@ class ValidationResources:
     ) -> dict[tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]]:
         """Get a mapping of reverse direct relations to their corresponding source view and 'through' property."""
 
-        bidirectional_connections = {}
+        bidirectional_connections: dict[
+            tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
+        ] = {}
+
+        if not self.local.data_model.views:
+            return bidirectional_connections
 
         for view_ref in self.local.data_model.views:
             view = self.select_view(view_ref)
+
+            # This should never happen, if it happens, it's a bug
             if not view:
-                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
+                raise RuntimeError(f"reverse_to_direct_mapping: View {view_ref!s} not found. This is a bug!")
 
             if not view.properties:
                 continue
@@ -297,6 +345,9 @@ class ValidationResources:
         """Get a mapping of view references to their corresponding ViewRequest objects."""
 
         connection_end_node_types: dict[tuple[ViewReference, str], ViewReference | None] = {}
+
+        if not self.local.data_model.views:
+            return connection_end_node_types
 
         for view_ref in self.local.data_model.views:
             view = self.select_view(view_ref)
@@ -317,7 +368,7 @@ class ValidationResources:
                     elif (
                         (
                             container := self.select_container(
-                                (property_.container, property_.container_property_identifier)
+                                property_.container, property_.container_property_identifier
                             )
                         )
                         and (property_.container_property_identifier in container.properties)

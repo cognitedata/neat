@@ -109,7 +109,7 @@ container_names = [f"Container{i}" for i in range(1, 12)] + [
 ]
 
 
-@pytest.fixture(scope="session")
+# @pytest.fixture(scope="session")
 def dms_yaml_hitting_all_the_data_model_limits() -> tuple[str, dict[str, set]]:
     yaml = f"""Metadata:
 - Key: space
