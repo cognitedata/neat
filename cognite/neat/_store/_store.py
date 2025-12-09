@@ -1,13 +1,25 @@
 from collections import UserList
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, cast
 
+from cognite.neat._client.client import NeatClient
+from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
 from cognite.neat._data_model.deployer.data_classes import DeploymentResult
+from cognite.neat._data_model.deployer.deployer import SchemaDeployer
 from cognite.neat._data_model.exporters import DMSExporter, DMSFileExporter
+from cognite.neat._data_model.exporters._api_exporter import DMSAPIExporter
 from cognite.neat._data_model.importers import DMSImporter, DMSTableImporter
 from cognite.neat._data_model.models.dms import RequestSchema as PhysicalDataModel
+from cognite.neat._data_model.models.dms._container import ContainerRequest
+from cognite.neat._data_model.models.dms._data_model import DataModelRequest
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
+from cognite.neat._data_model.models.dms._references import ContainerReference, DataModelReference, SpaceReference, ViewReference
+from cognite.neat._data_model.models.dms._space import SpaceRequest
+from cognite.neat._data_model.models.dms._views import ViewRequest
+from cognite.neat._data_model.validation.dms._base import CDFSnapshot
 from cognite.neat._exceptions import DataModelImportException
 from cognite.neat._issues import IssueList
 from cognite.neat._state_machine._states import EmptyState, PhysicalState, State
@@ -19,12 +31,17 @@ Agents = DMSExporter | DMSTableImporter | DMSImporter
 
 
 class NeatStore:
-    def __init__(self) -> None:
+    def __init__(self, config:NeatConfig, client: NeatClient|None = None) -> None:
         self.physical_data_model = DataModelList()
         self.provenance = Provenance()
         self.state: State = EmptyState()
+        self._client = client
+        self._config = config
 
-        # CDF resources
+        # Caching CDF Schema limits and snapshot
+        self.limits = SchemaLimits.from_api_response(client.statistics.project()) if self._client else SchemaLimits()
+        self.cdf_snapshot = CDFSnapshot.from_cdf(self._client) if self._client else CDFSnapshot()
+
 
     def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
         """Read object from the store"""
@@ -60,6 +77,10 @@ class NeatStore:
             change.target_state = self.state
 
         self.provenance.append(change)
+
+        if isinstance(writer, DMSAPIExporter) and isinstance(on_success, SchemaDeployer) and not on_success.options.dry_run:
+            # Update CDF snapshot after successful deployment
+            self.cdf_snapshot = CDFSnapshot.from_cdf(self._client)
 
     def _can_agent_do_activity(self, agent: Agents) -> None:
         """Validate if activity can be performed in the current state and considering provenance"""

@@ -37,7 +37,7 @@ from ._ai_readiness import (
     ViewPropertyMissingDescription,
     ViewPropertyMissingName,
 )
-from ._base import CDFResources, DataModelValidator, LocalResources, ValidationResources
+from ._base import DataModelValidator, CDFSnapshot, LocalSnapshot, ValidationResources
 from ._consistency import ViewSpaceVersionInconsistentWithDataModel
 from ._containers import (
     ExternalContainerDoesNotExist,
@@ -52,63 +52,23 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
     def __init__(
         self,
-        client: NeatClient,
+        cdf_snapshot: CDFSnapshot,
+        limits: SchemaLimits,
         modus_operandi: ModusOperandi = "additive",
         can_run_validator: Callable[[str, type], bool] | None = None,
     ) -> None:
         super().__init__()
-        self._client = client
-        self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
+        self._cdf_snapshot = cdf_snapshot
+        self._limits = limits
         self._modus_operandi = modus_operandi
+        self._can_run_validator = can_run_validator or (lambda code, issue_type: True)  # type: ignore
         self._has_run = False
 
-    # move this to _storage
-    def _gather_validation_resources(self, data_model: RequestSchema) -> ValidationResources:
-        """Gather local and CDF resources needed for validation."""
-
-        local = LocalResources(
-            data_model=data_model.data_model,
-            views={view.as_reference(): view for view in data_model.views},
-            containers={container.as_reference(): container for container in data_model.containers},
-        )
-
-        print("Fetching of DMS schema resources...")
-
-        cdf = CDFResources(
-            data_models={
-                response.as_reference(): response.as_request()
-                for response in self._client.data_models.retrieve([data_model.data_model.as_reference()])
-            },
-            views={
-                response.as_reference(): response.as_request()
-                for response in self._client.views.list(
-                    all_versions=True, include_global=True, include_inherited_properties=False, limit=None
-                )
-            },
-            containers={
-                response.as_reference(): response.as_request()
-                for response in self._client.containers.list(include_global=True, limit=None)
-            },
-            spaces={
-                response.as_reference(): response.as_request()
-                for response in self._client.spaces.list(include_global=True, limit=999)
-            },
-        )
-
-        print("Fetching completed...")
-
-        return ValidationResources(
-            modus_operandi=self._modus_operandi,
-            local=local,
-            cdf=cdf,
-            limits=SchemaLimits.from_api_response(self._client.statistics.project()),
-        )
-
-    def run(self, data_model: RequestSchema) -> None:
+    def run(self, request_schema: RequestSchema) -> None:
         """Run quality assessment on the DMS data model."""
 
-        # Helper wrangled data model components
-        validation_resources = self._gather_validation_resources(data_model)
+
+        validation_resources = self._gather_validation_resources(request_schema)
 
         # Initialize all validators
         validators: list[DataModelValidator] = [
@@ -157,3 +117,11 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
                 self._issues.extend(validator.run())
 
         self._has_run = True
+
+    def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
+        return ValidationResources(
+            cdf=self._cdf_snapshot,
+            local=LocalSnapshot.from_request_schema(request_schema),
+            limits=self._limits,
+            modus_operandi=self._modus_operandi,
+        )

@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from itertools import chain
 from typing import ClassVar, TypeAlias
 
 from pyparsing import cached_property
 
+from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_model import DataModelRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
@@ -17,6 +18,7 @@ from cognite.neat._data_model.models.dms._references import (
     ViewDirectReference,
     ViewReference,
 )
+from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._data_model.models.dms._space import SpaceRequest
 from cognite.neat._data_model.models.dms._view_property import (
     EdgeProperty,
@@ -39,27 +41,59 @@ ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReferenc
 
 
 @dataclass
-class CDFResources:
-    """Local data model resources."""
+class CDFSnapshot:
+    data_models: dict[DataModelReference, DataModelRequest] = field(default_factory=dict)
+    views: dict[ViewReference, ViewRequest] = field(default_factory=dict)
+    containers: dict[ContainerReference, ContainerRequest] = field(default_factory=dict)
+    spaces: dict[SpaceReference, SpaceRequest] = field(default_factory=dict)
 
-    data_models: dict[DataModelReference, DataModelRequest]
-    views: dict[ViewReference, ViewRequest]
-    containers: dict[ContainerReference, ContainerRequest]
-    spaces: dict[SpaceReference, SpaceRequest]
+    @classmethod
+    def from_cdf(cls, client: NeatClient) -> "CDFSnapshot":
+        """Create CDFSnapshot from CDF API responses."""
+        return CDFSnapshot(
+            #TODO: spaces and data_models should be update after updating list methods for unlimited no
+           spaces={
+                response.as_reference(): response.as_request()
+                for response in client.spaces.list(include_global=True, limit=1000)
+            },
+            data_models={
+                response.as_reference(): response.as_request()
+                for response in client.data_models.list(all_versions=True, include_global=True, limit=1000)
+            },
 
+            views={
+                response.as_reference(): response.as_request()
+                for response in client.views.list(
+                    all_versions=True, include_global=True, include_inherited_properties=False, limit=None
+                )
+            },
+            containers={
+                response.as_reference(): response.as_request()
+                for response in client.containers.list(include_global=True, limit=None)
+            },
+
+        )
 
 @dataclass
-class LocalResources:
+class LocalSnapshot:
     """Local data model resources."""
-
     data_model: DataModelRequest
     views: dict[ViewReference, ViewRequest]
     containers: dict[ContainerReference, ContainerRequest]
 
+    @classmethod
+    def from_request_schema(cls, schema: RequestSchema) -> "LocalSnapshot":
+        """Create LocalSnapshot from a DataModelRequest."""
+        return LocalSnapshot(
+            data_model=schema.data_model,
+            views={view.as_reference(): view for view in schema.views},
+            containers={container.as_reference(): container for container in schema.containers},
+        )
+
 
 class ValidationResources:
     def __init__(
-        self, modus_operandi: ModusOperandi, local: LocalResources, cdf: CDFResources, limits: SchemaLimits
+        self, modus_operandi: ModusOperandi, local: LocalSnapshot, cdf: CDFSnapshot, limits: SchemaLimits
     ) -> None:
         self.local = local
         self.cdf = cdf
