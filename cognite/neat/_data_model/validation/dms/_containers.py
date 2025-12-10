@@ -36,10 +36,10 @@ class ExternalContainerDoesNotExist(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.local_data_model.views:
+        if not self.validation_resources.merged_data_model.views:
             return errors
 
-        for view_ref in self.validation_resources.local_data_model.views:
+        for view_ref in self.validation_resources.merged_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
             if not view:
@@ -55,7 +55,7 @@ class ExternalContainerDoesNotExist(DataModelValidator):
                 if not isinstance(property_, ViewCorePropertyRequest):
                     continue
 
-                if property_.container.space == self.validation_resources.local_data_model.space:
+                if property_.container.space == self.validation_resources.merged_data_model.space:
                     continue
 
                 # Check existence of container in CDF
@@ -101,8 +101,8 @@ class ExternalContainerPropertyDoesNotExist(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if self.validation_resources.local_data_model.views:
-            for view_ref in self.validation_resources.local_data_model.views:
+        if self.validation_resources.merged_data_model.views:
+            for view_ref in self.validation_resources.merged_data_model.views:
                 view = self.validation_resources.select_view(view_ref)
 
                 if not view:
@@ -118,7 +118,7 @@ class ExternalContainerPropertyDoesNotExist(DataModelValidator):
                     if not isinstance(property_, ViewCorePropertyRequest):
                         continue
 
-                    if property_.container.space == self.validation_resources.local_data_model.space:
+                    if property_.container.space == self.validation_resources.merged_data_model.space:
                         continue
 
                     # Only check property if container exists in CDF
@@ -170,7 +170,7 @@ class RequiredContainerDoesNotExist(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        for container_ref, container in self.validation_resources.local.containers.items():
+        for container_ref, container in self.validation_resources.merged.containers.items():
             if not container.constraints:
                 continue
 

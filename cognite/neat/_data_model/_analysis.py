@@ -32,65 +32,53 @@ ReverseToDirectMapping: TypeAlias = dict[
 ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReference | None]
 
 
-ResourceSource = Literal["auto", "local", "cdf", "both"]
+ResourceSource = Literal["auto", "check_merged", "cdf", "both"]
 
 
 class ValidationResources:
     def __init__(
         self, modus_operandi: ModusOperandi, local: SchemaSnapshot, cdf: SchemaSnapshot, limits: SchemaLimits
     ) -> None:
+        self._modus_operandi = modus_operandi
+        self.limits = limits
+
         self.local = local
         self.cdf = cdf
-        self.limits = limits
-        self._modus_operandi = modus_operandi
 
-        # need this shortcut for easier access and also to avoid mypy to complain
-        self.local_data_model = self.local.data_model[next(iter(self.local.data_model.keys()))]
-
-        # Update local resources based on modus operandi
-        self._update_local_resources()
-
-    def _update_local_resources(self) -> None:
-        """Updates local resource definition with CDF resources for validation based on modus operandi.
-
-        In "rebuild" mode, local resources are considered complete and no updates are made.
-        In "additive" mode:
-            - Local data model is updated to include views from CDF data model.
-            - Local views are updated to include properties and implements from CDF views.
-            - Local containers are updated to include properties from CDF containers.
-        """
-
-        # Local schema is complete, it does not require any updates
-        # as changes will replace existing schema in CDF
-        if self._modus_operandi == "rebuild":
-            return None
-
-        # Local schema is partial, meaning we are adding to existing schema in CDF
-        elif self._modus_operandi == "additive":
-            self._update_local_data_model()
-            self._update_local_views()
-            self._update_local_containers()
+        if self._modus_operandi == "additive":
+            self.merged = self._merge(self.local, self.cdf)
+        elif self._modus_operandi == "rebuild":
+            self.merged = local.model_copy(deep=True)
         else:
-            raise RuntimeError(f"_update_local_resources: Unknown modus: {self._modus_operandi}. This is a bug!")
+            raise RuntimeError(f"ValidationResources: Unknown modus_operandi: {self._modus_operandi}. This is a bug!")
 
-    def _update_local_data_model(self) -> None:
-        if cdf := self.cdf.data_model.get(self.local_data_model.as_reference()):
-            if not cdf.views:
-                return None
+        # need this shortcut for easier access and also to avoid mypy to complains
+        self.merged_data_model = self.merged.data_model[next(iter(self.merged.data_model.keys()))]
 
-            for view in cdf.views:
-                if view not in (self.local_data_model.views or []):
-                    self.local_data_model.views = (self.local_data_model.views or []) + [view]
+    @classmethod
+    def _merge(cls, local: SchemaSnapshot, cdf: SchemaSnapshot) -> SchemaSnapshot:
+        """Merge local and CDF snapshots, prioritizing local definitions."""
+        merged = local.model_copy(deep=True)
 
-    def _update_local_views(self) -> None:
-        # update local views with additional properties and implements from CDF views
+        # shortcut for data model
+        data_model = merged.data_model[next(iter(merged.data_model.keys()))]
 
-        for view_ref, view in self.local.views.items():
-            if cdf_view := self.cdf.views.get(view_ref):
+        if cdf_data_model := cdf.data_model.get(data_model.as_reference()):
+            if cdf_data_model.views:
+                for view_ref in cdf_data_model.views:
+                    if view_ref not in (data_model.views or []):
+                        data_model.views = (data_model.views or []) + [view_ref]
+
+                    if view_ref not in merged.views:
+                        merged.views[view_ref] = cdf.views[view_ref]
+
+        # Update local views with additional properties and implements from CDF views
+        for view_ref, view in merged.views.items():
+            if cdf_view := cdf.views.get(view_ref):
                 # update properties
-                for prop_name, prop in cdf_view.properties.items():
+                for prop_name, view_prop in cdf_view.properties.items():
                     if prop_name not in view.properties:
-                        view.properties[prop_name] = prop
+                        view.properties[prop_name] = view_prop
 
                 # update implements
                 if cdf_view.implements:
@@ -101,25 +89,13 @@ class ValidationResources:
                             if impl not in view.implements:
                                 view.implements.append(impl)
 
-        # as we have updated view references in local data model, we need to ensure that any new views
-        # from CDF are also added to local views for validation
-        if not self.local_data_model.views:
-            return None
-
-        for view_ref in self.local_data_model.views:
-            if view_ref not in self.local.views:
-                if cdf_view := self.cdf.views.get(view_ref):
-                    self.local.views[view_ref] = cdf_view
-
-    def _update_local_containers(self) -> None:
-        # update local containers definitions with additional properties from CDF containers
-        for container_ref, container in self.local.containers.items():
-            if cdf_container := self.cdf.containers.get(container_ref):
+        for container_ref, container in merged.containers.items():
+            if cdf_container := cdf.containers.get(container_ref):
                 for prop_name, prop in cdf_container.properties.items():
                     if prop_name not in container.properties:
                         container.properties[prop_name] = prop
 
-        for view in self.local.views.values():
+        for view in merged.views.values():
             if not view.properties:
                 continue
 
@@ -129,27 +105,46 @@ class ValidationResources:
 
                 container_ref = property_.container
                 # already updated in previous loop
-                if container_ref in self.local.containers:
+                if container_ref in merged.containers:
                     continue
 
-                if cdf_container := self.cdf.containers.get(container_ref):
-                    self.local.containers[container_ref] = cdf_container
+                if cdf_container := cdf.containers.get(container_ref):
+                    merged.containers[container_ref] = cdf_container
+
+        return merged
 
     def select_view(
         self, view_ref: ViewReference, property_: str | None = None, source: ResourceSource = "auto"
     ) -> ViewRequest | None:
-        check_local, check_cdf = self._resolve_resource_sources(view_ref, source)
+        """Select view definition based on source strategy and optionally filter by property.
 
-        local_view = self.local.views.get(view_ref) if check_local else None
+        Selection prioritize merged view over CDF if both are available, as merged view represents the effective
+        definition which will be a result when the local schema is deployed to CDF.
+
+
+        Args:
+            view_ref: The view to select
+            property_: Optional property name to filter views that contain this property
+            source: The source strategy to use, options are: "auto", "local", "cdf", "both", where "auto" means
+                that the selection is driven by the modus_operandi of the validation resources.
+
+        Returns:
+            The selected ViewRequest or None if not found.
+        """
+
+        check_merged, check_cdf = self._resolve_resource_sources(view_ref, source)
+
+        merged_view = self.merged.views.get(view_ref) if check_merged else None
         cdf_view = self.cdf.views.get(view_ref) if check_cdf else None
 
         if property_ is None:
-            return local_view or cdf_view
+            return merged_view or cdf_view
 
-        # Try views with the property first, then any available view
+        # Filtering based on the property presence
+        # Try views with the property first, then any available view where merged view is prioritized
         candidates = chain(
-            (v for v in (local_view, cdf_view) if v and v.properties and property_ in v.properties),
-            (v for v in (local_view, cdf_view) if v),
+            (v for v in (merged_view, cdf_view) if v and v.properties and property_ in v.properties),
+            (v for v in (merged_view, cdf_view) if v),
         )
 
         return next(candidates, None)
@@ -157,18 +152,33 @@ class ValidationResources:
     def select_container(
         self, container_ref: ContainerReference, property_: str | None = None, source: ResourceSource = "auto"
     ) -> ContainerRequest | None:
-        check_local, check_cdf = self._resolve_resource_sources(container_ref, source)
+        """Select container definition based on source strategy and optionally filter by property.
 
-        local_container = self.local.containers.get(container_ref) if check_local else None
+        Selection prioritize merged container over CDF if both are available, as merged container represents
+        the effective definition which will be a result when the local schema is deployed to CDF.
+
+        Args:
+            container_ref: The container to select
+            property_: Optional property name to filter containers that contain this property
+            source: The source strategy to use, options are: "auto", "local", "cdf", "both", where "auto" means
+                that the selection is driven by the modus_operandi of the validation resources.
+
+        Returns:
+            The selected ContainerRequest or None if not found.
+        """
+
+        check_merged, check_cdf = self._resolve_resource_sources(container_ref, source)
+
+        merged_container = self.merged.containers.get(container_ref) if check_merged else None
         cdf_container = self.cdf.containers.get(container_ref) if check_cdf else None
 
         if property_ is None:
-            return local_container or cdf_container
+            return merged_container or cdf_container
 
         # Try containers with the property first, then any available container
         candidates = chain(
-            (c for c in (local_container, cdf_container) if c and c.properties and property_ in c.properties),
-            (c for c in (local_container, cdf_container) if c),
+            (c for c in (merged_container, cdf_container) if c and c.properties and property_ in c.properties),
+            (c for c in (merged_container, cdf_container) if c),
         )
 
         return next(candidates, None)
@@ -177,34 +187,34 @@ class ValidationResources:
         self, resource_ref: ViewReference | ContainerReference, source: ResourceSource
     ) -> tuple[bool, bool]:
         """
-        Determine which resource sources (local and/or CDF) to check based on the source parameter.
+        Determine which resource sources (merged and/or CDF) to check based on the source parameter.
 
         Args:
             resource_ref: The resource reference to check (ViewReference or ContainerReference)
             source: The source strategy to use
 
         Returns:
-            Tuple of (check_local, check_cdf) booleans indicating which sources to check
+            Tuple of (check_merged, check_cdf) booleans indicating which sources to check
         """
         if source == "auto":
             # Auto mode: driven by modus_operandi
-            # In "additive" mode or for resources outside local space, check both local and CDF
-            # In "rebuild" mode for resources in local space, check only local
-            check_local = True
-            check_cdf = resource_ref.space != self.local_data_model.space or self._modus_operandi == "additive"
+            # In "additive" mode or for resources outside local space, check both merged and CDF
+            # In "rebuild" mode for resources in local space, check only merged == local
+            check_merged = True
+            check_cdf = resource_ref.space != self.merged_data_model.space or self._modus_operandi == "additive"
         elif source == "local":
-            check_local = True
+            check_merged = True
             check_cdf = False
         elif source == "cdf":
-            check_local = False
+            check_merged = False
             check_cdf = True
         elif source == "both":
-            check_local = True
+            check_merged = True
             check_cdf = True
         else:
             raise RuntimeError(f"_resolve_resource_sources: Unknown source: {source}. This is a bug!")
 
-        return check_local, check_cdf
+        return check_merged, check_cdf
 
     @cached_property
     def ancestors_by_view(self) -> dict[ViewReference, list[ViewReference]]:
@@ -216,10 +226,10 @@ class ValidationResources:
         """
         ancestors_mapping: dict[ViewReference, list[ViewReference]] = {}
 
-        if not self.local_data_model.views:
+        if not self.merged_data_model.views:
             return ancestors_mapping
 
-        for view in self.local_data_model.views:
+        for view in self.merged_data_model.views:
             ancestors_mapping[view] = self.view_ancestors(view)
         return ancestors_mapping
 
@@ -297,8 +307,8 @@ class ValidationResources:
 
         properties_mapping: dict[ViewReference, dict[str, ViewRequestProperty]] = {}
 
-        if self.local_data_model.views:
-            for view_ref in self.local_data_model.views:
+        if self.merged_data_model.views:
+            for view_ref in self.merged_data_model.views:
                 view = self.select_view(view_ref)
                 # This should never happen, if it happens, it's a bug
                 if not view:
@@ -326,10 +336,10 @@ class ValidationResources:
 
         referenced_containers: set[ContainerReference] = set()
 
-        if not self.local_data_model.views:
+        if not self.merged_data_model.views:
             return referenced_containers
 
-        for view_ref in self.local_data_model.views:
+        for view_ref in self.merged_data_model.views:
             view = self.select_view(view_ref)
             # This should never happen, if it happens, it's a bug
             if not view:
@@ -353,8 +363,8 @@ class ValidationResources:
             tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
         ] = {}
 
-        if self.local_data_model.views:
-            for view_ref in self.local_data_model.views:
+        if self.merged_data_model.views:
+            for view_ref in self.merged_data_model.views:
                 view = self.select_view(view_ref)
 
                 # This should never happen, if it happens, it's a bug
@@ -379,8 +389,8 @@ class ValidationResources:
 
         connection_end_node_types: dict[tuple[ViewReference, str], ViewReference | None] = {}
 
-        if self.local_data_model.views:
-            for view_ref in self.local_data_model.views:
+        if self.merged_data_model.views:
+            for view_ref in self.merged_data_model.views:
                 view = self.select_view(view_ref)
                 if not view:
                     raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")

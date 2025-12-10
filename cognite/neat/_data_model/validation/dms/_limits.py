@@ -39,7 +39,7 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if self.validation_resources.local_data_model.views is None:
+        if self.validation_resources.merged_data_model.views is None:
             errors.append(
                 ConsistencyError(
                     message="The data model does not have any views. This means it is not a data model.",
@@ -47,11 +47,13 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
                 )
             )
 
-        elif len(self.validation_resources.local_data_model.views) > self.validation_resources.limits.data_models.views:
+        elif (
+            len(self.validation_resources.merged_data_model.views) > self.validation_resources.limits.data_models.views
+        ):
             errors.append(
                 ConsistencyError(
                     message=(
-                        f"The data model references {len(self.validation_resources.local_data_model.views)} views, "
+                        f"The data model references {len(self.validation_resources.merged_data_model.views)} views, "
                         "which exceeds the limit of "
                         f"{self.validation_resources.limits.data_models.views} views per data model."
                     ),
@@ -218,7 +220,7 @@ class ContainerPropertyCountIsOutOfLimits(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
         # Single loop over all containers
-        for container_ref, container in self.validation_resources.local.containers.items():
+        for container_ref, container in self.validation_resources.merged.containers.items():
             if (
                 container.properties
                 and len(container.properties) > self.validation_resources.limits.containers.properties()
@@ -275,7 +277,7 @@ class ContainerPropertyListSizeIsOutOfLimits(DataModelValidator):
         errors: list[ConsistencyError] = []
 
         # Single loop over all containers
-        for container_ref, container in self.validation_resources.local.containers.items():
+        for container_ref, container in self.validation_resources.merged.containers.items():
             properties_by_index_type = self.container_property_by_index_type(container)
 
             for property_id, property_ in container.properties.items():
