@@ -1,7 +1,9 @@
 from collections.abc import Callable
+from datetime import datetime, timezone
 
-from cognite.neat._data_model._analysis import CDFSnapshot, LocalSnapshot, ValidationResources
+from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
+from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._utils.auxiliary import get_concrete_subclasses
@@ -15,7 +17,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
 
     def __init__(
         self,
-        cdf_snapshot: CDFSnapshot,
+        cdf_snapshot: SchemaSnapshot,
         limits: SchemaLimits,
         modus_operandi: ModusOperandi = "additive",
         can_run_validator: Callable[[str, type], bool] | None = None,
@@ -45,9 +47,20 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
         self._has_run = True
 
     def _gather_validation_resources(self, request_schema: RequestSchema) -> ValidationResources:
+        # we do not want to modify the original request schema during validation
+        copy = request_schema.model_copy(deep=True)
+        local = SchemaSnapshot(
+            data_model={request_schema.data_model.as_reference(): copy.data_model},
+            views={view.as_reference(): view for view in copy.views},
+            containers={container.as_reference(): container for container in copy.containers},
+            spaces={space.as_reference(): space for space in copy.spaces},
+            node_types={node_type: node_type for node_type in copy.node_types},
+            timestamp=datetime.now(timezone.utc),
+        )
+
         return ValidationResources(
             cdf=self._cdf_snapshot,
-            local=LocalSnapshot.from_request_schema(request_schema.model_copy(deep=True)),
+            local=local,
             limits=self._limits,
             modus_operandi=self._modus_operandi,
         )

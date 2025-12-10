@@ -5,6 +5,7 @@ from typing import Literal, TypeAlias
 from pyparsing import cached_property
 
 from cognite.neat._client.client import NeatClient
+from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_model import DataModelRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
@@ -94,12 +95,15 @@ class LocalSnapshot:
 
 class ValidationResources:
     def __init__(
-        self, modus_operandi: ModusOperandi, local: LocalSnapshot, cdf: CDFSnapshot, limits: SchemaLimits
+        self, modus_operandi: ModusOperandi, local: SchemaSnapshot, cdf: SchemaSnapshot, limits: SchemaLimits
     ) -> None:
         self.local = local
         self.cdf = cdf
         self.limits = limits
         self._modus_operandi = modus_operandi
+
+        # need this shortcut for easier access and also to avoid mypy to complain
+        self.local_data_model = self.local.data_model[next(iter(self.local.data_model.keys()))]
 
         # Update local resources based on modus operandi
         self._update_local_resources()
@@ -128,15 +132,13 @@ class ValidationResources:
             raise RuntimeError(f"_update_local_resources: Unknown modus: {self._modus_operandi}. This is a bug!")
 
     def _update_local_data_model(self) -> None:
-        if cdf := self.cdf.data_models.get(self.local.data_model.as_reference()):
+        if cdf := self.cdf.data_model.get(self.local_data_model.as_reference()):
             if not cdf.views:
                 return None
 
             for view in cdf.views:
-                if not self.local.data_model.views:
-                    self.local.data_model.views = []
-                if view not in self.local.data_model.views:
-                    self.local.data_model.views.append(view)
+                if view not in (self.local_data_model.views or []):
+                    self.local_data_model.views = (self.local_data_model.views or []) + [view]
 
     def _update_local_views(self) -> None:
         # update local views with additional properties and implements from CDF views
@@ -159,10 +161,10 @@ class ValidationResources:
 
         # as we have updated view references in local data model, we need to ensure that any new views
         # from CDF are also added to local views for validation
-        if not self.local.data_model.views:
+        if not self.local_data_model.views:
             return None
 
-        for view_ref in self.local.data_model.views:
+        for view_ref in self.local_data_model.views:
             if view_ref not in self.local.views:
                 if cdf_view := self.cdf.views.get(view_ref):
                     self.local.views[view_ref] = cdf_view
@@ -247,7 +249,7 @@ class ValidationResources:
             # In "additive" mode or for resources outside local space, check both local and CDF
             # In "rebuild" mode for resources in local space, check only local
             check_local = True
-            check_cdf = resource_ref.space != self.local.data_model.space or self._modus_operandi == "additive"
+            check_cdf = resource_ref.space != self.local_data_model.space or self._modus_operandi == "additive"
         elif source == "local":
             check_local = True
             check_cdf = False
@@ -272,10 +274,10 @@ class ValidationResources:
         """
         ancestors_mapping: dict[ViewReference, list[ViewReference]] = {}
 
-        if not self.local.data_model.views:
+        if not self.local_data_model.views:
             return ancestors_mapping
 
-        for view in self.local.data_model.views:
+        for view in self.local_data_model.views:
             ancestors_mapping[view] = self.view_ancestors(view)
         return ancestors_mapping
 
@@ -353,28 +355,26 @@ class ValidationResources:
 
         properties_mapping: dict[ViewReference, dict[str, ViewRequestProperty]] = {}
 
-        if not self.local.data_model.views:
-            return properties_mapping
+        if self.local_data_model.views:
+            for view_ref in self.local_data_model.views:
+                view = self.select_view(view_ref)
+                # This should never happen, if it happens, it's a bug
+                if not view:
+                    raise RuntimeError(f"properties_by_view: View {view_ref!s} not found. This is a bug!")
 
-        for view_ref in self.local.data_model.views:
-            view = self.select_view(view_ref)
-            # This should never happen, if it happens, it's a bug
-            if not view:
-                raise RuntimeError(f"properties_by_view: View {view_ref!s} not found. This is a bug!")
+                combined_properties: dict[str, ViewRequestProperty] = {}
+                ancestors = self.ancestors_by_view.get(view_ref, [])
+                # Start with properties from ancestor views
+                for ancestor_ref in reversed(ancestors):
+                    ancestor_view = self.select_view(ancestor_ref)
+                    if ancestor_view:
+                        combined_properties.update(ancestor_view.properties)
 
-            combined_properties: dict[str, ViewRequestProperty] = {}
-            ancestors = self.ancestors_by_view.get(view_ref, [])
-            # Start with properties from ancestor views
-            for ancestor_ref in reversed(ancestors):
-                ancestor_view = self.select_view(ancestor_ref)
-                if ancestor_view:
-                    combined_properties.update(ancestor_view.properties)
+                # Finally, add properties from the current view, overriding any inherited ones
+                if view.properties:
+                    combined_properties.update(view.properties)
 
-            # Finally, add properties from the current view, overriding any inherited ones
-            if view.properties:
-                combined_properties.update(view.properties)
-
-            properties_mapping[view_ref] = combined_properties
+                properties_mapping[view_ref] = combined_properties
 
         return properties_mapping
 
@@ -384,10 +384,10 @@ class ValidationResources:
 
         referenced_containers: set[ContainerReference] = set()
 
-        if not self.local.data_model.views:
+        if not self.local_data_model.views:
             return referenced_containers
 
-        for view_ref in self.local.data_model.views:
+        for view_ref in self.local_data_model.views:
             view = self.select_view(view_ref)
             # This should never happen, if it happens, it's a bug
             if not view:
@@ -411,25 +411,23 @@ class ValidationResources:
             tuple[ViewReference, str], tuple[ViewReference, ContainerDirectReference | ViewDirectReference]
         ] = {}
 
-        if not self.local.data_model.views:
-            return bidirectional_connections
+        if self.local_data_model.views:
+            for view_ref in self.local_data_model.views:
+                view = self.select_view(view_ref)
 
-        for view_ref in self.local.data_model.views:
-            view = self.select_view(view_ref)
+                # This should never happen, if it happens, it's a bug
+                if not view:
+                    raise RuntimeError(f"reverse_to_direct_mapping: View {view_ref!s} not found. This is a bug!")
 
-            # This should never happen, if it happens, it's a bug
-            if not view:
-                raise RuntimeError(f"reverse_to_direct_mapping: View {view_ref!s} not found. This is a bug!")
-
-            if not view.properties:
-                continue
-            for prop_ref, property_ in view.properties.items():
-                # reverse direct relation
-                if isinstance(property_, ReverseDirectRelationProperty):
-                    bidirectional_connections[(view_ref, prop_ref)] = (
-                        property_.source,
-                        property_.through,
-                    )
+                if not view.properties:
+                    continue
+                for prop_ref, property_ in view.properties.items():
+                    # reverse direct relation
+                    if isinstance(property_, ReverseDirectRelationProperty):
+                        bidirectional_connections[(view_ref, prop_ref)] = (
+                            property_.source,
+                            property_.through,
+                        )
 
         return bidirectional_connections
 
@@ -439,46 +437,45 @@ class ValidationResources:
 
         connection_end_node_types: dict[tuple[ViewReference, str], ViewReference | None] = {}
 
-        if not self.local.data_model.views:
-            return connection_end_node_types
+        if self.local_data_model.views:
+            for view_ref in self.local_data_model.views:
+                view = self.select_view(view_ref)
+                if not view:
+                    raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
 
-        for view_ref in self.local.data_model.views:
-            view = self.select_view(view_ref)
-            if not view:
-                raise RuntimeError(f"View {view_ref!s} not found. This is a bug!")
+                if not view.properties:
+                    continue
 
-            if not view.properties:
-                continue
+                for prop_ref, property_ in view.properties.items():
+                    # direct relation
+                    if isinstance(property_, ViewCorePropertyRequest):
+                        # explicit set of end node type via 'source' which is View reference
+                        if property_.source:
+                            connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
-            for prop_ref, property_ in view.properties.items():
-                # direct relation
-                if isinstance(property_, ViewCorePropertyRequest):
-                    # explicit set of end node type via 'source' which is View reference
-                    if property_.source:
+                        # implicit end node type via container property, without actual knowledge of end node type
+                        elif (
+                            (
+                                container := self.select_container(
+                                    property_.container, property_.container_property_identifier
+                                )
+                            )
+                            and (property_.container_property_identifier in container.properties)
+                            and (
+                                isinstance(
+                                    container.properties[property_.container_property_identifier].type,
+                                    DirectNodeRelation,
+                                )
+                            )
+                        ):
+                            connection_end_node_types[(view_ref, prop_ref)] = None
+
+                    # reverse direct relation
+                    elif isinstance(property_, ReverseDirectRelationProperty) and property_.source:
                         connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
-                    # implicit end node type via container property, without actual knowledge of end node type
-                    elif (
-                        (
-                            container := self.select_container(
-                                property_.container, property_.container_property_identifier
-                            )
-                        )
-                        and (property_.container_property_identifier in container.properties)
-                        and (
-                            isinstance(
-                                container.properties[property_.container_property_identifier].type, DirectNodeRelation
-                            )
-                        )
-                    ):
-                        connection_end_node_types[(view_ref, prop_ref)] = None
-
-                # reverse direct relation
-                elif isinstance(property_, ReverseDirectRelationProperty) and property_.source:
-                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
-
-                # edge property
-                elif isinstance(property_, EdgeProperty) and property_.source:
-                    connection_end_node_types[(view_ref, prop_ref)] = property_.source
+                    # edge property
+                    elif isinstance(property_, EdgeProperty) and property_.source:
+                        connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
         return connection_end_node_types

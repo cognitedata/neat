@@ -39,7 +39,7 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if self.validation_resources.local.data_model.views is None:
+        if self.validation_resources.local_data_model.views is None:
             errors.append(
                 ConsistencyError(
                     message="The data model does not have any views. This means it is not a data model.",
@@ -47,11 +47,11 @@ class DataModelViewCountIsOutOfLimits(DataModelValidator):
                 )
             )
 
-        elif len(self.validation_resources.local.data_model.views) > self.validation_resources.limits.data_models.views:
+        elif len(self.validation_resources.local_data_model.views) > self.validation_resources.limits.data_models.views:
             errors.append(
                 ConsistencyError(
                     message=(
-                        f"The data model references {len(self.validation_resources.local.data_model.views)} views, "
+                        f"The data model references {len(self.validation_resources.local_data_model.views)} views, "
                         "which exceeds the limit of "
                         f"{self.validation_resources.limits.data_models.views} views per data model."
                     ),

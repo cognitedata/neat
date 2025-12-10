@@ -5,9 +5,8 @@ from typing import Any, cast
 
 from cognite.neat._client.client import NeatClient
 from cognite.neat._config import NeatConfig
-from cognite.neat._data_model._analysis import CDFSnapshot
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
-from cognite.neat._data_model.deployer.data_classes import DeploymentResult
+from cognite.neat._data_model.deployer.data_classes import DeploymentResult, SchemaSnapshot
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
 from cognite.neat._data_model.exporters import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.exporters._api_exporter import DMSAPIExporter
@@ -34,7 +33,7 @@ class NeatStore:
 
         # Caching CDF Schema limits and snapshot
         self.limits = SchemaLimits.from_api_response(self._client.statistics.project())
-        self.cdf_snapshot = CDFSnapshot.from_cdf(self._client)
+        self.cdf_snapshot = self.snapshot_cdf_schema()
 
     def read_physical(self, reader: DMSImporter, on_success: OnSuccess | None = None) -> None:
         """Read object from the store"""
@@ -77,7 +76,7 @@ class NeatStore:
             and not on_success.options.dry_run
         ):
             # Update CDF snapshot after successful deployment
-            self.cdf_snapshot = CDFSnapshot.from_cdf(self._client)
+            self.cdf_snapshot = self.snapshot_cdf_schema()
 
     def _can_agent_do_activity(self, agent: Agents) -> None:
         """Validate if activity can be performed in the current state and considering provenance"""
@@ -151,6 +150,32 @@ class NeatStore:
             result=deployment_result,
             activity=Change.standardize_activity_name(activity.__name__, start, end),
         ), created_data_model
+
+    def snapshot_cdf_schema(self) -> SchemaSnapshot:
+        """Snapshot CDF state into the store"""
+        return SchemaSnapshot(
+            # TODO: spaces and data_models should be update after updating list methods for unlimited no
+            spaces={
+                response.as_reference(): response.as_request()
+                for response in self._client.spaces.list(include_global=True, limit=1000)
+            },
+            data_model={
+                response.as_reference(): response.as_request()
+                for response in self._client.data_models.list(all_versions=True, include_global=True, limit=1000)
+            },
+            views={
+                response.as_reference(): response.as_request()
+                for response in self._client.views.list(
+                    all_versions=True, include_global=True, include_inherited_properties=False, limit=None
+                )
+            },
+            containers={
+                response.as_reference(): response.as_request()
+                for response in self._client.containers.list(include_global=True, limit=None)
+            },
+            node_types={},
+            timestamp=datetime.now(timezone.utc),
+        )
 
 
 class DataModelList(UserList[PhysicalDataModel]):

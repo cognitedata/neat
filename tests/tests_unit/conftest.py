@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -6,7 +7,7 @@ from cognite.client import ClientConfig
 from cognite.client.credentials import Token
 
 from cognite.neat._client import NeatClient, NeatClientConfig
-from cognite.neat._data_model._analysis import CDFSnapshot
+from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     ContainerResponse,
     DataModelResponse,
@@ -64,210 +65,7 @@ def neat_client(neat_config: NeatClientConfig) -> NeatClient:
 
 
 @pytest.fixture
-def validation_test_cdf_client(
-    neat_client: NeatClient, example_statistics_response: dict, respx_mock: respx.MockRouter
-) -> NeatClient:
-    client = neat_client
-    config = client.config
-    respx_mock.post(
-        config.create_api_url("/models/datamodels/byids"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [],
-            "nextCursor": None,
-        },
-    )
-    respx_mock.post(
-        config.create_api_url("/models/views/byids?includeInheritedProperties=true"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [
-                dict(
-                    space="my_space",
-                    externalId="DomainDescribable",
-                    version="v1",
-                    name="My View",
-                    description="An example view",
-                    properties={},
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    writable=True,
-                    queryable=True,
-                    usedFor="node",
-                    isGlobal=False,
-                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
-                ),
-                dict(
-                    space="not_my_space",
-                    externalId="ExistingEdgeConnection",
-                    version="v1",
-                    name="My View",
-                    description="An example view",
-                    properties={},
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    writable=True,
-                    queryable=True,
-                    usedFor="node",
-                    isGlobal=False,
-                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
-                ),
-                dict(
-                    space="my_space",
-                    externalId="ExistingDirectConnectionRemote",
-                    version="v1",
-                    name="My View",
-                    description="An example view",
-                    properties={},
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    writable=True,
-                    queryable=True,
-                    usedFor="node",
-                    isGlobal=False,
-                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
-                ),
-                dict(
-                    space="my_space",
-                    externalId="SourceForReverseConnectionExistRemote",
-                    version="v1",
-                    name="SourceForReverseConnectionExistRemote",
-                    description="SourceForReverseConnectionExistRemote",
-                    properties={
-                        "directPropertyRemote": {
-                            "container": {"space": "my_space", "externalId": "DirectConnectionRemoteContainer"},
-                            "containerPropertyIdentifier": "directRemote",
-                            "type": {
-                                "type": "direct",
-                                "source": {
-                                    "space": "my_space",
-                                    "external_id": "MyDescribable",
-                                    "version": "v1",
-                                    "type": "view",
-                                },
-                            },
-                            "connectionType": "primary_property",
-                            "constraintState": {"nullability": "current"},
-                        }
-                    },
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    writable=True,
-                    queryable=True,
-                    usedFor="node",
-                    isGlobal=False,
-                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
-                ),
-                dict(
-                    space="prodigy",
-                    externalId="OutOfSpace",
-                    version="1992",
-                    name="Out Of Space",
-                    description="I'll take your brain to another dimension",
-                    properties={
-                        "directPropertyRemote": {
-                            "container": {"space": "my_space", "externalId": "DirectConnectionRemoteContainer"},
-                            "containerPropertyIdentifier": "directRemote",
-                            "type": {
-                                "type": "direct",
-                                "source": {
-                                    "space": "my_space",
-                                    "external_id": "MyDescribable",
-                                    "version": "v1",
-                                    "type": "view",
-                                },
-                            },
-                            "connectionType": "primary_property",
-                            "constraintState": {"nullability": "current"},
-                        }
-                    },
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    writable=True,
-                    queryable=True,
-                    usedFor="node",
-                    isGlobal=False,
-                    mappedContainers=[{"space": "not_my_space", "externalId": "MyContainer"}],
-                ),
-            ],
-            "nextCursor": None,
-        },
-    )
-    respx_mock.post(
-        config.create_api_url("/models/containers/byids"),
-    ).respond(
-        status_code=200,
-        json={
-            "items": [
-                dict(
-                    space="nospace",
-                    externalId="ExistingContainer",
-                    name="ExistingContainer",
-                    description="ExistingContainer",
-                    usedFor="node",
-                    properties={
-                        "unused": {
-                            "type": {"type": "text"},
-                            "nullable": False,
-                            "immutable": False,
-                        }
-                    },
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    isGlobal=False,
-                ),
-                dict(
-                    space="cdf_cdm",
-                    externalId="CogniteDescribable",
-                    name="ExistingContainer",
-                    description="ExistingContainer",
-                    usedFor="node",
-                    properties={
-                        "name": {
-                            "type": {"type": "text"},
-                            "nullable": False,
-                            "immutable": False,
-                        }
-                    },
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    isGlobal=False,
-                ),
-                dict(
-                    space="my_space",
-                    externalId="DirectConnectionRemoteContainer",
-                    name="DirectConnectionRemoteContainer",
-                    description="DirectConnectionRemoteContainer",
-                    usedFor="node",
-                    properties={
-                        "directRemote": {
-                            "type": {"type": "direct"},
-                            "nullable": False,
-                            "immutable": False,
-                        }
-                    },
-                    createdTime=0,
-                    lastUpdatedTime=1,
-                    isGlobal=False,
-                ),
-            ],
-            "nextCursor": None,
-        },
-    )
-    respx_mock.get(
-        config.create_api_url("/models/statistics"),
-    ).respond(
-        status_code=200,
-        json=example_statistics_response,
-    )
-
-    return client
-
-
-@pytest.fixture
-def cdf_snapshot_for_validation() -> CDFSnapshot:
+def cdf_snapshot_for_validation() -> SchemaSnapshot:
     views = [
         ViewResponse.model_validate(pars)
         for pars in [
@@ -442,10 +240,10 @@ def cdf_snapshot_for_validation() -> CDFSnapshot:
         ]
     ]
 
-    return CDFSnapshot(
+    return SchemaSnapshot(
         views={view.as_reference(): view.as_request() for view in views},
         containers={container.as_reference(): container.as_request() for container in containers},
-        data_models={
+        data_model={
             DataModelReference(space="my_space", external_id="TestModel", version="v1"): DataModelRequest(
                 space="my_space",
                 externalId="TestModel",
@@ -455,6 +253,9 @@ def cdf_snapshot_for_validation() -> CDFSnapshot:
                 description="A test data model",
             )  # type: ignore
         },
+        node_types={},
+        timestamp=datetime.now(timezone.utc),
+        spaces={},
     )
 
 

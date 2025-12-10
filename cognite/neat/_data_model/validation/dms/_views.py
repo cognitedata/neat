@@ -29,10 +29,10 @@ class ViewToContainerMappingNotPossible(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.local.data_model.views:
+        if not self.validation_resources.local_data_model.views:
             return errors
 
-        for view_ref in self.validation_resources.local.data_model.views:
+        for view_ref in self.validation_resources.local_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
             if not view:
@@ -101,10 +101,10 @@ class ImplementedViewNotExisting(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.local.data_model.views:
+        if not self.validation_resources.local_data_model.views:
             return errors
 
-        for view_ref in self.validation_resources.local.data_model.views:
+        for view_ref in self.validation_resources.local_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
             if not view:

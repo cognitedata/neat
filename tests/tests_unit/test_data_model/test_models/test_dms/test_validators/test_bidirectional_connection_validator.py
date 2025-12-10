@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from cognite.neat._config import internal_profiles
-from cognite.neat._data_model._analysis import CDFSnapshot
+from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._references import ContainerDirectReference, ContainerReference, ViewReference
@@ -272,7 +272,7 @@ Containers:
 def test_validation_deep(
     profile: Literal["deep-additive", "legacy-additive"],
     valid_dms_yaml_with_consistency_errors: tuple[str, dict[type[DataModelValidator], set]],
-    cdf_snapshot_for_validation: CDFSnapshot,
+    cdf_snapshot_for_validation: SchemaSnapshot,
 ) -> None:
     yaml_content, expected_problematic_reversals = valid_dms_yaml_with_consistency_errors
 

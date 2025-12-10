@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cognite.neat._data_model._analysis import CDFSnapshot
+from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms import (
@@ -159,7 +159,7 @@ Containers:
 
 class TestValidators:
     def test_additive_modus_operandi(
-        self, cdf_snapshot_for_validation: CDFSnapshot, valid_dms_yaml_with_consistency_errors: str
+        self, cdf_snapshot_for_validation: SchemaSnapshot, valid_dms_yaml_with_consistency_errors: str
     ) -> None:
         read_yaml = MagicMock(spec=Path)
         read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
@@ -286,7 +286,7 @@ class TestValidators:
         assert found_missing_items == expected_missing_items
 
     def test_rebuild_modus_operandi(
-        self, cdf_snapshot_for_validation: CDFSnapshot, valid_dms_yaml_with_consistency_errors: str
+        self, cdf_snapshot_for_validation: SchemaSnapshot, valid_dms_yaml_with_consistency_errors: str
     ) -> None:
         read_yaml = MagicMock(spec=Path)
         read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors

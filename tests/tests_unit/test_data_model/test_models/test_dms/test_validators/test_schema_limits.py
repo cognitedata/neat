@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cognite.neat._data_model._analysis import CDFSnapshot
+from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._limits import (
@@ -273,7 +273,7 @@ Enum:
 
 
 def test_validation(
-    dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]], cdf_snapshot_for_validation: CDFSnapshot
+    dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]], cdf_snapshot_for_validation: SchemaSnapshot
 ) -> None:
     yaml_content, expected_problems = dms_yaml_hitting_all_the_data_model_limits
 

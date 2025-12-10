@@ -29,7 +29,7 @@ class DataModelMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        if not self.validation_resources.local.data_model.name:
+        if not self.validation_resources.local_data_model.name:
             recommendations.append(
                 Recommendation(
                     message="Data model is missing a human-readable name.",
@@ -68,7 +68,7 @@ class DataModelMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        if not self.validation_resources.local.data_model.description:
+        if not self.validation_resources.local_data_model.description:
             recommendations.append(
                 Recommendation(
                     message="Data model is missing a description.",
@@ -103,7 +103,7 @@ class ViewMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.local.data_model.views or []:
+        for view_ref in self.validation_resources.local_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:
@@ -154,7 +154,7 @@ class ViewMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.local.data_model.views or []:
+        for view_ref in self.validation_resources.local_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:
@@ -195,7 +195,7 @@ class ViewPropertyMissingName(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.local.data_model.views or []:
+        for view_ref in self.validation_resources.local_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:
@@ -251,7 +251,7 @@ class ViewPropertyMissingDescription(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        for view_ref in self.validation_resources.local.data_model.views or []:
+        for view_ref in self.validation_resources.local_data_model.views or []:
             view = self.validation_resources.select_view(view_ref)
 
             if view is None:

@@ -36,10 +36,10 @@ class ExternalContainerDoesNotExist(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.local.data_model.views:
+        if not self.validation_resources.local_data_model.views:
             return errors
 
-        for view_ref in self.validation_resources.local.data_model.views:
+        for view_ref in self.validation_resources.local_data_model.views:
             view = self.validation_resources.select_view(view_ref)
 
             if not view:
@@ -55,7 +55,7 @@ class ExternalContainerDoesNotExist(DataModelValidator):
                 if not isinstance(property_, ViewCorePropertyRequest):
                     continue
 
-                if property_.container.space == self.validation_resources.local.data_model.space:
+                if property_.container.space == self.validation_resources.local_data_model.space:
                     continue
 
                 # Check existence of container in CDF
@@ -101,49 +101,47 @@ class ExternalContainerPropertyDoesNotExist(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
-        if not self.validation_resources.local.data_model.views:
-            return errors
+        if self.validation_resources.local_data_model.views:
+            for view_ref in self.validation_resources.local_data_model.views:
+                view = self.validation_resources.select_view(view_ref)
 
-        for view_ref in self.validation_resources.local.data_model.views:
-            view = self.validation_resources.select_view(view_ref)
-
-            if not view:
-                raise RuntimeError(
-                    f"ImplementedViewNotExisting.run: View {view_ref!s} "
-                    "not found in local resources. This is a bug in NEAT."
-                )
-
-            if view.properties is None:
-                continue
-
-            for property_ref, property_ in view.properties.items():
-                if not isinstance(property_, ViewCorePropertyRequest):
-                    continue
-
-                if property_.container.space == self.validation_resources.local.data_model.space:
-                    continue
-
-                # Only check property if container exists in CDF
-                # this check is done in ExternalContainerDoesNotExist
-                if property_.container not in self.validation_resources.cdf.containers:
-                    continue
-
-                # Check existence of container property in CDF
-                if (
-                    property_.container_property_identifier
-                    not in self.validation_resources.cdf.containers[property_.container].properties
-                ):
-                    errors.append(
-                        ConsistencyError(
-                            message=(
-                                f"View {view_ref!s} property {property_ref!s} maps to "
-                                f"external container {property_.container!s} which does not have "
-                                f"property '{property_.container_property_identifier}' in CDF."
-                            ),
-                            fix="Define necessary container property in CDF",
-                            code=self.code,
-                        )
+                if not view:
+                    raise RuntimeError(
+                        f"ImplementedViewNotExisting.run: View {view_ref!s} "
+                        "not found in local resources. This is a bug in NEAT."
                     )
+
+                if view.properties is None:
+                    continue
+
+                for property_ref, property_ in view.properties.items():
+                    if not isinstance(property_, ViewCorePropertyRequest):
+                        continue
+
+                    if property_.container.space == self.validation_resources.local_data_model.space:
+                        continue
+
+                    # Only check property if container exists in CDF
+                    # this check is done in ExternalContainerDoesNotExist
+                    if property_.container not in self.validation_resources.cdf.containers:
+                        continue
+
+                    # Check existence of container property in CDF
+                    if (
+                        property_.container_property_identifier
+                        not in self.validation_resources.cdf.containers[property_.container].properties
+                    ):
+                        errors.append(
+                            ConsistencyError(
+                                message=(
+                                    f"View {view_ref!s} property {property_ref!s} maps to "
+                                    f"external container {property_.container!s} which does not have "
+                                    f"property '{property_.container_property_identifier}' in CDF."
+                                ),
+                                fix="Define necessary container property in CDF",
+                                code=self.code,
+                            )
+                        )
 
         return errors
 
