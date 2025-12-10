@@ -267,36 +267,6 @@ class ValidationResources:
 
         return ancestors
 
-    def expand_view(self, view_ref: ViewReference, source: ResourceSource = "auto") -> ViewRequest:
-        """Expands view properties to include also inherited properties from ancestor views.
-
-        Args:
-            view_ref: The view to expand
-            source: The source strategy to use
-
-        Returns:
-            The expanded ViewRequest with all inherited properties.
-        """
-        view = self.select_view(view_ref=view_ref, source=source)
-        if not view:
-            raise ValueError(f"expand_view: View {view_ref!s} not found in the specified source(s).")
-
-        copy = view.model_copy(deep=True)
-
-        ancestors = self.view_ancestors(view_ref, source=source)
-        # Start with properties from ancestor views
-        for ancestor_ref in reversed(ancestors):
-            ancestor_view = self.select_view(ancestor_ref, source=source)
-            if ancestor_view and ancestor_view.properties:
-                if copy.properties is None:
-                    copy.properties = {}
-
-                for prop_name, prop in ancestor_view.properties.items():
-                    if prop_name not in copy.properties:
-                        copy.properties[prop_name] = prop
-
-        return copy
-
     def is_ancestor(self, offspring: ViewReference, ancestor: ViewReference) -> bool:
         return ancestor in self.ancestors_by_view.get(offspring, set())
 
