@@ -28,8 +28,8 @@ class Catalog:
     @overload
     def load_scenario(
         self,
-        local_name: str,
-        cdf_name: str | None = None,
+        local_scenario_name: str,
+        cdf_scenario_name: str | None = None,
         modus_operandi: ModusOperandi = "additive",
         include_cdm: bool = False,
         format: Literal["validation-resource"] = "validation-resource",
@@ -38,8 +38,8 @@ class Catalog:
     @overload
     def load_scenario(
         self,
-        local_name: str,
-        cdf_name: str | None = None,
+        local_scenario_name: str,
+        cdf_scenario_name: str | None = None,
         modus_operandi: ModusOperandi = "additive",
         include_cdm: bool = False,
         format: Literal["snapshots"] = "snapshots",
@@ -47,16 +47,16 @@ class Catalog:
 
     def load_scenario(
         self,
-        local_name: str,
-        cdf_name: str | None = None,
+        local_scenario_name: str,
+        cdf_scenario_name: str | None = None,
         modus_operandi: ModusOperandi = "additive",
         include_cdm: bool = False,
         format: Literal["validation-resource", "snapshots"] = "validation-resource",
     ) -> ValidationResources | tuple[SchemaSnapshot, SchemaSnapshot]:
-        cdf_name = cdf_name or local_name
+        cdf_scenario_name = cdf_scenario_name or local_scenario_name
 
-        local = self.load_schema_snapshot(LOCAL_SNAPSHOTS_DIR / local_name)
-        cdf = self.load_schema_snapshot(CDF_SNAPSHOTS_DIR / cdf_name)
+        local = self.load_schema_snapshot(LOCAL_SNAPSHOTS_DIR / local_scenario_name)
+        cdf = self.load_schema_snapshot(CDF_SNAPSHOTS_DIR / cdf_scenario_name)
 
         return self.return_desired_format(local, cdf, modus_operandi, include_cdm, format)
 

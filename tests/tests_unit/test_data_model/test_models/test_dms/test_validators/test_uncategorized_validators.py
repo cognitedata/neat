@@ -21,8 +21,8 @@ from tests.data import SNAPSHOT_CATALOG
 class TestValidators:
     def test_additive_modus_operandi(self) -> None:
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            local_name="uncategorized_validators",
-            cdf_name="for_validators",
+            local_scenario_name="uncategorized_validators",
+            cdf_scenario_name="for_validators",
             modus_operandi="additive",
             include_cdm=False,
             format="snapshots",
@@ -148,8 +148,8 @@ class TestValidators:
 
     def test_rebuild_modus_operandi(self) -> None:
         local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            "uncategorized_validators",
-            "for_validators",
+            local_scenario_name="uncategorized_validators",
+            cdf_scenario_name="for_validators",
             modus_operandi="rebuild",
             include_cdm=False,
             format="snapshots",
