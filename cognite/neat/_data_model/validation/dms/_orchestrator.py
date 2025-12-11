@@ -50,6 +50,7 @@ from ._containers import (
     ExternalContainerPropertyDoesNotExist,
     MissingRequiresConstraint,
     RequiredContainerDoesNotExist,
+    RequiresConstraintComplicatesIngestion,
     RequiresConstraintCycle,
     UnnecessaryRequiresConstraint,
 )
@@ -139,6 +140,7 @@ class DmsDataModelValidation(OnSuccessIssuesChecker):
             MissingRequiresConstraint(local_resources, cdf_resources, self._modus_operandi),
             UnnecessaryRequiresConstraint(local_resources, cdf_resources, self._modus_operandi),
             RequiresConstraintCycle(local_resources, cdf_resources, self._modus_operandi),
+            RequiresConstraintComplicatesIngestion(local_resources, cdf_resources, self._modus_operandi),
             # Consistency
             ViewSpaceVersionInconsistentWithDataModel(local_resources, cdf_resources, self._modus_operandi),
             # Connections

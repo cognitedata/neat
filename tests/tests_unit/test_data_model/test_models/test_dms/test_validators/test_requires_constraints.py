@@ -7,6 +7,7 @@ from cognite.neat._client.client import NeatClient
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.validation.dms._containers import (
     MissingRequiresConstraint,
+    RequiresConstraintComplicatesIngestion,
     RequiresConstraintCycle,
     UnnecessaryRequiresConstraint,
 )
@@ -227,6 +228,105 @@ Containers:
         assert a_requires_b, f"Should recommend ContainerA requires ContainerB. Messages: {messages}"
         assert not a_requires_c_direct, (
             f"Should NOT directly recommend ContainerA requires ContainerC. Messages: {messages}"
+        )
+
+    def test_recommends_at_correct_level_in_chain(self, validation_test_cdf_client: NeatClient) -> None:
+        """
+        Scenario:
+        - Field requires Asset (existing)
+        - Asset and CogniteAsset always appear together (but Asset doesn't require CogniteAsset)
+
+        Should recommend:
+        - Asset requires CogniteAsset (NOT Field requires CogniteAsset)
+        """
+        yaml = """Metadata:
+- Key: space
+  Value: my_space
+- Key: externalId
+  Value: TestModel
+- Key: version
+  Value: v1
+- Key: name
+  Value: Test Model
+- Key: description
+  Value: Test Description
+Properties:
+- View: FullView
+  View Property: fieldId
+  Name: fieldId
+  Description: Field ID
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:FieldContainer
+  Container Property: fieldId
+- View: FullView
+  View Property: assetId
+  Name: assetId
+  Description: Asset ID
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:AssetContainer
+  Container Property: assetId
+- View: FullView
+  View Property: cogniteAssetId
+  Name: cogniteAssetId
+  Description: Cognite Asset ID
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:CogniteAssetContainer
+  Container Property: cogniteAssetId
+Views:
+- View: FullView
+  Name: Full View
+  Description: View with all three containers
+Containers:
+- Container: my_space:FieldContainer
+  Used For: node
+  Constraint: requires:req_asset(require=my_space:AssetContainer)
+- Container: my_space:AssetContainer
+  Used For: node
+- Container: my_space:CogniteAssetContainer
+  Used For: node
+"""
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = yaml
+        importer = DMSTableImporter.from_yaml(read_yaml)
+        data_model = importer.to_data_model()
+
+        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation.run(data_model)
+
+        missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
+
+        messages = [issue.message for issue in missing_requires_issues]
+
+        # Should recommend Asset requires CogniteAsset (they always appear together)
+        asset_requires_cognite = any(
+            msg.startswith("Container 'my_space:AssetContainer'")
+            and "always used together" in msg
+            and "CogniteAssetContainer" in msg
+            for msg in messages
+        )
+
+        # Should NOT recommend Field requires CogniteAsset (Field already requires Asset, and Asset should require CogniteAsset)
+        field_requires_cognite = any(
+            msg.startswith("Container 'my_space:FieldContainer'")
+            and "always used together" in msg
+            and "CogniteAssetContainer" in msg
+            for msg in messages
+        )
+
+        assert asset_requires_cognite, (
+            f"Should recommend AssetContainer requires CogniteAssetContainer. Messages: {messages}"
+        )
+        assert not field_requires_cognite, (
+            f"Should NOT recommend FieldContainer requires CogniteAssetContainer. Messages: {messages}"
         )
 
     def test_better_coverage_recommendation(self, validation_test_cdf_client: NeatClient) -> None:
@@ -676,3 +776,196 @@ Containers:
         cycle_issues = [issue for issue in validation.issues if issue.code == RequiresConstraintCycle.code]
 
         assert len(cycle_issues) == 0
+
+
+class TestRequiresConstraintComplicatesIngestion:
+    """Tests for RequiresConstraintComplicatesIngestion validator."""
+
+    def test_detects_ingestion_complication(self, validation_test_cdf_client: NeatClient) -> None:
+        """
+        When A requires B, B has non-nullable properties, and no view maps to both A and B's non-nullable props.
+        """
+        yaml = """Metadata:
+- Key: space
+  Value: my_space
+- Key: externalId
+  Value: TestModel
+- Key: version
+  Value: v1
+- Key: name
+  Value: Test Model
+- Key: description
+  Value: Test Description
+Properties:
+# View maps only to AssetContainer, not to DescribableContainer
+- View: AssetOnlyView
+  View Property: assetId
+  Name: assetId
+  Description: Asset ID
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:AssetContainer
+  Container Property: assetId
+# Separate view maps only to DescribableContainer with non-nullable property (Min Count: 1)
+- View: DescribableOnlyView
+  View Property: name
+  Name: name
+  Description: Name property
+  Value Type: text
+  Min Count: 1
+  Max Count: 1
+  Connection: null
+  Container: my_space:DescribableContainer
+  Container Property: name
+Views:
+- View: AssetOnlyView
+  Name: Asset Only View
+  Description: View mapping only to AssetContainer
+- View: DescribableOnlyView
+  Name: Describable Only View
+  Description: View mapping only to DescribableContainer
+Containers:
+- Container: my_space:AssetContainer
+  Used For: node
+  Constraint: requires:req_describable(require=my_space:DescribableContainer)
+- Container: my_space:DescribableContainer
+  Used For: node
+"""
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = yaml
+        importer = DMSTableImporter.from_yaml(read_yaml)
+        data_model = importer.to_data_model()
+
+        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation.run(data_model)
+
+        issues = [issue for issue in validation.issues if issue.code == RequiresConstraintComplicatesIngestion.code]
+
+        assert len(issues) == 1
+        assert "AssetContainer" in issues[0].message
+        assert "DescribableContainer" in issues[0].message
+        assert "non-nullable" in issues[0].message.lower()
+
+    def test_no_issue_when_view_covers_both_containers(self, validation_test_cdf_client: NeatClient) -> None:
+        """When a view maps to both A and all non-nullable properties of B, no issue."""
+        yaml = """Metadata:
+- Key: space
+  Value: my_space
+- Key: externalId
+  Value: TestModel
+- Key: version
+  Value: v1
+- Key: name
+  Value: Test Model
+- Key: description
+  Value: Test Description
+Properties:
+# View maps to both containers including the non-nullable property (Min Count: 1)
+- View: CombinedView
+  View Property: assetId
+  Name: assetId
+  Description: Asset ID
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:AssetContainer
+  Container Property: assetId
+- View: CombinedView
+  View Property: name
+  Name: name
+  Description: Name property
+  Value Type: text
+  Min Count: 1
+  Max Count: 1
+  Connection: null
+  Container: my_space:DescribableContainer
+  Container Property: name
+Views:
+- View: CombinedView
+  Name: Combined View
+  Description: View mapping to both containers
+Containers:
+- Container: my_space:AssetContainer
+  Used For: node
+  Constraint: requires:req_describable(require=my_space:DescribableContainer)
+- Container: my_space:DescribableContainer
+  Used For: node
+"""
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = yaml
+        importer = DMSTableImporter.from_yaml(read_yaml)
+        data_model = importer.to_data_model()
+
+        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation.run(data_model)
+
+        issues = [issue for issue in validation.issues if issue.code == RequiresConstraintComplicatesIngestion.code]
+
+        assert len(issues) == 0
+
+    def test_no_issue_when_required_container_has_no_non_nullable_properties(
+        self, validation_test_cdf_client: NeatClient
+    ) -> None:
+        """When B has no non-nullable properties, no issue (ingestion is straightforward)."""
+        yaml = """Metadata:
+- Key: space
+  Value: my_space
+- Key: externalId
+  Value: TestModel
+- Key: version
+  Value: v1
+- Key: name
+  Value: Test Model
+- Key: description
+  Value: Test Description
+Properties:
+# View maps only to AssetContainer
+- View: AssetOnlyView
+  View Property: assetId
+  Name: assetId
+  Description: Asset ID
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:AssetContainer
+  Container Property: assetId
+# Separate view maps to DescribableContainer (with nullable property - Min Count: 0)
+- View: DescribableOnlyView
+  View Property: description
+  Name: description
+  Description: Description property
+  Value Type: text
+  Min Count: 0
+  Max Count: 1
+  Connection: null
+  Container: my_space:DescribableContainer
+  Container Property: description
+Views:
+- View: AssetOnlyView
+  Name: Asset Only View
+  Description: View mapping only to AssetContainer
+- View: DescribableOnlyView
+  Name: Describable Only View
+  Description: View mapping only to DescribableContainer
+Containers:
+- Container: my_space:AssetContainer
+  Used For: node
+  Constraint: requires:req_describable(require=my_space:DescribableContainer)
+- Container: my_space:DescribableContainer
+  Used For: node
+"""
+        read_yaml = MagicMock(spec=Path)
+        read_yaml.read_text.return_value = yaml
+        importer = DMSTableImporter.from_yaml(read_yaml)
+        data_model = importer.to_data_model()
+
+        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation.run(data_model)
+
+        issues = [issue for issue in validation.issues if issue.code == RequiresConstraintComplicatesIngestion.code]
+
+        assert len(issues) == 0

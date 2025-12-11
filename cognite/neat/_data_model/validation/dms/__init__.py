@@ -27,6 +27,7 @@ from ._containers import (
     ExternalContainerPropertyDoesNotExist,
     MissingRequiresConstraint,
     RequiredContainerDoesNotExist,
+    RequiresConstraintComplicatesIngestion,
     RequiresConstraintCycle,
     UnnecessaryRequiresConstraint,
 )
@@ -58,6 +59,7 @@ __all__ = [
     "ImplementedViewNotExisting",
     "MissingRequiresConstraint",
     "RequiredContainerDoesNotExist",
+    "RequiresConstraintComplicatesIngestion",
     "RequiresConstraintCycle",
     "UnnecessaryRequiresConstraint",
     "ReverseConnectionContainerMissing",
