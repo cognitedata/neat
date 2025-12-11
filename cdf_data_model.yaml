@@ -1,0 +1,130 @@
+timestamp: '2025-12-11T10:57:06.035417Z'
+dataModel:
+  my_space:TestModel(version=v1):
+    space: my_space
+    externalId: TestModel
+    version: v1
+    name: Test Model
+    description: A test data model
+    views:
+    - space: my_space
+      externalId: DomainDescribable
+      version: v1
+      type: view
+    - space: not_my_space
+      externalId: ExistingEdgeConnection
+      version: v1
+      type: view
+    - space: my_space
+      externalId: ExistingDirectConnectionRemote
+      version: v1
+      type: view
+    - space: my_space
+      externalId: SourceForReverseConnectionExistRemote
+      version: v1
+      type: view
+    - space: prodigy
+      externalId: OutOfSpace
+      version: '1992'
+      type: view
+views:
+  my_space:DomainDescribable(version=v1):
+    space: my_space
+    externalId: DomainDescribable
+    version: v1
+    name: My View
+    description: An example view
+    properties: {}
+  not_my_space:ExistingEdgeConnection(version=v1):
+    space: not_my_space
+    externalId: ExistingEdgeConnection
+    version: v1
+    name: My View
+    description: An example view
+    properties: {}
+  my_space:ExistingDirectConnectionRemote(version=v1):
+    space: my_space
+    externalId: ExistingDirectConnectionRemote
+    version: v1
+    name: My View
+    description: An example view
+    properties: {}
+  my_space:SourceForReverseConnectionExistRemote(version=v1):
+    space: my_space
+    externalId: SourceForReverseConnectionExistRemote
+    version: v1
+    name: SourceForReverseConnectionExistRemote
+    description: SourceForReverseConnectionExistRemote
+    properties:
+      directPropertyRemote:
+        name: directPropertyRemote
+        description: A direct property for testing reverse connections
+        container:
+          space: my_space
+          externalId: DirectConnectionRemoteContainer
+          type: container
+        containerPropertyIdentifier: directRemote
+        source:
+          space: my_space
+          externalId: MyDescribable
+          version: v1
+          type: view
+  prodigy:OutOfSpace(version=1992):
+    space: prodigy
+    externalId: OutOfSpace
+    version: '1992'
+    name: Out Of Space
+    description: I'll take your brain to another dimension
+    properties:
+      directPropertyRemote:
+        name: directPropertyRemote
+        description: A direct property for testing reverse connections
+        container:
+          space: my_space
+          externalId: DirectConnectionRemoteContainer
+          type: container
+        containerPropertyIdentifier: directRemote
+        source:
+          space: my_space
+          externalId: MyDescribable
+          version: v1
+          type: view
+containers:
+  nospace:ExistingContainer:
+    space: nospace
+    externalId: ExistingContainer
+    name: ExistingContainer
+    description: ExistingContainer
+    usedFor: node
+    properties:
+      unused:
+        immutable: false
+        nullable: false
+        type:
+          type: text
+  cdf_cdm:CogniteDescribable:
+    space: cdf_cdm
+    externalId: CogniteDescribable
+    name: ExistingContainer
+    description: ExistingContainer
+    usedFor: node
+    properties:
+      name:
+        immutable: false
+        nullable: false
+        type:
+          type: text
+  my_space:DirectConnectionRemoteContainer:
+    space: my_space
+    externalId: DirectConnectionRemoteContainer
+    name: DirectConnectionRemoteContainer
+    description: DirectConnectionRemoteContainer
+    usedFor: node
+    properties:
+      directRemote:
+        immutable: false
+        nullable: false
+        type:
+          type: direct
+spaces: {}
+nodeTypes: {}

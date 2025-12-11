@@ -1,0 +1,35 @@
+dataModel:
+  space: my_space
+  externalId: TestModel
+  version: v1
+  views:
+  - space: my_space
+    externalId: SourceView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: TargetView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: AnotherView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: ViewWithoutProperties
+    version: v1
+    type: view
+  - space: my_space
+    externalId: AncestorView
+    version: v1
+    type: view
+  - space: my_space
+    externalId: DescendantView
+    version: v1
+    type: view
+
+
+
+spaces:
+- space: my_space
+nodeTypes: []
