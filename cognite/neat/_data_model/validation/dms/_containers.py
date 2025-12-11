@@ -444,23 +444,21 @@ class MissingRequiresConstraint(DataModelValidator):
                     if all_single_container and views_without_b:
                         optional_required.add(container_b)
 
-            # Find containers that could provide better coverage:
-            # containers that A appears with (but not always), that transitively cover items in always_required
-            better_coverage: set[ContainerReference] = set()
-            for container_c in containers_with_a:
-                if container_c in transitively_required:
-                    continue
-                if container_c in always_required:
-                    continue
-                # Check if C transitively covers any container in always_required
-                c_covers = _get_transitively_required_containers(container_c, self.merged_containers)
-                if c_covers & always_required:
-                    better_coverage.add(container_c)
-
             # Find the minimal set of constraints needed
             minimal_always = _find_minimal_set(always_required, self.merged_containers)
-            minimal_optional = _find_minimal_set(
-                optional_required - always_required, self.merged_containers, already_covered_by=always_required
+
+            # Find containers that A appears with in some views but not all (optional constraints)
+            # This includes both "better_coverage" (transitively covers always_required) and
+            # "optional_required" (A appears alone in single-container views)
+            partial_overlap = optional_required | {
+                c
+                for c in containers_with_a
+                if c not in transitively_required
+                and c not in always_required
+                and _get_transitively_required_containers(c, self.merged_containers) & always_required
+            }
+            minimal_partial = _find_minimal_set(
+                partial_overlap - always_required, self.merged_containers, already_covered_by=always_required
             )
 
             for container_b in minimal_always:
@@ -475,44 +473,22 @@ class MissingRequiresConstraint(DataModelValidator):
                     )
                 )
 
-            # Recommend better coverage containers (containers that would transitively cover always_required)
-            for container_c in better_coverage:
-                views_with_c = container_to_views.get(str(container_c), set())
-                views_with_both = views_with_a & views_with_c
-                views_without_c = views_with_a - views_with_c
-                c_covers = _get_transitively_required_containers(container_c, self.merged_containers) & always_required
-                covered_str = ", ".join(f"'{c!s}'" for c in c_covers)
-                views_with_both_str = ", ".join(sorted(views_with_both))
-                views_without_c_str = ", ".join(sorted(views_without_c))
-                recommendations.append(
-                    Recommendation(
-                        message=(
-                            f"Container '{container_a!s}' appears with container '{container_c!s}' in views: [{views_with_both_str}]. "
-                            f"Adding a requires constraint in '{container_a!s}' on '{container_c!s}' would transitively cover {covered_str} "
-                            f"and provide better query performance for these views. However, this would complicate ingestion for views "
-                            f"where '{container_a!s}' appears without '{container_c!s}': [{views_without_c_str}]."
-                        ),
-                        fix="Consider adding a requires constraint for better query performance in shared views",
-                        code=self.code,
-                    )
-                )
-
-            for container_b in minimal_optional:
+            # Recommend partial overlap containers with contextual details
+            for container_b in minimal_partial:
                 views_with_b = container_to_views.get(str(container_b), set())
                 views_with_both = views_with_a & views_with_b
                 views_without_b = views_with_a - views_with_b
-                # Identify single-container vs multi-container views
-                single_container_views = {v for v in views_without_b if len(view_to_containers.get(v, set())) == 1}
-                multi_container_views_str = ", ".join(sorted(views_with_both))
-                single_container_views_str = ", ".join(sorted(single_container_views))
+
+                views_with_both_str = ", ".join(sorted(views_with_both))
+                views_without_b_str = ", ".join(sorted(views_without_b))
+
                 recommendations.append(
                     Recommendation(
                         message=(
-                            f"Container '{container_a!s}' is used together with container '{container_b!s}' "
-                            f"in multi-container views: [{multi_container_views_str}], "
-                            f"but also appears alone in single-container views: [{single_container_views_str}]. "
-                            f"Adding a requires constraint in '{container_a!s}' on '{container_b!s}' would improve query performance for the multi-container views, "
-                            f"but may complicate ingestion through the single-container views."
+                            f"Container '{container_a!s}' appears with container '{container_b!s}' "
+                            f"in views: [{views_with_both_str}], but not in: [{views_without_b_str}]. "
+                            f"Adding a requires constraint in '{container_a!s}' on '{container_b!s}' would improve query performance for these views, "
+                            f"but may complicate ingestion for views where '{container_a!s}' appears without '{container_b!s}'."
                         ),
                         fix="Consider adding a requires constraint if query performance is more important than ingestion flexibility",
                         code=self.code,

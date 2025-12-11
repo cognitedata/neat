@@ -438,13 +438,13 @@ Containers:
             for msg in messages
         )
 
-        # Should suggest AssetContainer as better coverage option
-        better_coverage = any(
-            "TagContainer" in msg and "AssetContainer" in msg and "better" in msg.lower() for msg in messages
+        # Should suggest AssetContainer as a partial overlap option (better coverage)
+        partial_overlap = any(
+            "TagContainer" in msg and "AssetContainer" in msg and "improve" in msg.lower() for msg in messages
         )
 
         assert tag_requires_describable, "Should recommend TagContainer requires DescribableContainer"
-        assert better_coverage, "Should suggest AssetContainer as better coverage option"
+        assert partial_overlap, f"Should suggest AssetContainer as partial overlap option. Messages: {messages}"
 
 
 class TestUnnecessaryRequiresConstraint:
