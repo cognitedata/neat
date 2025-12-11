@@ -1,0 +1,139 @@
+- space: my_space
+  externalId: MyDescribable
+  version: v1
+  name: My Describable
+  description: A describable view
+  implements:
+  - space: my_space
+    externalId: DomainDescribable
+    version: v1
+    type: view
+  properties:
+    name:
+      name: name
+      description: The name of the describable
+      container:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container
+      containerPropertyIdentifier: name
+    altName:
+      name: altName
+      description: An alternative name for the describable
+      container:
+        space: nospace
+        externalId: UnexistingContainer
+        type: container
+      containerPropertyIdentifier: altName
+    jargon:
+      name: jargon
+      description: A jargon term for the describable
+      container:
+        space: nospace
+        externalId: ExistingContainer
+        type: container
+      containerPropertyIdentifier: unexistingProperty
+    directLocal:
+      name: directLocal
+      description: A direct property with unexisting local connection
+      container:
+        space: my_space
+        externalId: DirectConnectionContainer
+        type: container
+      containerPropertyIdentifier: directLocal
+      source:
+        space: my_space
+        externalId: UnexistingDirectConnectionLocal
+        version: v1
+        type: view
+    directToNowhere:
+      name: directToNowhere
+      description: A direct property with undefined connection
+      container:
+        space: my_space
+        externalId: DirectConnectionContainer
+        type: container
+      containerPropertyIdentifier: directToNowhere
+    directRemote:
+      name: directRemote
+      description: A direct property with existing remote connection
+      container:
+        space: my_space
+        externalId: DirectConnectionRemoteContainer
+        type: container
+      containerPropertyIdentifier: directRemote
+      source:
+        space: my_space
+        externalId: ExistingDirectConnectionRemote
+        version: v1
+        type: view
+    singleEdgeProperty:
+      connectionType: single_edge_connection
+      name: singleEdgeProperty
+      description: A single edge property with unexisting edge connection
+      source:
+        space: not_my_space
+        externalId: ExistingEdgeConnection
+        version: v1
+        type: view
+      type:
+        space: my_space
+        externalId: MyDescribable.singleEdgeProperty
+      direction: outwards
+    singleEdgePropertyToMyView:
+      connectionType: single_edge_connection
+      name: singleEdgePropertyToMyView
+      description: A single edge property with unexisting edge connection to my view
+      source:
+        space: my_space
+        externalId: UnexistingEdgeConnection
+        version: v1
+        type: view
+      type:
+        space: my_space
+        externalId: MyDescribable.singleEdgeProperty
+      direction: outwards
+    reverseDirectPropertyRemote:
+      connectionType: single_reverse_direct_relation
+      name: reverseDirectPropertyRemote
+      description: A reverse direct property with existing remote source connection
+      source:
+        space: my_space
+        externalId: SourceForReverseConnectionExistRemote
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceForReverseConnectionExistRemote
+          version: v1
+          type: view
+        identifier: directPropertyRemote
+    reverseDirectPropertyMissingOtherEnd:
+      connectionType: single_reverse_direct_relation
+      name: reverseDirectPropertyMissingOtherEnd
+      description: A reverse direct property with missing other end
+      source:
+        space: my_space
+        externalId: UnexistingSourceForReverseConnection
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: UnexistingSourceForReverseConnection
+          version: v1
+          type: view
+        identifier: directPropertyLocal
+- space: another_space
+  externalId: MissingProperties
+  version: v2
+  name: Missing Properties
+  description: A view missing properties
+  properties: {}
+- space: my_space
+  externalId: MissingProperties
+  version: v2
+  name: Missing Properties
+  description: A view missing properties
+  properties: {}

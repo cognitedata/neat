@@ -1,0 +1,20 @@
+space: cdf_cdm
+externalId: CogniteCore
+version: v1
+views:
+- space: cdf_cdm
+  externalId: CogniteDescribable
+  version: v1
+  type: view
+- space: cdf_cdm
+  externalId: CogniteAsset
+  version: v1
+  type: view
+- space: cdf_cdm
+  externalId: CogniteFile
+  version: v1
+  type: view
+- space: cdf_cdm
+  externalId: FileAnnotation
+  version: v1
+  type: view
