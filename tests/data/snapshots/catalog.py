@@ -1,9 +1,9 @@
 from datetime import datetime
+from functools import cached_property
 from pathlib import Path
 from typing import Literal, overload
 
 import yaml
-from pyparsing import cached_property
 
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
@@ -116,8 +116,14 @@ class Catalog:
 
     @classmethod
     def snapshot_to_request_schema(cls, snapshot: SchemaSnapshot) -> RequestSchema:
+        """This is a helper method for tests that converts a SchemaSnapshot to a RequestSchema"""
+        if not snapshot.data_model:
+            raise ValueError("Cannot create RequestSchema from a snapshot with no data model.")
+
+        data_model = next(iter(snapshot.data_model.values()))
+
         return RequestSchema(
-            dataModel=next(iter(snapshot.data_model.values())) if snapshot.data_model else [],
+            dataModel=data_model,
             views=list(snapshot.views.values()),
             containers=list(snapshot.containers.values()),
             spaces=list(snapshot.spaces.values()),
