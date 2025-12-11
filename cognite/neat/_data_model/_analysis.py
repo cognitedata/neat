@@ -32,7 +32,7 @@ ReverseToDirectMapping: TypeAlias = dict[
 ConnectionEndNodeTypes: TypeAlias = dict[tuple[ViewReference, str], ViewReference | None]
 
 
-ResourceSource = Literal["auto", "check_merged", "cdf", "both"]
+ResourceSource = Literal["auto", "merged", "cdf", "both"]
 
 
 class ValidationResources:
@@ -202,7 +202,7 @@ class ValidationResources:
             # In "rebuild" mode for resources in local space, check only merged == local
             check_merged = True
             check_cdf = resource_ref.space != self.merged_data_model.space or self._modus_operandi == "additive"
-        elif source == "local":
+        elif source == "merged":
             check_merged = True
             check_cdf = False
         elif source == "cdf":
