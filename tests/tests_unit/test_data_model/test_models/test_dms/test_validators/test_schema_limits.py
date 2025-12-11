@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._limits import (
@@ -16,6 +15,8 @@ from cognite.neat._data_model.validation.dms._limits import (
 )
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
 from cognite.neat._utils.text import NEWLINE as NL
+from tests.data import SNAPSHOT_CATALOG
+from tests.data.snapshots.catalog import CDF_SNAPSHOTS_DIR
 
 
 def generate_implements_list(interface_count: int) -> str:
@@ -272,9 +273,7 @@ Enum:
     return yaml, expected_problems
 
 
-def test_validation(
-    dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]], cdf_snapshot_for_validation: SchemaSnapshot
-) -> None:
+def test_validation(dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[str, set]]) -> None:
     yaml_content, expected_problems = dms_yaml_hitting_all_the_data_model_limits
 
     read_yaml = MagicMock(spec=Path)
@@ -284,7 +283,7 @@ def test_validation(
 
     # Run on success validators
     on_success = DmsDataModelValidation(
-        cdf_snapshot=cdf_snapshot_for_validation,
+        cdf_snapshot=SNAPSHOT_CATALOG.load_schema_snapshot(CDF_SNAPSHOTS_DIR / "for_validators"),
         limits=SchemaLimits(),
     )
     on_success.run(data_model)

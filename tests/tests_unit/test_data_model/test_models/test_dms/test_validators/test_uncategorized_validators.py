@@ -1,11 +1,5 @@
-from pathlib import Path
 from typing import cast
-from unittest.mock import MagicMock
 
-import pytest
-
-from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
-from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms import (
     ConnectionValueTypeUndefined,
@@ -21,154 +15,21 @@ from cognite.neat._data_model.validation.dms import (
 from cognite.neat._data_model.validation.dms._containers import RequiredContainerDoesNotExist
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
-
-
-@pytest.fixture(scope="session")
-def valid_dms_yaml_with_consistency_errors() -> str:
-    return """Metadata:
-- Key: space
-  Value: my_space
-- Key: externalId
-  Value: TestModel
-- Key: version
-  Value: v1
-- Key: name
-  Value: Test Model
-- Key: description
-  Value: A test data model
-Properties:
-- View: MyDescribable
-  View Property: name
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: cdf_cdm:CogniteDescribable
-  Container Property: name
-  Index: btree:name(cursorable=True)
-  Connection: null
-  Name: name
-  Description: The name of the describable
-- View: MyDescribable
-  View Property: altName
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: nospace:UnexistingContainer
-  Container Property: altName
-  Connection: null
-  Name: altName
-  Description: An alternative name for the describable
-- View: MyDescribable
-  View Property: jargon
-  Value Type: text
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: nospace:ExistingContainer
-  Container Property: unexistingProperty
-  Connection: null
-  Name: jargon
-  Description: A jargon term for the describable
-- View: MyDescribable
-  View Property: directLocal
-  Connection: direct
-  Value Type: my_space:UnexistingDirectConnectionLocal(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: my_space:DirectConnectionContainer
-  Container Property: directLocal
-  Name: directLocal
-  Description: A direct property with unexisting local connection
-- View: MyDescribable
-  View Property: directToNowhere
-  Connection: direct
-  Value Type: '#N/A'
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: my_space:DirectConnectionContainer
-  Container Property: directToNowhere
-  Name: directToNowhere
-  Description: A direct property with undefined connection
-- View: MyDescribable
-  View Property: directRemote
-  Connection: direct
-  Value Type: my_space:ExistingDirectConnectionRemote(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Immutable: false
-  Container: my_space:DirectConnectionRemoteContainer
-  Container Property: directRemote
-  Name: directRemote
-  Description: A direct property with existing remote connection
-- View: MyDescribable
-  View Property: singleEdgeProperty
-  Connection: edge(type=MyDescribable.singleEdgeProperty)
-  Value Type: not_my_space:ExistingEdgeConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Name: singleEdgeProperty
-  Description: A single edge property with unexisting edge connection
-- View: MyDescribable
-  View Property: singleEdgePropertyToMyView
-  Connection: edge(type=MyDescribable.singleEdgeProperty)
-  Value Type: my_space:UnexistingEdgeConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Name: singleEdgePropertyToMyView
-  Description: A single edge property with unexisting edge connection to my view
-- View: MyDescribable
-  View Property: reverseDirectPropertyRemote
-  Connection: reverse(property=directPropertyRemote)
-  Value Type: my_space:SourceForReverseConnectionExistRemote(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Name: reverseDirectPropertyRemote
-  Description: A reverse direct property with existing remote source connection
-- View: MyDescribable
-  View Property: reverseDirectPropertyMissingOtherEnd
-  Connection: reverse(property=directPropertyLocal)
-  Value Type: my_space:UnexistingSourceForReverseConnection(version=v1)
-  Min Count: 0
-  Max Count: 1
-  Name: reverseDirectPropertyMissingOtherEnd
-  Description: A reverse direct property with missing other end
-Views:
-- View: MyDescribable
-  Implements: DomainDescribable
-  Name: My Describable
-  Description: A describable view
-- View: another_space:MissingProperties(version=v2)
-  Name: Missing Properties
-  Description: A view missing properties
-- View: my_space:MissingProperties(version=v2)
-  Name: Missing Properties
-  Description: A view missing properties
-Containers:
-- Container: cdf_cdm:CogniteDescribable
-  Used For: node
-  Constraint: requires:my_constraint(require=idonotexist:AndWillNeverExist)
-- Container: my_space:DirectConnectionContainer
-  Used For: node
-  Constraint: requires:my_constraint(require=my_space:SomethingThatDoesNotExist)
-"""
+from tests.data import SNAPSHOT_CATALOG
 
 
 class TestValidators:
-    def test_additive_modus_operandi(
-        self, cdf_snapshot_for_validation: SchemaSnapshot, valid_dms_yaml_with_consistency_errors: str
-    ) -> None:
-        read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
-        importer = DMSTableImporter.from_yaml(read_yaml)
-        data_model = importer.to_data_model()
-
-        on_success = DmsDataModelValidation(
-            cdf_snapshot=cdf_snapshot_for_validation, limits=SchemaLimits(), modus_operandi="additive"
+    def test_additive_modus_operandi(self) -> None:
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            local_name="uncategorized_validators",
+            cdf_name="for_validators",
+            modus_operandi="additive",
+            include_cdm=False,
+            format="snapshots",
         )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+        on_success = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="additive")
 
         on_success.run(data_model)
 
@@ -285,17 +146,17 @@ class TestValidators:
                     found_missing_items.add(expected_item)
         assert found_missing_items == expected_missing_items
 
-    def test_rebuild_modus_operandi(
-        self, cdf_snapshot_for_validation: SchemaSnapshot, valid_dms_yaml_with_consistency_errors: str
-    ) -> None:
-        read_yaml = MagicMock(spec=Path)
-        read_yaml.read_text.return_value = valid_dms_yaml_with_consistency_errors
-        importer = DMSTableImporter.from_yaml(read_yaml)
-        data_model = importer.to_data_model()
-
-        on_success = DmsDataModelValidation(
-            cdf_snapshot=cdf_snapshot_for_validation, limits=SchemaLimits(), modus_operandi="rebuild"
+    def test_rebuild_modus_operandi(self) -> None:
+        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+            "uncategorized_validators",
+            "for_validators",
+            modus_operandi="rebuild",
+            include_cdm=False,
+            format="snapshots",
         )
+        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+
+        on_success = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="rebuild")
 
         on_success.run(data_model)
 
