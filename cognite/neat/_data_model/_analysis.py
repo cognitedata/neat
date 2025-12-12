@@ -3,7 +3,7 @@ from typing import Literal, TypeAlias
 
 from pyparsing import cached_property
 
-from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_types import DirectNodeRelation
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
@@ -46,7 +46,7 @@ class ValidationResources:
         self.cdf = cdf
 
         if self._modus_operandi == "additive":
-            self.merged = self.merge(self.local, self.cdf)
+            self.merged = self.local.merge(self.cdf)
         elif self._modus_operandi == "rebuild":
             self.merged = local.model_copy(deep=True)
         else:
@@ -54,44 +54,6 @@ class ValidationResources:
 
         # need this shortcut for easier access and also to avoid mypy to complains
         self.merged_data_model = self.merged.data_model[next(iter(self.merged.data_model.keys()))]
-
-    @classmethod
-    def merge(cls, local: SchemaSnapshot, cdf: SchemaSnapshot) -> SchemaSnapshot:
-        """Merge local and CDF snapshots, prioritizing local definitions."""
-        merged = local.model_copy(deep=True)
-
-        for model_ref, local_model in merged.data_model.items():
-            if model_ref not in cdf.data_model:
-                continue
-            cdf_model = cdf.data_model[model_ref]
-            if new_views := (set(cdf_model.views or []) - set(local_model.views or [])):
-                for view_ref in new_views:
-                    if cdf_view := cdf.views.get(view_ref):
-                        merged.views[view_ref] = cdf_view
-            # We append the local views at the end of the CDF views.
-            local_model.views = list(dict.fromkeys((cdf_model.views or []) + (local_model.views or [])).keys())
-
-        # Update local views with additional properties and implements from CDF views
-        for view_ref, view in merged.views.items():
-            if cdf_view := cdf.views.get(view_ref):
-                if cdf_only_containers := cdf_view.used_containers - set(view.used_containers):
-                    for cdf_only_container_ref in cdf_only_containers:
-                        if (
-                            cdf_container := cdf.containers.get(cdf_only_container_ref)
-                        ) and cdf_only_container_ref not in merged.containers:
-                            merged.containers[cdf_only_container_ref] = cdf_container
-
-                view.properties = {**cdf_view.properties, **view.properties}
-
-                # update implements
-                if cdf_view.implements:
-                    view.implements = list(dict.fromkeys(cdf_view.implements + (view.implements or [])).keys())
-
-        for container_ref, container in merged.containers.items():
-            if cdf_container := cdf.containers.get(container_ref):
-                container.properties = {**cdf_container.properties, **container.properties}
-
-        return merged
 
     def select_view(
         self, view_ref: ViewReference, property_: str | None = None, source: ResourceSource = "auto"

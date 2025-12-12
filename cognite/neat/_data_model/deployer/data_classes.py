@@ -3,14 +3,13 @@ import sys
 from abc import ABC, abstractmethod
 from collections import UserList, defaultdict
 from collections.abc import Hashable, Sequence
-from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Generic, Literal, TypeAlias, cast
 
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field
 from pydantic.alias_generators import to_camel
-from pydantic_core.core_schema import FieldSerializationInfo
 
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
     Constraint,
@@ -19,16 +18,11 @@ from cognite.neat._data_model.models.dms import (
     ContainerPropertyDefinition,
     ContainerReference,
     ContainerRequest,
-    DataModelReference,
     DataModelRequest,
     DataModelResource,
     Index,
-    NodeReference,
-    SpaceReference,
-    SpaceRequest,
     T_DataModelResource,
     T_ResourceId,
-    ViewReference,
     ViewRequest,
     ViewRequestProperty,
 )
@@ -238,24 +232,6 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
             ):
                 return True
         return False
-
-
-class SchemaSnapshot(BaseDeployObject):
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    data_model: dict[DataModelReference, DataModelRequest] = Field(default_factory=dict)
-    views: dict[ViewReference, ViewRequest] = Field(default_factory=dict)
-    containers: dict[ContainerReference, ContainerRequest] = Field(default_factory=dict)
-    spaces: dict[SpaceReference, SpaceRequest] = Field(default_factory=dict)
-    node_types: dict[NodeReference, NodeReference] = Field(default_factory=dict)
-
-    @field_serializer("data_model", "views", "containers", "spaces", "node_types", mode="plain")
-    @classmethod
-    def make_hashable_keys(cls, value: dict, info: FieldSerializationInfo) -> dict[str, Any]:
-        output: dict[str, Any] = {}
-        for key, val in value.items():
-            dumped_value = val.model_dump(**vars(info))
-            output[str(key)] = dumped_value
-        return output
 
 
 class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):

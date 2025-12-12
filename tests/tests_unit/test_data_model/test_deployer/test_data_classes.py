@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer._differ_data_model import DataModelDiffer
 from cognite.neat._data_model.deployer._differ_view import ViewDiffer
@@ -16,7 +17,6 @@ from cognite.neat._data_model.deployer.data_classes import (
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
-    SchemaSnapshot,
     SeverityType,
 )
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
