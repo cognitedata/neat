@@ -3,7 +3,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections import UserList, defaultdict
 from collections.abc import Hashable, Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Generic, Literal, TypeAlias, cast
 
@@ -240,12 +240,12 @@ class ContainerDeploymentPlan(ResourceDeploymentPlan[ContainerReference, Contain
 
 
 class SchemaSnapshot(BaseDeployObject):
-    timestamp: datetime
-    data_model: dict[DataModelReference, DataModelRequest]
-    views: dict[ViewReference, ViewRequest]
-    containers: dict[ContainerReference, ContainerRequest]
-    spaces: dict[SpaceReference, SpaceRequest]
-    node_types: dict[NodeReference, NodeReference]
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    data_model: dict[DataModelReference, DataModelRequest] = Field(default_factory=dict)
+    views: dict[ViewReference, ViewRequest] = Field(default_factory=dict)
+    containers: dict[ContainerReference, ContainerRequest] = Field(default_factory=dict)
+    spaces: dict[SpaceReference, SpaceRequest] = Field(default_factory=dict)
+    node_types: dict[NodeReference, NodeReference] = Field(default_factory=dict)
 
 
 class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):
