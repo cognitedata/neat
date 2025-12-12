@@ -21,6 +21,7 @@ from ._references import ContainerReference, NodeReference, ViewReference
 from ._view_filter import Filter
 from ._view_property import (
     EdgeProperty,
+    ViewCorePropertyRequest,
     ViewCorePropertyResponse,
     ViewRequestProperty,
     ViewResponseProperty,
@@ -129,6 +130,11 @@ class ViewRequest(View):
     def validate_properties_identifier(cls, val: dict[str, ViewRequestProperty]) -> dict[str, ViewRequestProperty]:
         """Validate properties Identifier"""
         return _validate_properties_keys(val)
+
+    @property
+    def used_containers(self) -> set[ContainerReference]:
+        """Get all containers referenced by this view."""
+        return {prop.container for prop in self.properties.values() if isinstance(prop, ViewCorePropertyRequest)}
 
 
 class ViewResponse(View, WriteableResource[ViewRequest]):
