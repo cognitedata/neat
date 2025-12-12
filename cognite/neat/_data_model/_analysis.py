@@ -64,16 +64,22 @@ class ValidationResources:
             if model_ref not in cdf.data_model:
                 continue
             cdf_model = cdf.data_model[model_ref]
+            if new_views := (set(cdf_model.views or []) - set(local_model.views or [])):
+                for view_ref in new_views:
+                    if cdf_view := cdf.views.get(view_ref):
+                        merged.views[view_ref] = cdf_view
             # We append the local views at the end of the CDF views.
             local_model.views = list(dict.fromkeys((cdf_model.views or []) + (local_model.views or [])).keys())
 
         # Update local views with additional properties and implements from CDF views
         for view_ref, view in merged.views.items():
             if cdf_view := cdf.views.get(view_ref):
-                if new_containers := cdf_view.used_containers - set(view.used_containers):
-                    for container_ref in new_containers:
-                        if cdf_container := cdf.containers.get(container_ref):
-                            merged.containers[container_ref] = cdf_container
+                if cdf_only_containers := cdf_view.used_containers - set(view.used_containers):
+                    for cdf_only_container_ref in cdf_only_containers:
+                        if (
+                            cdf_container := cdf.containers.get(cdf_only_container_ref)
+                        ) and cdf_only_container_ref not in merged.containers:
+                            merged.containers[cdf_only_container_ref] = cdf_container
 
                 view.properties = {**cdf_view.properties, **view.properties}
 

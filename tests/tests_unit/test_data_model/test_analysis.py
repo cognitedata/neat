@@ -174,14 +174,23 @@ def merge_schema_test_cases() -> Iterator[tuple]:
         SchemaSnapshot(
             timestamp=now,
             data_model={data_model_one_view.as_reference(): data_model_one_view},
+            views={view_one_prop.as_reference(): view_one_prop},
         ),
         SchemaSnapshot(
             timestamp=now,
             data_model={data_model_two_views.as_reference(): data_model_two_views},
+            views={
+                view_one_prop.as_reference(): view_one_prop,
+                other_view.as_reference(): other_view,
+            },
         ),
         SchemaSnapshot(
             timestamp=now,
             data_model={data_model_two_views.as_reference(): data_model_two_views},
+            views={
+                view_one_prop.as_reference(): view_one_prop,
+                other_view.as_reference(): other_view,
+            },
         ),
         id="CDF data model has additional view",
     )
