@@ -250,8 +250,8 @@ class SchemaSnapshot(BaseDeployObject):
 
     @field_serializer("data_model", "views", "containers", "spaces", "node_types", mode="plain")
     @classmethod
-    def make_hashable_keys(cls, value: dict, info: FieldSerializationInfo) -> dict:
-        output: dict = {}
+    def make_hashable_keys(cls, value: dict, info: FieldSerializationInfo) -> dict[str, Any]:
+        output: dict[str, Any] = {}
         for key, val in value.items():
             dumped_value = val.model_dump(**vars(info))
             output[str(key)] = dumped_value
