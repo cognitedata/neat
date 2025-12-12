@@ -60,25 +60,24 @@ class ValidationResources:
         """Merge local and CDF snapshots, prioritizing local definitions."""
         merged = local.model_copy(deep=True)
 
-        # shortcut for data model
-        data_model = merged.data_model[next(iter(merged.data_model.keys()))]
+        for model_ref, local_model in merged.data_model.items():
+            if model_ref not in cdf.data_model:
+                continue
+            cdf_model = cdf.data_model[model_ref]
+            # We append the local views at the end of the CDF views.
+            local_model.views = list(dict.fromkeys((cdf_model.views or []) + (local_model.views or [])).keys())
 
-        if cdf_data_model := cdf.data_model.get(data_model.as_reference()):
-            if cdf_data_model.views:
-                for view_ref in cdf_data_model.views:
-                    if view_ref not in (data_model.views or []):
-                        data_model.views = (data_model.views or []) + [view_ref]
-
-                    if view_ref not in merged.views:
-                        merged.views[view_ref] = cdf.views[view_ref]
+        for container_ref, container in merged.containers.items():
+            if cdf_container := cdf.containers.get(container_ref):
+                container.properties = {**cdf_container.properties, **container.properties}
 
         # Update local views with additional properties and implements from CDF views
         for view_ref, view in merged.views.items():
             if cdf_view := cdf.views.get(view_ref):
                 # update properties
-                for prop_name, view_prop in cdf_view.properties.items():
-                    if prop_name not in view.properties:
-                        view.properties[prop_name] = view_prop
+                for prop_id, view_prop in cdf_view.properties.items():
+                    if prop_id not in view.properties:
+                        view.properties[prop_id] = view_prop
 
                 # update implements
                 if cdf_view.implements:
@@ -88,12 +87,6 @@ class ValidationResources:
                         for impl in cdf_view.implements:
                             if impl not in view.implements:
                                 view.implements.append(impl)
-
-        for container_ref, container in merged.containers.items():
-            if cdf_container := cdf.containers.get(container_ref):
-                for prop_name, prop in cdf_container.properties.items():
-                    if prop_name not in container.properties:
-                        container.properties[prop_name] = prop
 
         for view in merged.views.values():
             if not view.properties:

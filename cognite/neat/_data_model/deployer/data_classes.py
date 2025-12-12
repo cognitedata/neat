@@ -7,8 +7,9 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Generic, Literal, TypeAlias, cast
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from pydantic.alias_generators import to_camel
+from pydantic_core.core_schema import FieldSerializationInfo
 
 from cognite.neat._data_model.models.dms import (
     BaseModelObject,
@@ -246,6 +247,15 @@ class SchemaSnapshot(BaseDeployObject):
     containers: dict[ContainerReference, ContainerRequest] = Field(default_factory=dict)
     spaces: dict[SpaceReference, SpaceRequest] = Field(default_factory=dict)
     node_types: dict[NodeReference, NodeReference] = Field(default_factory=dict)
+
+    @field_serializer("data_model", "views", "containers", "spaces", "node_types", mode="plain")
+    @classmethod
+    def make_hashable_keys(cls, value: dict, info: FieldSerializationInfo) -> dict:
+        output: dict = {}
+        for key, val in value.items():
+            dumped_value = val.model_dump(**vars(info))
+            output[str(key)] = dumped_value
+        return output
 
 
 class ResourceDeploymentPlanList(UserList[ResourceDeploymentPlan]):

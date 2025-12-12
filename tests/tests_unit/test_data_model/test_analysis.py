@@ -98,10 +98,13 @@ def merge_schema_test_cases() -> Iterator[tuple]:
         id="Local has one container, CDF is empty",
     )
     yield pytest.param(
-        SchemaSnapshot(timestamp=now),
         SchemaSnapshot(
             timestamp=now,
             containers={container_one_prop.as_reference(): container_one_prop},
+        ),
+        SchemaSnapshot(
+            timestamp=now,
+            containers={container_two_prop.as_reference(): container_two_prop},
         ),
         SchemaSnapshot(
             timestamp=now,
