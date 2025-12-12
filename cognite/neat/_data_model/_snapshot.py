@@ -5,12 +5,14 @@ from typing import Any
 from pydantic import BaseModel, Field, field_serializer
 from pydantic_core.core_schema import FieldSerializationInfo
 
+from cognite.neat._client import NeatClient
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
     DataModelReference,
     DataModelRequest,
     NodeReference,
+    RequestSchema,
     SpaceReference,
     SpaceRequest,
     ViewReference,
@@ -41,7 +43,7 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
         return output
 
     def merge(self, cdf: Self) -> Self:
-        """Merge local and CDF snapshots, prioritizing local definitions."""
+        """Merge another SchemaSnapshot into this one, prioritizing this snapshot's data."""
         merged = self.model_copy(deep=True)
 
         for model_ref, local_model in merged.data_model.items():
@@ -76,3 +78,56 @@ class SchemaSnapshot(BaseModel, extra="ignore"):
                 container.properties = {**cdf_container.properties, **container.properties}
 
         return merged
+
+    @classmethod
+    def fetch_cdf_data_model(cls, client: NeatClient, data_model: RequestSchema) -> Self:
+        """Fetch the latest data model, views, containers, and spaces from CDF based on the provided RequestSchema."""
+        now = datetime.now(timezone.utc)
+        space_ids = [space.as_reference() for space in data_model.spaces]
+        cdf_spaces = client.spaces.retrieve(space_ids)
+
+        container_refs = [c.as_reference() for c in data_model.containers]
+        cdf_containers = client.containers.retrieve(container_refs)
+
+        view_refs = [v.as_reference() for v in data_model.views]
+        cdf_views = client.views.retrieve(view_refs)
+
+        dm_ref = data_model.data_model.as_reference()
+        cdf_data_models = client.data_models.retrieve([dm_ref])
+
+        nodes = [node_type for view in cdf_views for node_type in view.node_types]
+        return cls(
+            timestamp=now,
+            data_model={dm.as_reference(): dm.as_request() for dm in cdf_data_models},
+            views={view.as_reference(): view.as_request() for view in cdf_views},
+            containers={container.as_reference(): container.as_request() for container in cdf_containers},
+            spaces={space.as_reference(): space.as_request() for space in cdf_spaces},
+            node_types={node: node for node in nodes},
+        )
+
+    @classmethod
+    def fetch_entire_cdf(cls, client: NeatClient) -> Self:
+        """Fetch the entire data model, views, containers, and spaces from CDF."""
+        now = datetime.now(timezone.utc)
+        all_views = client.views.list(
+            all_versions=True, include_global=True, include_inherited_properties=False, limit=None
+        )
+        nodes = [node_type for view in all_views for node_type in view.node_types]
+        return cls(
+            # TODO: spaces and data_models should be update after updating list methods for unlimited no
+            spaces={
+                response.as_reference(): response.as_request()
+                for response in client.spaces.list(include_global=True, limit=1000)
+            },
+            data_model={
+                response.as_reference(): response.as_request()
+                for response in client.data_models.list(all_versions=True, include_global=True, limit=1000)
+            },
+            views={response.as_reference(): response.as_request() for response in all_views},
+            containers={
+                response.as_reference(): response.as_request()
+                for response in client.containers.list(include_global=True, limit=None)
+            },
+            node_types={node_type: node_type for node_type in nodes},
+            timestamp=now,
+        )
