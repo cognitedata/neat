@@ -1,0 +1,26 @@
+space: my_space
+externalId: TestModel
+version: v1
+name: Test Model
+description: A test data model
+views:
+- space: my_space
+  externalId: DomainDescribable
+  version: v1
+  type: view
+- space: not_my_space
+  externalId: ExistingEdgeConnection
+  version: v1
+  type: view
+- space: my_space
+  externalId: ExistingDirectConnectionRemote
+  version: v1
+  type: view
+- space: my_space
+  externalId: SourceForReverseConnectionExistRemote
+  version: v1
+  type: view
+- space: prodigy
+  externalId: OutOfSpace
+  version: '1992'
+  type: view

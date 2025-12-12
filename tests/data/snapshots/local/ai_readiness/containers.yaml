@@ -1,0 +1,59 @@
+- space: cdf_cdm
+  externalId: CogniteDescribable
+  usedFor: all
+  properties:
+    name:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+        maxTextSize: 400
+  constraints:
+    uniqueName:
+      constraintType: uniqueness
+      properties:
+      - name
+      bySpace: true
+  indexes:
+    name:
+      indexType: btree
+      properties:
+      - name
+      cursorable: false
+- space: cdf_cdm
+  externalId: CogniteFile
+  usedFor: node
+  properties:
+    assets:
+      immutable: false
+      nullable: true
+      type:
+        type: direct
+        list: true
+        maxListSize: 1200
+    equipments:
+      immutable: false
+      nullable: true
+      type:
+        type: direct
+        list: true
+        maxListSize: 1200
+    category:
+      immutable: false
+      nullable: true
+      name: category_405
+      type:
+        type: enum
+        unknownValue: other
+        values:
+          blueprint: {}
+          document: {}
+          other: {}
+  constraints:
+    describablePresent:
+      constraintType: requires
+      require:
+        space: cdf_cdm
+        externalId: CogniteDescribable
+        type: container

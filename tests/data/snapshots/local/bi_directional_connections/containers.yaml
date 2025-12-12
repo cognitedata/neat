@@ -1,0 +1,58 @@
+- space: my_space
+  externalId: SourceContainer
+  usedFor: node
+  properties:
+    nameStorage:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+    directConnectionStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false
+    directWhichContainerPropertyDoesNotExistStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false
+    directWithoutTypingStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false
+- space: my_space
+  externalId: TargetContainer
+  usedFor: node
+  properties:
+    nameStorage:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+- space: my_space
+  externalId: AnotherContainer
+  usedFor: node
+  properties:
+    nameStorage:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+- space: my_space
+  externalId: AncestorContainer
+  usedFor: node
+  properties:
+    outerReflectionStorage:
+      nullable: true
+      type:
+        type: direct
+        list: false
+- space: my_space
+  externalId: DescendantContainer
+  usedFor: node
+  properties: {}

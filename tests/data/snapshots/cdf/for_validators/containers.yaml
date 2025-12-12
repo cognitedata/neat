@@ -1,0 +1,36 @@
+
+- space: nospace
+  externalId: ExistingContainer
+  name: ExistingContainer
+  description: ExistingContainer
+  usedFor: node
+  properties:
+    unused:
+      immutable: false
+      nullable: false
+      type:
+        type: text
+
+- space: cdf_cdm
+  externalId: CogniteDescribable
+  name: ExistingContainer
+  description: ExistingContainer
+  usedFor: node
+  properties:
+    name:
+      immutable: false
+      nullable: false
+      type:
+        type: text
+
+- space: my_space
+  externalId: DirectConnectionRemoteContainer
+  name: DirectConnectionRemoteContainer
+  description: DirectConnectionRemoteContainer
+  usedFor: node
+  properties:
+    directRemote:
+      immutable: false
+      nullable: false
+      type:
+        type: direct

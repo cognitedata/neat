@@ -1,0 +1,46 @@
+- space: cdf_cdm
+  externalId: CogniteDescribable
+  usedFor: node
+  properties:
+    name:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    my_constraint:
+      constraintType: requires
+      require:
+        space: idonotexist
+        externalId: AndWillNeverExist
+        type: container
+  indexes:
+    name:
+      indexType: btree
+      properties:
+      - name
+      cursorable: true
+- space: my_space
+  externalId: DirectConnectionContainer
+  usedFor: node
+  properties:
+    directLocal:
+      immutable: false
+      nullable: true
+      type:
+        type: direct
+        list: false
+    directToNowhere:
+      immutable: false
+      nullable: true
+      type:
+        type: direct
+        list: false
+  constraints:
+    my_constraint:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: SomethingThatDoesNotExist
+        type: container

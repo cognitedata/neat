@@ -2,7 +2,10 @@ name: Check Quality and Test
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      # Tmp branches for testing PRs before merging to main
+      - THIS-960-refactor-gathering-results
 
 env:
   # Used for linting, docker images, and docs.

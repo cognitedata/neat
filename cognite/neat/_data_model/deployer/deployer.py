@@ -1,11 +1,11 @@
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from functools import partial
 from typing import cast
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
@@ -46,7 +46,6 @@ from .data_classes import (
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
-    SchemaSnapshot,
     SeverityType,
 )
 
@@ -88,7 +87,7 @@ class SchemaDeployer(OnSuccessResultProducer):
 
     def deploy(self, data_model: RequestSchema) -> DeploymentResult:
         # Step 1: Fetch current CDF state
-        snapshot = self.fetch_cdf_state(data_model)
+        snapshot = SchemaSnapshot.fetch_cdf_data_model(self.client, data_model)
 
         # Step 2: Create deployment plan by comparing local vs cdf
         plan = self.create_deployment_plan(snapshot, data_model)
@@ -126,30 +125,6 @@ class SchemaDeployer(OnSuccessResultProducer):
             )
         return DeploymentResult(
             status="success" if changes.is_success else "partial", plan=list(plan), snapshot=snapshot, responses=changes
-        )
-
-    def fetch_cdf_state(self, data_model: RequestSchema) -> SchemaSnapshot:
-        now = datetime.now(tz=timezone.utc)
-        space_ids = [space.as_reference() for space in data_model.spaces]
-        cdf_spaces = self.client.spaces.retrieve(space_ids)
-
-        container_refs = [c.as_reference() for c in data_model.containers]
-        cdf_containers = self.client.containers.retrieve(container_refs)
-
-        view_refs = [v.as_reference() for v in data_model.views]
-        cdf_views = self.client.views.retrieve(view_refs)
-
-        dm_ref = data_model.data_model.as_reference()
-        cdf_data_models = self.client.data_models.retrieve([dm_ref])
-
-        nodes = [node_type for view in cdf_views for node_type in view.node_types]
-        return SchemaSnapshot(
-            timestamp=now,
-            data_model={dm.as_reference(): dm.as_request() for dm in cdf_data_models},
-            views={view.as_reference(): view.as_request() for view in cdf_views},
-            containers={container.as_reference(): container.as_request() for container in cdf_containers},
-            spaces={space.as_reference(): space.as_request() for space in cdf_spaces},
-            node_types={node: node for node in nodes},
         )
 
     def create_deployment_plan(self, snapshot: SchemaSnapshot, data_model: RequestSchema) -> ResourceDeploymentPlanList:

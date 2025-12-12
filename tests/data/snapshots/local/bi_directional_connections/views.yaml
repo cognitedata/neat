@@ -1,0 +1,281 @@
+- space: my_space
+  externalId: SourceView
+  version: v1
+  properties:
+    name:
+      container:
+        space: my_space
+        externalId: SourceContainer
+        type: container
+      containerPropertyIdentifier: nameStorage
+    directSourceToAnotheViewConnection:
+      container:
+        space: my_space
+        externalId: SourceContainer
+        type: container
+      containerPropertyIdentifier: directConnectionStorage
+      source:
+        space: my_space
+        externalId: AnotherView
+        version: v1
+        type: view
+    directConnectionWithoutContainer:
+      container:
+        space: my_space
+        externalId: NoContainer
+        type: container
+      containerPropertyIdentifier: directConnectionWithoutContainerStorage
+      source:
+        space: my_space
+        externalId: TargetView
+        version: v1
+        type: view
+    directWhichContainerPropertyDoesNotExist:
+      container:
+        space: my_space
+        externalId: SourceContainer
+        type: container
+      containerPropertyIdentifier: directWhichContainerPropertyDoesNotExistStorage
+      source:
+        space: my_space
+        externalId: TargetView
+        version: v1
+        type: view
+    directWithoutTyping:
+      container:
+        space: my_space
+        externalId: SourceContainer
+        type: container
+      containerPropertyIdentifier: directWithoutTypingStorage
+      source:
+        space: my_space
+        externalId: ToBeSetToNone
+        version: v1
+        type: view
+    edgeConnection:
+      connectionType: single_edge_connection
+      source:
+        space: my_space
+        externalId: AnotherView
+        version: v1
+        type: view
+      type:
+        space: my_space
+        externalId: SourceView.edgeConnection
+      direction: outwards
+- space: my_space
+  externalId: TargetView
+  version: v1
+  properties:
+    name:
+      container:
+        space: my_space
+        externalId: TargetContainer
+        type: container
+      containerPropertyIdentifier: nameStorage
+    reverseSourceToTargetViewConnection:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: directSourceToAnotheViewConnection
+    reverseUnknownToTargetViewConnection:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: Unknown
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: Unknown
+          version: v1
+          type: view
+        identifier: directSourceToAnotheViewConnection
+    reverseToEdgeConnection:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: edgeConnection
+    reverseToDirectConnectionWithoutContainer:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: directConnectionWithoutContainer
+    reverseToDirectThatDoesNotExist:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: directDoesNotExist
+    reverseToViewWithoutProperties:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: ViewWithoutProperties
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: ViewWithoutProperties
+          version: v1
+          type: view
+        identifier: directDoesNotExist
+    reverseToAttribute:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: name
+    reverseToDirectWhichDoesHaveStorage:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: directWhichContainerPropertyDoesNotExist
+    reverseToDirectWithoutTyping:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: directWithoutTyping
+- space: my_space
+  externalId: AnotherView
+  version: v1
+  properties:
+    name:
+      container:
+        space: my_space
+        externalId: AnotherContainer
+        type: container
+      containerPropertyIdentifier: nameStorage
+    reverseSourceToAnotheViewConnection:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: SourceView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: SourceView
+          version: v1
+          type: view
+        identifier: directSourceToAnotheViewConnection
+- space: my_space
+  externalId: ViewWithoutProperties
+  version: v1
+  properties: {}
+- space: my_space
+  externalId: AncestorView
+  version: v1
+  properties:
+    outerReflection:
+      container:
+        space: my_space
+        externalId: AncestorContainer
+        type: container
+      containerPropertyIdentifier: outerReflectionStorage
+      source:
+        space: my_space
+        externalId: AncestorView
+        version: v1
+        type: view
+    innerReflection:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: AncestorView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: AncestorView
+          version: v1
+          type: view
+        identifier: outerReflection
+- space: my_space
+  externalId: DescendantView
+  version: v1
+  implements:
+  - space: my_space
+    externalId: AncestorView
+    version: v1
+    type: view
+  properties:
+    innerReflection:
+      connectionType: single_reverse_direct_relation
+      source:
+        space: my_space
+        externalId: DescendantView
+        version: v1
+        type: view
+      through:
+        source:
+          space: my_space
+          externalId: DescendantView
+          version: v1
+          type: view
+        identifier: outerReflection

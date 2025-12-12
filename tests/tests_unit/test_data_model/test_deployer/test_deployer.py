@@ -8,6 +8,7 @@ import pytest
 import respx
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
@@ -16,7 +17,6 @@ from cognite.neat._data_model.deployer.data_classes import (
     RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
-    SchemaSnapshot,
     SeverityType,
 )
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
@@ -43,8 +43,7 @@ def model(example_dms_schema_response: dict[str, Any]) -> RequestSchema:
 def schema_snapshot(
     neat_client: NeatClient, model: RequestSchema, respx_mock_data_model: respx.MockRouter
 ) -> SchemaSnapshot:
-    deployer = SchemaDeployer(client=neat_client)
-    return deployer.fetch_cdf_state(model)
+    return SchemaSnapshot.fetch_cdf_data_model(neat_client, model)
 
 
 class TestSchemaDeployer:
