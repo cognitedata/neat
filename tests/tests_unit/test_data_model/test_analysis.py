@@ -11,6 +11,7 @@ from cognite.neat._data_model.models.dms import (
     DataModelRequest,
     TextProperty,
     ViewCorePropertyRequest,
+    ViewReference,
     ViewRequest,
 )
 
@@ -23,6 +24,13 @@ def merge_schema_test_cases() -> Iterator[tuple]:
         externalId="MyContainer",
         properties={
             "name": ContainerPropertyDefinition(type=TextProperty()),
+        },
+    )
+    another_container = ContainerRequest(
+        space="test_space",
+        externalId="AnotherContainer",
+        properties={
+            "description": ContainerPropertyDefinition(type=TextProperty()),
         },
     )
     view_one_prop = ViewRequest(
@@ -66,10 +74,11 @@ def merge_schema_test_cases() -> Iterator[tuple]:
                     container=container_two_prop.as_reference(), containerPropertyIdentifier="name"
                 ),
                 "description": ViewCorePropertyRequest(
-                    container=container_two_prop.as_reference(), containerPropertyIdentifier="description"
+                    container=another_container.as_reference(), containerPropertyIdentifier="description"
                 ),
-            }
-        }
+            },
+            "implements": [ViewReference(space="cdf_cdm", external_id="CogniteVisualizable", version="v1")],
+        },
     )
     data_model_two_views = data_model_one_view.model_copy(
         update={
@@ -128,16 +137,25 @@ def merge_schema_test_cases() -> Iterator[tuple]:
         SchemaSnapshot(
             timestamp=now,
             views={view_one_prop.as_reference(): view_one_prop},
+            containers={container_one_prop.as_reference(): container_one_prop},
         ),
         SchemaSnapshot(
             timestamp=now,
             views={view_two_prop.as_reference(): view_two_prop},
+            containers={
+                container_one_prop.as_reference(): container_one_prop,
+                another_container.as_reference(): another_container,
+            },
         ),
         SchemaSnapshot(
             timestamp=now,
             views={view_two_prop.as_reference(): view_two_prop},
+            containers={
+                container_one_prop.as_reference(): container_one_prop,
+                another_container.as_reference(): another_container,
+            },
         ),
-        id="CDF view has additional property",
+        id="CDF view has additional property and implements",
     )
 
     yield pytest.param(

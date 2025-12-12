@@ -67,42 +67,23 @@ class ValidationResources:
             # We append the local views at the end of the CDF views.
             local_model.views = list(dict.fromkeys((cdf_model.views or []) + (local_model.views or [])).keys())
 
-        for container_ref, container in merged.containers.items():
-            if cdf_container := cdf.containers.get(container_ref):
-                container.properties = {**cdf_container.properties, **container.properties}
-
         # Update local views with additional properties and implements from CDF views
         for view_ref, view in merged.views.items():
             if cdf_view := cdf.views.get(view_ref):
-                # update properties
-                for prop_id, view_prop in cdf_view.properties.items():
-                    if prop_id not in view.properties:
-                        view.properties[prop_id] = view_prop
+                if new_containers := cdf_view.used_containers - set(view.used_containers):
+                    for container_ref in new_containers:
+                        if cdf_container := cdf.containers.get(container_ref):
+                            merged.containers[container_ref] = cdf_container
+
+                view.properties = {**cdf_view.properties, **view.properties}
 
                 # update implements
                 if cdf_view.implements:
-                    if not view.implements:
-                        view.implements = cdf_view.implements
-                    else:
-                        for impl in cdf_view.implements:
-                            if impl not in view.implements:
-                                view.implements.append(impl)
+                    view.implements = list(dict.fromkeys(cdf_view.implements + (view.implements or [])).keys())
 
-        for view in merged.views.values():
-            if not view.properties:
-                continue
-
-            for property_ in view.properties.values():
-                if not isinstance(property_, ViewCorePropertyRequest):
-                    continue
-
-                container_ref = property_.container
-                # already updated in previous loop
-                if container_ref in merged.containers:
-                    continue
-
-                if cdf_container := cdf.containers.get(container_ref):
-                    merged.containers[container_ref] = cdf_container
+        for container_ref, container in merged.containers.items():
+            if cdf_container := cdf.containers.get(container_ref):
+                container.properties = {**cdf_container.properties, **container.properties}
 
         return merged
 
