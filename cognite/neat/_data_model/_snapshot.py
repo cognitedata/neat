@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from typing import Any
 
-from pydantic import Field, field_serializer
+from pydantic import BaseModel, Field, field_serializer
 from pydantic_core.core_schema import FieldSerializationInfo
 
-from cognite.neat._data_model.deployer.data_classes import BaseDeployObject
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
@@ -18,7 +17,7 @@ from cognite.neat._data_model.models.dms import (
 )
 
 
-class SchemaSnapshot(BaseDeployObject):
+class SchemaSnapshot(BaseModel, extra="ignore"):
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     data_model: dict[DataModelReference, DataModelRequest] = Field(default_factory=dict)
     views: dict[ViewReference, ViewRequest] = Field(default_factory=dict)
