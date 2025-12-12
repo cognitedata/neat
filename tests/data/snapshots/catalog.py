@@ -6,7 +6,7 @@ from typing import Literal, overload
 import yaml
 
 from cognite.neat._data_model._analysis import ValidationResources
-from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._data_model import DataModelRequest
 from cognite.neat._data_model.models.dms._limits import SchemaLimits

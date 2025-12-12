@@ -6,6 +6,7 @@ from typing import cast
 
 from cognite.neat._client import NeatClient
 from cognite.neat._data_model._shared import OnSuccessResultProducer
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms import (
     ContainerReference,
     ContainerRequest,
@@ -46,7 +47,6 @@ from .data_classes import (
     ResourceChange,
     ResourceDeploymentPlan,
     ResourceDeploymentPlanList,
-    SchemaSnapshot,
     SeverityType,
 )
 

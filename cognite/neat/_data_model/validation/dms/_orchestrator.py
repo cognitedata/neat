@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from cognite.neat._data_model._analysis import ValidationResources
 from cognite.neat._data_model._shared import OnSuccessIssuesChecker
-from cognite.neat._data_model.deployer.data_classes import SchemaSnapshot
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.models.dms._schema import RequestSchema
 from cognite.neat._utils.auxiliary import get_concrete_subclasses

@@ -6,7 +6,8 @@ from typing import Any, cast
 from cognite.neat._client.client import NeatClient
 from cognite.neat._config import NeatConfig
 from cognite.neat._data_model._shared import OnSuccess, OnSuccessIssuesChecker, OnSuccessResultProducer
-from cognite.neat._data_model.deployer.data_classes import DeploymentResult, SchemaSnapshot
+from cognite.neat._data_model._snapshot import SchemaSnapshot
+from cognite.neat._data_model.deployer.data_classes import DeploymentResult
 from cognite.neat._data_model.deployer.deployer import SchemaDeployer
 from cognite.neat._data_model.exporters import DMSExporter, DMSFileExporter
 from cognite.neat._data_model.exporters._api_exporter import DMSAPIExporter

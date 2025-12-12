@@ -8,6 +8,7 @@ import pytest
 import respx
 
 from cognite.neat._client import NeatClient
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.deployer._differ_container import ContainerDiffer
 from cognite.neat._data_model.deployer.data_classes import (
     AddedField,
@@ -16,7 +17,6 @@ from cognite.neat._data_model.deployer.data_classes import (
     RemovedField,
     ResourceChange,
     ResourceDeploymentPlan,
-    SchemaSnapshot,
     SeverityType,
 )
 from cognite.neat._data_model.deployer.deployer import DeploymentOptions, SchemaDeployer
