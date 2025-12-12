@@ -46,7 +46,7 @@ class ValidationResources:
         self.cdf = cdf
 
         if self._modus_operandi == "additive":
-            self.merged = self._merge(self.local, self.cdf)
+            self.merged = self.merge(self.local, self.cdf)
         elif self._modus_operandi == "rebuild":
             self.merged = local.model_copy(deep=True)
         else:
@@ -56,7 +56,7 @@ class ValidationResources:
         self.merged_data_model = self.merged.data_model[next(iter(self.merged.data_model.keys()))]
 
     @classmethod
-    def _merge(cls, local: SchemaSnapshot, cdf: SchemaSnapshot) -> SchemaSnapshot:
+    def merge(cls, local: SchemaSnapshot, cdf: SchemaSnapshot) -> SchemaSnapshot:
         """Merge local and CDF snapshots, prioritizing local definitions."""
         merged = local.model_copy(deep=True)
 
