@@ -33,6 +33,7 @@ nav:
             - Enum: excel_data_modeling/physical/enum.md
             - Units: excel_data_modeling/physical/units.md
   - Reference: reference/NeatSession/session.md
+  - Known Issues: known_issues.md
   - About:
     - History: history.md
     - Authors: authors.md
