@@ -13,7 +13,7 @@ theme:
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Getting Started: installation.md
   - Validations:
       - Ai_Readiness (NEAT-DMS-AI-READINESS): validation/index.html#ai_readiness-neat-dms-ai-readiness
       - Connections (NEAT-DMS-CONNECTIONS): validation/index.html#connections-neat-dms-connections

@@ -1,6 +1,6 @@
-# Installation
+# Getting Started with NEAT
 
-NEAT is distributed as a Python package. It is used primarily in a notebook environment such as, for example, Jupyter Notebooks. Another notebook environment is the CDF notebooks. Though, you will be soon able to plug NEAT to [CDF Toolkit](https://docs.cognite.com/cdf/deploy/cdf_toolkit), which will then leverage neat for CDF data modeling.
+NEAT is distributed as a Python package. It is used primarily in a notebook environment such as, for example, Jupyter Notebooks. Another notebook environment is the CDF notebooks. You will be soon able to plug NEAT to [CDF Toolkit](https://docs.cognite.com/cdf/deploy/cdf_toolkit), which will then leverage neat for CDF data modeling.
 
 ## CDF Notebooks Environment
 
@@ -107,6 +107,10 @@ client = get_cognite_client(".env")
 neat = NeatSession(client)
 
 # Start using neat by typing neat.<TAB>
+
+# Reading of a physical data model from CDF CDM
+
+neat.physical_data_model.read.cdf("cdf_cdm", "CogniteCore", "v1")
 ```
 
 !!! tip "Helper get_cognite_client function"

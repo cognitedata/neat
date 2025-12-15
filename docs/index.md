@@ -28,24 +28,3 @@ Only Data modeling? There was more before!?
 True, NEAT v0.x (legacy) offered a complete knowledge graph
 tooling. Do not worry though, all the legacy features are still available and will be gradually
 ported to NEAT v1.x according to the [roadmap](roadmap.md).
-
-
-## Usage
-The user interface for `NEAT` features is through `NeatSession`, which is typically instantiated in a notebook-based environment due to simplified interactivity with `NEAT`
-and navigation of the session content. Once you have set up your notebook environment, and installed neat via:
-
-```bash
-pip install cognite-neat
-```
-
-you start by creating a `CogniteClient` and instantiate a `NeatSession` object:
-
-```python
-from cognite.neat import NeatSession, get_cognite_client
-
-client = get_cognite_client(".env")
-
-neat = NeatSession(client)
-
-neat.physical_data_model.read.cdf("cdf_cdm", "CogniteCore", "v1")
-```
