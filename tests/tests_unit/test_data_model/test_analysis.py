@@ -30,7 +30,7 @@ def scenarios() -> dict[str, ValidationResources]:
     return scenarios
 
 
-class TestValidationResourcesSelectView:
+class TestValidationResources:
     @pytest.mark.parametrize(
         "scenario,view_ref,property_,source,expected_found",
         [
@@ -138,8 +138,6 @@ class TestValidationResourcesSelectView:
         else:
             assert view_request is None
 
-
-class TestValidationResourcesSelectContainer:
     @pytest.mark.parametrize(
         "scenario,container_ref,property_,source,expected_found",
         [
@@ -246,8 +244,6 @@ class TestValidationResourcesSelectContainer:
         else:
             assert container_request is None
 
-
-class TestValidationResourcesAncestors:
     @pytest.mark.parametrize(
         "scenario,view_ref,expected_ancestors",
         [
@@ -343,8 +339,6 @@ class TestValidationResourcesAncestors:
         result = resources.is_ancestor(offspring, ancestor)
         assert result == expected
 
-
-class TestValidationResourcesProperties:
     @pytest.mark.parametrize(
         "scenario,view_ref,expected_property_count",
         [
@@ -403,8 +397,6 @@ class TestValidationResourcesProperties:
         # The bi-directional scenario has references to containers in its properties
         assert actual_referenced == expected_references
 
-
-class TestValidationResourcesReverseToDirectMapping:
     def test_reverse_to_direct_mapping(
         self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
     ) -> None:
@@ -418,8 +410,6 @@ class TestValidationResourcesReverseToDirectMapping:
         }
         data_regression.check(serializable)
 
-
-class TestValidationResourcesConnectionEndNodeTypes:
     def test_connection_end_node_types(
         self, scenarios: dict[str, ValidationResources], data_regression: DataRegressionFixture
     ) -> None:
