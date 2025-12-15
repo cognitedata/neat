@@ -1,16 +1,16 @@
 # NeatSession
+
+```python
+neat = NeatSession(client: CogniteClient, config: Optional[NeatConfig] = None)
+```
+
 ::: cognite.neat.NeatSession.__init__
     options:
       heading_level: 3
-      show_root_heading: true
+      show_root_toc_entry: false
+      show_root_heading: false
       show_source: false
       show_if_no_docstring: true
-
-**Session Initialization**
-
-```python
-neat = NeatSession(client = ... , config = ...)
-```
 
 ### issues
 ```python
