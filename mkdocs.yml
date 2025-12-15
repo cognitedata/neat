@@ -32,9 +32,7 @@ nav:
             - Views: excel_data_modeling/physical/views.md
             - Enum: excel_data_modeling/physical/enum.md
             - Units: excel_data_modeling/physical/units.md
-  - NeatSession:
-      - Session: reference/NeatSession/session.md
-      - Physical Data Model: reference/NeatSession/physical.md
+  - Reference: reference/NeatSession/session.md
   - About:
     - History: history.md
     - Authors: authors.md
