@@ -1,7 +1,5 @@
 """Tests for requires constraint validators."""
 
-from typing import Literal
-
 import pytest
 
 from cognite.neat._config import internal_profiles
@@ -15,23 +13,6 @@ from cognite.neat._data_model.validation.dms._containers import (
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
 from tests.data import SNAPSHOT_CATALOG
 
-
-@pytest.fixture
-def validation_result() -> DmsDataModelValidation:
-    """Run validation on the requires_constraints scenario and return the result."""
-    local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-        local_scenario_name="requires_constraints",
-        cdf_scenario_name="for_validators",
-        modus_operandi="additive",
-        include_cdm=False,
-        format="snapshots",
-    )
-    data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-    validation = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="additive")
-    validation.run(data_model)
-    return validation
-
-
 PROBLEMS = {
     MissingRequiresConstraint: {"AssetContainer", "DescribableContainer", "TransitiveParent", "TagContainer"},
     UnnecessaryRequiresConstraint: {"OrderContainer", "CustomerContainer"},
@@ -40,11 +21,10 @@ PROBLEMS = {
 }
 
 
-@pytest.mark.parametrize("profile", ["deep-additive", "legacy-additive"])
-def test_requires_constraints_validation(
-    profile: Literal["deep-additive", "legacy-additive"],
-) -> None:
-    """Test all requires constraint validators with the requires_constraints scenario."""
+@pytest.fixture
+def validation_result(request: pytest.FixtureRequest) -> DmsDataModelValidation:
+    """Load scenario and run validation. Supports indirect parametrization with profile name."""
+    profile = getattr(request, "param", "deep-additive")
     config = internal_profiles()[profile]
     mode = config.modeling.mode
     can_run_validator = config.validation.can_run_validator
@@ -57,39 +37,36 @@ def test_requires_constraints_validation(
         format="snapshots",
     )
     data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-
-    on_success = DmsDataModelValidation(
-        cdf_snapshot=cdf_snapshot,
-        limits=SchemaLimits(),
-        modus_operandi=mode,
-        can_run_validator=can_run_validator,
+    validation = DmsDataModelValidation(
+        cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi=mode, can_run_validator=can_run_validator
     )
-    on_success.run(data_model)
-    by_code = on_success.issues.by_code()
+    validation.run(data_model)
+    return validation
 
-    # Filter to only validators we're testing
-    subset_problematic = {
-        class_: PROBLEMS[class_] for class_ in PROBLEMS.keys() if can_run_validator(class_.code, class_.issue_type)
-    }
+
+@pytest.mark.parametrize("validation_result", ["deep-additive", "legacy-additive"], indirect=True)
+def test_requires_constraints_validation(validation_result: DmsDataModelValidation) -> None:
+    """Test requires constraint validators - run in deep-*, excluded in legacy-*."""
+    can_run_validator = validation_result._can_run_validator
+    by_code = validation_result.issues.by_code()
+
+    # Filter to only validators that should run in this profile
+    subset_problematic = {cls: PROBLEMS[cls] for cls in PROBLEMS if can_run_validator(cls.code, cls.issue_type)}
 
     # Check that all expected validator codes are present
-    expected_codes = {class_.code for class_ in subset_problematic.keys()}
-    actual_codes = set(by_code.keys())
-    missing_codes = expected_codes - actual_codes
+    expected_codes = {cls.code for cls in subset_problematic}
+    missing_codes = expected_codes - set(by_code.keys())
     assert not missing_codes, f"Expected validator codes not found: {missing_codes}"
 
     # Check that all expected problems are found in the messages
     found = set()
-    actual = set()
-    for class_, expected_strings in subset_problematic.items():
+    for cls, expected_strings in subset_problematic.items():
         for expected_string in expected_strings:
-            actual.add(expected_string)
-            for issue in by_code.get(class_.code, []):
-                if expected_string.lower() in issue.message.lower():
-                    found.add(expected_string)
-                    break
+            if any(expected_string.lower() in issue.message.lower() for issue in by_code.get(cls.code, [])):
+                found.add(expected_string)
 
-    missing = actual - found
+    all_expected = {s for strings in subset_problematic.values() for s in strings}
+    missing = all_expected - found
     assert not missing, f"Expected problems not found in messages: {missing}"
 
 
@@ -113,9 +90,7 @@ def test_no_ingestion_complication_when_view_covers_non_nullable_properties(
     assert not any("CoveredAssetContainer" in msg for msg in messages)
 
 
-def test_no_unnecessary_constraint_when_containers_appear_together(
-    validation_result: DmsDataModelValidation,
-) -> None:
+def test_no_unnecessary_constraint_when_containers_appear_together(validation_result: DmsDataModelValidation) -> None:
     """TransitiveMiddle→TransitiveLeaf should not trigger - they appear together in TransitiveView."""
     messages = [issue.message for issue in validation_result.issues if issue.code == UnnecessaryRequiresConstraint.code]
     assert not any("TransitiveMiddle" in msg for msg in messages)
