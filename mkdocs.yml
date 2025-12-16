@@ -33,6 +33,8 @@ nav:
             - Views: data_modeling/excel/physical/views.md
             - Enum: data_modeling/excel/physical/enum.md
             - Units: data_modeling/excel/physical/units.md
+  - Tutorials:
+    - Introduction: tutorials/introduction.ipynb
   - Reference:
     - NeatSession: reference/session.md
     - NeatConfig: reference/config.md
