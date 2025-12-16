@@ -348,7 +348,6 @@ class MissingRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        merged_views = self.validation_resources.merged.views
         merged_containers = self.validation_resources.merged.containers
         local_containers = self.validation_resources.local.containers
         model_space = self.validation_resources.merged_data_model.space
