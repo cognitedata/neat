@@ -4,7 +4,13 @@ NEAT supports two modes of data modeling: additive and rebuild. Depending on the
 - ⚠️ `WARNING`: allowed changes where caution is advised, as they may have implications
 - ❌ `BREAKING`: disallowed changes, which would not be applied to CDF
 
+It is important to know that NEAT will only apply changes (creating, updating, deleting) to the space of data model. Any change outside of the data model space will be skipped.
+
 In the following sections, we describe the characteristics of each mode and provide detailed tables outlining the allowed and disallowed changes for each severity level.
+
+
+!!! warning "Changes can be done only in the data model space"
+    It is important to know that NEAT will only consider changes to the data model components (aka DMS schema components) in the same space as the data model itself. Any change outside of the data model space will be ignored. The reason for this is to avoid accidental changes to data models that have different owners or are managed by different teams.
 
 
 ## Additive Mode
