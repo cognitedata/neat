@@ -343,3 +343,52 @@ class ValidationResources:
                         connection_end_node_types[(view_ref, prop_ref)] = property_.source
 
         return connection_end_node_types
+
+    @cached_property
+    def container_to_views(self) -> dict[str, set[str]]:
+        """Get a mapping from container reference strings to the views that use them.
+
+        Returns:
+            Dictionary mapping container string (e.g., 'space:containerId') to set of view strings
+        """
+        container_to_views: dict[str, set[str]] = {}
+
+        for view_ref, view in self.merged.views.items():
+            if not view.properties:
+                continue
+            for property_ in view.properties.values():
+                if isinstance(property_, ViewCorePropertyRequest):
+                    container_str = str(property_.container)
+                    if container_str not in container_to_views:
+                        container_to_views[container_str] = set()
+                    container_to_views[container_str].add(str(view_ref))
+
+        return container_to_views
+
+    def containers_appear_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
+        """Check if two containers ever appear together in any view.
+
+        Args:
+            container_a: First container reference
+            container_b: Second container reference
+
+        Returns:
+            True if the containers appear together in at least one view
+        """
+        views_with_a = self.container_to_views.get(str(container_a), set())
+        views_with_b = self.container_to_views.get(str(container_b), set())
+        return bool(views_with_a & views_with_b)
+
+    def container_always_with(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
+        """Check if container A always appears with container B (A never without B).
+
+        Args:
+            container_a: Container that might always appear with B
+            container_b: Container that A might always appear with
+
+        Returns:
+            True if container A never appears without container B
+        """
+        views_with_a = self.container_to_views.get(str(container_a), set())
+        views_with_b = self.container_to_views.get(str(container_b), set())
+        return len(views_with_a) > 0 and views_with_a <= views_with_b

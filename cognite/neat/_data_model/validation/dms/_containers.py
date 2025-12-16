@@ -1,6 +1,6 @@
 """Validators for checking containers in the data model."""
 
-from pyparsing import cast
+from typing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
@@ -405,7 +405,11 @@ class MissingRequiresConstraint(DataModelValidator):
         local_containers = self.validation_resources.local.containers
         model_space = self.validation_resources.merged_data_model.space
 
-        container_to_views, str_to_container = _build_container_to_views_mapping(merged_views)
+        # Use cached container_to_views from ValidationResources
+        container_to_views = self.validation_resources.container_to_views
+
+        # Build str_to_container mapping for looking up ContainerReference from string
+        _, str_to_container = _build_container_to_views_mapping(merged_views)
         view_to_containers = _build_view_to_containers_mapping(merged_views)
 
         # For each local container, check if it should require other containers
@@ -540,10 +544,8 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        merged_views = self.validation_resources.merged.views
         local_containers = self.validation_resources.local.containers
-
-        container_to_views, _ = _build_container_to_views_mapping(merged_views)
+        merged_containers = self.validation_resources.merged.containers
 
         # Check each local container's requires constraints
         for container_ref, container in local_containers.items():
@@ -554,14 +556,10 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
                 if not isinstance(constraint, RequiresConstraintDefinition):
                     continue
 
-                # Get views that use each container
-                views_with_requiring = container_to_views.get(str(container_ref), set())
-                views_with_required = container_to_views.get(str(constraint.require), set())
+                if constraint.require not in merged_containers:
+                    continue  # Handled by RequiredContainerDoesNotExist
 
-                # Check if they ever appear together in any view
-                views_in_common = views_with_requiring & views_with_required
-
-                if views_in_common:
+                if self.validation_resources.containers_appear_together(container_ref, constraint.require):
                     continue  # They appear together, constraint is useful
 
                 recommendations.append(
@@ -692,8 +690,10 @@ class RequiresConstraintComplicatesIngestion(DataModelValidator):
                 container_b = merged_containers.get(container_b_ref)
 
                 if container_b is None:
-                    # Container B doesn't exist - this is handled by RequiredContainerDoesNotExist
-                    continue
+                    continue  # Handled by RequiredContainerDoesNotExist
+
+                if not self.validation_resources.containers_appear_together(container_a_ref, container_b_ref):
+                    continue  # Handled by UnnecessaryRequiresConstraint
 
                 # Get all non-nullable properties of container B
                 non_nullable_props: set[str] = set()

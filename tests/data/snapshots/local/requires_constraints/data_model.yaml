@@ -4,43 +4,39 @@ version: v1
 name: Requires Constraints Test Model
 description: A test data model for validating requires constraint validators
 views:
-  # Views for MissingRequiresConstraint tests
-  - space: my_space
-    externalId: AlwaysTogetherView
-    version: v1
-    type: view
-  - space: my_space
-    externalId: TransitiveView
-    version: v1
-    type: view
-  - space: my_space
-    externalId: TagReducedView
-    version: v1
-    type: view
-  - space: my_space
-    externalId: TagView
-    version: v1
-    type: view
-  # Views for UnnecessaryRequiresConstraint tests
-  - space: my_space
-    externalId: OrderOnlyView
-    version: v1
-    type: view
-  - space: my_space
-    externalId: CustomerOnlyView
-    version: v1
-    type: view
-  # Views for RequiresConstraintCycle tests
-  - space: my_space
-    externalId: CycleTestView
-    version: v1
-    type: view
-  # Views for RequiresConstraintComplicatesIngestion tests
-  - space: my_space
-    externalId: IngestionComplicationView
-    version: v1
-    type: view
-  - space: my_space
-    externalId: NonNullableOnlyView
-    version: v1
-    type: view
+# Views for MissingRequiresConstraint tests
+- space: my_space
+  externalId: AlwaysTogetherView
+  version: v1
+  type: view
+- space: my_space
+  externalId: TransitiveView
+  version: v1
+  type: view
+- space: my_space
+  externalId: TagReducedView
+  version: v1
+  type: view
+- space: my_space
+  externalId: TagView
+  version: v1
+  type: view
+# Views for UnnecessaryRequiresConstraint tests
+- space: my_space
+  externalId: OrderOnlyView
+  version: v1
+  type: view
+- space: my_space
+  externalId: CustomerOnlyView
+  version: v1
+  type: view
+# Views for RequiresConstraintCycle tests
+- space: my_space
+  externalId: CycleTestView
+  version: v1
+  type: view
+# Views for RequiresConstraintComplicatesIngestion tests
+- space: my_space
+  externalId: IngestionComplicationView
+  version: v1
+  type: view

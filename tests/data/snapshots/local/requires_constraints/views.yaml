@@ -165,11 +165,13 @@
       containerPropertyIdentifier: propB
 
 # Views for RequiresConstraintComplicatesIngestion test
+# This view maps to both containers, but only to a nullable property of IngestionDescribableContainer
+# (not the non-nullable 'name' property), so ingestion is complicated
 - space: my_space
   externalId: IngestionComplicationView
   version: v1
   name: Ingestion Complication View
-  description: View that only maps to requiring container
+  description: View that maps to both containers but not all non-nullable properties
   properties:
     ingestionAssetId:
       name: ingestionAssetId
@@ -179,18 +181,11 @@
         externalId: IngestionAssetContainer
         type: container
       containerPropertyIdentifier: assetId
-
-- space: my_space
-  externalId: NonNullableOnlyView
-  version: v1
-  name: Non-Nullable Only View
-  description: View mapping to required container with non-nullable property
-  properties:
-    requiredName:
-      name: requiredName
-      description: Required name (non-nullable)
+    ingestionDescription:
+      name: ingestionDescription
+      description: Description (nullable property - not the required 'name')
       container:
         space: my_space
         externalId: IngestionDescribableContainer
         type: container
-      containerPropertyIdentifier: name
+      containerPropertyIdentifier: description

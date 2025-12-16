@@ -14,7 +14,6 @@ from cognite.neat._data_model.validation.dms import (
 )
 from cognite.neat._data_model.validation.dms._containers import (
     RequiredContainerDoesNotExist,
-    UnnecessaryRequiresConstraint,
 )
 from cognite.neat._data_model.validation.dms._limits import ViewPropertyCountIsOutOfLimits
 from cognite.neat._issues import IssueList
@@ -38,7 +37,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 22
+        assert len(on_success.issues) == 20
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -49,7 +48,7 @@ class TestValidators:
             ExternalContainerDoesNotExist.code,
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
-            UnnecessaryRequiresConstraint.code,
+            # UnnecessaryRequiresConstraint no longer fires when required container doesn't exist
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 3
@@ -166,7 +165,7 @@ class TestValidators:
 
         by_code = cast(IssueList, on_success.issues).by_code()
 
-        assert len(on_success.issues) == 22
+        assert len(on_success.issues) == 20
         assert set(by_code.keys()) == {
             ConnectionValueTypeUnexisting.code,
             ConnectionValueTypeUndefined.code,
@@ -178,7 +177,7 @@ class TestValidators:
             ExternalContainerPropertyDoesNotExist.code,
             RequiredContainerDoesNotExist.code,
             ImplementedViewNotExisting.code,
-            UnnecessaryRequiresConstraint.code,
+            # UnnecessaryRequiresConstraint no longer fires when required container doesn't exist
         }
 
         assert len(by_code[ConnectionValueTypeUnexisting.code]) == 5

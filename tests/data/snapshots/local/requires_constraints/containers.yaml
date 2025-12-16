@@ -199,3 +199,9 @@
       type:
         type: text
         list: false
+    description:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
