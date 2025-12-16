@@ -5,7 +5,6 @@ import pytest
 
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
 from cognite.neat._data_model.models.dms._limits import SchemaLimits
-from cognite.neat._data_model.validation.dms._containers import MissingRequiresConstraint
 from cognite.neat._data_model.validation.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,
     ContainerPropertyListSizeIsOutOfLimits,
@@ -282,29 +281,24 @@ def test_validation(dms_yaml_hitting_all_the_data_model_limits: tuple[str, dict[
     importer = DMSTableImporter.from_yaml(read_yaml)
     data_model = importer.to_data_model()
 
-    # Run on success validators
+    # Only run limits validators (this test is specifically about schema limits)
+    def only_limits_validators(code: str, issue_type: type) -> bool:
+        return "LIMITS" in code
+
     on_success = DmsDataModelValidation(
         cdf_snapshot=SNAPSHOT_CATALOG.load_schema_snapshot(CDF_SNAPSHOTS_DIR / "for_validators"),
         limits=SchemaLimits(),
+        can_run_validator=only_limits_validators,
     )
     on_success.run(data_model)
 
     by_code = on_success.issues.by_code()
 
-    # Filter to only the codes we're testing (schema limits), ignoring other validators like MissingRequiresConstraint
-    relevant_codes = {
-        code for code in by_code.keys() if code in expected_problems or code not in [MissingRequiresConstraint.code]
-    }
-    # Remove MissingRequiresConstraint from the codes to check (this test is about schema limits)
-    relevant_codes.discard(MissingRequiresConstraint.code)
-
-    assert relevant_codes == set(expected_problems.keys()), (
-        f"Mismatch in issue codes. Expected {expected_problems.keys()}, found {relevant_codes}"
+    assert set(by_code.keys()) == set(expected_problems.keys()), (
+        f"Mismatch in issue codes. Expected {expected_problems.keys()}, found {by_code.keys()}"
     )
 
     for code, issues in by_code.items():
-        if code not in expected_problems:
-            continue  # Skip codes we're not testing
         assert len(issues) == len(expected_problems[code]), (
             f"Number of issues for {code} expected {len(expected_problems[code])}, found {len(issues)}"
         )
