@@ -74,7 +74,7 @@ def _find_requires_constraint_cycle(
     current_str = str(current)
     if current_str in visited:
         if str(start) == current_str:
-            return path + [current]
+            return [*path, current]
         return None
 
     visited.add(current_str)
@@ -347,7 +347,8 @@ class MissingRequiresConstraint(DataModelValidator):
     ## Example
     View `my_space:CogniteAsset` maps to containers `CogniteAsset`, `CogniteVisualizable`,
     `CogniteDescribable`, and `CogniteSourceable`. The `CogniteAsset` container should have requires
-    constraints on all other containers. This allows queries to use a `hasData` filter with only the `CogniteAsset` container.
+    constraints on all other containers. This allows queries to use a `hasData` filter with only
+    the `CogniteAsset` container.
     """
 
     code = f"{BASE_CODE}-004"
@@ -457,10 +458,14 @@ class MissingRequiresConstraint(DataModelValidator):
                         message=(
                             f"Container '{container_a!s}' appears with container '{container_b!s}' "
                             f"in views: [{views_with_both_str}], but not in: [{views_without_b_str}]. "
-                            f"Adding a requires constraint in '{container_a!s}' on '{container_b!s}' would improve query performance for these views, "
-                            f"but may complicate ingestion for views where '{container_a!s}' appears without '{container_b!s}'."
+                            f"Adding a requires constraint in '{container_a!s}' on '{container_b!s}' "
+                            f"would improve query performance for these views, but may complicate "
+                            f"ingestion for views where '{container_a!s}' appears without '{container_b!s}'."
                         ),
-                        fix="Consider adding a requires constraint if query performance is more important than ingestion flexibility",
+                        fix=(
+                            "Consider adding a requires constraint if query performance "
+                            "is more important than ingestion flexibility"
+                        ),
                         code=self.code,
                     )
                 )
@@ -676,12 +681,16 @@ class RequiresConstraintComplicatesIngestion(DataModelValidator):
                     recommendations.append(
                         Recommendation(
                             message=(
-                                f"Container '{container_a_ref!s}' requires '{container_b_ref!s}', but no view maps "
-                                f"to both '{container_a_ref!s}' and all non-nullable properties of '{container_b_ref!s}' "
-                                f"(non-nullable properties: {missing_props_str}). This means '{container_b_ref!s}' must "
-                                f"be populated separately before views using '{container_a_ref!s}' can be used for ingestion."
+                                f"Container '{container_a_ref!s}' requires '{container_b_ref!s}', but no view "
+                                f"maps to both '{container_a_ref!s}' and all non-nullable properties of "
+                                f"'{container_b_ref!s}' (non-nullable properties: {missing_props_str}). "
+                                f"This means '{container_b_ref!s}' must be populated separately before views "
+                                f"using '{container_a_ref!s}' can be used for ingestion."
                             ),
-                            fix="Create a view that maps to both containers including all non-nullable properties, or make the required container's properties nullable",
+                            fix=(
+                                "Create a view that maps to both containers including all non-nullable "
+                                "properties, or make the required container's properties nullable"
+                            ),
                             code=self.code,
                         )
                     )

@@ -100,5 +100,6 @@ def test_transitivity_avoids_redundant_recommendations() -> None:
 
     # Should be exactly 1 recommendation (Parent→Middle, not also Parent→Leaf)
     assert len(parent_issues) == 1, (
-        f"Expected 1 issue for TransitiveParent (transitivity should prevent redundant Parent→Leaf), got {len(parent_issues)}"
+        f"Expected 1 issue for TransitiveParent (transitivity should prevent redundant Parent→Leaf), "
+        f"got {len(parent_issues)}"
     )
