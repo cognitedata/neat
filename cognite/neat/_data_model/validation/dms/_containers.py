@@ -4,39 +4,12 @@ from typing import cast
 
 from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
-from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
+from cognite.neat._data_model.models.dms._references import ContainerReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
-from cognite.neat._data_model.models.dms._views import ViewRequest
 from cognite.neat._data_model.validation.dms._base import DataModelValidator
 from cognite.neat._issues import ConsistencyError, Recommendation
 
 BASE_CODE = "NEAT-DMS-CONTAINER"
-
-
-def _build_container_to_views_mapping(
-    views_by_reference: dict[ViewReference, ViewRequest],
-) -> tuple[dict[str, set[str]], dict[str, ContainerReference]]:
-    """Build a mapping from container reference strings to the views that use them.
-
-    Returns:
-        A tuple of:
-        - container_to_views: mapping from container string to set of view strings
-        - str_to_container: mapping from container string back to ContainerReference
-    """
-    container_to_views: dict[str, set[str]] = {}
-    str_to_container: dict[str, ContainerReference] = {}
-    for view_ref, view in views_by_reference.items():
-        if not view.properties:
-            continue
-        for property_ in view.properties.values():
-            if isinstance(property_, ViewCorePropertyRequest):
-                container_ref = property_.container
-                container_str = str(container_ref)
-                if container_str not in container_to_views:
-                    container_to_views[container_str] = set()
-                    str_to_container[container_str] = container_ref
-                container_to_views[container_str].add(str(view_ref))
-    return container_to_views, str_to_container
 
 
 def _get_direct_required_containers(
@@ -80,23 +53,6 @@ def _get_transitively_required_containers(
     for req in direct_required:
         all_required.update(_get_transitively_required_containers(req, containers_by_reference, visited))
     return all_required
-
-
-def _build_view_to_containers_mapping(
-    views_by_reference: dict[ViewReference, ViewRequest],
-) -> dict[str, set[ContainerReference]]:
-    """Build a mapping from view references (as strings) to the containers they use."""
-    view_to_containers: dict[str, set[ContainerReference]] = {}
-    for view_ref, view in views_by_reference.items():
-        if not view.properties:
-            continue
-        containers: set[ContainerReference] = set()
-        for property_ in view.properties.values():
-            if isinstance(property_, ViewCorePropertyRequest):
-                containers.add(property_.container)
-        if containers:
-            view_to_containers[str(view_ref)] = containers
-    return view_to_containers
 
 
 def _find_requires_constraint_cycle(
@@ -405,21 +361,17 @@ class MissingRequiresConstraint(DataModelValidator):
         local_containers = self.validation_resources.local.containers
         model_space = self.validation_resources.merged_data_model.space
 
-        # Use cached container_to_views from ValidationResources
+        # Use cached mappings from ValidationResources
         container_to_views = self.validation_resources.container_to_views
-
-        # Build str_to_container mapping for looking up ContainerReference from string
-        _, str_to_container = _build_container_to_views_mapping(merged_views)
-        view_to_containers = _build_view_to_containers_mapping(merged_views)
+        view_to_containers = self.validation_resources.view_to_containers
 
         # For each local container, check if it should require other containers
-        for container_a_str, views_with_a in container_to_views.items():
-            container_a = str_to_container[container_a_str]
-            # Only check local containers
+        for container_a in local_containers:
             if container_a.space != model_space:
                 continue
-            if container_a not in local_containers:
-                continue
+            views_with_a = container_to_views.get(str(container_a), set())
+            if not views_with_a:
+                continue  # Container not used in any view
 
             # Find all containers that appear with A in any view
             containers_with_a: set[ContainerReference] = set()

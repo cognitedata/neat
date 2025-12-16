@@ -365,6 +365,17 @@ class ValidationResources:
 
         return container_to_views
 
+    @cached_property
+    def view_to_containers(self) -> dict[str, set[ContainerReference]]:
+        """Get a mapping from view reference strings to the containers they use.
+
+        Returns:
+            Dictionary mapping view string (e.g., 'space:viewId(version=v1)') to set of ContainerReferences
+        """
+        return {
+            str(view_ref): view.used_containers for view_ref, view in self.merged.views.items() if view.used_containers
+        }
+
     def containers_appear_together(self, container_a: ContainerReference, container_b: ContainerReference) -> bool:
         """Check if two containers ever appear together in any view.
 
