@@ -1,7 +1,7 @@
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import Literal, overload
+from typing import Literal, TypeAlias, overload
 
 import yaml
 
@@ -23,13 +23,16 @@ LIMITS = SchemaLimits()
 
 now = datetime.now()
 
+LocalScenario: TypeAlias = Literal["ai_readiness", "bi_directional_connections", "uncategorized_validators"]
+CDFScenario: TypeAlias = Literal["cdm", "for_validators"]
+
 
 class Catalog:
     @overload
     def load_scenario(
         self,
-        local_scenario_name: str,
-        cdf_scenario_name: str | None = None,
+        local_scenario_name: LocalScenario,
+        cdf_scenario_name: CDFScenario | None = None,
         modus_operandi: ModusOperandi = "additive",
         include_cdm: bool = False,
         format: Literal["validation-resource"] = "validation-resource",
@@ -38,8 +41,8 @@ class Catalog:
     @overload
     def load_scenario(
         self,
-        local_scenario_name: str,
-        cdf_scenario_name: str | None = None,
+        local_scenario_name: LocalScenario,
+        cdf_scenario_name: CDFScenario | None = None,
         modus_operandi: ModusOperandi = "additive",
         include_cdm: bool = False,
         format: Literal["snapshots"] = "snapshots",
@@ -47,8 +50,8 @@ class Catalog:
 
     def load_scenario(
         self,
-        local_scenario_name: str,
-        cdf_scenario_name: str | None = None,
+        local_scenario_name: LocalScenario,
+        cdf_scenario_name: CDFScenario | None = None,
         modus_operandi: ModusOperandi = "additive",
         include_cdm: bool = False,
         format: Literal["validation-resource", "snapshots"] = "validation-resource",
