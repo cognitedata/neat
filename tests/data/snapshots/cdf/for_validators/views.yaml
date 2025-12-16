@@ -1,0 +1,62 @@
+
+- space: my_space
+  externalId: DomainDescribable
+  version: v1
+  name: My View
+  description: An example view
+  properties: {}
+
+- space: not_my_space
+  externalId: ExistingEdgeConnection
+  version: v1
+  name: My View
+  description: An example view
+  properties: {}
+
+- space: my_space
+  externalId: ExistingDirectConnectionRemote
+  version: v1
+  name: My View
+  description: An example view
+  properties: {}
+
+
+- space: my_space
+  externalId: SourceForReverseConnectionExistRemote
+  version: v1
+  name: SourceForReverseConnectionExistRemote
+  description: SourceForReverseConnectionExistRemote
+  properties:
+    directPropertyRemote:
+      name: directPropertyRemote
+      description: A direct property for testing reverse connections
+      container:
+        space: my_space
+        externalId: DirectConnectionRemoteContainer
+        type: container
+      containerPropertyIdentifier: directRemote
+      source:
+        space: my_space
+        externalId: MyDescribable
+        version: v1
+        type: view
+
+- space: prodigy
+  externalId: OutOfSpace
+  version: '1992'
+  name: Out Of Space
+  description: I'll take your brain to another dimension
+  properties:
+    directPropertyRemote:
+      name: directPropertyRemote
+      description: A direct property for testing reverse connections
+      container:
+        space: my_space
+        externalId: DirectConnectionRemoteContainer
+        type: container
+      containerPropertyIdentifier: directRemote
+      source:
+        space: my_space
+        externalId: MyDescribable
+        version: v1
+        type: view
