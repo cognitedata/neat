@@ -1,6 +1,8 @@
 """Validators for checking containers in the data model."""
 
-from cognite.neat._data_model.models.dms._constraints import RequiresConstraintDefinition
+from typing import cast
+
+from cognite.neat._data_model.models.dms._constraints import Constraint, RequiresConstraintDefinition
 from cognite.neat._data_model.models.dms._container import ContainerRequest
 from cognite.neat._data_model.models.dms._references import ContainerReference, ViewReference
 from cognite.neat._data_model.models.dms._view_property import ViewCorePropertyRequest
@@ -398,16 +400,21 @@ class MissingRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        container_to_views, str_to_container = _build_container_to_views_mapping(self.merged_views)
-        view_to_containers = _build_view_to_containers_mapping(self.merged_views)
+        merged_views = self.validation_resources.merged.views
+        merged_containers = self.validation_resources.merged.containers
+        local_containers = self.validation_resources.local.containers
+        model_space = self.validation_resources.merged_data_model.space
+
+        container_to_views, str_to_container = _build_container_to_views_mapping(merged_views)
+        view_to_containers = _build_view_to_containers_mapping(merged_views)
 
         # For each local container, check if it should require other containers
         for container_a_str, views_with_a in container_to_views.items():
             container_a = str_to_container[container_a_str]
             # Only check local containers
-            if container_a.space != self.local_resources.data_model_reference.space:
+            if container_a.space != model_space:
                 continue
-            if container_a not in self.local_resources.containers_by_reference:
+            if container_a not in local_containers:
                 continue
 
             # Find all containers that appear with A in any view
@@ -417,7 +424,7 @@ class MissingRequiresConstraint(DataModelValidator):
             containers_with_a.discard(container_a)
 
             # Get what A already transitively requires
-            transitively_required = _get_transitively_required_containers(container_a, self.merged_containers)
+            transitively_required = _get_transitively_required_containers(container_a, merged_containers)
 
             # Collect containers that A always appears with (strongest recommendation)
             always_required: set[ContainerReference] = set()
@@ -435,14 +442,14 @@ class MissingRequiresConstraint(DataModelValidator):
                     # but C doesn't require B. If so, the proper recommendation is for C to require B, not A.
                     should_skip = any(
                         container_to_views.get(str(c), set()) <= views_with_b
-                        and container_b not in _get_transitively_required_containers(c, self.merged_containers)
+                        and container_b not in _get_transitively_required_containers(c, merged_containers)
                         for c in transitively_required
                     )
                     if not should_skip:
                         always_required.add(container_b)
 
             # Find the minimal set of constraints needed
-            minimal_always = _find_minimal_set(always_required, self.merged_containers)
+            minimal_always = _find_minimal_set(always_required, merged_containers)
 
             # Find containers that A appears with in some views but not all (optional constraints)
             # Include if: views without B are all single-container, OR B transitively covers always_required
@@ -457,7 +464,7 @@ class MissingRequiresConstraint(DataModelValidator):
                     continue  # A always appears with B - handled above
 
                 # Include if B transitively covers something in always_required
-                if _get_transitively_required_containers(container_b, self.merged_containers) & always_required:
+                if _get_transitively_required_containers(container_b, merged_containers) & always_required:
                     partial_overlap.add(container_b)
                     continue
 
@@ -466,9 +473,7 @@ class MissingRequiresConstraint(DataModelValidator):
                 if all_single_container:
                     partial_overlap.add(container_b)
 
-            minimal_partial = _find_minimal_set(
-                partial_overlap, self.merged_containers, already_covered_by=always_required
-            )
+            minimal_partial = _find_minimal_set(partial_overlap, merged_containers, already_covered_by=always_required)
 
             for container_b in minimal_always:
                 recommendations.append(
@@ -535,10 +540,13 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
-        container_to_views, _ = _build_container_to_views_mapping(self.merged_views)
+        merged_views = self.validation_resources.merged.views
+        local_containers = self.validation_resources.local.containers
+
+        container_to_views, _ = _build_container_to_views_mapping(merged_views)
 
         # Check each local container's requires constraints
-        for container_ref, container in self.local_resources.containers_by_reference.items():
+        for container_ref, container in local_containers.items():
             if not container.constraints:
                 continue
 
@@ -553,8 +561,8 @@ class UnnecessaryRequiresConstraint(DataModelValidator):
                 # Check if they ever appear together in any view
                 views_in_common = views_with_requiring & views_with_required
 
-                if not views_in_common:
-                    continue
+                if views_in_common:
+                    continue  # They appear together, constraint is useful
 
                 recommendations.append(
                     Recommendation(
@@ -595,12 +603,15 @@ class RequiresConstraintCycle(DataModelValidator):
     def run(self) -> list[ConsistencyError]:
         errors: list[ConsistencyError] = []
 
+        local_containers = self.validation_resources.local.containers
+        merged_containers = self.validation_resources.merged.containers
+
         # Track which containers we've already reported cycles for
         reported_cycles: set[frozenset[ContainerReference]] = set()
 
         # Check each local container for cycles
-        for container_ref in self.local_resources.containers_by_reference:
-            cycle = _find_requires_constraint_cycle(container_ref, container_ref, self.merged_containers)
+        for container_ref in local_containers:
+            cycle = _find_requires_constraint_cycle(container_ref, container_ref, merged_containers)
             if not cycle:
                 continue
             # Create a frozenset of the cycle to avoid reporting the same cycle multiple times
@@ -652,9 +663,13 @@ class RequiresConstraintComplicatesIngestion(DataModelValidator):
     def run(self) -> list[Recommendation]:
         recommendations: list[Recommendation] = []
 
+        merged_views = self.validation_resources.merged.views
+        merged_containers = self.validation_resources.merged.containers
+        local_containers = self.validation_resources.local.containers
+
         # Build mappings from view to (container, property) pairs
         view_to_container_properties: dict[str, set[tuple[ContainerReference, str]]] = {}
-        for view_ref, view in self.merged_views.items():
+        for view_ref, view in merged_views.items():
             if not view.properties:
                 continue
             container_props: set[tuple[ContainerReference, str]] = set()
@@ -665,7 +680,7 @@ class RequiresConstraintComplicatesIngestion(DataModelValidator):
                 view_to_container_properties[str(view_ref)] = container_props
 
         # Check each local container's requires constraints
-        for container_a_ref, container_a in self.local_resources.containers_by_reference.items():
+        for container_a_ref, container_a in local_containers.items():
             if not container_a.constraints:
                 continue
 
@@ -674,7 +689,7 @@ class RequiresConstraintComplicatesIngestion(DataModelValidator):
                     continue
 
                 container_b_ref = constraint.require
-                container_b = self.merged_containers.get(container_b_ref)
+                container_b = merged_containers.get(container_b_ref)
 
                 if container_b is None:
                     # Container B doesn't exist - this is handled by RequiredContainerDoesNotExist

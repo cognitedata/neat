@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._containers import MissingRequiresConstraint
 from cognite.neat._data_model.validation.dms._limits import (
     ContainerPropertyCountIsOutOfLimits,

@@ -1,10 +1,12 @@
 """Tests for requires constraint validators."""
 
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from cognite.neat._client.client import NeatClient
+from cognite.neat._data_model._snapshot import SchemaSnapshot
 from cognite.neat._data_model.importers._table_importer.importer import DMSTableImporter
+from cognite.neat._data_model.models.dms._limits import SchemaLimits
 from cognite.neat._data_model.validation.dms._containers import (
     MissingRequiresConstraint,
     RequiresConstraintComplicatesIngestion,
@@ -14,12 +16,22 @@ from cognite.neat._data_model.validation.dms._containers import (
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
 
 
+def _create_empty_cdf_snapshot() -> SchemaSnapshot:
+    """Create an empty CDF snapshot for testing."""
+    return SchemaSnapshot(
+        data_model={},
+        views={},
+        containers={},
+        spaces={},
+        node_types={},
+        timestamp=datetime.now(timezone.utc),
+    )
+
+
 class TestMissingRequiresConstraint:
     """Tests for MissingRequiresConstraint validator."""
 
-    def test_recommends_constraint_when_containers_always_appear_together(
-        self, validation_test_cdf_client: NeatClient
-    ) -> None:
+    def test_recommends_constraint_when_containers_always_appear_together(self) -> None:
         """When container A always appears with container B, recommend A requires B."""
         yaml = """Metadata:
 - Key: space
@@ -68,7 +80,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
@@ -78,7 +90,7 @@ Containers:
         messages = [issue.message for issue in missing_requires_issues]
         assert any("AssetContainer" in msg and "DescribableContainer" in msg for msg in messages)
 
-    def test_no_recommendation_when_constraint_already_exists(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_no_recommendation_when_constraint_already_exists(self) -> None:
         """When A already requires B, no recommendation should be made."""
         yaml = """Metadata:
 - Key: space
@@ -128,7 +140,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
@@ -143,7 +155,7 @@ Containers:
             msg.startswith("Container 'my_space:AssetContainer'") and "DescribableContainer" in msg for msg in messages
         )
 
-    def test_transitivity_avoids_redundant_recommendations(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_transitivity_avoids_redundant_recommendations(self) -> None:
         """When B requires C, recommending A requires B should be sufficient (not A requires C)."""
         yaml = """Metadata:
 - Key: space
@@ -205,7 +217,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
@@ -230,7 +242,7 @@ Containers:
             f"Should NOT directly recommend ContainerA requires ContainerC. Messages: {messages}"
         )
 
-    def test_recommends_at_correct_level_in_chain(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_recommends_at_correct_level_in_chain(self) -> None:
         """
         Scenario:
         - Field requires Asset (existing)
@@ -299,7 +311,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
@@ -329,7 +341,7 @@ Containers:
             f"Should NOT recommend FieldContainer requires CogniteAssetContainer. Messages: {messages}"
         )
 
-    def test_better_coverage_recommendation(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_better_coverage_recommendation(self) -> None:
         """
         Scenario:
         - TagReduced view: Tag, CogniteDescribable
@@ -425,7 +437,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
@@ -450,7 +462,7 @@ Containers:
 class TestUnnecessaryRequiresConstraint:
     """Tests for UnnecessaryRequiresConstraint validator."""
 
-    def test_detects_unnecessary_constraint(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_detects_unnecessary_constraint(self) -> None:
         """When containers with requires constraint never appear together, flag it."""
         yaml = """Metadata:
 - Key: space
@@ -503,7 +515,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         unnecessary_issues = [issue for issue in validation.issues if issue.code == UnnecessaryRequiresConstraint.code]
@@ -513,7 +525,7 @@ Containers:
         assert "CustomerContainer" in unnecessary_issues[0].message
         assert "never appear together" in unnecessary_issues[0].message
 
-    def test_no_issue_when_constraint_is_valid(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_no_issue_when_constraint_is_valid(self) -> None:
         """When containers with requires constraint DO appear together, no issue."""
         yaml = """Metadata:
 - Key: space
@@ -563,7 +575,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         unnecessary_issues = [issue for issue in validation.issues if issue.code == UnnecessaryRequiresConstraint.code]
@@ -574,7 +586,7 @@ Containers:
 class TestRequiresConstraintCycle:
     """Tests for RequiresConstraintCycle validator."""
 
-    def test_detects_simple_cycle(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_detects_simple_cycle(self) -> None:
         """Detects A -> B -> A cycle."""
         yaml = """Metadata:
 - Key: space
@@ -625,7 +637,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         cycle_issues = [issue for issue in validation.issues if issue.code == RequiresConstraintCycle.code]
@@ -635,7 +647,7 @@ Containers:
         assert "ContainerA" in cycle_issues[0].message
         assert "ContainerB" in cycle_issues[0].message
 
-    def test_detects_longer_cycle(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_detects_longer_cycle(self) -> None:
         """Detects A -> B -> C -> A cycle."""
         yaml = """Metadata:
 - Key: space
@@ -699,7 +711,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         cycle_issues = [issue for issue in validation.issues if issue.code == RequiresConstraintCycle.code]
@@ -707,7 +719,7 @@ Containers:
         assert len(cycle_issues) == 1
         assert "cycle" in cycle_issues[0].message.lower()
 
-    def test_no_cycle_for_linear_chain(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_no_cycle_for_linear_chain(self) -> None:
         """No cycle when A -> B -> C (linear chain)."""
         yaml = """Metadata:
 - Key: space
@@ -770,7 +782,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         cycle_issues = [issue for issue in validation.issues if issue.code == RequiresConstraintCycle.code]
@@ -781,7 +793,7 @@ Containers:
 class TestRequiresConstraintComplicatesIngestion:
     """Tests for RequiresConstraintComplicatesIngestion validator."""
 
-    def test_detects_ingestion_complication(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_detects_ingestion_complication(self) -> None:
         """
         When A requires B, B has non-nullable properties, and no view maps to both A and B's non-nullable props.
         """
@@ -838,7 +850,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         issues = [issue for issue in validation.issues if issue.code == RequiresConstraintComplicatesIngestion.code]
@@ -848,7 +860,7 @@ Containers:
         assert "DescribableContainer" in issues[0].message
         assert "non-nullable" in issues[0].message.lower()
 
-    def test_no_issue_when_view_covers_both_containers(self, validation_test_cdf_client: NeatClient) -> None:
+    def test_no_issue_when_view_covers_both_containers(self) -> None:
         """When a view maps to both A and all non-nullable properties of B, no issue."""
         yaml = """Metadata:
 - Key: space
@@ -899,16 +911,14 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         issues = [issue for issue in validation.issues if issue.code == RequiresConstraintComplicatesIngestion.code]
 
         assert len(issues) == 0
 
-    def test_no_issue_when_required_container_has_no_non_nullable_properties(
-        self, validation_test_cdf_client: NeatClient
-    ) -> None:
+    def test_no_issue_when_required_container_has_no_non_nullable_properties(self) -> None:
         """When B has no non-nullable properties, no issue (ingestion is straightforward)."""
         yaml = """Metadata:
 - Key: space
@@ -963,7 +973,7 @@ Containers:
         importer = DMSTableImporter.from_yaml(read_yaml)
         data_model = importer.to_data_model()
 
-        validation = DmsDataModelValidation(validation_test_cdf_client)
+        validation = DmsDataModelValidation(cdf_snapshot=_create_empty_cdf_snapshot(), limits=SchemaLimits())
         validation.run(data_model)
 
         issues = [issue for issue in validation.issues if issue.code == RequiresConstraintComplicatesIngestion.code]
