@@ -102,12 +102,13 @@ class ReadPhysicalDataModel:
             reader = DMSAPIImporter.from_yaml(path)
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
+
         on_success = DmsDataModelValidation(
-            self._client,
             modus_operandi=self._config.modeling.mode,
+            cdf_snapshot=self._store.cdf_snapshot,
+            limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
         )
-
         return self._store.read_physical(reader, on_success)
 
     def json(self, io: Any, format: Literal["neat", "toolkit"] = "neat") -> None:
@@ -129,12 +130,13 @@ class ReadPhysicalDataModel:
             reader = DMSAPIImporter.from_json(path)
         else:
             raise UserInputError(f"Unsupported format: {format}. Supported formats are 'neat' and 'toolkit'.")
+
         on_success = DmsDataModelValidation(
-            self._client,
             modus_operandi=self._config.modeling.mode,
+            cdf_snapshot=self._store.cdf_snapshot,
+            limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
         )
-
         return self._store.read_physical(reader, on_success)
 
     def excel(self, io: Any) -> None:
@@ -147,9 +149,11 @@ class ReadPhysicalDataModel:
 
         path = NeatReader.create(io).materialize_path()
         reader = DMSTableImporter.from_excel(path)
+
         on_success = DmsDataModelValidation(
-            self._client,
             modus_operandi=self._config.modeling.mode,
+            cdf_snapshot=self._store.cdf_snapshot,
+            limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
         )
 
@@ -167,9 +171,11 @@ class ReadPhysicalDataModel:
         reader = DMSAPIImporter.from_cdf(
             DataModelReference(space=space, external_id=external_id, version=version), self._client
         )
+
         on_success = DmsDataModelValidation(
-            self._client,
             modus_operandi=self._config.modeling.mode,
+            cdf_snapshot=self._store.cdf_snapshot,
+            limits=self._store.limits,
             can_run_validator=self._config.validation.can_run_validator,
         )
 
