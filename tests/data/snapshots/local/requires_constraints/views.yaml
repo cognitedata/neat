@@ -189,3 +189,28 @@
         externalId: IngestionDescribableContainer
         type: container
       containerPropertyIdentifier: description
+
+# View for RequiresConstraintComplicatesIngestion NEGATIVE test
+# This view DOES cover all non-nullable properties of CoveredDescribableContainer
+- space: my_space
+  externalId: CoveredIngestionView
+  version: v1
+  name: Covered Ingestion View
+  description: View that properly covers all non-nullable properties
+  properties:
+    coveredAssetId:
+      name: coveredAssetId
+      description: Asset ID
+      container:
+        space: my_space
+        externalId: CoveredAssetContainer
+        type: container
+      containerPropertyIdentifier: coveredAssetId
+    coveredRequiredName:
+      name: coveredRequiredName
+      description: Required name property (non-nullable) - properly covered
+      container:
+        space: my_space
+        externalId: CoveredDescribableContainer
+        type: container
+      containerPropertyIdentifier: requiredName

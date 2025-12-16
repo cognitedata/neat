@@ -17,14 +17,7 @@ def _get_direct_required_containers(
     containers_by_reference: dict[ContainerReference, ContainerRequest],
 ) -> set[ContainerReference]:
     """Get all containers that a container directly requires."""
-    # Use string comparison to find the container (avoids object identity issues)
-    container_str = str(container_ref)
-    container: ContainerRequest | None = None
-    for ref, cont in containers_by_reference.items():
-        if str(ref) == container_str:
-            container = cont
-            break
-
+    container = containers_by_reference.get(container_ref)
     if not container or not container.constraints:
         return set()
 
@@ -38,15 +31,14 @@ def _get_direct_required_containers(
 def _get_transitively_required_containers(
     container_ref: ContainerReference,
     containers_by_reference: dict[ContainerReference, ContainerRequest],
-    visited: set[str] | None = None,
+    visited: set[ContainerReference] | None = None,
 ) -> set[ContainerReference]:
     """Get all containers that a container requires (transitively)."""
     if visited is None:
         visited = set()
-    container_str = str(container_ref)
-    if container_str in visited:
+    if container_ref in visited:
         return set()
-    visited.add(container_str)
+    visited.add(container_ref)
 
     direct_required = _get_direct_required_containers(container_ref, containers_by_reference)
     all_required = direct_required.copy()
@@ -59,7 +51,7 @@ def _find_requires_constraint_cycle(
     start: ContainerReference,
     current: ContainerReference,
     containers_by_reference: dict[ContainerReference, ContainerRequest],
-    visited: set[str] | None = None,
+    visited: set[ContainerReference] | None = None,
     path: list[ContainerReference] | None = None,
 ) -> list[ContainerReference] | None:
     """Find a cycle in requires constraints starting from 'start' through 'current'.
@@ -71,13 +63,12 @@ def _find_requires_constraint_cycle(
     if path is None:
         path = []
 
-    current_str = str(current)
-    if current_str in visited:
-        if str(start) == current_str:
+    if current in visited:
+        if start == current:
             return [*path, current]
         return None
 
-    visited.add(current_str)
+    visited.add(current)
     path.append(current)
 
     for required in _get_direct_required_containers(current, containers_by_reference):
@@ -663,11 +654,11 @@ class RequiresConstraintComplicatesIngestion(DataModelValidator):
                     continue
 
                 # Check if any view covers both A and all non-nullable properties of B
+                view_to_containers = self.validation_resources.view_to_containers
                 covers_all = False
-                for container_props in view_to_container_properties.values():
+                for view_ref_str, container_props in view_to_container_properties.items():
                     # Check if this view maps to container A
-                    maps_to_a = any(c_ref == container_a_ref for c_ref, _ in container_props)
-                    if not maps_to_a:
+                    if container_a_ref not in view_to_containers.get(view_ref_str, set()):
                         continue
 
                     # Check if this view maps to all non-nullable properties of B

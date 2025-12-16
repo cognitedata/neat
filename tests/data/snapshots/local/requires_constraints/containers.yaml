@@ -205,3 +205,34 @@
       type:
         type: text
         list: false
+
+# Containers for RequiresConstraintComplicatesIngestion NEGATIVE test
+# This pair has a view that covers all non-nullable properties, so NO issue should be raised
+- space: my_space
+  externalId: CoveredAssetContainer
+  usedFor: node
+  properties:
+    coveredAssetId:
+      immutable: false
+      nullable: true
+      type:
+        type: text
+        list: false
+  constraints:
+    req_covered_describable:
+      constraintType: requires
+      require:
+        space: my_space
+        externalId: CoveredDescribableContainer
+        type: container
+
+- space: my_space
+  externalId: CoveredDescribableContainer
+  usedFor: node
+  properties:
+    requiredName:
+      immutable: false
+      nullable: false
+      type:
+        type: text
+        list: false

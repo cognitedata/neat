@@ -40,3 +40,7 @@ views:
   externalId: IngestionComplicationView
   version: v1
   type: view
+- space: my_space
+  externalId: CoveredIngestionView
+  version: v1
+  type: view

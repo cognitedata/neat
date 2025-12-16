@@ -15,6 +15,23 @@ from cognite.neat._data_model.validation.dms._containers import (
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
 from tests.data import SNAPSHOT_CATALOG
 
+
+@pytest.fixture
+def validation_result() -> DmsDataModelValidation:
+    """Run validation on the requires_constraints scenario and return the result."""
+    local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+        local_scenario_name="requires_constraints",
+        cdf_scenario_name="for_validators",
+        modus_operandi="additive",
+        include_cdm=False,
+        format="snapshots",
+    )
+    data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+    validation = DmsDataModelValidation(cdf_snapshot=cdf_snapshot, limits=SchemaLimits(), modus_operandi="additive")
+    validation.run(data_model)
+    return validation
+
+
 PROBLEMS = {
     MissingRequiresConstraint: {"AssetContainer", "DescribableContainer", "TransitiveParent", "TagContainer"},
     UnnecessaryRequiresConstraint: {"OrderContainer", "CustomerContainer"},
@@ -76,30 +93,35 @@ def test_requires_constraints_validation(
     assert not missing, f"Expected problems not found in messages: {missing}"
 
 
-def test_transitivity_avoids_redundant_recommendations() -> None:
+def test_transitivity_avoids_redundant_recommendations(validation_result: DmsDataModelValidation) -> None:
     """When Middle requires Leaf, Parent should only get one recommendation (Parent→Middle), not two."""
-    local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-        local_scenario_name="requires_constraints",
-        cdf_scenario_name="for_validators",
-        modus_operandi="additive",
-        include_cdm=False,
-        format="snapshots",
-    )
-    data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-
-    validation = DmsDataModelValidation(
-        cdf_snapshot=cdf_snapshot,
-        limits=SchemaLimits(),
-        modus_operandi="additive",
-    )
-    validation.run(data_model)
-
-    messages = [issue.message for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
-    # Count issues where TransitiveParent is the REQUIRING container (message starts with it)
+    messages = [issue.message for issue in validation_result.issues if issue.code == MissingRequiresConstraint.code]
     parent_issues = [msg for msg in messages if msg.startswith("Container 'my_space:TransitiveParent'")]
-
-    # Should be exactly 1 recommendation (Parent→Middle, not also Parent→Leaf)
     assert len(parent_issues) == 1, (
         f"Expected 1 issue for TransitiveParent (transitivity should prevent redundant Parent→Leaf), "
         f"got {len(parent_issues)}"
     )
+
+
+def test_no_ingestion_complication_when_view_covers_non_nullable_properties(
+    validation_result: DmsDataModelValidation,
+) -> None:
+    """CoveredAssetContainer should have no issue - its view covers all non-nullable properties."""
+    messages = [
+        issue.message for issue in validation_result.issues if issue.code == RequiresConstraintComplicatesIngestion.code
+    ]
+    assert not any("CoveredAssetContainer" in msg for msg in messages)
+
+
+def test_no_unnecessary_constraint_when_containers_appear_together(
+    validation_result: DmsDataModelValidation,
+) -> None:
+    """TransitiveMiddle→TransitiveLeaf should not trigger - they appear together in TransitiveView."""
+    messages = [issue.message for issue in validation_result.issues if issue.code == UnnecessaryRequiresConstraint.code]
+    assert not any("TransitiveMiddle" in msg for msg in messages)
+
+
+def test_no_cycle_detected_for_linear_chain(validation_result: DmsDataModelValidation) -> None:
+    """TransitiveMiddle→TransitiveLeaf is a chain, not a cycle - should not trigger."""
+    messages = [issue.message for issue in validation_result.issues if issue.code == RequiresConstraintCycle.code]
+    assert not any("TransitiveMiddle" in msg or "TransitiveLeaf" in msg for msg in messages)
