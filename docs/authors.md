@@ -1,6 +1,4 @@
 
-## Authorship
-
 NEAT Version 1 is developed and maintained by [Nikola Vasiljević](https://thisisnikola.com) and [Anders Albert](https://www.linkedin.com/in/anders-albert-00790483/).
 
 The following is the list of contributors to the legacy version of NEAT: [Aleksandrs Livincovs](https://www.linkedin.com/in/aleksandrslivincovs/), [Marie Solvik Lepoutre](https://www.linkedin.com/in/mslepoutre/), [Julia Graham](https://www.linkedin.com/in/julia-graham-959a78a7/), [Rogerio Júnior](https://www.linkedin.com/in/rogerio-saboia-j%C3%BAnior-087118a7/), [Bård Henning Tvedt](https://www.linkedin.com/in/bhtvedt/), [Hassan Gomaa](https://www.linkedin.com/in/dr-hassan-gomaa-232638121/), [Kristina Tomičić](https://www.linkedin.com/in/kristina-tomicic-6bb443108/)

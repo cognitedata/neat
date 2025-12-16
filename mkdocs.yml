@@ -13,7 +13,7 @@ theme:
 
 nav:
   - Home: index.md
-  - Installation: installation.md
+  - Getting Started: installation.md
   - Validations:
       - Ai_Readiness (NEAT-DMS-AI-READINESS): validation/index.html#ai_readiness-neat-dms-ai-readiness
       - Connections (NEAT-DMS-CONNECTIONS): validation/index.html#connections-neat-dms-connections
@@ -32,9 +32,10 @@ nav:
             - Views: excel_data_modeling/physical/views.md
             - Enum: excel_data_modeling/physical/enum.md
             - Units: excel_data_modeling/physical/units.md
-  - NeatSession:
-      - Session: reference/NeatSession/session.md
-      - Physical Data Model: reference/NeatSession/physical.md
+  - Reference:
+      - NeatSession: reference/session.md
+      - NeatConfig: reference/config.md
+  - Known Issues: known_issues.md
   - About:
     - History: history.md
     - Authors: authors.md

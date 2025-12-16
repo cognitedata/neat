@@ -2,6 +2,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any, Protocol, TypeVar
 
+from cognite.neat._issues import ConsistencyError, Recommendation
 from cognite.neat._session._usage_analytics._collector import Collector
 from cognite.neat._store._store import NeatStore
 from cognite.neat._utils.text import NEWLINE, split_on_capitals
@@ -33,19 +34,33 @@ def session_wrapper(cls: type[T_Class]) -> type[T_Class]:
                         _COLLECTOR.collect("action", {"action": identifier, "success": True})
                     return res
                 change = self._store.provenance[-1]
-                issues_count = len(change.issues) if change.issues else 0
-                errors_count = len(change.errors) if change.errors else 0
-                total_issues = issues_count + errors_count
+
+                recommendation_count = (
+                    len(change.issues) if change.issues and change.issues.by_type().get(Recommendation) else 0
+                )
+                consistency_errors_count = (
+                    len(change.errors) if change.errors and change.errors.by_type().get(ConsistencyError) else 0
+                )
+                syntax_errors_count = len(change.errors) if change.errors else 0
+                errors_count = consistency_errors_count + syntax_errors_count
+                total_insights = recommendation_count + consistency_errors_count + syntax_errors_count
 
                 data_model_not_read = not change.successful and "ReadPhysicalDataModel" in identifier
 
+                if not change.successful:
+                    success_icon = "❌"
+                elif change.successful and consistency_errors_count:
+                    success_icon = "⚠️"
+                else:
+                    success_icon = "✅"
+
                 print(
                     f"{display_name} "
-                    f"{'✅' if change.successful else '❌'}"
-                    f"{f' | Issues: {total_issues} (of which {errors_count} critical)' if total_issues > 0 else ''}"
+                    f"{success_icon}"
+                    f"{f' | Insights: {total_insights} (of which {errors_count} errors)' if total_insights > 0 else ''}"
                     f"{NEWLINE + '⚠️ Data model not read into session' if data_model_not_read else ''}"
-                    f"{NEWLINE + '📋 For details on issues run neat.issues' if change.issues or change.errors else ''}"
-                    f"{NEWLINE + '📊 For details on result run neat.result' if change.result else ''}"
+                    f"{NEWLINE + '📋 For details on issues run .issues' if change.issues or change.errors else ''}"
+                    f"{NEWLINE + '📊 For details on result run .result' if change.result else ''}"
                 )
                 if _COLLECTOR.can_collect:
                     event = change.as_mixpanel_event()

@@ -68,7 +68,15 @@ class PhysicalDataModel:
 
 @session_wrapper
 class ReadPhysicalDataModel:
-    """Read physical data model from various sources into NeatSession store."""
+    """Read physical data model from various sources into NeatSession store.
+
+    Available methods:
+
+    - `neat.physical_data_model.read.yaml`
+    - `neat.physical_data_model.read.json`
+    - `neat.physical_data_model.read.excel`
+    - `neat.physical_data_model.read.cdf`
+    """
 
     def __init__(self, store: NeatStore, client: NeatClient, config: NeatConfig) -> None:
         self._store = store
@@ -176,7 +184,15 @@ class ReadPhysicalDataModel:
 
 @session_wrapper
 class WritePhysicalDataModel:
-    """Write physical data model to various sources from NeatSession store."""
+    """Write physical data model to various sources from NeatSession store.
+
+    Available methods:
+
+    - `neat.physical_data_model.write.yaml`
+    - `neat.physical_data_model.write.json`
+    - `neat.physical_data_model.write.excel`
+    - `neat.physical_data_model.write.cdf`
+    """
 
     def __init__(self, store: NeatStore, client: NeatClient, config: NeatConfig) -> None:
         self._store = store
@@ -244,22 +260,24 @@ class WritePhysicalDataModel:
         """Write physical data model with views, containers, and spaces that are in the same space as the data model
         to CDF.
 
-        This method depends on the session governance profile for data modeling set when creating the NeatSession.
-            - In 'additive' mode, only new or updates to data models/views/containers will be applied.
-                You cannot remove views from data models, properties from views or containers, or
-                indexes or constraints from containers.
-            - In 'rebuild' mode, the data model in CDF will be made to exactly match the data model in Neat.
-                If there are any breaking changes, Neat will delete and recreate the relevant
-                data model/view/container. However, if drop_data is set to False, Neat will treat
-                containers as 'additive' and will not delete any containers or remove properties,
-                indexes, or constraints. To fully rebuild the data model, including containers, set drop_data to True.
-
         Args:
             dry_run (bool): If true, the changes will not be applied to CDF. Instead, Neat will
                 report what changes would have been made.
             rollback (bool): If true, all changes will be rolled back if any error occurs.
             drop_data (bool): Only applicable if the session mode is 'rebuild'. If
 
+        !!! note "Impact of governance profile"
+            This method depends on the session governance profile for data modeling set when creating the NeatSession:
+
+            - In `additive` mode, only new or updates to data models/views/containers will be applied.
+              You cannot remove views from data models, properties from views or containers, or
+              indexes or constraints from containers.
+
+            - In `rebuild` mode, the data model in CDF will be made to exactly match the data model in Neat.
+              If there are any breaking changes, Neat will delete and recreate the relevant
+              data model/view/container. However, if drop_data is set to False, Neat will treat
+              containers as `additive` and will not delete any containers or remove properties,
+              indexes, or constraints. To fully rebuild the data model, including containers, set drop_data to True.
         """
         writer = DMSAPIExporter()
         options = DeploymentOptions(
