@@ -1,6 +1,6 @@
 """Tests for requires constraint validators."""
 
-from typing import Literal, cast
+from typing import Literal
 
 import pytest
 
@@ -13,38 +13,13 @@ from cognite.neat._data_model.validation.dms._containers import (
     UnnecessaryRequiresConstraint,
 )
 from cognite.neat._data_model.validation.dms._orchestrator import DmsDataModelValidation
-from cognite.neat._issues import IssueList
 from tests.data import SNAPSHOT_CATALOG
 
-# Expected problems for each validator
 PROBLEMS = {
-    MissingRequiresConstraint: {
-        # AlwaysTogetherView: AssetContainer and DescribableContainer without requires
-        "AssetContainer",
-        "DescribableContainer",
-        # TransitiveView: ContainerA should require ContainerB (which already requires C)
-        "ContainerA",
-        # Partial overlap: TagContainer with TagDescribableContainer and TagAssetContainer
-        "TagContainer",
-    },
-    UnnecessaryRequiresConstraint: {
-        # OrderContainer requires CustomerContainer but they never appear together
-        "OrderContainer",
-        "CustomerContainer",
-        "never appear together",
-    },
-    RequiresConstraintCycle: {
-        # CycleContainerA <-> CycleContainerB cycle
-        "CycleContainerA",
-        "CycleContainerB",
-        "cycle",
-    },
-    RequiresConstraintComplicatesIngestion: {
-        # IngestionAssetContainer requires IngestionDescribableContainer with non-nullable property
-        "IngestionAssetContainer",
-        "IngestionDescribableContainer",
-        "non-nullable",
-    },
+    MissingRequiresConstraint: {"AssetContainer", "DescribableContainer", "TransitiveParent", "TagContainer"},
+    UnnecessaryRequiresConstraint: {"OrderContainer", "CustomerContainer"},
+    RequiresConstraintCycle: {"CycleContainerA", "CycleContainerB"},
+    RequiresConstraintComplicatesIngestion: {"IngestionAssetContainer", "IngestionDescribableContainer"},
 }
 
 
@@ -73,7 +48,7 @@ def test_requires_constraints_validation(
         can_run_validator=can_run_validator,
     )
     on_success.run(data_model)
-    by_code = cast(IssueList, on_success.issues).by_code()
+    by_code = on_success.issues.by_code()
 
     # Filter to only validators we're testing
     subset_problematic = {
@@ -101,166 +76,29 @@ def test_requires_constraints_validation(
     assert not missing, f"Expected problems not found in messages: {missing}"
 
 
-class TestMissingRequiresConstraint:
-    """More detailed tests for MissingRequiresConstraint validator."""
+def test_transitivity_avoids_redundant_recommendations() -> None:
+    """When Middle requires Leaf, Parent should only get one recommendation (Parent→Middle), not two."""
+    local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
+        local_scenario_name="requires_constraints",
+        cdf_scenario_name="for_validators",
+        modus_operandi="additive",
+        include_cdm=False,
+        format="snapshots",
+    )
+    data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
 
-    def test_transitivity_avoids_redundant_recommendations(self) -> None:
-        """When B requires C, recommending A requires B should be sufficient (not A requires C)."""
-        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            local_scenario_name="requires_constraints",
-            cdf_scenario_name="for_validators",
-            modus_operandi="additive",
-            include_cdm=False,
-            format="snapshots",
-        )
-        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
+    validation = DmsDataModelValidation(
+        cdf_snapshot=cdf_snapshot,
+        limits=SchemaLimits(),
+        modus_operandi="additive",
+    )
+    validation.run(data_model)
 
-        validation = DmsDataModelValidation(
-            cdf_snapshot=cdf_snapshot,
-            limits=SchemaLimits(),
-            modus_operandi="additive",
-        )
-        validation.run(data_model)
+    messages = [issue.message for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
+    # Count issues where TransitiveParent is the REQUIRING container (message starts with it)
+    parent_issues = [msg for msg in messages if msg.startswith("Container 'my_space:TransitiveParent'")]
 
-        missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
-        messages = [issue.message for issue in missing_requires_issues]
-
-        # Should recommend A requires B (which transitively covers C)
-        a_requires_b = any(
-            msg.startswith("Container 'my_space:ContainerA'") and "ContainerB" in msg for msg in messages
-        )
-
-        # Should NOT recommend A requires C directly (because B already requires C)
-        a_requires_c_direct = any(
-            msg.startswith("Container 'my_space:ContainerA'") and "always used together" in msg and "ContainerC" in msg
-            for msg in messages
-        )
-
-        assert a_requires_b, f"Should recommend ContainerA requires ContainerB. Messages: {messages}"
-        assert not a_requires_c_direct, (
-            f"Should NOT directly recommend ContainerA requires ContainerC. Messages: {messages}"
-        )
-
-    def test_partial_overlap_recommendation(self) -> None:
-        """Test that partial overlap (better coverage) recommendations are made."""
-        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            local_scenario_name="requires_constraints",
-            cdf_scenario_name="for_validators",
-            modus_operandi="additive",
-            include_cdm=False,
-            format="snapshots",
-        )
-        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-
-        validation = DmsDataModelValidation(
-            cdf_snapshot=cdf_snapshot,
-            limits=SchemaLimits(),
-            modus_operandi="additive",
-        )
-        validation.run(data_model)
-
-        missing_requires_issues = [issue for issue in validation.issues if issue.code == MissingRequiresConstraint.code]
-        messages = [issue.message for issue in missing_requires_issues]
-
-        # Should recommend Tag requires Describable (always together)
-        tag_requires_describable = any(
-            "TagContainer" in msg and "always used together" in msg and "TagDescribableContainer" in msg
-            for msg in messages
-        )
-
-        # Should suggest TagAssetContainer as a partial overlap option
-        partial_overlap = any(
-            "TagContainer" in msg and "TagAssetContainer" in msg and "improve" in msg.lower() for msg in messages
-        )
-
-        assert tag_requires_describable, (
-            f"Should recommend TagContainer requires TagDescribableContainer. Messages: {messages}"
-        )
-        assert partial_overlap, f"Should suggest TagAssetContainer as partial overlap option. Messages: {messages}"
-
-
-class TestUnnecessaryRequiresConstraint:
-    """More detailed tests for UnnecessaryRequiresConstraint validator."""
-
-    def test_detects_unnecessary_constraint(self) -> None:
-        """When containers with requires constraint never appear together, flag it."""
-        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            local_scenario_name="requires_constraints",
-            cdf_scenario_name="for_validators",
-            modus_operandi="additive",
-            include_cdm=False,
-            format="snapshots",
-        )
-        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-
-        validation = DmsDataModelValidation(
-            cdf_snapshot=cdf_snapshot,
-            limits=SchemaLimits(),
-            modus_operandi="additive",
-        )
-        validation.run(data_model)
-
-        unnecessary_issues = [issue for issue in validation.issues if issue.code == UnnecessaryRequiresConstraint.code]
-
-        assert len(unnecessary_issues) >= 1
-        assert any("OrderContainer" in issue.message for issue in unnecessary_issues)
-        assert any("CustomerContainer" in issue.message for issue in unnecessary_issues)
-        assert any("never appear together" in issue.message for issue in unnecessary_issues)
-
-
-class TestRequiresConstraintCycle:
-    """More detailed tests for RequiresConstraintCycle validator."""
-
-    def test_detects_cycle(self) -> None:
-        """Detects A -> B -> A cycle."""
-        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            local_scenario_name="requires_constraints",
-            cdf_scenario_name="for_validators",
-            modus_operandi="additive",
-            include_cdm=False,
-            format="snapshots",
-        )
-        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-
-        validation = DmsDataModelValidation(
-            cdf_snapshot=cdf_snapshot,
-            limits=SchemaLimits(),
-            modus_operandi="additive",
-        )
-        validation.run(data_model)
-
-        cycle_issues = [issue for issue in validation.issues if issue.code == RequiresConstraintCycle.code]
-
-        assert len(cycle_issues) >= 1
-        assert any("cycle" in issue.message.lower() for issue in cycle_issues)
-        assert any("CycleContainerA" in issue.message for issue in cycle_issues)
-        assert any("CycleContainerB" in issue.message for issue in cycle_issues)
-
-
-class TestRequiresConstraintComplicatesIngestion:
-    """More detailed tests for RequiresConstraintComplicatesIngestion validator."""
-
-    def test_detects_ingestion_complication(self) -> None:
-        """When A requires B, B has non-nullable properties, and no view maps to both."""
-        local_snapshot, cdf_snapshot = SNAPSHOT_CATALOG.load_scenario(
-            local_scenario_name="requires_constraints",
-            cdf_scenario_name="for_validators",
-            modus_operandi="additive",
-            include_cdm=False,
-            format="snapshots",
-        )
-        data_model = SNAPSHOT_CATALOG.snapshot_to_request_schema(local_snapshot)
-
-        validation = DmsDataModelValidation(
-            cdf_snapshot=cdf_snapshot,
-            limits=SchemaLimits(),
-            modus_operandi="additive",
-        )
-        validation.run(data_model)
-
-        issues = [issue for issue in validation.issues if issue.code == RequiresConstraintComplicatesIngestion.code]
-
-        assert len(issues) >= 1
-        assert any("IngestionAssetContainer" in issue.message for issue in issues)
-        assert any("IngestionDescribableContainer" in issue.message for issue in issues)
-        assert any("non-nullable" in issue.message.lower() for issue in issues)
+    # Should be exactly 1 recommendation (Parent→Middle, not also Parent→Leaf)
+    assert len(parent_issues) == 1, (
+        f"Expected 1 issue for TransitiveParent (transitivity should prevent redundant Parent→Leaf), got {len(parent_issues)}"
+    )

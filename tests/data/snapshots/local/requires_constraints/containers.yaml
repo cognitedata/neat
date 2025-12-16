@@ -21,9 +21,9 @@
         type: text
         list: false
 
-# Containers for transitive requires test - B requires C
+# Containers for transitive requires test - Middle requires Leaf
 - space: my_space
-  externalId: ContainerA
+  externalId: TransitiveParent
   usedFor: node
   properties:
     fieldA:
@@ -34,7 +34,7 @@
         list: false
 
 - space: my_space
-  externalId: ContainerB
+  externalId: TransitiveMiddle
   usedFor: node
   properties:
     fieldB:
@@ -44,15 +44,15 @@
         type: text
         list: false
   constraints:
-    req_c:
+    req_leaf:
       constraintType: requires
       require:
         space: my_space
-        externalId: ContainerC
+        externalId: TransitiveLeaf
         type: container
 
 - space: my_space
-  externalId: ContainerC
+  externalId: TransitiveLeaf
   usedFor: node
   properties:
     fieldC:

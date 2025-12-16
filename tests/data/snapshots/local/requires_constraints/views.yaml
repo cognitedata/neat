@@ -22,7 +22,7 @@
         type: container
       containerPropertyIdentifier: description
 
-# View for transitive requires test - A, B, C together where B requires C
+# View for transitive requires test - Parent, Middle, Leaf together where Middle requires Leaf
 - space: my_space
   externalId: TransitiveView
   version: v1
@@ -34,7 +34,7 @@
       description: Field A
       container:
         space: my_space
-        externalId: ContainerA
+        externalId: TransitiveParent
         type: container
       containerPropertyIdentifier: fieldA
     fieldB:
@@ -42,7 +42,7 @@
       description: Field B
       container:
         space: my_space
-        externalId: ContainerB
+        externalId: TransitiveMiddle
         type: container
       containerPropertyIdentifier: fieldB
     fieldC:
@@ -50,7 +50,7 @@
       description: Field C
       container:
         space: my_space
-        externalId: ContainerC
+        externalId: TransitiveLeaf
         type: container
       containerPropertyIdentifier: fieldC
 
